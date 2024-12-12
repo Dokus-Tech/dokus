@@ -1,4 +1,4 @@
-package ai.thepredict.server
+package ai.thepredict.prediction
 
 import ai.thepredict.shared.Greeting
 import ai.thepredict.shared.SERVER_PORT

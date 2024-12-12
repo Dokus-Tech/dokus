@@ -29,5 +29,11 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
-include(":server")
+include(":application:ui")
+include(":service:contacts")
+include(":service:gateway")
+include(":service:identity")
+include(":service:documents")
+include(":service:prediction")
+include(":service:simulation")
 include(":shared")
