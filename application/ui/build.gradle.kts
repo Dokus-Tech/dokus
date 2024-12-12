@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -6,7 +5,7 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
 }
@@ -24,10 +23,10 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
+//        iosTarget.binaries.framework {
+//            baseName = "ComposeApp"
+//            isStatic = true
+//        }
     }
     
     jvm("desktop")
@@ -68,7 +67,6 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(projects.application.ui)
             implementation(projects.shared)
         }
         desktopMain.dependencies {
@@ -79,15 +77,12 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app"
+    namespace = "ai.thepredict.ui"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "ai.thepredict.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
     }
     packaging {
         resources {
@@ -112,8 +107,6 @@ dependencies {
 compose.desktop {
 
     application {
-        mainClass = "ai.thepredict.app.MainKt"
-
         buildTypes {
             release {
                 proguard {
@@ -122,16 +115,6 @@ compose.desktop {
                     this.isEnabled = false
                 }
             }
-        }
-
-//        buildTypes.release.proguard {
-//            version.set("7.4.2")
-//        }
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "ai.thepredict.app"
-            packageVersion = "1.0.0"
         }
     }
 }

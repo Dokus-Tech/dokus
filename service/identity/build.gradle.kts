@@ -4,10 +4,10 @@ plugins {
     application
 }
 
-group = "ai.thepredict.server"
+group = "ai.thepredict.identity"
 version = "1.0.0"
 application {
-    mainClass.set("ai.thepredict.server.ApplicationKt")
+    mainClass.set("ai.thepredict.identity.ApplicationKt")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=${extra["io.ktor.development"] ?: "false"}")
 }
 
