@@ -1,3 +1,10 @@
 package ai.thepredict.shared
 
-const val SERVER_PORT = 8080
+enum class ServerEndpoints(val port: Int) {
+    Gateway(8080),
+    Contacts(8081),
+    Documents(8082),
+    Identity(8083),
+    Prediction(8084),
+    Simulation(8085)
+}
