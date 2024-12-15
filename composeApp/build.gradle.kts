@@ -117,9 +117,9 @@ compose.desktop {
         buildTypes {
             release {
                 proguard {
-                    this.obfuscate = false
-                    this.optimize = false
-                    this.isEnabled = false
+                    obfuscate = false
+                    optimize = false
+                    isEnabled = false
                 }
             }
         }
@@ -130,8 +130,20 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "ai.thepredict.app"
+
+            packageName = "The Predict"
             packageVersion = "1.0.0"
+            vendor = "Invoid Vision"
+
+            macOS {
+                dockName = "Predict"
+                appStore = false
+                bundleID = "ai.thepredict.app"
+            }
+
+            windows {
+                perUserInstall = true
+            }
         }
     }
 }
