@@ -20,7 +20,7 @@ fun main() {
 fun Application.module() {
     routing {
         get("/") {
-            call.respondText("Contacts: Hey")
+            call.respondText("Contacts: Hey. Listening on ${ServerEndpoints.Contacts.internalPort}")
         }
     }
 }
