@@ -1,0 +1,15 @@
+services:
+  teamcity-server:
+    image: teamcity-server
+    container_name: teamcity
+    ports:
+      - "80:8111"
+  teamcity-agent:
+    image: jetbrains/teamcity-agent
+    container_name: tc-agent
+    depends_on:
+      - teamcity-server
+    links:
+      - teamcity-server
+    environment:
+      - SERVER_URL=teamcity-server-instance:8111

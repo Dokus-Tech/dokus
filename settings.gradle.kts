@@ -2,6 +2,7 @@ rootProject.name = "ThePredict"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             mavenContent {
@@ -30,11 +31,14 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 include(":application:ui")
-include(":service:contacts")
-include(":service:gateway")
-include(":service:identity")
-include(":service:documents")
-include(":service:prediction")
-include(":service:simulation")
-include(":service:database")
-include(":shared")
+include(":application:platform")
+include(":shared:configuration")
+include(":shared:domain")
+include(":server:contacts")
+include(":server:gateway")
+include(":server:identity")
+include(":server:documents")
+include(":server:prediction")
+include(":server:simulation")
+include(":server:database")
+//include(":shared")
