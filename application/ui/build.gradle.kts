@@ -30,15 +30,15 @@ kotlin {
     }
     
     jvm("desktop")
-    
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "composeApp"
+        moduleName = "applicationUi"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "composeApp.js"
+                outputFileName = "applicationUi.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -110,9 +110,9 @@ compose.desktop {
         buildTypes {
             release {
                 proguard {
-                    this.obfuscate = false
-                    this.optimize = false
-                    this.isEnabled = false
+                    obfuscate = false
+                    optimize = false
+                    isEnabled = false
                 }
             }
         }
