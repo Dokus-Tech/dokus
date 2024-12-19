@@ -11,7 +11,7 @@ import io.ktor.server.routing.routing
 fun main() {
     embeddedServer(
         Netty,
-        port = ServerEndpoints.Identity.port,
+        port = ServerEndpoints.Identity.internalPort,
         host = "0.0.0.0",
         module = Application::module
     ).start(wait = true)
