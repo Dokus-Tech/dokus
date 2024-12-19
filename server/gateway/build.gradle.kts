@@ -50,8 +50,15 @@ application {
 //}
 
 dependencies {
+    implementation(projects.shared.api)
     implementation(projects.shared.configuration)
     implementation(projects.shared.domain)
+
+    implementation(projects.server.contactsApi)
+    implementation(projects.server.documentsApi)
+    implementation(projects.server.identityApi)
+    implementation(projects.server.predictionApi)
+    implementation(projects.server.simulationApi)
 
     implementation(libs.logback)
     implementation(libs.ktor.server.core)
