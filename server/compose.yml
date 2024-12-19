@@ -1,15 +1,43 @@
 services:
-  teamcity-server:
-    image: teamcity-server
-    container_name: teamcity
+  gateway:
+    image: europe-west1-docker.pkg.dev/the-predict/containers/gateway:dev
+    container_name: the-predict-gateway
     ports:
-      - "80:8111"
-  teamcity-agent:
-    image: jetbrains/teamcity-agent
-    container_name: tc-agent
+      - "8080:8080"
     depends_on:
-      - teamcity-server
+      - contacts
+      - documents
+      - identity
+      - prediction
+      - simulation
     links:
-      - teamcity-server
-    environment:
-      - SERVER_URL=teamcity-server-instance:8111
+      - contacts
+      - documents
+      - identity
+      - prediction
+      - simulation
+  contacts:
+    image: europe-west1-docker.pkg.dev/the-predict/containers/contacts:dev
+    container_name: the-predict-contacts
+    ports:
+      - "8081:8081"
+  documents:
+    image: europe-west1-docker.pkg.dev/the-predict/containers/documents:dev
+    container_name: the-predict-documents
+    ports:
+      - "8082:8082"
+  identity:
+    image: europe-west1-docker.pkg.dev/the-predict/containers/identity:dev
+    container_name: the-predict-identity
+    ports:
+      - "8083:8083"
+  prediction:
+    image: europe-west1-docker.pkg.dev/the-predict/containers/prediction:dev
+    container_name: the-predict-prediction
+    ports:
+      - "8084:8084"
+  simulation:
+    image: europe-west1-docker.pkg.dev/the-predict/containers/simulation:dev
+    container_name: the-predict-simulation
+    ports:
+      - "8085:8085"
