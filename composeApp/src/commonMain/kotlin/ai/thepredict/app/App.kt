@@ -1,7 +1,7 @@
 package ai.thepredict.app
 
-import ai.thepredict.shared.Greeting
-import ai.thepredict.shared.getPlatform
+import ai.thepredict.platform.Greeting
+import ai.thepredict.platform.getPlatform
 import ai.thepredict.ui.Title
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image

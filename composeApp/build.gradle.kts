@@ -63,7 +63,8 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.application.ui)
-            implementation(projects.shared)
+            implementation(projects.application.platform)
+            implementation(projects.shared.configuration)
 
             implementation(compose.runtime)
             implementation(compose.foundation)
