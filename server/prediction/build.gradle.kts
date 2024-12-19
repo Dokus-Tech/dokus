@@ -14,6 +14,8 @@ application {
 dependencies {
     implementation(projects.shared.configuration)
     implementation(projects.shared.domain)
+
+    implementation(projects.server.predictionApi)
     implementation(projects.server.database)
 
     implementation(libs.logback)
