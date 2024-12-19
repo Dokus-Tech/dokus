@@ -17,28 +17,21 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-//        iosTarget.binaries.framework {
-//            baseName = "ComposeApp"
-//            isStatic = true
-//        }
-    }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
     
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "applicationUi"
+        moduleName = "applicationOnboarding"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "applicationUi.js"
+                outputFileName = "applicationOnboarding.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -70,7 +63,6 @@ kotlin {
             implementation(projects.shared.configuration)
         }
         desktopMain.dependencies {
-            implementation(compose.preview)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
         }
@@ -78,7 +70,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.ui"
+    namespace = "ai.thepredict.onboarding"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -98,10 +90,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    buildFeatures {
-        compose = true
     }
 }
 

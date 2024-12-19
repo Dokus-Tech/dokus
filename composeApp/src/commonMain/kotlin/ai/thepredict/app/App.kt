@@ -2,13 +2,15 @@ package ai.thepredict.app
 
 import ai.thepredict.platform.Greeting
 import ai.thepredict.platform.getPlatform
+import ai.thepredict.ui.PButton
 import ai.thepredict.ui.Title
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,8 +29,8 @@ fun App() {
     MaterialTheme {
         var showContent by remember { mutableStateOf(false) }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Button(onClick = { showContent = !showContent }) {
-                Title("Click me!")
+            PButton(text = "Click me", icon = Icons.Filled.Call) {
+                showContent = !showContent
             }
             AnimatedVisibility(showContent) {
                 val greeting = remember { Greeting().greet() }
