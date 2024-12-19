@@ -1,0 +1,43 @@
+package ai.thepredict.ui
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.unit.dp
+
+enum class PButtonVariant {
+    Default,
+    CallToAction,
+    Outline
+}
+
+object PButtonDefaults {
+    val variant: PButtonVariant = PButtonVariant.Default
+    val icon: ImageVector? = null
+    val contentDescription: String? = null
+}
+
+@Composable
+fun PButton(
+    text: String,
+    variant: PButtonVariant = PButtonDefaults.variant,
+    icon: ImageVector? = PButtonDefaults.icon,
+    contentDescription: String? = PButtonDefaults.contentDescription,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Button(modifier = modifier, onClick = onClick) {
+        if (icon != null) {
+            Icon(icon, modifier = Modifier.padding(4.dp), contentDescription = contentDescription)
+        }
+        Text(text, modifier = Modifier.padding(4.dp))
+    }
+}

@@ -31,6 +31,7 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 include(":application:ui")
+include(":application:onboarding")
 include(":application:platform")
 include(":shared:configuration")
 include(":shared:domain")
