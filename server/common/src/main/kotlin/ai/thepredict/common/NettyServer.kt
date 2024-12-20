@@ -1,7 +1,6 @@
 package ai.thepredict.common
 
 import ai.thepredict.configuration.ServerEndpoint
-import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationPlugin
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer

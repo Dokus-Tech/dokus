@@ -58,11 +58,11 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.shared.configuration)
 
-            implementation(projects.server.contactsApi)
-            implementation(projects.server.documentsApi)
-            implementation(projects.server.identityApi)
-            implementation(projects.server.predictionApi)
-            implementation(projects.server.simulationApi)
+            implementation(projects.shared.contactsApi)
+            implementation(projects.shared.documentsApi)
+            implementation(projects.shared.identityApi)
+            implementation(projects.shared.predictionApi)
+            implementation(projects.shared.simulationApi)
 
             implementation(libs.kotlinx.rpc.core)
             implementation(libs.kotlinx.rpc.krpc.ktor.client)

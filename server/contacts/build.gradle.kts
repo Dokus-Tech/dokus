@@ -16,7 +16,7 @@ application {
 dependencies {
     implementation(projects.server.common)
 
-    api(projects.server.contactsApi)
+    api(projects.shared.contactsApi)
     implementation(projects.server.database)
 
     implementation(libs.logback)

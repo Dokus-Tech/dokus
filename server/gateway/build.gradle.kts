@@ -19,10 +19,10 @@ dependencies {
 
     implementation(projects.server.common)
     implementation(projects.server.contacts)
-    implementation(projects.server.documentsApi)
-    implementation(projects.server.identityApi)
-    implementation(projects.server.predictionApi)
-    implementation(projects.server.simulationApi)
+    implementation(projects.server.documents)
+    implementation(projects.server.identity)
+    implementation(projects.server.prediction)
+    implementation(projects.server.simulation)
 
     implementation(libs.logback)
 
