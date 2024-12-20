@@ -6,6 +6,6 @@ import kotlinx.rpc.RemoteService
 import kotlinx.rpc.annotations.Rpc
 
 @Rpc
-interface ContactsServerApi : RemoteService {
+interface ContactsRemoteService : RemoteService {
     suspend fun myContacts(): Flow<Contact>
 }

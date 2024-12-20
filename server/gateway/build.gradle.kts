@@ -54,7 +54,7 @@ dependencies {
     implementation(projects.shared.configuration)
     implementation(projects.shared.domain)
 
-    implementation(projects.server.contactsApi)
+    implementation(projects.server.contacts)
     implementation(projects.server.documentsApi)
     implementation(projects.server.identityApi)
     implementation(projects.server.predictionApi)

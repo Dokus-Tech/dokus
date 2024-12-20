@@ -1,7 +1,7 @@
 package ai.thepredict.gateway
 
 import ai.thepredict.configuration.ServerEndpoints
-import ai.thepredict.gateway.api.registerServices
+import ai.thepredict.contacts.api.registerContactsRemoteServices
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -34,7 +34,7 @@ private fun Application.module() {
     routing {
         rpc {
             configure()
-            registerServices()
+            registerContactsRemoteServices()
         }
 
         get("/info") {
