@@ -6,9 +6,11 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinxRpcPlugin)
+    alias(libs.plugins.kotlinPluginSerialization)
 }
 
-group = "ai.thepredict.api"
+group = "ai.thepredict.shared.api"
 version = "1.0.0"
 
 kotlin {
@@ -28,12 +30,12 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "applicationUi"
+        moduleName = "applicationSharedApi"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "applicationUi.js"
+                outputFileName = "applicationSharedApi.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -43,7 +45,6 @@ kotlin {
                 }
             }
         }
-        binaries.executable()
     }
 
     sourceSets {
@@ -51,7 +52,13 @@ kotlin {
 
         androidMain.dependencies {
         }
+
         commonMain.dependencies {
+//            implementation(libs.kotlinx.rpc.krpc.ktor.server)
+            implementation(libs.kotlinx.rpc.krpc.serialization.json)
+            implementation(libs.kotlinx.rpc.core)
+            implementation(projects.shared.domain)
+//            implementation(libs.kotlinx.serialization)
         }
         desktopMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)
@@ -60,7 +67,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.api"
+    namespace = "ai.thepredict.shared.api"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
