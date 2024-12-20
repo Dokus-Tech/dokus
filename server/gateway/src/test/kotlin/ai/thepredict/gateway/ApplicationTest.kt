@@ -1,12 +1,9 @@
 package ai.thepredict.gateway
 
 import ai.thepredict.configuration.ServerEndpoints
-import ai.thepredict.shared.api.ContactsApi
+import ai.thepredict.contacts.api.ContactsRemoteService
 import io.ktor.client.HttpClient
-import io.ktor.http.encodedPath
-import io.ktor.server.config.configLoaders
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.yield
 import kotlinx.rpc.krpc.RPCConfig
 import kotlinx.rpc.krpc.ktor.client.KtorRPCClient
 import kotlinx.rpc.krpc.ktor.client.installRPC
@@ -36,7 +33,7 @@ fun main() = runBlocking {
 
     val client: KtorRPCClient = ktorClient.rpc {
         url {
-            host = "localhost"
+            host = "predict.local"
             port = ServerEndpoints.Gateway.internalPort
         }
 
@@ -47,10 +44,10 @@ fun main() = runBlocking {
         }
     }
 
-    val contacts: ContactsApi = client.withService<ContactsApi>()
+    val contacts = client.withService<ContactsRemoteService>()
 
     streamScoped {
-        contacts.my().collect {
+        contacts.myContacts().collect {
             println(it.name)
         }
     }

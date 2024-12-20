@@ -17,7 +17,7 @@ dependencies {
     implementation(projects.shared.configuration)
     implementation(projects.shared.domain)
 
-    implementation(projects.server.contactsApi)
+    api(projects.server.contactsApi)
     implementation(projects.server.database)
 
     implementation(libs.kotlinx.rpc.krpc.ktor.server)

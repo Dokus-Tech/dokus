@@ -1,8 +1,10 @@
 package ai.thepredict.contacts
 
 import ai.thepredict.configuration.ServerEndpoints
-import ai.thepredict.contacts.api.ContactsServerApi
-import ai.thepredict.contacts.api.ContactsServerApiImpl
+import ai.thepredict.contacts.api.ContactsRemoteService
+import ai.thepredict.contacts.api.ContactsRemoteServiceImpl
+import ai.thepredict.contacts.api.registerContactsRemoteServices
+import ai.thepredict.contacts.api.registerRemoteServices
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -41,9 +43,7 @@ fun Application.module() {
                 }
             }
 
-            registerService<ContactsServerApi> { ctx ->
-                ContactsServerApiImpl(ctx)
-            }
+            registerContactsRemoteServices()
         }
 
         get("/info") {
