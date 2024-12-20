@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
+    alias(libs.plugins.kotlinxRpcPlugin)
+    alias(libs.plugins.kotlinPluginSerialization)
     application
 }
 
@@ -12,15 +14,12 @@ application {
 }
 
 dependencies {
-    implementation(projects.shared.configuration)
-    implementation(projects.shared.domain)
+    implementation(projects.server.common)
 
-    api(projects.server.documentsApi)
+    api(projects.shared.documentsApi)
     implementation(projects.server.database)
 
     implementation(libs.logback)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.netty)
 //    testImplementation(libs.ktor.server.tests)
     testImplementation(libs.kotlin.test.junit)
 }
