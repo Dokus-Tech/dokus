@@ -77,6 +77,8 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    lint {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
     }
     packaging {

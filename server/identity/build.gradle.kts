@@ -16,7 +16,7 @@ dependencies {
     implementation(projects.shared.configuration)
     implementation(projects.shared.domain)
 
-    implementation(projects.server.identityApi)
+    api(projects.server.identityApi)
     implementation(projects.server.database)
 
     implementation(libs.logback)

@@ -51,10 +51,10 @@ kotlin {
         androidMain.dependencies {}
 
         commonMain.dependencies {
+            implementation(projects.shared.domain)
+
             implementation(libs.kotlinx.rpc.krpc.serialization.json)
             implementation(libs.kotlinx.rpc.core)
-            implementation(projects.shared.domain)
-//            implementation(libs.kotlinx.serialization)
         }
         desktopMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)
@@ -68,6 +68,8 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    lint {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
     }
     packaging {

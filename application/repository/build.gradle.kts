@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-//    alias(libs.plugins.kotlinxRpcPlugin)
+    alias(libs.plugins.kotlinxRpcPlugin)
 //    alias(libs.plugins.kotlinPluginSerialization)
 }
 
@@ -21,7 +21,7 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    
+
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -43,10 +43,10 @@ kotlin {
         }
         binaries.executable()
     }
-    
+
     sourceSets {
         val desktopMain by getting
-        
+
         androidMain.dependencies {
             implementation(libs.ktor.client.cio)
         }
@@ -56,14 +56,17 @@ kotlin {
         }
 
         commonMain.dependencies {
-//            implementation(projects.shared.configuration)
-//            implementation(projects.shared.api)
+            implementation(projects.shared.configuration)
 
-//            implementation(libs.kotlinx.rpc.core)
+            implementation(projects.server.contactsApi)
+            implementation(projects.server.documentsApi)
+            implementation(projects.server.identityApi)
+            implementation(projects.server.predictionApi)
+            implementation(projects.server.simulationApi)
+
+            implementation(libs.kotlinx.rpc.core)
             implementation(libs.kotlinx.rpc.krpc.ktor.client)
-//            implementation(libs.kotlinx.rpc.krpc.serialization.json)
-//
-//            implementation(libs.kotlinx.serialization)
+            implementation(libs.kotlinx.rpc.krpc.serialization.json)
         }
 
         desktopMain.dependencies {
@@ -79,6 +82,8 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    lint {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
     }
     packaging {
