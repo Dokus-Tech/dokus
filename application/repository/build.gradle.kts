@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinxRpcPlugin)
-//    alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.kotlinPluginSerialization)
 }
 
 kotlin {
