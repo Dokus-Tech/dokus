@@ -1,6 +1,6 @@
 package ai.thepredict.prediction
 
-import ai.thepredict.configuration.ServerEndpoints
+import ai.thepredict.configuration.ServerEndpoint
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -11,7 +11,7 @@ import io.ktor.server.routing.routing
 fun main() {
     embeddedServer(
         Netty,
-        port = ServerEndpoints.Prediction.internalPort,
+        port = ServerEndpoint.Prediction.internalPort,
         host = "0.0.0.0",
         module = Application::module
     ).start(wait = true)

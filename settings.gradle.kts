@@ -35,10 +35,10 @@ include(":application:onboarding")
 include(":application:platform")
 include(":application:repository")
 
-include(":shared:api")
 include(":shared:configuration")
 include(":shared:domain")
 
+include(":server:common")
 include(":server:gateway")
 include(":server:contacts")
 include(":server:contacts-api")

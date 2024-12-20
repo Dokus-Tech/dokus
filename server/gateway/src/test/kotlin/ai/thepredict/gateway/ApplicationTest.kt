@@ -1,6 +1,6 @@
 package ai.thepredict.gateway
 
-import ai.thepredict.configuration.ServerEndpoints
+import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.contacts.api.ContactsRemoteService
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.runBlocking
@@ -33,8 +33,8 @@ fun main() = runBlocking {
 
     val client: KtorRPCClient = ktorClient.rpc {
         url {
-            host = "predict.local"
-            port = ServerEndpoints.Gateway.internalPort
+            host = "0.0.0.0"
+            port = ServerEndpoint.Gateway.internalPort
         }
 
         rpcConfig {
