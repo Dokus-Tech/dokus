@@ -61,14 +61,22 @@ dependencies {
     implementation(projects.server.simulationApi)
 
     implementation(libs.logback)
+
     implementation(libs.ktor.server.core)
+    implementation(libs.ktor.client.cio)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+
+    implementation(libs.kotlinx.rpc.core)
     implementation(libs.kotlinx.rpc.krpc.ktor.server)
     implementation(libs.kotlinx.rpc.krpc.ktor.client)
     implementation(libs.kotlinx.rpc.krpc.serialization.json)
+
+//    implementation(libs.kotlinx.serialization)
 //    testImplementation(libs.ktor.server.tests)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.rpc.krpc.serialization.json)
+    testImplementation(kotlin("test"))
 }

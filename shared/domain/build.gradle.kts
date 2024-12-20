@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.kotlinxRpcPlugin)
 }
 
 kotlin {
@@ -42,7 +43,8 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.serialization)
+            implementation(libs.kotlinx.rpc.krpc.serialization.json)
+            implementation(libs.kotlinx.rpc.core)
             implementation(libs.kotlinx.datetime)
         }
     }
@@ -51,10 +53,12 @@ kotlin {
 android {
     namespace = "ai.thepredict.domain"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }

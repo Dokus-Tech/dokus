@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+//    alias(libs.plugins.kotlinxRpcPlugin)
+//    alias(libs.plugins.kotlinPluginSerialization)
 }
 
 kotlin {
@@ -46,12 +48,26 @@ kotlin {
         val desktopMain by getting
         
         androidMain.dependencies {
+            implementation(libs.ktor.client.cio)
         }
+
+        iosMain.dependencies {
+            implementation(libs.ktor.client.cio)
+        }
+
         commonMain.dependencies {
-            implementation(projects.shared.configuration)
-            implementation(projects.shared.api)
+//            implementation(projects.shared.configuration)
+//            implementation(projects.shared.api)
+
+//            implementation(libs.kotlinx.rpc.core)
+            implementation(libs.kotlinx.rpc.krpc.ktor.client)
+//            implementation(libs.kotlinx.rpc.krpc.serialization.json)
+//
+//            implementation(libs.kotlinx.serialization)
         }
+
         desktopMain.dependencies {
+            implementation(libs.ktor.client.cio)
             implementation(libs.kotlinx.coroutines.swing)
         }
     }
