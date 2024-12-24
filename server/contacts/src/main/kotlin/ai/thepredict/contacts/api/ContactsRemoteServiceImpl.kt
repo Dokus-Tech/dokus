@@ -1,14 +1,37 @@
 package ai.thepredict.contacts.api
 
 import ai.thepredict.domain.Contact
+import ai.thepredict.domain.api.OperationResult
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlin.coroutines.CoroutineContext
 
 class ContactsRemoteServiceImpl(
     override val coroutineContext: CoroutineContext,
 ) : ContactsRemoteService {
-    override suspend fun myContacts(): Flow<Contact> {
-        return flowOf(Contact(name = "Artem"))
+
+    override suspend fun getAll(): Flow<Contact> {
+        return flowOf(Contact(id = Contact.Id.random, name = "Artem"))
+    }
+
+    override suspend fun get(id: Contact.Id): Contact? {
+        return null
+    }
+
+    override suspend fun find(query: String): Flow<Contact> {
+        return emptyFlow()
+    }
+
+    override suspend fun create(create: Contact): OperationResult {
+        return OperationResult.OperationNotAvailable
+    }
+
+    override suspend fun update(contact: Contact): OperationResult {
+        return OperationResult.OperationNotAvailable
+    }
+
+    override suspend fun delete(id: Contact.Id): OperationResult {
+        return OperationResult.OperationNotAvailable
     }
 }

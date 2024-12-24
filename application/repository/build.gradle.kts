@@ -58,6 +58,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.shared.configuration)
 
+            implementation(projects.shared.domain)
             implementation(projects.shared.contactsApi)
             implementation(projects.shared.documentsApi)
             implementation(projects.shared.identityApi)

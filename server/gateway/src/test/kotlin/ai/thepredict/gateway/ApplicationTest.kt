@@ -33,7 +33,7 @@ fun main() = runBlocking {
 
     val client: KtorRPCClient = ktorClient.rpc {
         url {
-            host = "0.0.0.0"
+            host = "predict.local"
             port = ServerEndpoint.Gateway.internalPort
         }
 
@@ -47,7 +47,7 @@ fun main() = runBlocking {
     val contacts = client.withService<ContactsRemoteService>()
 
     streamScoped {
-        contacts.myContacts().collect {
+        contacts.getAll().collect {
             println(it.name)
         }
     }

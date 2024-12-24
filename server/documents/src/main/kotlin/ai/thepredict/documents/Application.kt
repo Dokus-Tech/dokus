@@ -7,7 +7,7 @@ import io.ktor.server.routing.Routing
 import kotlinx.rpc.krpc.ktor.server.rpc
 
 fun main() {
-    embeddedServer(ServerEndpoint.Documents, Routing::configureRouting).start(wait = true)
+    embeddedServer(ServerEndpoint.Documents(), Routing::configureRouting).start(wait = true)
 }
 
 private fun Routing.configureRouting() {
