@@ -17,28 +17,21 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-//        iosTarget.binaries.framework {
-//            baseName = "ComposeApp"
-//            isStatic = true
-//        }
-    }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
     
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "applicationUi"
+        moduleName = "applicationNavigation"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "applicationUi.js"
+                outputFileName = "applicationNavigation.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -55,30 +48,37 @@ kotlin {
         val desktopMain by getting
         
         androidMain.dependencies {
-            api(compose.preview)
-            api(libs.androidx.activity.compose)
+            implementation(compose.preview)
+            implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            api(compose.runtime)
-            api(compose.foundation)
-            api(compose.material)
-            api(compose.ui)
-            api(compose.components.resources)
-            api(compose.components.uiToolingPreview)
-            api(libs.androidx.lifecycle.viewmodel)
-            api(libs.androidx.lifecycle.runtime.compose)
-            api(projects.shared.configuration)
+            implementation(projects.shared.configuration)
+
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material)
+            implementation(compose.ui)
+
+            implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.lifecycle.runtime.compose)
+
+            api(libs.voyager.navigator)
+            api(libs.voyager.navigatorKmp)
+            api(libs.voyager.kodein)
+            api(libs.voyager.tabNavigator)
+            api(libs.voyager.screenModel)
         }
         desktopMain.dependencies {
-            api(compose.preview)
-            api(compose.desktop.currentOs)
-            api(libs.kotlinx.coroutines.swing)
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }
 
 android {
-    namespace = "ai.thepredict.ui"
+    namespace = "ai.thepredict.app.navigation"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -100,10 +100,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    buildFeatures {
-        compose = true
     }
 }
 

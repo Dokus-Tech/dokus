@@ -9,7 +9,7 @@ import org.kodein.di.singleton
 
 val repositoryDiModule by DI.Module("repository") {
     GlobalScope.launch { // TODO: Get rid of global scope
-        val api = UnifiedApi.create(ServerEndpoint.Gateway())
-        singleton { api }
+//        val api = UnifiedApi.create(ServerEndpoint.Gateway())
+//        singleton { api }
     }
 }

@@ -67,6 +67,7 @@ kotlin {
             implementation(projects.application.platform)
             implementation(projects.application.repository)
             implementation(projects.application.onboarding)
+            implementation(projects.application.navigation)
 
             implementation(projects.shared.configuration)
 
@@ -82,6 +83,7 @@ kotlin {
             implementation(libs.kodein)
 
             implementation(libs.voyager.navigator)
+            implementation(libs.voyager.navigatorKmp)
             implementation(libs.voyager.tabNavigator)
             implementation(libs.voyager.screenModel)
         }
