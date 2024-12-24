@@ -62,8 +62,12 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
+            implementation(projects.application.core)
             implementation(projects.application.ui)
             implementation(projects.application.platform)
+            implementation(projects.application.repository)
+            implementation(projects.application.onboarding)
+
             implementation(projects.shared.configuration)
 
             implementation(compose.runtime)
@@ -72,9 +76,14 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+
+            implementation(libs.kodein)
+
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.tabNavigator)
+            implementation(libs.voyager.screenModel)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

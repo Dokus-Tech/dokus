@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxRpcPlugin)
-    alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -21,17 +21,17 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-
+    
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "applicationRepository"
+        moduleName = "applicationCore"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "applicationRepository.js"
+                outputFileName = "applicationCore.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -43,44 +43,39 @@ kotlin {
         }
         binaries.executable()
     }
-
+    
     sourceSets {
         val desktopMain by getting
-
+        
         androidMain.dependencies {
-            implementation(libs.ktor.client.cio)
+            implementation(compose.preview)
+            implementation(libs.androidx.activity.compose)
         }
-
-        iosMain.dependencies {
-            implementation(libs.ktor.client.cio)
-        }
-
         commonMain.dependencies {
-            implementation(projects.application.core)
+            api(projects.application.repository)
+            api(projects.shared.configuration)
 
-            implementation(projects.shared.domain)
-            implementation(projects.shared.contactsApi)
-            implementation(projects.shared.documentsApi)
-            implementation(projects.shared.identityApi)
-            implementation(projects.shared.predictionApi)
-            implementation(projects.shared.simulationApi)
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material)
+            implementation(compose.ui)
 
-            implementation(libs.kodein)
+            implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.lifecycle.runtime.compose)
 
-            implementation(libs.kotlinx.rpc.core)
-            implementation(libs.kotlinx.rpc.krpc.ktor.client)
-            implementation(libs.kotlinx.rpc.krpc.serialization.json)
+            api(libs.kodein)
         }
-
         desktopMain.dependencies {
-            implementation(libs.ktor.client.cio)
+            implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }
 
 android {
-    namespace = "ai.thepredict.repository"
+    namespace = "ai.thepredict.app.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -106,4 +101,20 @@ android {
 }
 
 dependencies {
+    debugImplementation(compose.uiTooling)
+}
+
+compose.desktop {
+
+    application {
+        buildTypes {
+            release {
+                proguard {
+                    obfuscate = false
+                    optimize = false
+                    isEnabled = false
+                }
+            }
+        }
+    }
 }

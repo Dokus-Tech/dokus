@@ -34,6 +34,7 @@ include(":application:ui")
 include(":application:onboarding")
 include(":application:platform")
 include(":application:repository")
+include(":application:core")
 
 include(":shared:configuration")
 include(":shared:domain")
