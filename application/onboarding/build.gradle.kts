@@ -48,30 +48,14 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
+            implementation(projects.application.navigation)
             implementation(projects.application.core)
             implementation(projects.application.repository)
-
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
-
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.kodein)
-            implementation(libs.voyager.tabNavigator)
-            implementation(libs.voyager.screenModel)
+            implementation(projects.application.ui)
         }
         desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }
