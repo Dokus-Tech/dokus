@@ -21,7 +21,7 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    
+
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -43,15 +43,17 @@ kotlin {
         }
         binaries.executable()
     }
-    
+
     sourceSets {
         val desktopMain by getting
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
+            implementation(projects.application.core)
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
@@ -61,8 +63,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
-            implementation(projects.application.repository)
-            implementation(projects.shared.configuration)
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.kodein)
+            implementation(libs.voyager.tabNavigator)
+            implementation(libs.voyager.screenModel)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -72,7 +76,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.onboarding"
+    namespace = "ai.thepredict.app.onboarding"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
