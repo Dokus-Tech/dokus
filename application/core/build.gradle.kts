@@ -21,7 +21,7 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    
+
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -43,10 +43,10 @@ kotlin {
         }
         binaries.executable()
     }
-    
+
     sourceSets {
         val desktopMain by getting
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)

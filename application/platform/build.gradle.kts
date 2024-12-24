@@ -41,13 +41,14 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.persistence.settings)
             // put your Multiplatform dependencies here
         }
     }
 }
 
 android {
-    namespace = "ai.thepredict.platform"
+    namespace = "ai.thepredict.app.platform"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

@@ -1,4 +1,4 @@
-package ai.thepredict.onboarding
+package ai.thepredict.app.core
 
 import org.kodein.di.DI
 
