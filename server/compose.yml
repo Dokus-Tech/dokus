@@ -41,3 +41,16 @@ services:
     container_name: the-predict-simulation
     ports:
       - "8085:8085"
+  db:
+    image: postgres
+    restart: always
+    shm_size: 256mb
+    environment:
+      POSTGRES_PASSWORD: predictme
+    ports:
+      - "8090:5432"
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8091:8080"
