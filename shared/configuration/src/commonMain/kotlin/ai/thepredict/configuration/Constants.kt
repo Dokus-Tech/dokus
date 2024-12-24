@@ -1,14 +1,71 @@
 package ai.thepredict.configuration
 
 private const val DEFAULT_INTERNAL_HOST = "0.0.0.0"
+private const val DEFAULT_EXTERNAL_HOST = "predict.local"
 
-enum class ServerEndpoint(val internalHost: String, val internalPort: Int, val externalPort: Int) {
-    Gateway(DEFAULT_INTERNAL_HOST, 8080, 8080),
-    Contacts(DEFAULT_INTERNAL_HOST, 8081, 8081),
-    Documents(DEFAULT_INTERNAL_HOST, 8082, 8082),
-    Identity(DEFAULT_INTERNAL_HOST, 8083, 8083),
-    Prediction(DEFAULT_INTERNAL_HOST, 8084, 8084),
-    Simulation(DEFAULT_INTERNAL_HOST, 8085, 8085)
+sealed interface ServerEndpoint {
+    val internalHost: String
+    val externalHost: String
+    val internalPort: Int
+    val externalPort: Int
+
+    data class Gateway(
+        override val externalHost: String = DEFAULT_EXTERNAL_HOST,
+    ) : ServerEndpoint {
+        override val internalHost: String = DEFAULT_INTERNAL_HOST
+        override val internalPort: Int = 8080
+        override val externalPort: Int = 8080
+    }
+
+    data class Contacts(
+        override val externalHost: String = DEFAULT_EXTERNAL_HOST,
+    ) : ServerEndpoint {
+        override val internalHost: String = DEFAULT_INTERNAL_HOST
+        override val internalPort: Int = 8081
+        override val externalPort: Int = 8081
+    }
+
+    data class Documents(
+        override val externalHost: String = DEFAULT_EXTERNAL_HOST,
+    ) : ServerEndpoint {
+        override val internalHost: String = DEFAULT_INTERNAL_HOST
+        override val internalPort: Int = 8082
+        override val externalPort: Int = 8082
+    }
+
+    data class Identity(
+        override val externalHost: String = DEFAULT_EXTERNAL_HOST,
+    ) : ServerEndpoint {
+        override val internalHost: String = DEFAULT_INTERNAL_HOST
+        override val internalPort: Int = 8083
+        override val externalPort: Int = 8083
+    }
+
+    data class Prediction(
+        override val externalHost: String = DEFAULT_EXTERNAL_HOST,
+    ) : ServerEndpoint {
+        override val internalHost: String = DEFAULT_INTERNAL_HOST
+        override val internalPort: Int = 8084
+        override val externalPort: Int = 8084
+    }
+
+    data class Simulation(
+        override val externalHost: String = DEFAULT_EXTERNAL_HOST,
+    ) : ServerEndpoint {
+        override val internalHost: String = DEFAULT_INTERNAL_HOST
+        override val internalPort: Int = 8085
+        override val externalPort: Int = 8085
+    }
 }
+
+private val ServerEndpoint.name: String
+    get() = when (this) {
+        is ServerEndpoint.Gateway -> "Gateway"
+        is ServerEndpoint.Contacts -> "Contacts"
+        is ServerEndpoint.Documents -> "Documents"
+        is ServerEndpoint.Identity -> "Identity"
+        is ServerEndpoint.Prediction -> "Prediction"
+        is ServerEndpoint.Simulation -> "Simulation"
+    }
 
 val ServerEndpoint.info: String get() = "The Predict module: $name. \nListening on $internalPort"

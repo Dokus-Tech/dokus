@@ -6,22 +6,17 @@ import kotlin.math.absoluteValue
 import kotlin.random.Random
 
 @Serializable
-data class Contact(
+data class Workspace(
     val id: Id,
     val name: String,
-    val phoneNumber: String? = null,
-    val email: String? = null,
-    val taxNumber: String? = null,
-    val companyName: String? = null,
-    val notes: List<Note> = emptyList(),
+    val legalName: String? = null,
     val url: String? = null,
-    val logo: String? = null,
 ) {
     @Serializable
     @JvmInline
     value class Id(val value: Int) {
         companion object {
-            val random: Id = Id(Random.nextInt().absoluteValue)
+            val random: Int get() = Random.nextInt().absoluteValue
         }
     }
 }
