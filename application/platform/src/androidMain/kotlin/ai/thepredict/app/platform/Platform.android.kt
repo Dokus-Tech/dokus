@@ -1,4 +1,4 @@
-package ai.thepredict.platform
+package ai.thepredict.app.platform
 
 import android.os.Build
 

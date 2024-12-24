@@ -1,4 +1,4 @@
-package ai.thepredict.platform
+package ai.thepredict.app.platform
 
 class WasmPlatform: Platform {
     override val name: String = "Web with Kotlin/Wasm"

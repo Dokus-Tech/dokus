@@ -1,4 +1,4 @@
-package ai.thepredict.platform
+package ai.thepredict.app.platform
 
 interface Platform {
     val name: String

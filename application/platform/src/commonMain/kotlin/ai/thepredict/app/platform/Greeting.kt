@@ -1,4 +1,4 @@
-package ai.thepredict.platform
+package ai.thepredict.app.platform
 
 class Greeting {
     private val platform = getPlatform()

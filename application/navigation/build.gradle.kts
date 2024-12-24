@@ -66,7 +66,6 @@ kotlin {
 
             api(libs.voyager.navigator)
             api(libs.voyager.navigatorKmp)
-            api(libs.voyager.kodein)
             api(libs.voyager.tabNavigator)
             api(libs.voyager.screenModel)
         }

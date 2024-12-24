@@ -1,4 +1,4 @@
-package ai.thepredict.platform
+package ai.thepredict.app.platform
 
 class JVMPlatform: Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
