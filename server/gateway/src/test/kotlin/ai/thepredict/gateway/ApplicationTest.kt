@@ -15,12 +15,13 @@ import kotlinx.rpc.krpc.streamScoped
 import kotlinx.rpc.withService
 
 fun main() = runBlocking {
-    val config: RPCConfig.Client = rpcClientConfig { // same for RPCConfig.Server with rpcServerConfig
-        waitForServices = true // default parameter
-        serialization {
-            json()
+    val config: RPCConfig.Client =
+        rpcClientConfig { // same for RPCConfig.Server with rpcServerConfig
+            waitForServices = true // default parameter
+            serialization {
+                json()
+            }
         }
-    }
 
     val ktorClient = HttpClient {
         installRPC {
@@ -34,7 +35,7 @@ fun main() = runBlocking {
     val client: KtorRPCClient = ktorClient.rpc {
         url {
             host = "predict.local"
-            port = ServerEndpoint.Gateway.internalPort
+            port = ServerEndpoint.Gateway().internalPort
         }
 
         rpcConfig {
