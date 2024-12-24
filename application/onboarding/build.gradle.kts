@@ -53,6 +53,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.application.core)
+            implementation(projects.application.repository)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

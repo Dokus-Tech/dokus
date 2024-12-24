@@ -52,7 +52,6 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            api(projects.application.repository)
             api(projects.shared.configuration)
 
             implementation(compose.runtime)
