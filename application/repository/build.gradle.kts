@@ -58,17 +58,17 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.application.core)
 
-            implementation(projects.shared.domain)
-            implementation(projects.shared.contactsApi)
+            api(projects.shared.domain)
+            api(projects.shared.contactsApi)
             implementation(projects.shared.documentsApi)
-            implementation(projects.shared.identityApi)
+            api(projects.shared.identityApi)
             implementation(projects.shared.predictionApi)
             implementation(projects.shared.simulationApi)
 
             implementation(libs.kodein)
 
-            implementation(libs.kotlinx.rpc.core)
-            implementation(libs.kotlinx.rpc.krpc.ktor.client)
+            api(libs.kotlinx.rpc.core)
+            api(libs.kotlinx.rpc.krpc.ktor.client)
             implementation(libs.kotlinx.rpc.krpc.serialization.json)
         }
 

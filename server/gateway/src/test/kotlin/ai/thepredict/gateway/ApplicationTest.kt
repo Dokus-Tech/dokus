@@ -35,7 +35,7 @@ fun main() = runBlocking {
     val client: KtorRPCClient = ktorClient.rpc {
         url {
             host = "predict.local"
-            port = ServerEndpoint.Gateway().internalPort
+            port = ServerEndpoint.Gateway().externalPort
         }
 
         rpcConfig {

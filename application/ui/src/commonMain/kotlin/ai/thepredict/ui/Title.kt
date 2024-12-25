@@ -2,8 +2,10 @@ package ai.thepredict.ui
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
-fun Title(text: String) {
-    Text(text)
+fun Title(text: String, modifier: Modifier = Modifier) {
+    Text(text, textAlign = TextAlign.Center, modifier = modifier)
 }

@@ -8,10 +8,18 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlin.coroutines.CoroutineContext
 
-class IdentityApi(
+interface IdentityApi {
+    suspend fun allWorkspaces(): Flow<Workspace>
+
+    suspend fun createWorkspace(workspace: Workspace): OperationResult
+
+    suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult
+}
+
+class IdentityApiImpl(
     override val coroutineContext: CoroutineContext,
     private val endpoint: ServerEndpoint,
-) : IdentityRemoteService,
+) : IdentityApi,
     ServiceProvider<IdentityRemoteService> by ServiceProvider.create(coroutineContext, endpoint) {
 
     override suspend fun allWorkspaces(): Flow<Workspace> {
