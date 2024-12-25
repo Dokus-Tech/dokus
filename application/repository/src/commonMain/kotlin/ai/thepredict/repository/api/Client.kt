@@ -2,6 +2,7 @@ package ai.thepredict.repository.api
 
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult
+import ai.thepredict.repository.httpClient
 import io.ktor.client.HttpClient
 import kotlinx.rpc.RemoteService
 import kotlinx.rpc.krpc.ktor.client.KtorRPCClient
@@ -26,7 +27,7 @@ internal interface ServiceProvider<ServiceType> {
     }
 }
 
-internal class ServiceProviderImpl<ServiceType : RemoteService>(
+internal open class ServiceProviderImpl<ServiceType : RemoteService>(
     override val coroutineContext: CoroutineContext,
     private val endpoint: ServerEndpoint,
 ) : ServiceProvider<ServiceType> {
@@ -66,10 +67,10 @@ internal suspend inline fun <reified ServiceType : RemoteService> ServiceProvide
     return withService(onException = OperationResult.Failure, func = func)
 }
 
-internal suspend fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
-    val ktorClient = HttpClient {
+suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
+    val ktorClient = httpClient {
         installRPC {
-            waitForServices = false // default parameter
+            waitForServices = true // default parameter
             serialization {
                 json()
             }
@@ -87,5 +88,11 @@ internal suspend fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
                 json()
             }
         }
+    }
+}
+
+suspend inline fun <reified ServiceType : RemoteService> getService(endpoint: ServerEndpoint): Result<ServiceType> {
+    return runCatching {
+        createClient(endpoint).withService<ServiceType>()
     }
 }
