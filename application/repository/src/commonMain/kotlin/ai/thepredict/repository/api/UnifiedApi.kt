@@ -4,7 +4,6 @@ import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.contacts.api.ContactsRemoteService
 import ai.thepredict.identity.api.IdentityRemoteService
 import kotlinx.coroutines.Job
-import kotlinx.rpc.withService
 import kotlin.coroutines.CoroutineContext
 
 class UnifiedApi private constructor(
@@ -15,23 +14,22 @@ class UnifiedApi private constructor(
     ContactsRemoteService by contactsRemoteService {
 
     companion object {
-        suspend fun create(gateway: ServerEndpoint.Gateway = ServerEndpoint.Gateway()): UnifiedApi {
-            val client = createClient(gateway)
+        fun create(gateway: ServerEndpoint.Gateway = ServerEndpoint.Gateway()): UnifiedApi {
             return UnifiedApi(
                 Job(),
-                client.withService<IdentityRemoteService>(),
-                client.withService<ContactsRemoteService>(),
+                IdentityApi(Job(), gateway),
+                ContactsApi(Job(), gateway),
             )
         }
 
-        suspend fun create(
+        fun create(
             identity: ServerEndpoint.Identity,
             contacts: ServerEndpoint.Contacts,
         ): UnifiedApi {
             return UnifiedApi(
                 Job(),
-                createClient(identity).withService<IdentityRemoteService>(),
-                createClient(contacts).withService<ContactsRemoteService>(),
+                IdentityApi(Job(), identity),
+                ContactsApi(Job(), contacts),
             )
         }
     }

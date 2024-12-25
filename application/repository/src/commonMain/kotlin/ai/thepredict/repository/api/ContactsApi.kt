@@ -1,0 +1,52 @@
+package ai.thepredict.repository.api
+
+import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.contacts.api.ContactsRemoteService
+import ai.thepredict.domain.Contact
+import ai.thepredict.domain.api.OperationResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlin.coroutines.CoroutineContext
+
+class ContactsApi(
+    override val coroutineContext: CoroutineContext,
+    private val endpoint: ServerEndpoint,
+) : ContactsRemoteService,
+    ServiceProvider<ContactsRemoteService> by ServiceProvider.create(coroutineContext, endpoint) {
+
+    override suspend fun getAll(): Flow<Contact> {
+        return withService(onException = emptyFlow()) {
+            getAll()
+        }
+    }
+
+    override suspend fun get(id: Contact.Id): Contact? {
+        return withService(onException = null) {
+            get(id)
+        }
+    }
+
+    override suspend fun find(query: String): Flow<Contact> {
+        return withService(onException = emptyFlow()) {
+            find(query)
+        }
+    }
+
+    override suspend fun create(create: Contact): OperationResult {
+        return withServiceOrFailure {
+            create(create)
+        }
+    }
+
+    override suspend fun update(contact: Contact): OperationResult {
+        return withServiceOrFailure {
+            update(contact)
+        }
+    }
+
+    override suspend fun delete(id: Contact.Id): OperationResult {
+        return withServiceOrFailure {
+            delete(id)
+        }
+    }
+}
