@@ -6,8 +6,6 @@ import ai.thepredict.domain.Contact
 import ai.thepredict.domain.api.OperationResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.rpc.krpc.streamScoped
 import kotlin.coroutines.CoroutineContext
 
 interface ContactsApi {
@@ -31,11 +29,9 @@ internal class ContactsApiImpl(
     ContactsApi {
 
     override suspend fun getAll(): Flow<Contact> {
-        val service = getService<ContactsRemoteService>(endpoint).getOrThrow()
-        return service.getAll()
-//        return withService(onException = emptyFlow()) {
-//            streamScoped { getAll() }
-//        }
+        return withService(onException = emptyFlow()) {
+            getAll()
+        }
     }
 
     override suspend fun get(id: Contact.Id): Contact? {
