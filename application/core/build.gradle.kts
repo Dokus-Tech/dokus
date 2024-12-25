@@ -64,6 +64,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
+            implementation(libs.kotlinx.rpc.krpc.ktor.client)
+
             api(libs.kodein)
         }
         desktopMain.dependencies {
