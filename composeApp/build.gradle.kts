@@ -155,6 +155,8 @@ compose.desktop {
                 dockName = "Predict"
                 appStore = false
                 bundleID = "ai.thepredict.app"
+                copyright = "Invoid Vision 2025"
+                description = "Predict your financial future"
             }
 
             windows {
