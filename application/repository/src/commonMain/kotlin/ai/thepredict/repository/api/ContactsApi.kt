@@ -24,7 +24,7 @@ interface ContactsApi {
 
 internal class ContactsApiImpl(
     override val coroutineContext: CoroutineContext,
-    private val endpoint: ServerEndpoint,
+    endpoint: ServerEndpoint,
 ) : ServiceProviderImpl<ContactsRemoteService>(coroutineContext, endpoint),
     ContactsApi {
 

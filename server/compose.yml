@@ -10,39 +10,52 @@ services:
       - identity
       - prediction
       - simulation
+      - database
     links:
       - contacts
       - documents
       - identity
       - prediction
       - simulation
+      - database
   contacts:
     image: europe-west1-docker.pkg.dev/the-predict/containers/contacts:dev
     container_name: the-predict-contacts
+    links:
+      - database
     ports:
       - "8081:8081"
   documents:
     image: europe-west1-docker.pkg.dev/the-predict/containers/documents:dev
     container_name: the-predict-documents
+    links:
+      - database
     ports:
       - "8082:8082"
   identity:
     image: europe-west1-docker.pkg.dev/the-predict/containers/identity:dev
     container_name: the-predict-identity
+    links:
+      - database
     ports:
       - "8083:8083"
   prediction:
     image: europe-west1-docker.pkg.dev/the-predict/containers/prediction:dev
     container_name: the-predict-prediction
+    links:
+      - database
     ports:
       - "8084:8084"
   simulation:
     image: europe-west1-docker.pkg.dev/the-predict/containers/simulation:dev
     container_name: the-predict-simulation
+    links:
+      - database
     ports:
       - "8085:8085"
-  db:
+  database:
     image: postgres
+    container_name: the-predict-database-postgres
     restart: always
     shm_size: 256mb
     environment:
