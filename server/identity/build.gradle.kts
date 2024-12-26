@@ -22,5 +22,10 @@ dependencies {
 
     implementation(libs.logback)
 //    testImplementation(libs.ktor.server.tests)
+
+    implementation(libs.kotlinx.rpc.krpc.ktor.client)
+
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.rpc.krpc.serialization.json)
+    testImplementation(kotlin("test"))
 }

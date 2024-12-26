@@ -1,11 +1,13 @@
 package ai.thepredict.database.tables
 
+import ai.thepredict.database.db
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 internal object WorkspacesTable : UUIDTable("workspaces") {
@@ -18,7 +20,15 @@ internal object WorkspacesTable : UUIDTable("workspaces") {
 class WorkspaceEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<WorkspaceEntity>(WorkspacesTable)
 
+    private val _workspaceId by WorkspacesTable.id
+    val workspaceId = _workspaceId.value
+
     val name by WorkspacesTable.name
     val legalName by WorkspacesTable.legalName
     val vatNumber by WorkspacesTable.vatNumber
+
+}
+
+fun WorkspaceEntity.Companion.getAll(): List<WorkspaceEntity> {
+    return transaction(db) { WorkspaceEntity.all().toList() }
 }
