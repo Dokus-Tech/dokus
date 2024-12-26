@@ -15,5 +15,8 @@ dependencies {
     implementation(libs.h2)
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.datetime)
+
     testImplementation(libs.kotlin.test.junit)
 }
