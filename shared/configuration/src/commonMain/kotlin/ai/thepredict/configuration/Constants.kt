@@ -56,6 +56,15 @@ sealed interface ServerEndpoint {
         override val internalPort: Int = 8085
         override val externalPort: Int = 8085
     }
+
+    data object Database : ServerEndpoint {
+        override val internalHost = DEFAULT_INTERNAL_HOST
+        override val externalHost = DEFAULT_EXTERNAL_HOST
+        override val internalPort = 8090
+        override val externalPort = 8090
+
+        val connectUrl = "${internalHost}:${internalPort}"
+    }
 }
 
 private val ServerEndpoint.name: String
@@ -66,6 +75,7 @@ private val ServerEndpoint.name: String
         is ServerEndpoint.Identity -> "Identity"
         is ServerEndpoint.Prediction -> "Prediction"
         is ServerEndpoint.Simulation -> "Simulation"
+        is ServerEndpoint.Database -> "Database"
     }
 
 val ServerEndpoint.info: String get() = "The Predict module: $name. \nListening on $internalPort"
