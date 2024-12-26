@@ -16,7 +16,7 @@ data class Workspace(
     @JvmInline
     value class Id(val value: Int) {
         companion object {
-            val random: Int get() = Random.nextInt().absoluteValue
+            val random: Id get() = Id(Random.nextInt().absoluteValue)
         }
     }
 }
