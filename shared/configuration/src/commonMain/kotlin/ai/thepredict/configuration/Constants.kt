@@ -60,7 +60,7 @@ sealed interface ServerEndpoint {
     data object Database : ServerEndpoint {
         override val internalHost = DEFAULT_INTERNAL_HOST
         override val externalHost = DEFAULT_EXTERNAL_HOST
-        override val internalPort = 8090
+        override val internalPort = 5432
         override val externalPort = 8090
 
         val connectUrl = "${internalHost}:${internalPort}"

@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.Database
 
 val db by lazy {
     Database.connect(
-        "jdbc:postgresql://${ServerEndpoint.Database.connectUrl}/test",
+        "jdbc:postgresql://${ServerEndpoint.Database.connectUrl}",
         driver = "org.postgresql.Driver",
         user = "postgres",
         password = "predictme"

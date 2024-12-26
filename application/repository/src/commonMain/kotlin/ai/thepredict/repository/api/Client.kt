@@ -3,7 +3,6 @@ package ai.thepredict.repository.api
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.repository.httpClient
-import io.ktor.client.HttpClient
 import kotlinx.rpc.RemoteService
 import kotlinx.rpc.krpc.ktor.client.KtorRPCClient
 import kotlinx.rpc.krpc.ktor.client.installRPC

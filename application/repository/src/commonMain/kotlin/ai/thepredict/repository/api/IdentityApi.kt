@@ -1,6 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.contacts.api.ContactsRemoteService
 import ai.thepredict.domain.Workspace
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.identity.api.IdentityRemoteService
@@ -16,11 +17,11 @@ interface IdentityApi {
     suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult
 }
 
-class IdentityApiImpl(
+internal class IdentityApiImpl(
     override val coroutineContext: CoroutineContext,
-    private val endpoint: ServerEndpoint,
+    endpoint: ServerEndpoint,
 ) : IdentityApi,
-    ServiceProvider<IdentityRemoteService> by ServiceProvider.create(coroutineContext, endpoint) {
+    ServiceProviderImpl<IdentityRemoteService>(coroutineContext, endpoint) {
 
     override suspend fun allWorkspaces(): Flow<Workspace> {
         return withService<IdentityRemoteService, Flow<Workspace>>(onException = emptyFlow()) {
