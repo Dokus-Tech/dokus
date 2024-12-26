@@ -27,6 +27,7 @@ exposed = "0.57.0"
 kodein = "7.22.0"
 voyager = "1.1.0-beta02"
 settings = "1.2.0"
+pgjdbc = "0.8.9"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -59,6 +60,7 @@ ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+postgres-pgjdbc = { group = "com.impossibl.pgjdbc-ng", name = "pgjdbc-ng", version.ref = "pgjdbc" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }

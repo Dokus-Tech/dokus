@@ -12,6 +12,7 @@ dependencies {
 
     implementation(libs.logback)
     implementation(libs.postgresql)
+    implementation(libs.postgres.pgjdbc)
     implementation(libs.h2)
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
