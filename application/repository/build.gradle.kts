@@ -56,14 +56,14 @@ kotlin {
         }
 
         commonMain.dependencies {
-            implementation(projects.application.core)
+            implementation(projects.shared.configuration)
 
             api(projects.shared.domain)
             api(projects.shared.contactsApi)
-            implementation(projects.shared.documentsApi)
+            api(projects.shared.documentsApi)
             api(projects.shared.identityApi)
-            implementation(projects.shared.predictionApi)
-            implementation(projects.shared.simulationApi)
+            api(projects.shared.predictionApi)
+            api(projects.shared.simulationApi)
 
             implementation(libs.kodein)
 

@@ -11,7 +11,7 @@ import org.kodein.di.instance
 
 class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Loading) {
 
-    private val api: UnifiedApi by di.instance()
+    private val api: UnifiedApi by di.instance { screenModelScope }
 
     fun fetch() {
         screenModelScope.launchStreamScoped {

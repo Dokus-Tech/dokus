@@ -54,6 +54,8 @@ kotlin {
         commonMain.dependencies {
             api(projects.shared.configuration)
 
+            implementation(projects.application.repository)
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)

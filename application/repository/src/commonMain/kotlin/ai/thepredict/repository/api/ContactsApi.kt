@@ -4,6 +4,9 @@ import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.contacts.api.ContactsRemoteService
 import ai.thepredict.domain.Contact
 import ai.thepredict.domain.api.OperationResult
+import ai.thepredict.repository.helpers.ServiceProvider
+import ai.thepredict.repository.helpers.withService
+import ai.thepredict.repository.helpers.withServiceOrFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlin.coroutines.CoroutineContext
@@ -20,46 +23,68 @@ interface ContactsApi {
     suspend fun update(contact: Contact): OperationResult
 
     suspend fun delete(id: Contact.Id): OperationResult
+
+    companion object {
+        fun create(
+            coroutineContext: CoroutineContext,
+            endpoint: ServerEndpoint.Contacts,
+        ): ContactsApi {
+            return ContactsApiImpl(coroutineContext, endpoint)
+        }
+
+        fun create(
+            coroutineContext: CoroutineContext,
+            endpoint: ServerEndpoint.Gateway,
+        ): ContactsApi {
+            return ContactsApiImpl(coroutineContext, endpoint)
+        }
+    }
 }
 
-internal class ContactsApiImpl(
-    override val coroutineContext: CoroutineContext,
+private class ContactsApiImpl(
+    coroutineContext: CoroutineContext,
     endpoint: ServerEndpoint,
-) : ServiceProviderImpl<ContactsRemoteService>(coroutineContext, endpoint),
-    ContactsApi {
+) : ContactsApi {
+
+    private val serviceProvider by lazy {
+        ServiceProvider.create<ContactsRemoteService>(
+            coroutineContext,
+            endpoint
+        )
+    }
 
     override suspend fun getAll(): Flow<Contact> {
-        return withService(onException = emptyFlow()) {
+        return serviceProvider.withService(onException = emptyFlow()) {
             getAll()
         }
     }
 
     override suspend fun get(id: Contact.Id): Contact? {
-        return withService(onException = null) {
+        return serviceProvider.withService(onException = null) {
             get(id)
         }
     }
 
     override suspend fun find(query: String): Flow<Contact> {
-        return withService(onException = emptyFlow()) {
+        return serviceProvider.withService(onException = emptyFlow()) {
             find(query)
         }
     }
 
     override suspend fun create(create: Contact): OperationResult {
-        return withServiceOrFailure {
+        return serviceProvider.withServiceOrFailure {
             create(create)
         }
     }
 
     override suspend fun update(contact: Contact): OperationResult {
-        return withServiceOrFailure {
+        return serviceProvider.withServiceOrFailure {
             update(contact)
         }
     }
 
     override suspend fun delete(id: Contact.Id): OperationResult {
-        return withServiceOrFailure {
+        return serviceProvider.withServiceOrFailure {
             delete(id)
         }
     }
