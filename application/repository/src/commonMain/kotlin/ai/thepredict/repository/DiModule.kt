@@ -4,28 +4,29 @@ import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.repository.api.ContactsApi
 import ai.thepredict.repository.api.IdentityApi
 import ai.thepredict.repository.api.UnifiedApi
+import kotlinx.coroutines.CoroutineScope
 import org.kodein.di.DI
 import org.kodein.di.bindFactory
-import kotlin.coroutines.CoroutineContext
 
 val repositoryDiModule by DI.Module("repository") {
-    bindFactory<CoroutineContext, UnifiedApi> { coroutineContext ->
+    bindFactory<CoroutineScope, UnifiedApi> { scope ->
         UnifiedApi.create(
-            coroutineContext,
-            ServerEndpoint.Gateway()
+            scope.coroutineContext,
+            ServerEndpoint.Identity(),
+            ServerEndpoint.Contacts(),
         )
     }
 
-    bindFactory<CoroutineContext, ContactsApi> { coroutineContext ->
+    bindFactory<CoroutineScope, ContactsApi> { scope ->
         ContactsApi.create(
-            coroutineContext,
+            scope.coroutineContext,
             ServerEndpoint.Contacts()
         )
     }
 
-    bindFactory<CoroutineContext, IdentityApi> { coroutineContext ->
+    bindFactory<CoroutineScope, IdentityApi> { scope ->
         IdentityApi.create(
-            coroutineContext,
+            scope.coroutineContext,
             ServerEndpoint.Identity()
         )
     }
