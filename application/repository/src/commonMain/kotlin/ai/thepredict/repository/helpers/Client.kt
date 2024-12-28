@@ -1,4 +1,4 @@
-package ai.thepredict.repository.api
+package ai.thepredict.repository.helpers
 
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult
@@ -26,7 +26,7 @@ internal interface ServiceProvider<ServiceType> {
     }
 }
 
-internal open class ServiceProviderImpl<ServiceType : RemoteService>(
+internal class ServiceProviderImpl<ServiceType : RemoteService>(
     override val coroutineContext: CoroutineContext,
     private val endpoint: ServerEndpoint,
 ) : ServiceProvider<ServiceType> {
@@ -87,11 +87,5 @@ suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
                 json()
             }
         }
-    }
-}
-
-suspend inline fun <reified ServiceType : RemoteService> getService(endpoint: ServerEndpoint): Result<ServiceType> {
-    return runCatching {
-        createClient(endpoint).withService<ServiceType>()
     }
 }
