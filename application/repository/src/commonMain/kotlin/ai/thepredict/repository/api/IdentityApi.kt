@@ -10,10 +10,9 @@ import ai.thepredict.repository.helpers.withServiceOrFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 interface IdentityApi {
-    suspend fun allWorkspaces(): Flow<Workspace>
+    suspend fun myWorkspaces(): Flow<Workspace>
 
     suspend fun createWorkspace(workspace: Workspace): OperationResult
 
@@ -48,9 +47,9 @@ private class IdentityApiImpl(
         )
     }
 
-    override suspend fun allWorkspaces(): Flow<Workspace> {
+    override suspend fun myWorkspaces(): Flow<Workspace> {
         return serviceProvider.withService<IdentityRemoteService, Flow<Workspace>>(onException = emptyFlow()) {
-            return@withService allWorkspaces()
+            return@withService myWorkspaces()
         }
     }
 
