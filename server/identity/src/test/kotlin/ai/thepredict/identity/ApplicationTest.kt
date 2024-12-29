@@ -48,7 +48,7 @@ fun main() = runBlocking {
     val identity = client.withService<IdentityRemoteService>()
 
     streamScoped {
-        identity.allWorkspaces().collect {
+        identity.myWorkspaces().collect {
             println(it.name)
         }
     }

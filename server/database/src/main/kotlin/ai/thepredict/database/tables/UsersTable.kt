@@ -31,3 +31,7 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
 fun UserEntity.Companion.getAll(): List<UserEntity> {
     return Database.transaction { UserEntity.all().toList() }
 }
+
+fun UserEntity.Companion.getById(userId: UUID): UserEntity? {
+    return Database.transaction { runCatching { get(userId) }.getOrNull() }
+}

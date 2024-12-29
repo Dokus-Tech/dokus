@@ -15,7 +15,7 @@ class WorkspaceSelectionViewModel : StateScreenModel<WorkspaceSelectionViewModel
 
     fun fetch() {
         screenModelScope.launchStreamScoped {
-            mutableState.value = State.Loaded(api.allWorkspaces().toList())
+            mutableState.value = State.Loaded(api.myWorkspaces().toList())
         }
     }
 
