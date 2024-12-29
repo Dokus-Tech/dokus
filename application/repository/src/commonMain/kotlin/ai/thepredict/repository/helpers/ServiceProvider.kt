@@ -22,13 +22,9 @@ internal class ServiceProvider<ServiceType : RemoteService>(
 ) {
     private var service: ServiceType? = null
 
-    private suspend fun createClientAndService(): Result<ServiceType> {
-        return withContext(coroutineContext) {
-            runCatching {
-                val client = createClient(endpoint)
-                return@runCatching createService(client)
-            }
-        }
+    private suspend fun createClientAndService(): Result<ServiceType> = runCatching {
+        val client = createClient(endpoint)
+        return@runCatching createService(client)
     }
 
     suspend fun <ReturnType> withService(
@@ -66,7 +62,7 @@ internal class ServiceProvider<ServiceType : RemoteService>(
     )
 }
 
-suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
+private suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
     val ktorClient = httpClient {
         installRPC {
             waitForServices = true // default parameter
