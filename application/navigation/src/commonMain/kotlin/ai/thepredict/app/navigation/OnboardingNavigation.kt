@@ -14,7 +14,7 @@ sealed interface OnboardingNavigation : ScreenProvider {
     }
 
     sealed interface Workspaces : OnboardingNavigation {
-        data object WorkspacesSelectionScreen : Workspaces
-        data object WorkspaceCreationScreen : Workspaces
+        data object All : Workspaces
+        data object Create : Workspaces
     }
 }

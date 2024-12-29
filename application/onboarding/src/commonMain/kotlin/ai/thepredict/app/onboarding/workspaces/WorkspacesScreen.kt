@@ -13,11 +13,11 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 
-internal class WorkspaceSelectionScreen : Screen {
+internal class WorkspacesScreen : Screen {
 
     @Composable
     override fun Content() {
-        val viewModel = rememberScreenModel { WorkspaceSelectionViewModel() }
+        val viewModel = rememberScreenModel { WorkspacesViewModel() }
         val data = viewModel.state.collectAsState()
 
         LaunchedEffect("workspace-selection") {
@@ -34,17 +34,17 @@ internal class WorkspaceSelectionScreen : Screen {
             }
 
             when (val state = data.value) {
-                is WorkspaceSelectionViewModel.State.Loading -> {
+                is WorkspacesViewModel.State.Loading -> {
                     PTitle("Loading")
                 }
 
-                is WorkspaceSelectionViewModel.State.Loaded -> {
+                is WorkspacesViewModel.State.Loaded -> {
                     state.workspaces.forEach {
                         PTitle(it.name)
                     }
                 }
 
-                is WorkspaceSelectionViewModel.State.Error -> {
+                is WorkspacesViewModel.State.Error -> {
                     PTitle("Error happened")
                 }
             }

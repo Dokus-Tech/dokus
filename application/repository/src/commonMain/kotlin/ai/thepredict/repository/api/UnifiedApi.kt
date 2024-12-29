@@ -48,7 +48,7 @@ class UnifiedApi private constructor(
     }
 }
 
-interface ApiCompanion<ApiClass, EndpointType : ServerEndpoint> {
+internal interface ApiCompanion<ApiClass, EndpointType : ServerEndpoint> {
     fun create(
         coroutineContext: CoroutineContext,
         endpoint: EndpointType,

@@ -9,7 +9,7 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.toList
 import org.kodein.di.instance
 
-class WorkspaceSelectionViewModel : StateScreenModel<WorkspaceSelectionViewModel.State>(State.Loading) {
+internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>(State.Loading) {
 
     private val api: UnifiedApi by di.instance { screenModelScope }
 

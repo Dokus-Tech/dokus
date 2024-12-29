@@ -5,7 +5,7 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
 
-class SplashScreenViewModel : StateScreenModel<SplashScreenViewModel.Effect>(Effect.Idle) {
+internal class SplashScreenViewModel : StateScreenModel<SplashScreenViewModel.Effect>(Effect.Idle) {
 
     fun checkOnboarding() {
         screenModelScope.launch {
