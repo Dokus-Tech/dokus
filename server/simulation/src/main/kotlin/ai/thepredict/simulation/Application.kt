@@ -3,6 +3,7 @@ package ai.thepredict.simulation
 import ai.thepredict.common.configureRpc
 import ai.thepredict.common.embeddedServer
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.simulation.api.registerSimulationRemoteServices
 import io.ktor.server.routing.Routing
 import kotlinx.rpc.krpc.ktor.server.rpc
 
@@ -13,5 +14,6 @@ fun main() {
 private fun Routing.configureRouting() {
     rpc {
         configureRpc()
+        registerSimulationRemoteServices()
     }
 }

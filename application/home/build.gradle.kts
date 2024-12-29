@@ -26,12 +26,12 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "applicationCore"
+        moduleName = "applicationHome"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "applicationCore.js"
+                outputFileName = "applicationHome.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -48,38 +48,20 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            api(projects.shared.configuration)
-            api(projects.application.platform)
-
+            implementation(projects.application.navigation)
+            implementation(projects.application.core)
             implementation(projects.application.repository)
-
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material)
-            implementation(compose.ui)
-
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
-
-            implementation(libs.kotlinx.rpc.krpc.ktor.client)
-
-            api(libs.kodein)
+            implementation(projects.application.ui)
         }
         desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }
 
 android {
-    namespace = "ai.thepredict.app.core"
+    namespace = "ai.thepredict.app.home"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

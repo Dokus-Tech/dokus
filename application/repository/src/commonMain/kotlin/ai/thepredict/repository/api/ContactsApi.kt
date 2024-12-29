@@ -5,10 +5,9 @@ import ai.thepredict.contacts.api.ContactsRemoteService
 import ai.thepredict.domain.Contact
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.repository.helpers.ServiceProvider
-import ai.thepredict.repository.helpers.withService
-import ai.thepredict.repository.helpers.withServiceOrFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.rpc.withService
 import kotlin.coroutines.CoroutineContext
 
 interface ContactsApi {
@@ -24,15 +23,15 @@ interface ContactsApi {
 
     suspend fun delete(id: Contact.Id): OperationResult
 
-    companion object {
-        fun create(
+    companion object : ApiCompanion<ContactsApi, ServerEndpoint.Contacts> {
+        override fun create(
             coroutineContext: CoroutineContext,
             endpoint: ServerEndpoint.Contacts,
         ): ContactsApi {
             return ContactsApiImpl(coroutineContext, endpoint)
         }
 
-        fun create(
+        override fun create(
             coroutineContext: CoroutineContext,
             endpoint: ServerEndpoint.Gateway,
         ): ContactsApi {
@@ -47,10 +46,12 @@ private class ContactsApiImpl(
 ) : ContactsApi {
 
     private val serviceProvider by lazy {
-        ServiceProvider.create<ContactsRemoteService>(
+        ServiceProvider<ContactsRemoteService>(
             coroutineContext,
             endpoint
-        )
+        ) {
+            withService<ContactsRemoteService>()
+        }
     }
 
     override suspend fun getAll(): Flow<Contact> {

@@ -33,5 +33,5 @@ suspend fun UserEntity.Companion.getAll(): List<UserEntity> {
 }
 
 suspend fun UserEntity.Companion.getById(userId: UUID): UserEntity? {
-    return Database.transaction { runCatching { get(userId) }.getOrThrow() }
+    return Database.transaction { runCatching { get(userId) }.getOrNull() }
 }

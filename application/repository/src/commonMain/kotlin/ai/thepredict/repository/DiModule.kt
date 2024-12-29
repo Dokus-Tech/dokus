@@ -14,6 +14,9 @@ val repositoryDiModule by DI.Module("repository") {
             scope.coroutineContext,
             ServerEndpoint.Identity(),
             ServerEndpoint.Contacts(),
+            ServerEndpoint.Documents(),
+            ServerEndpoint.Prediction(),
+            ServerEndpoint.Simulation()
         )
     }
 

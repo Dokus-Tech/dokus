@@ -1,5 +1,6 @@
 package ai.thepredict.app.wrap
 
+import ai.thepredict.app.home.homeScreensModule
 import ai.thepredict.app.onboarding.onboardingScreensModule
 import ai.thepredict.app.onboarding.splash.SplashScreen
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import cafe.adriel.voyager.navigator.Navigator
 fun NavigationProvided(content: @Composable () -> Unit) {
     ScreenRegistry {
         onboardingScreensModule()
+        homeScreensModule()
     }
 
     ProvideNavigatorLifecycleKMPSupport {
