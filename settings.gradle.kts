@@ -30,11 +30,14 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
-include(":application:ui")
+
 include(":application:onboarding")
+include(":application:home")
+include(":application:ui")
+
+include(":application:core")
 include(":application:platform")
 include(":application:repository")
-include(":application:core")
 include(":application:navigation")
 
 include(":shared:configuration")
@@ -53,4 +56,3 @@ include(":server:documents")
 include(":server:prediction")
 include(":server:simulation")
 include(":server:database")
-//include(":shared")

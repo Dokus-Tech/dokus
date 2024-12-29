@@ -5,10 +5,9 @@ import ai.thepredict.domain.Workspace
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.identity.api.IdentityRemoteService
 import ai.thepredict.repository.helpers.ServiceProvider
-import ai.thepredict.repository.helpers.withService
-import ai.thepredict.repository.helpers.withServiceOrFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.rpc.withService
 import kotlin.coroutines.CoroutineContext
 
 interface IdentityApi {
@@ -18,15 +17,15 @@ interface IdentityApi {
 
     suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult
 
-    companion object {
-        fun create(
+    companion object : ApiCompanion<IdentityApi, ServerEndpoint.Identity> {
+        override fun create(
             coroutineContext: CoroutineContext,
             endpoint: ServerEndpoint.Identity,
         ): IdentityApi {
             return IdentityApiImpl(coroutineContext, endpoint)
         }
 
-        fun create(
+        override fun create(
             coroutineContext: CoroutineContext,
             endpoint: ServerEndpoint.Gateway,
         ): IdentityApi {
@@ -41,27 +40,29 @@ private class IdentityApiImpl(
 ) : IdentityApi {
 
     private val serviceProvider by lazy {
-        ServiceProvider.create<IdentityRemoteService>(
+        ServiceProvider<IdentityRemoteService>(
             coroutineContext,
             endpoint
-        )
+        ) {
+            withService<IdentityRemoteService>()
+        }
     }
 
     override suspend fun myWorkspaces(): Flow<Workspace> {
-        return serviceProvider.withService<IdentityRemoteService, Flow<Workspace>>(onException = emptyFlow()) {
-            return@withService myWorkspaces()
+        return serviceProvider.withService(onException = emptyFlow()) {
+            myWorkspaces()
         }
     }
 
     override suspend fun createWorkspace(workspace: Workspace): OperationResult {
-        return serviceProvider.withServiceOrFailure<IdentityRemoteService> {
-            return@withServiceOrFailure createWorkspace(workspace)
+        return serviceProvider.withServiceOrFailure {
+            createWorkspace(workspace)
         }
     }
 
     override suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult {
-        return serviceProvider.withServiceOrFailure<IdentityRemoteService> {
-            return@withServiceOrFailure deleteWorkspace(organisationId)
+        return serviceProvider.withServiceOrFailure {
+            deleteWorkspace(organisationId)
         }
     }
 }

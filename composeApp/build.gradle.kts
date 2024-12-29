@@ -67,6 +67,7 @@ kotlin {
             implementation(projects.application.platform)
             implementation(projects.application.repository)
             implementation(projects.application.onboarding)
+            implementation(projects.application.home)
             implementation(projects.application.navigation)
 
             implementation(projects.shared.configuration)
