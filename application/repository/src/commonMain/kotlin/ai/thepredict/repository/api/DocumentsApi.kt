@@ -30,12 +30,9 @@ private class DocumentsApiImpl(
     endpoint: ServerEndpoint,
 ) : DocumentsApi {
 
-    private val serviceProvider by lazy {
-        ServiceProvider<DocumentsRemoteService>(
-            coroutineContext,
-            endpoint
-        ) {
-            withService<DocumentsRemoteService>()
-        }
-    }
+    private val serviceProvider = ServiceProvider<DocumentsRemoteService>(
+        coroutineContext = coroutineContext,
+        endpoint = endpoint,
+        createService = { withService() }
+    )
 }

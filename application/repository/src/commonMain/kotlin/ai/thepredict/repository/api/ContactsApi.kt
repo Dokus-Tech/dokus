@@ -45,14 +45,11 @@ private class ContactsApiImpl(
     endpoint: ServerEndpoint,
 ) : ContactsApi {
 
-    private val serviceProvider by lazy {
-        ServiceProvider<ContactsRemoteService>(
-            coroutineContext,
-            endpoint
-        ) {
-            withService<ContactsRemoteService>()
-        }
-    }
+    private val serviceProvider = ServiceProvider<ContactsRemoteService>(
+        coroutineContext = coroutineContext,
+        endpoint = endpoint,
+        createService = { withService() }
+    )
 
     override suspend fun getAll(): Flow<Contact> {
         return serviceProvider.withService(onException = emptyFlow()) {

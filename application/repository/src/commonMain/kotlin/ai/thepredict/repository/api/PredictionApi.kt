@@ -30,12 +30,9 @@ private class PredictionApiImpl(
     endpoint: ServerEndpoint,
 ) : PredictionApi {
 
-    private val serviceProvider by lazy {
-        ServiceProvider<PredictionRemoteService>(
-            coroutineContext,
-            endpoint
-        ) {
-            withService()
-        }
-    }
+    private val serviceProvider = ServiceProvider<PredictionRemoteService>(
+        coroutineContext = coroutineContext,
+        endpoint = endpoint,
+        createService = { withService() }
+    )
 }

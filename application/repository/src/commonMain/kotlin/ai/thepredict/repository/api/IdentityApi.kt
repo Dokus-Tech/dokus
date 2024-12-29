@@ -39,14 +39,11 @@ private class IdentityApiImpl(
     endpoint: ServerEndpoint,
 ) : IdentityApi {
 
-    private val serviceProvider by lazy {
-        ServiceProvider<IdentityRemoteService>(
-            coroutineContext,
-            endpoint
-        ) {
-            withService<IdentityRemoteService>()
-        }
-    }
+    private val serviceProvider = ServiceProvider<IdentityRemoteService>(
+        coroutineContext = coroutineContext,
+        endpoint = endpoint,
+        createService = { withService() }
+    )
 
     override suspend fun myWorkspaces(): Flow<Workspace> {
         return serviceProvider.withService(onException = emptyFlow()) {

@@ -1,7 +1,7 @@
 package ai.thepredict.app.onboarding.workspaces
 
 import ai.thepredict.ui.PButton
-import ai.thepredict.ui.Title
+import ai.thepredict.ui.PTitle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,7 +27,7 @@ internal class WorkspaceSelectionScreen : Screen {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
         ) {
-            Title("Workspace selection screen")
+            PTitle("Workspace selection screen")
 
             PButton("Refresh") {
                 viewModel.fetch()
@@ -35,17 +35,17 @@ internal class WorkspaceSelectionScreen : Screen {
 
             when (val state = data.value) {
                 is WorkspaceSelectionViewModel.State.Loading -> {
-                    Title("Loading")
+                    PTitle("Loading")
                 }
 
                 is WorkspaceSelectionViewModel.State.Loaded -> {
                     state.workspaces.forEach {
-                        Title(it.name)
+                        PTitle(it.name)
                     }
                 }
 
                 is WorkspaceSelectionViewModel.State.Error -> {
-                    Title("Error happened")
+                    PTitle("Error happened")
                 }
             }
         }
