@@ -25,5 +25,4 @@ class IdentityRemoteServiceImpl(
     override suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult {
         return OperationResult.OperationNotAvailable
     }
-
 }

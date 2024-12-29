@@ -1,13 +1,12 @@
 package ai.thepredict.database.tables
 
-import ai.thepredict.database.db
+import ai.thepredict.database.Database
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 internal object UsersTable : UUIDTable("users") {
@@ -30,5 +29,5 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
 }
 
 fun UserEntity.Companion.getAll(): List<UserEntity> {
-    return transaction(db) { UserEntity.all().toList() }
+    return Database.transaction { UserEntity.all().toList() }
 }
