@@ -1,7 +1,7 @@
 package ai.thepredict.app.onboarding.login
 
 import ai.thepredict.ui.PButton
-import ai.thepredict.ui.Title
+import ai.thepredict.ui.PTitle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,7 +27,7 @@ internal class LoginScreen : Screen {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
         ) {
-            Title("LoginScreen")
+            PTitle("LoginScreen")
 
             PButton("Refresh") {
                 viewModel.fetch()
@@ -35,17 +35,17 @@ internal class LoginScreen : Screen {
 
             when (val state = data.value) {
                 is LoginViewModel.State.Loading -> {
-                    Title("Loading")
+                    PTitle("Loading")
                 }
 
                 is LoginViewModel.State.Loaded -> {
                     state.contacts.forEach {
-                        Title(it.name)
+                        PTitle(it.name)
                     }
                 }
 
                 is LoginViewModel.State.Error -> {
-                    Title("Error happened")
+                    PTitle("Error happened")
                 }
             }
         }

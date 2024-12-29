@@ -30,12 +30,9 @@ private class SimulationApiImpl(
     endpoint: ServerEndpoint,
 ) : SimulationApi {
 
-    private val serviceProvider by lazy {
-        ServiceProvider<SimulationRemoteService>(
-            coroutineContext,
-            endpoint
-        ) {
-            withService()
-        }
-    }
+    private val serviceProvider = ServiceProvider<SimulationRemoteService>(
+        coroutineContext = coroutineContext,
+        endpoint = endpoint,
+        createService = { withService() }
+    )
 }
