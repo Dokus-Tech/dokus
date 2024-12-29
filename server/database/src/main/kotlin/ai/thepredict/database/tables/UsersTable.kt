@@ -13,7 +13,7 @@ internal object UsersTable : UUIDTable("users") {
     val name = varchar("name", 128)
     val email = varchar("email", 128)
     val passwordHash = text("password_hash")
-    val createdAt = datetime("createdAt").defaultExpression(CurrentDateTime)
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val workspaces = reference("workspaces", WorkspacesTable)
 }
 
