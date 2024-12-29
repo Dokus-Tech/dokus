@@ -1,5 +1,6 @@
 package ai.thepredict.contacts.api
 
+import ai.thepredict.common.UserIdGetter
 import ai.thepredict.domain.Contact
 import ai.thepredict.domain.api.OperationResult
 import kotlinx.coroutines.flow.Flow
@@ -9,6 +10,7 @@ import kotlin.coroutines.CoroutineContext
 
 class ContactsRemoteServiceImpl(
     override val coroutineContext: CoroutineContext,
+    private val userIdGetter: UserIdGetter,
 ) : ContactsRemoteService {
 
     override suspend fun getAll(): Flow<Contact> {

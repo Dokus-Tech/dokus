@@ -28,10 +28,10 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     val workspaces by WorkspaceEntity referrersOn UsersTable.workspaces
 }
 
-fun UserEntity.Companion.getAll(): List<UserEntity> {
+suspend fun UserEntity.Companion.getAll(): List<UserEntity> {
     return Database.transaction { UserEntity.all().toList() }
 }
 
-fun UserEntity.Companion.getById(userId: UUID): UserEntity? {
-    return Database.transaction { runCatching { get(userId) }.getOrNull() }
+suspend fun UserEntity.Companion.getById(userId: UUID): UserEntity? {
+    return Database.transaction { runCatching { get(userId) }.getOrThrow() }
 }

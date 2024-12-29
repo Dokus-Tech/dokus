@@ -28,6 +28,6 @@ class WorkspaceEntity(id: EntityID<UUID>) : UUIDEntity(id) {
 
 }
 
-fun WorkspaceEntity.Companion.getById(workspaceId: UUID): WorkspaceEntity? {
+suspend fun WorkspaceEntity.Companion.getById(workspaceId: UUID): WorkspaceEntity? {
     return Database.transaction { runCatching { get(workspaceId) }.getOrNull() }
 }

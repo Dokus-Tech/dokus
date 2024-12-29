@@ -3,6 +3,10 @@ package ai.thepredict.database
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.database.tables.UsersTable
 import ai.thepredict.database.tables.WorkspacesTable
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -23,17 +27,18 @@ object Database {
             driver = "com.impossibl.postgres.jdbc.PGDriver",
             user = "postgres",
             password = "predictme"
-        ).also {
-            transaction {
-                SchemaUtils.create(*tables)
-            }
-        }
+        )
     }
 
-    fun <T> transaction(statement: Transaction.() -> T): T {
-        return transaction(db) {
-            addLogger(StdOutSqlLogger)
-            statement()
+    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
+    suspend fun <T> transaction(statement: Transaction.() -> T): T {
+        val databaseContext = newSingleThreadContext("DatabaseThread")
+        return withContext(databaseContext) {
+            transaction(db) {
+                SchemaUtils.create(*tables)
+                addLogger(StdOutSqlLogger)
+                statement()
+            }
         }
     }
 }
