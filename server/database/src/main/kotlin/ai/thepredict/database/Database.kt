@@ -1,6 +1,7 @@
 package ai.thepredict.database
 
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.database.tables.ContactsTable
 import ai.thepredict.database.tables.UsersTable
 import ai.thepredict.database.tables.WorkspacesTable
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -18,7 +19,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object Database {
     private val serverEndpoint: ServerEndpoint.Database = ServerEndpoint.Database
 
-    private val tables: Array<Table> = arrayOf(UsersTable, WorkspacesTable)
+    private val tables: Array<Table> = arrayOf(UsersTable, WorkspacesTable, ContactsTable)
 
     private val db by lazy {
         Database.connect(
