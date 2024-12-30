@@ -4,7 +4,7 @@ import ai.thepredict.app.navigation.HomeNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -15,6 +15,7 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 
 class SplashScreen : Screen {
 
@@ -35,6 +36,7 @@ class SplashScreen : Screen {
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            AdaptiveCircularProgressIndicator()
             Text("Loading")
         }
 

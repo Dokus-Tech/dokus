@@ -1,6 +1,6 @@
 package ai.thepredict.app.home.screen
 
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.screen.Screen
 

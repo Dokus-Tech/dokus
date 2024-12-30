@@ -46,5 +46,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+    <string>Camera permission is required to take pictures of your receipts and invoices</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Bluetooth permission is required to use Bluetooth</string>
 </dict>
 </plist>

@@ -17,18 +17,17 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
-//        iosTarget.binaries.framework {
-//            baseName = "ComposeApp"
-//            isStatic = true
-//        }
+        iosTarget.binaries.framework {
+            export(libs.calf.ui)
+        }
     }
-    
+
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -50,24 +49,32 @@ kotlin {
         }
         binaries.executable()
     }
-    
+
     sourceSets {
         val desktopMain by getting
-        
+
         androidMain.dependencies {
             api(compose.preview)
             api(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
+            api(projects.shared.configuration)
+
             api(compose.runtime)
             api(compose.foundation)
-            api(compose.material)
+            api(compose.material3)
             api(compose.ui)
             api(compose.components.resources)
             api(compose.components.uiToolingPreview)
             api(libs.androidx.lifecycle.viewmodel)
             api(libs.androidx.lifecycle.runtime.compose)
-            api(projects.shared.configuration)
+
+            api(libs.calf.core)
+            api(libs.calf.ui)
+
+            api(libs.composeIcons.feather)
+
+            api(libs.materialKolor)
         }
         desktopMain.dependencies {
             api(compose.preview)

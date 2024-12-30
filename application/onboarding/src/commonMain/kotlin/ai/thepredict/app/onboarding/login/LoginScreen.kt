@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,6 +24,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -30,6 +36,9 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.AtSign
+import compose.icons.feathericons.Key
 
 internal class LoginScreen : Screen {
 
@@ -44,13 +53,17 @@ internal class LoginScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
+        var passwordFocusWasRequested by remember { mutableStateOf(false) }
+        val focusManager = LocalFocusManager.current
+        val passwordFocusRequester = FocusRequester()
+
         LaunchedEffect("login") {
             viewModel.fetch()
         }
 
-        Scaffold {
+        Scaffold { contentPadding ->
             Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(contentPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
@@ -65,11 +78,27 @@ internal class LoginScreen : Screen {
                     label = {
                         Text("Email")
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    leadingIcon = {
+                        Icon(FeatherIcons.AtSign, "email")
+                    },
+                    singleLine = true,
+                    keyboardActions = KeyboardActions(
+                        onNext = {
+                            passwordFocusWasRequested = true
+                            passwordFocusRequester.requestFocus()
+                        },
+                        onDone = {
+                            passwordFocusRequester.requestFocus()
+                        }
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = if (passwordFocusWasRequested) ImeAction.Done else ImeAction.Next
+                    ),
                 )
 
                 OutlinedTextField(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.focusRequester(passwordFocusRequester).padding(16.dp),
                     value = password,
                     onValueChange = {
                         password = it
@@ -77,8 +106,21 @@ internal class LoginScreen : Screen {
                     label = {
                         Text("Password")
                     },
+                    leadingIcon = {
+                        Icon(FeatherIcons.Key, "password")
+                    },
                     visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                        }, onNext = {
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
                 )
 
                 PButton("Login", modifier = Modifier.padding(16.dp)) {
