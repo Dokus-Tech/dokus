@@ -10,7 +10,7 @@ import kotlinx.rpc.annotations.Rpc
 interface ContactsRemoteService : RemoteService {
     suspend fun getAll(): Flow<Contact>
 
-    suspend fun get(id: Contact.Id): Contact?
+    suspend fun get(id: Contact.Id): Contact
 
     suspend fun find(query: String): Flow<Contact>
 

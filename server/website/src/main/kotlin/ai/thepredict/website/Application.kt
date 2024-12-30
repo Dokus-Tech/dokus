@@ -12,7 +12,7 @@ fun main() {
         endpoint = ServerEndpoint.Website(),
         plugin = null,
         routing = Routing::configureRouting
-    ).start()
+    ).start(wait = true)
 }
 
 private fun Routing.configureRouting() {

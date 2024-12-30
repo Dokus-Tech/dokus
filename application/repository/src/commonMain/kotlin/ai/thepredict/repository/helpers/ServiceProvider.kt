@@ -28,16 +28,15 @@ internal class ServiceProvider<ServiceType : RemoteService>(
     }
 
     suspend fun <ReturnType> withService(
-        onException: ReturnType,
         retryAttempt: Boolean = false,
         func: suspend ServiceType.() -> ReturnType,
-    ): ReturnType = withContext(coroutineContext) {
+    ): Result<ReturnType> = withContext(coroutineContext) {
         val currentService = service
         val result: Result<ReturnType> = if (currentService == null) {
             val newService = createClientAndService().getOrNull()
             if (newService == null) {
                 // TODO: Log it
-                return@withContext onException
+                return@withContext Result.failure(IllegalStateException())
             }
             service = newService
 
@@ -49,17 +48,38 @@ internal class ServiceProvider<ServiceType : RemoteService>(
         if (result.exceptionOrNull() != null && !retryAttempt) { // TODO: Handle connection exception
             service = null
             delay(1.seconds)
-            return@withContext withService(onException, true, func)
+            return@withContext withService(true, func)
         }
-        return@withContext result.getOrNull() ?: onException
+        return@withContext result
     }
 
     suspend fun withServiceOrFailure(
+        retryAttempt: Boolean = false,
         func: suspend ServiceType.() -> OperationResult,
-    ): OperationResult = withService(
-        onException = OperationResult.Failure,
-        func = func
-    )
+    ): OperationResult = withContext(coroutineContext) {
+        val currentService = service
+        val result = if (currentService == null) {
+            val newService = createClientAndService().getOrNull()
+            if (newService == null) {
+                // TODO: Log it
+                return@withContext OperationResult.Failure
+            }
+            service = newService
+
+            runCatching { func(newService) }
+        } else {
+            runCatching { func(currentService) }
+        }
+
+        if (result.exceptionOrNull() != null && !retryAttempt) { // TODO: Handle connection exception
+            service = null
+            delay(1.seconds)
+            return@withContext withServiceOrFailure(true, func)
+        }
+        return@withContext if (result.isFailure) {
+            OperationResult.Failure
+        } else OperationResult.Success
+    }
 }
 
 private suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient {

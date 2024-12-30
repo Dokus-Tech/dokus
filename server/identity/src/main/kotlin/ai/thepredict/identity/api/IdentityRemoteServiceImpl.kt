@@ -13,7 +13,6 @@ import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 
@@ -22,7 +21,7 @@ class IdentityRemoteServiceImpl(
     private val userIdGetter: UserIdGetter,
 ) : IdentityRemoteService {
 
-    override suspend fun createUser(newUser: NewUser): Flow<User> {
+    override suspend fun createUser(newUser: NewUser): User {
         val user = Database.transaction {
             UserEntity.new {
                 name = newUser.name
@@ -30,7 +29,7 @@ class IdentityRemoteServiceImpl(
                 passwordHash = newUser.password
             }
         }
-        return flowOf(user.asUserApi)
+        return user.asUserApi
     }
 
     override suspend fun myWorkspaces(): Flow<Workspace> {
