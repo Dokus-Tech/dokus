@@ -1,23 +1,27 @@
 package ai.thepredict.database.tables
 
 import ai.thepredict.database.Database
-import org.jetbrains.exposed.dao.UUIDEntity
-import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.IntEntity
+import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import java.util.UUID
 
-internal object WorkspacesTable : UUIDTable("workspaces") {
+internal object WorkspacesTable : IntIdTable("workspaces") {
     val name = varchar("name", 128)
     val legalName = varchar("legal_name", 128).nullable()
     val vatNumber = varchar("vat_number", 128).nullable()
-    val createdAt = datetime("createdAt").defaultExpression(CurrentDateTime)
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+    val owner = reference("owner", UsersTable)
+
+    init {
+        foreignKey(owner, target = UsersTable.primaryKey)
+    }
 }
 
-class WorkspaceEntity(id: EntityID<UUID>) : UUIDEntity(id) {
-    companion object : UUIDEntityClass<WorkspaceEntity>(WorkspacesTable)
+class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<WorkspaceEntity>(WorkspacesTable)
 
     private val _workspaceId by WorkspacesTable.id
     val workspaceId = _workspaceId.value
@@ -26,8 +30,15 @@ class WorkspaceEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     val legalName by WorkspacesTable.legalName
     val vatNumber by WorkspacesTable.vatNumber
 
+    val owner by UserEntity referrersOn WorkspacesTable
 }
 
-suspend fun WorkspaceEntity.Companion.getById(workspaceId: UUID): WorkspaceEntity? {
+suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity? {
     return Database.transaction { runCatching { get(workspaceId) }.getOrNull() }
 }
+//
+//suspend fun WorkspaceEntity.Companion.getByOwner(ownerId: Int): WorkspaceEntity? {
+//    return Database.transaction { WorkspaceEntity.find { WorkspacesTable.owner eq ownerId } }
+//        .getOrNull()
+//}
+//}

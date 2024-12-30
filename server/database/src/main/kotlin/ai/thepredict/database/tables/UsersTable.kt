@@ -14,7 +14,6 @@ internal object UsersTable : UUIDTable("users") {
     val email = varchar("email", 128)
     val passwordHash = text("password_hash")
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
-    val workspaces = reference("workspaces", WorkspacesTable)
 }
 
 class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
@@ -25,7 +24,7 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     val passwordHash by UsersTable.passwordHash
     val createdAt by UsersTable.createdAt
 
-    val workspaces by WorkspaceEntity referrersOn UsersTable.workspaces
+    val workspaces by WorkspaceEntity referrersOn WorkspacesTable
 }
 
 suspend fun UserEntity.Companion.getAll(): List<UserEntity> {
