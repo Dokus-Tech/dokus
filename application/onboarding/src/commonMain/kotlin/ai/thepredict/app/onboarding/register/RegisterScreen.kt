@@ -167,7 +167,7 @@ internal class RegisterScreen : Screen {
                     }
 
                     is RegisterViewModel.State.Error -> {
-                        Text("Error happened")
+                        Text(state.throwable.toString())
                     }
                 }
             }

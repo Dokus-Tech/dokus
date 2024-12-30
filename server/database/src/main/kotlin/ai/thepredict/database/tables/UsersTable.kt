@@ -20,7 +20,7 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<UserEntity>(UsersTable)
 
     private val _userId by UsersTable.id
-    val userId = _userId.value
+    val userId get() = _userId.value
 
     var name by UsersTable.name
     var email by UsersTable.email
