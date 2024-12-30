@@ -15,6 +15,7 @@ internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Loa
 
     fun fetch() {
         screenModelScope.launchStreamScoped {
+            api.myWorkspaces()
             mutableState.value = State.Loaded(api.getAll().toList())
         }
     }
