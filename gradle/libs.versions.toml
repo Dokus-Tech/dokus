@@ -12,6 +12,7 @@ androidx-espresso-core = "3.6.1"
 androidx-lifecycle = "2.8.3"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
+
 compose-multiplatform = "1.7.0"
 junit = "4.13.2"
 kotlin = "2.0.21"
@@ -21,13 +22,19 @@ kotlinx-datetime = "0.6.1"
 kotlinx-rpc = "0.4.0"
 ktor = "3.0.1"
 logback = "1.5.11"
+
 postgres = "42.7.4"
 h2 = "2.3.232"
+pgjdbc = "0.8.9"
 exposed = "0.57.0"
+
 kodein = "7.22.0"
+
 voyager = "1.1.0-beta02"
 settings = "1.2.0"
-pgjdbc = "0.8.9"
+calf = "0.6.1"
+compose-icons = "1.1.1"
+materialKolor = "2.0.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -60,6 +67,7 @@ ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml-jvm", vers
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
+
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
 postgres-pgjdbc = { group = "com.impossibl.pgjdbc-ng", name = "pgjdbc-ng", version.ref = "pgjdbc" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
@@ -67,7 +75,9 @@ exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "e
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
 exposed-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
+
 kodein = { group = "org.kodein.di", name = "kodein-di", version.ref = "kodein" }
+
 voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager-navigatorKmp = { module = "cafe.adriel.voyager:voyager-lifecycle-kmp", version.ref = "voyager" }
 voyager-screenModel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyager" }
@@ -75,6 +85,15 @@ voyager-bottomSheetNavigator = { module = "cafe.adriel.voyager:voyager-bottom-sh
 voyager-tabNavigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
 voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
 voyager-kodein = { module = "cafe.adriel.voyager:voyager-kodein", version.ref = "voyager" }
+
+calf-core = { group = "com.mohamedrejeb.calf", name = "calf-core", version.ref = "calf" }
+calf-permissions = { group = "com.mohamedrejeb.calf", name = "calf-permissions", version.ref = "calf" }
+calf-ui = { group = "com.mohamedrejeb.calf", name = "calf-ui", version.ref = "calf" }
+calf-filePicker = { group = "com.mohamedrejeb.calf", name = "calf-file-picker", version.ref = "calf" }
+
+materialKolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialKolor" }
+
+composeIcons-feather = { group = "br.com.devsrsouza.compose.icons", name = "feather", version.ref = "compose-icons" }
 
 persistence-settings = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "settings" }
 persistence-settingsTest = { group = "com.russhwolf", name = "multiplatform-settings-test", version.ref = "settings" }
