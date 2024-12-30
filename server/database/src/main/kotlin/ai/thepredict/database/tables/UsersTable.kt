@@ -19,9 +19,12 @@ internal object UsersTable : UUIDTable("users") {
 class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<UserEntity>(UsersTable)
 
-    val name by UsersTable.name
-    val email by UsersTable.email
-    val passwordHash by UsersTable.passwordHash
+    private val _userId by UsersTable.id
+    val userId = _userId.value
+
+    var name by UsersTable.name
+    var email by UsersTable.email
+    var passwordHash by UsersTable.passwordHash
     val createdAt by UsersTable.createdAt
 
     val workspaces by WorkspaceEntity referrersOn WorkspacesTable.owner

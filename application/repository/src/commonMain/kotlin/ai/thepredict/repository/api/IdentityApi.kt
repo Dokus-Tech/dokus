@@ -1,6 +1,8 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.NewUser
+import ai.thepredict.domain.User
 import ai.thepredict.domain.Workspace
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.identity.api.IdentityRemoteService
@@ -11,6 +13,8 @@ import kotlinx.rpc.withService
 import kotlin.coroutines.CoroutineContext
 
 interface IdentityApi {
+    suspend fun createUser(newUser: NewUser): Flow<User>
+
     suspend fun myWorkspaces(): Flow<Workspace>
 
     suspend fun createWorkspace(workspace: Workspace): OperationResult
@@ -44,6 +48,12 @@ private class IdentityApiImpl(
         endpoint = endpoint,
         createService = { withService() }
     )
+
+    override suspend fun createUser(newUser: NewUser): Flow<User> {
+        return serviceProvider.withService(onException = emptyFlow()) {
+            createUser(newUser)
+        }
+    }
 
     override suspend fun myWorkspaces(): Flow<Workspace> {
         return serviceProvider.withService(onException = emptyFlow()) {
