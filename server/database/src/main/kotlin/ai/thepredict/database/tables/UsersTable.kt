@@ -24,7 +24,7 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     val passwordHash by UsersTable.passwordHash
     val createdAt by UsersTable.createdAt
 
-    val workspaces by WorkspaceEntity referrersOn WorkspacesTable
+    val workspaces by WorkspaceEntity referrersOn WorkspacesTable.owner
 }
 
 suspend fun UserEntity.Companion.getAll(): List<UserEntity> {

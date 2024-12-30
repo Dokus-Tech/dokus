@@ -4,15 +4,17 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.sql.ReferenceOption
 
 internal object ContactsTable : IntIdTable("contacts") {
     val name = varchar("name", 128)
-    val workspace = reference("workspaces", WorkspacesTable)
     val phoneNumber = varchar("phone_number", 128).nullable()
     val email = varchar("email", 128).nullable()
     val taxNumber = varchar("tax_number", 128).nullable()
     val companyName = varchar("company_name", 128).nullable()
     val webUrl = varchar("web_url", 128).nullable()
+
+    val workspace = reference("workspace", WorkspacesTable, onDelete = ReferenceOption.SET_NULL)
 }
 
 class ContactsEntity(id: EntityID<Int>) : IntEntity(id) {
@@ -25,5 +27,5 @@ class ContactsEntity(id: EntityID<Int>) : IntEntity(id) {
     val companyName by ContactsTable.companyName
     val webUrl by ContactsTable.webUrl
 
-    val workspace by WorkspaceEntity referrersOn ContactsTable.workspace
+    val workspace by WorkspaceEntity referencedOn ContactsTable.workspace
 }
