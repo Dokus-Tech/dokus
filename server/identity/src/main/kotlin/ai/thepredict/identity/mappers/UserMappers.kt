@@ -8,7 +8,7 @@ import kotlin.uuid.toKotlinUuid
 @OptIn(ExperimentalUuidApi::class)
 val UserEntity.asUserApi: User
     get() = User(
-        id = User.Id(userId.toKotlinUuid()),
+        id = User.Id(id.value.toKotlinUuid()),
         name = name,
         email = email,
         password = passwordHash

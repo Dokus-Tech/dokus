@@ -21,7 +21,7 @@ class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<WorkspaceEntity>(WorkspacesTable)
 
     private val _workspaceId by WorkspacesTable.id
-    val workspaceId = _workspaceId.value
+    val workspaceId get() = _workspaceId.value
 
     val name by WorkspacesTable.name
     val legalName by WorkspacesTable.legalName
