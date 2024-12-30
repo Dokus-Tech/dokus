@@ -15,14 +15,14 @@ import kotlinx.rpc.krpc.ktor.server.RPC
 inline fun embeddedServer(
     endpoint: ServerEndpoint,
     crossinline routing: Routing.() -> Unit,
-    plugin: ApplicationPlugin<RPCConfigBuilder.Server> = RPC,
+    plugin: ApplicationPlugin<RPCConfigBuilder.Server>? = RPC,
 ): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
     return embeddedServer(
         Netty,
         port = endpoint.internalPort,
         host = endpoint.internalHost
     ) {
-        install(plugin)
+        plugin?.let(::install)
 
         routing {
             routing()

@@ -9,12 +9,20 @@ sealed interface ServerEndpoint {
     val internalPort: Int
     val externalPort: Int
 
-    data class Gateway(
+    data class Website(
         override val externalHost: String = DEFAULT_EXTERNAL_HOST,
     ) : ServerEndpoint {
         override val internalHost: String = DEFAULT_INTERNAL_HOST
         override val internalPort: Int = 8080
         override val externalPort: Int = 8080
+    }
+
+    data class Gateway(
+        override val externalHost: String = DEFAULT_EXTERNAL_HOST,
+    ) : ServerEndpoint {
+        override val internalHost: String = DEFAULT_INTERNAL_HOST
+        override val internalPort: Int = 8089
+        override val externalPort: Int = 8089
     }
 
     data class Contacts(
@@ -69,6 +77,7 @@ sealed interface ServerEndpoint {
 
 private val ServerEndpoint.name: String
     get() = when (this) {
+        is ServerEndpoint.Website -> "Website"
         is ServerEndpoint.Gateway -> "Gateway"
         is ServerEndpoint.Contacts -> "Contacts"
         is ServerEndpoint.Documents -> "Documents"

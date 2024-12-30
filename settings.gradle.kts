@@ -49,6 +49,7 @@ include(":shared:prediction-api")
 include(":shared:simulation-api")
 
 include(":server:common")
+include(":server:website")
 include(":server:gateway")
 include(":server:contacts")
 include(":server:identity")

@@ -3,7 +3,7 @@ services:
     image: europe-west1-docker.pkg.dev/the-predict/containers/gateway:dev
     container_name: the-predict-gateway
     ports:
-      - "8080:8080"
+      - "8089:8089"
     depends_on:
       - contacts
       - documents
@@ -53,6 +53,11 @@ services:
       - database
     ports:
       - "8085:8085"
+  website:
+    image: europe-west1-docker.pkg.dev/the-predict/containers/website:dev
+    container_name: the-predict-website
+    ports:
+      - "8080:8080"
   database:
     image: postgres
     container_name: the-predict-database-postgres
