@@ -17,12 +17,12 @@ class ContactsRemoteServiceImpl(
         return flowOf(Contact(id = Contact.Id.random, name = "Artem"))
     }
 
-    override suspend fun get(id: Contact.Id): Contact? {
-        return null
+    override suspend fun get(id: Contact.Id): Contact {
+        throw NotImplementedError()
     }
 
     override suspend fun find(query: String): Flow<Contact> {
-        return emptyFlow()
+        throw NotImplementedError()
     }
 
     override suspend fun create(create: Contact): OperationResult {

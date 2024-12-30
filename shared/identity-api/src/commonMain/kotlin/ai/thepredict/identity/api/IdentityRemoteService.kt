@@ -13,7 +13,7 @@ import kotlin.uuid.Uuid
 @Rpc
 interface IdentityRemoteService : RemoteService {
 
-    suspend fun createUser(newUser: NewUser): Flow<User>
+    suspend fun createUser(newUser: NewUser): User
 
     suspend fun myWorkspaces(): Flow<Workspace>
 

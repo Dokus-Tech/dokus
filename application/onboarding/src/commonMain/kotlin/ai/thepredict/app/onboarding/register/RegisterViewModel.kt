@@ -22,12 +22,13 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
 
         screenModelScope.launchStreamScoped {
             val newUser = NewUser(name = name, email = email, password = password)
-            val createdUser = api.createUser(newUser).singleOrNull()
+            val createdUser = api.createUser(newUser)
 
-            if (createdUser != null) {
-                mutableState.value = State.Loaded(createdUser)
+            if (createdUser.getOrNull() != null) {
+                mutableState.value = State.Loaded(createdUser.getOrThrow())
             } else {
-                mutableState.value = State.Error(RuntimeException())
+                mutableState.value =
+                    State.Error(createdUser.exceptionOrNull() ?: RuntimeException())
             }
         }
     }

@@ -15,7 +15,8 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
 
     fun fetch() {
         screenModelScope.launchStreamScoped {
-            mutableState.value = State.Loaded(api.myWorkspaces().toList())
+            mutableState.value =
+                State.Loaded(api.myWorkspaces().getOrNull()?.toList() ?: emptyList())
         }
     }
 
