@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.ui.PButton
+import ai.thepredict.ui.PErrorText
 import ai.thepredict.ui.PTitle
 import ai.thepredict.ui.PTopAppBar
 import ai.thepredict.ui.fields.PTextFieldEmail
@@ -12,6 +13,7 @@ import ai.thepredict.ui.fields.PTextFieldPassword
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -63,6 +65,7 @@ internal class RegisterScreen : Screen {
                 PTitle("Let's create an account")
 
                 PTextFieldName(
+                    modifier = Modifier.padding(vertical = 16.dp),
                     fieldName = "Name",
                     value = name,
                     icon = FeatherIcons.User,
@@ -72,7 +75,10 @@ internal class RegisterScreen : Screen {
                     name = it
                 }
 
+                Spacer(modifier = Modifier.padding(vertical = 16.dp))
+
                 PTextFieldEmail(
+                    modifier = Modifier.padding(vertical = 16.dp),
                     fieldName = "Email",
                     value = email,
                     keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
@@ -89,11 +95,13 @@ internal class RegisterScreen : Screen {
                     password = it
                 }
 
-                PButton("Register", modifier = Modifier.padding(16.dp)) {
+                Spacer(modifier = Modifier.padding(vertical = 16.dp))
+
+                PButton("Register", modifier = Modifier.padding(vertical = 32.dp)) {
                     viewModel.createUser(email, password, name)
                 }
 
-                Spacer(modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.weight(1f))
 
                 when (val state = data.value) {
                     is RegisterViewModel.State.Loading -> {
@@ -105,7 +113,7 @@ internal class RegisterScreen : Screen {
                     }
 
                     is RegisterViewModel.State.Error -> {
-                        Text(state.exception.message)
+                        PErrorText(state.exception)
                     }
                 }
             }

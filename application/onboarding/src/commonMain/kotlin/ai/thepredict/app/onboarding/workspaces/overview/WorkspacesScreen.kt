@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding.workspaces.overview
 
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.ui.PButton
+import ai.thepredict.ui.PErrorText
 import ai.thepredict.ui.PTitle
 import ai.thepredict.ui.PTopAppBar
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +62,7 @@ internal class WorkspacesScreen : Screen {
                     }
 
                     is WorkspacesViewModel.State.Error -> {
-                        PTitle(state.exception.message)
+                        PErrorText(state.exception)
                     }
                 }
 

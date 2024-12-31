@@ -9,7 +9,7 @@ import ai.thepredict.domain.NewUser
 import ai.thepredict.domain.User
 import ai.thepredict.domain.Workspace
 import ai.thepredict.domain.api.OperationResult
-import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.configuration.exceptions.PredictException
 import ai.thepredict.identity.mappers.asUserApi
 import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
