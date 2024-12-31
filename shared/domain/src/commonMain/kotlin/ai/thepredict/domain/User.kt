@@ -25,6 +25,8 @@ data class User(
 @Serializable
 data class NewUser(
     val name: String,
-    val email: String,
+    private val _email: String,
     val password: String,
-)
+) {
+    val email = _email.lowercase()
+}

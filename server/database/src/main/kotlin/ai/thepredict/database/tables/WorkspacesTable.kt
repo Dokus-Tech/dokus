@@ -35,9 +35,3 @@ class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
 suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity? {
     return Database.transaction { runCatching { get(workspaceId) }.getOrNull() }
 }
-//
-//suspend fun WorkspaceEntity.Companion.getByOwner(ownerId: Int): WorkspaceEntity? {
-//    return Database.transaction { WorkspaceEntity.find { WorkspacesTable.owner eq ownerId } }
-//        .getOrNull()
-//}
-//}
