@@ -27,6 +27,7 @@ class SplashScreen : Screen {
 
         val loginScreen = rememberScreen(OnboardingNavigation.Authorization.LoginScreen)
         val homeScreen = rememberScreen(HomeNavigation.HomeScreen)
+        val workspacesOverview = rememberScreen(OnboardingNavigation.Workspaces.All)
 
         LaunchedEffect("splash-screen") {
             viewModel.checkOnboarding()
@@ -42,8 +43,13 @@ class SplashScreen : Screen {
 
         when (data.value) {
             is SplashScreenViewModel.Effect.Idle -> {}
+
             is SplashScreenViewModel.Effect.NavigateToLogin -> {
                 navigator.replace(loginScreen)
+            }
+
+            is SplashScreenViewModel.Effect.NavigateToWorkspacesOverview -> {
+                navigator.replace(workspacesOverview)
             }
 
             is SplashScreenViewModel.Effect.NavigateHome -> {

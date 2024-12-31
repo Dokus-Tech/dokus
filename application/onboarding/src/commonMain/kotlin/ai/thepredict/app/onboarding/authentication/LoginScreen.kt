@@ -1,7 +1,8 @@
-package ai.thepredict.app.onboarding.register
+package ai.thepredict.app.onboarding.authentication
 
+import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.ui.PButton
-import ai.thepredict.ui.PTitle
+import ai.thepredict.ui.PTopAppBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,16 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,83 +24,53 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
+import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.AtSign
 import compose.icons.feathericons.Key
-import compose.icons.feathericons.User
 
-internal class RegisterScreen : Screen {
+internal class LoginScreen : Screen {
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-        val viewModel = rememberScreenModel { RegisterViewModel() }
+        val viewModel = rememberScreenModel { LoginViewModel() }
         val data = viewModel.state.collectAsState()
+
+        val navigator = LocalNavigator.currentOrThrow
+        val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
-        var name by remember { mutableStateOf("") }
 
-        val navigator = LocalNavigator.currentOrThrow
+        var passwordFocusWasRequested by remember { mutableStateOf(false) }
         val focusManager = LocalFocusManager.current
+        val passwordFocusRequester = FocusRequester()
+
+        LaunchedEffect("login") {
+            viewModel.fetch()
+        }
 
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Register") },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            navigator.pop()
-                        }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    }
-                )
-            }
-        ) { contentPadding ->
+            topBar = { PTopAppBar("Login") }
+        ) { innerPadding ->
             Column(
-                modifier = Modifier.fillMaxWidth().padding(contentPadding),
+                modifier = Modifier.fillMaxWidth().padding(innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
-                PTitle("Let's create an account")
-
                 OutlinedTextField(
-                    modifier = Modifier.padding(16.dp),
-                    value = name,
-                    onValueChange = {
-                        name = it
-                    },
-                    label = {
-                        Text("Name")
-                    },
-                    leadingIcon = {
-                        Icon(FeatherIcons.User, "name")
-                    },
-                    singleLine = true,
-                    keyboardActions = KeyboardActions(
-                        onNext = {
-                            focusManager.moveFocus(FocusDirection.Next)
-                        }
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
-                    ),
-                )
-
-                OutlinedTextField(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(vertical = 16.dp),
                     value = email,
                     onValueChange = {
                         email = it
@@ -116,17 +84,21 @@ internal class RegisterScreen : Screen {
                     singleLine = true,
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            focusManager.moveFocus(FocusDirection.Next)
+                            passwordFocusWasRequested = true
+                            passwordFocusRequester.requestFocus()
+                        },
+                        onDone = {
+                            passwordFocusRequester.requestFocus()
                         }
                     ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
+                        imeAction = if (passwordFocusWasRequested) ImeAction.Done else ImeAction.Next
                     ),
                 )
 
                 OutlinedTextField(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.focusRequester(passwordFocusRequester).padding(vertical = 16.dp),
                     value = password,
                     onValueChange = {
                         password = it
@@ -151,25 +123,16 @@ internal class RegisterScreen : Screen {
                     ),
                 )
 
-                PButton("Register", modifier = Modifier.padding(16.dp)) {
-                    viewModel.createUser(email, password, name)
+                PButton("Login", modifier = Modifier.padding(vertical = 16.dp)) {
+                }
+
+                OutlinedButton(onClick = {
+                    navigator.push(registerScreen)
+                }) {
+                    Text("New? Create an account")
                 }
 
                 Spacer(modifier = Modifier.fillMaxWidth())
-
-                when (val state = data.value) {
-                    is RegisterViewModel.State.Loading -> {
-
-                    }
-
-                    is RegisterViewModel.State.Loaded -> {
-                        PTitle(state.user.id.toString())
-                    }
-
-                    is RegisterViewModel.State.Error -> {
-                        Text(state.throwable.toString())
-                    }
-                }
             }
         }
     }

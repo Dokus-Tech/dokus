@@ -69,6 +69,8 @@ kotlin {
             api(libs.androidx.lifecycle.viewmodel)
             api(libs.androidx.lifecycle.runtime.compose)
 
+            implementation(libs.voyager.navigator)
+
             api(libs.calf.core)
             api(libs.calf.ui)
 

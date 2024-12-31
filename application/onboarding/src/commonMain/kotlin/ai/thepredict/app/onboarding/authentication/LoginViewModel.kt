@@ -1,4 +1,4 @@
-package ai.thepredict.app.onboarding.login
+package ai.thepredict.app.onboarding.authentication
 
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.extension.launchStreamScoped
