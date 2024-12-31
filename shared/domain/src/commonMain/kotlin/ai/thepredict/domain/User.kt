@@ -10,11 +10,13 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class User(
-    val id: Id,
+    private val _id: String,
     val name: String,
     val email: String,
     val password: String,
 ) {
+    val id: Id get() = Id(Uuid.parse(_id))
+
     @Serializable
     @JvmInline
     value class Id(@Contextual val value: Uuid)

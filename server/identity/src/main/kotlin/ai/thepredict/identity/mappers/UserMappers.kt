@@ -2,13 +2,10 @@ package ai.thepredict.identity.mappers
 
 import ai.thepredict.database.tables.UserEntity
 import ai.thepredict.domain.User
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
-@OptIn(ExperimentalUuidApi::class)
 val UserEntity.asUserApi: User
     get() = User(
-        id = User.Id(id.value.toKotlinUuid()),
+        _id = id.value.toString(),
         name = name,
         email = email,
         password = passwordHash
