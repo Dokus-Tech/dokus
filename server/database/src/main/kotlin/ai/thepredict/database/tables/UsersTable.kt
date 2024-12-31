@@ -13,6 +13,7 @@ internal object UsersTable : UUIDTable("users") {
     val name = varchar("name", 128)
     val email = varchar("email", 128)
     val passwordHash = text("password_hash")
+
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 }
 
@@ -25,6 +26,7 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var name by UsersTable.name
     var email by UsersTable.email
     var passwordHash by UsersTable.passwordHash
+
     val createdAt by UsersTable.createdAt
 
     val workspaces by WorkspaceEntity referrersOn WorkspacesTable.owner

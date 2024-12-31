@@ -23,13 +23,13 @@ class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
     private val _workspaceId by WorkspacesTable.id
     val workspaceId get() = _workspaceId.value
 
-    val name by WorkspacesTable.name
-    val legalName by WorkspacesTable.legalName
-    val taxNumber by WorkspacesTable.taxNumber
-    val createdAt by WorkspacesTable.createdAt
+    var name by WorkspacesTable.name
+    var legalName by WorkspacesTable.legalName
+    var taxNumber by WorkspacesTable.taxNumber
+    var createdAt by WorkspacesTable.createdAt
 
     val owner by UserEntity referencedOn WorkspacesTable.owner
-    val contacts by ContactsEntity referencedOn ContactsTable.workspace
+    val contacts by ContactEntity referencedOn ContactsTable.workspace
 }
 
 suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity? {

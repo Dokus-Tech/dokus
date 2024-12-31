@@ -1,5 +1,6 @@
 package ai.thepredict.domain
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 import kotlin.math.absoluteValue
@@ -22,6 +23,25 @@ data class Contact(
     value class Id(val value: Int) {
         companion object {
             val random: Id = Id(Random.nextInt().absoluteValue)
+        }
+    }
+
+    @Serializable
+    enum class State(val key: String) {
+        @SerialName(KEY_ACTIVE)
+        Active("ACTIVE"),
+
+        @SerialName(KEY_ARCHIVED)
+        Archived("ARCHIVED");
+
+        companion object {
+            private const val KEY_ACTIVE = "ACTIVE"
+            private const val KEY_ARCHIVED = "ARCHIVED"
+            val default = Active
+
+            fun fromKey(value: String, orDefault: State = default): State {
+                return entries.find { it.key == value } ?: orDefault
+            }
         }
     }
 }
