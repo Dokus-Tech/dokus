@@ -39,3 +39,7 @@ suspend fun UserEntity.Companion.getAll(): List<UserEntity> {
 suspend fun UserEntity.Companion.getById(userId: UUID): UserEntity? {
     return Database.transaction { runCatching { get(userId) }.getOrNull() }
 }
+
+suspend fun UserEntity.Companion.findByEmail(email: String): UserEntity? {
+    return Database.transaction { runCatching { find { UsersTable.email eq email }.singleOrNull() }.getOrNull() }
+}

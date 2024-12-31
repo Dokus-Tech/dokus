@@ -21,7 +21,7 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
         if (email.isEmpty() && password.isEmpty() && name.isEmpty()) return
 
         screenModelScope.launchStreamScoped {
-            val newUser = NewUser(name = name, email = email, password = password)
+            val newUser = NewUser(name = name, _email = email, password = password)
             val createdUser = api.createUser(newUser)
 
             if (createdUser.getOrNull() != null) {
