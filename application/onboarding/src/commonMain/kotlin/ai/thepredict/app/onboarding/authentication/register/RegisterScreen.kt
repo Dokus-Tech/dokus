@@ -1,4 +1,4 @@
-package ai.thepredict.app.onboarding.authentication
+package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.ui.PButton

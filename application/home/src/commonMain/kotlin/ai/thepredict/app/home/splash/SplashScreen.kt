@@ -1,4 +1,4 @@
-package ai.thepredict.app.onboarding.splash
+package ai.thepredict.app.home.splash
 
 import ai.thepredict.app.navigation.HomeNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation

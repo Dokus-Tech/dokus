@@ -2,7 +2,7 @@ package ai.thepredict.app.wrap
 
 import ai.thepredict.app.home.homeScreensModule
 import ai.thepredict.app.onboarding.onboardingScreensModule
-import ai.thepredict.app.onboarding.splash.SplashScreen
+import ai.thepredict.app.home.splash.SplashScreen
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
 import cafe.adriel.voyager.core.registry.ScreenRegistry

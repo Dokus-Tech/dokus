@@ -12,6 +12,8 @@ import kotlinx.rpc.withService
 import kotlin.coroutines.CoroutineContext
 
 interface IdentityApi {
+    suspend fun authenticate(email: String, password: String): Result<User>
+
     suspend fun createUser(newUser: NewUser): Result<User>
 
     suspend fun myWorkspaces(): Result<Flow<Workspace>>
@@ -47,6 +49,12 @@ private class IdentityApiImpl(
         endpoint = endpoint,
         createService = { withService() }
     )
+
+    override suspend fun authenticate(email: String, password: String): Result<User> {
+        return serviceProvider.withService {
+            authenticate(email, password)
+        }
+    }
 
     override suspend fun createUser(newUser: NewUser): Result<User> {
         return serviceProvider.withService {
