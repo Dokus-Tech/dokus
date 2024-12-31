@@ -24,6 +24,14 @@ class IdentityRemoteServiceImpl(
     private val userIdGetter: UserIdGetter,
 ) : IdentityRemoteService {
 
+    @Throws(PredictException.NonAuthenticated::class)
+    override suspend fun authenticate(email: String, password: String): User {
+        val existingUser = UserEntity.findByEmail(email)
+
+        if (existingUser == null || existingUser.passwordHash == password) throw PredictException.NonAuthenticated
+        return existingUser.asUserApi
+    }
+
     @Throws(PredictException.UserAlreadyExists::class)
     override suspend fun createUser(newUser: NewUser): User {
         val existingUser = UserEntity.findByEmail(newUser.email)

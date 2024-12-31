@@ -9,6 +9,9 @@ sealed class PredictException(override val message: String) : Exception(message)
     data object UserAlreadyExists : PredictException("That user already exists!")
 
     @Serializable
+    data object NonAuthenticated : PredictException("Wrong credentials!")
+
+    @Serializable
     data class Unknown(@Contextual val throwable: Throwable?) : PredictException(throwable?.message ?: "Unknown error")
 
     @Serializable
