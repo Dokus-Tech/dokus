@@ -1,4 +1,4 @@
-package ai.thepredict.app.onboarding.restore
+package ai.thepredict.app.onboarding.authentication.restore
 
 import ai.thepredict.ui.PTitle
 import androidx.compose.runtime.Composable

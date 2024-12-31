@@ -9,7 +9,10 @@ private class SettingsDelegate(
     private val settings: Settings,
     private val key: String,
 ) {
-    inline operator fun <reified T : Any> getValue(thisRef: Persistence, property: KProperty<*>): T? {
+    inline operator fun <reified T : Any> getValue(
+        thisRef: Persistence,
+        property: KProperty<*>,
+    ): T? {
         return settings.get<T>(key)
     }
 
@@ -23,8 +26,10 @@ private class SettingsDelegate(
 }
 
 class Persistence(settings: Settings) {
+    var userId: String? by SettingsDelegate(settings, "user_id")
     var email: String? by SettingsDelegate(settings, "email")
     var password: String? by SettingsDelegate(settings, "password")
+    var selectedWorkspace: String? by SettingsDelegate(settings, "selected_workspace")
 }
 
 private val settings: Settings = Settings()

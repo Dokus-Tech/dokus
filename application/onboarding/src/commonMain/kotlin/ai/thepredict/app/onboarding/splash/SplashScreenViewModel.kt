@@ -1,28 +1,42 @@
 package ai.thepredict.app.onboarding.splash
 
+import ai.thepredict.app.core.di
 import ai.thepredict.app.platform.persistence
+import ai.thepredict.repository.api.UnifiedApi
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
+import org.kodein.di.instance
 
 internal class SplashScreenViewModel : StateScreenModel<SplashScreenViewModel.Effect>(Effect.Idle) {
 
+    private val api: UnifiedApi by di.instance()
+
     fun checkOnboarding() {
         screenModelScope.launch {
-            val isUserLoggedIn = persistence.email != null && persistence.password != null
-
-            if (isUserLoggedIn) {
-                mutableState.value = Effect.NavigateHome
-            } else {
-                mutableState.value = Effect.NavigateToLogin
+            val effect = when {
+                checkIsNotLoggedIn() -> Effect.NavigateToLogin
+                noWorkspaceIsSelected() -> Effect.NavigateToWorkspacesOverview
+                else -> Effect.NavigateHome
             }
+            mutableState.value = effect
         }
+    }
+
+    private fun checkIsNotLoggedIn(): Boolean {
+        return persistence.email == null || persistence.password == null
+    }
+
+    private fun noWorkspaceIsSelected(): Boolean {
+        return persistence.selectedWorkspace == null
     }
 
     sealed interface Effect {
         data object Idle : Effect
 
         data object NavigateToLogin : Effect
+
+        data object NavigateToWorkspacesOverview : Effect
 
         data object NavigateHome : Effect
     }
