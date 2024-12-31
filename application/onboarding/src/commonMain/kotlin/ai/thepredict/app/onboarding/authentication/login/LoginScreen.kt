@@ -3,6 +3,7 @@ package ai.thepredict.app.onboarding.authentication.login
 import ai.thepredict.app.navigation.HomeNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.ui.PButton
+import ai.thepredict.ui.PErrorText
 import ai.thepredict.ui.PTopAppBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -133,9 +134,13 @@ internal class LoginScreen : Screen {
                     Text("New? Create an account")
                 }
 
-                Spacer(modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.weight(1f))
 
                 when (val state = data.value) {
+                    is LoginViewModel.State.Idle -> {
+
+                    }
+
                     is LoginViewModel.State.Loading -> {
                         AdaptiveCircularProgressIndicator()
                     }
@@ -145,7 +150,7 @@ internal class LoginScreen : Screen {
                     }
 
                     is LoginViewModel.State.Error -> {
-                        Text(state.exception.message)
+                        PErrorText(state.exception)
                     }
                 }
             }
