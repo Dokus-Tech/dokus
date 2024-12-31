@@ -4,12 +4,12 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class PredictException : Exception() {
+sealed class PredictException(override val message: String?) : Exception(message) {
     @Serializable
-    data object UserAlreadyExists : PredictException()
+    data object UserAlreadyExists : PredictException("That user already exists!")
 
     @Serializable
-    data class Unknown(@Contextual val throwable: Throwable) : PredictException()
+    data class Unknown(@Contextual val throwable: Throwable) : PredictException(throwable.message)
 }
 
 val Throwable.asPredictException: PredictException
