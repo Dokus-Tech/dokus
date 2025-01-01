@@ -1,10 +1,13 @@
 package ai.thepredict.repository.helpers
 
+import ai.thepredict.app.platform.persistence
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.AuthCredentials
 import ai.thepredict.domain.api.OperationResult
-import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
+import ai.thepredict.repository.extensions.authCredentials
 import ai.thepredict.repository.httpClient
+import io.ktor.client.request.basicAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.rpc.RPCClient
@@ -31,7 +34,7 @@ internal class ServiceProvider<ServiceType : RemoteService>(
 
     suspend fun <ReturnType> withService(
         retryAttempt: Boolean = false,
-        func: suspend ServiceType.() -> ReturnType,
+        func: suspend ServiceType.(credentials: AuthCredentials?) -> ReturnType,
     ): Result<ReturnType> = withContext(coroutineContext) {
         val currentService = service
         val result: Result<ReturnType> = if (currentService == null) {
@@ -43,9 +46,9 @@ internal class ServiceProvider<ServiceType : RemoteService>(
             }
             service = newService
 
-            runCatching { func(newService) }
+            runCatching { func(newService, persistence.authCredentials) }
         } else {
-            runCatching { func(currentService) }
+            runCatching { func(currentService, persistence.authCredentials) }
         }
 
         if (result.exceptionOrNull() != null && !retryAttempt) { // TODO: Handle connection exception
@@ -58,7 +61,7 @@ internal class ServiceProvider<ServiceType : RemoteService>(
 
     suspend fun withServiceOrFailure(
         retryAttempt: Boolean = false,
-        func: suspend ServiceType.() -> OperationResult,
+        func: suspend ServiceType.(credentials: AuthCredentials?) -> OperationResult,
     ): OperationResult = withContext(coroutineContext) {
         val currentService = service
         val result = if (currentService == null) {
@@ -69,9 +72,9 @@ internal class ServiceProvider<ServiceType : RemoteService>(
             }
             service = newService
 
-            runCatching { func(newService) }
+            runCatching { func(newService, persistence.authCredentials) }
         } else {
-            runCatching { func(currentService) }
+            runCatching { func(currentService, persistence.authCredentials) }
         }
 
         if (result.exceptionOrNull() != null && !retryAttempt) { // TODO: Handle connection exception
@@ -88,7 +91,7 @@ internal class ServiceProvider<ServiceType : RemoteService>(
 private suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
     val ktorClient = httpClient {
         installRPC {
-            waitForServices = true // default parameter
+            waitForServices = false // default parameter
             serialization {
                 json()
             }
@@ -102,6 +105,7 @@ private suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient
         }
 
         rpcConfig {
+            basicAuth(persistence.email.orEmpty(), persistence.password.orEmpty())
             serialization {
                 json()
             }

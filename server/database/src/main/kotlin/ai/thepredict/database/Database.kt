@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.transactions.experimental.suspendedTransactionAsync
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Database {
@@ -38,14 +39,12 @@ object Database {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
-    suspend fun <T> transaction(statement: Transaction.() -> T): T {
+    suspend fun <T> transaction(statement: suspend Transaction.() -> T): T {
         val databaseContext = newSingleThreadContext("DatabaseThread")
-        return withContext(databaseContext) {
-            transaction(db) {
-                SchemaUtils.create(*tables)
-                addLogger(StdOutSqlLogger)
-                statement()
-            }
-        }
+        return suspendedTransactionAsync(databaseContext, db) {
+            SchemaUtils.create(*tables)
+            addLogger(StdOutSqlLogger)
+            statement()
+        }.await()
     }
 }

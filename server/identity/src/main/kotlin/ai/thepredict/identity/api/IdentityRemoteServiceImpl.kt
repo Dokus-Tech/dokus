@@ -5,11 +5,13 @@ import ai.thepredict.database.Database
 import ai.thepredict.database.tables.UserEntity
 import ai.thepredict.database.tables.findByEmail
 import ai.thepredict.database.tables.getById
+import ai.thepredict.domain.AuthCredentials
 import ai.thepredict.domain.NewUser
 import ai.thepredict.domain.User
 import ai.thepredict.domain.Workspace
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.domain.userUUID
 import ai.thepredict.identity.mappers.asUserApi
 import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +19,8 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 class IdentityRemoteServiceImpl(
     override val coroutineContext: CoroutineContext,
@@ -46,16 +50,23 @@ class IdentityRemoteServiceImpl(
         return user.asUserApi
     }
 
-    override suspend fun myWorkspaces(): Flow<Workspace> {
-        val workspaces = UserEntity.getById(userIdGetter.get())?.workspaces
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
+        val workspaces = UserEntity.getById(authCredentials.userUUID.toJavaUuid())?.workspaces
         return (workspaces?.asFlow() ?: emptyFlow()).map { it.asWorkspaceApi }
     }
 
-    override suspend fun createWorkspace(workspace: Workspace): OperationResult {
+    override suspend fun createWorkspace(
+        authCredentials: AuthCredentials,
+        workspace: Workspace,
+    ): OperationResult {
         return OperationResult.OperationNotAvailable
     }
 
-    override suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult {
+    override suspend fun deleteWorkspace(
+        authCredentials: AuthCredentials,
+        organisationId: Workspace.Id,
+    ): OperationResult {
         return OperationResult.OperationNotAvailable
     }
 }
