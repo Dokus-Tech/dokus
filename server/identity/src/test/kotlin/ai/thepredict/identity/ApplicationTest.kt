@@ -1,6 +1,7 @@
 package ai.thepredict.identity
 
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.AuthCredentials
 import ai.thepredict.identity.api.IdentityRemoteService
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.runBlocking
@@ -48,7 +49,7 @@ fun main() = runBlocking {
     val identity = client.withService<IdentityRemoteService>()
 
     streamScoped {
-        identity.myWorkspaces().collect {
+        identity.myWorkspaces(AuthCredentials.empty).collect {
             println(it.name)
         }
     }

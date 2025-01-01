@@ -9,6 +9,7 @@ group = "ai.thepredict.common"
 dependencies {
     api(projects.shared.configuration)
     api(projects.shared.domain)
+    implementation(projects.server.database)
 
     api(libs.kotlinx.rpc.krpc.ktor.server)
     api(libs.kotlinx.rpc.core)

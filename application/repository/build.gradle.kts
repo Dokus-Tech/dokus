@@ -65,8 +65,11 @@ kotlin {
             api(projects.shared.predictionApi)
             api(projects.shared.simulationApi)
 
+            api(projects.application.platform)
+
             implementation(libs.kodein)
 
+            implementation(libs.ktor.server.auth)
             api(libs.kotlinx.rpc.core)
             api(libs.kotlinx.rpc.krpc.ktor.client)
             implementation(libs.kotlinx.rpc.krpc.serialization.json)

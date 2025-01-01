@@ -63,20 +63,23 @@ private class IdentityApiImpl(
     }
 
     override suspend fun myWorkspaces(): Result<Flow<Workspace>> {
-        return serviceProvider.withService {
-            myWorkspaces()
+        return serviceProvider.withService { authCredentials ->
+            require(authCredentials != null)
+            myWorkspaces(authCredentials)
         }
     }
 
     override suspend fun createWorkspace(workspace: Workspace): OperationResult {
-        return serviceProvider.withServiceOrFailure {
-            createWorkspace(workspace)
+        return serviceProvider.withServiceOrFailure { authCredentials ->
+            require(authCredentials != null)
+            createWorkspace(authCredentials, workspace)
         }
     }
 
     override suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult {
-        return serviceProvider.withServiceOrFailure {
-            deleteWorkspace(organisationId)
+        return serviceProvider.withServiceOrFailure { authCredentials ->
+            require(authCredentials != null)
+            deleteWorkspace(authCredentials, organisationId)
         }
     }
 }
