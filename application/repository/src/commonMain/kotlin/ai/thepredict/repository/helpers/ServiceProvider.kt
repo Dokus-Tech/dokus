@@ -2,6 +2,8 @@ package ai.thepredict.repository.helpers
 
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult
+import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.domain.exceptions.asPredictException
 import ai.thepredict.repository.httpClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -33,10 +35,11 @@ internal class ServiceProvider<ServiceType : RemoteService>(
     ): Result<ReturnType> = withContext(coroutineContext) {
         val currentService = service
         val result: Result<ReturnType> = if (currentService == null) {
-            val newService = createClientAndService().getOrNull()
+            val newServiceResult = createClientAndService()
+            val newService = newServiceResult.getOrNull()
             if (newService == null) {
                 // TODO: Log it
-                return@withContext Result.failure(IllegalStateException())
+                return@withContext Result.failure(newServiceResult.asPredictException)
             }
             service = newService
 
