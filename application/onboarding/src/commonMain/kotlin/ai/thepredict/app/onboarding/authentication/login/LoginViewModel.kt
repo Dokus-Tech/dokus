@@ -3,7 +3,7 @@ package ai.thepredict.app.onboarding.authentication.login
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.extension.launchStreamScoped
 import ai.thepredict.app.platform.persistence
-import ai.thepredict.domain.User
+import ai.thepredict.data.User
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
 import ai.thepredict.repository.api.UnifiedApi

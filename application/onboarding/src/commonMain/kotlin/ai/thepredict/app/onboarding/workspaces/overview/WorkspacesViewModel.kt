@@ -2,8 +2,9 @@ package ai.thepredict.app.onboarding.workspaces.overview
 
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.extension.launchStreamScoped
-import ai.thepredict.domain.Workspace
+import ai.thepredict.data.Workspace
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.domain.exceptions.asPredictException
 import ai.thepredict.repository.api.UnifiedApi
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
@@ -14,11 +15,13 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
 
     private val api: UnifiedApi by di.instance { screenModelScope }
 
-    fun fetch() {
-        screenModelScope.launchStreamScoped {
-            mutableState.value =
-                State.Loaded(api.myWorkspaces().getOrNull()?.toList() ?: emptyList())
+    fun fetch() = screenModelScope.launchStreamScoped {
+        val workspaces = api.myWorkspaces().getOrElse {
+            mutableState.value = State.Error(it.asPredictException)
+            return@launchStreamScoped
         }
+
+        mutableState.value = State.Loaded(workspaces.toList())
     }
 
     sealed interface State {

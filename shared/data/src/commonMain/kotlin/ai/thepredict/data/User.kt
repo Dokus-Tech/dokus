@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package ai.thepredict.domain
+package ai.thepredict.data
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable

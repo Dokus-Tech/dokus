@@ -1,7 +1,7 @@
 package ai.thepredict.identity.mappers
 
 import ai.thepredict.database.tables.WorkspaceEntity
-import ai.thepredict.domain.Workspace
+import ai.thepredict.data.Workspace
 
 val WorkspaceEntity.asWorkspaceApi: Workspace
     get() = Workspace(

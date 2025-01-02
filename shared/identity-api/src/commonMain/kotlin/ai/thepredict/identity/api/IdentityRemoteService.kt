@@ -1,15 +1,13 @@
 package ai.thepredict.identity.api
 
-import ai.thepredict.domain.AuthCredentials
-import ai.thepredict.domain.NewUser
-import ai.thepredict.domain.User
-import ai.thepredict.domain.Workspace
+import ai.thepredict.data.AuthCredentials
+import ai.thepredict.data.NewUser
+import ai.thepredict.data.User
+import ai.thepredict.data.Workspace
 import ai.thepredict.domain.api.OperationResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.RemoteService
 import kotlinx.rpc.annotations.Rpc
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @Rpc
 interface IdentityRemoteService : RemoteService {

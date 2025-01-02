@@ -1,7 +1,7 @@
 package ai.thepredict.identity
 
 import ai.thepredict.configuration.ServerEndpoint
-import ai.thepredict.domain.AuthCredentials
+import ai.thepredict.data.AuthCredentials
 import ai.thepredict.identity.api.IdentityRemoteService
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.runBlocking

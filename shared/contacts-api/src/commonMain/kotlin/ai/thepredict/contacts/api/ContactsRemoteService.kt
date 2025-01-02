@@ -1,6 +1,6 @@
 package ai.thepredict.contacts.api
 
-import ai.thepredict.domain.Contact
+import ai.thepredict.data.Contact
 import ai.thepredict.domain.api.OperationResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.RemoteService

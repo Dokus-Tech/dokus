@@ -2,7 +2,7 @@ package ai.thepredict.repository.api
 
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.contacts.api.ContactsRemoteService
-import ai.thepredict.domain.Contact
+import ai.thepredict.data.Contact
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.repository.helpers.ServiceProvider
 import kotlinx.coroutines.flow.Flow

@@ -10,6 +10,7 @@ import ai.thepredict.repository.api.UnifiedApi
 import kotlinx.coroutines.CoroutineScope
 import org.kodein.di.DI
 import org.kodein.di.bindFactory
+import org.kodein.di.instance
 
 val repositoryDiModule by DI.Module("repository") {
     bindFactory<CoroutineScope, UnifiedApi> { scope ->
@@ -24,37 +25,22 @@ val repositoryDiModule by DI.Module("repository") {
     }
 
     bindFactory<CoroutineScope, IdentityApi> { scope ->
-        IdentityApi.create(
-            scope.coroutineContext,
-            ServerEndpoint.Identity()
-        )
+        instance<UnifiedApi> { scope }
     }
 
     bindFactory<CoroutineScope, ContactsApi> { scope ->
-        ContactsApi.create(
-            scope.coroutineContext,
-            ServerEndpoint.Contacts()
-        )
+        instance<UnifiedApi> { scope }
     }
 
     bindFactory<CoroutineScope, DocumentsApi> { scope ->
-        DocumentsApi.create(
-            scope.coroutineContext,
-            ServerEndpoint.Documents()
-        )
+        instance<UnifiedApi> { scope }
     }
 
     bindFactory<CoroutineScope, PredictionApi> { scope ->
-        PredictionApi.create(
-            scope.coroutineContext,
-            ServerEndpoint.Prediction()
-        )
+        instance<UnifiedApi> { scope }
     }
 
     bindFactory<CoroutineScope, SimulationApi> { scope ->
-        SimulationApi.create(
-            scope.coroutineContext,
-            ServerEndpoint.Simulation()
-        )
+        instance<UnifiedApi> { scope }
     }
 }
