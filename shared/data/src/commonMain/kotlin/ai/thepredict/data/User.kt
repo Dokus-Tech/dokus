@@ -19,7 +19,9 @@ data class User(
 
     @Serializable
     @JvmInline
-    value class Id(@Contextual val value: Uuid)
+    value class Id(@Contextual val value: Uuid) {
+        constructor(id: String) : this(Uuid.parse(id))
+    }
 }
 
 @Serializable

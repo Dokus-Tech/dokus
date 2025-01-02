@@ -2,9 +2,13 @@ package ai.thepredict.app.onboarding.authentication.login
 
 import ai.thepredict.app.navigation.HomeNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
+import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PButton
 import ai.thepredict.ui.PErrorText
 import ai.thepredict.ui.PTopAppBar
+import ai.thepredict.ui.fields.PTextFieldEmail
+import ai.thepredict.ui.fields.PTextFieldEmailDefaults
+import ai.thepredict.ui.fields.PTextFieldPassword
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
@@ -48,6 +53,7 @@ internal class LoginScreen : Screen {
     override fun Content() {
         val viewModel = rememberScreenModel { LoginViewModel() }
         val data = viewModel.state.collectAsState()
+        val fieldsError: PredictException? = (data.value as? LoginViewModel.State.Error)?.exception
 
         val navigator = LocalNavigator.currentOrThrow
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
@@ -56,9 +62,7 @@ internal class LoginScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
-        var passwordFocusWasRequested by remember { mutableStateOf(false) }
         val focusManager = LocalFocusManager.current
-        val passwordFocusRequester = FocusRequester()
 
         Scaffold(
             topBar = { PTopAppBar("Login") }
@@ -68,64 +72,29 @@ internal class LoginScreen : Screen {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly,
             ) {
-                OutlinedTextField(
+                PTextFieldEmail(
                     modifier = Modifier.padding(vertical = 16.dp),
+                    fieldName = "Email",
+                    error = fieldsError.takeIf { it is PredictException.InvalidEmail },
                     value = email,
-                    onValueChange = {
-                        email = it
-                    },
-                    label = {
-                        Text("Email")
-                    },
-                    leadingIcon = {
-                        Icon(FeatherIcons.AtSign, "email")
-                    },
-                    singleLine = true,
-                    keyboardActions = KeyboardActions(
-                        onNext = {
-                            passwordFocusWasRequested = true
-                            passwordFocusRequester.requestFocus()
-                        },
-                        onDone = {
-                            passwordFocusRequester.requestFocus()
-                        }
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = if (passwordFocusWasRequested) ImeAction.Done else ImeAction.Next
-                    ),
-                )
+                    keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                ) {
+                    email = it
+                }
 
-                OutlinedTextField(
-                    modifier = Modifier
-                        .focusRequester(passwordFocusRequester)
-                        .padding(vertical = 16.dp),
+                PTextFieldPassword(
+                    fieldName = "Password",
                     value = password,
-                    onValueChange = {
-                        password = it
-                    },
-                    label = {
-                        Text("Password")
-                    },
-                    leadingIcon = {
-                        Icon(FeatherIcons.Key, "password")
-                    },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                        }, onNext = {
-                            focusManager.clearFocus()
-                        }
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
-                    ),
-                )
+                    error = fieldsError.takeIf { it is PredictException.WeakPassword },
+                    onAction = { focusManager.clearFocus() }
+                ) {
+                    password = it
+                }
 
                 PButton("Login", modifier = Modifier.padding(vertical = 16.dp)) {
                     viewModel.login(email, password)
+                    focusManager.clearFocus()
                 }
 
                 OutlinedButton(onClick = {
