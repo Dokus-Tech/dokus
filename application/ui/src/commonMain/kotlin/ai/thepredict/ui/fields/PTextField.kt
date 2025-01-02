@@ -2,11 +2,9 @@ package ai.thepredict.ui.fields
 
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PErrorText
+import ai.thepredict.ui.PIcon
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +18,7 @@ fun PTextField(
     value: String,
     icon: ImageVector?,
     singleLine: Boolean,
+    minLines: Int,
     onAction: () -> Unit,
     keyboardOptions: KeyboardOptions,
     error: PredictException?,
@@ -27,6 +26,11 @@ fun PTextField(
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
 ) {
+    val leadingIcon: (@Composable () -> Unit)? = if (icon == null) null else {
+        {
+            PIcon(icon, fieldName, error != null)
+        }
+    }
     OutlinedTextField(
         modifier = modifier,
         value = value,
@@ -41,17 +45,9 @@ fun PTextField(
         label = {
             Text(fieldName)
         },
-        leadingIcon = {
-            if (icon != null) {
-                val tint = if (error != null) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    LocalContentColor.current
-                }
-                Icon(icon, fieldName, tint = tint)
-            }
-        },
+        leadingIcon = leadingIcon,
         singleLine = singleLine,
+        minLines = minLines,
         keyboardActions = KeyboardActions(
             onNext = {
                 onAction()
