@@ -1,5 +1,6 @@
 package ai.thepredict.ui.fields
 
+import ai.thepredict.domain.exceptions.PredictException
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -22,7 +23,6 @@ object PTextFieldFreeDefaults {
         capitalization = KeyboardCapitalization.Sentences,
         imeAction = ImeAction.Done
     )
-    val isError = false
     val visualTransformation = VisualTransformation.None
 }
 
@@ -34,34 +34,21 @@ fun PTextFieldFree(
     singleLine: Boolean = PTextFieldFreeDefaults.singleLine,
     onAction: () -> Unit = PTextFieldFreeDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldFreeDefaults.keyboardOptions,
-    isError: Boolean = PTextFieldFreeDefaults.isError,
+    error: PredictException? = null,
     visualTransformation: VisualTransformation = PTextFieldFreeDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
 ) {
-    OutlinedTextField(
-        modifier = modifier,
+    PTextField(
+        fieldName = fieldName,
         value = value,
-        onValueChange = onValueChange,
-        isError = isError,
-        visualTransformation = visualTransformation,
-        label = {
-            Text(fieldName)
-        },
-        leadingIcon = {
-            if (icon != null) {
-                Icon(icon, fieldName)
-            }
-        },
+        icon = icon,
         singleLine = singleLine,
-        keyboardActions = KeyboardActions(
-            onNext = {
-                onAction()
-            },
-            onDone = {
-                onAction()
-            }
-        ),
+        onAction = onAction,
         keyboardOptions = keyboardOptions,
+        error = error,
+        visualTransformation = visualTransformation,
+        modifier = modifier,
+        onValueChange = onValueChange
     )
 }

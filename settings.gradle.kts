@@ -34,6 +34,7 @@ include(":composeApp")
 include(":application:onboarding")
 include(":application:home")
 include(":application:ui")
+include(":application:ui-preview")
 
 include(":application:core")
 include(":application:platform")

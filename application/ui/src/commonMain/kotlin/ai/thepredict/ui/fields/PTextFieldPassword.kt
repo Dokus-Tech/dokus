@@ -43,33 +43,16 @@ fun PTextFieldPassword(
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
 ) {
-    OutlinedTextField(
-        modifier = modifier,
+    PTextField(
+        fieldName = fieldName,
         value = value,
-        onValueChange = onValueChange,
-        supportingText = {
-            if (error != null) {
-                PErrorText(error)
-            }
-        },
-        visualTransformation = visualTransformation,
-        label = {
-            Text(fieldName)
-        },
-        leadingIcon = {
-            if (icon != null) {
-                Icon(icon, fieldName)
-            }
-        },
+        icon = icon,
         singleLine = singleLine,
-        keyboardActions = KeyboardActions(
-            onNext = {
-                onAction()
-            },
-            onDone = {
-                onAction()
-            }
-        ),
+        onAction = onAction,
         keyboardOptions = keyboardOptions,
+        error = error,
+        visualTransformation = visualTransformation,
+        modifier = modifier,
+        onValueChange = onValueChange
     )
 }
