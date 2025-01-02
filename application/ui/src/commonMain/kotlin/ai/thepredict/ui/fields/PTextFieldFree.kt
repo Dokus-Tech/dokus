@@ -1,11 +1,7 @@
 package ai.thepredict.ui.fields
 
 import ai.thepredict.domain.exceptions.PredictException
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,6 +40,7 @@ fun PTextFieldFree(
         value = value,
         icon = icon,
         singleLine = singleLine,
+        minLines = 3,
         onAction = onAction,
         keyboardOptions = keyboardOptions,
         error = error,

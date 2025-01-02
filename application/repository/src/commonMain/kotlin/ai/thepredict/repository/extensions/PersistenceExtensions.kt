@@ -7,9 +7,9 @@ import kotlin.uuid.ExperimentalUuidApi
 
 val Persistence.authCredentials: AuthCredentials?
     get() {
-        val email = email.takeIf { it?.isNotEmpty() == true } ?: return null
+        val userId = userId.takeIf { it?.isNotEmpty() == true } ?: return null
         val password = password.takeIf { it?.isNotEmpty() == true } ?: return null
-        return AuthCredentials(email, password)
+        return AuthCredentials(userId, password)
     }
 
 @OptIn(ExperimentalUuidApi::class)
