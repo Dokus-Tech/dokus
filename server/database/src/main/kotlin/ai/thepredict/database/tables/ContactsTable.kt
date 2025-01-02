@@ -1,5 +1,6 @@
 package ai.thepredict.database.tables
 
+import ai.thepredict.data.Contact
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
