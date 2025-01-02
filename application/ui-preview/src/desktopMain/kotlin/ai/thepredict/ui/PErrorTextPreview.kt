@@ -1,12 +1,13 @@
 package ai.thepredict.ui
 
+import ai.thepredict.domain.exceptions.PredictException
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.runtime.Composable
 
 @Composable
 @Preview
-fun PButtonPreview() {
+fun PErrorTextPreview() {
     PreviewWrapper {
-        PButton("I'm a button") {}
+        PErrorText(PredictException.NonAuthenticated)
     }
 }

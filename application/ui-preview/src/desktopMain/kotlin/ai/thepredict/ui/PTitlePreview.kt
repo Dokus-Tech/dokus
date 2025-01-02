@@ -6,5 +6,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun PTitlePreview() {
-    PTitle("Hi")
+    PreviewWrapper {
+        PTitle("Hi")
+    }
 }
