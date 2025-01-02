@@ -1,5 +1,7 @@
 package ai.thepredict.ui.fields
 
+import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.PErrorText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -25,7 +27,6 @@ object PTextFieldPasswordDefaults {
         capitalization = KeyboardCapitalization.None,
         imeAction = ImeAction.Done,
     )
-    val isError = false
     val visualTransformation = PasswordVisualTransformation()
 }
 
@@ -37,7 +38,7 @@ fun PTextFieldPassword(
     singleLine: Boolean = PTextFieldPasswordDefaults.singleLine,
     onAction: () -> Unit = PTextFieldPasswordDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldPasswordDefaults.keyboardOptions,
-    isError: Boolean = PTextFieldPasswordDefaults.isError,
+    error: PredictException? = null,
     visualTransformation: VisualTransformation = PTextFieldPasswordDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
@@ -46,7 +47,11 @@ fun PTextFieldPassword(
         modifier = modifier,
         value = value,
         onValueChange = onValueChange,
-        isError = isError,
+        supportingText = {
+            if (error != null) {
+                PErrorText(error)
+            }
+        },
         visualTransformation = visualTransformation,
         label = {
             Text(fieldName)

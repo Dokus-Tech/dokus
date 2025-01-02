@@ -1,8 +1,13 @@
 package ai.thepredict.ui.fields
 
+import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.PErrorText
+import ai.thepredict.ui.extensions.localized
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,7 +30,6 @@ object PTextFieldEmailDefaults {
         capitalization = KeyboardCapitalization.None,
         imeAction = ImeAction.Done
     )
-    val isError = false
     val visualTransformation = VisualTransformation.None
 }
 
@@ -37,7 +41,7 @@ fun PTextFieldEmail(
     singleLine: Boolean = PTextFieldEmailDefaults.singleLine,
     onAction: () -> Unit = PTextFieldEmailDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldEmailDefaults.keyboardOptions,
-    isError: Boolean = PTextFieldEmailDefaults.isError,
+    error: PredictException? = null,
     visualTransformation: VisualTransformation = PTextFieldEmailDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
@@ -46,14 +50,24 @@ fun PTextFieldEmail(
         modifier = modifier,
         value = value,
         onValueChange = onValueChange,
-        isError = isError,
+        isError = error != null,
+        supportingText = {
+            if (error != null) {
+                PErrorText(error)
+            }
+        },
         visualTransformation = visualTransformation,
         label = {
             Text(fieldName)
         },
         leadingIcon = {
             if (icon != null) {
-                Icon(icon, fieldName)
+                val tint = if (error != null) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    LocalContentColor.current
+                }
+                Icon(icon, fieldName, tint = tint)
             }
         },
         singleLine = singleLine,

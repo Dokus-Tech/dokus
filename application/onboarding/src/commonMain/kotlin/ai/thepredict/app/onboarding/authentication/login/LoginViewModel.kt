@@ -3,38 +3,40 @@ package ai.thepredict.app.onboarding.authentication.login
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.extension.launchStreamScoped
 import ai.thepredict.app.platform.persistence
-import ai.thepredict.data.User
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
+import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
+import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase
 import ai.thepredict.repository.api.UnifiedApi
+import ai.thepredict.repository.extensions.user
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import org.kodein.di.instance
 
 internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idle) {
 
+    private val validateEmailUseCase: ValidateEmailUseCase by di.instance()
+    private val validatePasswordUseCase: ValidatePasswordUseCase by di.instance()
     private val api: UnifiedApi by di.instance { screenModelScope }
 
-    fun login(emailValue: String, passwordValue: String) {
-        screenModelScope.launchStreamScoped {
-            mutableState.value = State.Loading
+    fun login(emailValue: String, passwordValue: String) = screenModelScope.launchStreamScoped {
+        mutableState.value = State.Loading
 
-            val existingUser = api.authenticate(emailValue, passwordValue)
-
-            existingUser.getOrNull()?.also { user: User ->
-                with(persistence) {
-                    userId = user.id.toString()
-                    email = user.email
-                    password = user.password
-                }
-
-                mutableState.value = State.Authenticated
-
-                return@launchStreamScoped
-            }
-
-            mutableState.value = State.Error(existingUser.asPredictException)
+        if (!validateEmailUseCase(emailValue)) {
+            mutableState.value = State.Error(PredictException.InvalidEmail)
+            return@launchStreamScoped
         }
+        if (!validatePasswordUseCase(passwordValue)) {
+            mutableState.value = State.Error(PredictException.WeakPassword)
+            return@launchStreamScoped
+        }
+
+        persistence.user = api.authenticate(emailValue, passwordValue).getOrElse {
+            mutableState.value = State.Error(it.asPredictException)
+            return@launchStreamScoped
+        }
+
+        mutableState.value = State.Authenticated
     }
 
     sealed interface State {
@@ -45,5 +47,10 @@ internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idl
         data object Authenticated : State
 
         data class Error(val exception: PredictException) : State
+    }
+
+    sealed interface FieldsValidationState {
+        data object Ok : FieldsValidationState
+        data class Error(val exception: PredictException) : FieldsValidationState
     }
 }

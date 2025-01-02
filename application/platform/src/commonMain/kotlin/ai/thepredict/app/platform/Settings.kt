@@ -27,6 +27,7 @@ private class SettingsDelegate(
 
 class Persistence(settings: Settings) {
     var userId: String? by SettingsDelegate(settings, "user_id")
+    var name: String? by SettingsDelegate(settings, "name")
     var email: String? by SettingsDelegate(settings, "email")
     var password: String? by SettingsDelegate(settings, "password")
     var selectedWorkspace: String? by SettingsDelegate(settings, "selected_workspace")

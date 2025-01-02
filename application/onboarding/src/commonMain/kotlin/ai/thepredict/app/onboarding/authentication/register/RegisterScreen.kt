@@ -1,6 +1,8 @@
 package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.navigation.OnboardingNavigation
+import ai.thepredict.app.onboarding.authentication.login.LoginViewModel
+import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PButton
 import ai.thepredict.ui.PErrorText
 import ai.thepredict.ui.PTitle
@@ -44,6 +46,7 @@ internal class RegisterScreen : Screen {
     override fun Content() {
         val viewModel = rememberScreenModel { RegisterViewModel() }
         val data = viewModel.state.collectAsState()
+        val fieldsError: PredictException? = (data.value as? RegisterViewModel.State.Error)?.exception
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -67,6 +70,7 @@ internal class RegisterScreen : Screen {
                 PTextFieldName(
                     modifier = Modifier.padding(vertical = 16.dp),
                     fieldName = "Name",
+                    error = fieldsError.takeIf { it is PredictException.InvalidName },
                     value = name,
                     icon = FeatherIcons.User,
                     keyboardOptions = PTextFieldFreeDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
@@ -80,6 +84,7 @@ internal class RegisterScreen : Screen {
                 PTextFieldEmail(
                     modifier = Modifier.padding(vertical = 16.dp),
                     fieldName = "Email",
+                    error = fieldsError.takeIf { it is PredictException.InvalidEmail },
                     value = email,
                     keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                     onAction = { focusManager.moveFocus(FocusDirection.Next) },
@@ -89,6 +94,7 @@ internal class RegisterScreen : Screen {
 
                 PTextFieldPassword(
                     fieldName = "Password",
+                    error = fieldsError.takeIf { it is PredictException.WeakPassword },
                     value = password,
                     onAction = { focusManager.clearFocus() }
                 ) {
