@@ -1,9 +1,9 @@
 package ai.thepredict.contacts.api
 
 import ai.thepredict.common.UserIdGetter
+import ai.thepredict.data.Contact
 import ai.thepredict.domain.api.OperationResult
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlin.coroutines.CoroutineContext
 
