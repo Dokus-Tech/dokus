@@ -46,39 +46,16 @@ fun PTextFieldEmail(
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
 ) {
-    OutlinedTextField(
-        modifier = modifier,
+    PTextField(
+        fieldName = fieldName,
         value = value,
-        onValueChange = onValueChange,
-        isError = error != null,
-        supportingText = {
-            if (error != null) {
-                PErrorText(error)
-            }
-        },
-        visualTransformation = visualTransformation,
-        label = {
-            Text(fieldName)
-        },
-        leadingIcon = {
-            if (icon != null) {
-                val tint = if (error != null) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    LocalContentColor.current
-                }
-                Icon(icon, fieldName, tint = tint)
-            }
-        },
+        icon = icon,
         singleLine = singleLine,
-        keyboardActions = KeyboardActions(
-            onNext = {
-                onAction()
-            },
-            onDone = {
-                onAction()
-            }
-        ),
+        onAction = onAction,
         keyboardOptions = keyboardOptions,
+        error = error,
+        visualTransformation = visualTransformation,
+        modifier = modifier,
+        onValueChange = onValueChange
     )
 }

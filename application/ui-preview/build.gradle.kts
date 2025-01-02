@@ -32,12 +32,12 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "applicationUi"
+        moduleName = "applicationUiPreview"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "applicationUi.js"
+                outputFileName = "applicationUiPreview.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -54,10 +54,11 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
+            api(compose.preview)
             api(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            api(projects.shared.configuration)
+            implementation(projects.application.ui)
             implementation(projects.shared.domain)
 
             api(compose.runtime)
@@ -79,8 +80,8 @@ kotlin {
             api(libs.materialKolor)
         }
         desktopMain.dependencies {
+            api(compose.preview)
             api(compose.desktop.currentOs)
-            api(libs.kotlinx.coroutines.swing)
         }
     }
 }
