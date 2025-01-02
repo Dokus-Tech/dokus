@@ -1,7 +1,7 @@
 package ai.thepredict.repository.extensions
 
 import ai.thepredict.app.platform.Persistence
-import ai.thepredict.domain.AuthCredentials
+import ai.thepredict.data.AuthCredentials
 
 val Persistence.authCredentials: AuthCredentials?
     get() {

@@ -1,9 +1,9 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.configuration.ServerEndpoint
-import ai.thepredict.domain.NewUser
-import ai.thepredict.domain.User
-import ai.thepredict.domain.Workspace
+import ai.thepredict.data.NewUser
+import ai.thepredict.data.User
+import ai.thepredict.data.Workspace
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.identity.api.IdentityRemoteService
 import ai.thepredict.repository.helpers.ServiceProvider

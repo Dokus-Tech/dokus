@@ -1,7 +1,7 @@
 package ai.thepredict.identity.mappers
 
 import ai.thepredict.database.tables.UserEntity
-import ai.thepredict.domain.User
+import ai.thepredict.data.User
 
 val UserEntity.asUserApi: User
     get() = User(

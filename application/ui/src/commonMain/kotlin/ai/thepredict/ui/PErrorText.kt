@@ -1,6 +1,7 @@
 package ai.thepredict.ui
 
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.extensions.localized
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,5 +22,5 @@ fun PErrorText(text: String, modifier: Modifier = Modifier.padding(all = 16.dp))
 
 @Composable
 fun PErrorText(exception: PredictException, modifier: Modifier = Modifier.padding(all = 16.dp)) {
-    PErrorText(exception.message, modifier)
+    PErrorText(exception.localized, modifier)
 }

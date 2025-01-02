@@ -42,6 +42,7 @@ include(":application:navigation")
 
 include(":shared:configuration")
 include(":shared:domain")
+include(":shared:data")
 include(":shared:contacts-api")
 include(":shared:identity-api")
 include(":shared:documents-api")

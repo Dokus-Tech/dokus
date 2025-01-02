@@ -5,13 +5,14 @@ import ai.thepredict.database.Database
 import ai.thepredict.database.tables.UserEntity
 import ai.thepredict.database.tables.findByEmail
 import ai.thepredict.database.tables.getById
-import ai.thepredict.domain.AuthCredentials
-import ai.thepredict.domain.NewUser
-import ai.thepredict.domain.User
-import ai.thepredict.domain.Workspace
+import ai.thepredict.data.AuthCredentials
+import ai.thepredict.data.NewUser
+import ai.thepredict.data.User
+import ai.thepredict.data.Workspace
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.domain.userUUID
+import ai.thepredict.data.userUUID
+import ai.thepredict.domain.usecases.validators.ValidateNewUserUseCase
 import ai.thepredict.identity.mappers.asUserApi
 import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,7 @@ import kotlin.uuid.toJavaUuid
 class IdentityRemoteServiceImpl(
     override val coroutineContext: CoroutineContext,
     private val userIdGetter: UserIdGetter,
+    private val validateNewUserUseCase: ValidateNewUserUseCase = ValidateNewUserUseCase(),
 ) : IdentityRemoteService {
 
     @Throws(PredictException.NonAuthenticated::class)
@@ -35,8 +37,10 @@ class IdentityRemoteServiceImpl(
         return existingUser.asUserApi
     }
 
-    @Throws(PredictException.UserAlreadyExists::class)
+    @Throws(PredictException::class)
     override suspend fun createUser(newUser: NewUser): User {
+        validateNewUserUseCase(newUser)
+
         val existingUser = UserEntity.findByEmail(newUser.email)
         if (existingUser != null) throw PredictException.UserAlreadyExists
 
