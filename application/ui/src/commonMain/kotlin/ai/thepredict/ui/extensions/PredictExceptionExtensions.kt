@@ -9,6 +9,7 @@ val PredictException.localized: String
         is PredictException.NonAuthenticated -> "Authentication unsuccessful"
         is PredictException.Unknown -> message ?: "Unknown error happened"
         is PredictException.InternalError -> errorMessage
+        is PredictException.ConnectionError -> "Unable to connect to the server"
         is PredictException.InvalidEmail -> "Please enter the valid email"
         is PredictException.WeakPassword -> "The password is too weak"
         is PredictException.InvalidName -> "Please enter the valid name"

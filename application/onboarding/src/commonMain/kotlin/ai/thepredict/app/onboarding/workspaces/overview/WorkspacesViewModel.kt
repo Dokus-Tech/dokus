@@ -16,6 +16,8 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
     private val api: UnifiedApi by di.instance { screenModelScope }
 
     fun fetch() = screenModelScope.launchStreamScoped {
+        mutableState.value = State.Loading
+
         val workspaces = api.myWorkspaces().getOrElse {
             mutableState.value = State.Error(it.asPredictException)
             return@launchStreamScoped

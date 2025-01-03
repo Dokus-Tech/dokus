@@ -3,6 +3,8 @@ package ai.thepredict.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -40,7 +42,20 @@ fun PButton(
         )
 
         PButtonVariant.CallToAction -> {}
-        PButtonVariant.Outline -> {}
+        PButtonVariant.Outline -> {
+            OutlinedButton(
+                onClick = onClick
+            ) {
+                if (icon != null) {
+                    Icon(
+                        icon,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        contentDescription = contentDescription
+                    )
+                }
+                Text(text, style = MaterialTheme.typography.labelMedium)
+            }
+        }
     }
 }
 
@@ -54,7 +69,11 @@ private fun PButtonDefault(
 ) {
     Button(modifier = modifier, onClick = onClick) {
         if (icon != null) {
-            Icon(icon, modifier = Modifier.padding(4.dp), contentDescription = contentDescription)
+            Icon(
+                icon,
+                modifier = Modifier.padding(horizontal = 8.dp),
+                contentDescription = contentDescription
+            )
         }
         Text(text, modifier = Modifier.padding(4.dp))
     }

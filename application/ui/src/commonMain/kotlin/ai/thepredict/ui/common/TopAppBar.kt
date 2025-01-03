@@ -1,4 +1,4 @@
-package ai.thepredict.ui
+package ai.thepredict.ui.common
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,19 +14,21 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PTopAppBar(title: String) {
+fun PTopAppBar(title: String, hideIfNoPop: Boolean = false) {
     val navigator = LocalNavigator.currentOrThrow
-    if (!navigator.canPop) {
+    if (!navigator.canPop && hideIfNoPop) {
         return
     }
 
     TopAppBar(
         title = { Text(title, textAlign = TextAlign.Center) },
         navigationIcon = {
-            IconButton(
-                onClick = { navigator.pop() }
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            if (navigator.canPop) {
+                IconButton(
+                    onClick = { navigator.pop() }
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
             }
         }
     )

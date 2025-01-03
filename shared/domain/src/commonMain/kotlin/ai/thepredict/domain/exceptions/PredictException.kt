@@ -4,7 +4,7 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class PredictException : Exception() {
+sealed class PredictException(val recoverable: Boolean = false) : Exception() {
     @Serializable
     data object UserAlreadyExists : PredictException()
 
@@ -15,7 +15,10 @@ sealed class PredictException : Exception() {
     data class Unknown(@Contextual val throwable: Throwable?) : PredictException()
 
     @Serializable
-    data class InternalError(val errorMessage: String) : PredictException()
+    data class InternalError(val errorMessage: String) : PredictException(recoverable = true)
+
+    @Serializable
+    data object ConnectionError : PredictException(recoverable = true)
 
     @Serializable
     data object InvalidEmail : PredictException()
@@ -28,9 +31,12 @@ sealed class PredictException : Exception() {
 }
 
 val Throwable?.asPredictException: PredictException
-    get() {
-        return if (this is PredictException) this
-        else PredictException.Unknown(this)
+    get() = when (this) {
+        is PredictException -> this
+        else -> when (this?.message) {
+            "Connection refused" -> PredictException.ConnectionError
+            else -> PredictException.Unknown(this)
+        }
     }
 
 val Result<*>.asPredictException: PredictException

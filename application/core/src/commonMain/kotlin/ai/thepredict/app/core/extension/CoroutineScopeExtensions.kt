@@ -12,8 +12,6 @@ fun CoroutineScope.launchStreamScoped(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit,
-): Job {
-    return launch(context, start) {
-        streamScoped(block)
-    }
+): Job = launch(context, start) {
+    streamScoped(block)
 }

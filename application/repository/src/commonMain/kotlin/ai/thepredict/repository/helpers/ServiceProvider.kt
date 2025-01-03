@@ -41,7 +41,11 @@ internal class ServiceProvider<ServiceType : RemoteService>(
             val newServiceResult = createClientAndService()
             val newService = newServiceResult.getOrNull()
             if (newService == null) {
-                // TODO: Log it
+                if (!retryAttempt) {
+                    service = null
+                    delay(1.seconds)
+                    return@withContext withService(true, func)
+                }
                 return@withContext Result.failure(newServiceResult.asPredictException)
             }
             service = newService
