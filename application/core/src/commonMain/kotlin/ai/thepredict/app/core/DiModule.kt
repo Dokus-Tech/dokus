@@ -23,9 +23,9 @@ val coreDiModule by DI.Module("core") {
 
     bindProvider<CreateNewUserUseCase> {
         CreateNewUserUseCase(
-            emailValidator = instance(),
-            passwordValidator = instance(),
-            nameValidator = instance()
+            emailValidator = instance<ValidateEmailUseCase>(),
+            passwordValidator = instance<ValidatePasswordUseCase>(),
+            nameValidator = instance<ValidateNameUseCase>()
         )
     }
 }

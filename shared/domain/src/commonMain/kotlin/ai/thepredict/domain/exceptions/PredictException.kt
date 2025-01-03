@@ -38,6 +38,7 @@ val Throwable?.asPredictException: PredictException
             if (message?.contains("Failed to connect to") == true) PredictException.ConnectionError
             else if (message?.contains("Connection refused") == true) PredictException.ConnectionError
             else if (message?.contains("Could not connect to the server") == true) PredictException.ConnectionError
+            else if (message?.contains("WebSocket connection") == true) PredictException.ConnectionError
             else PredictException.Unknown(this)
         }
     }
