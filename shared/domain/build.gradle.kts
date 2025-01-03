@@ -48,7 +48,6 @@ kotlin {
             implementation(libs.kotlinx.rpc.krpc.serialization.json)
             implementation(libs.kotlinx.rpc.core)
             api(libs.kotlinx.datetime)
-            api(libs.exposed.datetime)
         }
     }
 }
