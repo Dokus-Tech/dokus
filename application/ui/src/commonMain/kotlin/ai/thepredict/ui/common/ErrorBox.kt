@@ -25,7 +25,9 @@ fun ErrorBox(exception: PredictException, modifier: Modifier = Modifier, onRetry
         PTitle("Oops")
         Spacer(Modifier.padding(vertical = 8.dp))
         PErrorText(exception)
-        Spacer(Modifier.padding(vertical = 8.dp))
-        PButton("Try again", icon = FeatherIcons.RefreshCw, onClick = onRetry)
+        if (exception.recoverable) {
+            Spacer(Modifier.padding(vertical = 8.dp))
+            PButton("Try again", icon = FeatherIcons.RefreshCw, onClick = onRetry)
+        }
     }
 }
