@@ -23,3 +23,10 @@ data class Workspace(
         }
     }
 }
+
+@Serializable
+data class NewWorkspace(
+    val name: String,
+    val legalName: String?,
+    val taxNumber: String?,
+)

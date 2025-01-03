@@ -28,8 +28,8 @@ class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
     var taxNumber by WorkspacesTable.taxNumber
     var createdAt by WorkspacesTable.createdAt
 
-    val owner by UserEntity referencedOn WorkspacesTable.owner
-    val contacts by ContactEntity referencedOn ContactsTable.workspace
+    var owner by UserEntity referencedOn WorkspacesTable.owner
+    var contacts by ContactEntity referencedOn ContactsTable.workspace
 }
 
 suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity? {

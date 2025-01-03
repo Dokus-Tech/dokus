@@ -7,21 +7,21 @@ import ai.thepredict.database.tables.findByEmail
 import ai.thepredict.database.tables.getById
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.NewUser
+import ai.thepredict.data.NewWorkspace
 import ai.thepredict.data.User
 import ai.thepredict.data.Workspace
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.data.userUUID
+import ai.thepredict.database.tables.WorkspaceEntity
 import ai.thepredict.domain.usecases.validators.ValidateNewUserUseCase
 import ai.thepredict.identity.mappers.asUserApi
 import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
 
 class IdentityRemoteServiceImpl(
     override val coroutineContext: CoroutineContext,
@@ -56,15 +56,30 @@ class IdentityRemoteServiceImpl(
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
-        val workspaces = UserEntity.getById(authCredentials.userUUID.toJavaUuid())?.workspaces
-        return (workspaces?.asFlow() ?: emptyFlow()).map { it.asWorkspaceApi }
+        val user = UserEntity.getById(authCredentials.userUUID)
+        if (user == null) throw PredictException.NonAuthenticated
+
+        return user.workspaces.asFlow().map { it.asWorkspaceApi }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun createWorkspace(
         authCredentials: AuthCredentials,
-        workspace: Workspace,
-    ): OperationResult {
-        return OperationResult.OperationNotAvailable
+        workspace: NewWorkspace,
+    ): Workspace {
+        val user = UserEntity.getById(authCredentials.userUUID)
+        if (user == null) throw PredictException.NonAuthenticated
+
+        val workspaceEntity = Database.transaction {
+            WorkspaceEntity.new {
+                name = workspace.name
+                legalName = workspace.legalName
+                taxNumber = workspace.taxNumber
+                owner = user
+            }
+        }
+
+        return workspaceEntity.asWorkspaceApi
     }
 
     override suspend fun deleteWorkspace(
