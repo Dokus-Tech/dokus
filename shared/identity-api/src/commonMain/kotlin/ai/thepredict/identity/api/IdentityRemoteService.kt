@@ -2,6 +2,7 @@ package ai.thepredict.identity.api
 
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.NewUser
+import ai.thepredict.data.NewWorkspace
 import ai.thepredict.data.User
 import ai.thepredict.data.Workspace
 import ai.thepredict.domain.api.OperationResult
@@ -20,8 +21,8 @@ interface IdentityRemoteService : RemoteService {
 
     suspend fun createWorkspace(
         authCredentials: AuthCredentials,
-        workspace: Workspace,
-    ): OperationResult
+        workspace: NewWorkspace,
+    ): Workspace
 
     suspend fun deleteWorkspace(
         authCredentials: AuthCredentials,

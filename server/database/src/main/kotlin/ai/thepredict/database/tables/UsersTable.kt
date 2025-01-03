@@ -8,6 +8,9 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 internal object UsersTable : UUIDTable("users") {
     val name = varchar("name", 128)
@@ -34,6 +37,11 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
 
 suspend fun UserEntity.Companion.getAll(): List<UserEntity> {
     return Database.transaction { UserEntity.all().toList() }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+suspend fun UserEntity.Companion.getById(userId: Uuid): UserEntity? {
+    return Database.transaction { runCatching { get(userId.toJavaUuid()) }.getOrNull() }
 }
 
 suspend fun UserEntity.Companion.getById(userId: UUID): UserEntity? {

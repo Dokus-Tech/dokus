@@ -2,6 +2,7 @@ package ai.thepredict.repository.api
 
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.data.NewUser
+import ai.thepredict.data.NewWorkspace
 import ai.thepredict.data.User
 import ai.thepredict.data.Workspace
 import ai.thepredict.domain.api.OperationResult
@@ -18,7 +19,7 @@ interface IdentityApi {
 
     suspend fun myWorkspaces(): Result<Flow<Workspace>>
 
-    suspend fun createWorkspace(workspace: Workspace): OperationResult
+    suspend fun createWorkspace(workspace: NewWorkspace): Result<Workspace>
 
     suspend fun deleteWorkspace(organisationId: Workspace.Id): OperationResult
 
@@ -69,8 +70,8 @@ private class IdentityApiImpl(
         }
     }
 
-    override suspend fun createWorkspace(workspace: Workspace): OperationResult {
-        return serviceProvider.withServiceOrFailure { authCredentials ->
+    override suspend fun createWorkspace(workspace: NewWorkspace): Result<Workspace> {
+        return serviceProvider.withService { authCredentials ->
             require(authCredentials != null)
             createWorkspace(authCredentials, workspace)
         }
