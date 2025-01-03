@@ -60,7 +60,7 @@ class IdentityRemoteServiceImpl(
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
         val user = UserEntity.getById(authCredentials.userUUID)
-        if (user == null) throw PredictException.NonAuthenticated
+        if (user == null) return emptyFlow()
 
         val workspaces = user.workspaces.toList()
         if (workspaces.isEmpty()) return emptyFlow()
