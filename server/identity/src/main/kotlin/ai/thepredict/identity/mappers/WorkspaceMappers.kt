@@ -8,4 +8,6 @@ val WorkspaceEntity.asWorkspaceApi: Workspace
         id = Workspace.Id.random,
         name = name,
         legalName = legalName,
+        taxNumber = taxNumber,
+        createdAt = createdAt,
     )

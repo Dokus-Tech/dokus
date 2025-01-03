@@ -1,12 +1,11 @@
 package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.navigation.OnboardingNavigation
-import ai.thepredict.app.onboarding.authentication.login.LoginViewModel
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PButton
 import ai.thepredict.ui.PErrorText
 import ai.thepredict.ui.PTitle
-import ai.thepredict.ui.PTopAppBar
+import ai.thepredict.ui.common.PTopAppBar
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldFreeDefaults
@@ -15,11 +14,9 @@ import ai.thepredict.ui.fields.PTextFieldPassword
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue

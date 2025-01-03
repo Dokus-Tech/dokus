@@ -5,7 +5,7 @@ import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PButton
 import ai.thepredict.ui.PErrorText
-import ai.thepredict.ui.PTopAppBar
+import ai.thepredict.ui.common.PTopAppBar
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
@@ -14,11 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,12 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.registry.rememberScreen
@@ -43,9 +35,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.AtSign
-import compose.icons.feathericons.Key
 
 internal class LoginScreen : Screen {
 

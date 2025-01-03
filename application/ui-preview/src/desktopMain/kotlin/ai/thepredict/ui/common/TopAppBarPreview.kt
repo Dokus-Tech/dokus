@@ -1,4 +1,4 @@
-package ai.thepredict.ui
+package ai.thepredict.ui.common
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.material.Scaffold
