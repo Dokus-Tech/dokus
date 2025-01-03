@@ -33,9 +33,11 @@ sealed class PredictException(val recoverable: Boolean = false) : Exception() {
 val Throwable?.asPredictException: PredictException
     get() = when (this) {
         is PredictException -> this
-        else -> when (this?.message) {
-            "Connection refused" -> PredictException.ConnectionError
-            else -> PredictException.Unknown(this)
+        null -> PredictException.Unknown(this)
+        else -> {
+            if (message?.contains("Failed to connect to") == true) PredictException.ConnectionError
+            else if (message?.contains("Connection refused") == true) PredictException.ConnectionError
+            else PredictException.Unknown(this)
         }
     }
 
