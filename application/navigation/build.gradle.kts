@@ -67,6 +67,7 @@ kotlin {
             api(libs.voyager.navigator)
             api(libs.voyager.navigatorKmp)
             api(libs.voyager.tabNavigator)
+            api(libs.voyager.transitions)
             api(libs.voyager.screenModel)
         }
         desktopMain.dependencies {

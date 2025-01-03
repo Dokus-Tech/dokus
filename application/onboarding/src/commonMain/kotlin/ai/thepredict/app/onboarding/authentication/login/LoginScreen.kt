@@ -54,7 +54,7 @@ internal class LoginScreen : Screen {
         val focusManager = LocalFocusManager.current
 
         Scaffold(
-            topBar = { PTopAppBar("Login") }
+            topBar = { PTopAppBar("Let's get started") }
         ) { innerPadding ->
             Column(
                 modifier = Modifier.fillMaxWidth().padding(innerPadding),
