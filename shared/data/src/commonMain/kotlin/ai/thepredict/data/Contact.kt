@@ -45,3 +45,12 @@ data class Contact(
         }
     }
 }
+
+@Serializable
+data class NewContact(
+    val name: String,
+    val phoneNumber: String? = null,
+    val email: String? = null,
+    val taxNumber: String? = null,
+    val companyName: String? = null,
+)

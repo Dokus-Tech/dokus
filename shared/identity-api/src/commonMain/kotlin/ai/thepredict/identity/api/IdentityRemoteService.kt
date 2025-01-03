@@ -21,7 +21,7 @@ interface IdentityRemoteService : RemoteService {
 
     suspend fun createWorkspace(
         authCredentials: AuthCredentials,
-        workspace: NewWorkspace,
+        newWorkspace: NewWorkspace,
     ): Workspace
 
     suspend fun deleteWorkspace(

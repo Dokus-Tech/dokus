@@ -15,10 +15,12 @@ import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.data.userUUID
 import ai.thepredict.database.tables.WorkspaceEntity
 import ai.thepredict.domain.usecases.validators.ValidateNewUserUseCase
+import ai.thepredict.domain.usecases.validators.ValidateNewWorkspaceUseCase
 import ai.thepredict.identity.mappers.asUserApi
 import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 import kotlin.uuid.ExperimentalUuidApi
@@ -27,6 +29,7 @@ class IdentityRemoteServiceImpl(
     override val coroutineContext: CoroutineContext,
     private val userIdGetter: UserIdGetter,
     private val validateNewUserUseCase: ValidateNewUserUseCase = ValidateNewUserUseCase(),
+    private val validateNewWorkspaceUseCase: ValidateNewWorkspaceUseCase = ValidateNewWorkspaceUseCase(),
 ) : IdentityRemoteService {
 
     @Throws(PredictException.NonAuthenticated::class)
@@ -59,22 +62,26 @@ class IdentityRemoteServiceImpl(
         val user = UserEntity.getById(authCredentials.userUUID)
         if (user == null) throw PredictException.NonAuthenticated
 
-        return user.workspaces.asFlow().map { it.asWorkspaceApi }
+        val workspaces = user.workspaces.toList()
+        if (workspaces.isEmpty()) return emptyFlow()
+        return workspaces.asFlow().map { it.asWorkspaceApi }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun createWorkspace(
         authCredentials: AuthCredentials,
-        workspace: NewWorkspace,
+        newWorkspace: NewWorkspace,
     ): Workspace {
+        validateNewWorkspaceUseCase(newWorkspace)
+
         val user = UserEntity.getById(authCredentials.userUUID)
         if (user == null) throw PredictException.NonAuthenticated
 
         val workspaceEntity = Database.transaction {
             WorkspaceEntity.new {
-                name = workspace.name
-                legalName = workspace.legalName
-                taxNumber = workspace.taxNumber
+                name = newWorkspace.name
+                legalName = newWorkspace.legalName
+                taxNumber = newWorkspace.taxNumber
                 owner = user
             }
         }

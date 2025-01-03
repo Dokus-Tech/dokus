@@ -28,6 +28,12 @@ sealed class PredictException(val recoverable: Boolean = false) : Exception() {
 
     @Serializable
     data object InvalidName : PredictException()
+
+    @Serializable
+    data object InvalidTaxNumber : PredictException()
+
+    @Serializable
+    data object InvalidWorkspaceName : PredictException()
 }
 
 val Throwable?.asPredictException: PredictException
