@@ -1,16 +1,11 @@
 package ai.thepredict.app.home.splash
 
-import ai.thepredict.app.core.di
 import ai.thepredict.app.platform.persistence
-import ai.thepredict.repository.api.UnifiedApi
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
-import org.kodein.di.instance
 
 internal class SplashScreenViewModel : StateScreenModel<SplashScreenViewModel.Effect>(Effect.Idle) {
-
-    private val api: UnifiedApi by di.instance()
 
     fun checkOnboarding() {
         screenModelScope.launch {
