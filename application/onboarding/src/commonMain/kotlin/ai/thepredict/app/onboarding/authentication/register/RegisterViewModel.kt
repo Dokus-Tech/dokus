@@ -34,7 +34,7 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
             }
 
             with(persistence) {
-                userId = user.id.toString()
+                userId = user.userUUID.toString()
                 email = user.email
                 password = user.password
             }
