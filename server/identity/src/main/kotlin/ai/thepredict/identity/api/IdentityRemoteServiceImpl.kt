@@ -63,7 +63,7 @@ class IdentityRemoteServiceImpl(
     override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
         val user = UserEntity.authenticated(authCredentials)
 
-        return user.workspaces?.asFlow()?.map { it.asWorkspaceApi } ?: emptyFlow()
+        return user.workspaces.asFlow().map { it.asWorkspaceApi }
     }
 
     @OptIn(ExperimentalUuidApi::class)

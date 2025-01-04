@@ -3,7 +3,6 @@ package ai.thepredict.repository.extensions
 import ai.thepredict.app.platform.Persistence
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.User
-import kotlin.uuid.ExperimentalUuidApi
 
 val Persistence.authCredentials: AuthCredentials?
     get() {
@@ -12,7 +11,6 @@ val Persistence.authCredentials: AuthCredentials?
         return AuthCredentials(userId, password)
     }
 
-@OptIn(ExperimentalUuidApi::class)
 var Persistence.user: User?
     get() {
         val userId = userId.takeIf { it?.isNotEmpty() == true } ?: return null
@@ -22,7 +20,7 @@ var Persistence.user: User?
         return User(userId, email, name, password)
     }
     set(value) {
-        userId = value?.id?.value.toString()
+        userId = value?.id
         name = value?.name
         email = value?.email
         password = value?.password
