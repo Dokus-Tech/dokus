@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package ai.thepredict.data
 
 import kotlinx.serialization.Contextual
@@ -15,8 +13,10 @@ data class User(
     val email: String,
     val password: String,
 ) {
+    @OptIn(ExperimentalUuidApi::class)
     val userUUID: Id get() = Id(Uuid.parse(id))
 
+    @OptIn(ExperimentalUuidApi::class)
     @Serializable
     @JvmInline
     value class Id(@Contextual val value: Uuid) {
