@@ -62,9 +62,7 @@ class IdentityRemoteServiceImpl(
         val user = UserEntity.getById(authCredentials.userUUID)
         if (user == null) return emptyFlow()
 
-        val workspaces = user.workspaces.toList()
-        if (workspaces.isEmpty()) return emptyFlow()
-        return workspaces.asFlow().map { it.asWorkspaceApi }
+        return user.workspaces?.asFlow()?.map { it.asWorkspaceApi } ?: emptyFlow()
     }
 
     @OptIn(ExperimentalUuidApi::class)
