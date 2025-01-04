@@ -42,8 +42,8 @@ object Database {
     suspend fun <T> transaction(statement: suspend Transaction.() -> T): T {
         val databaseContext = newSingleThreadContext("DatabaseThread")
         return suspendedTransactionAsync(databaseContext, db) {
-            SchemaUtils.create(*tables)
             addLogger(StdOutSqlLogger)
+            SchemaUtils.create(*tables)
             statement()
         }.await()
     }

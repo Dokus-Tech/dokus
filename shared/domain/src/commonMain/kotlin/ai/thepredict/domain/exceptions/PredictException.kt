@@ -9,7 +9,10 @@ sealed class PredictException(val recoverable: Boolean = false) : Exception() {
     data object UserAlreadyExists : PredictException()
 
     @Serializable
-    data object NonAuthenticated : PredictException()
+    data object NotAuthenticated : PredictException()
+
+    @Serializable
+    data object NotAuthorized : PredictException()
 
     @Serializable
     data class Unknown(@Contextual val throwable: Throwable?) : PredictException()

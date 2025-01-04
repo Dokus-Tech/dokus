@@ -8,6 +8,6 @@ import androidx.compose.runtime.Composable
 @Preview
 fun PErrorTextPreview() {
     PreviewWrapper {
-        PErrorText(PredictException.NonAuthenticated)
+        PErrorText(PredictException.NotAuthenticated)
     }
 }

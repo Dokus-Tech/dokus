@@ -6,7 +6,8 @@ import androidx.compose.runtime.Composable
 val PredictException.localized: String
     @Composable get() = when (this) {
         is PredictException.UserAlreadyExists -> "That user already exists!"
-        is PredictException.NonAuthenticated -> "Authentication unsuccessful"
+        is PredictException.NotAuthenticated -> "You are not authenticated"
+        is PredictException.NotAuthorized -> "You are not authorized to perform this action"
         is PredictException.Unknown -> message ?: "Unknown error happened"
         is PredictException.InternalError -> errorMessage
         is PredictException.ConnectionError -> "Unable to connect to the server"
