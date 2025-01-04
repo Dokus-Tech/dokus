@@ -1,6 +1,9 @@
 package ai.thepredict.database.tables
 
+import ai.thepredict.data.AuthCredentials
+import ai.thepredict.data.userUUID
 import ai.thepredict.database.Database
+import ai.thepredict.domain.exceptions.PredictException
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -50,4 +53,12 @@ suspend fun UserEntity.Companion.getById(userId: UUID): UserEntity? {
 
 suspend fun UserEntity.Companion.findByEmail(email: String): UserEntity? {
     return Database.transaction { runCatching { find { UsersTable.email eq email }.singleOrNull() }.getOrNull() }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Throws(PredictException.NotAuthenticated::class)
+suspend fun UserEntity.Companion.authenticated(authCredentials: AuthCredentials): UserEntity {
+    val user = UserEntity.getById(authCredentials.userUUID.toJavaUuid())
+    if (user == null || user.passwordHash != authCredentials.passwordHash) throw PredictException.NotAuthenticated
+    return user
 }

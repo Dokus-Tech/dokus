@@ -14,6 +14,7 @@ import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.data.userUUID
 import ai.thepredict.database.tables.WorkspaceEntity
+import ai.thepredict.database.tables.authenticated
 import ai.thepredict.domain.usecases.validators.ValidateNewUserUseCase
 import ai.thepredict.domain.usecases.validators.ValidateNewWorkspaceUseCase
 import ai.thepredict.identity.mappers.asUserApi
@@ -32,11 +33,11 @@ class IdentityRemoteServiceImpl(
     private val validateNewWorkspaceUseCase: ValidateNewWorkspaceUseCase = ValidateNewWorkspaceUseCase(),
 ) : IdentityRemoteService {
 
-    @Throws(PredictException.NonAuthenticated::class)
+    @Throws(PredictException.NotAuthenticated::class)
     override suspend fun authenticate(email: String, password: String): User {
         val existingUser = UserEntity.findByEmail(email)
 
-        if (existingUser == null || existingUser.passwordHash != password) throw PredictException.NonAuthenticated
+        if (existingUser == null || existingUser.passwordHash != password) throw PredictException.NotAuthenticated
         return existingUser.asUserApi
     }
 
@@ -58,9 +59,9 @@ class IdentityRemoteServiceImpl(
     }
 
     @OptIn(ExperimentalUuidApi::class)
+    @Throws(PredictException.NotAuthenticated::class)
     override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
-        val user = UserEntity.getById(authCredentials.userUUID)
-        if (user == null) return emptyFlow()
+        val user = UserEntity.authenticated(authCredentials)
 
         return user.workspaces?.asFlow()?.map { it.asWorkspaceApi } ?: emptyFlow()
     }
@@ -73,7 +74,7 @@ class IdentityRemoteServiceImpl(
         validateNewWorkspaceUseCase(newWorkspace)
 
         val user = UserEntity.getById(authCredentials.userUUID)
-        if (user == null) throw PredictException.NonAuthenticated
+        if (user == null) throw PredictException.NotAuthenticated
 
         val workspaceEntity = Database.transaction {
             WorkspaceEntity.new {
