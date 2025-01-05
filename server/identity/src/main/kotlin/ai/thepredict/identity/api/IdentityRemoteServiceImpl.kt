@@ -22,7 +22,6 @@ import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -62,7 +61,11 @@ class IdentityRemoteServiceImpl(
     override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
         val user = UserEntity.authenticated(authCredentials)
 
-        return Database.transaction { user.workspaces.asFlow().map { it.asWorkspaceApi } }
+        val workspaces = user.workspaces.map { it.asWorkspaceApi }
+        if (workspaces.isEmpty()) {
+            return emptyFlow()
+        }
+        return workspaces.asFlow()
     }
 
     @OptIn(ExperimentalUuidApi::class)
