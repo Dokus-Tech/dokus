@@ -29,6 +29,7 @@ fun PButton(
     variant: PButtonVariant = PButtonDefaults.variant,
     icon: ImageVector? = PButtonDefaults.icon,
     contentDescription: String? = PButtonDefaults.contentDescription,
+    isEnabled: Boolean = true,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {

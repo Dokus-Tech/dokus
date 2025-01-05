@@ -13,12 +13,12 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.toList
 import org.kodein.di.instance
 
-internal class WorkspaceCreateViewModel : StateScreenModel<WorkspaceCreateViewModel.State>(State.Loading) {
+internal class WorkspaceCreateViewModel : StateScreenModel<WorkspaceCreateViewModel.State>(State.Idle) {
 
     private val createNewWorkspaceUseCase: CreateNewWorkspaceUseCase by di.instance()
     private val api: UnifiedApi by di.instance { screenModelScope }
 
-    fun create(name: String, legalName: String?, taxNumber: String?) {
+    fun create(name: String, legalName: String, taxNumber: String) {
         screenModelScope.launchStreamScoped {
             mutableState.value = State.Loading
 
@@ -37,6 +37,8 @@ internal class WorkspaceCreateViewModel : StateScreenModel<WorkspaceCreateViewMo
     }
 
     sealed interface State {
+        data object Idle : State
+
         data object Loading : State
 
         data class Loaded(val workspace: Workspace) : State

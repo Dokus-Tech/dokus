@@ -43,7 +43,7 @@ internal class RegisterScreen : Screen {
     override fun Content() {
         val viewModel = rememberScreenModel { RegisterViewModel() }
         val data = viewModel.state.collectAsState()
-        val fieldsError: PredictException? = (data.value as? RegisterViewModel.State.Error)?.exception
+        val fieldsError = data.value.exceptionOrNull
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }

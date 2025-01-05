@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
-import kotlin.uuid.ExperimentalUuidApi
 
 class IdentityRemoteServiceImpl(
     override val coroutineContext: CoroutineContext,
@@ -66,7 +65,6 @@ class IdentityRemoteServiceImpl(
             .map { it.asWorkspaceApi }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     override suspend fun createWorkspace(
         authCredentials: AuthCredentials,
         newWorkspace: NewWorkspace,
