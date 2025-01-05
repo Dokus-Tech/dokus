@@ -1,8 +1,6 @@
 package ai.thepredict.database.tables
 
 import ai.thepredict.database.Database
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -39,8 +37,8 @@ suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity
     return Database.transaction { findById(workspaceId) }
 }
 
-suspend fun WorkspaceEntity.Companion.getAllForUserId(userId: UUID): Flow<WorkspaceEntity> {
+suspend fun WorkspaceEntity.Companion.getAllForUserId(userId: UUID): List<WorkspaceEntity> {
     return Database.transaction {
-        WorkspaceEntity.find { WorkspacesTable.owner eq userId }.asFlow()
+        WorkspaceEntity.find { WorkspacesTable.owner eq userId }.toList()
     }
 }
