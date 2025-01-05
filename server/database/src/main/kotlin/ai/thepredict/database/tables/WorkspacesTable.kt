@@ -15,7 +15,7 @@ internal object WorkspacesTable : IntIdTable("workspaces") {
     val legalName = varchar("legal_name", 128).nullable()
     val taxNumber = varchar("tax_number", 128).nullable()
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
-    val owner = reference("owner", UsersTable, onDelete = ReferenceOption.CASCADE)
+    val owner = reference("owner", UsersTable.id, onDelete = ReferenceOption.CASCADE)
 }
 
 class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
@@ -30,7 +30,7 @@ class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
     var createdAt by WorkspacesTable.createdAt
 
     var owner by UserEntity referencedOn WorkspacesTable.owner
-    var contacts by ContactEntity referencedOn ContactsTable.workspace
+//    var contacts by ContactEntity referencedOn ContactsTable.workspace
 }
 
 suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity? {
