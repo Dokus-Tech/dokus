@@ -39,12 +39,14 @@ object Database {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
-    suspend fun <T> transaction(statement: suspend Transaction.() -> T): T {
+    suspend fun <T> transaction(statement: Transaction.() -> T): T {
         val databaseContext = newSingleThreadContext("DatabaseThread")
-        return suspendedTransactionAsync(databaseContext, db) {
-            addLogger(StdOutSqlLogger)
-            SchemaUtils.create(*tables)
-            statement()
-        }.await()
+        return withContext(databaseContext) {
+            transaction(db) {
+                addLogger(StdOutSqlLogger)
+                SchemaUtils.create(*tables)
+                statement()
+            }
+        }
     }
 }
