@@ -3,6 +3,7 @@ package ai.thepredict.repository.extensions
 import ai.thepredict.app.platform.Persistence
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.User
+import ai.thepredict.data.Workspace
 
 val Persistence.authCredentials: AuthCredentials?
     get() {
@@ -24,4 +25,13 @@ var Persistence.user: User?
         name = value?.name
         email = value?.email
         password = value?.password
+    }
+
+var Persistence.selectedWorkspaceId: Workspace.Id?
+    get() {
+        val id = selectedWorkspace.takeIf { it != null } ?: return null
+        return Workspace.Id(id)
+    }
+    set(value) {
+        selectedWorkspace = value?.value
     }

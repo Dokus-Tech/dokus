@@ -1,6 +1,6 @@
 package ai.thepredict.app.onboarding.authentication.login
 
-import ai.thepredict.app.navigation.HomeNavigation
+import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PButton
@@ -46,7 +46,7 @@ internal class LoginScreen : Screen {
 
         val navigator = LocalNavigator.currentOrThrow
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
-        val splashScreen = rememberScreen(HomeNavigation.SplashScreen)
+        val splashScreen = rememberScreen(CoreNavigation.Splash)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }

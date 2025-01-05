@@ -1,5 +1,6 @@
 package ai.thepredict.app.onboarding.workspaces.overview
 
+import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.ui.PButton
 import ai.thepredict.ui.PButtonVariant
@@ -40,10 +41,13 @@ internal class WorkspacesScreen : Screen {
     override fun Content() {
         val viewModel = rememberScreenModel { WorkspacesViewModel() }
         val data = viewModel.state.collectAsState()
+        val effect = viewModel.effect.collectAsState()
+
         val state = data.value
 
         val navigator = LocalNavigator.currentOrThrow
         val workspaceCreate = rememberScreen(OnboardingNavigation.Workspaces.Create)
+        val homeScreen = rememberScreen(CoreNavigation.Core)
 
         LaunchedEffect("workspaces-overview") {
             viewModel.fetch()
@@ -59,7 +63,7 @@ internal class WorkspacesScreen : Screen {
             ) {
                 Workspaces(
                     state = state,
-                    onCreateClick = { navigator.push(workspaceCreate) },
+                    onCreateClick = { viewModel.createWorkspace() },
                     onRefreshClick = { viewModel.fetch() },
                     modifier = Modifier.limitedWidth()
                 )
@@ -67,11 +71,17 @@ internal class WorkspacesScreen : Screen {
                 Spacer(Modifier.weight(1f))
                 Actions(
                     state = state,
-                    onCreateClick = { navigator.push(workspaceCreate) },
-                    onContinueClick = { }
+                    onCreateClick = { viewModel.createWorkspace() },
+                    onContinueClick = { viewModel.continueToHome() }
                 )
                 Spacer(Modifier.weight(1f))
             }
+        }
+
+        when (effect.value) {
+            is WorkspacesViewModel.Effect.None -> Unit
+            is WorkspacesViewModel.Effect.NavigateCreateWorkspace -> navigator.push(workspaceCreate)
+            is WorkspacesViewModel.Effect.NavigateHome -> navigator.replaceAll(homeScreen)
         }
     }
 }

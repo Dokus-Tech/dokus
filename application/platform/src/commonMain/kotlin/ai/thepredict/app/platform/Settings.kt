@@ -30,7 +30,7 @@ class Persistence(settings: Settings) {
     var name: String? by SettingsDelegate(settings, "name")
     var email: String? by SettingsDelegate(settings, "email")
     var password: String? by SettingsDelegate(settings, "password")
-    var selectedWorkspace: String? by SettingsDelegate(settings, "selected_workspace")
+    var selectedWorkspace: Int? by SettingsDelegate(settings, "selected_workspace")
 }
 
 private val settings: Settings = Settings()
