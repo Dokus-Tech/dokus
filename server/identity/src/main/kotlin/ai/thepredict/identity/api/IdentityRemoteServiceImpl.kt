@@ -73,10 +73,8 @@ class IdentityRemoteServiceImpl(
         authCredentials: AuthCredentials,
         newWorkspace: NewWorkspace,
     ): Workspace {
+        val user = UserEntity.authenticated(authCredentials)
         validateNewWorkspaceUseCase(newWorkspace)
-
-        val user = UserEntity.getById(authCredentials.userUUID)
-        if (user == null) throw PredictException.NotAuthenticated
 
         val workspaceEntity = Database.transaction {
             WorkspaceEntity.new {

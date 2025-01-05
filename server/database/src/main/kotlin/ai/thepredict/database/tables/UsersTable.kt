@@ -48,11 +48,11 @@ suspend fun UserEntity.Companion.getById(userId: Uuid): UserEntity? {
 }
 
 suspend fun UserEntity.Companion.getById(userId: UUID): UserEntity? {
-    return Database.transaction { runCatching { get(userId) }.getOrNull() }
+    return Database.transaction { findById(userId) }
 }
 
 suspend fun UserEntity.Companion.findByEmail(email: String): UserEntity? {
-    return Database.transaction { runCatching { find { UsersTable.email eq email }.singleOrNull() }.getOrNull() }
+    return Database.transaction { find { UsersTable.email eq email }.singleOrNull() }
 }
 
 @OptIn(ExperimentalUuidApi::class)

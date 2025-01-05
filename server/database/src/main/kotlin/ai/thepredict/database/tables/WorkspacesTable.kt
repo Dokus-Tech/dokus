@@ -36,7 +36,7 @@ class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
 }
 
 suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity? {
-    return Database.transaction { runCatching { get(workspaceId) }.getOrNull() }
+    return Database.transaction { findById(workspaceId) }
 }
 
 suspend fun WorkspaceEntity.Companion.getAllForUserId(userId: UUID): Flow<WorkspaceEntity> {
