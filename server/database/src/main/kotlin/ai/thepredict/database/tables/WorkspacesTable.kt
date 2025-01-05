@@ -1,6 +1,8 @@
 package ai.thepredict.database.tables
 
 import ai.thepredict.database.Database
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -8,6 +10,7 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import java.util.UUID
 
 internal object WorkspacesTable : IntIdTable("workspaces") {
     val name = varchar("name", 128)
@@ -34,4 +37,10 @@ class WorkspaceEntity(id: EntityID<Int>) : IntEntity(id) {
 
 suspend fun WorkspaceEntity.Companion.getById(workspaceId: Int): WorkspaceEntity? {
     return Database.transaction { runCatching { get(workspaceId) }.getOrNull() }
+}
+
+suspend fun WorkspaceEntity.Companion.getAllForUserId(userId: UUID): Flow<WorkspaceEntity> {
+    return Database.transaction {
+        WorkspaceEntity.find { WorkspacesTable.owner eq userId }.asFlow()
+    }
 }
