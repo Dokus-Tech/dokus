@@ -24,7 +24,8 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
                 return@launchStreamScoped
             }
 
-            mutableState.value = State.Loaded(workspaces.toList())
+            val workspacesList = workspaces.toList()
+            mutableState.value = State.Loaded(workspacesList)
         }
     }
 
