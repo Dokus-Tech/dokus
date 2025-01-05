@@ -41,7 +41,7 @@ internal class WorkspacesScreen : Screen {
     override fun Content() {
         val viewModel = rememberScreenModel { WorkspacesViewModel() }
         val data = viewModel.state.collectAsState()
-        val effect = viewModel.effect.collectAsState()
+        val effect = viewModel.effect.collectAsState(initial = WorkspacesViewModel.Effect.None)
 
         val state = data.value
 
@@ -67,7 +67,6 @@ internal class WorkspacesScreen : Screen {
                     onRefreshClick = { viewModel.fetch() },
                     modifier = Modifier.limitedWidth()
                 )
-
                 Spacer(Modifier.weight(1f))
                 Actions(
                     state = state,

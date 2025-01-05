@@ -51,9 +51,3 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
         data class Error(val exception: PredictException) : State
     }
 }
-
-internal val RegisterViewModel.State.exceptionOrNull: PredictException?
-    get() = when (this) {
-        is RegisterViewModel.State.Error -> exception
-        else -> null
-    }
