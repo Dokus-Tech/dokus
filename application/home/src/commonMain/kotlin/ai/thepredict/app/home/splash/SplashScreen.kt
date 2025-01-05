@@ -1,6 +1,6 @@
 package ai.thepredict.app.home.splash
 
-import ai.thepredict.app.navigation.HomeNavigation
+import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +26,7 @@ class SplashScreen : Screen {
         val data = viewModel.state.collectAsState()
 
         val loginScreen = rememberScreen(OnboardingNavigation.Authorization.LoginScreen)
-        val homeScreen = rememberScreen(HomeNavigation.HomeScreen)
+        val homeScreen = rememberScreen(CoreNavigation.Core)
         val workspacesOverview = rememberScreen(OnboardingNavigation.Workspaces.All)
 
         LaunchedEffect("splash-screen") {
