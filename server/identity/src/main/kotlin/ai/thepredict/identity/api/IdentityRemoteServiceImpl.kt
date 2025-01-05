@@ -1,28 +1,25 @@
 package ai.thepredict.identity.api
 
 import ai.thepredict.common.UserIdGetter
-import ai.thepredict.database.Database
-import ai.thepredict.database.tables.UserEntity
-import ai.thepredict.database.tables.findByEmail
-import ai.thepredict.database.tables.getById
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.NewUser
 import ai.thepredict.data.NewWorkspace
 import ai.thepredict.data.User
 import ai.thepredict.data.Workspace
-import ai.thepredict.domain.api.OperationResult
-import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.data.userUUID
+import ai.thepredict.database.Database
+import ai.thepredict.database.tables.UserEntity
 import ai.thepredict.database.tables.WorkspaceEntity
 import ai.thepredict.database.tables.authenticated
+import ai.thepredict.database.tables.findByEmail
 import ai.thepredict.database.tables.getAllForUserId
+import ai.thepredict.domain.api.OperationResult
+import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.usecases.validators.ValidateNewUserUseCase
 import ai.thepredict.domain.usecases.validators.ValidateNewWorkspaceUseCase
 import ai.thepredict.identity.mappers.asUserApi
 import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 import kotlin.uuid.ExperimentalUuidApi
@@ -65,6 +62,7 @@ class IdentityRemoteServiceImpl(
 
         return WorkspaceEntity
             .getAllForUserId(user.userId)
+            .asFlow()
             .map { it.asWorkspaceApi }
     }
 
