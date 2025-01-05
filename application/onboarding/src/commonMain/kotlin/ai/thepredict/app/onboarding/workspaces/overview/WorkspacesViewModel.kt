@@ -10,18 +10,16 @@ import ai.thepredict.repository.api.UnifiedApi
 import ai.thepredict.repository.extensions.selectedWorkspaceId
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.rpc.krpc.streamScoped
 import org.kodein.di.instance
 
 internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>(State.Loading) {
 
-    private val mutableEffect = MutableStateFlow<Effect>(Effect.None)
-    val effect = mutableEffect.asStateFlow()
+    private val mutableEffect = MutableSharedFlow<Effect>()
+    val effect = mutableEffect.asSharedFlow()
 
     private val api: UnifiedApi by di.instance { screenModelScope }
 
@@ -42,6 +40,7 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
     fun createWorkspace() {
         screenModelScope.launch {
             mutableEffect.emit(Effect.NavigateCreateWorkspace)
+            mutableEffect.emit(Effect.None)
         }
     }
 
@@ -53,6 +52,7 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
             persistence.selectedWorkspaceId = workspaces.first().id
 
             mutableEffect.emit(Effect.NavigateHome)
+            mutableEffect.emit(Effect.None)
         }
     }
 

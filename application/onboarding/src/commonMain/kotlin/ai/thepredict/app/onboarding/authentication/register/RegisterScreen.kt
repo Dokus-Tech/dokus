@@ -37,6 +37,12 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.User
 
+private val RegisterViewModel.State.exceptionOrNull: PredictException?
+    get() = when (this) {
+        is RegisterViewModel.State.Error -> exception
+        else -> null
+    }
+
 internal class RegisterScreen : Screen {
 
     @Composable
