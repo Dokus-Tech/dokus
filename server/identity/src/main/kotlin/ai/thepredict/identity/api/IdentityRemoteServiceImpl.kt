@@ -15,6 +15,7 @@ import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.data.userUUID
 import ai.thepredict.database.tables.WorkspaceEntity
 import ai.thepredict.database.tables.authenticated
+import ai.thepredict.database.tables.getAllForUserId
 import ai.thepredict.domain.usecases.validators.ValidateNewUserUseCase
 import ai.thepredict.domain.usecases.validators.ValidateNewWorkspaceUseCase
 import ai.thepredict.identity.mappers.asUserApi
@@ -22,6 +23,7 @@ import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -61,11 +63,9 @@ class IdentityRemoteServiceImpl(
     override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
         val user = UserEntity.authenticated(authCredentials)
 
-        val workspaces = user.workspaces.map { it.asWorkspaceApi }
-        if (workspaces.isEmpty()) {
-            return emptyFlow()
-        }
-        return workspaces.asFlow()
+        return WorkspaceEntity
+            .getAllForUserId(user.userId)
+            .map { it.asWorkspaceApi }
     }
 
     @OptIn(ExperimentalUuidApi::class)
