@@ -37,6 +37,8 @@ compose-icons = "1.1.1"
 materialKolor = "2.0.0"
 
 [libraries]
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -68,9 +70,9 @@ ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
 postgres-pgjdbc = { group = "com.impossibl.pgjdbc-ng", name = "pgjdbc-ng", version.ref = "pgjdbc" }
-h2 = { module = "com.h2database:h2", version.ref = "h2" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
@@ -97,6 +99,10 @@ composeIcons-feather = { group = "br.com.devsrsouza.compose.icons", name = "feat
 
 persistence-settings = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "settings" }
 persistence-settingsTest = { group = "com.russhwolf", name = "multiplatform-settings-test", version.ref = "settings" }
+
+[bundles]
+database = ["exposed-core", "exposed-jdbc", "exposed-dao", "exposed-datetime", "postgresql", "postgres-pgjdbc", "h2"]
+krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

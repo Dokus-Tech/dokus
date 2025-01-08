@@ -45,8 +45,7 @@ kotlin {
         commonMain.dependencies {
             api(projects.shared.data)
 
-            implementation(libs.kotlinx.rpc.krpc.serialization.json)
-            implementation(libs.kotlinx.rpc.core)
+            implementation(libs.bundles.krpc.base)
             api(libs.kotlinx.datetime)
         }
     }

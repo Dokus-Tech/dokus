@@ -4,6 +4,9 @@ plugins {
 
 group = "ai.thepredict.buildlogic"
 
-dependencies {}
+dependencies {
+    implementation(libs.kotlin.gradlePlugin)
+    implementation(libs.android.gradlePlugin)
+}
 
 gradlePlugin {}
