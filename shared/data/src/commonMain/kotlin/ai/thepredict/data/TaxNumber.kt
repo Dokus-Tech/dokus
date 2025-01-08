@@ -3,7 +3,7 @@ package ai.thepredict.data
 import kotlin.jvm.JvmInline
 
 @JvmInline
-value class TaxNumber private constructor(private val value: String) {
+value class TaxNumber(private val value: String) {
     companion object {
         const val LENGTH = 12
 

@@ -11,13 +11,8 @@ dependencies {
     implementation(projects.shared.domain)
 
     implementation(libs.logback)
-    implementation(libs.postgresql)
-    implementation(libs.postgres.pgjdbc)
-    implementation(libs.h2)
-    implementation(libs.exposed.core)
-    implementation(libs.exposed.jdbc)
-    api(libs.exposed.dao)
-    implementation(libs.exposed.datetime)
+    api(libs.exposed.dao) // TODO No api
+    implementation(libs.bundles.database)
 
     testImplementation(libs.kotlin.test.junit)
 }

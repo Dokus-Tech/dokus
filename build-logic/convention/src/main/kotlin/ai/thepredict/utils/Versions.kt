@@ -1,6 +1,6 @@
-package ai.thepredict.buildlogic
+package ai.thepredict.utils
 
-object PVersion {
+object Versions {
     const val APP = "1.0.0"
     const val SERVER = APP
 }
