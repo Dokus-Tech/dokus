@@ -19,9 +19,9 @@ val Workspace.Companion.mockedIv by lazy {
 
 val Workspace.Companion.mockedPredict by lazy {
     Workspace(
-        Workspace.Id.random,
-        "Predict",
-        taxNumber = "The Predict SRL",
+        id = Workspace.Id.random,
+        name = "Predict",
+        legalName = "The Predict SRL",
         createdAt = LocalDateTime.mocked
     )
 }

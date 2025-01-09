@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -34,22 +35,36 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Plus
+import kotlinx.coroutines.launch
 
 internal class WorkspacesScreen : Screen {
 
     @Composable
     override fun Content() {
         val viewModel = rememberScreenModel { WorkspacesViewModel() }
-        val data = viewModel.state.collectAsState()
-        val effect = viewModel.effect.collectAsState(initial = WorkspacesViewModel.Effect.None)
+        val scope = rememberCoroutineScope()
 
+        val data = viewModel.state.collectAsState()
         val state = data.value
 
         val navigator = LocalNavigator.currentOrThrow
         val workspaceCreate = rememberScreen(OnboardingNavigation.Workspaces.Create)
         val homeScreen = rememberScreen(CoreNavigation.Core)
 
+        val handleEffect = { effect: WorkspacesViewModel.Effect ->
+            when (effect) {
+                is WorkspacesViewModel.Effect.NavigateCreateWorkspace -> navigator.push(
+                    workspaceCreate
+                )
+
+                is WorkspacesViewModel.Effect.NavigateHome -> navigator.replaceAll(
+                    homeScreen
+                )
+            }
+        }
+
         LaunchedEffect("workspaces-overview") {
+            scope.launch { viewModel.effect.collect(handleEffect) }
             viewModel.fetch()
         }
 
@@ -75,12 +90,6 @@ internal class WorkspacesScreen : Screen {
                 )
                 Spacer(Modifier.weight(1f))
             }
-        }
-
-        when (effect.value) {
-            is WorkspacesViewModel.Effect.None -> Unit
-            is WorkspacesViewModel.Effect.NavigateCreateWorkspace -> navigator.push(workspaceCreate)
-            is WorkspacesViewModel.Effect.NavigateHome -> navigator.replaceAll(homeScreen)
         }
     }
 }

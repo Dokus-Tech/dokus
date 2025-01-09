@@ -40,7 +40,6 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
     fun createWorkspace() {
         screenModelScope.launch {
             mutableEffect.emit(Effect.NavigateCreateWorkspace)
-            mutableEffect.emit(Effect.None)
         }
     }
 
@@ -52,7 +51,6 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
             persistence.selectedWorkspaceId = workspaces.first().id
 
             mutableEffect.emit(Effect.NavigateHome)
-            mutableEffect.emit(Effect.None)
         }
     }
 
@@ -63,7 +61,6 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
     }
 
     sealed interface Effect {
-        data object None : Effect
         data object NavigateHome : Effect
         data object NavigateCreateWorkspace : Effect
     }
