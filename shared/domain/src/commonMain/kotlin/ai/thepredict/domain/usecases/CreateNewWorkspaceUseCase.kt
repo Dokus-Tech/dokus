@@ -9,9 +9,18 @@ class CreateNewWorkspaceUseCase(
     private val validateWorkspaceNameUseCase: ValidateWorkspaceNameUseCase,
     private val validateWorkspaceTaxNumberUseCase: ValidateWorkspaceTaxNumberUseCase,
 ) {
-    operator fun invoke(name: String, legalName: String?, taxNumber: String?): Result<NewWorkspace> {
+    operator fun invoke(
+        name: String,
+        legalName: String?,
+        taxNumber: String?,
+    ): Result<NewWorkspace> {
         if (!validateWorkspaceNameUseCase(name)) return Result.failure(PredictException.InvalidWorkspaceName)
         if (!validateWorkspaceTaxNumberUseCase(taxNumber)) return Result.failure(PredictException.InvalidTaxNumber)
-        return Result.success(NewWorkspace(name, legalName, taxNumber))
+        val newWorkspace = NewWorkspace(
+            name = name,
+            legalName = legalName.takeIf { it?.isNotEmpty() == true },
+            taxNumber = taxNumber
+        )
+        return Result.success(newWorkspace)
     }
 }
