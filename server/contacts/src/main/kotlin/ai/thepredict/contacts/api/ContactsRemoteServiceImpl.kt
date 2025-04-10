@@ -12,7 +12,7 @@ class ContactsRemoteServiceImpl(
     private val userIdGetter: UserIdGetter,
 ) : ContactsRemoteService {
 
-    override suspend fun getAll(): Flow<Contact> {
+    override fun getAll(): Flow<Contact> {
         return flowOf(Contact(id = Contact.Id.random, name = "Artem"))
     }
 
@@ -20,7 +20,7 @@ class ContactsRemoteServiceImpl(
         throw NotImplementedError()
     }
 
-    override suspend fun find(query: String): Flow<Contact> {
+    override fun find(query: String): Flow<Contact> {
         throw NotImplementedError()
     }
 
