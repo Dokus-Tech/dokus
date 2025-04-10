@@ -62,7 +62,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            implementation(projects.application.core)
+            implementation(projects.application.foundation)
             implementation(projects.application.ui)
             implementation(projects.application.platform)
             implementation(projects.application.repository)
