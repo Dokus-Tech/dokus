@@ -1,7 +1,6 @@
 package ai.thepredict.app.onboarding.workspaces.overview
 
 import ai.thepredict.app.core.di
-import ai.thepredict.app.core.extension.launchStreamScoped
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.data.Workspace
 import ai.thepredict.domain.exceptions.PredictException
@@ -24,12 +23,12 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
     private val api: UnifiedApi by di.instance { screenModelScope }
 
     fun fetch() {
-        screenModelScope.launchStreamScoped {
+        screenModelScope.launch {
             mutableState.value = State.Loading
 
             val workspaces = api.myWorkspaces().getOrElse {
                 mutableState.value = State.Error(it.asPredictException)
-                return@launchStreamScoped
+                return@launch
             }
 
             val workspacesList = workspaces.toList()
@@ -44,9 +43,9 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
     }
 
     fun continueToHome() {
-        screenModelScope.launchStreamScoped {
+        screenModelScope.launch {
             val workspaces = api.myWorkspaces().getOrNull()?.toList()
-            if (workspaces.isNullOrEmpty()) return@launchStreamScoped
+            if (workspaces.isNullOrEmpty()) return@launch
 
             persistence.selectedWorkspaceId = workspaces.first().id
 

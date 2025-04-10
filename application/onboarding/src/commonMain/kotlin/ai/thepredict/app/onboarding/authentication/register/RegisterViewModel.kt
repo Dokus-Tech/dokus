@@ -1,7 +1,6 @@
 package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.di
-import ai.thepredict.app.core.extension.launchStreamScoped
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.data.User
 import ai.thepredict.domain.exceptions.PredictException
@@ -10,6 +9,7 @@ import ai.thepredict.domain.usecases.CreateNewUserUseCase
 import ai.thepredict.repository.api.UnifiedApi
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
 internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(State.Loading) {
@@ -18,19 +18,19 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
     private val api: UnifiedApi by di.instance { screenModelScope }
 
     fun createUser(newEmail: String, newPassword: String, name: String) {
-        screenModelScope.launchStreamScoped {
+        screenModelScope.launch {
             val newUser = createNewUserUseCase(
                 name = name,
                 email = newEmail,
                 password = newPassword
             ).getOrElse {
                 mutableState.value = State.Error(it.asPredictException)
-                return@launchStreamScoped
+                return@launch
             }
 
             val user = api.createUser(newUser).getOrElse {
                 mutableState.value = State.Error(it.asPredictException)
-                return@launchStreamScoped
+                return@launch
             }
 
             with(persistence) {
