@@ -17,7 +17,7 @@ interface IdentityRemoteService : RemoteService {
 
     suspend fun createUser(newUser: NewUser): User
 
-    suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace>
+    fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace>
 
     suspend fun createWorkspace(
         authCredentials: AuthCredentials,
