@@ -8,11 +8,11 @@ import kotlinx.rpc.annotations.Rpc
 
 @Rpc
 interface ContactsRemoteService : RemoteService {
-    suspend fun getAll(): Flow<Contact>
+    fun getAll(): Flow<Contact>
 
     suspend fun get(id: Contact.Id): Contact
 
-    suspend fun find(query: String): Flow<Contact>
+    fun find(query: String): Flow<Contact>
 
     suspend fun create(create: Contact): OperationResult
 

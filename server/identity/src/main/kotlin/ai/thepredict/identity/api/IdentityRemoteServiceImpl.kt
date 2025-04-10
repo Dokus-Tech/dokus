@@ -20,6 +20,8 @@ import ai.thepredict.identity.mappers.asUserApi
 import ai.thepredict.identity.mappers.asWorkspaceApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 
@@ -56,13 +58,14 @@ class IdentityRemoteServiceImpl(
     }
 
     @Throws(PredictException.NotAuthenticated::class)
-    override suspend fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
-        val user = UserEntity.authenticated(authCredentials)
-
-        return WorkspaceEntity
-            .getAllForUserId(user.userId)
-            .asFlow()
-            .map { it.asWorkspaceApi }
+    override fun myWorkspaces(authCredentials: AuthCredentials): Flow<Workspace> {
+        return flow {
+            val user = UserEntity.authenticated(authCredentials)
+            val workspaces = WorkspaceEntity
+                .getAllForUserId(user.userId)
+                .map { it.asWorkspaceApi }
+            emitAll(workspaces.asFlow())
+        }
     }
 
     override suspend fun createWorkspace(
