@@ -10,10 +10,9 @@ import ai.thepredict.repository.httpClient
 import io.ktor.client.request.basicAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.rpc.RPCClient
 import kotlinx.rpc.RemoteService
-import kotlinx.rpc.krpc.ktor.client.KtorRPCClient
-import kotlinx.rpc.krpc.ktor.client.installRPC
+import kotlinx.rpc.RpcClient
+import kotlinx.rpc.krpc.ktor.client.installKrpc
 import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
 import kotlinx.rpc.krpc.serialization.json.json
@@ -23,7 +22,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class ServiceProvider<ServiceType : RemoteService>(
     private val coroutineContext: CoroutineContext,
     private val endpoint: ServerEndpoint,
-    private val createService: suspend RPCClient.() -> ServiceType,
+    private val createService: suspend RpcClient.() -> ServiceType,
 ) {
     private var service: ServiceType? = null
 
@@ -92,9 +91,9 @@ internal class ServiceProvider<ServiceType : RemoteService>(
     }
 }
 
-private suspend inline fun createClient(endpoint: ServerEndpoint): KtorRPCClient {
+private suspend inline fun createClient(endpoint: ServerEndpoint): RpcClient {
     val ktorClient = httpClient {
-        installRPC {
+        installKrpc {
             waitForServices = false // default parameter
             serialization {
                 json()
