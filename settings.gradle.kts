@@ -38,9 +38,9 @@ include(":application:home")
 include(":application:ui")
 include(":application:ui-preview")
 
-include(":application:foundation")
-include(":application:platform")
 include(":application:core")
+include(":application:platform")
+include(":application:repository")
 include(":application:navigation")
 
 include(":shared:configuration")
