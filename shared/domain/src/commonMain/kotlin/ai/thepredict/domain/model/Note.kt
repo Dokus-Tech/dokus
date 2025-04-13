@@ -1,4 +1,4 @@
-package ai.thepredict.data
+package ai.thepredict.domain.model
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable

@@ -1,4 +1,4 @@
-package ai.thepredict.data
+package ai.thepredict.domain.model
 
 import kotlin.jvm.JvmInline
 

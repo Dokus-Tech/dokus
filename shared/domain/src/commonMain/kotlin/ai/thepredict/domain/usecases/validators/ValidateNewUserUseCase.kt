@@ -1,7 +1,7 @@
 package ai.thepredict.domain.usecases.validators
 
-import ai.thepredict.data.NewUser
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.domain.model.NewUser
 
 class ValidateNewUserUseCase(
     private val emailValidator: Validator<String> = ValidateEmailUseCase(),

@@ -1,10 +1,10 @@
 package ai.thepredict.apispec
 
-import ai.thepredict.data.AuthCredentials
-import ai.thepredict.data.NewUser
-import ai.thepredict.data.NewWorkspace
-import ai.thepredict.data.User
-import ai.thepredict.data.Workspace
+import ai.thepredict.domain.model.AuthCredentials
+import ai.thepredict.domain.model.NewUser
+import ai.thepredict.domain.model.NewWorkspace
+import ai.thepredict.domain.model.User
+import ai.thepredict.domain.model.Workspace
 import ai.thepredict.domain.api.OperationResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.RemoteService
