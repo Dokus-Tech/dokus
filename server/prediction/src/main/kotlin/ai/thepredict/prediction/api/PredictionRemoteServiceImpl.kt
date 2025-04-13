@@ -1,5 +1,6 @@
 package ai.thepredict.prediction.api
 
+import ai.thepredict.apispec.PredictionRemoteService
 import ai.thepredict.common.UserIdGetter
 import kotlin.coroutines.CoroutineContext
 

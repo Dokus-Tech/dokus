@@ -5,6 +5,7 @@ pluginManagement {
     includeBuild("build-logic")
     repositories {
         google {
+            @Suppress("UnstableApiUsage")
             mavenContent {
                 includeGroupAndSubgroups("androidx")
                 includeGroupAndSubgroups("com.android")
@@ -17,6 +18,7 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
     repositories {
         google {
             mavenContent {
@@ -36,22 +38,16 @@ include(":application:home")
 include(":application:ui")
 include(":application:ui-preview")
 
-include(":application:foundation")
+include(":application:core")
 include(":application:platform")
 include(":application:repository")
 include(":application:navigation")
 
 include(":shared:configuration")
 include(":shared:domain")
-include(":shared:data")
-include(":shared:contacts-api")
-include(":shared:identity-api")
-include(":shared:documents-api")
-include(":shared:prediction-api")
-include(":shared:simulation-api")
+include(":shared:apispec")
 
 include(":server:common")
-include(":server:website")
 include(":server:gateway")
 include(":server:contacts")
 include(":server:identity")

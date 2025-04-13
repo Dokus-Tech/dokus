@@ -1,5 +1,4 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -13,7 +12,6 @@ plugins {
 
 kotlin {
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
@@ -53,6 +51,11 @@ kotlin {
         }
         binaries.executable()
     }
+//    js {
+//        browser {
+//        }
+//        binaries.executable()
+//    }
 
     sourceSets {
         val desktopMain by getting
@@ -62,7 +65,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            implementation(projects.application.foundation)
+            implementation(projects.application.core)
             implementation(projects.application.ui)
             implementation(projects.application.platform)
             implementation(projects.application.repository)

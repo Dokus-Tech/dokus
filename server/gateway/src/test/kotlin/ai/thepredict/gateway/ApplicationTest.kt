@@ -1,13 +1,12 @@
 package ai.thepredict.gateway
 
+import ai.thepredict.apispec.ContactsRemoteService
 import ai.thepredict.configuration.ServerEndpoint
-import ai.thepredict.contacts.api.ContactsRemoteService
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.runBlocking
-import kotlinx.rpc.krpc.RPCConfig
-import kotlinx.rpc.krpc.ktor.client.KtorRPCClient
+import kotlinx.rpc.krpc.KrpcConfig
+import kotlinx.rpc.krpc.client.KrpcClient
 import kotlinx.rpc.krpc.ktor.client.installRPC
-import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
 import kotlinx.rpc.krpc.rpcClientConfig
 import kotlinx.rpc.krpc.serialization.json.json
@@ -15,7 +14,7 @@ import kotlinx.rpc.krpc.streamScoped
 import kotlinx.rpc.withService
 
 fun main() = runBlocking {
-    val config: RPCConfig.Client =
+    val config: KrpcConfig.Client =
         rpcClientConfig { // same for RPCConfig.Server with rpcServerConfig
             waitForServices = true // default parameter
             serialization {
@@ -32,7 +31,7 @@ fun main() = runBlocking {
         }
     }
 
-    val client: KtorRPCClient = ktorClient.rpc {
+    val client: KrpcClient = KrpcClient {
         url {
             host = "predict.local"
             port = ServerEndpoint.Gateway().externalPort

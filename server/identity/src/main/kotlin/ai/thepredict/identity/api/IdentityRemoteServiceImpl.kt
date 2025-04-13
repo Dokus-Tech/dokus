@@ -1,10 +1,11 @@
 package ai.thepredict.identity.api
 
+import ai.thepredict.apispec.IdentityRemoteService
 import ai.thepredict.common.UserIdGetter
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.NewUser
 import ai.thepredict.data.NewWorkspace
-import ai.thepredict.data.User
+import ai.thepredict.domain.model.User
 import ai.thepredict.data.Workspace
 import ai.thepredict.database.Database
 import ai.thepredict.database.tables.UserEntity
@@ -22,7 +23,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 
 class IdentityRemoteServiceImpl(
