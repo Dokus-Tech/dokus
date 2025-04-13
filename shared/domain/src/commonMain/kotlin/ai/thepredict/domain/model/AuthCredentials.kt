@@ -1,4 +1,4 @@
-package ai.thepredict.data
+package ai.thepredict.domain.model
 
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi

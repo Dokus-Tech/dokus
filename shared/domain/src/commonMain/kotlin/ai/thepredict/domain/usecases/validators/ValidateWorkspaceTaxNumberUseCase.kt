@@ -1,6 +1,6 @@
 package ai.thepredict.domain.usecases.validators
 
-import ai.thepredict.data.TaxNumber
+import ai.thepredict.domain.model.TaxNumber
 
 class ValidateWorkspaceTaxNumberUseCase : Validator<String?> {
     override fun invoke(value: String?): Boolean {
