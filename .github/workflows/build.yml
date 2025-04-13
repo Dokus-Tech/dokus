@@ -43,13 +43,13 @@ jobs:
         uses: ./.github/actions/job-set-up
 
       - name: Build Desktop
-        run: ./gradlew :composeApp:packageDistributionForCurrentOS
+        run: ./gradlew :composeApp:packageReleaseDmg
 
       - name: Upload macOS App
         uses: actions/upload-artifact@v4
         with:
           name: macOS-app
-          path: build/compose/binaries/main/dmg
+          path: composeApp/build/compose/binaries/main-release/dmg
 
   iOS:
     if: ${{ inputs.shouldRunKmp == 'true' || inputs.shouldRunIos == 'true' }}
