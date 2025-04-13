@@ -51,6 +51,11 @@ kotlin {
         }
         binaries.executable()
     }
+//    js {
+//        browser {
+//        }
+//        binaries.executable()
+//    }
 
     sourceSets {
         val desktopMain by getting
