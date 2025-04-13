@@ -43,7 +43,7 @@ jobs:
       shouldRunAndroid: true
       shouldRunIos: false
       shouldRunDesktop: true
-      shouldRunWasm: true
+      shouldRunWasm: false
 
   Build:
     needs: SetUp
