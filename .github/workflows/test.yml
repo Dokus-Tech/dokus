@@ -15,6 +15,9 @@ on:
       shouldRunDesktop:
         required: true
         type: string
+      shouldRunWasm:
+        required: true
+        type: string
 
 jobs:
   Android:

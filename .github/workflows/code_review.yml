@@ -54,11 +54,16 @@ jobs:
       shouldRunIos: ${{ needs.SetUp.outputs.shouldRunIos }}
       shouldRunDesktop: ${{ needs.SetUp.outputs.shouldRunDesktop }}
       shouldRunWasm: ${{ needs.SetUp.outputs.shouldRunWasm }}
-#
-#  UnitTests:
-#    needs: SetUp
-#    uses: ./.github/workflows/test.yml
-#    with:
+
+  UnitTests:
+    needs: SetUp
+    uses: ./.github/workflows/test.yml
+    with:
+      shouldRunKmp: false
+      shouldRunAndroid: false
+      shouldRunIos: false
+      shouldRunDesktop: false
+      shouldRunWasm: false
 #      shouldRunKmp: ${{ needs.SetUp.outputs.shouldRunKmp }}
 #      shouldRunAndroid: ${{ needs.SetUp.outputs.shouldRunAndroid }}
 #      shouldRunIos: ${{ needs.SetUp.outputs.shouldRunIos }}
