@@ -41,8 +41,6 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
-            api(projects.shared.data)
-
             implementation(libs.bundles.krpc.base)
             api(libs.kotlinx.datetime)
         }
