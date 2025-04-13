@@ -1,5 +1,6 @@
 package ai.thepredict.identity.api
 
+import ai.thepredict.apispec.IdentityRemoteService
 import ai.thepredict.common.UserIdGetter
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.NewUser
@@ -22,7 +23,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 
 class IdentityRemoteServiceImpl(

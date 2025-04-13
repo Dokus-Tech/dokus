@@ -1,9 +1,10 @@
 package ai.thepredict.prediction.api
 
+import ai.thepredict.apispec.PredictionRemoteService
 import ai.thepredict.common.withUserIdGetter
-import kotlinx.rpc.krpc.ktor.server.RPCRoute
+import kotlinx.rpc.krpc.ktor.server.KrpcRoute
 
-fun RPCRoute.registerPredictionRemoteServices() {
+fun KrpcRoute.registerPredictionRemoteServices() {
     registerService<PredictionRemoteService> { ctx ->
         PredictionRemoteServiceImpl(ctx, withUserIdGetter())
     }
