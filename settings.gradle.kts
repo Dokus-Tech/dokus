@@ -45,7 +45,6 @@ include(":application:navigation")
 
 include(":shared:configuration")
 include(":shared:domain")
-include(":shared:data")
 include(":shared:apispec")
 
 include(":server:common")
