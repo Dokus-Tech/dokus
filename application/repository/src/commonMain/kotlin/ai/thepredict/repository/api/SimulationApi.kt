@@ -1,8 +1,8 @@
 package ai.thepredict.repository.api
 
+import ai.thepredict.apispec.SimulationRemoteService
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.repository.helpers.ServiceProvider
-import ai.thepredict.simulation.api.SimulationRemoteService
 import kotlinx.rpc.withService
 import kotlin.coroutines.CoroutineContext
 

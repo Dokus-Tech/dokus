@@ -1,9 +1,10 @@
 package ai.thepredict.documents.api
 
+import ai.thepredict.apispec.DocumentsRemoteService
 import ai.thepredict.common.withUserIdGetter
-import kotlinx.rpc.krpc.ktor.server.RPCRoute
+import kotlinx.rpc.krpc.ktor.server.KrpcRoute
 
-fun RPCRoute.registerDocumentsRemoteServices() {
+fun KrpcRoute.registerDocumentsRemoteServices() {
     registerService<DocumentsRemoteService> { ctx ->
         DocumentsRemoteServiceImpl(ctx, withUserIdGetter())
     }

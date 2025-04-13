@@ -9,13 +9,13 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.routing
-import kotlinx.rpc.krpc.RPCConfigBuilder
-import kotlinx.rpc.krpc.ktor.server.RPC
+import kotlinx.rpc.krpc.KrpcConfigBuilder
+import kotlinx.rpc.krpc.ktor.server.Krpc
 
 inline fun embeddedServer(
     endpoint: ServerEndpoint,
     crossinline routing: Routing.() -> Unit,
-    plugin: ApplicationPlugin<RPCConfigBuilder.Server>? = RPC,
+    plugin: ApplicationPlugin<KrpcConfigBuilder.Server>? = Krpc,
 ): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
     return embeddedServer(
         Netty,

@@ -1,7 +1,7 @@
 package ai.thepredict.domain.usecases
 
-import ai.thepredict.data.NewWorkspace
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.domain.model.NewWorkspace
 import ai.thepredict.domain.usecases.validators.ValidateWorkspaceNameUseCase
 import ai.thepredict.domain.usecases.validators.ValidateWorkspaceTaxNumberUseCase
 
