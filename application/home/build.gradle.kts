@@ -49,7 +49,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.application.navigation)
-            implementation(projects.application.foundation)
+            implementation(projects.application.core)
             implementation(projects.application.repository)
             implementation(projects.application.ui)
         }
