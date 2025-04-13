@@ -1,4 +1,4 @@
-package ai.thepredict.contacts.api
+package ai.thepredict.apispec
 
 import ai.thepredict.data.Contact
 import ai.thepredict.domain.api.OperationResult

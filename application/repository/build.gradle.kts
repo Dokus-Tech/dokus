@@ -57,11 +57,7 @@ kotlin {
             implementation(projects.shared.configuration)
 
             api(projects.shared.domain)
-            api(projects.shared.contactsApi)
-            api(projects.shared.documentsApi)
-            api(projects.shared.identityApi)
-            api(projects.shared.predictionApi)
-            api(projects.shared.simulationApi)
+            api(projects.shared.apispec)
 
             api(projects.application.platform)
 

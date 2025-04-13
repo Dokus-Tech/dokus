@@ -16,7 +16,7 @@ application {
 dependencies {
     implementation(projects.server.common)
 
-    api(projects.shared.documentsApi)
+    api(projects.shared.apispec)
     implementation(projects.server.database)
 
     implementation(libs.logback)

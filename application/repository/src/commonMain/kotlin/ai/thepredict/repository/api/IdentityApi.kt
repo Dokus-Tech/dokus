@@ -1,12 +1,12 @@
 package ai.thepredict.repository.api
 
+import ai.thepredict.apispec.IdentityRemoteService
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.data.NewUser
 import ai.thepredict.data.NewWorkspace
 import ai.thepredict.data.User
 import ai.thepredict.data.Workspace
 import ai.thepredict.domain.api.OperationResult
-import ai.thepredict.identity.api.IdentityRemoteService
 import ai.thepredict.repository.helpers.ServiceProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.withService

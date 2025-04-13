@@ -1,4 +1,4 @@
-package ai.thepredict.identity.api
+package ai.thepredict.apispec
 
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.NewUser

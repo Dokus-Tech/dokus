@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-group = "ai.thepredict.documents.api"
+group = "ai.thepredict.apispec"
 version = "1.0.0"
 
 kotlin {
@@ -28,12 +28,12 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = "applicationDocumentspi"
+        moduleName = "applicationApispec"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "applicationDocumentsApi.js"
+                outputFileName = "applicationApispec.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -62,7 +62,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.documents.api"
+    namespace = "ai.thepredict.apispec"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

@@ -1,9 +1,9 @@
 package ai.thepredict.common
 
-import kotlinx.rpc.krpc.ktor.server.RPCRoute
+import kotlinx.rpc.krpc.ktor.server.KrpcRoute
 import kotlinx.rpc.krpc.serialization.json.json
 
-fun RPCRoute.configureRpc() {
+fun KrpcRoute.configureRpc() {
     rpcConfig {
         serialization {
             json()
