@@ -40,7 +40,7 @@ include(":application:ui-preview")
 
 include(":application:foundation")
 include(":application:platform")
-include(":application:repository")
+include(":application:core")
 include(":application:navigation")
 
 include(":shared:configuration")
