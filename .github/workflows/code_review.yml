@@ -39,10 +39,10 @@ jobs:
             exit 1
           fi
     outputs:
-      shouldRunKmp: ${{ steps.setVariables.outputs.shouldRunKmp }}
-      shouldRunAndroid: ${{ steps.setVariables.outputs.shouldRunAndroid }}
-      shouldRunIos: ${{ steps.setVariables.outputs.shouldRunIos }}
-      shouldRunDesktop: ${{ steps.setVariables.outputs.shouldRunDesktop }}
+      shouldRunKmp: true
+      shouldRunAndroid: true
+      shouldRunIos: true
+      shouldRunDesktop: true
 
   Build:
     needs: SetUp
