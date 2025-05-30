@@ -1,6 +1,6 @@
 package ai.thepredict.identity.api
 
-import ai.thepredict.apispec.IdentityRemoteService
+import ai.thepredict.apispec.service.IdentityRemoteService
 import ai.thepredict.common.UserIdGetter
 import ai.thepredict.data.AuthCredentials
 import ai.thepredict.data.NewUser

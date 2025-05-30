@@ -1,4 +1,4 @@
-package ai.thepredict.apispec
+package ai.thepredict.apispec.service
 
 import ai.thepredict.domain.model.AuthCredentials
 import ai.thepredict.domain.model.NewUser

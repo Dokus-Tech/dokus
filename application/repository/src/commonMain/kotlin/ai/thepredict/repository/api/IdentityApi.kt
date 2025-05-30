@@ -1,6 +1,6 @@
 package ai.thepredict.repository.api
 
-import ai.thepredict.apispec.IdentityRemoteService
+import ai.thepredict.apispec.service.IdentityRemoteService
 import ai.thepredict.domain.model.NewUser
 import ai.thepredict.domain.model.NewWorkspace
 import ai.thepredict.domain.model.User

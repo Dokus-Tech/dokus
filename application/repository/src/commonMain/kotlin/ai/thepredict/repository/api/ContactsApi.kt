@@ -1,6 +1,6 @@
 package ai.thepredict.repository.api
 
-import ai.thepredict.apispec.ContactsRemoteService
+import ai.thepredict.apispec.service.ContactsRemoteService
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.domain.model.Contact

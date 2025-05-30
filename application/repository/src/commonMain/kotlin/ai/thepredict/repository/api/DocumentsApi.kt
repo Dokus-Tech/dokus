@@ -1,6 +1,6 @@
 package ai.thepredict.repository.api
 
-import ai.thepredict.apispec.DocumentsRemoteService
+import ai.thepredict.apispec.service.DocumentsRemoteService
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.repository.helpers.ServiceProvider
 import kotlinx.rpc.withService
