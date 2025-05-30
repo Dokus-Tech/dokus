@@ -3,7 +3,7 @@ package ai.thepredict.app.onboarding.workspaces.create
 import ai.thepredict.app.core.di
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
-import ai.thepredict.domain.model.Workspace
+import ai.thepredict.domain.model.old.Workspace
 import ai.thepredict.domain.usecases.CreateNewWorkspaceUseCase
 import ai.thepredict.repository.api.UnifiedApi
 import cafe.adriel.voyager.core.model.StateScreenModel

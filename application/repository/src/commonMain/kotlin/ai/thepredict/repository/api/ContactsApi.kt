@@ -3,7 +3,7 @@ package ai.thepredict.repository.api
 import ai.thepredict.apispec.service.ContactsRemoteService
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult
-import ai.thepredict.domain.model.Contact
+import ai.thepredict.domain.model.old.Contact
 import ai.thepredict.repository.helpers.ServiceProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.withService

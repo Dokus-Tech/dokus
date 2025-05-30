@@ -1,10 +1,10 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.service.IdentityRemoteService
-import ai.thepredict.domain.model.NewUser
-import ai.thepredict.domain.model.NewWorkspace
-import ai.thepredict.domain.model.User
-import ai.thepredict.domain.model.Workspace
+import ai.thepredict.domain.model.old.NewUser
+import ai.thepredict.domain.model.old.NewWorkspace
+import ai.thepredict.domain.model.old.User
+import ai.thepredict.domain.model.old.Workspace
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult
 import ai.thepredict.repository.helpers.ServiceProvider
