@@ -1,4 +1,4 @@
-package ai.thepredict.domain.model
+package ai.thepredict.domain.model.old
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable

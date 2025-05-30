@@ -4,7 +4,7 @@ import ai.thepredict.app.core.di
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
-import ai.thepredict.domain.model.Workspace
+import ai.thepredict.domain.model.old.Workspace
 import ai.thepredict.repository.api.UnifiedApi
 import ai.thepredict.repository.extensions.selectedWorkspaceId
 import cafe.adriel.voyager.core.model.StateScreenModel
