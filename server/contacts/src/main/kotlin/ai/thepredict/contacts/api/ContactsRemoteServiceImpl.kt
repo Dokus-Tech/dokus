@@ -1,6 +1,6 @@
 package ai.thepredict.contacts.api
 
-import ai.thepredict.apispec.ContactsRemoteService
+import ai.thepredict.apispec.service.ContactsRemoteService
 import ai.thepredict.common.UserIdGetter
 import ai.thepredict.data.Contact
 import ai.thepredict.domain.api.OperationResult

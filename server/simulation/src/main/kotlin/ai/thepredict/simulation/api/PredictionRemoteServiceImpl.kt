@@ -1,6 +1,6 @@
 package ai.thepredict.simulation.api
 
-import ai.thepredict.apispec.SimulationRemoteService
+import ai.thepredict.apispec.service.SimulationRemoteService
 import ai.thepredict.common.UserIdGetter
 import kotlin.coroutines.CoroutineContext
 
