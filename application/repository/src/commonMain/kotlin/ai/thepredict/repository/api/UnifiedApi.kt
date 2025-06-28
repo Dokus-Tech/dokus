@@ -47,23 +47,23 @@ class UnifiedApi private constructor(
 
     companion object {
         fun create(
-            gateway: ServerEndpoint.Gateway,
+            endpoint: ServerEndpoint,
         ): UnifiedApi {
             val httpClient = httpClient()
             return UnifiedApi(
-                AuthApi.create(httpClient, gateway),
-                CompanyApi.create(httpClient, gateway),
-                CompanyMembersApi.create(httpClient, gateway),
-                UserApi.create(httpClient, gateway),
-                DocumentApi.create(httpClient, gateway),
-                DocumentExtractionApi.create(httpClient, gateway),
-                DocumentFileApi.create(httpClient, gateway),
-                MatchingApi.create(httpClient, gateway),
-                TransactionApi.create(httpClient, gateway),
-                TransactionExtractionApi.create(httpClient, gateway),
-                TransactionFileApi.create(httpClient, gateway),
-                TransactionMatchingApi.create(httpClient, gateway),
-                InfoApi.create(httpClient, gateway)
+                AuthApi.create(httpClient, endpoint),
+                CompanyApi.create(httpClient, endpoint),
+                CompanyMembersApi.create(httpClient, endpoint),
+                UserApi.create(httpClient, endpoint),
+                DocumentApi.create(httpClient, endpoint),
+                DocumentExtractionApi.create(httpClient, endpoint),
+                DocumentFileApi.create(httpClient, endpoint),
+                MatchingApi.create(httpClient, endpoint),
+                TransactionApi.create(httpClient, endpoint),
+                TransactionExtractionApi.create(httpClient, endpoint),
+                TransactionFileApi.create(httpClient, endpoint),
+                TransactionMatchingApi.create(httpClient, endpoint),
+                InfoApi.create(httpClient, endpoint)
             )
         }
     }
