@@ -3,6 +3,8 @@ package ai.thepredict.apispec
 import ai.thepredict.domain.model.Transaction
 
 interface TransactionApi {
+    companion object {}
+
     suspend fun listTransactions(
         companyId: String,
         offset: Int = 0,

@@ -73,6 +73,13 @@ sealed interface ServerEndpoint {
 
         val connectUrl = "${internalHost}:${internalPort}"
     }
+
+    data object PredictCloud : ServerEndpoint {
+        override val internalHost = "predict-cloud"
+        override val externalHost = "https://predict-api-463513006881.europe-west1.run.app/api/v1"
+        override val internalPort = 80
+        override val externalPort = 80
+    }
 }
 
 private val ServerEndpoint.name: String
@@ -85,6 +92,7 @@ private val ServerEndpoint.name: String
         is ServerEndpoint.Prediction -> "Prediction"
         is ServerEndpoint.Simulation -> "Simulation"
         is ServerEndpoint.Database -> "Database"
+        is ServerEndpoint.PredictCloud -> "PredictCloud"
     }
 
 val ServerEndpoint.info: String get() = "The Predict module: $name. \nListening on $internalPort"
