@@ -4,6 +4,8 @@ import ai.thepredict.domain.model.Document
 import ai.thepredict.domain.model.DocumentType
 
 interface DocumentApi {
+    companion object {}
+
     suspend fun listDocuments(
         companyId: String,
         documentType: DocumentType? = null,
