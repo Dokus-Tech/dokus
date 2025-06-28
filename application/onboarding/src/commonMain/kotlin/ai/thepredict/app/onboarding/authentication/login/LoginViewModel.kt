@@ -30,11 +30,11 @@ internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idl
             mutableState.value = State.Error(PredictException.WeakPassword)
             return@launch
         }
-
-        persistence.user = api.authenticate(emailValue, passwordValue).getOrElse {
-            mutableState.value = State.Error(it.asPredictException)
-            return@launch
-        }
+//
+//        persistence.user = api.authenticate(emailValue, passwordValue).getOrElse {
+//            mutableState.value = State.Error(it.asPredictException)
+//            return@launch
+//        }
 
         mutableState.value = State.Authenticated
     }

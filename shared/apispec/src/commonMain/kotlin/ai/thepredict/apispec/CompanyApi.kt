@@ -5,7 +5,7 @@ import ai.thepredict.domain.model.CreateCompanyRequest
 import ai.thepredict.domain.model.UpdateCompanyRequest
 
 interface CompanyApi {
-    companion object {}
+    companion object;
 
     suspend fun getCompanies(): List<Company>
     suspend fun createCompany(request: CreateCompanyRequest): Company

@@ -24,13 +24,13 @@ internal class WorkspaceCreateViewModel : StateScreenModel<WorkspaceCreateViewMo
                 mutableState.value = State.Error(it.asPredictException)
                 return@launch
             }
-
-            val workspace = api.createWorkspace(newWorkspace).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
-                return@launch
-            }
-
-            mutableState.value = State.Loaded(workspace)
+//
+//            val workspace = api.createWorkspace(newWorkspace).getOrElse {
+//                mutableState.value = State.Error(it.asPredictException)
+//                return@launch
+//            }
+//
+//            mutableState.value = State.Loaded(workspace)
         }
     }
 

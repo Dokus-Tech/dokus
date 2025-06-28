@@ -28,18 +28,6 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
                 return@launch
             }
 
-            val user = api.createUser(newUser).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
-                return@launch
-            }
-
-            with(persistence) {
-                userId = user.userUUID.toString()
-                email = user.email
-                password = user.password
-            }
-
-            mutableState.value = State.Loaded(user)
         }
     }
 

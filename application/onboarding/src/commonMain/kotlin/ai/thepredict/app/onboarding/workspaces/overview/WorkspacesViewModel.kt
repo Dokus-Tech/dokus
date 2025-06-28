@@ -26,13 +26,13 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
         screenModelScope.launch {
             mutableState.value = State.Loading
 
-            val workspaces = api.myWorkspaces().getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
-                return@launch
-            }
-
-            val workspacesList = workspaces.toList()
-            mutableState.value = State.Loaded(workspacesList)
+//            val workspaces = api.getCompanies().getOrElse {
+//                mutableState.value = State.Error(it.asPredictException)
+//                return@launch
+//            }
+//
+//            val workspacesList = workspaces.toList()
+//            mutableState.value = State.Loaded(workspacesList)
         }
     }
 
@@ -44,12 +44,12 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
 
     fun continueToHome() {
         screenModelScope.launch {
-            val workspaces = api.myWorkspaces().getOrNull()?.toList()
-            if (workspaces.isNullOrEmpty()) return@launch
-
-            persistence.selectedWorkspaceId = workspaces.first().id
-
-            mutableEffect.emit(Effect.NavigateHome)
+//            val workspaces = api.myWorkspaces().getOrNull()?.toList()
+//            if (workspaces.isNullOrEmpty()) return@launch
+//
+//            persistence.selectedWorkspaceId = workspaces.first().id
+//
+//            mutableEffect.emit(Effect.NavigateHome)
         }
     }
 
