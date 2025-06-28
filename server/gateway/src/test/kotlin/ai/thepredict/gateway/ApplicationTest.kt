@@ -1,6 +1,6 @@
 package ai.thepredict.gateway
 
-import ai.thepredict.apispec.ContactsRemoteService
+import ai.thepredict.apispec.service.ContactsRemoteService
 import ai.thepredict.configuration.ServerEndpoint
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.runBlocking
