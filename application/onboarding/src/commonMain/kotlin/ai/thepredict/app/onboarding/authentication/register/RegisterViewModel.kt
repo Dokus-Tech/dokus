@@ -2,7 +2,7 @@ package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.di
 import ai.thepredict.app.platform.persistence
-import ai.thepredict.domain.model.User
+import ai.thepredict.domain.model.old.User
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
 import ai.thepredict.domain.usecases.CreateNewUserUseCase
@@ -28,18 +28,6 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
                 return@launch
             }
 
-            val user = api.createUser(newUser).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
-                return@launch
-            }
-
-            with(persistence) {
-                userId = user.userUUID.toString()
-                email = user.email
-                password = user.password
-            }
-
-            mutableState.value = State.Loaded(user)
         }
     }
 

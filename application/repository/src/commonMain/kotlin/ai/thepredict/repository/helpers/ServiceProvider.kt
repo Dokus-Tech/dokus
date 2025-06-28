@@ -1,6 +1,6 @@
 package ai.thepredict.repository.helpers
 
-import ai.thepredict.domain.model.AuthCredentials
+import ai.thepredict.domain.model.old.AuthCredentials
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.api.OperationResult

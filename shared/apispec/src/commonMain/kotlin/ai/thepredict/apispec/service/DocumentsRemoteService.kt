@@ -1,4 +1,4 @@
-package ai.thepredict.apispec
+package ai.thepredict.apispec.service
 
 import kotlinx.rpc.RemoteService
 import kotlinx.rpc.annotations.Rpc

@@ -1,8 +1,8 @@
 package ai.thepredict.repository.extensions
 
-import ai.thepredict.domain.model.AuthCredentials
-import ai.thepredict.domain.model.User
-import ai.thepredict.domain.model.Workspace
+import ai.thepredict.domain.model.old.AuthCredentials
+import ai.thepredict.domain.model.old.User
+import ai.thepredict.domain.model.old.Workspace
 import ai.thepredict.app.platform.Persistence
 
 val Persistence.authCredentials: AuthCredentials?

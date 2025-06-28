@@ -1,7 +1,7 @@
 package ai.thepredict.domain.usecases.validators
 
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.domain.model.NewWorkspace
+import ai.thepredict.domain.model.old.NewWorkspace
 
 class ValidateNewWorkspaceUseCase(
     private val nameValidator: ValidateWorkspaceNameUseCase = ValidateWorkspaceNameUseCase(),

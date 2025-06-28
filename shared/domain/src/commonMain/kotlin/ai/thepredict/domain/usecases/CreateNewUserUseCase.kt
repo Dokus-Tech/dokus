@@ -1,7 +1,7 @@
 package ai.thepredict.domain.usecases
 
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.domain.model.NewUser
+import ai.thepredict.domain.model.old.NewUser
 import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
 import ai.thepredict.domain.usecases.validators.ValidateNameUseCase
 import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase

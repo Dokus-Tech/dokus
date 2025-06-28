@@ -4,7 +4,7 @@ import ai.thepredict.app.core.di
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
-import ai.thepredict.domain.model.Workspace
+import ai.thepredict.domain.model.old.Workspace
 import ai.thepredict.repository.api.UnifiedApi
 import ai.thepredict.repository.extensions.selectedWorkspaceId
 import cafe.adriel.voyager.core.model.StateScreenModel
@@ -26,13 +26,13 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
         screenModelScope.launch {
             mutableState.value = State.Loading
 
-            val workspaces = api.myWorkspaces().getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
-                return@launch
-            }
-
-            val workspacesList = workspaces.toList()
-            mutableState.value = State.Loaded(workspacesList)
+//            val workspaces = api.getCompanies().getOrElse {
+//                mutableState.value = State.Error(it.asPredictException)
+//                return@launch
+//            }
+//
+//            val workspacesList = workspaces.toList()
+//            mutableState.value = State.Loaded(workspacesList)
         }
     }
 
@@ -44,12 +44,12 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
 
     fun continueToHome() {
         screenModelScope.launch {
-            val workspaces = api.myWorkspaces().getOrNull()?.toList()
-            if (workspaces.isNullOrEmpty()) return@launch
-
-            persistence.selectedWorkspaceId = workspaces.first().id
-
-            mutableEffect.emit(Effect.NavigateHome)
+//            val workspaces = api.myWorkspaces().getOrNull()?.toList()
+//            if (workspaces.isNullOrEmpty()) return@launch
+//
+//            persistence.selectedWorkspaceId = workspaces.first().id
+//
+//            mutableEffect.emit(Effect.NavigateHome)
         }
     }
 
