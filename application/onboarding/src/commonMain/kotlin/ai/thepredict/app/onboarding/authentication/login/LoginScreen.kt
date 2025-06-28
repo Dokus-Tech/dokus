@@ -3,20 +3,27 @@ package ai.thepredict.app.onboarding.authentication.login
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.PButton
-import ai.thepredict.ui.PErrorText
-import ai.thepredict.ui.common.PTopAppBar
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,14 +34,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 
 internal class LoginScreen : Screen {
 
@@ -42,7 +53,8 @@ internal class LoginScreen : Screen {
     override fun Content() {
         val viewModel = rememberScreenModel { LoginViewModel() }
         val data = viewModel.state.collectAsState()
-        val fieldsError: PredictException? = (data.value as? LoginViewModel.State.Error)?.exception
+        val fieldsError: PredictException? =
+            (data.value as? LoginViewModel.State.Error)?.exception
 
         val navigator = LocalNavigator.currentOrThrow
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
@@ -51,67 +63,200 @@ internal class LoginScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
-        val focusManager = LocalFocusManager.current
+        ContentMobile(
+            email = email,
+            onEmailChange = { email = it },
+            password = password,
+            onPasswordChange = { password = it },
+            fieldsError = fieldsError,
+            onLoginClick = { viewModel.login(email, password) },
+            onRegisterClick = { navigator.push(registerScreen) },
+            onConnectToServerClick = { /* Handle connect to server */ }
+        )
+    }
+}
 
-        Scaffold(
-            topBar = { PTopAppBar("Let's get started") }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                PTextFieldEmail(
-                    modifier = Modifier.padding(vertical = 16.dp),
-                    fieldName = "Email",
-                    error = fieldsError.takeIf { it is PredictException.InvalidEmail },
-                    value = email,
-                    keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                ) {
-                    email = it
-                }
+@Composable
+private fun ContentMobile(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fieldsError: PredictException?,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onConnectToServerClick: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
 
-                PTextFieldPassword(
-                    fieldName = "Password",
-                    value = password,
-                    error = fieldsError.takeIf { it is PredictException.WeakPassword },
-                    onAction = { focusManager.clearFocus() }
-                ) {
-                    password = it
-                }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Spacer(modifier = Modifier.height(40.dp))
 
-                PButton("Login", modifier = Modifier.padding(vertical = 16.dp)) {
-                    viewModel.login(email, password)
-                    focusManager.clearFocus()
-                }
+        // Logo
+        Text(
+            text = "Predict",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.displaySmall
+        )
 
-                OutlinedButton(onClick = {
-                    navigator.push(registerScreen)
-                }) {
-                    Text("New? Create an account")
-                }
+        Spacer(modifier = Modifier.height(48.dp))
 
-                Spacer(modifier = Modifier.weight(1f))
+        // Title
+        Text(
+            text = "Login to account",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            style = MaterialTheme.typography.headlineMedium
+        )
 
-                when (val state = data.value) {
-                    is LoginViewModel.State.Idle -> {
+        Spacer(modifier = Modifier.height(24.dp))
 
-                    }
+        // Form fields
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Email Field - Using OutlinedTextField with light background
+            PTextFieldEmail(
+                fieldName = "Email address",
+                error = fieldsError.takeIf { it is PredictException.InvalidEmail },
+                value = email,
+                keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                modifier = Modifier.fillMaxWidth(), onValueChange = onEmailChange
+            )
 
-                    is LoginViewModel.State.Loading -> {
-                        AdaptiveCircularProgressIndicator()
-                    }
-
-                    is LoginViewModel.State.Authenticated -> {
-                        navigator.replace(splashScreen)
-                    }
-
-                    is LoginViewModel.State.Error -> {
-                        PErrorText(state.exception)
-                    }
-                }
+            // Password Field - Using OutlinedTextField with light background
+            PTextFieldPassword(
+                fieldName = "Password",
+                value = password,
+                error = fieldsError.takeIf { it is PredictException.WeakPassword },
+                onAction = { focusManager.clearFocus() },
+                modifier = Modifier.fillMaxWidth(), onValueChange = onPasswordChange
+            )
+        }
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            TextButton(onClick = { }) {
+                Text(
+                    text = "Forgot password?",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Login Button
+        Button(
+            onClick = onLoginClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(38.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(
+                text = "Login",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sign up text - moved up here to match Figma
+        TextButton(
+            modifier = Modifier.align(Alignment.Start),
+            onClick = onRegisterClick
+        ) {
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(
+                        SpanStyle(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    ) {
+                        append("Don't have an account? ")
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        append("Sign up")
+                    }
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Divider with "or"
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Divider(
+                modifier = Modifier.weight(1f),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+
+            Text(
+                text = "or",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Divider(
+                modifier = Modifier.weight(1f),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Connect to server button - simple outlined button
+        OutlinedButton(
+            onClick = onConnectToServerClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(38.dp),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "Connect to server",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
