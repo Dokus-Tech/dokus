@@ -26,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
@@ -38,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
 
 @Preview
 @Composable
@@ -57,7 +57,7 @@ fun LoginScreenPreview() {
                     .fillMaxSize()
                     .statusBarsPadding()
                     .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.Start
             ) {
                 Spacer(modifier = Modifier.height(40.dp))
 
@@ -106,21 +106,19 @@ fun LoginScreenPreview() {
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
                     )
-
-                    // Forgot Password (right aligned)
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.CenterEnd
-                    ) {
-                        TextButton(onClick = { }) {
-                            Text(
-                                text = "Forgot password?",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                }
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    TextButton(onClick = { }) {
+                        Text(
+                            text = "Forgot password?",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
 
@@ -131,7 +129,7 @@ fun LoginScreenPreview() {
                     onClick = { },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
+                        .height(38.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -149,6 +147,7 @@ fun LoginScreenPreview() {
 
                 // Sign up text - moved up here to match Figma
                 TextButton(
+                    modifier = Modifier.align(Alignment.Start),
                     onClick = { }
                 ) {
                     Text(
@@ -210,7 +209,7 @@ fun LoginScreenPreview() {
                     onClick = { },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
+                        .height(38.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
