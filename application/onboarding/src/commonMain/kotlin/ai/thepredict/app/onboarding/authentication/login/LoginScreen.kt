@@ -56,193 +56,188 @@ internal class LoginScreen : Screen {
 
     @Composable
     override fun Content() {
-        val colorScheme = createColorScheme(false)
+        val viewModel = rememberScreenModel { LoginViewModel() }
+        val data = viewModel.state.collectAsState()
+        val fieldsError: PredictException? = (data.value as? LoginViewModel.State.Error)?.exception
 
-        MaterialTheme(colorScheme = colorScheme) {
-            val viewModel = rememberScreenModel { LoginViewModel() }
-            val data = viewModel.state.collectAsState()
-            val fieldsError: PredictException? =
-                (data.value as? LoginViewModel.State.Error)?.exception
+        val navigator = LocalNavigator.currentOrThrow
+        val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
+        val splashScreen = rememberScreen(CoreNavigation.Splash)
 
-            val navigator = LocalNavigator.currentOrThrow
-            val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
-            val splashScreen = rememberScreen(CoreNavigation.Splash)
+        var email by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
 
-            var email by remember { mutableStateOf("") }
-            var password by remember { mutableStateOf("") }
+        val focusManager = LocalFocusManager.current
 
-            val focusManager = LocalFocusManager.current
-
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(40.dp))
+
+                // Logo
+                Text(
+                    text = "Predict",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = (-0.14).sp,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+                Spacer(modifier = Modifier.height(52.dp))
+
+                // Title
+                Text(
+                    text = "Login to account",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    letterSpacing = (-0.14).sp,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Form fields
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .statusBarsPadding()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Spacer(modifier = Modifier.height(40.dp))
-
-                    // Logo
-                    Text(
-                        text = "Predict",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = (-0.14).sp,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(52.dp))
-
-                    // Title
-                    Text(
-                        text = "Login to account",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        letterSpacing = (-0.14).sp,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Form fields
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
-                        // Email Field
-                        PTextFieldEmail(
-                            fieldName = "Email address",
-                            error = fieldsError.takeIf { it is PredictException.InvalidEmail },
-                            value = email,
-                            keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                            onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            email = it
-                        }
-
-                        // Password Field
-                        PTextFieldPassword(
-                            fieldName = "Password",
-                            value = password,
-                            error = fieldsError.takeIf { it is PredictException.WeakPassword },
-                            onAction = { focusManager.clearFocus() },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            password = it
-                        }
-
-                        // Forgot Password (right aligned)
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            TextButton(
-                                onClick = { /* TODO: Handle forgot password */ }
-                            ) {
-                                Text(
-                                    text = "Forgot password?",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Login Button
-                    PButton(
-                        text = "Login",
+                    // Email Field
+                    PTextFieldEmail(
+                        fieldName = "Email address",
+                        error = fieldsError.takeIf { it is PredictException.InvalidEmail },
+                        value = email,
+                        keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                        onAction = { focusManager.moveFocus(FocusDirection.Next) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        viewModel.login(email, password)
-                        focusManager.clearFocus()
+                        email = it
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    // Password Field
+                    PTextFieldPassword(
+                        fieldName = "Password",
+                        value = password,
+                        error = fieldsError.takeIf { it is PredictException.WeakPassword },
+                        onAction = { focusManager.clearFocus() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        password = it
+                    }
 
-                    // Divider with "or"
-                    Row(
+                    // Forgot Password (right aligned)
+                    Box(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        contentAlignment = Alignment.CenterEnd
                     ) {
-                        Divider(
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
-
-                        Text(
-                            text = "or",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Divider(
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
+                        TextButton(
+                            onClick = { /* TODO: Handle forgot password */ }
+                        ) {
+                            Text(
+                                text = "Forgot password?",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
+                }
 
-                    Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                    // Sign up text (clickable)
-                    TextButton(
-                        onClick = {
-                            navigator.push(registerScreen)
+                // Login Button
+                PButton(
+                    text = "Login",
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    viewModel.login(email, password)
+                    focusManager.clearFocus()
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Divider with "or"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Divider(
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                    )
+
+                    Text(
+                        text = "or",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Divider(
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Sign up text (clickable)
+                TextButton(
+                    onClick = {
+                        navigator.push(registerScreen)
+                    },
+                    modifier = Modifier.padding(bottom = 24.dp)
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                SpanStyle(
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            ) {
+                                append("Don't have an account? ")
+                            }
+                            withStyle(
+                                SpanStyle(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            ) {
+                                append("Sign up")
+                            }
                         },
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    ) {
-                        Text(
-                            text = buildAnnotatedString {
-                                withStyle(
-                                    SpanStyle(
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        fontWeight = FontWeight.Normal
-                                    )
-                                ) {
-                                    append("Don't have an account? ")
-                                }
-                                withStyle(
-                                    SpanStyle(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                ) {
-                                    append("Sign up")
-                                }
-                            },
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                // Loading and error states
+                when (val state = data.value) {
+                    is LoginViewModel.State.Idle -> {
+                        // Nothing to show
                     }
 
-                    // Loading and error states
-                    when (val state = data.value) {
-                        is LoginViewModel.State.Idle -> {
-                            // Nothing to show
-                        }
+                    is LoginViewModel.State.Loading -> {
+                        AdaptiveCircularProgressIndicator()
+                    }
 
-                        is LoginViewModel.State.Loading -> {
-                            AdaptiveCircularProgressIndicator()
-                        }
+                    is LoginViewModel.State.Authenticated -> {
+                        navigator.replace(splashScreen)
+                    }
 
-                        is LoginViewModel.State.Authenticated -> {
-                            navigator.replace(splashScreen)
-                        }
-
-                        is LoginViewModel.State.Error -> {
-                            PErrorText(state.exception)
-                        }
+                    is LoginViewModel.State.Error -> {
+                        PErrorText(state.exception)
                     }
                 }
             }
