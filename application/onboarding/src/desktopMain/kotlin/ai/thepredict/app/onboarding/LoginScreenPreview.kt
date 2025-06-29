@@ -1,6 +1,6 @@
 package ai.thepredict.app.onboarding
 
-import ai.thepredict.app.onboarding.authentication.login.ContentMobile
+import ai.thepredict.app.onboarding.authentication.login.LoginForm
 import ai.thepredict.app.onboarding.authentication.login.LoginScreen
 import ai.thepredict.ui.theme.createColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -14,7 +14,7 @@ fun LoginScreenPreview() {
     val screen = LoginScreen()
 
     MaterialTheme(colorScheme = colorScheme) {
-        ContentMobile(
+        LoginForm(
             email = "",
             onEmailChange = { /*TODO*/ },
             password = "",
