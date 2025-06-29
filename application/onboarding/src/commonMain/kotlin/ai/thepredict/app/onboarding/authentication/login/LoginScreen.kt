@@ -1,6 +1,7 @@
 package ai.thepredict.app.onboarding.authentication.login
 
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
@@ -365,6 +366,7 @@ internal fun LoginForm(
         // Connect to server button - simple outlined button
         OutlinedButton(
             onClick = onConnectToServerClick,
+            enabled = FeatureFlags.ownServers,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(38.dp),
