@@ -15,11 +15,15 @@ class DocumentFileApiImpl(
     private val client: HttpClient,
 ) : DocumentFileApi {
     override suspend fun getDocumentFileUrl(documentId: String, companyId: String): String {
-        return client.get("/companies/$companyId/documents/$documentId/file/url").body()
+        return client.get("/api/v1/documents/$documentId/file/url") {
+            header("X-Company-ID", companyId)
+        }.body()
     }
 
     override suspend fun deleteDocumentFile(documentId: String, companyId: String) {
-        client.delete("/companies/$companyId/documents/$documentId/file")
+        client.delete("/api/v1/documents/$documentId/file") {
+            header("X-Company-ID", companyId)
+        }
     }
 }
 

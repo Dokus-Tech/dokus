@@ -23,14 +23,14 @@ class CompanyMembersApiImpl(
         offset: Int,
         limit: Int
     ): List<User> {
-        return client.get("/companies/$companyId/members") {
+        return client.get("/api/v1/companies/$companyId/members") {
             parameter("offset", offset)
             parameter("limit", limit)
         }.body()
     }
 
     override suspend fun checkCompanyMember(companyId: String, userId: String): Boolean {
-        return client.get("/companies/$companyId/members/$userId/exists").body()
+        return client.get("/api/v1/companies/$companyId/members/$userId/exists").body()
     }
 
     override suspend fun updateUserCompanyRole(
@@ -38,7 +38,7 @@ class CompanyMembersApiImpl(
         userId: String,
         role: Role
     ): User {
-        return client.put("/companies/$companyId/members/$userId/role") {
+        return client.put("/api/v1/companies/$companyId/members/$userId/role") {
             setBody(role)
         }.body()
     }

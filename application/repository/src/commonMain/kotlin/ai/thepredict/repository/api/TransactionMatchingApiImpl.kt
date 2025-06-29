@@ -15,7 +15,9 @@ class TransactionMatchingApiImpl(
     private val client: HttpClient,
 ) : TransactionMatchingApi {
     override suspend fun getTransactionMatching(transactionId: String, companyId: String): MatchedSchema {
-        return client.get("/companies/$companyId/transactions/$transactionId/matching").body()
+        return client.get("/api/v1/transactions/$transactionId/matching") {
+            header("X-Company-ID", companyId)
+        }.body()
     }
 }
 
