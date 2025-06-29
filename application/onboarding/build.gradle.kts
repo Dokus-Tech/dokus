@@ -37,6 +37,7 @@ kotlin {
             implementation(projects.application.core)
             implementation(projects.application.repository)
             implementation(projects.application.ui)
+            implementation(compose.components.resources)
         }
         desktopMain.dependencies {
         }

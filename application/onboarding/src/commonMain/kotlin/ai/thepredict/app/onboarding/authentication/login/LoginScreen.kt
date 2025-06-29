@@ -1,8 +1,11 @@
 package ai.thepredict.app.onboarding.authentication.login
 
+import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.BackgroundGradientAnimated
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
@@ -11,17 +14,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -63,21 +67,40 @@ internal class LoginScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
-        ContentMobile(
-            email = email,
-            onEmailChange = { email = it },
-            password = password,
-            onPasswordChange = { password = it },
-            fieldsError = fieldsError,
-            onLoginClick = { viewModel.login(email, password) },
-            onRegisterClick = { navigator.push(registerScreen) },
-            onConnectToServerClick = { /* Handle connect to server */ }
-        )
+        Scaffold { contentPadding ->
+            Box(Modifier.padding(contentPadding)) {
+                if (isLargeScreen) {
+                    LoginScreenDesktopContent(
+                        email = email,
+                        onEmailChange = { email = it },
+                        password = password,
+                        onPasswordChange = { password = it },
+                        fieldsError = fieldsError,
+                        onLoginClick = { viewModel.login(email, password) },
+                        onRegisterClick = { navigator.push(registerScreen) },
+                        onConnectToServerClick = { /* Handle connect to server */ },
+                        modifier = Modifier
+                    )
+                } else {
+                    LoginScreenMobileContent(
+                        email = email,
+                        onEmailChange = { email = it },
+                        password = password,
+                        onPasswordChange = { password = it },
+                        fieldsError = fieldsError,
+                        onLoginClick = { viewModel.login(email, password) },
+                        onRegisterClick = { navigator.push(registerScreen) },
+                        onConnectToServerClick = { /* Handle connect to server */ },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun ContentMobile(
+internal fun LoginScreenMobileContent(
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -85,15 +108,11 @@ private fun ContentMobile(
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onConnectToServerClick: () -> Unit
+    onConnectToServerClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val focusManager = LocalFocusManager.current
-
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(24.dp),
+        modifier = modifier,
         horizontalAlignment = Alignment.Start
     ) {
         Spacer(modifier = Modifier.height(40.dp))
@@ -107,8 +126,115 @@ private fun ContentMobile(
             style = MaterialTheme.typography.displaySmall
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        LoginForm(
+            email = email,
+            onEmailChange = onEmailChange,
+            password = password,
+            onPasswordChange = onPasswordChange,
+            fieldsError = fieldsError,
+            onLoginClick = onLoginClick,
+            onRegisterClick = onRegisterClick,
+            onConnectToServerClick = onConnectToServerClick,
+            modifier = Modifier.fillMaxSize()
+        )
 
+        Spacer(Modifier.weight(1f))
+    }
+}
+
+@Composable
+internal fun LoginScreenDesktopContent(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fieldsError: PredictException?,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onConnectToServerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        Row(Modifier.weight(1f).padding(32.dp)) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.weight(2f).fillMaxHeight()
+            ) {
+                Text(
+                    text = "Predict",
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.displaySmall
+                )
+                Text(
+                    text = "©2025 The Predict",
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            // Center LoginForm vertically in desktop mode
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .weight(3f)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                LoginForm(
+                    email = email,
+                    onEmailChange = onEmailChange,
+                    password = password,
+                    onPasswordChange = onPasswordChange,
+                    fieldsError = fieldsError,
+                    onLoginClick = onLoginClick,
+                    onRegisterClick = onRegisterClick,
+                    onConnectToServerClick = onConnectToServerClick,
+                    modifier = Modifier
+                )
+            }
+            Spacer(modifier = Modifier.weight(2f))
+        }
+        Box(Modifier.weight(1f)) {
+            BackgroundGradientAnimated()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(40.dp), // Add padding around the text
+                contentAlignment = Alignment.Center // Center the text within the Box
+            ) {
+                Text(
+                    text = "Financial forecasting without the headaches or jargon. Just smart insights that help your Belgian business thrive.",
+                    color = MaterialTheme.colorScheme.onPrimary, // White text color
+                    style = MaterialTheme.typography.headlineMedium, // Adjust text style as needed
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 40.sp // Adjust line height for better readability
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun LoginForm(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fieldsError: PredictException?,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onConnectToServerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
+        verticalArrangement = Arrangement.Center // Center content vertically
+    ) {
         // Title
         Text(
             text = "Login to account",
@@ -220,7 +346,7 @@ private fun ContentMobile(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.outlineVariant
             )
@@ -233,7 +359,7 @@ private fun ContentMobile(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.outlineVariant
             )
@@ -244,6 +370,7 @@ private fun ContentMobile(
         // Connect to server button - simple outlined button
         OutlinedButton(
             onClick = onConnectToServerClick,
+            enabled = FeatureFlags.ownServers,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(38.dp),
@@ -256,7 +383,5 @@ private fun ContentMobile(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-
-        Spacer(modifier = Modifier.weight(1f))
     }
 }
