@@ -6,8 +6,13 @@ import ai.thepredict.domain.model.Document
 import ai.thepredict.domain.model.DocumentType
 import ai.thepredict.domain.model.PaginatedResponse
 import ai.thepredict.domain.model.DocumentUploadResponse
+import ai.thepredict.repository.extensions.withAmountRange
 import ai.thepredict.repository.extensions.withCompanyId
+import ai.thepredict.repository.extensions.withDateRange
+import ai.thepredict.repository.extensions.withDocumentType
+import ai.thepredict.repository.extensions.withIds
 import ai.thepredict.repository.extensions.withPagination
+import ai.thepredict.repository.extensions.withSupplierId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -40,13 +45,11 @@ class DocumentApiImpl(
         return client.get("/api/v1/documents") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
             withCompanyId(companyId)
-            documentType?.let { parameter("document_type", it.name) }
-            supplierId?.let { parameter("supplier_id", it) }
-            dateFrom?.let { parameter("date_from", it) }
-            dateTo?.let { parameter("date_to", it) }
-            amountMin?.let { parameter("amount_min", it) }
-            amountMax?.let { parameter("amount_max", it) }
-            ids?.let { parameter("ids", it.joinToString(",")) }
+            withDocumentType(documentType)
+            withSupplierId(supplierId)
+            withDateRange(dateFrom, dateTo)
+            withAmountRange(amountMin, amountMax)
+            withIds(ids)
             withPagination(page = page, size = size)
         }.body()
     }
