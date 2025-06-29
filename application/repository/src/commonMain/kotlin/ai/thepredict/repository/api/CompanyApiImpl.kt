@@ -21,31 +21,31 @@ class CompanyApiImpl(
     private val client: HttpClient,
 ) : CompanyApi {
     override suspend fun getCompanies(): List<Company> {
-        return client.get("/companies").body()
+        return client.get("/api/v1/companies").body()
     }
 
     override suspend fun createCompany(request: CreateCompanyRequest): Company {
-        return client.post("/companies") {
+        return client.post("/api/v1/companies") {
             setBody(request)
         }.body()
     }
 
     override suspend fun getCompany(companyId: String): Company {
-        return client.get("/companies/$companyId").body()
+        return client.get("/api/v1/companies/$companyId").body()
     }
 
     override suspend fun updateCompany(companyId: String, request: UpdateCompanyRequest): Company {
-        return client.put("/companies/$companyId") {
+        return client.put("/api/v1/companies/$companyId") {
             setBody(request)
         }.body()
     }
 
     override suspend fun deleteCompany(companyId: String) {
-        client.delete("/companies/$companyId")
+        client.delete("/api/v1/companies/$companyId")
     }
 
     override suspend fun checkCompanyExists(companyId: String): Boolean {
-        return client.get("/companies/$companyId/exists").body()
+        return client.get("/api/v1/companies/$companyId/exists").body()
     }
 }
 

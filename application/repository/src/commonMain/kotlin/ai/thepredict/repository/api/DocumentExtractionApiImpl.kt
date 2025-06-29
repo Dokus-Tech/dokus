@@ -8,6 +8,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.head
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.http.ContentType
@@ -17,15 +18,22 @@ class DocumentExtractionApiImpl(
     private val client: HttpClient,
 ) : DocumentExtractionApi {
     override suspend fun startDocumentExtraction(documentId: String, companyId: String): Document {
-        return client.post("/companies/$companyId/documents/$documentId/extraction").body()
+        return client.post("/api/v1/documents/$documentId/extraction") {
+            header("X-Company-ID", companyId)
+        }.body()
     }
 
     override suspend fun deleteDocumentExtraction(documentId: String, companyId: String) {
-        client.delete("/companies/$companyId/documents/$documentId/extraction")
+        client.delete("/api/v1/documents/$documentId/extraction") {
+            header("X-Company-ID", companyId)
+        }
     }
 
     override suspend fun checkDocumentExtractionExists(documentId: String, companyId: String): Boolean {
-        return client.get("/companies/$companyId/documents/$documentId/extraction/exists").body()
+        val response = client.head("/api/v1/documents/$documentId/extraction") {
+            header("X-Company-ID", companyId)
+        }
+        return response.status.value in 200..299
     }
 }
 

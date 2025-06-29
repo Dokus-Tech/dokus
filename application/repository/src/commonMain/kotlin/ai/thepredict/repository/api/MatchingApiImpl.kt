@@ -16,11 +16,15 @@ class MatchingApiImpl(
     private val client: HttpClient,
 ) : MatchingApi {
     override suspend fun getDocumentMatching(documentId: String, companyId: String): MatchedSchema {
-        return client.get("/companies/$companyId/documents/$documentId/matching").body()
+        return client.get("/api/v1/documents/$documentId/matching") {
+            header("X-Company-ID", companyId)
+        }.body()
     }
 
     override suspend fun getAllMatching(companyId: String): SimpleMatchDocumentsResult {
-        return client.get("/companies/$companyId/matching").body()
+        return client.get("/api/v1/matching") {
+            header("X-Company-ID", companyId)
+        }.body()
     }
 }
 

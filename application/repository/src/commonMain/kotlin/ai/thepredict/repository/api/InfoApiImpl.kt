@@ -15,7 +15,7 @@ class InfoApiImpl(
     private val client: HttpClient,
 ) : InfoApi {
     override suspend fun getApiInfo(): InfoSchema {
-        return client.get("/info").body()
+        return client.get("/api/v1/info").body()
     }
 }
 

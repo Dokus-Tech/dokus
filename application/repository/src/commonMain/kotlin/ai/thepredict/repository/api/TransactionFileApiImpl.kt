@@ -15,11 +15,15 @@ class TransactionFileApiImpl(
     private val client: HttpClient,
 ) : TransactionFileApi {
     override suspend fun getTransactionFileUrl(transactionId: String, companyId: String): String {
-        return client.get("/companies/$companyId/transactions/$transactionId/file/url").body()
+        return client.get("/api/v1/transactions/$transactionId/file/url") {
+            header("X-Company-ID", companyId)
+        }.body()
     }
 
     override suspend fun deleteTransactionFile(transactionId: String, companyId: String) {
-        client.delete("/companies/$companyId/transactions/$transactionId/file")
+        client.delete("/api/v1/transactions/$transactionId/file") {
+            header("X-Company-ID", companyId)
+        }
     }
 }
 

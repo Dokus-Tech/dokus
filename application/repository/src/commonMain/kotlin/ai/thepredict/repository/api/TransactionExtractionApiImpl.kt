@@ -8,6 +8,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.head
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.http.ContentType
@@ -17,15 +18,22 @@ class TransactionExtractionApiImpl(
     private val client: HttpClient,
 ) : TransactionExtractionApi {
     override suspend fun startTransactionExtraction(transactionId: String, companyId: String): Transaction {
-        return client.post("/companies/$companyId/transactions/$transactionId/extraction/start").body()
+        return client.post("/api/v1/transactions/$transactionId/extraction") {
+            header("X-Company-ID", companyId)
+        }.body()
     }
 
     override suspend fun deleteTransactionExtraction(transactionId: String, companyId: String) {
-        client.delete("/companies/$companyId/transactions/$transactionId/extraction")
+        client.delete("/api/v1/transactions/$transactionId/extraction") {
+            header("X-Company-ID", companyId)
+        }
     }
 
     override suspend fun checkTransactionExtractionExists(transactionId: String, companyId: String): Boolean {
-        return client.get("/companies/$companyId/transactions/$transactionId/extraction/exists").body()
+        val response = client.head("/api/v1/transactions/$transactionId/extraction") {
+            header("X-Company-ID", companyId)
+        }
+        return response.status.value in 200..299
     }
 }
 
