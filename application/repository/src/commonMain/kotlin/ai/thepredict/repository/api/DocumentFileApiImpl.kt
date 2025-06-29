@@ -15,14 +15,16 @@ import io.ktor.http.HttpHeaders
 class DocumentFileApiImpl(
     private val client: HttpClient,
 ) : DocumentFileApi {
+    private val basePath = "/api/v1/documents"
+
     override suspend fun getDocumentFileUrl(documentId: String, companyId: String): String {
-        return client.get("/api/v1/documents/$documentId/file/url") {
+        return client.get("$basePath/$documentId/file/url") {
             withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteDocumentFile(documentId: String, companyId: String) {
-        client.delete("/api/v1/documents/$documentId/file") {
+        client.delete("$basePath/$documentId/file") {
             withCompanyId(companyId)
         }
     }

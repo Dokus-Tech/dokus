@@ -20,32 +20,34 @@ import io.ktor.http.HttpHeaders
 class CompanyApiImpl(
     private val client: HttpClient,
 ) : CompanyApi {
+    private val basePath = "/api/v1/companies"
+
     override suspend fun getCompanies(): List<Company> {
-        return client.get("/api/v1/companies").body()
+        return client.get(basePath).body()
     }
 
     override suspend fun createCompany(request: CreateCompanyRequest): Company {
-        return client.post("/api/v1/companies") {
+        return client.post(basePath) {
             setBody(request)
         }.body()
     }
 
     override suspend fun getCompany(companyId: String): Company {
-        return client.get("/api/v1/companies/$companyId").body()
+        return client.get("$basePath/$companyId").body()
     }
 
     override suspend fun updateCompany(companyId: String, request: UpdateCompanyRequest): Company {
-        return client.put("/api/v1/companies/$companyId") {
+        return client.put("$basePath/$companyId") {
             setBody(request)
         }.body()
     }
 
     override suspend fun deleteCompany(companyId: String) {
-        client.delete("/api/v1/companies/$companyId")
+        client.delete("$basePath/$companyId")
     }
 
     override suspend fun checkCompanyExists(companyId: String): Boolean {
-        return client.get("/api/v1/companies/$companyId/exists").body()
+        return client.get("$basePath/$companyId/exists").body()
     }
 }
 

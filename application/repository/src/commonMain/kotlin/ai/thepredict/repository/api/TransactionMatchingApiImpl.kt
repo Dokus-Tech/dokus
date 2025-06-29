@@ -15,14 +15,22 @@ import io.ktor.http.HttpHeaders
 class TransactionMatchingApiImpl(
     private val client: HttpClient,
 ) : TransactionMatchingApi {
-    override suspend fun getTransactionMatching(transactionId: String, companyId: String): MatchedSchema {
-        return client.get("/api/v1/transactions/$transactionId/matching") {
+    private val basePath = "/api/v1/transactions"
+
+    override suspend fun getTransactionMatching(
+        transactionId: String,
+        companyId: String
+    ): MatchedSchema {
+        return client.get("$basePath/$transactionId/matching") {
             withCompanyId(companyId)
         }.body()
     }
 }
 
-internal fun TransactionMatchingApi.Companion.create(httpClient: HttpClient, endpoint: ServerEndpoint): TransactionMatchingApi {
+internal fun TransactionMatchingApi.Companion.create(
+    httpClient: HttpClient,
+    endpoint: ServerEndpoint
+): TransactionMatchingApi {
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
