@@ -20,10 +20,12 @@ class TransactionMatchingApiImpl(
     override suspend fun getTransactionMatching(
         transactionId: String,
         companyId: String
-    ): MatchedSchema {
-        return client.get("$basePath/$transactionId/matching") {
-            withCompanyId(companyId)
-        }.body()
+    ): Result<MatchedSchema> {
+        return runCatching {
+            client.get("$basePath/$transactionId/matching") {
+                withCompanyId(companyId)
+            }.body()
+        }
     }
 }
 

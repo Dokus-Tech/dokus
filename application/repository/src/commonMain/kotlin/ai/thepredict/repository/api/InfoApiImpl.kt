@@ -16,8 +16,10 @@ class InfoApiImpl(
 ) : InfoApi {
     private val basePath = "/api/v1"
 
-    override suspend fun getApiInfo(): InfoSchema {
-        return client.get("$basePath/info").body()
+    override suspend fun getApiInfo(): Result<InfoSchema> {
+        return runCatching {
+            client.get("$basePath/info").body()
+        }
     }
 }
 

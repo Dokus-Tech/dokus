@@ -11,21 +11,32 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import kotlin.Result
 
 class TransactionFileApiImpl(
     private val client: HttpClient,
 ) : TransactionFileApi {
     private val basePath = "/api/v1/transactions"
 
-    override suspend fun getTransactionFileUrl(transactionId: String, companyId: String): String {
-        return client.get("$basePath/$transactionId/file/url") {
-            withCompanyId(companyId)
-        }.body()
+    override suspend fun getTransactionFileUrl(
+        transactionId: String,
+        companyId: String
+    ): Result<String> {
+        return runCatching {
+            client.get("$basePath/$transactionId/file") {
+                withCompanyId(companyId)
+            }.body()
+        }
     }
 
-    override suspend fun deleteTransactionFile(transactionId: String, companyId: String) {
-        client.delete("$basePath/$transactionId/file") {
-            withCompanyId(companyId)
+    override suspend fun deleteTransactionFile(
+        transactionId: String,
+        companyId: String
+    ): Result<Unit> {
+        return runCatching {
+            client.delete("$basePath/$transactionId/file") {
+                withCompanyId(companyId)
+            }
         }
     }
 }
