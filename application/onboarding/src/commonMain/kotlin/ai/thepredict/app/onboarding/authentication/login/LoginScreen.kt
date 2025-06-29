@@ -208,6 +208,20 @@ internal fun LoginScreenDesktopContent(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(40.dp), // Add padding around the text
+                contentAlignment = Alignment.Center // Center the text within the Box
+            ) {
+                Text(
+                    text = "Financial forecasting without the headaches or jargon. Just smart insights that help your Belgian business thrive.",
+                    color = MaterialTheme.colorScheme.onPrimary, // White text color
+                    style = MaterialTheme.typography.headlineMedium, // Adjust text style as needed
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 40.sp // Adjust line height for better readability
+                )
+            }
         }
     }
 }
