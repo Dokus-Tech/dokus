@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -114,8 +116,62 @@ internal fun LoginScreenMobileContent(
             fieldsError = fieldsError,
             onLoginClick = onLoginClick,
             onRegisterClick = onRegisterClick,
-            onConnectToServerClick = onConnectToServerClick
+            onConnectToServerClick = onConnectToServerClick,
+            modifier = Modifier.fillMaxSize()
         )
+    }
+}
+
+@Composable
+internal fun LoginScreenDesktopContent(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fieldsError: PredictException?,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onConnectToServerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        Row(Modifier.weight(1f)) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            ) {
+                Text(
+                    text = "Predict",
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.displaySmall
+                )
+                Text(
+                    text = "©2025 The Predict",
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            Box(Modifier.weight(1f).align(Alignment.CenterVertically)) {
+                LoginForm(
+                    email = email,
+                    onEmailChange = onEmailChange,
+                    password = password,
+                    onPasswordChange = onPasswordChange,
+                    fieldsError = fieldsError,
+                    onLoginClick = onLoginClick,
+                    onRegisterClick = onRegisterClick,
+                    onConnectToServerClick = onConnectToServerClick,
+                    modifier = Modifier
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+        }
+        Box(Modifier.weight(1f)) {
+
+        }
     }
 }
 
@@ -134,8 +190,7 @@ internal fun LoginForm(
     val focusManager = LocalFocusManager.current
 
     Column(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier,
         horizontalAlignment = Alignment.Start
     ) {
         Spacer(modifier = Modifier.height(48.dp))
