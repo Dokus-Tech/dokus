@@ -17,27 +17,35 @@ import io.ktor.http.HttpHeaders
 class DocumentExtractionApiImpl(
     private val client: HttpClient,
 ) : DocumentExtractionApi {
+    private val basePath = "/api/v1/documents"
+
     override suspend fun startDocumentExtraction(documentId: String, companyId: String): Document {
-        return client.post("/api/v1/documents/$documentId/extraction") {
+        return client.post("$basePath/$documentId/extraction") {
             withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteDocumentExtraction(documentId: String, companyId: String) {
-        client.delete("/api/v1/documents/$documentId/extraction") {
+        client.delete("$basePath/$documentId/extraction") {
             withCompanyId(companyId)
         }
     }
 
-    override suspend fun checkDocumentExtractionExists(documentId: String, companyId: String): Boolean {
-        val response = client.head("/api/v1/documents/$documentId/extraction") {
+    override suspend fun checkDocumentExtractionExists(
+        documentId: String,
+        companyId: String
+    ): Boolean {
+        val response = client.head("$basePath/$documentId/extraction") {
             withCompanyId(companyId)
         }
         return response.status.value in 200..299
     }
 }
 
-internal fun DocumentExtractionApi.Companion.create(httpClient: HttpClient, endpoint: ServerEndpoint): DocumentExtractionApi {
+internal fun DocumentExtractionApi.Companion.create(
+    httpClient: HttpClient,
+    endpoint: ServerEndpoint
+): DocumentExtractionApi {
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
