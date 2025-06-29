@@ -15,13 +15,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -63,21 +63,24 @@ internal class LoginScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
-        ContentMobile(
-            email = email,
-            onEmailChange = { email = it },
-            password = password,
-            onPasswordChange = { password = it },
-            fieldsError = fieldsError,
-            onLoginClick = { viewModel.login(email, password) },
-            onRegisterClick = { navigator.push(registerScreen) },
-            onConnectToServerClick = { /* Handle connect to server */ }
-        )
+        Scaffold { contentPadding ->
+            LoginScreenMobileContent(
+                email = email,
+                onEmailChange = { email = it },
+                password = password,
+                onPasswordChange = { password = it },
+                fieldsError = fieldsError,
+                onLoginClick = { viewModel.login(email, password) },
+                onRegisterClick = { navigator.push(registerScreen) },
+                onConnectToServerClick = { /* Handle connect to server */ },
+                modifier = Modifier.padding(contentPadding)
+            )
+        }
     }
 }
 
 @Composable
-internal fun ContentMobile(
+internal fun LoginScreenMobileContent(
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -85,15 +88,11 @@ internal fun ContentMobile(
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onConnectToServerClick: () -> Unit
+    onConnectToServerClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val focusManager = LocalFocusManager.current
-
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(24.dp),
+        modifier = modifier,
         horizontalAlignment = Alignment.Start
     ) {
         Spacer(modifier = Modifier.height(40.dp))
@@ -107,6 +106,38 @@ internal fun ContentMobile(
             style = MaterialTheme.typography.displaySmall
         )
 
+        LoginForm(
+            email = email,
+            onEmailChange = onEmailChange,
+            password = password,
+            onPasswordChange = onPasswordChange,
+            fieldsError = fieldsError,
+            onLoginClick = onLoginClick,
+            onRegisterClick = onRegisterClick,
+            onConnectToServerClick = onConnectToServerClick
+        )
+    }
+}
+
+@Composable
+internal fun LoginForm(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fieldsError: PredictException?,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onConnectToServerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.Start
+    ) {
         Spacer(modifier = Modifier.height(48.dp))
 
         // Title
