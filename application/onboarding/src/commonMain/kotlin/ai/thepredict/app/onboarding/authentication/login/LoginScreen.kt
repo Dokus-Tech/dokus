@@ -6,6 +6,7 @@ import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,6 +48,9 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.jetbrains.compose.resources.painterResource
+import thepredict.application.onboarding.generated.resources.Res
+import thepredict.application.onboarding.generated.resources.onboarding_background_gradient
 
 internal class LoginScreen : Screen {
 
@@ -108,6 +111,8 @@ internal fun LoginScreenMobileContent(
             style = MaterialTheme.typography.displaySmall
         )
 
+        Spacer(modifier = Modifier.height(48.dp))
+
         LoginForm(
             email = email,
             onEmailChange = onEmailChange,
@@ -154,7 +159,7 @@ internal fun LoginScreenDesktopContent(
                     style = MaterialTheme.typography.titleSmall
                 )
             }
-            Box(Modifier.weight(1f).align(Alignment.CenterVertically)) {
+            Box(Modifier.align(Alignment.CenterVertically).weight(1f)) {
                 LoginForm(
                     email = email,
                     onEmailChange = onEmailChange,
@@ -170,7 +175,11 @@ internal fun LoginScreenDesktopContent(
             Spacer(modifier = Modifier.weight(1f))
         }
         Box(Modifier.weight(1f)) {
-
+            Image(
+                painter = painterResource(Res.drawable.onboarding_background_gradient),
+                contentDescription = "",
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
@@ -191,10 +200,9 @@ internal fun LoginForm(
 
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.Start
+        horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
+        verticalArrangement = Arrangement.Center // Center content vertically
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
-
         // Title
         Text(
             text = "Login to account",
