@@ -4,6 +4,15 @@ import ai.thepredict.apispec.DocumentApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Document
 import ai.thepredict.domain.model.DocumentType
+import ai.thepredict.domain.model.DocumentUploadResponse
+import ai.thepredict.domain.model.PaginatedResponse
+import ai.thepredict.repository.extensions.withAmountRange
+import ai.thepredict.repository.extensions.withCompanyId
+import ai.thepredict.repository.extensions.withDateRange
+import ai.thepredict.repository.extensions.withDocumentType
+import ai.thepredict.repository.extensions.withIds
+import ai.thepredict.repository.extensions.withPagination
+import ai.thepredict.repository.extensions.withSupplierId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -11,8 +20,8 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
+import io.ktor.client.request.head
 import io.ktor.client.request.header
-import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -20,44 +29,72 @@ import io.ktor.http.HttpHeaders
 class DocumentApiImpl(
     private val client: HttpClient,
 ) : DocumentApi {
+    private val basePath = "/api/v1/documents"
+
     override suspend fun listDocuments(
         companyId: String,
         documentType: DocumentType?,
-        offset: Int,
-        limit: Int
-    ): List<Document> {
-        return client.get("/companies/$companyId/documents") {
-            parameter("offset", offset)
-            parameter("limit", limit)
-            documentType?.let { parameter("type", it.name) }
+        supplierId: String?,
+        dateFrom: String?,
+        dateTo: String?,
+        amountMin: Double?,
+        amountMax: Double?,
+        ids: List<String>?,
+        page: Int,
+        size: Int
+    ): PaginatedResponse<Document> {
+        return client.get(basePath) {
+            header(HttpHeaders.ContentType, ContentType.Application.Json)
+            withCompanyId(companyId)
+            withDocumentType(documentType)
+            withSupplierId(supplierId)
+            withDateRange(dateFrom, dateTo)
+            withAmountRange(amountMin, amountMax)
+            withIds(ids)
+            withPagination(page = page, size = size)
         }.body()
     }
 
-    override suspend fun uploadDocumentFile(companyId: String, fileBytes: ByteArray): Document {
+    override suspend fun uploadDocumentFile(
+        companyId: String,
+        fileBytes: ByteArray
+    ): DocumentUploadResponse {
         return client.submitFormWithBinaryData(
-            url = "/companies/$companyId/documents/upload",
+            url = "$basePath/upload",
             formData = formData {
                 append("file", fileBytes, Headers.build {
                     append(HttpHeaders.ContentDisposition, "filename=document")
                 })
             }
-        ).body()
+        ) {
+            withCompanyId(companyId)
+        }.body()
     }
 
     override suspend fun getDocument(documentId: String, companyId: String): Document {
-        return client.get("/companies/$companyId/documents/$documentId").body()
+        return client.get("$basePath/$documentId") {
+            withCompanyId(companyId)
+        }.body()
     }
 
     override suspend fun deleteDocument(documentId: String, companyId: String) {
-        client.delete("/companies/$companyId/documents/$documentId")
+        client.delete("$basePath/$documentId") {
+            withCompanyId(companyId)
+        }
     }
 
     override suspend fun checkDocumentExists(documentId: String, companyId: String): Boolean {
-        return client.get("/companies/$companyId/documents/$documentId/exists").body()
+        val response = client.head("$basePath/$documentId") {
+            withCompanyId(companyId)
+        }
+        return response.status.value in 200..299
     }
 }
 
-internal fun DocumentApi.Companion.create(httpClient: HttpClient, endpoint: ServerEndpoint): DocumentApi {
+internal fun DocumentApi.Companion.create(
+    httpClient: HttpClient,
+    endpoint: ServerEndpoint
+): DocumentApi {
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)

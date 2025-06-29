@@ -14,8 +14,10 @@ import io.ktor.http.HttpHeaders
 class InfoApiImpl(
     private val client: HttpClient,
 ) : InfoApi {
+    private val basePath = "/api/v1"
+
     override suspend fun getApiInfo(): InfoSchema {
-        return client.get("/info").body()
+        return client.get("$basePath/info").body()
     }
 }
 

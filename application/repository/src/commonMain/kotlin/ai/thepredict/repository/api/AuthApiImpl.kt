@@ -13,7 +13,7 @@ class AuthApiImpl(
     private val client: HttpClient,
 ) : AuthApi {
     override suspend fun login(request: LoginRequest): String {
-        return client.post("/auth/login") {
+        return client.post("/api/v1/auth/login") {
             setBody(request)
         }.bodyAsText()
     }

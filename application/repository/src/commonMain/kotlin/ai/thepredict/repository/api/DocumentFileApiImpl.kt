@@ -2,6 +2,7 @@ package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.DocumentFileApi
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -14,16 +15,25 @@ import io.ktor.http.HttpHeaders
 class DocumentFileApiImpl(
     private val client: HttpClient,
 ) : DocumentFileApi {
+    private val basePath = "/api/v1/documents"
+
     override suspend fun getDocumentFileUrl(documentId: String, companyId: String): String {
-        return client.get("/companies/$companyId/documents/$documentId/file/url").body()
+        return client.get("$basePath/$documentId/file/url") {
+            withCompanyId(companyId)
+        }.body()
     }
 
     override suspend fun deleteDocumentFile(documentId: String, companyId: String) {
-        client.delete("/companies/$companyId/documents/$documentId/file")
+        client.delete("$basePath/$documentId/file") {
+            withCompanyId(companyId)
+        }
     }
 }
 
-internal fun DocumentFileApi.Companion.create(httpClient: HttpClient, endpoint: ServerEndpoint): DocumentFileApi {
+internal fun DocumentFileApi.Companion.create(
+    httpClient: HttpClient,
+    endpoint: ServerEndpoint
+): DocumentFileApi {
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
