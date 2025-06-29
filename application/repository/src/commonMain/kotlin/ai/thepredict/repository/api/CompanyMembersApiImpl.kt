@@ -14,6 +14,8 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import kotlin.Result
+import kotlin.Result.Companion.success
 
 class CompanyMembersApiImpl(
     private val client: HttpClient,
@@ -24,25 +26,31 @@ class CompanyMembersApiImpl(
         companyId: String,
         offset: Int,
         limit: Int
-    ): List<User> {
-        return client.get("$basePath/$companyId/members") {
-            parameter("offset", offset)
-            parameter("limit", limit)
-        }.body()
+    ): Result<List<User>> {
+        return runCatching {
+            client.get("$basePath/$companyId/members") {
+                parameter("offset", offset)
+                parameter("limit", limit)
+            }.body()
+        }
     }
 
-    override suspend fun checkCompanyMember(companyId: String, userId: String): Boolean {
-        return client.get("$basePath/$companyId/members/$userId/exists").body()
+    override suspend fun checkCompanyMember(companyId: String, userId: String): Result<Boolean> {
+        return runCatching {
+            client.get("$basePath/$companyId/members/$userId/exists").body()
+        }
     }
 
     override suspend fun updateUserCompanyRole(
         companyId: String,
         userId: String,
         role: Role
-    ): User {
-        return client.put("$basePath/$companyId/members/$userId/role") {
-            setBody(role)
-        }.body()
+    ): Result<User> {
+        return runCatching {
+            client.put("$basePath/$companyId/members/$userId/role") {
+                setBody(role)
+            }.body()
+        }
     }
 }
 

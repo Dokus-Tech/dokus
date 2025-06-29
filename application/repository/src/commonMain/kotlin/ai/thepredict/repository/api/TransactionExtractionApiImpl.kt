@@ -8,7 +8,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.request.delete
-import io.ktor.client.request.get
 import io.ktor.client.request.head
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -23,26 +22,35 @@ class TransactionExtractionApiImpl(
     override suspend fun startTransactionExtraction(
         transactionId: String,
         companyId: String
-    ): Transaction {
-        return client.post("$basePath/$transactionId/extraction") {
-            withCompanyId(companyId)
-        }.body()
+    ): Result<Transaction> {
+        return runCatching {
+            client.post("$basePath/$transactionId/extraction") {
+                withCompanyId(companyId)
+            }.body()
+        }
     }
 
-    override suspend fun deleteTransactionExtraction(transactionId: String, companyId: String) {
-        client.delete("$basePath/$transactionId/extraction") {
-            withCompanyId(companyId)
+    override suspend fun deleteTransactionExtraction(
+        transactionId: String,
+        companyId: String
+    ): Result<Unit> {
+        return runCatching {
+            client.delete("$basePath/$transactionId/extraction") {
+                withCompanyId(companyId)
+            }
         }
     }
 
     override suspend fun checkTransactionExtractionExists(
         transactionId: String,
         companyId: String
-    ): Boolean {
-        val response = client.head("$basePath/$transactionId/extraction") {
-            withCompanyId(companyId)
+    ): Result<Boolean> {
+        return runCatching {
+            val response = client.head("$basePath/$transactionId/extraction") {
+                withCompanyId(companyId)
+            }
+            response.status.value in 200..299
         }
-        return response.status.value in 200..299
     }
 }
 

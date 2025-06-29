@@ -19,26 +19,38 @@ class DocumentExtractionApiImpl(
 ) : DocumentExtractionApi {
     private val basePath = "/api/v1/documents"
 
-    override suspend fun startDocumentExtraction(documentId: String, companyId: String): Document {
-        return client.post("$basePath/$documentId/extraction") {
-            withCompanyId(companyId)
-        }.body()
+    override suspend fun startDocumentExtraction(
+        documentId: String,
+        companyId: String
+    ): Result<Document> {
+        return runCatching {
+            client.post("$basePath/$documentId/extraction") {
+                withCompanyId(companyId)
+            }.body()
+        }
     }
 
-    override suspend fun deleteDocumentExtraction(documentId: String, companyId: String) {
-        client.delete("$basePath/$documentId/extraction") {
-            withCompanyId(companyId)
+    override suspend fun deleteDocumentExtraction(
+        documentId: String,
+        companyId: String
+    ): Result<Unit> {
+        return runCatching {
+            client.delete("$basePath/$documentId/extraction") {
+                withCompanyId(companyId)
+            }
         }
     }
 
     override suspend fun checkDocumentExtractionExists(
         documentId: String,
         companyId: String
-    ): Boolean {
-        val response = client.head("$basePath/$documentId/extraction") {
-            withCompanyId(companyId)
+    ): Result<Boolean> {
+        return runCatching {
+            val response = client.head("$basePath/$documentId/extraction") {
+                withCompanyId(companyId)
+            }
+            response.status.value in 200..299
         }
-        return response.status.value in 200..299
     }
 }
 
