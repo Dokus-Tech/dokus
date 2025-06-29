@@ -5,5 +5,6 @@ import ai.thepredict.domain.model.InfoSchema
 interface InfoApi {
     companion object;
 
-    suspend fun getApiInfo(): InfoSchema
+    // Return Result to handle exceptions properly
+    suspend fun getApiInfo(): Result<InfoSchema>
 }

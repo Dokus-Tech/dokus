@@ -8,6 +8,7 @@ import ai.thepredict.domain.model.PaginatedResponse
 interface DocumentApi {
     companion object {}
 
+    // Return Result to handle exceptions properly
     suspend fun listDocuments(
         companyId: String,
         documentType: DocumentType? = null,
@@ -19,11 +20,14 @@ interface DocumentApi {
         ids: List<String>? = null,
         page: Int = 1,
         size: Int = 10
-    ): PaginatedResponse<Document>
+    ): Result<PaginatedResponse<Document>>
 
-    suspend fun uploadDocumentFile(companyId: String, fileBytes: ByteArray): DocumentUploadResponse
+    suspend fun uploadDocumentFile(
+        companyId: String,
+        fileBytes: ByteArray
+    ): Result<DocumentUploadResponse>
 
-    suspend fun getDocument(documentId: String, companyId: String): Document
-    suspend fun deleteDocument(documentId: String, companyId: String)
-    suspend fun checkDocumentExists(documentId: String, companyId: String): Boolean
+    suspend fun getDocument(documentId: String, companyId: String): Result<Document>
+    suspend fun deleteDocument(documentId: String, companyId: String): Result<Unit>
+    suspend fun checkDocumentExists(documentId: String, companyId: String): Result<Boolean>
 }

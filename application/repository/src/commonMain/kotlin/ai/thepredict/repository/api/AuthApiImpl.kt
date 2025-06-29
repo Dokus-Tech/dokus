@@ -8,14 +8,18 @@ import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlin.Result
+import kotlin.runCatching
 
 class AuthApiImpl(
     private val client: HttpClient,
 ) : AuthApi {
-    override suspend fun login(request: LoginRequest): String {
-        return client.post("/api/v1/auth/login") {
-            setBody(request)
-        }.bodyAsText()
+    override suspend fun login(request: LoginRequest): Result<String> {
+        return runCatching {
+            client.post("/api/v1/auth/login") {
+                setBody(request)
+            }.bodyAsText()
+        }
     }
 }
 

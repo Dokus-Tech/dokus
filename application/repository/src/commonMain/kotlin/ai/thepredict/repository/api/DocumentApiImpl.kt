@@ -42,52 +42,65 @@ class DocumentApiImpl(
         ids: List<String>?,
         page: Int,
         size: Int
-    ): PaginatedResponse<Document> {
-        return client.get(basePath) {
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
-            withCompanyId(companyId)
-            withDocumentType(documentType)
-            withSupplierId(supplierId)
-            withDateRange(dateFrom, dateTo)
-            withAmountRange(amountMin, amountMax)
-            withIds(ids)
-            withPagination(page = page, size = size)
-        }.body()
+    ): Result<PaginatedResponse<Document>> {
+        return runCatching {
+            client.get(basePath) {
+                header(HttpHeaders.ContentType, ContentType.Application.Json)
+                withCompanyId(companyId)
+                withDocumentType(documentType)
+                withSupplierId(supplierId)
+                withDateRange(dateFrom, dateTo)
+                withAmountRange(amountMin, amountMax)
+                withIds(ids)
+                withPagination(page = page, size = size)
+            }.body()
+        }
     }
 
     override suspend fun uploadDocumentFile(
         companyId: String,
         fileBytes: ByteArray
-    ): DocumentUploadResponse {
-        return client.submitFormWithBinaryData(
-            url = "$basePath/upload",
-            formData = formData {
-                append("file", fileBytes, Headers.build {
-                    append(HttpHeaders.ContentDisposition, "filename=document")
-                })
+    ): Result<DocumentUploadResponse> {
+        return runCatching {
+            client.submitFormWithBinaryData(
+                url = "$basePath/upload",
+                formData = formData {
+                    append("file", fileBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=document")
+                    })
+                }
+            ) {
+                withCompanyId(companyId)
+            }.body()
+        }
+    }
+
+    override suspend fun getDocument(documentId: String, companyId: String): Result<Document> {
+        return runCatching {
+            client.get("$basePath/$documentId") {
+                withCompanyId(companyId)
+            }.body()
+        }
+    }
+
+    override suspend fun deleteDocument(documentId: String, companyId: String): Result<Unit> {
+        return runCatching {
+            client.delete("$basePath/$documentId") {
+                withCompanyId(companyId)
             }
-        ) {
-            withCompanyId(companyId)
-        }.body()
-    }
-
-    override suspend fun getDocument(documentId: String, companyId: String): Document {
-        return client.get("$basePath/$documentId") {
-            withCompanyId(companyId)
-        }.body()
-    }
-
-    override suspend fun deleteDocument(documentId: String, companyId: String) {
-        client.delete("$basePath/$documentId") {
-            withCompanyId(companyId)
         }
     }
 
-    override suspend fun checkDocumentExists(documentId: String, companyId: String): Boolean {
-        val response = client.head("$basePath/$documentId") {
-            withCompanyId(companyId)
+    override suspend fun checkDocumentExists(
+        documentId: String,
+        companyId: String
+    ): Result<Boolean> {
+        return runCatching {
+            val response = client.head("$basePath/$documentId") {
+                withCompanyId(companyId)
+            }
+            response.status.value in 200..299
         }
-        return response.status.value in 200..299
     }
 }
 

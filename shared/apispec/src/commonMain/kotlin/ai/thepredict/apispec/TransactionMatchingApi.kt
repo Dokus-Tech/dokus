@@ -5,5 +5,9 @@ import ai.thepredict.domain.model.MatchedSchema
 interface TransactionMatchingApi {
     companion object;
 
-    suspend fun getTransactionMatching(transactionId: String, companyId: String): MatchedSchema
+    // Return Result to handle exceptions properly
+    suspend fun getTransactionMatching(
+        transactionId: String,
+        companyId: String
+    ): Result<MatchedSchema>
 }
