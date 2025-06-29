@@ -7,6 +7,7 @@ import ai.thepredict.domain.model.TransactionUploadResponse
 interface TransactionApi {
     companion object {}
 
+    // Return Result to handle exceptions properly
     suspend fun listTransactions(
         companyId: String,
         supplierId: String? = null,
@@ -17,10 +18,14 @@ interface TransactionApi {
         ids: List<String>? = null,
         page: Int = 1,
         size: Int = 100
-    ): PaginatedResponse<Transaction>
+    ): Result<PaginatedResponse<Transaction>>
 
-    suspend fun uploadTransactionFile(companyId: String, fileBytes: ByteArray): TransactionUploadResponse
-    suspend fun getTransaction(transactionId: String, companyId: String): Transaction
-    suspend fun deleteTransaction(transactionId: String, companyId: String)
-    suspend fun checkTransactionExists(transactionId: String, companyId: String): Boolean
+    suspend fun uploadTransactionFile(
+        companyId: String,
+        fileBytes: ByteArray
+    ): Result<TransactionUploadResponse>
+
+    suspend fun getTransaction(transactionId: String, companyId: String): Result<Transaction>
+    suspend fun deleteTransaction(transactionId: String, companyId: String): Result<Unit>
+    suspend fun checkTransactionExists(transactionId: String, companyId: String): Result<Boolean>
 }
