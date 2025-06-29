@@ -21,30 +21,40 @@ import io.ktor.http.HttpHeaders
 class UserApiImpl(
     private val client: HttpClient,
 ) : UserApi {
-    override suspend fun getUser(userId: String): User {
-        return client.get("/api/v1/users/$userId").body()
+    override suspend fun getUser(userId: String): Result<User> {
+        return runCatching {
+            client.get("/api/v1/users/$userId").body()
+        }
     }
 
-    override suspend fun updateUser(userId: String, request: UpdateUserRequest): User {
-        return client.put("/api/v1/users/$userId") {
-            setBody(request)
-        }.body()
+    override suspend fun updateUser(userId: String, request: UpdateUserRequest): Result<User> {
+        return runCatching {
+            client.put("/api/v1/users/$userId") {
+                setBody(request)
+            }.body()
+        }
     }
 
-    override suspend fun deleteUser(userId: String) {
-        client.delete("/api/v1/users/$userId")
+    override suspend fun deleteUser(userId: String): Result<Unit> {
+        return runCatching {
+            client.delete("/api/v1/users/$userId")
+        }
     }
 
-    override suspend fun createUser(request: CreateUserRequest): User {
-        return client.post("/api/v1/users") {
-            setBody(request)
-        }.body()
+    override suspend fun createUser(request: CreateUserRequest): Result<User> {
+        return runCatching {
+            client.post("/api/v1/users") {
+                setBody(request)
+            }.body()
+        }
     }
 
-    override suspend fun checkUserExistsByEmail(email: String): Boolean {
-        return client.get("/api/v1/users/exists") {
-            parameter("email", email)
-        }.body()
+    override suspend fun checkUserExistsByEmail(email: String): Result<Boolean> {
+        return runCatching {
+            client.get("/api/v1/users/exists") {
+                parameter("email", email)
+            }.body()
+        }
     }
 }
 

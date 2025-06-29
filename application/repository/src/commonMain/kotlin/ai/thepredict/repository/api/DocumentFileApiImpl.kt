@@ -17,15 +17,19 @@ class DocumentFileApiImpl(
 ) : DocumentFileApi {
     private val basePath = "/api/v1/documents"
 
-    override suspend fun getDocumentFileUrl(documentId: String, companyId: String): String {
-        return client.get("$basePath/$documentId/file/url") {
-            withCompanyId(companyId)
-        }.body()
+    override suspend fun getDocumentFileUrl(documentId: String, companyId: String): Result<String> {
+        return runCatching {
+            client.get("$basePath/$documentId/file") {
+                withCompanyId(companyId)
+            }.body()
+        }
     }
 
-    override suspend fun deleteDocumentFile(documentId: String, companyId: String) {
-        client.delete("$basePath/$documentId/file") {
-            withCompanyId(companyId)
+    override suspend fun deleteDocumentFile(documentId: String, companyId: String): Result<Unit> {
+        return runCatching {
+            client.delete("$basePath/$documentId/file") {
+                withCompanyId(companyId)
+            }
         }
     }
 }

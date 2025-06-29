@@ -12,22 +12,32 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import kotlin.Result
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 class MatchingApiImpl(
     private val client: HttpClient,
 ) : MatchingApi {
     private val basePath = "/api/v1"
 
-    override suspend fun getDocumentMatching(documentId: String, companyId: String): MatchedSchema {
-        return client.get("$basePath/documents/$documentId/matching") {
-            withCompanyId(companyId)
-        }.body()
+    override suspend fun getDocumentMatching(
+        documentId: String,
+        companyId: String
+    ): Result<MatchedSchema> {
+        return runCatching {
+            client.get("$basePath/documents/$documentId/matching") {
+                withCompanyId(companyId)
+            }.body()
+        }
     }
 
-    override suspend fun getAllMatching(companyId: String): SimpleMatchDocumentsResult {
-        return client.get("$basePath/matching") {
-            withCompanyId(companyId)
-        }.body()
+    override suspend fun getAllMatching(companyId: String): Result<SimpleMatchDocumentsResult> {
+        return runCatching {
+            client.get("$basePath/matching") {
+                withCompanyId(companyId)
+            }.body()
+        }
     }
 }
 
