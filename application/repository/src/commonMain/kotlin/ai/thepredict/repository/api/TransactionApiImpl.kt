@@ -31,6 +31,8 @@ import io.ktor.http.HttpHeaders
 class TransactionApiImpl(
     private val client: HttpClient,
 ) : TransactionApi {
+    private val basePath = "/api/v1/transactions"
+
     override suspend fun listTransactions(
         companyId: String,
         supplierId: String?,
@@ -42,7 +44,7 @@ class TransactionApiImpl(
         page: Int,
         size: Int
     ): PaginatedResponse<Transaction> {
-        return client.get("/api/v1/transactions") {
+        return client.get(basePath) {
             withCompanyId(companyId)
             withSupplierId(supplierId)
             withDateRange(dateFrom, dateTo)
@@ -57,7 +59,7 @@ class TransactionApiImpl(
         fileBytes: ByteArray
     ): TransactionUploadResponse {
         return client.submitFormWithBinaryData(
-            url = "/api/v1/transactions/upload",
+            url = "$basePath/upload",
             formData = formData {
                 append("file", fileBytes, Headers.build {
                     append(HttpHeaders.ContentDisposition, "filename=\"transactions.csv\"")
@@ -69,19 +71,19 @@ class TransactionApiImpl(
     }
 
     override suspend fun getTransaction(transactionId: String, companyId: String): Transaction {
-        return client.get("/api/v1/transactions/$transactionId") {
+        return client.get("$basePath/$transactionId") {
             withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteTransaction(transactionId: String, companyId: String) {
-        client.delete("/api/v1/transactions/$transactionId") {
+        client.delete("$basePath/$transactionId") {
             withCompanyId(companyId)
         }
     }
 
     override suspend fun checkTransactionExists(transactionId: String, companyId: String): Boolean {
-        val response = client.head("/api/v1/transactions/$transactionId") {
+        val response = client.head("$basePath/$transactionId") {
             withCompanyId(companyId)
         }
         return response.status.value in 200..299

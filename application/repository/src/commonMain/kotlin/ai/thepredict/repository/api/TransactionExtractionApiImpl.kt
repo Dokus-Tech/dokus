@@ -18,27 +18,38 @@ import io.ktor.http.HttpHeaders
 class TransactionExtractionApiImpl(
     private val client: HttpClient,
 ) : TransactionExtractionApi {
-    override suspend fun startTransactionExtraction(transactionId: String, companyId: String): Transaction {
-        return client.post("/api/v1/transactions/$transactionId/extraction") {
+    private val basePath = "/api/v1/transactions"
+
+    override suspend fun startTransactionExtraction(
+        transactionId: String,
+        companyId: String
+    ): Transaction {
+        return client.post("$basePath/$transactionId/extraction") {
             withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteTransactionExtraction(transactionId: String, companyId: String) {
-        client.delete("/api/v1/transactions/$transactionId/extraction") {
+        client.delete("$basePath/$transactionId/extraction") {
             withCompanyId(companyId)
         }
     }
 
-    override suspend fun checkTransactionExtractionExists(transactionId: String, companyId: String): Boolean {
-        val response = client.head("/api/v1/transactions/$transactionId/extraction") {
+    override suspend fun checkTransactionExtractionExists(
+        transactionId: String,
+        companyId: String
+    ): Boolean {
+        val response = client.head("$basePath/$transactionId/extraction") {
             withCompanyId(companyId)
         }
         return response.status.value in 200..299
     }
 }
 
-internal fun TransactionExtractionApi.Companion.create(httpClient: HttpClient, endpoint: ServerEndpoint): TransactionExtractionApi {
+internal fun TransactionExtractionApi.Companion.create(
+    httpClient: HttpClient,
+    endpoint: ServerEndpoint
+): TransactionExtractionApi {
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
