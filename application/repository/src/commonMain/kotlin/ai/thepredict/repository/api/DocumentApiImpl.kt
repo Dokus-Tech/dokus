@@ -7,6 +7,7 @@ import ai.thepredict.domain.model.DocumentType
 import ai.thepredict.domain.model.PaginatedResponse
 import ai.thepredict.domain.model.DocumentUploadResponse
 import ai.thepredict.repository.extensions.withCompanyId
+import ai.thepredict.repository.extensions.withPagination
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -46,8 +47,7 @@ class DocumentApiImpl(
             amountMin?.let { parameter("amount_min", it) }
             amountMax?.let { parameter("amount_max", it) }
             ids?.let { parameter("ids", it.joinToString(",")) }
-            parameter("page", page)
-            parameter("size", size)
+            withPagination(page = page, size = size)
         }.body()
     }
 
