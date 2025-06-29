@@ -1,5 +1,6 @@
 package ai.thepredict.app.onboarding.authentication.login
 
+import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -69,17 +71,33 @@ internal class LoginScreen : Screen {
         var password by remember { mutableStateOf("") }
 
         Scaffold { contentPadding ->
-            LoginScreenMobileContent(
-                email = email,
-                onEmailChange = { email = it },
-                password = password,
-                onPasswordChange = { password = it },
-                fieldsError = fieldsError,
-                onLoginClick = { viewModel.login(email, password) },
-                onRegisterClick = { navigator.push(registerScreen) },
-                onConnectToServerClick = { /* Handle connect to server */ },
-                modifier = Modifier.padding(contentPadding)
-            )
+            Box(Modifier.padding(contentPadding)) {
+                if (isLargeScreen) {
+                    LoginScreenDesktopContent(
+                        email = email,
+                        onEmailChange = { email = it },
+                        password = password,
+                        onPasswordChange = { password = it },
+                        fieldsError = fieldsError,
+                        onLoginClick = { viewModel.login(email, password) },
+                        onRegisterClick = { navigator.push(registerScreen) },
+                        onConnectToServerClick = { /* Handle connect to server */ },
+                        modifier = Modifier
+                    )
+                } else {
+                    LoginScreenMobileContent(
+                        email = email,
+                        onEmailChange = { email = it },
+                        password = password,
+                        onPasswordChange = { password = it },
+                        fieldsError = fieldsError,
+                        onLoginClick = { viewModel.login(email, password) },
+                        onRegisterClick = { navigator.push(registerScreen) },
+                        onConnectToServerClick = { /* Handle connect to server */ },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -111,8 +129,6 @@ internal fun LoginScreenMobileContent(
             style = MaterialTheme.typography.displaySmall
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
-
         LoginForm(
             email = email,
             onEmailChange = onEmailChange,
@@ -124,6 +140,8 @@ internal fun LoginScreenMobileContent(
             onConnectToServerClick = onConnectToServerClick,
             modifier = Modifier.fillMaxSize()
         )
+
+        Spacer(Modifier.weight(1f))
     }
 }
 
@@ -140,7 +158,7 @@ internal fun LoginScreenDesktopContent(
     modifier: Modifier = Modifier
 ) {
     Row(modifier = modifier) {
-        Row(Modifier.weight(1f)) {
+        Row(Modifier.weight(1f).padding(32.dp)) {
             Column(
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.SpaceBetween,
@@ -159,7 +177,14 @@ internal fun LoginScreenDesktopContent(
                     style = MaterialTheme.typography.titleSmall
                 )
             }
-            Box(Modifier.align(Alignment.CenterVertically).weight(1f)) {
+            // Center LoginForm vertically in desktop mode
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
                 LoginForm(
                     email = email,
                     onEmailChange = onEmailChange,
@@ -178,6 +203,7 @@ internal fun LoginScreenDesktopContent(
             Image(
                 painter = painterResource(Res.drawable.onboarding_background_gradient),
                 contentDescription = "",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -350,7 +376,5 @@ internal fun LoginForm(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-
-        Spacer(modifier = Modifier.weight(1f))
     }
 }
