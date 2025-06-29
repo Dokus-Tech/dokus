@@ -5,8 +5,12 @@ import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Transaction
 import ai.thepredict.domain.model.PaginatedResponse
 import ai.thepredict.domain.model.TransactionUploadResponse
+import ai.thepredict.repository.extensions.withAmountRange
 import ai.thepredict.repository.extensions.withCompanyId
+import ai.thepredict.repository.extensions.withDateRange
+import ai.thepredict.repository.extensions.withIds
 import ai.thepredict.repository.extensions.withPagination
+import ai.thepredict.repository.extensions.withSupplierId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -40,12 +44,10 @@ class TransactionApiImpl(
     ): PaginatedResponse<Transaction> {
         return client.get("/api/v1/transactions") {
             withCompanyId(companyId)
-            supplierId?.let { parameter("supplier_id", it) }
-            dateFrom?.let { parameter("date_from", it) }
-            dateTo?.let { parameter("date_to", it) }
-            amountMin?.let { parameter("amount_min", it) }
-            amountMax?.let { parameter("amount_max", it) }
-            ids?.let { parameter("ids", it.joinToString(",")) }
+            withSupplierId(supplierId)
+            withDateRange(dateFrom, dateTo)
+            withAmountRange(amountMin, amountMax)
+            withIds(ids)
             withPagination(page = page, size = size)
         }.body()
     }
