@@ -2,6 +2,7 @@ package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.TransactionFileApi
 import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -16,13 +17,13 @@ class TransactionFileApiImpl(
 ) : TransactionFileApi {
     override suspend fun getTransactionFileUrl(transactionId: String, companyId: String): String {
         return client.get("/api/v1/transactions/$transactionId/file/url") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteTransactionFile(transactionId: String, companyId: String) {
         client.delete("/api/v1/transactions/$transactionId/file") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }
     }
 }

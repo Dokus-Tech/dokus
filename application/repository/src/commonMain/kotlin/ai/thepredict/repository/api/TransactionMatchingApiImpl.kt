@@ -3,6 +3,7 @@ package ai.thepredict.repository.api
 import ai.thepredict.apispec.TransactionMatchingApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.MatchedSchema
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -16,7 +17,7 @@ class TransactionMatchingApiImpl(
 ) : TransactionMatchingApi {
     override suspend fun getTransactionMatching(transactionId: String, companyId: String): MatchedSchema {
         return client.get("/api/v1/transactions/$transactionId/matching") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 }
