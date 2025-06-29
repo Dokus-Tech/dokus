@@ -4,6 +4,7 @@ import ai.thepredict.apispec.MatchingApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.MatchedSchema
 import ai.thepredict.domain.model.SimpleMatchDocumentsResult
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -15,16 +16,25 @@ import io.ktor.http.HttpHeaders
 class MatchingApiImpl(
     private val client: HttpClient,
 ) : MatchingApi {
+    private val basePath = "/api/v1"
+
     override suspend fun getDocumentMatching(documentId: String, companyId: String): MatchedSchema {
-        return client.get("/companies/$companyId/documents/$documentId/matching").body()
+        return client.get("$basePath/documents/$documentId/matching") {
+            withCompanyId(companyId)
+        }.body()
     }
 
     override suspend fun getAllMatching(companyId: String): SimpleMatchDocumentsResult {
-        return client.get("/companies/$companyId/matching").body()
+        return client.get("$basePath/matching") {
+            withCompanyId(companyId)
+        }.body()
     }
 }
 
-internal fun MatchingApi.Companion.create(httpClient: HttpClient, endpoint: ServerEndpoint): MatchingApi {
+internal fun MatchingApi.Companion.create(
+    httpClient: HttpClient,
+    endpoint: ServerEndpoint
+): MatchingApi {
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
