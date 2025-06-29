@@ -162,7 +162,7 @@ internal fun LoginScreenDesktopContent(
             Column(
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.weight(1f).fillMaxHeight()
+                modifier = Modifier.weight(2f).fillMaxHeight()
             ) {
                 Text(
                     text = "Predict",
@@ -181,7 +181,7 @@ internal fun LoginScreenDesktopContent(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
-                    .weight(1f)
+                    .weight(3f)
                     .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
@@ -197,7 +197,7 @@ internal fun LoginScreenDesktopContent(
                     modifier = Modifier
                 )
             }
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(2f))
         }
         Box(Modifier.weight(1f)) {
             Image(
