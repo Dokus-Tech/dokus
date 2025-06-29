@@ -4,6 +4,7 @@ import ai.thepredict.apispec.MatchingApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.MatchedSchema
 import ai.thepredict.domain.model.SimpleMatchDocumentsResult
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -17,13 +18,13 @@ class MatchingApiImpl(
 ) : MatchingApi {
     override suspend fun getDocumentMatching(documentId: String, companyId: String): MatchedSchema {
         return client.get("/api/v1/documents/$documentId/matching") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun getAllMatching(companyId: String): SimpleMatchDocumentsResult {
         return client.get("/api/v1/matching") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 }

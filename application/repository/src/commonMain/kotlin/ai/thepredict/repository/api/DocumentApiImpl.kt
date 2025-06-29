@@ -6,6 +6,7 @@ import ai.thepredict.domain.model.Document
 import ai.thepredict.domain.model.DocumentType
 import ai.thepredict.domain.model.PaginatedResponse
 import ai.thepredict.domain.model.DocumentUploadResponse
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -37,7 +38,7 @@ class DocumentApiImpl(
     ): PaginatedResponse<Document> {
         return client.get("/api/v1/documents") {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
             documentType?.let { parameter("document_type", it.name) }
             supplierId?.let { parameter("supplier_id", it) }
             dateFrom?.let { parameter("date_from", it) }
@@ -62,25 +63,25 @@ class DocumentApiImpl(
                 })
             }
         ) {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun getDocument(documentId: String, companyId: String): Document {
         return client.get("/api/v1/documents/$documentId") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteDocument(documentId: String, companyId: String) {
         client.delete("/api/v1/documents/$documentId") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }
     }
 
     override suspend fun checkDocumentExists(documentId: String, companyId: String): Boolean {
         val response = client.head("/api/v1/documents/$documentId") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }
         return response.status.value in 200..299
     }

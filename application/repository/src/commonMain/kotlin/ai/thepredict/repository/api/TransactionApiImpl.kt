@@ -5,6 +5,7 @@ import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Transaction
 import ai.thepredict.domain.model.PaginatedResponse
 import ai.thepredict.domain.model.TransactionUploadResponse
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -37,7 +38,7 @@ class TransactionApiImpl(
         size: Int
     ): PaginatedResponse<Transaction> {
         return client.get("/api/v1/transactions") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
             supplierId?.let { parameter("supplier_id", it) }
             dateFrom?.let { parameter("date_from", it) }
             dateTo?.let { parameter("date_to", it) }
@@ -61,25 +62,25 @@ class TransactionApiImpl(
                 })
             }
         ) {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun getTransaction(transactionId: String, companyId: String): Transaction {
         return client.get("/api/v1/transactions/$transactionId") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteTransaction(transactionId: String, companyId: String) {
         client.delete("/api/v1/transactions/$transactionId") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }
     }
 
     override suspend fun checkTransactionExists(transactionId: String, companyId: String): Boolean {
         val response = client.head("/api/v1/transactions/$transactionId") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }
         return response.status.value in 200..299
     }

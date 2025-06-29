@@ -3,6 +3,7 @@ package ai.thepredict.repository.api
 import ai.thepredict.apispec.TransactionExtractionApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Transaction
+import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.DefaultRequest
@@ -19,19 +20,19 @@ class TransactionExtractionApiImpl(
 ) : TransactionExtractionApi {
     override suspend fun startTransactionExtraction(transactionId: String, companyId: String): Transaction {
         return client.post("/api/v1/transactions/$transactionId/extraction") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }.body()
     }
 
     override suspend fun deleteTransactionExtraction(transactionId: String, companyId: String) {
         client.delete("/api/v1/transactions/$transactionId/extraction") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }
     }
 
     override suspend fun checkTransactionExtractionExists(transactionId: String, companyId: String): Boolean {
         val response = client.head("/api/v1/transactions/$transactionId/extraction") {
-            header("X-Company-ID", companyId)
+            withCompanyId(companyId)
         }
         return response.status.value in 200..299
     }
