@@ -77,7 +77,7 @@ internal class LoginScreen : Screen {
 }
 
 @Composable
-private fun ContentMobile(
+internal fun ContentMobile(
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
