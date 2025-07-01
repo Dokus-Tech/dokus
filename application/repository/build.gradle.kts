@@ -1,11 +1,9 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinxRpcPlugin)
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
@@ -49,9 +47,6 @@ kotlin {
             implementation(libs.kodein)
 
             implementation(libs.ktor.server.auth)
-            api(libs.kotlinx.rpc.core)
-            api(libs.kotlinx.rpc.krpc.ktor.client)
-            implementation(libs.kotlinx.rpc.krpc.serialization.json)
         }
 
         desktopMain.dependencies {
