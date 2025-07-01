@@ -9,6 +9,8 @@ import ai.thepredict.ui.BackgroundGradientAnimated
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -61,16 +64,29 @@ internal class LoginScreen : Screen {
             (data.value as? LoginViewModel.State.Error)?.exception
 
         val navigator = LocalNavigator.currentOrThrow
+        val focusManager = LocalFocusManager.current
+
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
         val splashScreen = rememberScreen(CoreNavigation.Splash)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        val mutableInteractionSource = remember { MutableInteractionSource() }
 
         Scaffold { contentPadding ->
-            Box(Modifier.padding(contentPadding)) {
+            Box(
+                Modifier
+                    .padding(contentPadding)
+                    .clickable(
+                        indication = null,
+                        interactionSource = mutableInteractionSource
+                    ) {
+                        focusManager.clearFocus()
+                    }
+            ) {
                 if (isLargeScreen) {
                     LoginScreenDesktopContent(
+                        focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
                         password = password,
@@ -83,6 +99,7 @@ internal class LoginScreen : Screen {
                     )
                 } else {
                     LoginScreenMobileContent(
+                        focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
                         password = password,
@@ -101,6 +118,7 @@ internal class LoginScreen : Screen {
 
 @Composable
 internal fun LoginScreenMobileContent(
+    focusManager: FocusManager,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -127,6 +145,7 @@ internal fun LoginScreenMobileContent(
         )
 
         LoginForm(
+            focusManager = focusManager,
             email = email,
             onEmailChange = onEmailChange,
             password = password,
@@ -144,6 +163,7 @@ internal fun LoginScreenMobileContent(
 
 @Composable
 internal fun LoginScreenDesktopContent(
+    focusManager: FocusManager,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -183,6 +203,7 @@ internal fun LoginScreenDesktopContent(
                 contentAlignment = Alignment.Center
             ) {
                 LoginForm(
+                    focusManager = focusManager,
                     email = email,
                     onEmailChange = onEmailChange,
                     password = password,
@@ -218,6 +239,7 @@ internal fun LoginScreenDesktopContent(
 
 @Composable
 internal fun LoginForm(
+    focusManager: FocusManager,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -228,8 +250,6 @@ internal fun LoginForm(
     onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val focusManager = LocalFocusManager.current
-
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
