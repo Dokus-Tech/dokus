@@ -6,9 +6,12 @@ import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.BackgroundGradientAnimated
+import ai.thepredict.ui.SloganWithBackground
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -61,16 +65,29 @@ internal class LoginScreen : Screen {
             (data.value as? LoginViewModel.State.Error)?.exception
 
         val navigator = LocalNavigator.currentOrThrow
+        val focusManager = LocalFocusManager.current
+
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
         val splashScreen = rememberScreen(CoreNavigation.Splash)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        val mutableInteractionSource = remember { MutableInteractionSource() }
 
         Scaffold { contentPadding ->
-            Box(Modifier.padding(contentPadding)) {
+            Box(
+                Modifier
+                    .padding(contentPadding)
+                    .clickable(
+                        indication = null,
+                        interactionSource = mutableInteractionSource
+                    ) {
+                        focusManager.clearFocus()
+                    }
+            ) {
                 if (isLargeScreen) {
                     LoginScreenDesktopContent(
+                        focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
                         password = password,
@@ -83,6 +100,7 @@ internal class LoginScreen : Screen {
                     )
                 } else {
                     LoginScreenMobileContent(
+                        focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
                         password = password,
@@ -101,6 +119,7 @@ internal class LoginScreen : Screen {
 
 @Composable
 internal fun LoginScreenMobileContent(
+    focusManager: FocusManager,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -127,6 +146,7 @@ internal fun LoginScreenMobileContent(
         )
 
         LoginForm(
+            focusManager = focusManager,
             email = email,
             onEmailChange = onEmailChange,
             password = password,
@@ -144,6 +164,7 @@ internal fun LoginScreenMobileContent(
 
 @Composable
 internal fun LoginScreenDesktopContent(
+    focusManager: FocusManager,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -183,6 +204,7 @@ internal fun LoginScreenDesktopContent(
                 contentAlignment = Alignment.Center
             ) {
                 LoginForm(
+                    focusManager = focusManager,
                     email = email,
                     onEmailChange = onEmailChange,
                     password = password,
@@ -196,28 +218,13 @@ internal fun LoginScreenDesktopContent(
             }
             Spacer(modifier = Modifier.weight(2f))
         }
-        Box(Modifier.weight(1f)) {
-            BackgroundGradientAnimated()
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(40.dp), // Add padding around the text
-                contentAlignment = Alignment.Center // Center the text within the Box
-            ) {
-                Text(
-                    text = "Financial forecasting without the headaches or jargon. Just smart insights that help your Belgian business thrive.",
-                    color = MaterialTheme.colorScheme.onPrimary, // White text color
-                    style = MaterialTheme.typography.headlineMedium, // Adjust text style as needed
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 40.sp // Adjust line height for better readability
-                )
-            }
-        }
+        SloganWithBackground(Modifier.weight(1f))
     }
 }
 
 @Composable
 internal fun LoginForm(
+    focusManager: FocusManager,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -228,8 +235,6 @@ internal fun LoginForm(
     onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val focusManager = LocalFocusManager.current
-
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
