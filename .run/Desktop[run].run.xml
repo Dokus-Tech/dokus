@@ -3,7 +3,7 @@
     <ExternalSystemSettings>
       <option name="env">
         <map>
-          <entry key="DEVELOPER_DIR" value="/Applications/Xcode.app/Contents/Developer" />
+          <entry key="DEVELOPER_DIR" value="/Applications/Xcode-16.3.0.app/Contents/Developer" />
         </map>
       </option>
       <option name="executionName" />
