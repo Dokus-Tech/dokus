@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -27,6 +28,7 @@ fun SloganWithBackground(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onPrimary, // White text color
                 style = MaterialTheme.typography.headlineMedium, // Adjust text style as needed
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 lineHeight = 40.sp // Adjust line height for better readability
             )
         }
