@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.2"
+agp = "8.11.0"
 android-compileSdk = "35"
 android-minSdk = "24"
 android-targetSdk = "35"
@@ -13,13 +13,13 @@ androidx-lifecycle = "2.8.4"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 
-compose-multiplatform = "1.8.0-beta02"
+compose-multiplatform = "1.8.2"
 junit = "4.13.2"
-kotlin = "2.1.20"
+kotlin = "2.2.0"
 kotlinx-coroutines = "1.10.1"
 kotlinx-serialization = "1.8.1"
 kotlinx-datetime = "0.6.1"
-kotlinx-rpc = "0.6.0"
+#kotlinx-rpc = "0.7.0"
 ktor = "3.1.1"
 logback = "1.5.11"
 
@@ -56,10 +56,10 @@ kotlinx-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-seria
 kotlinx-serialization-runtime = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-runtime", version.ref = "kotlinx-serialization" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-kotlinx-rpc-krpc-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json", version.ref = "kotlinx-rpc" }
-kotlinx-rpc-core = { module = "org.jetbrains.kotlinx:kotlinx-rpc-core", version.ref = "kotlinx-rpc" }
-kotlinx-rpc-krpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server", version.ref = "kotlinx-rpc" }
-kotlinx-rpc-krpc-ktor-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client", version.ref = "kotlinx-rpc" }
+#kotlinx-rpc-krpc-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json", version.ref = "kotlinx-rpc" }
+#kotlinx-rpc-core = { module = "org.jetbrains.kotlinx:kotlinx-rpc-core", version.ref = "kotlinx-rpc" }
+#kotlinx-rpc-krpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server", version.ref = "kotlinx-rpc" }
+#kotlinx-rpc-krpc-ktor-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client", version.ref = "kotlinx-rpc" }
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
@@ -102,7 +102,7 @@ persistence-settingsTest = { group = "com.russhwolf", name = "multiplatform-sett
 
 [bundles]
 database = ["exposed-core", "exposed-jdbc", "exposed-dao", "exposed-datetime", "postgresql", "postgres-pgjdbc", "h2"]
-krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
+#krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -113,4 +113,4 @@ kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-kotlinxRpcPlugin = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
+#kotlinxRpcPlugin = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
