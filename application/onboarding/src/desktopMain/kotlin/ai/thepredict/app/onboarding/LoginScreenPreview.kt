@@ -4,6 +4,7 @@ import ai.thepredict.app.onboarding.authentication.login.LoginScreenDesktopConte
 import ai.thepredict.ui.theme.createColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalFocusManager
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Preview
@@ -13,6 +14,7 @@ fun LoginScreenPreview() {
 
     MaterialTheme(colorScheme = colorScheme) {
         LoginScreenDesktopContent(
+            focusManager = LocalFocusManager.current,
             email = "",
             onEmailChange = { /*TODO*/ },
             password = "",

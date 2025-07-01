@@ -6,6 +6,7 @@ import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.BackgroundGradientAnimated
+import ai.thepredict.ui.SloganWithBackground
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
@@ -217,23 +218,7 @@ internal fun LoginScreenDesktopContent(
             }
             Spacer(modifier = Modifier.weight(2f))
         }
-        Box(Modifier.weight(1f)) {
-            BackgroundGradientAnimated()
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(40.dp), // Add padding around the text
-                contentAlignment = Alignment.Center // Center the text within the Box
-            ) {
-                Text(
-                    text = "Financial forecasting without the headaches or jargon. Just smart insights that help your Belgian business thrive.",
-                    color = MaterialTheme.colorScheme.onPrimary, // White text color
-                    style = MaterialTheme.typography.headlineMedium, // Adjust text style as needed
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 40.sp // Adjust line height for better readability
-                )
-            }
-        }
+        SloganWithBackground(Modifier.weight(1f))
     }
 }
 

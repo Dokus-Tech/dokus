@@ -5,6 +5,7 @@ import ai.thepredict.app.onboarding.authentication.login.LoginScreenMobileConten
 import ai.thepredict.ui.theme.createColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 
 @Preview
@@ -15,6 +16,7 @@ fun LoginScreenPreview() {
 
     MaterialTheme(colorScheme = colorScheme) {
         LoginScreenMobileContent(
+            focusManager = LocalFocusManager.current,
             email = "",
             onEmailChange = { /*TODO*/ },
             password = "",
@@ -22,7 +24,7 @@ fun LoginScreenPreview() {
             fieldsError = null,
             onLoginClick = { /*TODO*/ },
             onRegisterClick = { /*TODO*/ },
-            onConnectToServerClick = { /*TODO*/ }
+            onConnectToServerClick = { /*TODO*/ },
         )
     }
 }
