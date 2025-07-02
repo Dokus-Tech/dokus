@@ -28,6 +28,7 @@ fun LoginScreenPreview() {
                 onLoginClick = { /*TODO*/ },
                 onRegisterClick = { /*TODO*/ },
                 onConnectToServerClick = { /*TODO*/ },
+                onForgetPasswordClick = { /*TODO*/ },
                 modifier = Modifier
             )
         }
