@@ -1,11 +1,13 @@
 package ai.thepredict.app.onboarding.authentication.login
 
+import BackgroundAnimationViewModel
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.core.di
 import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.SloganWithBackgroundWithLeftContent
+import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
@@ -53,12 +55,14 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.kodein.di.instance
 
 internal class LoginScreen : Screen {
-
     @Composable
     override fun Content() {
+        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
         val viewModel = rememberScreenModel { LoginViewModel() }
+
         val data = viewModel.state.collectAsState()
         val fieldsError: PredictException? =
             (data.value as? LoginViewModel.State.Error)?.exception
@@ -85,7 +89,7 @@ internal class LoginScreen : Screen {
                     }
             ) {
                 if (isLargeScreen) {
-                    SloganWithBackgroundWithLeftContent {
+                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
                         LoginForm(
                             focusManager = focusManager,
                             email = email,

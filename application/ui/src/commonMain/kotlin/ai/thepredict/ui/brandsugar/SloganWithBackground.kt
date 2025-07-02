@@ -1,5 +1,6 @@
-package ai.thepredict.ui
+package ai.thepredict.ui.brandsugar
 
+import BackgroundAnimationViewModel
 import ai.thepredict.ui.text.AppNameText
 import ai.thepredict.ui.text.CopyRightText
 import androidx.compose.foundation.layout.Arrangement
@@ -21,9 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun SloganWithBackground(modifier: Modifier = Modifier) {
+fun SloganWithBackground(
+    modifier: Modifier = Modifier,
+    backgroundAnimationViewModel: BackgroundAnimationViewModel
+) {
     Box(modifier) {
-        BackgroundGradientAnimated()
+        BackgroundGradientAnimated(animationViewModel = backgroundAnimationViewModel)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -44,6 +48,7 @@ fun SloganWithBackground(modifier: Modifier = Modifier) {
 
 @Composable
 fun SloganWithBackgroundWithLeftContent(
+    backgroundAnimationViewModel: BackgroundAnimationViewModel,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -68,6 +73,9 @@ fun SloganWithBackgroundWithLeftContent(
             }
             Spacer(modifier = Modifier.weight(2f))
         }
-        SloganWithBackground(Modifier.weight(1f))
+        SloganWithBackground(
+            modifier = Modifier.weight(1f),
+            backgroundAnimationViewModel = backgroundAnimationViewModel
+        )
     }
 }
