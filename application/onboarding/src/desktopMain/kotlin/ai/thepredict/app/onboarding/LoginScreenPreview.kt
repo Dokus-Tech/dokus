@@ -1,7 +1,7 @@
 package ai.thepredict.app.onboarding
 
-import BackgroundAnimationViewModel
 import ai.thepredict.app.onboarding.authentication.login.LoginForm
+import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.theme.createColorScheme
 import androidx.compose.material3.MaterialTheme

@@ -1,12 +1,12 @@
 package ai.thepredict.app.onboarding.authentication.login
 
-import BackgroundAnimationViewModel
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
