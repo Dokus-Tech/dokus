@@ -3,6 +3,7 @@ import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -22,7 +23,7 @@ data class BackgroundAnimationState(
 
 class BackgroundAnimationViewModel : StateScreenModel<BackgroundAnimationState>(initialState) {
     private companion object {
-        private val dotCount = 12
+        private const val dotCount = 12
         private val initialBoxSize = Offset(2000f, 2000f)
         private val initialState by lazy {
             BackgroundAnimationState(
@@ -33,20 +34,18 @@ class BackgroundAnimationViewModel : StateScreenModel<BackgroundAnimationState>(
                             Random.nextFloat() * initialBoxSize.y
                         ),
                         velocity = Offset(
-                            (Random.nextFloat() - 0.5f) * 2.0f,
-                            (Random.nextFloat() - 0.5f) * 2.0f
+                            (Random.nextFloat() - 0.5f) * 5.0f,
+                            (Random.nextFloat() - 0.5f) * 5.0f
                         ),
                         radius = Random.nextFloat() * 48f + 32f,
                         color = Color.White.copy(alpha = 0.11f + Random.nextFloat() * 0.22f)
                     )
                 },
-                blurProgress = 8f,
+                blurProgress = 98f,
                 boxSize = initialBoxSize
             )
         }
     }
-
-    private var blurDirection = 1f
 
     private val subscriberCount = MutableStateFlow(0)
     private var animationJob: Job? = null
@@ -74,17 +73,16 @@ class BackgroundAnimationViewModel : StateScreenModel<BackgroundAnimationState>(
     private suspend fun animateBlur() {
         val min = 8f
         val max = 98f
-        val durationMs = 6000f
+        val durationMs = 800f
         val frameIntervalMs = 16f
         val step = (max - min) / (durationMs / frameIntervalMs)
-        while (true) {
-            val current = mutableState.value.blurProgress
-            val next = (current + blurDirection * step).coerceIn(min, max)
-            if (next >= max) blurDirection = -1f
-            if (next <= min) blurDirection = 1f
-            mutableState.value = mutableState.value.copy(blurProgress = next)
-            kotlinx.coroutines.delay(frameIntervalMs.toLong())
+        var current = max
+        while (current > min) {
+            current = (current - step).coerceAtLeast(min)
+            mutableState.value = mutableState.value.copy(blurProgress = current)
+            delay(frameIntervalMs.toLong())
         }
+        mutableState.value = mutableState.value.copy(blurProgress = min)
     }
 
     private suspend fun animateDots() {
@@ -102,7 +100,7 @@ class BackgroundAnimationViewModel : StateScreenModel<BackgroundAnimationState>(
                 dot.copy(position = pos, velocity = vel)
             }
             mutableState.value = mutableState.value.copy(dots = updatedDots)
-            kotlinx.coroutines.delay(16)
+            delay(16)
         }
     }
 
