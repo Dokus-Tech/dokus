@@ -1,6 +1,8 @@
 package ai.thepredict.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
+import thepredict.application.ui.generated.resources.Res
+import thepredict.application.ui.generated.resources.arrow_left
 
 enum class PButtonVariant {
     Default,
@@ -78,4 +83,17 @@ private fun PButtonDefault(
         }
         Text(text, modifier = Modifier.padding(4.dp))
     }
+}
+
+
+@Composable
+fun PBackButton(
+    modifier: Modifier,
+    onBackPress: () -> Unit,
+) {
+    Icon(
+        painter = painterResource(Res.drawable.arrow_left),
+        contentDescription = "Back",
+        modifier = modifier.clickable { onBackPress() }.size(24.dp)
+    )
 }
