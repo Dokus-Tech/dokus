@@ -44,8 +44,8 @@ fun SloganWithBackground(modifier: Modifier = Modifier) {
 
 @Composable
 fun SloganWithBackgroundWithLeftContent(
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     Row(modifier = modifier) {
         Row(Modifier.weight(1f).padding(32.dp)) {
