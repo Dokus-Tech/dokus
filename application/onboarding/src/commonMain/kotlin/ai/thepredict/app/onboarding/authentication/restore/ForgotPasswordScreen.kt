@@ -4,6 +4,7 @@ import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.PBackButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
@@ -23,8 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -46,8 +45,6 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.ArrowLeft
 import org.kodein.di.instance
 
 internal class ForgotPasswordScreen : Screen {
@@ -156,13 +153,15 @@ internal fun ForgotPasswordForm(
         // Title
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.Start,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            IconButton(
-                onClick = { onBackPress() }
-            ) {
-                Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
-            }
+            PBackButton(modifier = Modifier.padding(end = 12.dp), onBackPress = onBackPress)
+//            Icon(
+//                painterResource(Res.drawable.background_gradient),
+//                contentDescription = "Back",
+//                Modifier.padding(end = 8.dp).clickable { onBackPress() }.size(24.dp).size(24.dp)
+//            )
             Text(
                 text = "Forgot password",
                 fontWeight = FontWeight.SemiBold,
