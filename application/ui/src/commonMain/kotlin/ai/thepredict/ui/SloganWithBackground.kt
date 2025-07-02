@@ -1,6 +1,13 @@
 package ai.thepredict.ui
 
+import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.CopyRightText
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -32,5 +39,35 @@ fun SloganWithBackground(modifier: Modifier = Modifier) {
                 lineHeight = 40.sp // Adjust line height for better readability
             )
         }
+    }
+}
+
+@Composable
+fun SloganWithBackgroundWithLeftContent(
+    content: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        Row(Modifier.weight(1f).padding(32.dp)) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.weight(2f).fillMaxHeight()
+            ) {
+                AppNameText()
+                CopyRightText()
+            }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .weight(3f)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                content()
+            }
+            Spacer(modifier = Modifier.weight(2f))
+        }
+        SloganWithBackground(Modifier.weight(1f))
     }
 }
