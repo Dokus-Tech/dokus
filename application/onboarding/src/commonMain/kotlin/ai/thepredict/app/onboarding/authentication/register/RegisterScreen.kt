@@ -1,24 +1,22 @@
 package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.core.di
 import ai.thepredict.app.navigation.OnboardingNavigation
-import ai.thepredict.app.onboarding.authentication.login.LoginViewModel
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.SloganWithBackground
+import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
+import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldName
 import ai.thepredict.ui.fields.PTextFieldPassword
 import ai.thepredict.ui.text.AppNameText
-import ai.thepredict.ui.text.CopyRightText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,12 +51,15 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.kodein.di.instance
+import kotlin.getValue
 
 internal class RegisterScreen : Screen {
-
     @Composable
     override fun Content() {
+        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
         val viewModel = rememberScreenModel { RegisterViewModel() }
+
         val data = viewModel.state.collectAsState()
         val fieldsError: PredictException? =
             (data.value as? RegisterViewModel.State.Error)?.exception
@@ -85,25 +86,26 @@ internal class RegisterScreen : Screen {
                     }
             ) {
                 if (isLargeScreen) {
-                    RegisterScreenDesktopContent(
-                        focusManager = focusManager,
-                        email = email,
-                        onEmailChange = { email = it },
-                        password = password,
-                        onPasswordChange = { password = it },
-                        fullName = fullName,
-                        onFullNameChange = { fullName = it },
-                        fieldsError = fieldsError,
-                        onLoginClick = { navigator.replace(loginScreen) },
-                        onRegisterClick = {
-                            viewModel.createUser(
-                                newEmail = email,
-                                newPassword = password,
-                                name = fullName
-                            )
-                        },
-                        modifier = Modifier
-                    )
+                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
+                        RegisterForm(
+                            focusManager = focusManager,
+                            email = email,
+                            onEmailChange = { email = it },
+                            password = password,
+                            onPasswordChange = { password = it },
+                            fullName = fullName,
+                            onFullNameChange = { fullName = it },
+                            fieldsError = fieldsError,
+                            onLoginClick = { navigator.replace(loginScreen) },
+                            onRegisterClick = {
+                                viewModel.createUser(
+                                    newEmail = email,
+                                    newPassword = password,
+                                    name = fullName
+                                )
+                            },
+                        )
+                    }
                 } else {
                     RegisterScreenMobileContent(
                         focusManager = focusManager,
@@ -167,58 +169,6 @@ internal fun RegisterScreenMobileContent(
         )
 
         Spacer(Modifier.weight(1f))
-    }
-}
-
-@Composable
-internal fun RegisterScreenDesktopContent(
-    focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    fullName: String,
-    onFullNameChange: (String) -> Unit,
-    fieldsError: PredictException?,
-    onLoginClick: () -> Unit,
-    onRegisterClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(modifier = modifier) {
-        Row(Modifier.weight(1f).padding(32.dp)) {
-            Column(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.weight(2f).fillMaxHeight()
-            ) {
-                AppNameText()
-                CopyRightText()
-            }
-            // Center LoginForm vertically in desktop mode
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .weight(3f)
-                    .fillMaxHeight(),
-                contentAlignment = Alignment.Center
-            ) {
-                RegisterForm(
-                    focusManager = focusManager,
-                    email = email,
-                    onEmailChange = onEmailChange,
-                    password = password,
-                    onPasswordChange = onPasswordChange,
-                    fullName = fullName,
-                    onFullNameChange = onFullNameChange,
-                    fieldsError = fieldsError,
-                    onLoginClick = onLoginClick,
-                    onRegisterClick = onRegisterClick,
-                    modifier = Modifier
-                )
-            }
-            Spacer(modifier = Modifier.weight(2f))
-        }
-        SloganWithBackground(Modifier.weight(1f))
     }
 }
 

@@ -1,11 +1,13 @@
 package ai.thepredict.app.onboarding.authentication.login
 
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.core.di
 import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.SloganWithBackground
+import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
+import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
@@ -17,7 +19,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -54,12 +55,14 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.kodein.di.instance
 
 internal class LoginScreen : Screen {
-
     @Composable
     override fun Content() {
+        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
         val viewModel = rememberScreenModel { LoginViewModel() }
+
         val data = viewModel.state.collectAsState()
         val fieldsError: PredictException? =
             (data.value as? LoginViewModel.State.Error)?.exception
@@ -86,18 +89,20 @@ internal class LoginScreen : Screen {
                     }
             ) {
                 if (isLargeScreen) {
-                    LoginScreenDesktopContent(
-                        focusManager = focusManager,
-                        email = email,
-                        onEmailChange = { email = it },
-                        password = password,
-                        onPasswordChange = { password = it },
-                        fieldsError = fieldsError,
-                        onLoginClick = { viewModel.login(email, password) },
-                        onRegisterClick = { navigator.push(registerScreen) },
-                        onConnectToServerClick = { /* Handle connect to server */ },
-                        modifier = Modifier
-                    )
+                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
+                        LoginForm(
+                            focusManager = focusManager,
+                            email = email,
+                            onEmailChange = { email = it },
+                            password = password,
+                            onPasswordChange = { password = it },
+                            fieldsError = fieldsError,
+                            onLoginClick = { viewModel.login(email, password) },
+                            onRegisterClick = { navigator.push(registerScreen) },
+                            onConnectToServerClick = { /* Handle connect to server */ },
+                            modifier = Modifier
+                        )
+                    }
                 } else {
                     LoginScreenMobileContent(
                         focusManager = focusManager,
@@ -152,66 +157,6 @@ internal fun LoginScreenMobileContent(
         )
 
         Spacer(Modifier.weight(1f))
-    }
-}
-
-@Composable
-internal fun LoginScreenDesktopContent(
-    focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    fieldsError: PredictException?,
-    onLoginClick: () -> Unit,
-    onRegisterClick: () -> Unit,
-    onConnectToServerClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(modifier = modifier) {
-        Row(Modifier.weight(1f).padding(32.dp)) {
-            Column(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.weight(2f).fillMaxHeight()
-            ) {
-                Text(
-                    text = "Predict",
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.displaySmall
-                )
-                Text(
-                    text = "©2025 The Predict",
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleSmall
-                )
-            }
-            // Center LoginForm vertically in desktop mode
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .weight(3f)
-                    .fillMaxHeight(),
-                contentAlignment = Alignment.Center
-            ) {
-                LoginForm(
-                    focusManager = focusManager,
-                    email = email,
-                    onEmailChange = onEmailChange,
-                    password = password,
-                    onPasswordChange = onPasswordChange,
-                    fieldsError = fieldsError,
-                    onLoginClick = onLoginClick,
-                    onRegisterClick = onRegisterClick,
-                    onConnectToServerClick = onConnectToServerClick,
-                    modifier = Modifier
-                )
-            }
-            Spacer(modifier = Modifier.weight(2f))
-        }
-        SloganWithBackground(Modifier.weight(1f))
     }
 }
 
