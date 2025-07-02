@@ -2,7 +2,6 @@ package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
-import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
@@ -22,9 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -52,7 +48,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.kodein.di.instance
-import kotlin.getValue
 
 internal class RegisterScreen : Screen {
     @Composable

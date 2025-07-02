@@ -1,13 +1,9 @@
 package ai.thepredict.app.onboarding.authentication.restore
 
 import ai.thepredict.app.core.di
-import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.domain.exceptions.asPredictException
 import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
-import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase
 import ai.thepredict.repository.api.UnifiedApi
-import ai.thepredict.repository.extensions.user
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
