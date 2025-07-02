@@ -5,7 +5,6 @@ import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.BackgroundGradientAnimated
 import ai.thepredict.ui.SloganWithBackground
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
@@ -237,7 +236,7 @@ internal fun LoginForm(
 ) {
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
+        horizontalAlignment = Alignment.Start, // Center content horizontally
         verticalArrangement = Arrangement.Center // Center content vertically
     ) {
         // Title
