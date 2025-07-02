@@ -38,11 +38,14 @@ kotlin {
             api(projects.shared.configuration)
             api(projects.application.platform)
             api(projects.shared.domain)
+            api(projects.application.ui)
 
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+
+            implementation(libs.voyager.screenModel)
 
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
