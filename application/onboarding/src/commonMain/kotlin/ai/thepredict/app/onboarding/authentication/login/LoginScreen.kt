@@ -6,6 +6,7 @@ import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
@@ -24,8 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -71,7 +70,8 @@ internal class LoginScreen : Screen {
         val focusManager = LocalFocusManager.current
 
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
-        val splashScreen = rememberScreen(CoreNavigation.Splash)
+        val forgetPasswordScreen =
+            rememberScreen(OnboardingNavigation.Authorization.ForgotPasswordScreen)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -99,6 +99,7 @@ internal class LoginScreen : Screen {
                             fieldsError = fieldsError,
                             onLoginClick = { viewModel.login(email, password) },
                             onRegisterClick = { navigator.push(registerScreen) },
+                            onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
                             onConnectToServerClick = { /* Handle connect to server */ },
                             modifier = Modifier
                         )
@@ -113,6 +114,7 @@ internal class LoginScreen : Screen {
                         fieldsError = fieldsError,
                         onLoginClick = { viewModel.login(email, password) },
                         onRegisterClick = { navigator.push(registerScreen) },
+                        onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
                         onConnectToServerClick = { /* Handle connect to server */ },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
@@ -132,6 +134,7 @@ internal fun LoginScreenMobileContent(
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
+    onForgetPasswordClick: () -> Unit,
     onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -152,6 +155,7 @@ internal fun LoginScreenMobileContent(
             fieldsError = fieldsError,
             onLoginClick = onLoginClick,
             onRegisterClick = onRegisterClick,
+            onForgetPasswordClick = onForgetPasswordClick,
             onConnectToServerClick = onConnectToServerClick,
             modifier = Modifier.fillMaxSize()
         )
@@ -170,6 +174,7 @@ internal fun LoginForm(
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
+    onForgetPasswordClick: () -> Unit,
     onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -217,7 +222,7 @@ internal fun LoginForm(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.CenterStart
         ) {
-            TextButton(onClick = { }) {
+            TextButton(onClick = onForgetPasswordClick) {
                 Text(
                     text = "Forgot password?",
                     fontSize = 14.sp,
@@ -230,24 +235,11 @@ internal fun LoginForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Login Button
-        Button(
-            onClick = onLoginClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(38.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Login",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
-            )
-        }
+        PPrimaryButton(
+            text = "Login",
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onLoginClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -316,14 +308,13 @@ internal fun LoginForm(
             enabled = FeatureFlags.ownServers,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(38.dp),
+                .height(42.dp),
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
                 text = "Connect to server",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
             )
         }
     }

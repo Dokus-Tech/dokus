@@ -1,7 +1,13 @@
 package ai.thepredict.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -9,7 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
+import thepredict.application.ui.generated.resources.Res
+import thepredict.application.ui.generated.resources.arrow_left
 
 enum class PButtonVariant {
     Default,
@@ -78,4 +88,42 @@ private fun PButtonDefault(
         }
         Text(text, modifier = Modifier.padding(4.dp))
     }
+}
+
+@Composable
+fun PPrimaryButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(42.dp),
+        shape = RoundedCornerShape(8.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+
+@Composable
+fun PBackButton(
+    modifier: Modifier,
+    onBackPress: () -> Unit,
+) {
+    Icon(
+        painter = painterResource(Res.drawable.arrow_left),
+        contentDescription = "Back",
+        modifier = modifier.clickable { onBackPress() }.size(24.dp)
+    )
 }

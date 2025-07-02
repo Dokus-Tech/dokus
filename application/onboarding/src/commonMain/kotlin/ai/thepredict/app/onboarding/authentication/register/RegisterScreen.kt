@@ -2,8 +2,8 @@ package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
-import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
@@ -21,9 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,12 +44,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.kodein.di.instance
-import kotlin.getValue
 
 internal class RegisterScreen : Screen {
     @Composable
@@ -66,8 +61,6 @@ internal class RegisterScreen : Screen {
 
         val navigator = LocalNavigator.currentOrThrow
         val focusManager = LocalFocusManager.current
-
-        val loginScreen = rememberScreen(OnboardingNavigation.Authorization.LoginScreen)
 
         var fullName by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
@@ -96,7 +89,7 @@ internal class RegisterScreen : Screen {
                             fullName = fullName,
                             onFullNameChange = { fullName = it },
                             fieldsError = fieldsError,
-                            onLoginClick = { navigator.replace(loginScreen) },
+                            onLoginClick = { navigator.pop() },
                             onRegisterClick = {
                                 viewModel.createUser(
                                     newEmail = email,
@@ -116,7 +109,7 @@ internal class RegisterScreen : Screen {
                         fullName = fullName,
                         onFullNameChange = { fullName = it },
                         fieldsError = fieldsError,
-                        onLoginClick = { navigator.replace(loginScreen) },
+                        onLoginClick = { navigator.pop() },
                         onRegisterClick = {
                             viewModel.createUser(
                                 newEmail = email,
@@ -238,24 +231,11 @@ internal fun RegisterForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Login Button
-        Button(
-            onClick = onRegisterClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(38.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Register",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
-            )
-        }
+        PPrimaryButton(
+            text = "Register",
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onRegisterClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
