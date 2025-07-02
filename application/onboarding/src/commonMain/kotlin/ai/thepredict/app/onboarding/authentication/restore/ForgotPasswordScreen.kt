@@ -174,9 +174,8 @@ internal fun ForgotPasswordForm(
 
         Text(
             text = "Insert your email address and we will send you a link to reset the password",
-            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyLarge
         )
 
         Spacer(modifier = Modifier.height(24.dp))
