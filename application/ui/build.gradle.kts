@@ -59,6 +59,7 @@ kotlin {
             api(libs.calf.ui)
 
             api(libs.composeIcons.feather)
+            api(libs.composeIcons.fontAwesome)
 
             api(libs.materialKolor)
         }

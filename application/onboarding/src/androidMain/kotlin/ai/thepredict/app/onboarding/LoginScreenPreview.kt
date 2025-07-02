@@ -24,6 +24,7 @@ fun LoginScreenPreview() {
             fieldsError = null,
             onLoginClick = { /*TODO*/ },
             onRegisterClick = { /*TODO*/ },
+            onForgetPasswordClick = { /*TODO*/ },
             onConnectToServerClick = { /*TODO*/ },
         )
     }

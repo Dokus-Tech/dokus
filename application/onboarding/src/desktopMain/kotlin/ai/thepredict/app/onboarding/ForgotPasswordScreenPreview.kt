@@ -1,6 +1,6 @@
 package ai.thepredict.app.onboarding
 
-import ai.thepredict.app.onboarding.authentication.login.LoginForm
+import ai.thepredict.app.onboarding.authentication.restore.ForgotPasswordForm
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.theme.createColorScheme
@@ -13,22 +13,18 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Preview
 @Composable
-fun LoginScreenPreview() {
+fun ForgotPasswordScreenPreview() {
     val colorScheme = createColorScheme(false)
 
     MaterialTheme(colorScheme = colorScheme) {
         SloganWithBackgroundWithLeftContent(remember { BackgroundAnimationViewModel() }) {
-            LoginForm(
+            ForgotPasswordForm(
                 focusManager = LocalFocusManager.current,
                 email = "",
                 onEmailChange = { /*TODO*/ },
-                password = "",
-                onPasswordChange = { /*TODO*/ },
                 fieldsError = null,
-                onLoginClick = { /*TODO*/ },
-                onRegisterClick = { /*TODO*/ },
-                onConnectToServerClick = { /*TODO*/ },
-                onForgetPasswordClick = { /*TODO*/ },
+                onSubmit = { /*TODO*/ },
+                onBackPress = { /*TODO*/ },
                 modifier = Modifier
             )
         }

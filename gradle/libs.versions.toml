@@ -96,6 +96,7 @@ calf-filePicker = { group = "com.mohamedrejeb.calf", name = "calf-file-picker", 
 materialKolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialKolor" }
 
 composeIcons-feather = { group = "br.com.devsrsouza.compose.icons", name = "feather", version.ref = "compose-icons" }
+composeIcons-fontAwesome = { module = "br.com.devsrsouza.compose.icons:font-awesome", version.ref = "compose-icons" }
 
 persistence-settings = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "settings" }
 persistence-settingsTest = { group = "com.russhwolf", name = "multiplatform-settings-test", version.ref = "settings" }
