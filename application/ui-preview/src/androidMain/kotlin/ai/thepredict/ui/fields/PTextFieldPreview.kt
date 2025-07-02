@@ -7,8 +7,8 @@ import androidx.compose.ui.tooling.preview.Preview
 @Preview
 fun PTextFieldPreview() {
     PTextFieldEmail(
-        fieldName = "Field Name",
-        value = "Initial Value",
+        fieldName = "Email address",
+        value = "",
         onValueChange = { /* Handle value change */ }
     )
 }
