@@ -67,8 +67,6 @@ internal class RegisterScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val focusManager = LocalFocusManager.current
 
-        val loginScreen = rememberScreen(OnboardingNavigation.Authorization.LoginScreen)
-
         var fullName by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -96,7 +94,7 @@ internal class RegisterScreen : Screen {
                             fullName = fullName,
                             onFullNameChange = { fullName = it },
                             fieldsError = fieldsError,
-                            onLoginClick = { navigator.replace(loginScreen) },
+                            onLoginClick = { navigator.pop() },
                             onRegisterClick = {
                                 viewModel.createUser(
                                     newEmail = email,
@@ -116,7 +114,7 @@ internal class RegisterScreen : Screen {
                         fullName = fullName,
                         onFullNameChange = { fullName = it },
                         fieldsError = fieldsError,
-                        onLoginClick = { navigator.replace(loginScreen) },
+                        onLoginClick = { navigator.pop() },
                         onRegisterClick = {
                             viewModel.createUser(
                                 newEmail = email,

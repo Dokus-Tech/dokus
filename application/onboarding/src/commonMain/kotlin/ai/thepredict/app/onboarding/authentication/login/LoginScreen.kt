@@ -71,6 +71,8 @@ internal class LoginScreen : Screen {
         val focusManager = LocalFocusManager.current
 
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
+        val forgetPasswordScreen =
+            rememberScreen(OnboardingNavigation.Authorization.ForgotPasswordScreen)
         val splashScreen = rememberScreen(CoreNavigation.Splash)
 
         var email by remember { mutableStateOf("") }
@@ -99,6 +101,7 @@ internal class LoginScreen : Screen {
                             fieldsError = fieldsError,
                             onLoginClick = { viewModel.login(email, password) },
                             onRegisterClick = { navigator.push(registerScreen) },
+                            onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
                             onConnectToServerClick = { /* Handle connect to server */ },
                             modifier = Modifier
                         )
@@ -113,6 +116,7 @@ internal class LoginScreen : Screen {
                         fieldsError = fieldsError,
                         onLoginClick = { viewModel.login(email, password) },
                         onRegisterClick = { navigator.push(registerScreen) },
+                        onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
                         onConnectToServerClick = { /* Handle connect to server */ },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
@@ -132,6 +136,7 @@ internal fun LoginScreenMobileContent(
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
+    onForgetPasswordClick: () -> Unit,
     onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -152,6 +157,7 @@ internal fun LoginScreenMobileContent(
             fieldsError = fieldsError,
             onLoginClick = onLoginClick,
             onRegisterClick = onRegisterClick,
+            onForgetPasswordClick = onForgetPasswordClick,
             onConnectToServerClick = onConnectToServerClick,
             modifier = Modifier.fillMaxSize()
         )
@@ -170,6 +176,7 @@ internal fun LoginForm(
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
+    onForgetPasswordClick: () -> Unit,
     onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -217,7 +224,7 @@ internal fun LoginForm(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.CenterStart
         ) {
-            TextButton(onClick = { }) {
+            TextButton(onClick = onForgetPasswordClick) {
                 Text(
                     text = "Forgot password?",
                     fontSize = 14.sp,
