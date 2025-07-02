@@ -12,4 +12,6 @@ fun createColorScheme(useDarkTheme: Boolean) = dynamicColorScheme(
     style = PaletteStyle.Content,
     isAmoled = false,
     isDark = useDarkTheme
-)
+).let {
+    it.copy(primary = it.primaryContainer, onPrimary = it.onPrimaryContainer)
+}
