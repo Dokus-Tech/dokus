@@ -27,7 +27,6 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
                 mutableState.value = State.Error(it.asPredictException)
                 return@launch
             }
-
         }
     }
 

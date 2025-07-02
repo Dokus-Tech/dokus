@@ -58,10 +58,10 @@ internal class RegisterScreen : Screen {
 
     @Composable
     override fun Content() {
-        val viewModel = rememberScreenModel { LoginViewModel() }
+        val viewModel = rememberScreenModel { RegisterViewModel() }
         val data = viewModel.state.collectAsState()
         val fieldsError: PredictException? =
-            (data.value as? LoginViewModel.State.Error)?.exception
+            (data.value as? RegisterViewModel.State.Error)?.exception
 
         val navigator = LocalNavigator.currentOrThrow
         val focusManager = LocalFocusManager.current
@@ -95,7 +95,13 @@ internal class RegisterScreen : Screen {
                         onFullNameChange = { fullName = it },
                         fieldsError = fieldsError,
                         onLoginClick = { navigator.replace(loginScreen) },
-                        onRegisterClick = { /* Handle register click */ },
+                        onRegisterClick = {
+                            viewModel.createUser(
+                                newEmail = email,
+                                newPassword = password,
+                                name = fullName
+                            )
+                        },
                         modifier = Modifier
                     )
                 } else {
@@ -109,7 +115,13 @@ internal class RegisterScreen : Screen {
                         onFullNameChange = { fullName = it },
                         fieldsError = fieldsError,
                         onLoginClick = { navigator.replace(loginScreen) },
-                        onRegisterClick = { /* Handle register click */ },
+                        onRegisterClick = {
+                            viewModel.createUser(
+                                newEmail = email,
+                                newPassword = password,
+                                name = fullName
+                            )
+                        },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
@@ -138,14 +150,7 @@ internal fun RegisterScreenMobileContent(
     ) {
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Logo
-        Text(
-            text = "Predict",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.displaySmall
-        )
+        AppNameText()
 
         RegisterForm(
             focusManager = focusManager,
@@ -233,16 +238,15 @@ internal fun RegisterForm(
 ) {
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.Start, // Center content horizontally
-        verticalArrangement = Arrangement.Center // Center content vertically
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Center,
     ) {
         // Title
         Text(
-            text = "Login to account",
-            fontSize = 24.sp,
+            text = "Register",
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineSmall
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -286,7 +290,7 @@ internal fun RegisterForm(
 
         // Login Button
         Button(
-            onClick = onLoginClick,
+            onClick = onRegisterClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(38.dp),
@@ -308,7 +312,7 @@ internal fun RegisterForm(
         // Sign up text - moved up here to match Figma
         TextButton(
             modifier = Modifier.align(Alignment.Start),
-            onClick = onRegisterClick
+            onClick = onLoginClick
         ) {
             Text(
                 text = buildAnnotatedString {
