@@ -5,6 +5,7 @@ import ai.thepredict.app.core.di
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PBackButton
+import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
@@ -157,11 +158,6 @@ internal fun ForgotPasswordForm(
             modifier = Modifier.fillMaxWidth()
         ) {
             PBackButton(modifier = Modifier.padding(end = 12.dp), onBackPress = onBackPress)
-//            Icon(
-//                painterResource(Res.drawable.background_gradient),
-//                contentDescription = "Back",
-//                Modifier.padding(end = 8.dp).clickable { onBackPress() }.size(24.dp).size(24.dp)
-//            )
             Text(
                 text = "Forgot password",
                 fontWeight = FontWeight.SemiBold,
@@ -199,24 +195,11 @@ internal fun ForgotPasswordForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Login Button
-        Button(
-            onClick = onSubmit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(42.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Continue",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
-        }
+        PPrimaryButton(
+            text = "Continue",
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onSubmit
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
     }

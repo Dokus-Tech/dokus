@@ -6,6 +6,7 @@ import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
@@ -237,24 +238,11 @@ internal fun LoginForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Login Button
-        Button(
-            onClick = onLoginClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(38.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Login",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
-            )
-        }
+        PPrimaryButton(
+            text = "Login",
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onLoginClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -323,14 +311,13 @@ internal fun LoginForm(
             enabled = FeatureFlags.ownServers,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(38.dp),
+                .height(42.dp),
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
                 text = "Connect to server",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
             )
         }
     }
