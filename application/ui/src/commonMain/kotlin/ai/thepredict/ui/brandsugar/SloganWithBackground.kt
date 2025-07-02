@@ -1,6 +1,5 @@
 package ai.thepredict.ui.brandsugar
 
-import BackgroundAnimationViewModel
 import ai.thepredict.ui.text.AppNameText
 import ai.thepredict.ui.text.CopyRightText
 import androidx.compose.foundation.layout.Arrangement

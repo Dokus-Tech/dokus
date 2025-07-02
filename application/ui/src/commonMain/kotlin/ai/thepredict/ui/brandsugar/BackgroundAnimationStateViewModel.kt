@@ -1,3 +1,5 @@
+package ai.thepredict.ui.brandsugar
+
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.core.model.StateScreenModel
@@ -23,11 +25,11 @@ data class BackgroundAnimationState(
 
 class BackgroundAnimationViewModel : StateScreenModel<BackgroundAnimationState>(initialState) {
     private companion object {
-        private const val dotCount = 12
+        private const val DOT_COUNT = 12
         private val initialBoxSize = Offset(2000f, 2000f)
         private val initialState by lazy {
             BackgroundAnimationState(
-                dots = List(dotCount) {
+                dots = List(DOT_COUNT) {
                     Dot(
                         position = Offset(
                             Random.nextFloat() * initialBoxSize.x,

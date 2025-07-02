@@ -1,6 +1,5 @@
 package ai.thepredict.ui.brandsugar
 
-import BackgroundAnimationViewModel
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
