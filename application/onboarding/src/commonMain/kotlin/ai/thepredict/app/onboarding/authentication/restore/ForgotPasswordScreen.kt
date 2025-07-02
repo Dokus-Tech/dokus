@@ -204,7 +204,7 @@ internal fun ForgotPasswordForm(
             onClick = onSubmit,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(38.dp),
+                .height(42.dp),
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -213,7 +213,7 @@ internal fun ForgotPasswordForm(
         ) {
             Text(
                 text = "Continue",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
         }
