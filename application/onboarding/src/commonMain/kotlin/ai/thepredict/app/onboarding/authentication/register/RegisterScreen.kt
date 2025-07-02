@@ -1,9 +1,11 @@
 package ai.thepredict.app.onboarding.authentication.register
 
+import BackgroundAnimationViewModel
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.core.di
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.SloganWithBackgroundWithLeftContent
+import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldName
@@ -49,12 +51,15 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.kodein.di.instance
+import kotlin.getValue
 
 internal class RegisterScreen : Screen {
-
     @Composable
     override fun Content() {
+        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
         val viewModel = rememberScreenModel { RegisterViewModel() }
+
         val data = viewModel.state.collectAsState()
         val fieldsError: PredictException? =
             (data.value as? RegisterViewModel.State.Error)?.exception
@@ -81,7 +86,7 @@ internal class RegisterScreen : Screen {
                     }
             ) {
                 if (isLargeScreen) {
-                    SloganWithBackgroundWithLeftContent {
+                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
                         RegisterForm(
                             focusManager = focusManager,
                             email = email,

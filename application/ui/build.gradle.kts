@@ -53,6 +53,7 @@ kotlin {
             api(libs.androidx.lifecycle.runtime.compose)
 
             implementation(libs.voyager.navigator)
+            implementation(libs.voyager.screenModel)
 
             api(libs.calf.core)
             api(libs.calf.ui)
