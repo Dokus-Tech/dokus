@@ -237,7 +237,7 @@ internal fun LoginForm(
 ) {
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
+        horizontalAlignment = Alignment.Start, // Center content horizontally
         verticalArrangement = Arrangement.Center // Center content vertically
     ) {
         // Title
