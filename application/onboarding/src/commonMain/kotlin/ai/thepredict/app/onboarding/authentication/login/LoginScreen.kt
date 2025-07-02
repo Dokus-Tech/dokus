@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -74,7 +72,6 @@ internal class LoginScreen : Screen {
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
         val forgetPasswordScreen =
             rememberScreen(OnboardingNavigation.Authorization.ForgotPasswordScreen)
-        val splashScreen = rememberScreen(CoreNavigation.Splash)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
