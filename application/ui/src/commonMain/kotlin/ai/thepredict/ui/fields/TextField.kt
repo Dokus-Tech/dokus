@@ -93,7 +93,7 @@ fun PTextField(
                 minLines = minLines,
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 16.sp,
-                    color = if (value.isEmpty()) Color(0xFF999999) else Color(0xFF1F1F1F)
+                    color = if (value.isEmpty()) Color(0xFF999999) else Color(0xFF1F1F1F) // TODO: Use theme
                 ),
                 singleLine = singleLine,
                 keyboardActions = KeyboardActions(
