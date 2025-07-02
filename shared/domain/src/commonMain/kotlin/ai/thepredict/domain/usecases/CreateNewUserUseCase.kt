@@ -14,9 +14,9 @@ class CreateNewUserUseCase(
 ) {
 
     operator fun invoke(name: String, email: String, password: String): Result<NewUser> {
+        if (!nameValidator(name)) return Result.failure(PredictException.InvalidName)
         if (!emailValidator(email)) return Result.failure(PredictException.InvalidEmail)
         if (!passwordValidator(password)) return Result.failure(PredictException.WeakPassword)
-        if (!nameValidator(name)) return Result.failure(PredictException.InvalidName)
         return Result.success(NewUser(name, email, password))
     }
 }

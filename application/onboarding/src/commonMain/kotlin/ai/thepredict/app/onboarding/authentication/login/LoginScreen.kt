@@ -9,6 +9,7 @@ import ai.thepredict.ui.SloganWithBackground
 import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
+import ai.thepredict.ui.text.AppNameText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -135,14 +136,7 @@ internal fun LoginScreenMobileContent(
     ) {
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Logo
-        Text(
-            text = "Predict",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.displaySmall
-        )
+        AppNameText()
 
         LoginForm(
             focusManager = focusManager,
