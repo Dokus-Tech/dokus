@@ -67,7 +67,7 @@ internal class NewPasswordScreen : Screen {
             ) {
                 if (isLargeScreen) {
                     SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
-                        RegisterForm(
+                        NewPasswordForm(
                             focusManager = focusManager,
                             password = password,
                             onPasswordChange = { password = it },
@@ -78,7 +78,7 @@ internal class NewPasswordScreen : Screen {
                         )
                     }
                 } else {
-                    RegisterScreenMobileContent(
+                    NewPasswordScreenMobileContent(
                         focusManager = focusManager,
                         password = password,
                         onPasswordChange = { password = it },
@@ -95,7 +95,7 @@ internal class NewPasswordScreen : Screen {
 }
 
 @Composable
-internal fun RegisterScreenMobileContent(
+internal fun NewPasswordScreenMobileContent(
     focusManager: FocusManager,
     password: String,
     onPasswordChange: (String) -> Unit,
@@ -113,7 +113,7 @@ internal fun RegisterScreenMobileContent(
 
         AppNameText()
 
-        RegisterForm(
+        NewPasswordForm(
             focusManager = focusManager,
             password = password,
             onPasswordChange = onPasswordChange,
@@ -129,7 +129,7 @@ internal fun RegisterScreenMobileContent(
 }
 
 @Composable
-internal fun RegisterForm(
+internal fun NewPasswordForm(
     focusManager: FocusManager,
     password: String,
     onPasswordChange: (String) -> Unit,
@@ -144,7 +144,7 @@ internal fun RegisterForm(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
     ) {
-        SectionTitle("Register")
+        SectionTitle("New password")
 
         Spacer(modifier = Modifier.height(24.dp))
 
