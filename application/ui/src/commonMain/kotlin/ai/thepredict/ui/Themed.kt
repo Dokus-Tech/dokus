@@ -1,6 +1,5 @@
 package ai.thepredict.ui
 
-import ai.thepredict.app.platform.ActivePlatform
 import ai.thepredict.app.platform.activePlatform
 import ai.thepredict.app.platform.isWeb
 import ai.thepredict.ui.theme.createColorScheme
