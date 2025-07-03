@@ -1,7 +1,6 @@
 package ai.thepredict.ui
 
 import ai.thepredict.domain.model.Company
-import ai.thepredict.domain.model.old.Workspace
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
