@@ -51,7 +51,18 @@ data class User(
     val firstName: String,
     val lastName: String,
     val email: String
-)
+) {
+    companion object {
+        fun from(schema: JwtTokenDataSchema): User {
+            return User(
+                id = schema.id,
+                firstName = schema.firstName,
+                lastName = schema.lastName,
+                email = schema.email
+            )
+        }
+    }
+}
 
 @Serializable
 data class LoginRequest(
