@@ -16,6 +16,8 @@ import ai.thepredict.apispec.UserApi
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.repository.httpClient
+import ai.thepredict.repository.utils.LoggingPlugin
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.api.createClientPlugin
@@ -28,7 +30,6 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.request
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.auth.Authentication
 import kotlinx.serialization.json.Json
@@ -74,10 +75,8 @@ class UnifiedApi private constructor(
     InfoApi by infoApi {
 
     companion object {
-        fun create(
-            endpoint: ServerEndpoint,
-        ): UnifiedApi {
-            val httpClient = httpClient {
+        private fun createHttpClient(endpoint: ServerEndpoint): HttpClient {
+            return httpClient {
                 install(HttpRedirect) {
                     checkHttpMethod = false
                 }
@@ -91,6 +90,12 @@ class UnifiedApi private constructor(
                 }
                 install(LoggingPlugin)
             }
+        }
+
+        fun create(
+            endpoint: ServerEndpoint,
+        ): UnifiedApi {
+            val httpClient = createHttpClient(endpoint)
             return UnifiedApi(
                 AuthApi.create(httpClient, endpoint),
                 CompanyApi.create(httpClient, endpoint),
