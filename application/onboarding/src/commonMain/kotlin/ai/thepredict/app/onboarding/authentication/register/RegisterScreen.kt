@@ -11,6 +11,7 @@ import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldName
 import ai.thepredict.ui.fields.PTextFieldPassword
 import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.SectionTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -184,13 +185,7 @@ internal fun RegisterForm(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
     ) {
-        // Title
-        Text(
-            text = "Register",
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineSmall
-        )
+        SectionTitle("Register")
 
         Spacer(modifier = Modifier.height(24.dp))
 
