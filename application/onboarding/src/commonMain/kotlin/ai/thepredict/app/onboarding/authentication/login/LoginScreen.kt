@@ -3,7 +3,6 @@ package ai.thepredict.app.onboarding.authentication.login
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.flags.FeatureFlags
-import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
@@ -13,6 +12,7 @@ import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
 import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.SectionTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -72,6 +72,8 @@ internal class LoginScreen : Screen {
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
         val forgetPasswordScreen =
             rememberScreen(OnboardingNavigation.Authorization.ForgotPasswordScreen)
+        val serverConnectionScreen =
+            rememberScreen(OnboardingNavigation.Configuration.ServerConnectionScreen)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -100,7 +102,7 @@ internal class LoginScreen : Screen {
                             onLoginClick = { viewModel.login(email, password) },
                             onRegisterClick = { navigator.push(registerScreen) },
                             onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
-                            onConnectToServerClick = { /* Handle connect to server */ },
+                            onConnectToServerClick = { navigator.push(serverConnectionScreen) },
                             modifier = Modifier
                         )
                     }
@@ -115,7 +117,7 @@ internal class LoginScreen : Screen {
                         onLoginClick = { viewModel.login(email, password) },
                         onRegisterClick = { navigator.push(registerScreen) },
                         onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
-                        onConnectToServerClick = { /* Handle connect to server */ },
+                        onConnectToServerClick = { navigator.push(serverConnectionScreen) },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
@@ -183,14 +185,7 @@ internal fun LoginForm(
         horizontalAlignment = Alignment.Start, // Center content horizontally
         verticalArrangement = Arrangement.Center // Center content vertically
     ) {
-        // Title
-        Text(
-            text = "Login to account",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineMedium
-        )
+        SectionTitle("Login to account")
 
         Spacer(modifier = Modifier.height(24.dp))
 
