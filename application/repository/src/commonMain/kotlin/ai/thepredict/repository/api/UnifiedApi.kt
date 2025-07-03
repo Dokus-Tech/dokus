@@ -20,31 +20,13 @@ import ai.thepredict.repository.utils.LoggingPlugin
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpRedirect
-import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.logging.DEFAULT
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
-import io.ktor.client.statement.request
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.auth.Authentication
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.CoroutineContext
-
-val LoggingPlugin = createClientPlugin("LoggingPlugin") {
-    onRequest { request, _ ->
-        println("Request: ${request.url} ${request.method.value}")
-        println("Headers: ${request.headers.entries()}")
-    }
-    onResponse { response ->
-        println("Response: ${response.status.value} for ${response.request.url}")
-        println("Headers: ${response.headers.entries()}")
-    }
-}
 
 class UnifiedApi private constructor(
     authApi: AuthApi,
