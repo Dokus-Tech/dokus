@@ -12,6 +12,7 @@ import ai.thepredict.ui.fields.PTextFieldEmail
 import ai.thepredict.ui.fields.PTextFieldEmailDefaults
 import ai.thepredict.ui.fields.PTextFieldPassword
 import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.SectionTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -184,14 +185,7 @@ internal fun LoginForm(
         horizontalAlignment = Alignment.Start, // Center content horizontally
         verticalArrangement = Arrangement.Center // Center content vertically
     ) {
-        // Title
-        Text(
-            text = "Login to account",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineMedium
-        )
+        SectionTitle("Login to account")
 
         Spacer(modifier = Modifier.height(24.dp))
 
