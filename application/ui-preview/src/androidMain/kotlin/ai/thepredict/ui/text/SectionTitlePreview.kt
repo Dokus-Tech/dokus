@@ -1,13 +1,14 @@
 package ai.thepredict.ui.text
 
 import ai.thepredict.ui.PreviewWrapper
+import ai.thepredict.ui.Themed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 
 @Preview
 @Composable
 fun SectionTitleWithBackButtonPreview() {
-    PreviewWrapper {
+    Themed {
         SectionTitle(
             text = "Forgot password"
         ) {
@@ -19,7 +20,7 @@ fun SectionTitleWithBackButtonPreview() {
 @Preview
 @Composable
 fun SectionTitleNoBackButtonPreview() {
-    PreviewWrapper {
+    Themed {
         SectionTitle(
             text = "Forgot password"
         )

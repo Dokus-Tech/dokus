@@ -22,14 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.min
 
 @Composable
 fun PTextField(
@@ -69,7 +67,7 @@ fun PTextField(
                 text = fieldName,
                 style = labelTextStyle,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1F1F1F)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -78,11 +76,11 @@ fun PTextField(
                 .fillMaxWidth()
                 .border(
                     width = 1.dp,
-                    color = if (error != null) Color.Red else Color(0xFFE1E1E1),
+                    color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .background(
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -93,7 +91,7 @@ fun PTextField(
                 minLines = minLines,
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 16.sp,
-                    color = if (value.isEmpty()) Color(0xFF999999) else Color(0xFF1F1F1F) // TODO: Use theme
+                    color = if (value.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
                 ),
                 singleLine = singleLine,
                 keyboardActions = KeyboardActions(
