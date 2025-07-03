@@ -74,6 +74,7 @@ internal class LoginScreen : Screen {
             rememberScreen(OnboardingNavigation.Authorization.ForgotPasswordScreen)
         val serverConnectionScreen =
             rememberScreen(OnboardingNavigation.Configuration.ServerConnectionScreen)
+        val workspacesScreen = rememberScreen(OnboardingNavigation.Workspaces.All)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -122,6 +123,14 @@ internal class LoginScreen : Screen {
                     )
                 }
             }
+        }
+
+        when (data.value) {
+            is LoginViewModel.State.Authenticated -> {
+                navigator.push(workspacesScreen)
+            }
+
+            else -> {}
         }
     }
 }

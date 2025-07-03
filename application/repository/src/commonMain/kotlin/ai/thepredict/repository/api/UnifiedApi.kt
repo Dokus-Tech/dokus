@@ -15,6 +15,15 @@ import ai.thepredict.apispec.TransactionMatchingApi
 import ai.thepredict.apispec.UserApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.repository.httpClient
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRedirect
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.header
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.path
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import kotlin.coroutines.CoroutineContext
 
 class UnifiedApi private constructor(
@@ -49,7 +58,18 @@ class UnifiedApi private constructor(
         fun create(
             endpoint: ServerEndpoint,
         ): UnifiedApi {
-            val httpClient = httpClient()
+            val httpClient = httpClient {
+                install(HttpRedirect) {
+                    checkHttpMethod = false
+                }
+                install(ContentNegotiation) {
+                    json(Json { ignoreUnknownKeys = true })
+                }
+                install(DefaultRequest) {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json)
+                    host = endpoint.externalHost
+                }
+            }
             return UnifiedApi(
                 AuthApi.create(httpClient, endpoint),
                 CompanyApi.create(httpClient, endpoint),

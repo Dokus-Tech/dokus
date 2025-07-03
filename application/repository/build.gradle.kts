@@ -47,6 +47,8 @@ kotlin {
             implementation(libs.kodein)
 
             implementation(libs.ktor.server.auth)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
         }
 
         desktopMain.dependencies {
