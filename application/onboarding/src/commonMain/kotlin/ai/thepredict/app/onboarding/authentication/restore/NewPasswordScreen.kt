@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
@@ -158,7 +159,7 @@ internal fun NewPasswordForm(
                 fieldName = "Password",
                 value = password,
                 error = fieldsError.takeIf { it is PredictException.WeakPassword },
-                onAction = { focusManager.clearFocus() },
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = onPasswordChange
             )
