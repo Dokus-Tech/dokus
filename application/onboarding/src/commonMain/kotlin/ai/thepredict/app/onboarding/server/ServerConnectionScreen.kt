@@ -11,6 +11,6 @@ internal class ServerConnectionScreen : Screen {
 }
 
 @Composable
-fun ServerConnectionScreenContent() {
+internal fun ServerConnectionScreenContent() {
 
 }
