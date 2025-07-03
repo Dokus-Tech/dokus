@@ -1,6 +1,6 @@
 package ai.thepredict.app.onboarding
 
-import ai.thepredict.app.onboarding.authentication.login.LoginScreenMobileContent
+import ai.thepredict.app.onboarding.authentication.restore.NewPasswordScreenMobileContent
 import ai.thepredict.ui.Themed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalFocusManager
@@ -8,19 +8,16 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Preview
 @Composable
-fun LoginScreenPreview() {
+fun NewPasswordScreenPreview() {
     Themed {
-        LoginScreenMobileContent(
+        NewPasswordScreenMobileContent(
             focusManager = LocalFocusManager.current,
-            email = "",
-            onEmailChange = { /*TODO*/ },
             password = "",
             onPasswordChange = { /*TODO*/ },
+            passwordConfirmation = "",
+            onPasswordConfirmationChange = { /*TODO*/ },
+            onContinueClick = { /*TODO*/ },
             fieldsError = null,
-            onLoginClick = { /*TODO*/ },
-            onRegisterClick = { /*TODO*/ },
-            onForgetPasswordClick = { /*TODO*/ },
-            onConnectToServerClick = { /*TODO*/ },
         )
     }
 }
