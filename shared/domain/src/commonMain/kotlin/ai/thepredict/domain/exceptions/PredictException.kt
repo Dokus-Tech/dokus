@@ -2,6 +2,7 @@ package ai.thepredict.domain.exceptions
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import kotlin.coroutines.EmptyCoroutineContext.get
 
 @Serializable
 sealed class PredictException(val recoverable: Boolean = false) : Exception() {
@@ -39,6 +40,12 @@ sealed class PredictException(val recoverable: Boolean = false) : Exception() {
 
     @Serializable
     data object InvalidWorkspaceName : PredictException()
+}
+
+fun PredictException.Companion.fromRestStatus(statusCode: Int): PredictException? = when (statusCode) {
+    401 -> PredictException.NotAuthenticated
+    403 -> PredictException.NotAuthorized
+    else -> null
 }
 
 val Throwable?.asPredictException: PredictException

@@ -5,17 +5,14 @@ import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Company
 import ai.thepredict.domain.model.CreateCompanyRequest
 import ai.thepredict.domain.model.UpdateCompanyRequest
+import ai.thepredict.repository.extensions.bodyIfOk
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 
 class CompanyApiImpl(
     private val client: HttpClient,
@@ -24,7 +21,7 @@ class CompanyApiImpl(
 
     override suspend fun getCompanies(): Result<List<Company>> {
         return runCatching {
-            client.get(basePath).body()
+            client.get(basePath).bodyIfOk()
         }
     }
 
@@ -70,12 +67,6 @@ internal fun CompanyApi.Companion.create(
     httpClient: HttpClient,
     endpoint: ServerEndpoint
 ): CompanyApi {
-    httpClient.config {
-        install(DefaultRequest) {
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
-            host = endpoint.externalHost
-        }
-    }
     return CompanyApiImpl(
         client = httpClient,
     )

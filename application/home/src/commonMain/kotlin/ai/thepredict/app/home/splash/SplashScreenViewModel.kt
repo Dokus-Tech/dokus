@@ -1,6 +1,8 @@
 package ai.thepredict.app.home.splash
 
 import ai.thepredict.app.platform.persistence
+import ai.thepredict.repository.extensions.authCredentials
+import ai.thepredict.repository.extensions.user
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
@@ -19,7 +21,7 @@ internal class SplashScreenViewModel : StateScreenModel<SplashScreenViewModel.Ef
     }
 
     private fun checkIsNotLoggedIn(): Boolean {
-        return persistence.email == null || persistence.password == null
+        return persistence.authCredentials == null || persistence.user == null
     }
 
     private fun noWorkspaceIsSelected(): Boolean {
