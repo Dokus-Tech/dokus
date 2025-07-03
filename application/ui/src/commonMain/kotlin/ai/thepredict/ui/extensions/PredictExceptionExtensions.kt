@@ -13,6 +13,7 @@ val PredictException.localized: String
         is PredictException.ConnectionError -> "Unable to connect to the server"
         is PredictException.InvalidEmail -> "Please enter the valid email"
         is PredictException.WeakPassword -> "The password is too weak"
+        is PredictException.PasswordDoNotMatch -> "Passwords do not match"
         is PredictException.InvalidName -> "Please enter the valid name"
         is PredictException.InvalidTaxNumber -> "Please enter the valid tax number"
         is PredictException.InvalidWorkspaceName -> "Please enter the valid workspace name"

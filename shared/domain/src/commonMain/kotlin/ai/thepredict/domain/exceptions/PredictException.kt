@@ -29,6 +29,8 @@ sealed class PredictException(val recoverable: Boolean = false) : Exception() {
     @Serializable
     data object WeakPassword : PredictException()
 
+    data object PasswordDoNotMatch : PredictException()
+
     @Serializable
     data object InvalidName : PredictException()
 
