@@ -7,8 +7,8 @@ sealed interface OnboardingNavigation : ScreenProvider {
         data object LoginScreen : Authorization
         data object RegisterScreen : Authorization
         data object ForgotPasswordScreen : Authorization
-
         data object NewPasswordScreen : Authorization
+        data object RegisterConfirmationScreen : Authorization
     }
 
     sealed interface Configuration : OnboardingNavigation {
