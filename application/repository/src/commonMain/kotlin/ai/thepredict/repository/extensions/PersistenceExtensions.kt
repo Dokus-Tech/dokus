@@ -1,30 +1,39 @@
 package ai.thepredict.repository.extensions
 
 import ai.thepredict.domain.model.old.AuthCredentials
-import ai.thepredict.domain.model.old.User
 import ai.thepredict.domain.model.old.Workspace
 import ai.thepredict.app.platform.Persistence
+import ai.thepredict.domain.model.User
 
-val Persistence.authCredentials: AuthCredentials?
+var Persistence.authCredentials: AuthCredentials?
     get() {
         val userId = userId.takeIf { it?.isNotEmpty() == true } ?: return null
-        val password = password.takeIf { it?.isNotEmpty() == true } ?: return null
-        return AuthCredentials(userId, password)
+        val token = jwtToken.takeIf { it?.isNotEmpty() == true } ?: return null
+        return AuthCredentials(userId, token)
+    }
+    set(value) {
+        jwtToken = value?.jwtToken
+        userId = value?.userId
     }
 
 var Persistence.user: User?
     get() {
         val userId = userId.takeIf { it?.isNotEmpty() == true } ?: return null
-        val name = name.takeIf { it?.isNotEmpty() == true } ?: return null
+        val firstName = firstName.takeIf { it?.isNotEmpty() == true } ?: return null
+        val lastName = lastName.takeIf { it?.isNotEmpty() == true } ?: return null
         val email = email.takeIf { it?.isNotEmpty() == true } ?: return null
-        val password = password.takeIf { it?.isNotEmpty() == true } ?: return null
-        return User(userId, email, name, password)
+        return User(
+            id = userId,
+            firstName = firstName,
+            lastName = lastName,
+            email = email
+        )
     }
     set(value) {
         userId = value?.id
-        name = value?.name
+        firstName = value?.firstName
+        lastName = value?.lastName
         email = value?.email
-        password = value?.password
     }
 
 var Persistence.selectedWorkspaceId: Workspace.Id?

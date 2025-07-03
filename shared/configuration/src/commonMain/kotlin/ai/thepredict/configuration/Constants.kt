@@ -76,7 +76,7 @@ sealed interface ServerEndpoint {
 
     data object PredictCloud : ServerEndpoint {
         override val internalHost = "predict-cloud"
-        override val externalHost = "https://predict-api-463513006881.europe-west1.run.app/api/v1"
+        override val externalHost = "api.thepredict.ai"
         override val internalPort = 80
         override val externalPort = 80
     }

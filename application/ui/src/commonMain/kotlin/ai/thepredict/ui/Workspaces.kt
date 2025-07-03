@@ -1,6 +1,6 @@
 package ai.thepredict.ui
 
-import ai.thepredict.domain.model.old.Workspace
+import ai.thepredict.domain.model.Company
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,9 +25,9 @@ import compose.icons.feathericons.Edit2
 
 @Composable
 fun WorkspacesList(
-    workspaces: List<Workspace>,
+    workspaces: List<Company>,
     modifier: Modifier = Modifier,
-    onClick: ((Workspace) -> Unit)?,
+    onClick: ((Company) -> Unit)?,
 ) {
     LazyColumn(
         modifier,
@@ -44,7 +44,7 @@ fun WorkspacesList(
 
 @Composable
 fun WorkspaceListItem(
-    workspace: Workspace,
+    workspace: Company,
     clickEnabled: Boolean = false,
     onClick: () -> Unit = {},
 ) {
@@ -53,14 +53,14 @@ fun WorkspaceListItem(
             modifier = Modifier.padding(vertical = 8.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            WorkspaceIcon(workspace.url, modifier = Modifier.weight(1f))
+            WorkspaceIcon(workspace.avatar, modifier = Modifier.weight(1f))
             Column(
                 modifier = Modifier.weight(4f),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.SpaceAround
             ) {
                 WorkspaceName(workspace.name)
-                WorkspaceLegalName(workspace.legalName, workspace.taxNumber)
+                WorkspaceLegalName("", workspace.taxId)
             }
             WorkspaceNavigation(Modifier.weight(1f), if (clickEnabled) onClick else null)
         }

@@ -3,13 +3,10 @@ package ai.thepredict.repository.api
 import ai.thepredict.apispec.AuthApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.domain.model.LoginRequest
-import io.ktor.client.*
-import io.ktor.client.plugins.DefaultRequest
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import kotlin.Result
-import kotlin.runCatching
+import ai.thepredict.repository.extensions.bodyIfOk
+import io.ktor.client.HttpClient
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 
 class AuthApiImpl(
     private val client: HttpClient,
@@ -18,18 +15,12 @@ class AuthApiImpl(
         return runCatching {
             client.post("/api/v1/auth/login") {
                 setBody(request)
-            }.bodyAsText()
+            }.bodyIfOk<String>().trim('"')
         }
     }
 }
 
 internal fun AuthApi.Companion.create(httpClient: HttpClient, endpoint: ServerEndpoint): AuthApi {
-    httpClient.config {
-        install(DefaultRequest) {
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
-            host = endpoint.externalHost
-        }
-    }
     return AuthApiImpl(
         client = httpClient,
     )

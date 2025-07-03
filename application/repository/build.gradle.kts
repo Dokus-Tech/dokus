@@ -47,11 +47,17 @@ kotlin {
             implementation(libs.kodein)
 
             implementation(libs.ktor.server.auth)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
         }
 
         desktopMain.dependencies {
             implementation(libs.ktor.client.cio)
             implementation(libs.kotlinx.coroutines.swing)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
     }
 }

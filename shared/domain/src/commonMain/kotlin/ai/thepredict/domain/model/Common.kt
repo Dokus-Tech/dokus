@@ -29,20 +29,26 @@ enum class Currency { EUR, USD }
 
 @Serializable
 data class Address(
+    @SerialName("street_name")
     val streetName: String? = null,
+    @SerialName("city")
     val city: String? = null,
+    @SerialName("postal_code")
     val postalCode: String? = null,
+    @SerialName("country")
     val country: String? = null
 )
 
 @Serializable
 data class Company(
-    val id: String? = null, // UUID as string for KMP
-    val name: String? = null,
+    val id: String, // UUID as string for KMP
+    val name: String,
     val address: Address? = null,
-    val taxId: String? = null,
-    val matchedVat: String? = null,
-    val isOwner: Boolean
+    @SerialName("tax_id")
+    val taxId: String,
+    @SerialName("is_owner")
+    val isOwner: Boolean,
+    val avatar: String? = null
 )
 
 @Serializable
@@ -51,7 +57,18 @@ data class User(
     val firstName: String,
     val lastName: String,
     val email: String
-)
+) {
+    companion object {
+        fun from(schema: JwtTokenDataSchema): User {
+            return User(
+                id = schema.id,
+                firstName = schema.firstName,
+                lastName = schema.lastName,
+                email = schema.email
+            )
+        }
+    }
+}
 
 @Serializable
 data class LoginRequest(

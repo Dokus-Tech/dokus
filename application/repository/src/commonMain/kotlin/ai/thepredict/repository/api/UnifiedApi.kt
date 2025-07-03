@@ -13,8 +13,19 @@ import ai.thepredict.apispec.TransactionExtractionApi
 import ai.thepredict.apispec.TransactionFileApi
 import ai.thepredict.apispec.TransactionMatchingApi
 import ai.thepredict.apispec.UserApi
+import ai.thepredict.app.platform.persistence
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.repository.httpClient
+import ai.thepredict.repository.utils.LoggingPlugin
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRedirect
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.header
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import kotlin.coroutines.CoroutineContext
 
 class UnifiedApi private constructor(
@@ -46,10 +57,27 @@ class UnifiedApi private constructor(
     InfoApi by infoApi {
 
     companion object {
+        private fun createHttpClient(endpoint: ServerEndpoint): HttpClient {
+            return httpClient {
+                install(HttpRedirect) {
+                    checkHttpMethod = false
+                }
+                install(ContentNegotiation) {
+                    json(Json { ignoreUnknownKeys = true })
+                }
+                install(DefaultRequest) {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json)
+                    header(HttpHeaders.Authorization, "Bearer ${persistence.jwtToken}")
+                    host = endpoint.externalHost
+                }
+                install(LoggingPlugin)
+            }
+        }
+
         fun create(
             endpoint: ServerEndpoint,
         ): UnifiedApi {
-            val httpClient = httpClient()
+            val httpClient = createHttpClient(endpoint)
             return UnifiedApi(
                 AuthApi.create(httpClient, endpoint),
                 CompanyApi.create(httpClient, endpoint),

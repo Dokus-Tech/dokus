@@ -5,7 +5,7 @@ import ai.thepredict.domain.model.UpdateUserRequest
 import ai.thepredict.domain.model.User
 
 interface UserApi {
-    companion object {}
+    companion object;
 
     // Return Result to handle exceptions properly
     suspend fun getUser(userId: String): Result<User>
