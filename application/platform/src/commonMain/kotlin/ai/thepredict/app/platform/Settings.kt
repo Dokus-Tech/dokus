@@ -30,7 +30,6 @@ class Persistence(settings: Settings) {
     var firstName: String? by SettingsDelegate(settings, "name")
     var lastName: String? by SettingsDelegate(settings, "last_name")
     var email: String? by SettingsDelegate(settings, "email")
-    var password: String? by SettingsDelegate(settings, "password")
     var selectedWorkspace: Int? by SettingsDelegate(settings, "selected_workspace")
     var jwtToken: String? by SettingsDelegate(settings, "user_token")
 }
