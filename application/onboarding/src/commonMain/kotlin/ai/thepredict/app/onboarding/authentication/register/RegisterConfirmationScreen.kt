@@ -1,18 +1,21 @@
 package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
-import ai.thepredict.app.core.di
 import ai.thepredict.ui.PPrimaryButton
-import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
+import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.CopyRightText
 import ai.thepredict.ui.text.SectionTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,22 +27,17 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import org.kodein.di.instance
 
 internal class RegisterConfirmationScreen : Screen {
     @Composable
     override fun Content() {
-        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
-
         val navigator = LocalNavigator.currentOrThrow
 
         Scaffold { contentPadding ->
             Box(Modifier.padding(contentPadding)) {
                 if (isLargeScreen) {
-                    Column {
-                        RegistrationConfirmationForm {
-                            // TODO: Complete the code here
-                        }
+                    RegisterConfirmationFormDesktop {
+                        // TODO: Complete the code here
                     }
                 } else {
                     RegistrationConfirmationForm {
@@ -52,12 +50,35 @@ internal class RegisterConfirmationScreen : Screen {
 }
 
 @Composable
-internal fun RegistrationConfirmationForm(
+internal fun RegisterConfirmationFormDesktop(
     modifier: Modifier = Modifier,
     onContinueClick: () -> Unit,
 ) {
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            modifier = modifier.widthIn(max = 480.dp).fillMaxHeight().align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            AppNameText()
+
+            RegistrationConfirmationForm(
+                modifier = Modifier.fillMaxWidth(),
+                onContinueClick = onContinueClick
+            )
+
+            CopyRightText()
+        }
+    }
+}
+
+@Composable
+internal fun RegistrationConfirmationForm(
+    modifier: Modifier = Modifier.fillMaxSize(),
+    onContinueClick: () -> Unit,
+) {
     Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
+        modifier = modifier.padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
