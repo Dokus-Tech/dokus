@@ -3,7 +3,7 @@ package ai.thepredict.app
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.app.wrap.Bootstrapped
 import ai.thepredict.app.wrap.NavigationProvided
-import ai.thepredict.app.wrap.Themed
+import ai.thepredict.ui.Themed
 import ai.thepredict.repository.extensions.user
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
