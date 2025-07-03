@@ -21,12 +21,11 @@ fun Themed(
 
     val fontFamilyDisplay = createFontFamilyDisplay()
     val fontFamily = createFontFamily()
-    val typography = MaterialTheme.typography.let {
-        if (!activePlatform.isWeb) {
-            it.withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay)
-        } else {
-            it
-        }
+    val typography = MaterialTheme.typography.run {
+        // For some reason rendering of custom fonts fail on web. They do load, but render incorrectly
+        // For now we'll keep typography default only for web, and use custom for all other platforms
+        if (activePlatform.isWeb) this
+        else withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay)
     }
     MaterialTheme(
         colorScheme = colorScheme,
