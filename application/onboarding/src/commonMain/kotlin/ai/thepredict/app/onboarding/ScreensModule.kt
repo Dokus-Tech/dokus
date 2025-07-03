@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding
 
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.app.onboarding.authentication.login.LoginScreen
+import ai.thepredict.app.onboarding.authentication.register.RegisterConfirmationScreen
 import ai.thepredict.app.onboarding.authentication.register.RegisterScreen
 import ai.thepredict.app.onboarding.authentication.restore.ForgotPasswordScreen
 import ai.thepredict.app.onboarding.authentication.restore.NewPasswordScreen
@@ -25,6 +26,10 @@ val onboardingScreensModule = screenModule {
 
     register<OnboardingNavigation.Authorization.NewPasswordScreen> {
         NewPasswordScreen()
+    }
+
+    register<OnboardingNavigation.Authorization.RegisterConfirmationScreen> {
+        RegisterConfirmationScreen()
     }
 
     register<OnboardingNavigation.Configuration.ServerConnectionScreen> {
