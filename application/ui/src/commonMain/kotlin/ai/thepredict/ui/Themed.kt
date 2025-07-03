@@ -1,4 +1,4 @@
-package ai.thepredict.app.wrap
+package ai.thepredict.ui
 
 import ai.thepredict.ui.theme.createColorScheme
 import ai.thepredict.ui.theme.createFontFamily
