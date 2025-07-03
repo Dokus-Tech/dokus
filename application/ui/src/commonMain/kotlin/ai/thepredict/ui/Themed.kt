@@ -1,5 +1,8 @@
 package ai.thepredict.ui
 
+import ai.thepredict.app.platform.ActivePlatform
+import ai.thepredict.app.platform.activePlatform
+import ai.thepredict.app.platform.isWeb
 import ai.thepredict.ui.theme.createColorScheme
 import ai.thepredict.ui.theme.createFontFamily
 import ai.thepredict.ui.theme.createFontFamilyDisplay
@@ -18,9 +21,13 @@ fun Themed(
 
     val fontFamilyDisplay = createFontFamilyDisplay()
     val fontFamily = createFontFamily()
-    val typography = MaterialTheme.typography
-        .withFontFamily(fontFamily)
-        .withFontFamilyForDisplay(fontFamilyDisplay)
+    val typography = MaterialTheme.typography.let {
+        if (!activePlatform.isWeb) {
+            it.withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay)
+        } else {
+            it
+        }
+    }
     MaterialTheme(
         colorScheme = colorScheme,
         typography = typography
