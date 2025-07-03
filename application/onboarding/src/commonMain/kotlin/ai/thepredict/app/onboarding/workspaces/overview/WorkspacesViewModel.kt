@@ -1,17 +1,14 @@
 package ai.thepredict.app.onboarding.workspaces.overview
 
+import ai.thepredict.apispec.CompanyApi
 import ai.thepredict.app.core.di
-import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
-import ai.thepredict.domain.model.old.Workspace
-import ai.thepredict.repository.api.UnifiedApi
-import ai.thepredict.repository.extensions.selectedWorkspaceId
+import ai.thepredict.domain.model.Company
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
@@ -20,19 +17,18 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    private val api: UnifiedApi by di.instance { screenModelScope }
+    private val api: CompanyApi by di.instance()
 
     fun fetch() {
         screenModelScope.launch {
             mutableState.value = State.Loading
 
-//            val workspaces = api.getCompanies().getOrElse {
-//                mutableState.value = State.Error(it.asPredictException)
-//                return@launch
-//            }
-//
-//            val workspacesList = workspaces.toList()
-//            mutableState.value = State.Loaded(workspacesList)
+            val workspaces = api.getCompanies().getOrElse {
+                mutableState.value = State.Error(it.asPredictException)
+                return@launch
+            }
+
+            mutableState.value = State.Loaded(workspaces)
         }
     }
 
@@ -55,7 +51,7 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
 
     sealed interface State {
         data object Loading : State
-        data class Loaded(val workspaces: List<Workspace>) : State
+        data class Loaded(val workspaces: List<Company>) : State
         data class Error(val exception: PredictException) : State
     }
 
