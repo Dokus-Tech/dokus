@@ -3,7 +3,6 @@ package ai.thepredict.app.onboarding.authentication.login
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.flags.FeatureFlags
-import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
@@ -72,6 +71,8 @@ internal class LoginScreen : Screen {
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
         val forgetPasswordScreen =
             rememberScreen(OnboardingNavigation.Authorization.ForgotPasswordScreen)
+        val serverConnectionScreen =
+            rememberScreen(OnboardingNavigation.Configuration.ServerConnectionScreen)
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -100,7 +101,7 @@ internal class LoginScreen : Screen {
                             onLoginClick = { viewModel.login(email, password) },
                             onRegisterClick = { navigator.push(registerScreen) },
                             onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
-                            onConnectToServerClick = { /* Handle connect to server */ },
+                            onConnectToServerClick = { navigator.push(serverConnectionScreen) },
                             modifier = Modifier
                         )
                     }
@@ -115,7 +116,7 @@ internal class LoginScreen : Screen {
                         onLoginClick = { viewModel.login(email, password) },
                         onRegisterClick = { navigator.push(registerScreen) },
                         onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
-                        onConnectToServerClick = { /* Handle connect to server */ },
+                        onConnectToServerClick = { navigator.push(serverConnectionScreen) },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
