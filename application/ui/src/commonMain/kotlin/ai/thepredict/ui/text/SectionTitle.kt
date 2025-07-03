@@ -14,10 +14,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SectionTitle(text: String, modifier: Modifier = Modifier, onBackPress: (() -> Unit)? = null) {
+fun SectionTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    onBackPress: (() -> Unit)? = null
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = horizontalArrangement,
         modifier = modifier.fillMaxWidth()
     ) {
         if (onBackPress != null) {
