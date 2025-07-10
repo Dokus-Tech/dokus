@@ -3,7 +3,7 @@ package ai.thepredict.app.onboarding.authentication.register
 import ai.thepredict.app.core.di
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
-import ai.thepredict.domain.model.old.User
+import ai.thepredict.domain.model.User
 import ai.thepredict.domain.usecases.CreateNewUserUseCase
 import ai.thepredict.repository.api.UnifiedApi
 import cafe.adriel.voyager.core.model.StateScreenModel

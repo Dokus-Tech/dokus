@@ -1,8 +1,7 @@
 package ai.thepredict.repository.extensions
 
-import ai.thepredict.domain.model.old.AuthCredentials
-import ai.thepredict.domain.model.old.Workspace
 import ai.thepredict.app.platform.Persistence
+import ai.thepredict.domain.model.AuthCredentials
 import ai.thepredict.domain.model.User
 
 var Persistence.authCredentials: AuthCredentials?
@@ -36,11 +35,11 @@ var Persistence.user: User?
         email = value?.email
     }
 
-var Persistence.selectedWorkspaceId: Workspace.Id?
-    get() {
-        val id = selectedWorkspace.takeIf { it != null } ?: return null
-        return Workspace.Id(id)
-    }
-    set(value) {
-        selectedWorkspace = value?.value
-    }
+//var Persistence.selectedWorkspaceId: Workspace.Id?
+//    get() {
+//        val id = selectedWorkspace.takeIf { it != null } ?: return null
+//        return Workspace.Id(id)
+//    }
+//    set(value) {
+//        selectedWorkspace = value?.value
+//    }
