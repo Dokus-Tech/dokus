@@ -8,7 +8,7 @@ import ai.thepredict.domain.exceptions.asPredictException
 import ai.thepredict.domain.model.JwtTokenDataSchema
 import ai.thepredict.domain.model.LoginRequest
 import ai.thepredict.domain.model.User
-import ai.thepredict.domain.model.old.AuthCredentials
+import ai.thepredict.domain.model.AuthCredentials
 import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
 import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase
 import ai.thepredict.repository.extensions.authCredentials
