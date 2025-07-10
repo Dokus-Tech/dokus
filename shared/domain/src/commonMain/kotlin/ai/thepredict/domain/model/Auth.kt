@@ -1,6 +1,5 @@
-package ai.thepredict.domain.model.old
+package ai.thepredict.domain.model
 
-import ai.thepredict.domain.model.JwtTokenDataSchema
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

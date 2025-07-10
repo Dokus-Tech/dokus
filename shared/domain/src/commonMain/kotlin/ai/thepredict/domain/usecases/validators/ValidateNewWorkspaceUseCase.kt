@@ -1,15 +1,14 @@
 package ai.thepredict.domain.usecases.validators
 
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.domain.model.old.NewWorkspace
 
 class ValidateNewWorkspaceUseCase(
     private val nameValidator: ValidateWorkspaceNameUseCase = ValidateWorkspaceNameUseCase(),
     private val taxNumberValidator: ValidateWorkspaceTaxNumberUseCase = ValidateWorkspaceTaxNumberUseCase(),
-) : ValidatorThrowable<NewWorkspace> {
+) : ValidatorThrowable<Any> {
 
-    override operator fun invoke(value: NewWorkspace) {
-        if (!nameValidator(value.name)) throw PredictException.InvalidWorkspaceName
-        if (!taxNumberValidator(value.taxNumber)) throw PredictException.InvalidTaxNumber
+    override operator fun invoke(value: Any) {
+//        if (!nameValidator(value.name)) throw PredictException.InvalidWorkspaceName
+//        if (!taxNumberValidator(value.taxNumber)) throw PredictException.InvalidTaxNumber
     }
 }
