@@ -21,7 +21,7 @@ kotlinx-serialization = "1.8.1"
 kotlinx-datetime = "0.7.1"
 #kotlinx-rpc = "0.7.0"
 ktor = "3.1.1"
-logback = "1.5.11"
+logback = "1.5.18"
 
 postgres = "42.7.4"
 h2 = "2.3.232"
