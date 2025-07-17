@@ -24,7 +24,9 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.util.url
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.CoroutineContext
 
@@ -59,16 +61,17 @@ class UnifiedApi private constructor(
     companion object {
         private fun createHttpClient(endpoint: ServerEndpoint): HttpClient {
             return httpClient {
-                install(HttpRedirect) {
-                    checkHttpMethod = false
-                }
                 install(ContentNegotiation) {
                     json(Json { ignoreUnknownKeys = true })
                 }
                 install(DefaultRequest) {
                     header(HttpHeaders.ContentType, ContentType.Application.Json)
                     header(HttpHeaders.Authorization, "Bearer ${persistence.jwtToken}")
-                    host = endpoint.externalHost
+                    url {
+                        protocol = URLProtocol.HTTP
+                        host = endpoint.externalHost
+                        port = endpoint.externalPort // Use 443 for standard HTTPS
+                    }
                 }
                 install(LoggingPlugin)
             }
