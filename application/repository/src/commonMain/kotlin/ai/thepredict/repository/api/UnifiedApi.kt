@@ -61,6 +61,9 @@ class UnifiedApi private constructor(
     companion object {
         private fun createHttpClient(endpoint: ServerEndpoint): HttpClient {
             return httpClient {
+                install(HttpRedirect) {
+                    checkHttpMethod = false
+                }
                 install(ContentNegotiation) {
                     json(Json { ignoreUnknownKeys = true })
                 }
@@ -68,9 +71,9 @@ class UnifiedApi private constructor(
                     header(HttpHeaders.ContentType, ContentType.Application.Json)
                     header(HttpHeaders.Authorization, "Bearer ${persistence.jwtToken}")
                     url {
-                        protocol = URLProtocol.HTTP
+                        protocol = URLProtocol.HTTPS
                         host = endpoint.externalHost
-                        port = endpoint.externalPort // Use 443 for standard HTTPS
+//                        port = endpoint.externalPort // Use 443 for standard HTTPS
                     }
                 }
                 install(LoggingPlugin)
