@@ -4,7 +4,7 @@ import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.ui.PButton
 import ai.thepredict.ui.PButtonVariant
-import ai.thepredict.ui.WorkspacesList
+import ai.thepredict.ui.WorkspacesGrid
 import ai.thepredict.ui.common.ErrorBox
 import ai.thepredict.ui.common.PTopAppBar
 import ai.thepredict.ui.common.limitedWidth
@@ -114,7 +114,12 @@ private fun Workspaces(
                     NoWorkspaces(Modifier.fillMaxWidth().heightIn(min = 120.dp), onCreateClick)
                     return@Card
                 }
-                WorkspacesList(state.workspaces, onClick = null)
+                WorkspacesGrid(
+                    state.workspaces,
+                    onWorkspaceClick = { /* Handle click */ },
+                    onAddWorkspaceClick = { /* Handle click */ },
+                    modifier = modifier
+                )
             }
 
             is WorkspacesViewModel.State.Error -> {
