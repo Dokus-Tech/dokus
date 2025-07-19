@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -33,7 +34,7 @@ fun WorkspaceItem(
     ) {
         // Avatar box
         Card(
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(80.dp),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 if (onAddClick != null) {
@@ -41,6 +42,7 @@ fun WorkspaceItem(
                         modifier = Modifier.align(Alignment.Center),
                         text = "+",
                         style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
@@ -49,6 +51,7 @@ fun WorkspaceItem(
                         modifier = Modifier.align(Alignment.Center),
                         text = workspace.name.firstOrNull()?.uppercaseChar()?.toString() ?: "",
                         style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.Center
                     )
@@ -61,6 +64,7 @@ fun WorkspaceItem(
             text = if (onAddClick != null) "Add workspace" else workspace.name,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
     }
