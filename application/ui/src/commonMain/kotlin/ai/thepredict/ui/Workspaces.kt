@@ -3,98 +3,105 @@ package ai.thepredict.ui
 import ai.thepredict.domain.model.Company
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Briefcase
-import compose.icons.feathericons.Edit2
 
 @Composable
-fun WorkspacesList(
-    workspaces: List<Company>,
+fun WorkspaceItem(
+    workspace: Company,
     modifier: Modifier = Modifier,
-    onClick: ((Company) -> Unit)?,
+    onAddClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
 ) {
-    LazyColumn(
-        modifier,
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    Column(
+        modifier = modifier.clickable { onClick?.invoke() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Avatar box
+        Card(
+            modifier = Modifier.size(80.dp),
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (onAddClick != null) {
+                    Text(
+                        modifier = Modifier.align(Alignment.Center),
+                        text = "+",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    Text(
+                        modifier = Modifier.align(Alignment.Center),
+                        text = workspace.name.firstOrNull()?.uppercaseChar()?.toString() ?: "",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+
+        // Workspace name
+        Text(
+            text = if (onAddClick != null) "Add workspace" else workspace.name,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun WorkspacesGrid(
+    workspaces: List<Company>,
+    onWorkspaceClick: ((Company) -> Unit),
+    onAddWorkspaceClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    LazyVerticalGrid(
+        modifier = modifier,
+        columns = GridCells.Fixed(3),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(workspaces) { workspace ->
-            WorkspaceListItem(workspace, clickEnabled = onClick != null) {
-                onClick?.invoke(workspace)
+            WorkspaceItem(
+                workspace = workspace,
+                onClick = { onWorkspaceClick(workspace) }
+            )
+        }
+
+        if (onAddWorkspaceClick != null) {
+            item {
+                WorkspaceItem(
+                    workspace = Company(
+                        id = "",
+                        name = "",
+                        taxId = "",
+                        isOwner = false
+                    ),
+                    onAddClick = onAddWorkspaceClick
+                )
             }
         }
     }
-}
-
-@Composable
-fun WorkspaceListItem(
-    workspace: Company,
-    clickEnabled: Boolean = false,
-    onClick: () -> Unit = {},
-) {
-    Card(modifier = Modifier.clickable { if (clickEnabled) onClick.invoke() }) {
-        Row(
-            modifier = Modifier.padding(vertical = 8.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            WorkspaceIcon(workspace.avatar, modifier = Modifier.weight(1f))
-            Column(
-                modifier = Modifier.weight(4f),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.SpaceAround
-            ) {
-                WorkspaceName(workspace.name)
-                WorkspaceLegalName("", workspace.taxId)
-            }
-            WorkspaceNavigation(Modifier.weight(1f), if (clickEnabled) onClick else null)
-        }
-    }
-}
-
-@Composable
-fun WorkspaceIcon(url: String?, modifier: Modifier = Modifier) {
-    Icon(imageVector = FeatherIcons.Briefcase, contentDescription = "logo", modifier = modifier)
-}
-
-@Composable
-fun WorkspaceName(name: String, modifier: Modifier = Modifier) {
-    Text(text = name, modifier = modifier, style = MaterialTheme.typography.titleMedium)
-}
-
-@Composable
-fun WorkspaceLegalName(legalName: String?, taxNumber: String?, modifier: Modifier = Modifier) {
-    Text(
-        text = taxNumber ?: legalName.orEmpty(),
-        modifier = modifier,
-        style = MaterialTheme.typography.labelMedium
-    )
-}
-
-@Composable
-private fun WorkspaceNavigation(modifier: Modifier = Modifier, onClick: (() -> Unit)?) {
-    if (onClick == null) {
-        Spacer(modifier)
-        return
-    }
-    Icon(
-        imageVector = FeatherIcons.Edit2,
-        contentDescription = "edit",
-        modifier = modifier
-    )
 }
