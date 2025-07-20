@@ -134,7 +134,7 @@ internal fun WorkspacesSelection(
     ) {
         SectionTitle("Select workspace")
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         WorkspacesGrid(
             workspaces = workspaces,
