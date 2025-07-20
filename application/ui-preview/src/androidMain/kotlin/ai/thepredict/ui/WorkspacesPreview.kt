@@ -10,6 +10,14 @@ import androidx.compose.ui.unit.dp
 
 @Preview
 @Composable
+fun WorkspaceItemNewPreview() {
+    Themed {
+        WorkspaceItemCreateNew { }
+    }
+}
+
+@Preview
+@Composable
 fun WorkspaceItemPreview() {
     Themed {
         WorkspaceItem(
