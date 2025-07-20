@@ -74,7 +74,6 @@ class UnifiedApi private constructor(
                         }
                         host = endpoint.host
                         endpoint.port?.let { port = it }
-//                        port = endpoint.externalPort // Use 443 for standard HTTPS
                     }
                 }
                 install(LoggingPlugin)
