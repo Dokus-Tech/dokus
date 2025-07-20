@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -108,9 +109,12 @@ fun WorkspacesGrid(
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
-        modifier = modifier,
+        modifier = modifier.background(Color.Cyan),
         columns = GridCells.Adaptive(100.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 24.dp,
+            alignment = Alignment.CenterHorizontally
+        ),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         items(workspaces) { workspace ->
