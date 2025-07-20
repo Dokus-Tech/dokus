@@ -27,7 +27,7 @@ internal fun InfoApi.Companion.create(httpClient: HttpClient, endpoint: ServerEn
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            host = endpoint.externalHost
+            host = endpoint.host
         }
     }
     return InfoApiImpl(

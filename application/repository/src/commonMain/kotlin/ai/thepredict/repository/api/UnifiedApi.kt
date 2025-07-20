@@ -26,9 +26,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.util.url
 import kotlinx.serialization.json.Json
-import kotlin.coroutines.CoroutineContext
 
 class UnifiedApi private constructor(
     authApi: AuthApi,
@@ -71,9 +69,11 @@ class UnifiedApi private constructor(
                     header(HttpHeaders.ContentType, ContentType.Application.Json)
                     header(HttpHeaders.Authorization, "Bearer ${persistence.jwtToken}")
                     url {
-                        protocol = URLProtocol.HTTPS
-                        host = endpoint.externalHost
-//                        port = endpoint.externalPort // Use 443 for standard HTTPS
+                        if (!endpoint.isLocal) {
+                            protocol = URLProtocol.HTTPS
+                        }
+                        host = endpoint.host
+                        endpoint.port?.let { port = it }
                     }
                 }
                 install(LoggingPlugin)
@@ -101,16 +101,4 @@ class UnifiedApi private constructor(
             )
         }
     }
-}
-
-internal interface ApiCompanion<ApiClass, EndpointType : ServerEndpoint> {
-    fun create(
-        coroutineContext: CoroutineContext,
-        endpoint: EndpointType,
-    ): ApiClass
-
-    fun create(
-        coroutineContext: CoroutineContext,
-        endpoint: ServerEndpoint.Gateway,
-    ): ApiClass
 }

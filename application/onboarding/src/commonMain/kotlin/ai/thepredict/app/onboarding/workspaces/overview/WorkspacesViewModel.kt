@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding.workspaces.overview
 
 import ai.thepredict.apispec.CompanyApi
 import ai.thepredict.app.core.di
+import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
 import ai.thepredict.domain.model.Company
@@ -32,20 +33,16 @@ internal class WorkspacesViewModel : StateScreenModel<WorkspacesViewModel.State>
         }
     }
 
-    fun createWorkspace() {
+    fun selectWorkspace(workspace: Company) {
         screenModelScope.launch {
-            mutableEffect.emit(Effect.NavigateCreateWorkspace)
+            persistence.selectedWorkspace = workspace.id
+            mutableEffect.emit(Effect.NavigateHome)
         }
     }
 
-    fun continueToHome() {
+    fun createWorkspace() {
         screenModelScope.launch {
-//            val workspaces = api.myWorkspaces().getOrNull()?.toList()
-//            if (workspaces.isNullOrEmpty()) return@launch
-//
-//            persistence.selectedWorkspaceId = workspaces.first().id
-//
-//            mutableEffect.emit(Effect.NavigateHome)
+            mutableEffect.emit(Effect.NavigateCreateWorkspace)
         }
     }
 
