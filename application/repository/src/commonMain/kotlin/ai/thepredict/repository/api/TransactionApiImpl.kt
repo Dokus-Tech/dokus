@@ -109,7 +109,7 @@ internal fun TransactionApi.Companion.create(
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            host = endpoint.externalHost
+            host = endpoint.host
         }
     }
     return TransactionApiImpl(

@@ -23,6 +23,8 @@ fun App() {
                     if (clearUser) {
                         LaunchedEffect("clearUser") {
                             persistence.user = null
+                            persistence.jwtToken = null
+                            persistence.selectedWorkspace = null
                         }
                     }
                     CurrentScreen()

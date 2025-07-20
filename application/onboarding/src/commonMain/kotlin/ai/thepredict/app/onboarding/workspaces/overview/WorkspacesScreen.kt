@@ -1,25 +1,23 @@
 package ai.thepredict.app.onboarding.workspaces.overview
 
+import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.app.navigation.OnboardingNavigation
-import ai.thepredict.ui.PButton
-import ai.thepredict.ui.PButtonVariant
+import ai.thepredict.domain.model.Company
 import ai.thepredict.ui.WorkspacesGrid
 import ai.thepredict.ui.common.ErrorBox
-import ai.thepredict.ui.common.PTopAppBar
-import ai.thepredict.ui.common.limitedWidth
+import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.SectionTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,8 +31,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Plus
 import kotlinx.coroutines.launch
 
 internal class WorkspacesScreen : Screen {
@@ -68,40 +64,44 @@ internal class WorkspacesScreen : Screen {
             viewModel.fetch()
         }
 
-        Scaffold(
-            topBar = { PTopAppBar("Your workspaces") }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                Workspaces(
-                    state = state,
-                    onCreateClick = { viewModel.createWorkspace() },
-                    onRefreshClick = { viewModel.fetch() },
-                    modifier = Modifier.limitedWidth()
-                )
-                Spacer(Modifier.weight(1f))
-                Actions(
-                    state = state,
-                    onCreateClick = { viewModel.createWorkspace() },
-                    onContinueClick = { viewModel.continueToHome() }
-                )
-                Spacer(Modifier.weight(1f))
+        Scaffold { contentPadding ->
+            Box(Modifier.padding(contentPadding)) {
+                if (isLargeScreen) {
+                    WorkspacesSelectionDesktopContent(
+                        state = state,
+                        onWorkspaceSelect = viewModel::selectWorkspace,
+                        onNewWorkspaceClick = viewModel::createWorkspace,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    WorkspacesSelectionMobileContent(
+                        state = state,
+                        onWorkspaceSelect = viewModel::selectWorkspace,
+                        onNewWorkspaceClick = viewModel::createWorkspace,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Workspaces(
+internal fun WorkspacesSelectionDesktopContent(
     state: WorkspacesViewModel.State,
-    onCreateClick: () -> Unit,
-    onRefreshClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    onWorkspaceSelect: (Company) -> Unit,
+    onNewWorkspaceClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Card(modifier.padding(horizontal = 16.dp)) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(modifier = Modifier.height(40.dp))
+
+        AppNameText()
+
         when (state) {
             is WorkspacesViewModel.State.Loading -> {
                 Box(modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
@@ -110,15 +110,61 @@ private fun Workspaces(
             }
 
             is WorkspacesViewModel.State.Loaded -> {
-                if (state.workspaces.isEmpty()) {
-                    NoWorkspaces(Modifier.fillMaxWidth().heightIn(min = 120.dp), onCreateClick)
-                    return@Card
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Spacer(Modifier.weight(1f))
+                    WorkspacesSelection(
+                        workspaces = state.workspaces,
+                        onWorkspaceSelect = onWorkspaceSelect,
+                        onNewWorkspaceClick = onNewWorkspaceClick,
+                        modifier = Modifier.fillMaxSize().weight(3f)
+                    )
+                    Spacer(Modifier.weight(1f))
                 }
-                WorkspacesGrid(
-                    state.workspaces,
-                    onWorkspaceClick = { /* Handle click */ },
-                    onAddWorkspaceClick = { /* Handle click */ },
-                    modifier = modifier
+            }
+
+            is WorkspacesViewModel.State.Error -> {
+                ErrorBox(
+                    exception = state.exception,
+                    modifier = Modifier.fillMaxWidth(),
+                    onRetry = {}
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun WorkspacesSelectionMobileContent(
+    state: WorkspacesViewModel.State,
+    onWorkspaceSelect: (Company) -> Unit,
+    onNewWorkspaceClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.Start
+    ) {
+        Spacer(modifier = Modifier.height(40.dp))
+
+        AppNameText()
+
+        when (state) {
+            is WorkspacesViewModel.State.Loading -> {
+                Box(modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
+                    AdaptiveCircularProgressIndicator()
+                }
+            }
+
+            is WorkspacesViewModel.State.Loaded -> {
+                WorkspacesSelection(
+                    workspaces = state.workspaces,
+                    onWorkspaceSelect = onWorkspaceSelect,
+                    onNewWorkspaceClick = onNewWorkspaceClick,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
 
@@ -126,7 +172,7 @@ private fun Workspaces(
                 ErrorBox(
                     exception = state.exception,
                     modifier = Modifier.fillMaxWidth(),
-                    onRetry = onRefreshClick
+                    onRetry = {}
                 )
             }
         }
@@ -134,53 +180,31 @@ private fun Workspaces(
 }
 
 @Composable
-private fun NoWorkspaces(modifier: Modifier = Modifier, onCreateClick: () -> Unit) {
-    Column(
-        modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            "Seems like you don't have any workspaces yet.",
-            style = MaterialTheme.typography.titleSmall
-        )
-        Spacer(Modifier.padding(vertical = 8.dp))
-        Text("Let's create one?", style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.padding(vertical = 8.dp))
-        PButton(
-            "Create a workspace",
-            variant = PButtonVariant.Outline,
-            icon = FeatherIcons.Plus,
-            onClick = onCreateClick
-        )
-    }
-}
-
-@Composable
-private fun Actions(
-    modifier: Modifier = Modifier,
-    state: WorkspacesViewModel.State,
-    onCreateClick: () -> Unit,
-    onContinueClick: () -> Unit,
+internal fun WorkspacesSelection(
+    workspaces: List<Company>,
+    onWorkspaceSelect: (Company) -> Unit,
+    onNewWorkspaceClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    if (state is WorkspacesViewModel.State.Loaded && state.workspaces.isNotEmpty()) {
-        Column(
-            modifier.padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            PButton(
-                "Create a workspace",
-                variant = PButtonVariant.Outline,
-                icon = FeatherIcons.Plus,
-                onClick = onCreateClick
-            )
-            Text(
-                "OR",
-                modifier = Modifier.padding(vertical = 16.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
-            PButton(text = "Continue", onClick = onContinueClick)
-        }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = if (isLargeScreen) Alignment.CenterHorizontally else Alignment.Start,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        SectionTitle(
+            "Select workspace",
+            horizontalArrangement = Arrangement.Center,
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        WorkspacesGrid(
+            workspaces = workspaces,
+            onWorkspaceClick = onWorkspaceSelect,
+            onAddWorkspaceClick = onNewWorkspaceClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
