@@ -21,10 +21,48 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
+fun WorkspaceItemCreateNew(
+    modifier: Modifier = Modifier,
+    onAddClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier.clickable { onAddClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Avatar box
+        Card(
+            modifier = Modifier.size(80.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = "+",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // Workspace name
+        Text(
+            text = "Create new workspace",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 fun WorkspaceItem(
     workspace: Company,
     modifier: Modifier = Modifier,
-    onAddClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
     Column(
@@ -39,31 +77,21 @@ fun WorkspaceItem(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(if (onAddClick != null) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                if (onAddClick != null) {
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = "+",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = workspace.name.firstOrNull()?.uppercaseChar()?.toString() ?: "",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = workspace.name.firstOrNull()?.uppercaseChar()?.toString() ?: "",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
         // Workspace name
         Text(
-            text = if (onAddClick != null) "Add workspace" else workspace.name,
+            text = workspace.name,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
@@ -93,15 +121,7 @@ fun WorkspacesGrid(
 
         if (onAddWorkspaceClick != null) {
             item {
-                WorkspaceItem(
-                    workspace = Company(
-                        id = "",
-                        name = "",
-                        taxId = "",
-                        isOwner = false
-                    ),
-                    onAddClick = onAddWorkspaceClick
-                )
+                WorkspaceItemCreateNew(onAddClick = onAddWorkspaceClick)
             }
         }
     }
