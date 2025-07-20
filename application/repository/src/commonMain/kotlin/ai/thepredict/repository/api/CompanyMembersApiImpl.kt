@@ -15,7 +15,6 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import kotlin.Result
-import kotlin.Result.Companion.success
 
 class CompanyMembersApiImpl(
     private val client: HttpClient,
@@ -61,7 +60,7 @@ internal fun CompanyMembersApi.Companion.create(
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            host = endpoint.externalHost
+            host = endpoint.host
         }
     }
     return CompanyMembersApiImpl(
