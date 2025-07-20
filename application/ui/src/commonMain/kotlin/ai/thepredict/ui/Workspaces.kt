@@ -39,7 +39,7 @@ fun WorkspaceItem(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(if (onAddClick != null) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 if (onAddClick != null) {
                     Text(
