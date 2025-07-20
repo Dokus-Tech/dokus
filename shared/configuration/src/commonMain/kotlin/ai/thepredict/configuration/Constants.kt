@@ -16,10 +16,17 @@ sealed interface ServerEndpoint {
         override val port = 8000
         override val isLocal = true
     }
+
+    data object Local : ServerEndpoint {
+        override val host = "127.0.0.1"
+        override val port = 8000
+        override val isLocal = true
+    }
 }
 
 private val ServerEndpoint.name: String
     get() = when (this) {
         is ServerEndpoint.PredictCloud -> "PredictCloud"
         is ServerEndpoint.LocalAndroid -> "LocalAndroid"
+        is ServerEndpoint.Local -> "Local"
     }
