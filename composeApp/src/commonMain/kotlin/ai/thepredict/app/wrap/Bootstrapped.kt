@@ -5,13 +5,14 @@ import ai.thepredict.app.core.coreDiModule
 import ai.thepredict.app.home.homeDiModule
 import ai.thepredict.app.onboarding.onboardingDiModule
 import ai.thepredict.repository.repositoryDiModule
+import ai.thepredict.ui.uiDiModule
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun Bootstrapped(content: @Composable () -> Unit) {
     LaunchedEffect("app-bootstrap") {
-        configureDi(coreDiModule, repositoryDiModule, onboardingDiModule, homeDiModule)
+        configureDi(coreDiModule, uiDiModule, repositoryDiModule, onboardingDiModule, homeDiModule)
     }
 
     content()
