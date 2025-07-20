@@ -13,8 +13,6 @@ import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import kotlin.Result
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 class MatchingApiImpl(
     private val client: HttpClient,
@@ -48,7 +46,7 @@ internal fun MatchingApi.Companion.create(
     httpClient.config {
         install(DefaultRequest) {
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-            host = endpoint.externalHost
+            host = endpoint.host
         }
     }
     return MatchingApiImpl(
