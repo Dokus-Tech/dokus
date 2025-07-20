@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -18,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -101,6 +102,8 @@ fun WorkspaceItem(
     }
 }
 
+private val workspaceItemWidth = 100.dp
+
 @Composable
 fun WorkspacesGrid(
     workspaces: List<Company>,
@@ -108,26 +111,23 @@ fun WorkspacesGrid(
     onAddWorkspaceClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    LazyVerticalGrid(
-        modifier = modifier.background(Color.Cyan),
-        columns = GridCells.Adaptive(100.dp),
-        horizontalArrangement = Arrangement.spacedBy(
-            space = 24.dp,
-            alignment = Alignment.CenterHorizontally
-        ),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
     ) {
-        items(workspaces) { workspace ->
+        workspaces.forEach { workspace ->
             WorkspaceItem(
                 workspace = workspace,
+                modifier = Modifier.width(workspaceItemWidth),
                 onClick = { onWorkspaceClick(workspace) }
             )
         }
-
         if (onAddWorkspaceClick != null) {
-            item {
-                WorkspaceItemCreateNew(onAddClick = onAddWorkspaceClick)
-            }
+            WorkspaceItemCreateNew(
+                modifier = Modifier.width(workspaceItemWidth),
+                onAddClick = onAddWorkspaceClick
+            )
         }
     }
 }
