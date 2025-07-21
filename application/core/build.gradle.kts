@@ -38,7 +38,6 @@ kotlin {
             api(projects.shared.configuration)
             api(projects.application.platform)
             api(projects.shared.domain)
-            api(projects.application.ui)
 
             implementation(compose.runtime)
             implementation(compose.foundation)
