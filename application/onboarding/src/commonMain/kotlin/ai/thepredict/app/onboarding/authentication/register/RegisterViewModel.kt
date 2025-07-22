@@ -75,8 +75,6 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
     sealed interface State {
         data object Loading : State
 
-        data class Loaded(val user: User) : State
-
         data class Error(val exception: PredictException) : State
     }
 
