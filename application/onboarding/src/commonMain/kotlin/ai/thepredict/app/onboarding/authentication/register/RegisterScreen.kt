@@ -229,7 +229,7 @@ internal fun RegisterForm(
         ) {
             PTextFieldName(
                 fieldName = "First name",
-                error = fieldsError.takeIf { it is PredictException.InvalidName },
+                error = fieldsError.takeIf { it is PredictException.InvalidFirstName },
                 value = firstName,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
@@ -239,7 +239,7 @@ internal fun RegisterForm(
 
             PTextFieldName(
                 fieldName = "Last name",
-                error = fieldsError.takeIf { it is PredictException.InvalidName },
+                error = fieldsError.takeIf { it is PredictException.InvalidFirstName },
                 value = lastName,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },

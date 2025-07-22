@@ -18,8 +18,8 @@ class CreateNewUserUseCase(
         email: String,
         password: String
     ): Result<Any> {
-        if (!nameValidator(firstName)) return Result.failure(PredictException.InvalidName)
-        if (!nameValidator(lastName)) return Result.failure(PredictException.InvalidName)
+        if (!nameValidator(firstName)) return Result.failure(PredictException.InvalidFirstName)
+        if (!nameValidator(lastName)) return Result.failure(PredictException.InvalidLastName)
         if (!emailValidator(email)) return Result.failure(PredictException.InvalidEmail)
         if (!passwordValidator(password)) return Result.failure(PredictException.WeakPassword)
         return Result.success(Any())
