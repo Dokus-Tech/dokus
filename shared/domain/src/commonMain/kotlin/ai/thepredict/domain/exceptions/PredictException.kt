@@ -2,7 +2,6 @@ package ai.thepredict.domain.exceptions
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
-import kotlin.coroutines.EmptyCoroutineContext.get
 
 @Serializable
 sealed class PredictException(val recoverable: Boolean = false) : Exception() {
@@ -33,7 +32,10 @@ sealed class PredictException(val recoverable: Boolean = false) : Exception() {
     data object PasswordDoNotMatch : PredictException()
 
     @Serializable
-    data object InvalidName : PredictException()
+    data object InvalidFirstName : PredictException()
+
+    @Serializable
+    data object InvalidLastName : PredictException()
 
     @Serializable
     data object InvalidTaxNumber : PredictException()

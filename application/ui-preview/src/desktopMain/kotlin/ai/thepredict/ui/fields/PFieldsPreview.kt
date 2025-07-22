@@ -46,7 +46,7 @@ fun PTextFieldNameErrorPreview() {
         PTextFieldName(
             fieldName = "Name",
             value = "",
-            error = PredictException.InvalidName
+            error = PredictException.InvalidFirstName
         ) {}
     }
 }
