@@ -66,16 +66,17 @@ internal class RegisterScreen : Screen {
 
         val scope = rememberCoroutineScope()
 
-        val workspacesScreen = rememberScreen(OnboardingNavigation.Workspaces.All)
+        val registrationConfirmationScreen =
+            rememberScreen(OnboardingNavigation.Authorization.RegisterConfirmationScreen)
         val handleEffect = { effect: RegisterViewModel.Effect ->
             when (effect) {
-                is RegisterViewModel.Effect.NavigateToWorkspaces -> navigator.replaceAll(
-                    workspacesScreen
+                is RegisterViewModel.Effect.NavigateToRegistrationConfirmation -> navigator.replaceAll(
+                    registrationConfirmationScreen
                 )
             }
         }
 
-        LaunchedEffect("login-screen") {
+        LaunchedEffect("register-screen") {
             scope.launch { viewModel.effect.collect(handleEffect) }
         }
 

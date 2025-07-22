@@ -68,7 +68,7 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
             persistence.authCredentials = AuthCredentials.from(jwtSchema, jwtRaw)
             persistence.user = User.from(jwtSchema)
 
-            mutableEffect.emit(Effect.NavigateToWorkspaces)
+            mutableEffect.emit(Effect.NavigateToRegistrationConfirmation)
         }
     }
 
@@ -79,6 +79,6 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
     }
 
     sealed interface Effect {
-        data object NavigateToWorkspaces : Effect
+        data object NavigateToRegistrationConfirmation : Effect
     }
 }
