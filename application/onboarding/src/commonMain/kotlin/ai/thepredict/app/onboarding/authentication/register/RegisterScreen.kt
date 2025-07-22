@@ -83,7 +83,8 @@ internal class RegisterScreen : Screen {
         val fieldsError: PredictException? =
             (data.value as? RegisterViewModel.State.Error)?.exception
 
-        var fullName by remember { mutableStateOf("") }
+        var firstName by remember { mutableStateOf("") }
+        var lastName by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         val mutableInteractionSource = remember { MutableInteractionSource() }
@@ -107,15 +108,18 @@ internal class RegisterScreen : Screen {
                             onEmailChange = { email = it },
                             password = password,
                             onPasswordChange = { password = it },
-                            fullName = fullName,
-                            onFullNameChange = { fullName = it },
+                            firstName = firstName,
+                            onFirstNameChange = { firstName = it },
+                            lastName = lastName,
+                            onLastNameChange = { lastName = it },
                             fieldsError = fieldsError,
                             onLoginClick = { navigator.pop() },
                             onRegisterClick = {
                                 viewModel.createUser(
                                     newEmail = email,
                                     newPassword = password,
-                                    name = fullName
+                                    firstName = firstName,
+                                    lastName = lastName
                                 )
                             },
                         )
@@ -127,15 +131,18 @@ internal class RegisterScreen : Screen {
                         onEmailChange = { email = it },
                         password = password,
                         onPasswordChange = { password = it },
-                        fullName = fullName,
-                        onFullNameChange = { fullName = it },
+                        firstName = firstName,
+                        onFirstNameChange = { firstName = it },
                         fieldsError = fieldsError,
                         onLoginClick = { navigator.pop() },
+                        lastName = lastName,
+                        onLastNameChange = { lastName = it },
                         onRegisterClick = {
                             viewModel.createUser(
                                 newEmail = email,
                                 newPassword = password,
-                                name = fullName
+                                firstName = firstName,
+                                lastName = lastName
                             )
                         },
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -153,8 +160,10 @@ internal fun RegisterScreenMobileContent(
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    fullName: String,
-    onFullNameChange: (String) -> Unit,
+    firstName: String,
+    onFirstNameChange: (String) -> Unit,
+    lastName: String,
+    onLastNameChange: (String) -> Unit,
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
@@ -177,8 +186,10 @@ internal fun RegisterScreenMobileContent(
             fieldsError = fieldsError,
             onLoginClick = onLoginClick,
             onRegisterClick = onRegisterClick,
-            fullName = fullName,
-            onFullNameChange = onFullNameChange,
+            firstName = firstName,
+            onFirstNameChange = onFirstNameChange,
+            lastName = lastName,
+            onLastNameChange = onLastNameChange,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -193,8 +204,10 @@ internal fun RegisterForm(
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    fullName: String,
-    onFullNameChange: (String) -> Unit,
+    firstName: String,
+    onFirstNameChange: (String) -> Unit,
+    lastName: String,
+    onLastNameChange: (String) -> Unit,
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
@@ -215,13 +228,23 @@ internal fun RegisterForm(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             PTextFieldName(
-                fieldName = "Full Name",
+                fieldName = "First name",
                 error = fieldsError.takeIf { it is PredictException.InvalidName },
-                value = fullName,
+                value = firstName,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
                 modifier = Modifier.fillMaxWidth(),
-                onValueChange = onFullNameChange
+                onValueChange = onFirstNameChange
+            )
+
+            PTextFieldName(
+                fieldName = "Last name",
+                error = fieldsError.takeIf { it is PredictException.InvalidName },
+                value = lastName,
+                keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onLastNameChange
             )
 
             PTextFieldEmail(
