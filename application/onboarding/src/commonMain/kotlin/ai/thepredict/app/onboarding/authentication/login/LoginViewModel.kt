@@ -15,6 +15,8 @@ import ai.thepredict.repository.extensions.authCredentials
 import ai.thepredict.repository.extensions.user
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
@@ -23,6 +25,9 @@ internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idl
     private val validateEmailUseCase: ValidateEmailUseCase by di.instance()
     private val validatePasswordUseCase: ValidatePasswordUseCase by di.instance()
     private val authApi: AuthApi by di.instance()
+
+    private val mutableEffect = MutableSharedFlow<Effect>()
+    val effect = mutableEffect.asSharedFlow()
 
     fun login(emailValue: String, passwordValue: String) = screenModelScope.launch {
         mutableState.value = State.Loading
@@ -50,7 +55,7 @@ internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idl
         persistence.authCredentials = AuthCredentials.from(jwtSchema, jwtRaw)
         persistence.user = User.from(jwtSchema)
 
-        mutableState.value = State.Authenticated
+        mutableEffect.emit(Effect.NavigateToWorkspaces)
     }
 
     sealed interface State {
@@ -58,9 +63,11 @@ internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idl
 
         data object Loading : State
 
-        data object Authenticated : State
-
         data class Error(val exception: PredictException) : State
+    }
+
+    sealed interface Effect {
+        data object NavigateToWorkspaces : Effect
     }
 
     sealed interface FieldsValidationState {
