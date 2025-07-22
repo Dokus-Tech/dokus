@@ -32,10 +32,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,7 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
 internal class LoginScreen : Screen {
@@ -62,12 +65,10 @@ internal class LoginScreen : Screen {
         val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
         val viewModel = rememberScreenModel { LoginViewModel() }
 
-        val data = viewModel.state.collectAsState()
-        val fieldsError: PredictException? =
-            (data.value as? LoginViewModel.State.Error)?.exception
-
         val navigator = LocalNavigator.currentOrThrow
         val focusManager = LocalFocusManager.current
+
+        val scope = rememberCoroutineScope()
 
         val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
         val forgetPasswordScreen =
@@ -75,6 +76,22 @@ internal class LoginScreen : Screen {
         val serverConnectionScreen =
             rememberScreen(OnboardingNavigation.Configuration.ServerConnectionScreen)
         val workspacesScreen = rememberScreen(OnboardingNavigation.Workspaces.All)
+
+        val handleEffect = { effect: LoginViewModel.Effect ->
+            when (effect) {
+                is LoginViewModel.Effect.NavigateToWorkspaces -> navigator.replaceAll(
+                    workspacesScreen
+                )
+            }
+        }
+
+        LaunchedEffect("login-screen") {
+            scope.launch { viewModel.effect.collect(handleEffect) }
+        }
+
+        val data = viewModel.state.collectAsState()
+        val fieldsError: PredictException? =
+            (data.value as? LoginViewModel.State.Error)?.exception
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -123,14 +140,6 @@ internal class LoginScreen : Screen {
                     )
                 }
             }
-        }
-
-        when (data.value) {
-            is LoginViewModel.State.Authenticated -> {
-                navigator.push(workspacesScreen)
-            }
-
-            else -> {}
         }
     }
 }
