@@ -12,8 +12,14 @@ class CreateNewUserUseCase(
     private val nameValidator: Validator<String> = ValidateNameUseCase(),
 ) {
 
-    operator fun invoke(name: String, email: String, password: String): Result<Any> {
-        if (!nameValidator(name)) return Result.failure(PredictException.InvalidName)
+    operator fun invoke(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String
+    ): Result<Any> {
+        if (!nameValidator(firstName)) return Result.failure(PredictException.InvalidFirstName)
+        if (!nameValidator(lastName)) return Result.failure(PredictException.InvalidLastName)
         if (!emailValidator(email)) return Result.failure(PredictException.InvalidEmail)
         if (!passwordValidator(password)) return Result.failure(PredictException.WeakPassword)
         return Result.success(Any())
