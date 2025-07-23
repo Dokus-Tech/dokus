@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
+import ai.thepredict.app.navigation.OnboardingNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
@@ -27,10 +28,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,9 +48,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
+import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
 internal class RegisterScreen : Screen {
@@ -56,14 +61,31 @@ internal class RegisterScreen : Screen {
         val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
         val viewModel = rememberScreenModel { RegisterViewModel() }
 
+        val navigator = LocalNavigator.currentOrThrow
+        val focusManager = LocalFocusManager.current
+
+        val scope = rememberCoroutineScope()
+
+        val registrationConfirmationScreen =
+            rememberScreen(OnboardingNavigation.Authorization.RegisterConfirmationScreen)
+        val handleEffect = { effect: RegisterViewModel.Effect ->
+            when (effect) {
+                is RegisterViewModel.Effect.NavigateToRegistrationConfirmation -> navigator.replaceAll(
+                    registrationConfirmationScreen
+                )
+            }
+        }
+
+        LaunchedEffect("register-screen") {
+            scope.launch { viewModel.effect.collect(handleEffect) }
+        }
+
         val data = viewModel.state.collectAsState()
         val fieldsError: PredictException? =
             (data.value as? RegisterViewModel.State.Error)?.exception
 
-        val navigator = LocalNavigator.currentOrThrow
-        val focusManager = LocalFocusManager.current
-
-        var fullName by remember { mutableStateOf("") }
+        var firstName by remember { mutableStateOf("") }
+        var lastName by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         val mutableInteractionSource = remember { MutableInteractionSource() }
@@ -87,15 +109,18 @@ internal class RegisterScreen : Screen {
                             onEmailChange = { email = it },
                             password = password,
                             onPasswordChange = { password = it },
-                            fullName = fullName,
-                            onFullNameChange = { fullName = it },
+                            firstName = firstName,
+                            onFirstNameChange = { firstName = it },
+                            lastName = lastName,
+                            onLastNameChange = { lastName = it },
                             fieldsError = fieldsError,
                             onLoginClick = { navigator.pop() },
                             onRegisterClick = {
                                 viewModel.createUser(
                                     newEmail = email,
                                     newPassword = password,
-                                    name = fullName
+                                    firstName = firstName,
+                                    lastName = lastName
                                 )
                             },
                         )
@@ -107,15 +132,18 @@ internal class RegisterScreen : Screen {
                         onEmailChange = { email = it },
                         password = password,
                         onPasswordChange = { password = it },
-                        fullName = fullName,
-                        onFullNameChange = { fullName = it },
+                        firstName = firstName,
+                        onFirstNameChange = { firstName = it },
                         fieldsError = fieldsError,
                         onLoginClick = { navigator.pop() },
+                        lastName = lastName,
+                        onLastNameChange = { lastName = it },
                         onRegisterClick = {
                             viewModel.createUser(
                                 newEmail = email,
                                 newPassword = password,
-                                name = fullName
+                                firstName = firstName,
+                                lastName = lastName
                             )
                         },
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -133,8 +161,10 @@ internal fun RegisterScreenMobileContent(
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    fullName: String,
-    onFullNameChange: (String) -> Unit,
+    firstName: String,
+    onFirstNameChange: (String) -> Unit,
+    lastName: String,
+    onLastNameChange: (String) -> Unit,
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
@@ -157,8 +187,10 @@ internal fun RegisterScreenMobileContent(
             fieldsError = fieldsError,
             onLoginClick = onLoginClick,
             onRegisterClick = onRegisterClick,
-            fullName = fullName,
-            onFullNameChange = onFullNameChange,
+            firstName = firstName,
+            onFirstNameChange = onFirstNameChange,
+            lastName = lastName,
+            onLastNameChange = onLastNameChange,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -173,8 +205,10 @@ internal fun RegisterForm(
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    fullName: String,
-    onFullNameChange: (String) -> Unit,
+    firstName: String,
+    onFirstNameChange: (String) -> Unit,
+    lastName: String,
+    onLastNameChange: (String) -> Unit,
     fieldsError: PredictException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
@@ -195,13 +229,23 @@ internal fun RegisterForm(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             PTextFieldName(
-                fieldName = "Full Name",
-                error = fieldsError.takeIf { it is PredictException.InvalidName },
-                value = fullName,
+                fieldName = "First name",
+                error = fieldsError.takeIf { it is PredictException.InvalidFirstName },
+                value = firstName,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
                 modifier = Modifier.fillMaxWidth(),
-                onValueChange = onFullNameChange
+                onValueChange = onFirstNameChange
+            )
+
+            PTextFieldName(
+                fieldName = "Last name",
+                error = fieldsError.takeIf { it is PredictException.InvalidFirstName },
+                value = lastName,
+                keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onLastNameChange
             )
 
             PTextFieldEmail(
