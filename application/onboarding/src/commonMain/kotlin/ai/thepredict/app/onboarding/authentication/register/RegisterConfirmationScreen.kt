@@ -1,6 +1,7 @@
 package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.text.AppNameText
 import ai.thepredict.ui.text.CopyRightText
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -33,15 +34,17 @@ internal class RegisterConfirmationScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
 
+        val homeScreen = rememberScreen(CoreNavigation.Core)
+
         Scaffold { contentPadding ->
             Box(Modifier.padding(contentPadding)) {
                 if (isLargeScreen) {
                     RegisterConfirmationFormDesktop {
-                        // TODO: Complete the code here
+                        navigator.replaceAll(homeScreen)
                     }
                 } else {
                     RegistrationConfirmationForm {
-                        // TODO: Complete the code here
+                        navigator.replaceAll(homeScreen)
                     }
                 }
             }
