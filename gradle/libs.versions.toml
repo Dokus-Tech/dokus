@@ -23,10 +23,10 @@ kotlinx-datetime = "0.7.1"
 ktor = "3.1.1"
 logback = "1.5.18"
 
-postgres = "42.7.4"
+postgres = "42.7.7"
 h2 = "2.3.232"
 pgjdbc = "0.8.9"
-exposed = "0.57.0"
+exposed = "0.61.0"
 
 kodein = "7.22.0"
 
