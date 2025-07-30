@@ -1,38 +1,28 @@
 package ai.thepredict.app.onboarding.workspaces.create
 
+import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.PButton
-import ai.thepredict.ui.common.PTopAppBar
-import ai.thepredict.ui.common.limitedWidth
-import ai.thepredict.ui.fields.PTextFieldFreeDefaults
-import ai.thepredict.ui.fields.PTextFieldName
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
+import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Award
-import compose.icons.feathericons.Briefcase
-import compose.icons.feathericons.Hash
+import kotlinx.coroutines.launch
 
 private val WorkspaceCreateViewModel.State.exceptionOrNull: PredictException?
     get() = when (this) {
@@ -46,114 +36,44 @@ internal class WorkspaceCreateScreen : Screen {
     override fun Content() {
         val viewModel = rememberScreenModel { WorkspaceCreateViewModel() }
         val data = viewModel.state.collectAsState()
+
         val navigator = LocalNavigator.currentOrThrow
+        val focusManager = LocalFocusManager.current
+        val scope = rememberCoroutineScope()
+
+        val fieldsError: PredictException? = data.value.exceptionOrNull
 
         var workspaceName by remember { mutableStateOf("") }
         var legalName by remember { mutableStateOf("") }
         var taxNumber by remember { mutableStateOf("") }
+        val mutableInteractionSource = remember { MutableInteractionSource() }
 
-        Scaffold(
-            topBar = { PTopAppBar("Let's create your workspace") }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                CreateWorkspaceFields(
-                    data.value,
-                    workspaceName,
-                    legalName,
-                    taxNumber,
-                    onSetWorkspaceName = { workspaceName = it },
-                    onSetLegalName = { legalName = it },
-                    onSetTaxNumber = { taxNumber = it }
+        val homeScreen = rememberScreen(CoreNavigation.Core)
+
+        val handleEffect = { effect: WorkspaceCreateViewModel.Effect ->
+            when (effect) {
+                is WorkspaceCreateViewModel.Effect.NavigateToHome -> navigator.replaceAll(
+                    homeScreen
                 )
-                Spacer(Modifier.weight(1f))
-                Actions(
-                    data.value,
-                    onCreateClick = { viewModel.create(workspaceName, legalName, taxNumber) },
-                    onSuccess = { navigator.pop() }
-                )
-                Spacer(Modifier.weight(1f))
             }
         }
-    }
-}
 
-@Composable
-private fun CreateWorkspaceFields(
-    state: WorkspaceCreateViewModel.State,
-    workspaceName: String,
-    legalName: String,
-    taxNumber: String,
-    onSetWorkspaceName: (String) -> Unit,
-    onSetLegalName: (String) -> Unit,
-    onSetTaxNumber: (String) -> Unit,
-) {
-    val fieldsError = state.exceptionOrNull
-    val focusManager = LocalFocusManager.current
-
-    Column(
-        modifier = Modifier.fillMaxWidth().limitedWidth(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        PTextFieldName(
-            modifier = Modifier.padding(vertical = 16.dp),
-            fieldName = "Company name",
-            error = fieldsError.takeIf { it is PredictException.InvalidWorkspaceName },
-            value = workspaceName,
-            icon = FeatherIcons.Award,
-            keyboardOptions = PTextFieldFreeDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-            onAction = { focusManager.moveFocus(FocusDirection.Next) },
-            onValueChange = onSetWorkspaceName
-        )
-
-        PTextFieldName(
-            modifier = Modifier.padding(vertical = 16.dp),
-            fieldName = "Legal name (optional)",
-            value = legalName,
-            icon = FeatherIcons.Briefcase,
-            keyboardOptions = PTextFieldFreeDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-            onAction = { focusManager.moveFocus(FocusDirection.Next) },
-            onValueChange = onSetLegalName
-        )
-
-        PTextFieldName(
-            modifier = Modifier.padding(vertical = 16.dp),
-            fieldName = "Tax Number (optional)",
-            error = fieldsError.takeIf { it is PredictException.InvalidTaxNumber },
-            value = taxNumber,
-            icon = FeatherIcons.Hash,
-            keyboardOptions = PTextFieldFreeDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),
-            onAction = { focusManager.clearFocus() },
-            onValueChange = onSetTaxNumber
-        )
-    }
-}
-
-@Composable
-private fun Actions(
-    state: WorkspaceCreateViewModel.State,
-    onCreateClick: () -> Unit,
-    onSuccess: () -> Unit,
-) {
-    when (state) {
-        is WorkspaceCreateViewModel.State.Idle -> {
-            PButton("Create", onClick = onCreateClick)
+        LaunchedEffect("workspace-create") {
+            scope.launch { viewModel.effect.collect(handleEffect) }
         }
 
-        is WorkspaceCreateViewModel.State.Loading -> {
-            AdaptiveCircularProgressIndicator()
-        }
-
-        is WorkspaceCreateViewModel.State.Loaded -> {
-            onSuccess()
-        }
-
-        is WorkspaceCreateViewModel.State.Error -> {
-            PButton("Create", onClick = onCreateClick)
+        Scaffold { contentPadding ->
+            Box(
+                Modifier
+                    .padding(contentPadding)
+                    .clickable(
+                        indication = null,
+                        interactionSource = mutableInteractionSource
+                    ) {
+                        focusManager.clearFocus()
+                    }
+            ) {
+            }
         }
     }
 }
