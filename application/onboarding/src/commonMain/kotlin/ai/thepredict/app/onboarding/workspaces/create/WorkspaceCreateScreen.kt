@@ -1,11 +1,11 @@
 package ai.thepredict.app.onboarding.workspaces.create
 
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
-import ai.thepredict.app.onboarding.workspaces.overview.WorkspacesViewModel
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.ui.PCardPlusIcon
 import ai.thepredict.ui.PPrimaryButton
-import ai.thepredict.ui.common.ErrorBox
 import ai.thepredict.ui.fields.PTextFieldTaxNumber
 import ai.thepredict.ui.fields.PTextFieldTaxNumberDefaults
 import ai.thepredict.ui.fields.PTextFieldWorkspaceName
@@ -21,14 +21,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,6 +45,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
@@ -111,6 +114,7 @@ internal class WorkspaceCreateScreen : Screen {
                         vatNumber = taxNumber,
                         onVatNumberChange = { taxNumber = it },
                         fieldsError = fieldsError,
+                        onAddAvatarClick = {},
                         onCreateClick = {
                             viewModel.create(
                                 workspaceName,
@@ -130,6 +134,7 @@ internal class WorkspaceCreateScreen : Screen {
                         vatNumber = taxNumber,
                         onVatNumberChange = { taxNumber = it },
                         fieldsError = fieldsError,
+                        onAddAvatarClick = {},
                         onCreateClick = {
                             viewModel.create(
                                 workspaceName,
@@ -156,6 +161,7 @@ internal fun WorkspaceCreateScreenMobileContent(
     vatNumber: String,
     onVatNumberChange: (String) -> Unit,
     fieldsError: PredictException?,
+    onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -176,6 +182,7 @@ internal fun WorkspaceCreateScreenMobileContent(
             vatNumber = vatNumber,
             onVatNumberChange = onVatNumberChange,
             fieldsError = fieldsError,
+            onAddAvatarClick = onAddAvatarClick,
             onCreateClick = onCreateClick,
             onBackClick = onBackClick,
             modifier = Modifier.fillMaxSize()
@@ -192,6 +199,7 @@ internal fun WorkspaceCreateScreenDesktopContent(
     vatNumber: String,
     onVatNumberChange: (String) -> Unit,
     fieldsError: PredictException?,
+    onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -219,6 +227,7 @@ internal fun WorkspaceCreateScreenDesktopContent(
                     vatNumber = vatNumber,
                     onVatNumberChange = onVatNumberChange,
                     fieldsError = fieldsError,
+                    onAddAvatarClick = onAddAvatarClick,
                     onCreateClick = onCreateClick,
                     onBackClick = onBackClick,
                     modifier = Modifier.weight(1f).widthIn(max = 320.dp)
@@ -239,6 +248,7 @@ internal fun WorkspaceCreateForm(
     vatNumber: String,
     onVatNumberChange: (String) -> Unit,
     fieldsError: PredictException?,
+    onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -257,6 +267,33 @@ internal fun WorkspaceCreateForm(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Row(
+                modifier = Modifier.heightIn(max = 80.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.weight(2f)
+                ) {
+                    PCardPlusIcon(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clickable(enabled = FeatureFlags.addWorkspaceAvatar) { onAddAvatarClick() }
+                    )
+                    Box(Modifier.padding(start = 12.dp)) {
+                        Text(
+                            "Workspace avatar",
+                            fontWeight = FontWeight.Normal,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(2.dp))
             PTextFieldWorkspaceName(
                 fieldName = "Company name",
                 error = fieldsError.takeIf { it is PredictException.InvalidWorkspaceName },
@@ -266,7 +303,6 @@ internal fun WorkspaceCreateForm(
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = onWorkspaceNameChange
             )
-
             PTextFieldTaxNumber(
                 fieldName = "VAT number",
                 error = fieldsError.takeIf { it is PredictException.InvalidTaxNumber },
