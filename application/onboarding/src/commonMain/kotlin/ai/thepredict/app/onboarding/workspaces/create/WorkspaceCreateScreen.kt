@@ -2,8 +2,10 @@ package ai.thepredict.app.onboarding.workspaces.create
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.navigation.CoreNavigation
+import ai.thepredict.app.onboarding.workspaces.overview.WorkspacesViewModel
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
+import ai.thepredict.ui.common.ErrorBox
 import ai.thepredict.ui.fields.PTextFieldTaxNumber
 import ai.thepredict.ui.fields.PTextFieldTaxNumberDefaults
 import ai.thepredict.ui.fields.PTextFieldWorkspaceName
@@ -15,11 +17,15 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +47,7 @@ import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 import kotlinx.coroutines.launch
 
 private val WorkspaceCreateViewModel.State.exceptionOrNull: PredictException?
@@ -93,7 +100,8 @@ internal class WorkspaceCreateScreen : Screen {
                     }
             ) {
                 if (isLargeScreen) {
-                    WorkspaceCreateScreenMobileContent(
+                    WorkspaceCreateScreenDesktopContent(
+                        state = data.value,
                         focusManager = focusManager,
                         workspaceName = workspaceName,
                         onWorkspaceNameChange = { workspaceName = it },
@@ -109,7 +117,7 @@ internal class WorkspaceCreateScreen : Screen {
                         },
                         onBackClick = {
                             navigator.pop()
-                        }
+                        },
                     )
                 } else {
                     WorkspaceCreateScreenMobileContent(
@@ -169,6 +177,58 @@ internal fun WorkspaceCreateScreenMobileContent(
             onBackClick = onBackClick,
             modifier = Modifier.fillMaxSize()
         )
+    }
+}
+
+@Composable
+internal fun WorkspaceCreateScreenDesktopContent(
+    state: WorkspaceCreateViewModel.State,
+    focusManager: FocusManager,
+    workspaceName: String,
+    onWorkspaceNameChange: (String) -> Unit,
+    vatNumber: String,
+    onVatNumberChange: (String) -> Unit,
+    fieldsError: PredictException?,
+    onCreateClick: () -> Unit,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(modifier = Modifier.height(40.dp))
+
+        AppNameText()
+
+        when (state) {
+            is WorkspaceCreateViewModel.State.Loading -> {
+                Box(modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
+                    AdaptiveCircularProgressIndicator()
+                }
+            }
+
+            else -> {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    WorkspaceCreateForm(
+                        focusManager = focusManager,
+                        workspaceName = workspaceName,
+                        onWorkspaceNameChange = onWorkspaceNameChange,
+                        vatNumber = vatNumber,
+                        onVatNumberChange = onVatNumberChange,
+                        fieldsError = fieldsError,
+                        onCreateClick = onCreateClick,
+                        onBackClick = onBackClick,
+                        modifier = Modifier.fillMaxHeight().widthIn(max = 320.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
