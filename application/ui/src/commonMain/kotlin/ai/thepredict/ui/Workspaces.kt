@@ -1,24 +1,21 @@
 package ai.thepredict.ui
 
 import ai.thepredict.domain.model.Company
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+
+private val workspaceItemSize = 80.dp
 
 @Composable
 fun WorkspaceItemCreateNew(
@@ -31,22 +28,16 @@ fun WorkspaceItemCreateNew(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Avatar box
-        OutlinedCard(
-            modifier = Modifier.size(80.dp),
+        POutlinedCard(
+            modifier = Modifier.size(workspaceItemSize),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = "+",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = "+",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
 
         // Workspace name
@@ -71,22 +62,16 @@ fun WorkspaceItem(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Avatar box
-        Card(
-            modifier = Modifier.size(80.dp),
+        PCard(
+            modifier = Modifier.size(workspaceItemSize),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = workspace.name.firstOrNull()?.uppercaseChar()?.toString() ?: "",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = workspace.name.firstOrNull()?.uppercaseChar()?.toString() ?: "",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
         }
 
         // Workspace name
