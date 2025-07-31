@@ -80,7 +80,7 @@ data class LoginRequest(
 @Serializable
 data class CreateCompanyRequest(
     val name: String,
-    val address: Address? = null,
+    val address: Address,
     val taxId: String
 )
 
@@ -226,4 +226,12 @@ value class TaxNumber(private val value: String) {
 
     val formatted: String
         get() = if (formattedRegex.matches(value)) value else formatNumber(value)
+}
+
+enum class Country {
+    BE;
+
+    companion object {
+        val default = BE
+    }
 }

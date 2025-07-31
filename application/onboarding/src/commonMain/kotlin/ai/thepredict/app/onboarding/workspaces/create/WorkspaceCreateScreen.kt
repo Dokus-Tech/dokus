@@ -4,8 +4,12 @@ import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.domain.model.Address
+import ai.thepredict.domain.model.Country
 import ai.thepredict.ui.PCardPlusIcon
 import ai.thepredict.ui.PPrimaryButton
+import ai.thepredict.ui.extensions.localized
+import ai.thepredict.ui.fields.PTextFieldStandard
 import ai.thepredict.ui.fields.PTextFieldTaxNumber
 import ai.thepredict.ui.fields.PTextFieldTaxNumberDefaults
 import ai.thepredict.ui.fields.PTextFieldWorkspaceName
@@ -13,7 +17,6 @@ import ai.thepredict.ui.fields.PTextFieldWorkspaceNameDefaults
 import ai.thepredict.ui.text.AppNameText
 import ai.thepredict.ui.text.CopyRightText
 import ai.thepredict.ui.text.SectionTitle
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +31,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,10 +47,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.registry.rememberScreen
@@ -54,6 +58,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.MapPin
 import kotlinx.coroutines.launch
 
 private val WorkspaceCreateViewModel.State.exceptionOrNull: PredictException?
@@ -75,16 +81,18 @@ internal class WorkspaceCreateScreen : Screen {
 
         val fieldsError: PredictException? = data.value.exceptionOrNull
 
+        val defaultCountry = Country.default.localized
+
         var workspaceName by remember { mutableStateOf("") }
-        var legalName by remember { mutableStateOf("") }
         var taxNumber by remember { mutableStateOf("") }
+        var address by remember { mutableStateOf(Address(country = defaultCountry)) }
         val mutableInteractionSource = remember { MutableInteractionSource() }
 
         val homeScreen = rememberScreen(CoreNavigation.Core)
 
         val handleEffect = { effect: WorkspaceCreateViewModel.Effect ->
             when (effect) {
-                is WorkspaceCreateViewModel.Effect.NavigateToHome -> navigator.replaceAll(
+                is WorkspaceCreateViewModel.Effect.NavigateHome -> navigator.replaceAll(
                     homeScreen
                 )
             }
@@ -113,13 +121,15 @@ internal class WorkspaceCreateScreen : Screen {
                         onWorkspaceNameChange = { workspaceName = it },
                         vatNumber = taxNumber,
                         onVatNumberChange = { taxNumber = it },
+                        address = address,
+                        onAddressChange = { address = it },
                         fieldsError = fieldsError,
                         onAddAvatarClick = {},
                         onCreateClick = {
                             viewModel.create(
-                                workspaceName,
-                                legalName,
-                                taxNumber
+                                name = workspaceName,
+                                taxNumber = taxNumber,
+                                address = address
                             )
                         },
                         onBackClick = {
@@ -133,13 +143,15 @@ internal class WorkspaceCreateScreen : Screen {
                         onWorkspaceNameChange = { workspaceName = it },
                         vatNumber = taxNumber,
                         onVatNumberChange = { taxNumber = it },
+                        address = address,
+                        onAddressChange = { address = it },
                         fieldsError = fieldsError,
                         onAddAvatarClick = {},
                         onCreateClick = {
                             viewModel.create(
-                                workspaceName,
-                                legalName,
-                                taxNumber
+                                name = workspaceName,
+                                taxNumber = taxNumber,
+                                address = address
                             )
                         },
                         onBackClick = {
@@ -160,6 +172,8 @@ internal fun WorkspaceCreateScreenMobileContent(
     onWorkspaceNameChange: (String) -> Unit,
     vatNumber: String,
     onVatNumberChange: (String) -> Unit,
+    address: Address,
+    onAddressChange: (Address) -> Unit,
     fieldsError: PredictException?,
     onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
@@ -181,6 +195,8 @@ internal fun WorkspaceCreateScreenMobileContent(
             onWorkspaceNameChange = onWorkspaceNameChange,
             vatNumber = vatNumber,
             onVatNumberChange = onVatNumberChange,
+            address = address,
+            onAddressChange = onAddressChange,
             fieldsError = fieldsError,
             onAddAvatarClick = onAddAvatarClick,
             onCreateClick = onCreateClick,
@@ -198,6 +214,8 @@ internal fun WorkspaceCreateScreenDesktopContent(
     onWorkspaceNameChange: (String) -> Unit,
     vatNumber: String,
     onVatNumberChange: (String) -> Unit,
+    address: Address,
+    onAddressChange: (Address) -> Unit,
     fieldsError: PredictException?,
     onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
@@ -226,6 +244,8 @@ internal fun WorkspaceCreateScreenDesktopContent(
                     onWorkspaceNameChange = onWorkspaceNameChange,
                     vatNumber = vatNumber,
                     onVatNumberChange = onVatNumberChange,
+                    address = address,
+                    onAddressChange = onAddressChange,
                     fieldsError = fieldsError,
                     onAddAvatarClick = onAddAvatarClick,
                     onCreateClick = onCreateClick,
@@ -247,6 +267,8 @@ internal fun WorkspaceCreateForm(
     onWorkspaceNameChange: (String) -> Unit,
     vatNumber: String,
     onVatNumberChange: (String) -> Unit,
+    address: Address,
+    onAddressChange: (Address) -> Unit,
     fieldsError: PredictException?,
     onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
@@ -263,56 +285,128 @@ internal fun WorkspaceCreateForm(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Form fields
-        Column(
+        LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.heightIn(max = 80.dp)
-            ) {
+            item {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.weight(2f)
+                    modifier = Modifier.heightIn(max = 80.dp)
                 ) {
-                    PCardPlusIcon(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clickable(enabled = FeatureFlags.addWorkspaceAvatar) { onAddAvatarClick() }
-                    )
-                    Box(Modifier.padding(start = 12.dp)) {
-                        Text(
-                            "Workspace avatar",
-                            fontWeight = FontWeight.Normal,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.align(Alignment.Center)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier.weight(2f)
+                    ) {
+                        PCardPlusIcon(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clickable(enabled = FeatureFlags.addWorkspaceAvatar) { onAddAvatarClick() }
                         )
+                        Box(Modifier.padding(start = 12.dp)) {
+                            Text(
+                                "Workspace avatar",
+                                fontWeight = FontWeight.Normal,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
                     }
+                    Spacer(Modifier.weight(1f))
                 }
-                Spacer(Modifier.weight(1f))
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
-            PTextFieldWorkspaceName(
-                fieldName = "Company name",
-                error = fieldsError.takeIf { it is PredictException.InvalidWorkspaceName },
-                value = workspaceName,
-                keyboardOptions = PTextFieldWorkspaceNameDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = onWorkspaceNameChange
-            )
-            PTextFieldTaxNumber(
-                fieldName = "VAT number",
-                error = fieldsError.takeIf { it is PredictException.InvalidTaxNumber },
-                value = vatNumber,
-                singleLine = true,
-                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = onVatNumberChange
-            )
+            item { Spacer(modifier = Modifier.height(2.dp)) }
+            item {
+                PTextFieldWorkspaceName(
+                    fieldName = "Company name",
+                    error = fieldsError.takeIf { it is PredictException.InvalidWorkspaceName },
+                    value = workspaceName,
+                    keyboardOptions = PTextFieldWorkspaceNameDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = onWorkspaceNameChange
+                )
+            }
+            item {
+                PTextFieldTaxNumber(
+                    fieldName = "VAT number",
+                    error = fieldsError.takeIf { it is PredictException.InvalidTaxNumber },
+                    value = vatNumber,
+                    singleLine = true,
+                    keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = onVatNumberChange
+                )
+            }
+            item {
+                PTextFieldStandard(
+                    fieldName = "Street",
+                    error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                    value = address.streetName.orEmpty(),
+                    singleLine = true,
+                    keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    icon = FeatherIcons.MapPin,
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        onAddressChange(address.copy(streetName = it))
+                    }
+                )
+            }
+            item {
+                PTextFieldStandard(
+                    fieldName = "City",
+                    error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                    value = address.city.orEmpty(),
+                    singleLine = true,
+                    keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    icon = FeatherIcons.MapPin,
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        onAddressChange(address.copy(city = it))
+                    }
+                )
+            }
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PTextFieldStandard(
+                        fieldName = "Postal code",
+                        error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                        value = address.postalCode.orEmpty(),
+                        singleLine = true,
+                        keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(
+                            imeAction = ImeAction.Next,
+                            keyboardType = KeyboardType.Number
+                        ),
+                        onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                        icon = FeatherIcons.MapPin,
+                        modifier = Modifier.weight(1f),
+                        onValueChange = {
+                            onAddressChange(address.copy(postalCode = it))
+                        }
+                    )
+                    PTextFieldStandard(
+                        fieldName = "Country",
+                        error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                        value = address.country.orEmpty(),
+                        singleLine = true,
+                        keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),
+                        onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                        icon = FeatherIcons.MapPin,
+                        modifier = Modifier.weight(1f),
+                        onValueChange = {
+                            onAddressChange(address.copy(country = it))
+                        }
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

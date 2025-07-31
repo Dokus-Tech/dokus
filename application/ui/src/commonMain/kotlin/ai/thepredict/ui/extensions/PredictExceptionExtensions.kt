@@ -18,4 +18,10 @@ val PredictException.localized: String
         is PredictException.InvalidLastName -> "Please enter the valid last name"
         is PredictException.InvalidTaxNumber -> "Please enter the valid tax number"
         is PredictException.InvalidWorkspaceName -> "Please enter the valid workspace name"
+        is PredictException.InvalidAddress -> when (this) {
+            is PredictException.InvalidAddress.InvalidStreetName -> "Please enter the valid street name"
+            is PredictException.InvalidAddress.InvalidCity -> "Please enter the valid city"
+            is PredictException.InvalidAddress.InvalidPostalCode -> "Please enter the valid postal code"
+            is PredictException.InvalidAddress.InvalidCountry -> "Please enter the valid country"
+        }
     }
