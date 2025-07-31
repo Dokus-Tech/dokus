@@ -57,6 +57,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Map
+import compose.icons.feathericons.MapPin
 import kotlinx.coroutines.launch
 
 private val WorkspaceCreateViewModel.State.exceptionOrNull: PredictException?
@@ -337,7 +338,7 @@ internal fun WorkspaceCreateForm(
                 singleLine = true,
                 keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.Map,
+                icon = FeatherIcons.MapPin,
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = {
                     onAddressChange(address.copy(streetName = it))
@@ -350,7 +351,7 @@ internal fun WorkspaceCreateForm(
                 singleLine = true,
                 keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.Map,
+                icon = FeatherIcons.MapPin,
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = {
                     onAddressChange(address.copy(city = it))
@@ -366,7 +367,7 @@ internal fun WorkspaceCreateForm(
                     keyboardType = KeyboardType.Number
                 ),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.Map,
+                icon = FeatherIcons.MapPin,
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = {
                     onAddressChange(address.copy(postalCode = it))
@@ -379,7 +380,7 @@ internal fun WorkspaceCreateForm(
                 singleLine = true,
                 keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.Map,
+                icon = FeatherIcons.MapPin,
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = {
                     onAddressChange(address.copy(country = it))
