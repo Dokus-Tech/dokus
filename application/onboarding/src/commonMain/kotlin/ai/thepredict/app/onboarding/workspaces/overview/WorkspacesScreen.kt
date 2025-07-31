@@ -9,7 +9,6 @@ import ai.thepredict.ui.common.ErrorBox
 import ai.thepredict.ui.text.AppNameText
 import ai.thepredict.ui.text.CopyRightText
 import ai.thepredict.ui.text.SectionTitle
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.registry.rememberScreen
@@ -81,7 +79,7 @@ internal class WorkspacesScreen : Screen {
                         state = state,
                         onWorkspaceSelect = viewModel::selectWorkspace,
                         onNewWorkspaceClick = viewModel::createWorkspace,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize()
                     )
                 }
             }
