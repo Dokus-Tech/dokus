@@ -5,8 +5,10 @@ import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.model.Address
+import ai.thepredict.domain.model.Country
 import ai.thepredict.ui.PCardPlusIcon
 import ai.thepredict.ui.PPrimaryButton
+import ai.thepredict.ui.extensions.localized
 import ai.thepredict.ui.fields.PTextFieldStandard
 import ai.thepredict.ui.fields.PTextFieldTaxNumber
 import ai.thepredict.ui.fields.PTextFieldTaxNumberDefaults
@@ -29,6 +31,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -56,7 +59,6 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Map
 import compose.icons.feathericons.MapPin
 import kotlinx.coroutines.launch
 
@@ -79,9 +81,11 @@ internal class WorkspaceCreateScreen : Screen {
 
         val fieldsError: PredictException? = data.value.exceptionOrNull
 
+        val defaultCountry = Country.default.localized
+
         var workspaceName by remember { mutableStateOf("") }
         var taxNumber by remember { mutableStateOf("") }
-        var address by remember { mutableStateOf(Address()) }
+        var address by remember { mutableStateOf(Address(country = defaultCountry)) }
         val mutableInteractionSource = remember { MutableInteractionSource() }
 
         val homeScreen = rememberScreen(CoreNavigation.Core)
@@ -281,111 +285,128 @@ internal fun WorkspaceCreateForm(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Form fields
-        Column(
+        LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.heightIn(max = 80.dp)
-            ) {
+            item {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.weight(2f)
+                    modifier = Modifier.heightIn(max = 80.dp)
                 ) {
-                    PCardPlusIcon(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clickable(enabled = FeatureFlags.addWorkspaceAvatar) { onAddAvatarClick() }
-                    )
-                    Box(Modifier.padding(start = 12.dp)) {
-                        Text(
-                            "Workspace avatar",
-                            fontWeight = FontWeight.Normal,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.align(Alignment.Center)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier.weight(2f)
+                    ) {
+                        PCardPlusIcon(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clickable(enabled = FeatureFlags.addWorkspaceAvatar) { onAddAvatarClick() }
                         )
+                        Box(Modifier.padding(start = 12.dp)) {
+                            Text(
+                                "Workspace avatar",
+                                fontWeight = FontWeight.Normal,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
                     }
+                    Spacer(Modifier.weight(1f))
                 }
-                Spacer(Modifier.weight(1f))
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
-            PTextFieldWorkspaceName(
-                fieldName = "Company name",
-                error = fieldsError.takeIf { it is PredictException.InvalidWorkspaceName },
-                value = workspaceName,
-                keyboardOptions = PTextFieldWorkspaceNameDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = onWorkspaceNameChange
-            )
-            PTextFieldTaxNumber(
-                fieldName = "VAT number",
-                error = fieldsError.takeIf { it is PredictException.InvalidTaxNumber },
-                value = vatNumber,
-                singleLine = true,
-                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = onVatNumberChange
-            )
-            PTextFieldStandard(
-                fieldName = "Street",
-                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
-                value = address.streetName.orEmpty(),
-                singleLine = true,
-                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.MapPin,
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = {
-                    onAddressChange(address.copy(streetName = it))
+            item { Spacer(modifier = Modifier.height(2.dp)) }
+            item {
+                PTextFieldWorkspaceName(
+                    fieldName = "Company name",
+                    error = fieldsError.takeIf { it is PredictException.InvalidWorkspaceName },
+                    value = workspaceName,
+                    keyboardOptions = PTextFieldWorkspaceNameDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = onWorkspaceNameChange
+                )
+            }
+            item {
+                PTextFieldTaxNumber(
+                    fieldName = "VAT number",
+                    error = fieldsError.takeIf { it is PredictException.InvalidTaxNumber },
+                    value = vatNumber,
+                    singleLine = true,
+                    keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = onVatNumberChange
+                )
+            }
+            item {
+                PTextFieldStandard(
+                    fieldName = "Street",
+                    error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                    value = address.streetName.orEmpty(),
+                    singleLine = true,
+                    keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    icon = FeatherIcons.MapPin,
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        onAddressChange(address.copy(streetName = it))
+                    }
+                )
+            }
+            item {
+                PTextFieldStandard(
+                    fieldName = "City",
+                    error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                    value = address.city.orEmpty(),
+                    singleLine = true,
+                    keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                    icon = FeatherIcons.MapPin,
+                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = {
+                        onAddressChange(address.copy(city = it))
+                    }
+                )
+            }
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PTextFieldStandard(
+                        fieldName = "Postal code",
+                        error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                        value = address.postalCode.orEmpty(),
+                        singleLine = true,
+                        keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(
+                            imeAction = ImeAction.Next,
+                            keyboardType = KeyboardType.Number
+                        ),
+                        onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                        icon = FeatherIcons.MapPin,
+                        modifier = Modifier.weight(1f),
+                        onValueChange = {
+                            onAddressChange(address.copy(postalCode = it))
+                        }
+                    )
+                    PTextFieldStandard(
+                        fieldName = "Country",
+                        error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                        value = address.country.orEmpty(),
+                        singleLine = true,
+                        keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),
+                        onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                        icon = FeatherIcons.MapPin,
+                        modifier = Modifier.weight(1f),
+                        onValueChange = {
+                            onAddressChange(address.copy(country = it))
+                        }
+                    )
                 }
-            )
-            PTextFieldStandard(
-                fieldName = "City",
-                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
-                value = address.city.orEmpty(),
-                singleLine = true,
-                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.MapPin,
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = {
-                    onAddressChange(address.copy(city = it))
-                }
-            )
-            PTextFieldStandard(
-                fieldName = "Postal code",
-                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
-                value = address.postalCode.orEmpty(),
-                singleLine = true,
-                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(
-                    imeAction = ImeAction.Next,
-                    keyboardType = KeyboardType.Number
-                ),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.MapPin,
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = {
-                    onAddressChange(address.copy(postalCode = it))
-                }
-            )
-            PTextFieldStandard(
-                fieldName = "Country",
-                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
-                value = address.country.orEmpty(),
-                singleLine = true,
-                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),
-                onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                icon = FeatherIcons.MapPin,
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = {
-                    onAddressChange(address.copy(country = it))
-                }
-            )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
