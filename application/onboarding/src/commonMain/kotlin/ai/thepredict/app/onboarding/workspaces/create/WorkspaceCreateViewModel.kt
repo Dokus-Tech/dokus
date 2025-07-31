@@ -27,10 +27,7 @@ internal class WorkspaceCreateViewModel :
     fun create(
         name: String,
         taxNumber: String,
-        street: String,
-        city: String,
-        postalCode: String,
-        country: String
+        address: Address,
     ) {
         screenModelScope.launch {
             mutableState.value = State.Loading
@@ -38,9 +35,7 @@ internal class WorkspaceCreateViewModel :
             val request = CreateCompanyRequest(
                 name = name,
                 taxId = taxNumber,
-                address = Address(
-                    streetName = street, city = city, postalCode = postalCode, country = country
-                ),
+                address = address,
             )
             runCatching { validateNewWorkspaceUseCase(request) }.getOrElse {
                 mutableState.value = State.Error(it.asPredictException)
