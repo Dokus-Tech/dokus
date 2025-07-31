@@ -229,5 +229,9 @@ value class TaxNumber(private val value: String) {
 }
 
 enum class Country {
-    BE
+    BE;
+
+    companion object {
+        val default = BE
+    }
 }
