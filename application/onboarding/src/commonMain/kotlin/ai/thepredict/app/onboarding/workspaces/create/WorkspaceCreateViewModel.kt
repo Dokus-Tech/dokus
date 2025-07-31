@@ -1,9 +1,12 @@
 package ai.thepredict.app.onboarding.workspaces.create
 
 import ai.thepredict.app.core.di
+import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
-import ai.thepredict.domain.usecases.CreateNewWorkspaceUseCase
+import ai.thepredict.domain.model.Address
+import ai.thepredict.domain.model.CreateCompanyRequest
+import ai.thepredict.domain.usecases.validators.ValidateNewWorkspaceUseCase
 import ai.thepredict.repository.api.UnifiedApi
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
@@ -15,15 +18,42 @@ import org.kodein.di.instance
 internal class WorkspaceCreateViewModel :
     StateScreenModel<WorkspaceCreateViewModel.State>(State.Idle) {
 
-    private val createNewWorkspaceUseCase: CreateNewWorkspaceUseCase by di.instance()
+    private val validateNewWorkspaceUseCase: ValidateNewWorkspaceUseCase by di.instance()
     private val api: UnifiedApi by di.instance { screenModelScope }
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun create(name: String, legalName: String, taxNumber: String) {
+    fun create(
+        name: String,
+        taxNumber: String,
+        street: String,
+        city: String,
+        postalCode: String,
+        country: String
+    ) {
         screenModelScope.launch {
             mutableState.value = State.Loading
+
+            val request = CreateCompanyRequest(
+                name = name,
+                taxId = taxNumber,
+                address = Address(
+                    streetName = street, city = city, postalCode = postalCode, country = country
+                ),
+            )
+            runCatching { validateNewWorkspaceUseCase(request) }.getOrElse {
+                mutableState.value = State.Error(it.asPredictException)
+                return@launch
+            }
+
+            val company = api.createCompany(request).getOrElse {
+                mutableState.value = State.Error(it.asPredictException)
+                return@launch
+            }
+
+            persistence.selectedWorkspace = company.id
+            mutableEffect.emit(Effect.NavigateHome)
         }
     }
 
@@ -36,6 +66,6 @@ internal class WorkspaceCreateViewModel :
     }
 
     sealed interface Effect {
-        data object NavigateToHome : Effect
+        data object NavigateHome : Effect
     }
 }

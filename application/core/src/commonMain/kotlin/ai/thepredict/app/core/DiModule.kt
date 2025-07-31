@@ -1,10 +1,14 @@
 package ai.thepredict.app.core
 
+import ai.thepredict.domain.model.Country
 import ai.thepredict.domain.usecases.CreateNewUserUseCase
-import ai.thepredict.domain.usecases.CreateNewWorkspaceUseCase
+import ai.thepredict.domain.usecases.validators.ValidateAddressUseCase
 import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
 import ai.thepredict.domain.usecases.validators.ValidateNameUseCase
+import ai.thepredict.domain.usecases.validators.ValidateNewWorkspaceUseCase
+import ai.thepredict.domain.usecases.validators.ValidateNotShortUseCase
 import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase
+import ai.thepredict.domain.usecases.validators.ValidatePostalCode
 import ai.thepredict.domain.usecases.validators.ValidateWorkspaceNameUseCase
 import ai.thepredict.domain.usecases.validators.ValidateWorkspaceTaxNumberUseCase
 import org.kodein.di.DI
@@ -40,10 +44,29 @@ val coreDiModule by DI.Module("core") {
         ValidateWorkspaceTaxNumberUseCase()
     }
 
-    bindProvider<CreateNewWorkspaceUseCase> {
-        CreateNewWorkspaceUseCase(
-            validateWorkspaceNameUseCase = instance<ValidateWorkspaceNameUseCase>(),
-            validateWorkspaceTaxNumberUseCase = instance<ValidateWorkspaceTaxNumberUseCase>()
+    bindProvider<ValidateNotShortUseCase> {
+        ValidateNotShortUseCase()
+    }
+
+    bindProvider<ValidatePostalCode> {
+        ValidatePostalCode(Country.BE)
+    }
+
+    bindProvider<ValidateAddressUseCase> {
+        ValidateAddressUseCase(
+            country = Country.BE,
+            streetNameValidator = instance<ValidateNotShortUseCase>(),
+            cityValidator = instance<ValidateNotShortUseCase>(),
+            postalCodeValidator = instance<ValidatePostalCode>(),
+            countryValidator = instance<ValidateNotShortUseCase>()
+        )
+    }
+
+    bindProvider<ValidateNewWorkspaceUseCase> {
+        ValidateNewWorkspaceUseCase(
+            nameValidator = instance<ValidateWorkspaceNameUseCase>(),
+            taxNumberValidator = instance<ValidateWorkspaceTaxNumberUseCase>(),
+            addressValidator = instance<ValidateAddressUseCase>()
         )
     }
 }

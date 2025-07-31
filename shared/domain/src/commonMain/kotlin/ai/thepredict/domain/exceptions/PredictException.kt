@@ -42,13 +42,28 @@ sealed class PredictException(val recoverable: Boolean = false) : Exception() {
 
     @Serializable
     data object InvalidWorkspaceName : PredictException()
+
+    sealed class InvalidAddress : PredictException() {
+        @Serializable
+        data object InvalidStreetName : InvalidAddress()
+
+        @Serializable
+        data object InvalidCity : InvalidAddress()
+
+        @Serializable
+        data object InvalidPostalCode : InvalidAddress()
+
+        @Serializable
+        data object InvalidCountry : InvalidAddress()
+    }
 }
 
-fun PredictException.Companion.fromRestStatus(statusCode: Int): PredictException? = when (statusCode) {
-    401 -> PredictException.NotAuthenticated
-    403 -> PredictException.NotAuthorized
-    else -> null
-}
+fun PredictException.Companion.fromRestStatus(statusCode: Int): PredictException? =
+    when (statusCode) {
+        401 -> PredictException.NotAuthenticated
+        403 -> PredictException.NotAuthorized
+        else -> null
+    }
 
 val Throwable?.asPredictException: PredictException
     get() = when (this) {

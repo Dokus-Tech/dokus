@@ -13,7 +13,6 @@ import ai.thepredict.ui.fields.PTextFieldWorkspaceNameDefaults
 import ai.thepredict.ui.text.AppNameText
 import ai.thepredict.ui.text.CopyRightText
 import ai.thepredict.ui.text.SectionTitle
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -84,7 +82,7 @@ internal class WorkspaceCreateScreen : Screen {
 
         val handleEffect = { effect: WorkspaceCreateViewModel.Effect ->
             when (effect) {
-                is WorkspaceCreateViewModel.Effect.NavigateToHome -> navigator.replaceAll(
+                is WorkspaceCreateViewModel.Effect.NavigateHome -> navigator.replaceAll(
                     homeScreen
                 )
             }
