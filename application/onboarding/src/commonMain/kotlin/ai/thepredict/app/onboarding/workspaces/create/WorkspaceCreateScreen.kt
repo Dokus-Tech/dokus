@@ -7,6 +7,7 @@ import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.model.Address
 import ai.thepredict.ui.PCardPlusIcon
 import ai.thepredict.ui.PPrimaryButton
+import ai.thepredict.ui.fields.PTextFieldStandard
 import ai.thepredict.ui.fields.PTextFieldTaxNumber
 import ai.thepredict.ui.fields.PTextFieldTaxNumberDefaults
 import ai.thepredict.ui.fields.PTextFieldWorkspaceName
@@ -46,6 +47,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.registry.rememberScreen
@@ -53,6 +55,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Map
 import kotlinx.coroutines.launch
 
 private val WorkspaceCreateViewModel.State.exceptionOrNull: PredictException?
@@ -325,6 +329,61 @@ internal fun WorkspaceCreateForm(
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = onVatNumberChange
+            )
+            PTextFieldStandard(
+                fieldName = "Street",
+                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                value = address.streetName.orEmpty(),
+                singleLine = true,
+                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                icon = FeatherIcons.Map,
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    onAddressChange(address.copy(streetName = it))
+                }
+            )
+            PTextFieldStandard(
+                fieldName = "City",
+                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                value = address.city.orEmpty(),
+                singleLine = true,
+                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                icon = FeatherIcons.Map,
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    onAddressChange(address.copy(city = it))
+                }
+            )
+            PTextFieldStandard(
+                fieldName = "Postal code",
+                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                value = address.postalCode.orEmpty(),
+                singleLine = true,
+                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(
+                    imeAction = ImeAction.Next,
+                    keyboardType = KeyboardType.Number
+                ),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                icon = FeatherIcons.Map,
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    onAddressChange(address.copy(postalCode = it))
+                }
+            )
+            PTextFieldStandard(
+                fieldName = "Country",
+                error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                value = address.country.orEmpty(),
+                singleLine = true,
+                keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                icon = FeatherIcons.Map,
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    onAddressChange(address.copy(country = it))
+                }
             )
         }
 
