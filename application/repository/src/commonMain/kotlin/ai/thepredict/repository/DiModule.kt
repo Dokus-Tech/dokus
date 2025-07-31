@@ -21,7 +21,7 @@ import org.kodein.di.instance
 import org.kodein.di.singleton
 
 val repositoryDiModule by DI.Module("repository") {
-    bind<UnifiedApi>() with singleton { UnifiedApi.create(ServerEndpoint.Local) }
+    bind<UnifiedApi>() with singleton { UnifiedApi.create(ServerEndpoint.PredictCloud) }
 
     bind<AuthApi>() with singleton { instance<UnifiedApi>() }
     bind<CompanyApi>() with singleton { instance<UnifiedApi>() }

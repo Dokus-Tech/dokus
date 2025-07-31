@@ -12,7 +12,7 @@ class ValidateAddressUseCase(
     private val countryValidator: Validator<String>,
 ) : ValidatorThrowable<Address> {
 
-    @Throws(PredictException.InvalidAddress::class)
+    @Throws(PredictException::class)
     override fun invoke(value: Address) {
         if (value.streetName != null && !streetNameValidator(value.streetName)) throw PredictException.InvalidAddress.InvalidStreetName
         if (value.city != null && !cityValidator(value.city)) throw PredictException.InvalidAddress.InvalidCity
