@@ -4,6 +4,7 @@ import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.flags.FeatureFlags
 import ai.thepredict.app.navigation.CoreNavigation
 import ai.thepredict.domain.exceptions.PredictException
+import ai.thepredict.domain.model.Address
 import ai.thepredict.ui.PCardPlusIcon
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.fields.PTextFieldTaxNumber
@@ -74,8 +75,8 @@ internal class WorkspaceCreateScreen : Screen {
         val fieldsError: PredictException? = data.value.exceptionOrNull
 
         var workspaceName by remember { mutableStateOf("") }
-        var legalName by remember { mutableStateOf("") }
         var taxNumber by remember { mutableStateOf("") }
+        var address by remember { mutableStateOf(Address()) }
         val mutableInteractionSource = remember { MutableInteractionSource() }
 
         val homeScreen = rememberScreen(CoreNavigation.Core)
@@ -115,9 +116,9 @@ internal class WorkspaceCreateScreen : Screen {
                         onAddAvatarClick = {},
                         onCreateClick = {
                             viewModel.create(
-                                workspaceName,
-                                legalName,
-                                taxNumber
+                                name = workspaceName,
+                                taxNumber = taxNumber,
+                                address = address
                             )
                         },
                         onBackClick = {
@@ -135,9 +136,9 @@ internal class WorkspaceCreateScreen : Screen {
                         onAddAvatarClick = {},
                         onCreateClick = {
                             viewModel.create(
-                                workspaceName,
-                                legalName,
-                                taxNumber
+                                name = workspaceName,
+                                taxNumber = taxNumber,
+                                address = address
                             )
                         },
                         onBackClick = {
