@@ -7,7 +7,9 @@ import ai.thepredict.domain.model.Company
 import ai.thepredict.ui.WorkspacesGrid
 import ai.thepredict.ui.common.ErrorBox
 import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.CopyRightText
 import ai.thepredict.ui.text.SectionTitle
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.registry.rememberScreen
@@ -94,7 +97,7 @@ internal fun WorkspacesSelectionDesktopContent(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -111,7 +114,7 @@ internal fun WorkspacesSelectionDesktopContent(
 
             is WorkspacesViewModel.State.Loaded -> {
                 Row(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -120,7 +123,7 @@ internal fun WorkspacesSelectionDesktopContent(
                         workspaces = state.workspaces,
                         onWorkspaceSelect = onWorkspaceSelect,
                         onNewWorkspaceClick = onNewWorkspaceClick,
-                        modifier = Modifier.fillMaxSize().weight(3f)
+                        modifier = Modifier.weight(3f)
                     )
                     Spacer(Modifier.weight(1f))
                 }
@@ -134,6 +137,9 @@ internal fun WorkspacesSelectionDesktopContent(
                 )
             }
         }
+
+        CopyRightText()
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 
