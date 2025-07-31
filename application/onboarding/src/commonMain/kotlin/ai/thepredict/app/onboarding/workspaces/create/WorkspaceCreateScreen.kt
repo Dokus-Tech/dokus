@@ -11,7 +11,9 @@ import ai.thepredict.ui.fields.PTextFieldTaxNumberDefaults
 import ai.thepredict.ui.fields.PTextFieldWorkspaceName
 import ai.thepredict.ui.fields.PTextFieldWorkspaceNameDefaults
 import ai.thepredict.ui.text.AppNameText
+import ai.thepredict.ui.text.CopyRightText
 import ai.thepredict.ui.text.SectionTitle
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -199,7 +202,6 @@ internal fun WorkspaceCreateScreenDesktopContent(
         verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.height(40.dp))
-
         AppNameText()
 
         when (state) {
@@ -210,25 +212,22 @@ internal fun WorkspaceCreateScreenDesktopContent(
             }
 
             else -> {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    WorkspaceCreateForm(
-                        focusManager = focusManager,
-                        workspaceName = workspaceName,
-                        onWorkspaceNameChange = onWorkspaceNameChange,
-                        vatNumber = vatNumber,
-                        onVatNumberChange = onVatNumberChange,
-                        fieldsError = fieldsError,
-                        onCreateClick = onCreateClick,
-                        onBackClick = onBackClick,
-                        modifier = Modifier.fillMaxHeight().widthIn(max = 320.dp)
-                    )
-                }
+                WorkspaceCreateForm(
+                    focusManager = focusManager,
+                    workspaceName = workspaceName,
+                    onWorkspaceNameChange = onWorkspaceNameChange,
+                    vatNumber = vatNumber,
+                    onVatNumberChange = onVatNumberChange,
+                    fieldsError = fieldsError,
+                    onCreateClick = onCreateClick,
+                    onBackClick = onBackClick,
+                    modifier = Modifier.weight(1f).widthIn(max = 320.dp)
+                )
             }
         }
+
+        CopyRightText()
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 
