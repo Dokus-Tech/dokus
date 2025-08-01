@@ -1,8 +1,8 @@
 package ai.thepredict.ui.navigation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -86,12 +85,13 @@ fun NavigationBar(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(0.dp)
-            )
     ) {
+        Box(
+            Modifier
+                .height(1.dp)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -100,14 +100,11 @@ fun NavigationBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             firstHalf.forEach { item ->
-                IconButton(onClick = { }) {
-                    Icon(
-                        painter = painterResource(item.icon),
-                        contentDescription = item.label,
-                        tint = if (selectedItem == item) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                NavigationButton(
+                    navigationItem = item,
+                    onClick = { },
+                    selected = selectedItem == item
+                )
             }
 
             // Add button (FAB)
@@ -126,16 +123,28 @@ fun NavigationBar(
             }
 
             secondHalf.forEach { item ->
-                IconButton(onClick = { }) {
-                    Icon(
-                        painter = painterResource(item.icon),
-                        contentDescription = item.label,
-                        tint = if (selectedItem == item) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                NavigationButton(
+                    navigationItem = item,
+                    onClick = { },
+                    selected = selectedItem == item
+                )
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun NavigationButton(
+    navigationItem: NavigationItem,
+    onClick: () -> Unit,
+    selected: Boolean
+) {
+    IconButton(onClick = onClick) {
+        Icon(
+            painter = painterResource(navigationItem.icon),
+            contentDescription = navigationItem.label,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
