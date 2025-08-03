@@ -14,12 +14,24 @@ sealed interface HomeTabsNavigation : ScreenProvider {
         override val screenKey: ScreenKey = "Contacts"
     }
 
+    data object Cashflow : HomeTabsNavigation {
+        override val screenKey: ScreenKey = "Cashflow"
+    }
+
+    data object Simulations : HomeTabsNavigation {
+        override val screenKey: ScreenKey = "Simulations"
+    }
+
     data object Items : HomeTabsNavigation {
         override val screenKey: ScreenKey = "Items"
     }
 
     data object Banking : HomeTabsNavigation {
         override val screenKey: ScreenKey = "Banking"
+    }
+
+    data object Profile : HomeTabsNavigation {
+        override val screenKey: ScreenKey = "Profile"
     }
 
     data object AddDocuments : HomeTabsNavigation {
