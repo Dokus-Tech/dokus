@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,8 +37,8 @@ sealed interface NavigationItem {
 
     data object Charts : NavigationItem {
         override val icon: DrawableResource = Res.drawable.chart_bar_trend_up
-        override val label: String @Composable get() = "Charts"
-        override val route: String = "charts"
+        override val label: String @Composable get() = "Dashboard"
+        override val route: String = "dashboard"
     }
 
     data object Contacts : NavigationItem {
@@ -56,8 +55,14 @@ sealed interface NavigationItem {
 
     data object Banks : NavigationItem {
         override val icon: DrawableResource = Res.drawable.wallet_2
-        override val label: String @Composable get() = "Banks"
-        override val route: String = "banks"
+        override val label: String @Composable get() = "Banking"
+        override val route: String = "banking"
+    }
+
+    data object AddDocument : NavigationItem {
+        override val icon: DrawableResource = Res.drawable.plus
+        override val label: String @Composable get() = "Add"
+        override val route: String = "documents/add"
     }
 
     companion object {
@@ -73,8 +78,10 @@ sealed interface NavigationItem {
 @Composable
 fun NavigationBar(
     navigationItems: List<NavigationItem>,
+    fabItem: NavigationItem,
     selectedIndex: Int,
     modifier: Modifier = Modifier,
+    onItemClick: (NavigationItem) -> Unit,
 ) {
     val selectedItem = navigationItems[selectedIndex]
     val half = navigationItems.size / 2
@@ -102,22 +109,22 @@ fun NavigationBar(
             firstHalf.forEach { item ->
                 NavigationButton(
                     navigationItem = item,
-                    onClick = { },
+                    onClick = { onItemClick(item) },
                     selected = selectedItem == item
                 )
             }
 
             // Add button (FAB)
             FloatingActionButton(
-                onClick = { },
+                onClick = { onItemClick(fabItem) },
                 modifier = Modifier.size(48.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.plus),
-                    contentDescription = "Add",
+                    painter = painterResource(fabItem.icon),
+                    contentDescription = fabItem.label,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -125,7 +132,7 @@ fun NavigationBar(
             secondHalf.forEach { item ->
                 NavigationButton(
                     navigationItem = item,
-                    onClick = { },
+                    onClick = { onItemClick(item) },
                     selected = selectedItem == item
                 )
             }
