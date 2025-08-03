@@ -18,8 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import thepredict.application.ui.generated.resources.Res
 import thepredict.application.ui.generated.resources.chart_bar_trend_up
@@ -29,50 +29,57 @@ import thepredict.application.ui.generated.resources.users
 import thepredict.application.ui.generated.resources.wallet_2
 
 
-sealed interface NavigationItem {
-    val icon: DrawableResource
+sealed interface TabNavItem {
+    @get:Composable
+    val icon: Painter
 
     @get:Composable
-    val label: String
+    val title: String
     val route: String
     val screenProvider: HomeTabsNavigation
+    val showTopBar: Boolean
 
-    data object Charts : NavigationItem {
-        override val icon: DrawableResource = Res.drawable.chart_bar_trend_up
-        override val label: String @Composable get() = "Dashboard"
+    data object Charts : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.chart_bar_trend_up)
+        override val title: String @Composable get() = "Dashboard"
         override val route: String = "dashboard"
         override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Dashboard
+        override val showTopBar: Boolean = false
     }
 
-    data object Contacts : NavigationItem {
-        override val icon: DrawableResource = Res.drawable.users
-        override val label: String @Composable get() = "Contacts"
+    data object Contacts : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.users)
+        override val title: String @Composable get() = "Contacts"
         override val route: String = "contacts"
         override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Contacts
+        override val showTopBar: Boolean = true
     }
 
-    data object Inventory : NavigationItem {
-        override val icon: DrawableResource = Res.drawable.tasks_2
-        override val label: String @Composable get() = "Items"
+    data object Inventory : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.tasks_2)
+        override val title: String @Composable get() = "Items"
         override val route: String = "items"
         override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
+        override val showTopBar: Boolean = true
     }
 
-    data object Banks : NavigationItem {
-        override val icon: DrawableResource = Res.drawable.wallet_2
-        override val label: String @Composable get() = "Banking"
+    data object Banks : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.wallet_2)
+        override val title: String @Composable get() = "Banking"
         override val route: String = "banking"
         override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Banking
+        override val showTopBar: Boolean = true
     }
 
-    data object AddDocuments : NavigationItem {
-        override val icon: DrawableResource = Res.drawable.plus
-        override val label: String @Composable get() = "Add"
+    data object AddDocuments : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.plus)
+        override val title: String @Composable get() = "Add"
         override val route: String = "documents/add"
         override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.AddDocuments
+        override val showTopBar: Boolean = true
     }
 
-    companion object {
+    companion object Companion {
         val all = listOf(
             Charts,
             Contacts,
@@ -82,18 +89,25 @@ sealed interface NavigationItem {
     }
 }
 
+fun List<TabNavItem>.findByScreenKey(
+    screenKey: String,
+    default: TabNavItem = first()
+): TabNavItem {
+    return find { it.screenProvider.screenKey == screenKey } ?: default
+}
+
 @Composable
 fun NavigationBar(
-    navigationItems: List<NavigationItem>,
-    fabItem: NavigationItem,
+    tabNavItems: List<TabNavItem>,
+    fabItem: TabNavItem,
     selectedIndex: Int,
     modifier: Modifier = Modifier,
-    onItemClick: (NavigationItem) -> Unit,
+    onItemClick: (TabNavItem) -> Unit,
 ) {
-    val selectedItem = navigationItems[selectedIndex]
-    val half = navigationItems.size / 2
-    val firstHalf = navigationItems.take(half)
-    val secondHalf = navigationItems.drop(half)
+    val selectedItem = tabNavItems[selectedIndex]
+    val half = tabNavItems.size / 2
+    val firstHalf = tabNavItems.take(half)
+    val secondHalf = tabNavItems.drop(half)
 
     Column(
         modifier = modifier
@@ -115,7 +129,7 @@ fun NavigationBar(
         ) {
             firstHalf.forEach { item ->
                 NavigationButton(
-                    navigationItem = item,
+                    tabNavItem = item,
                     onClick = { onItemClick(item) },
                     selected = selectedItem == item
                 )
@@ -130,15 +144,15 @@ fun NavigationBar(
                 shape = CircleShape
             ) {
                 Icon(
-                    painter = painterResource(fabItem.icon),
-                    contentDescription = fabItem.label,
+                    painter = fabItem.icon,
+                    contentDescription = fabItem.title,
                     modifier = Modifier.size(20.dp)
                 )
             }
 
             secondHalf.forEach { item ->
                 NavigationButton(
-                    navigationItem = item,
+                    tabNavItem = item,
                     onClick = { onItemClick(item) },
                     selected = selectedItem == item
                 )
@@ -149,14 +163,14 @@ fun NavigationBar(
 
 @Composable
 private fun NavigationButton(
-    navigationItem: NavigationItem,
+    tabNavItem: TabNavItem,
     onClick: () -> Unit,
     selected: Boolean
 ) {
     IconButton(onClick = onClick) {
         Icon(
-            painter = painterResource(navigationItem.icon),
-            contentDescription = navigationItem.label,
+            painter = tabNavItem.icon,
+            contentDescription = tabNavItem.title,
             tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp)
         )

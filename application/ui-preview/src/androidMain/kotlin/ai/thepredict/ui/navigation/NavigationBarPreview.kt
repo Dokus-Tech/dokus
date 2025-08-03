@@ -9,8 +9,8 @@ import androidx.compose.ui.tooling.preview.Preview
 private fun NavigationBarPreview() {
     Themed {
         NavigationBar(
-            navigationItems = NavigationItem.all,
-            fabItem = NavigationItem.AddDocuments,
+            tabNavItems = TabNavItem.all,
+            fabItem = TabNavItem.AddDocuments,
             selectedIndex = 0
         ) {}
     }

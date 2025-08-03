@@ -1,8 +1,9 @@
 package ai.thepredict.app.navigation
 
+import cafe.adriel.voyager.core.registry.ScreenProvider
 import cafe.adriel.voyager.core.screen.ScreenKey
 
-sealed interface HomeTabsNavigation {
+sealed interface HomeTabsNavigation : ScreenProvider {
     val screenKey: ScreenKey
 
     data object Dashboard : HomeTabsNavigation {
