@@ -18,9 +18,12 @@ internal class HomeScreen : Screen {
             bottomBar = {
                 NavigationBar(
                     navigationItems = NavigationItem.all,
+                    fabItem = NavigationItem.AddDocument,
                     selectedIndex = 0,
                     modifier = Modifier.padding(bottom = 32.dp)
-                )
+                ) { clickedItem ->
+
+                }
             }
         ) { innerPadding ->
             Box(

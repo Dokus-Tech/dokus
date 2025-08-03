@@ -11,8 +11,8 @@ private fun NavigationBarPreview() {
     Themed {
         NavigationBar(
             navigationItems = NavigationItem.all,
-            selectedIndex = 0,
-            modifier = Modifier
-        )
+            fabItem = NavigationItem.AddDocument,
+            selectedIndex = 0
+        ) {}
     }
 }
