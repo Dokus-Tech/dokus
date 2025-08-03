@@ -1,5 +1,6 @@
 package ai.thepredict.ui.navigation
 
+import ai.thepredict.app.navigation.HomeTabsNavigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,35 +35,41 @@ sealed interface NavigationItem {
     @get:Composable
     val label: String
     val route: String
+    val screenProvider: HomeTabsNavigation
 
     data object Charts : NavigationItem {
         override val icon: DrawableResource = Res.drawable.chart_bar_trend_up
         override val label: String @Composable get() = "Dashboard"
         override val route: String = "dashboard"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Dashboard
     }
 
     data object Contacts : NavigationItem {
         override val icon: DrawableResource = Res.drawable.users
         override val label: String @Composable get() = "Contacts"
         override val route: String = "contacts"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Contacts
     }
 
     data object Inventory : NavigationItem {
         override val icon: DrawableResource = Res.drawable.tasks_2
         override val label: String @Composable get() = "Items"
         override val route: String = "items"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
     }
 
     data object Banks : NavigationItem {
         override val icon: DrawableResource = Res.drawable.wallet_2
         override val label: String @Composable get() = "Banking"
         override val route: String = "banking"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Banking
     }
 
-    data object AddDocument : NavigationItem {
+    data object AddDocuments : NavigationItem {
         override val icon: DrawableResource = Res.drawable.plus
         override val label: String @Composable get() = "Add"
         override val route: String = "documents/add"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.AddDocuments
     }
 
     companion object {
