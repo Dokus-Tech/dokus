@@ -18,7 +18,7 @@ internal class HomeScreen : Screen {
             bottomBar = {
                 NavigationBar(
                     navigationItems = NavigationItem.all,
-                    fabItem = NavigationItem.AddDocument,
+                    fabItem = NavigationItem.AddDocuments,
                     selectedIndex = 0,
                     modifier = Modifier.padding(bottom = 32.dp)
                 ) { clickedItem ->
