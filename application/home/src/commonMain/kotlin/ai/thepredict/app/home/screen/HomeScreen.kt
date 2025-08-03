@@ -30,13 +30,13 @@ internal class HomeScreen : Screen {
     override fun Content() {
         val navItems = TabNavItem.all
 
-        val dashboardTab = rememberScreen(TabNavItem.Charts.screenProvider)
+        val dashboardTab = rememberScreen(TabNavItem.Dashboard.screenProvider)
 
         Scaffold {
             Navigator(dashboardTab) { navigator ->
                 val onNavItemSelected: (TabNavItem) -> Unit = { item ->
                     when (item) {
-                        TabNavItem.Charts -> navigator.replaceAll(dashboardTab)
+                        TabNavItem.Dashboard -> navigator.replaceAll(dashboardTab)
                         else -> {}
                     }
                 }

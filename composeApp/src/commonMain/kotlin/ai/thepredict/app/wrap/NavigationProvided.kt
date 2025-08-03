@@ -1,5 +1,6 @@
 package ai.thepredict.app.wrap
 
+import ai.thepredict.app.dashboard.dashboardScreensModule
 import ai.thepredict.app.home.homeScreensModule
 import ai.thepredict.app.onboarding.onboardingScreensModule
 import ai.thepredict.app.home.splash.SplashScreen
@@ -15,6 +16,7 @@ fun NavigationProvided(content: @Composable () -> Unit) {
     ScreenRegistry {
         onboardingScreensModule()
         homeScreensModule()
+        dashboardScreensModule()
     }
 
     ProvideNavigatorLifecycleKMPSupport {

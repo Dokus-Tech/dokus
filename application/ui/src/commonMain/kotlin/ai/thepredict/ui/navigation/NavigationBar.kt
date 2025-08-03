@@ -39,7 +39,7 @@ sealed interface TabNavItem {
     val screenProvider: HomeTabsNavigation
     val showTopBar: Boolean
 
-    data object Charts : TabNavItem {
+    data object Dashboard : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.chart_bar_trend_up)
         override val title: String @Composable get() = "Dashboard"
         override val route: String = "dashboard"
@@ -81,7 +81,7 @@ sealed interface TabNavItem {
 
     companion object Companion {
         val all = listOf(
-            Charts,
+            Dashboard,
             Contacts,
             Inventory,
             Banks
