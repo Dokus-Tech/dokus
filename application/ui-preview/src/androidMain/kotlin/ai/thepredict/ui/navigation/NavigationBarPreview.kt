@@ -10,7 +10,7 @@ private fun NavigationBarPreview() {
     Themed {
         NavigationBar(
             tabNavItems = TabNavItem.all,
-            fabItem = TabNavItem.AddDocuments,
+            fabItem = TabNavItem.Fab.AddDocuments,
             selectedIndex = 0
         ) {}
     }

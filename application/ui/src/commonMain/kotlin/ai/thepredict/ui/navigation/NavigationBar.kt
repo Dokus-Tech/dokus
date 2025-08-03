@@ -22,9 +22,12 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import thepredict.application.ui.generated.resources.Res
+import thepredict.application.ui.generated.resources.cashflow
 import thepredict.application.ui.generated.resources.chart_bar_trend_up
 import thepredict.application.ui.generated.resources.plus
+import thepredict.application.ui.generated.resources.simulations
 import thepredict.application.ui.generated.resources.tasks_2
+import thepredict.application.ui.generated.resources.user
 import thepredict.application.ui.generated.resources.users
 import thepredict.application.ui.generated.resources.wallet_2
 
@@ -55,6 +58,22 @@ sealed interface TabNavItem {
         override val showTopBar: Boolean = true
     }
 
+    data object Cashflow : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.cashflow)
+        override val title: String @Composable get() = "Cashflow"
+        override val route: String = "cashflow"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
+        override val showTopBar: Boolean = true
+    }
+
+    data object Simulations : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.simulations)
+        override val title: String @Composable get() = "Simulations"
+        override val route: String = "simulations"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
+        override val showTopBar: Boolean = true
+    }
+
     data object Inventory : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.tasks_2)
         override val title: String @Composable get() = "Items"
@@ -63,7 +82,7 @@ sealed interface TabNavItem {
         override val showTopBar: Boolean = true
     }
 
-    data object Banks : TabNavItem {
+    data object Banking : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.wallet_2)
         override val title: String @Composable get() = "Banking"
         override val route: String = "banking"
@@ -71,20 +90,33 @@ sealed interface TabNavItem {
         override val showTopBar: Boolean = true
     }
 
-    data object AddDocuments : TabNavItem {
-        override val icon: Painter @Composable get() = painterResource(Res.drawable.plus)
-        override val title: String @Composable get() = "Add"
-        override val route: String = "documents/add"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.AddDocuments
-        override val showTopBar: Boolean = true
+    data object Profile : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.user)
+        override val title: String @Composable get() = "Profile"
+        override val route: String = "profile"
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
+        override val showTopBar: Boolean = false
+    }
+
+    sealed interface Fab : TabNavItem {
+        data object AddDocuments : Fab {
+            override val icon: Painter @Composable get() = painterResource(Res.drawable.plus)
+            override val title: String @Composable get() = "Add"
+            override val route: String = "documents/add"
+            override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.AddDocuments
+            override val showTopBar: Boolean = true
+        }
     }
 
     companion object Companion {
         val all = listOf(
             Dashboard,
             Contacts,
+            Cashflow,
+            Simulations,
             Inventory,
-            Banks
+            Banking,
+            Profile
         )
     }
 }

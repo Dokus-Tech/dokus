@@ -25,10 +25,30 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 
+private val TabNavItem.Companion.items: List<TabNavItem>
+    @Composable get() = if (isLargeScreen) {
+        listOf(
+            TabNavItem.Dashboard,
+            TabNavItem.Contacts,
+            TabNavItem.Cashflow,
+            TabNavItem.Simulations,
+            TabNavItem.Inventory,
+            TabNavItem.Banking,
+            TabNavItem.Profile
+        )
+    } else {
+        listOf(
+            TabNavItem.Dashboard,
+            TabNavItem.Contacts,
+            TabNavItem.Inventory,
+            TabNavItem.Banking
+        )
+    }
+
 internal class HomeScreen : Screen {
     @Composable
     override fun Content() {
-        val navItems = TabNavItem.all
+        val navItems = TabNavItem.items
 
         val dashboardTab = rememberScreen(TabNavItem.Dashboard.screenProvider)
 
@@ -130,7 +150,7 @@ private fun BottomNavigationLayout(
         bottomBar = {
             NavigationBar(
                 tabNavItems = navItems,
-                fabItem = TabNavItem.AddDocuments,
+                fabItem = TabNavItem.Fab.AddDocuments,
                 selectedIndex = navItems.indexOf(selectedItem),
                 modifier = Modifier.padding(bottom = 32.dp)
             ) {
