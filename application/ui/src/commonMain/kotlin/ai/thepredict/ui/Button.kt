@@ -1,5 +1,6 @@
 package ai.thepredict.ui
 
+import ai.thepredict.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -124,6 +125,6 @@ fun PBackButton(
     Icon(
         painter = painterResource(Res.drawable.arrow_left),
         contentDescription = "Back",
-        modifier = modifier.clickable { onBackPress() }.size(24.dp)
+        modifier = modifier.clickableWithRipple { onBackPress() }.size(24.dp)
     )
 }

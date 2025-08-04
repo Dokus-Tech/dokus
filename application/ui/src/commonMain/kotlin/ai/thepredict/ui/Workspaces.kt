@@ -1,7 +1,7 @@
 package ai.thepredict.ui
 
 import ai.thepredict.domain.model.Company
-import androidx.compose.foundation.clickable
+import ai.thepredict.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -23,7 +23,7 @@ fun WorkspaceItemCreateNew(
     onAddClick: () -> Unit,
 ) {
     Column(
-        modifier = modifier.clickable { onAddClick() },
+        modifier = modifier.clickableWithRipple { onAddClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -57,7 +57,7 @@ fun WorkspaceItem(
     onClick: (() -> Unit)? = null
 ) {
     Column(
-        modifier = modifier.clickable { onClick?.invoke() },
+        modifier = modifier.clickableWithRipple { onClick?.invoke() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
