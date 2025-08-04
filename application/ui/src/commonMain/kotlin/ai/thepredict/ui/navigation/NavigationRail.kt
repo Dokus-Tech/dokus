@@ -35,6 +35,7 @@ fun ColumnScope.NavigationRail(
     modifier: Modifier = Modifier
 ) {
     Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         val mainItems = navItems.dropLast(1)
@@ -47,7 +48,7 @@ fun ColumnScope.NavigationRail(
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isSelected) {
-                        MaterialTheme.colorScheme.primaryContainer
+                        MaterialTheme.colorScheme.surfaceVariant
                     } else {
                         Color.Transparent
                     }
@@ -65,7 +66,7 @@ fun ColumnScope.NavigationRail(
                         painter = item.icon,
                         contentDescription = item.title,
                         tint = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimary
+                            MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
@@ -79,7 +80,7 @@ fun ColumnScope.NavigationRail(
                             fontWeight = FontWeight.Medium
                         ),
                         color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimary
+                            MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         }
