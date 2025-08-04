@@ -23,7 +23,7 @@ fun WorkspaceItemCreateNew(
     onAddClick: () -> Unit,
 ) {
     Column(
-        modifier = modifier.clickableWithRipple() { onAddClick() },
+        modifier = modifier.clickableWithRipple { onAddClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
