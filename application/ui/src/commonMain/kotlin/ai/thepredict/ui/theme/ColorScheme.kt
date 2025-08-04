@@ -1,6 +1,9 @@
 package ai.thepredict.ui.theme
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ripple
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 
@@ -21,3 +24,6 @@ fun createColorScheme(useDarkTheme: Boolean) = dynamicColorScheme(
         )
     }
 )
+
+val ColorScheme.rippleColor: Color get() = primary
+val ColorScheme.ripple get() = ripple(color = rippleColor)
