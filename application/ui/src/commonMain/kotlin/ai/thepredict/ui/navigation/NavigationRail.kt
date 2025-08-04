@@ -2,7 +2,6 @@ package ai.thepredict.ui.navigation
 
 import ai.thepredict.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
