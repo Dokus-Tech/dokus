@@ -5,6 +5,7 @@ import ai.thepredict.ui.navigation.NavigationBar
 import ai.thepredict.ui.navigation.NavigationRail
 import ai.thepredict.ui.navigation.TabNavItem
 import ai.thepredict.ui.navigation.findByScreenKey
+import ai.thepredict.ui.text.AppNameText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -115,17 +116,7 @@ private fun RailNavigationLayout(
                     .fillMaxHeight()
                     .padding(16.dp)
             ) {
-                // Logo Section
-                Text(
-                    text = "Predict",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Normal,
-                        letterSpacing = (-0.144).sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                )
+                AppNameText(modifier = Modifier.padding(bottom = 32.dp))
 
                 NavigationRail(
                     selectedItem = selectedItem,
