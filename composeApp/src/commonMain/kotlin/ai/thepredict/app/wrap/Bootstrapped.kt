@@ -7,6 +7,7 @@ import ai.thepredict.app.core.coreDiModule
 import ai.thepredict.app.dashboard.dashboardDiModule
 import ai.thepredict.app.home.homeDiModule
 import ai.thepredict.app.onboarding.onboardingDiModule
+import ai.thepredict.app.simulations.simulationDiModule
 import ai.thepredict.repository.repositoryDiModule
 import ai.thepredict.ui.uiDiModule
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ fun Bootstrapped(content: @Composable () -> Unit) {
             dashboardDiModule,
             contactsDiModule,
             cashflowDiModule,
+            simulationDiModule,
         )
     }
 
