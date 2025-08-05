@@ -41,6 +41,7 @@ include(":application:cashflow")
 include(":application:simulation")
 include(":application:inventory")
 include(":application:banking")
+include(":application:profile")
 include(":application:ui")
 include(":application:ui-preview")
 
