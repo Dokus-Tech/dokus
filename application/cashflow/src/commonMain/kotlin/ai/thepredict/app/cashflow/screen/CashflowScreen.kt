@@ -14,7 +14,7 @@ internal class CashflowScreen : Screen {
     override fun Content() {
         Scaffold {
             Box(modifier = Modifier.padding(it)) {
-                Text("Contacts", modifier = Modifier.align(Alignment.Center))
+                Text("Cashflow", modifier = Modifier.align(Alignment.Center))
             }
         }
     }
