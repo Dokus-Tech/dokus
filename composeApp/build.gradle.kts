@@ -72,6 +72,7 @@ kotlin {
             implementation(projects.application.onboarding)
             implementation(projects.application.home)
             implementation(projects.application.dashboard)
+            implementation(projects.application.contacts)
             implementation(projects.application.navigation)
 
             implementation(projects.shared.configuration)
