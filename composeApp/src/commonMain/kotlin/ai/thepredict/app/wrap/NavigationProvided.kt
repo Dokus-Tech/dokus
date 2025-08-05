@@ -1,5 +1,6 @@
 package ai.thepredict.app.wrap
 
+import ai.thepredict.app.cashflow.cashflowScreensModule
 import ai.thepredict.app.contacts.contactsScreensModule
 import ai.thepredict.app.dashboard.dashboardScreensModule
 import ai.thepredict.app.home.homeScreensModule
@@ -19,6 +20,7 @@ fun NavigationProvided(content: @Composable () -> Unit) {
         homeScreensModule()
         dashboardScreensModule()
         contactsScreensModule()
+        cashflowScreensModule()
     }
 
     ProvideNavigatorLifecycleKMPSupport {
