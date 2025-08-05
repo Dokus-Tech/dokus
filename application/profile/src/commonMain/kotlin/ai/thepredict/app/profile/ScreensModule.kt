@@ -5,7 +5,7 @@ import ai.thepredict.app.navigation.HomeTabsNavigation
 import cafe.adriel.voyager.core.registry.screenModule
 
 val profileScreensModule = screenModule {
-    register<HomeTabsNavigation.Banking> {
+    register<HomeTabsNavigation.Profile> {
         ProfileScreen()
     }
 }
