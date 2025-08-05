@@ -59,6 +59,8 @@ internal class HomeScreen : Screen {
         val cashflowTab = rememberScreen(TabNavItem.Cashflow.screenProvider)
         val simulationTab = rememberScreen(TabNavItem.Simulations.screenProvider)
         val inventoryTab = rememberScreen(TabNavItem.Inventory.screenProvider)
+        val bankingTab = rememberScreen(TabNavItem.Banking.screenProvider)
+        val profileTab = rememberScreen(TabNavItem.Profile.screenProvider)
 
         Scaffold {
             Navigator(dashboardTab) { navigator ->
@@ -69,6 +71,8 @@ internal class HomeScreen : Screen {
                         TabNavItem.Cashflow -> navigator.replaceAll(cashflowTab)
                         TabNavItem.Simulations -> navigator.replaceAll(simulationTab)
                         TabNavItem.Inventory -> navigator.replaceAll(inventoryTab)
+                        TabNavItem.Banking -> navigator.replaceAll(bankingTab)
+                        TabNavItem.Profile -> navigator.replaceAll(profileTab)
                         else -> {}
                     }
                 }
