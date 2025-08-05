@@ -40,6 +40,7 @@ include(":application:contacts")
 include(":application:cashflow")
 include(":application:simulation")
 include(":application:inventory")
+include(":application:banking")
 include(":application:ui")
 include(":application:ui-preview")
 
