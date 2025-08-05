@@ -55,12 +55,14 @@ internal class HomeScreen : Screen {
         val navItems = TabNavItem.items
 
         val dashboardTab = rememberScreen(TabNavItem.Dashboard.screenProvider)
+        val contactsTab = rememberScreen(TabNavItem.Contacts.screenProvider)
 
         Scaffold {
             Navigator(dashboardTab) { navigator ->
                 val onNavItemSelected: (TabNavItem) -> Unit = { item ->
                     when (item) {
                         TabNavItem.Dashboard -> navigator.replaceAll(dashboardTab)
+                        TabNavItem.Contacts -> navigator.replaceAll(contactsTab)
                         else -> {}
                     }
                 }
