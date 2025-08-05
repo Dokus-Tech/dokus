@@ -6,6 +6,7 @@ import ai.thepredict.app.dashboard.dashboardScreensModule
 import ai.thepredict.app.home.homeScreensModule
 import ai.thepredict.app.onboarding.onboardingScreensModule
 import ai.thepredict.app.home.splash.SplashScreen
+import ai.thepredict.app.inventory.inventoryScreensModule
 import ai.thepredict.app.simulations.simulationScreensModule
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
@@ -23,6 +24,7 @@ fun NavigationProvided(content: @Composable () -> Unit) {
         contactsScreensModule()
         cashflowScreensModule()
         simulationScreensModule()
+        inventoryScreensModule()
     }
 
     ProvideNavigatorLifecycleKMPSupport {
