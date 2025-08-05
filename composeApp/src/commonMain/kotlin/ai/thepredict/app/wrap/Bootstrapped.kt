@@ -1,5 +1,6 @@
 package ai.thepredict.app.wrap
 
+import ai.thepredict.app.banking.bankingDiModule
 import ai.thepredict.app.cashflow.cashflowDiModule
 import ai.thepredict.app.contacts.contactsDiModule
 import ai.thepredict.app.core.configureDi
@@ -28,6 +29,7 @@ fun Bootstrapped(content: @Composable () -> Unit) {
             cashflowDiModule,
             simulationDiModule,
             inventoryDiModule,
+            bankingDiModule
         )
     }
 
