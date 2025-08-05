@@ -1,4 +1,4 @@
-package ai.thepredict.app.dashboard.screen
+package ai.thepredict.app.cashflow.screen
 
 import ai.thepredict.app.navigation.HomeTabsNavigation
 import androidx.compose.foundation.layout.Box
@@ -11,14 +11,14 @@ import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 
-internal class DashboardScreen : Screen {
-    override val key: ScreenKey = HomeTabsNavigation.Dashboard.screenKey
+internal class CashflowScreen : Screen {
+    override val key: ScreenKey = HomeTabsNavigation.Cashflow.screenKey
 
     @Composable
     override fun Content() {
         Scaffold {
             Box(modifier = Modifier.padding(it)) {
-                Text("Dashboard", modifier = Modifier.align(Alignment.Center))
+                Text("Cashflow", modifier = Modifier.align(Alignment.Center))
             }
         }
     }

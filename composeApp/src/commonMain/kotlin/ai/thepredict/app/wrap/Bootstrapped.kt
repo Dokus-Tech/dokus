@@ -1,10 +1,16 @@
 package ai.thepredict.app.wrap
 
+import ai.thepredict.app.banking.bankingDiModule
+import ai.thepredict.app.cashflow.cashflowDiModule
+import ai.thepredict.app.contacts.contactsDiModule
 import ai.thepredict.app.core.configureDi
 import ai.thepredict.app.core.coreDiModule
 import ai.thepredict.app.dashboard.dashboardDiModule
 import ai.thepredict.app.home.homeDiModule
+import ai.thepredict.app.inventory.inventoryDiModule
 import ai.thepredict.app.onboarding.onboardingDiModule
+import ai.thepredict.app.profile.profileDiModule
+import ai.thepredict.app.simulations.simulationDiModule
 import ai.thepredict.repository.repositoryDiModule
 import ai.thepredict.ui.uiDiModule
 import androidx.compose.runtime.Composable
@@ -19,7 +25,13 @@ fun Bootstrapped(content: @Composable () -> Unit) {
             repositoryDiModule,
             onboardingDiModule,
             homeDiModule,
-            dashboardDiModule
+            dashboardDiModule,
+            contactsDiModule,
+            cashflowDiModule,
+            simulationDiModule,
+            inventoryDiModule,
+            bankingDiModule,
+            profileDiModule,
         )
     }
 

@@ -62,7 +62,7 @@ sealed interface TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.cashflow)
         override val title: String @Composable get() = "Cashflow"
         override val route: String = "cashflow"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Cashflow
         override val showTopBar: Boolean = true
     }
 
@@ -70,7 +70,7 @@ sealed interface TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.simulations)
         override val title: String @Composable get() = "Simulations"
         override val route: String = "simulations"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Simulations
         override val showTopBar: Boolean = true
     }
 
@@ -94,7 +94,7 @@ sealed interface TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.user)
         override val title: String @Composable get() = "Profile"
         override val route: String = "profile"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
+        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Profile
         override val showTopBar: Boolean = false
     }
 
