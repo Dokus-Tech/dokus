@@ -75,6 +75,7 @@ kotlin {
             implementation(projects.application.contacts)
             implementation(projects.application.cashflow)
             implementation(projects.application.simulation)
+            implementation(projects.application.inventory)
             implementation(projects.application.navigation)
 
             implementation(projects.shared.configuration)
