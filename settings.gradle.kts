@@ -37,6 +37,7 @@ include(":application:onboarding")
 include(":application:home")
 include(":application:dashboard")
 include(":application:contacts")
+include(":application:cashflow")
 include(":application:ui")
 include(":application:ui-preview")
 
