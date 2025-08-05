@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -23,9 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.registry.rememberScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.CurrentScreen
@@ -57,12 +56,24 @@ internal class HomeScreen : Screen {
         val navItems = TabNavItem.items
 
         val dashboardTab = rememberScreen(TabNavItem.Dashboard.screenProvider)
+        val contactsTab = rememberScreen(TabNavItem.Contacts.screenProvider)
+        val cashflowTab = rememberScreen(TabNavItem.Cashflow.screenProvider)
+        val simulationTab = rememberScreen(TabNavItem.Simulations.screenProvider)
+        val inventoryTab = rememberScreen(TabNavItem.Inventory.screenProvider)
+        val bankingTab = rememberScreen(TabNavItem.Banking.screenProvider)
+        val profileTab = rememberScreen(TabNavItem.Profile.screenProvider)
 
         Scaffold {
             Navigator(dashboardTab) { navigator ->
                 val onNavItemSelected: (TabNavItem) -> Unit = { item ->
                     when (item) {
                         TabNavItem.Dashboard -> navigator.replaceAll(dashboardTab)
+                        TabNavItem.Contacts -> navigator.replaceAll(contactsTab)
+                        TabNavItem.Cashflow -> navigator.replaceAll(cashflowTab)
+                        TabNavItem.Simulations -> navigator.replaceAll(simulationTab)
+                        TabNavItem.Inventory -> navigator.replaceAll(inventoryTab)
+                        TabNavItem.Banking -> navigator.replaceAll(bankingTab)
+                        TabNavItem.Profile -> navigator.replaceAll(profileTab)
                         else -> {}
                     }
                 }
@@ -122,7 +133,7 @@ private fun RailNavigationLayout(
                     selectedItem = selectedItem,
                     navItems = navItems,
                     onSelectedItemChange = onSelectedItemChange,
-                    modifier = Modifier.fillMaxHeight()
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
