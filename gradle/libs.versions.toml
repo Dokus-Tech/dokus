@@ -20,7 +20,7 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.9.0"
 kotlinx-datetime = "0.7.1"
 #kotlinx-rpc = "0.7.0"
-ktor = "3.2.3"
+ktor = "3.3.0"
 logback = "1.5.18"
 
 postgres = "42.7.8"
