@@ -21,14 +21,14 @@ kotlinx-serialization = "1.9.0"
 kotlinx-datetime = "0.7.1"
 #kotlinx-rpc = "0.7.0"
 ktor = "3.3.0"
-logback = "1.5.18"
+logback = "1.5.19"
 
 postgres = "42.7.8"
 h2 = "2.4.240"
 pgjdbc = "0.8.9"
 exposed = "0.61.0"
 
-kodein = "7.26.1"
+kodein = "7.28.0"
 
 voyager = "1.1.0-beta03"
 settings = "1.3.0"
