@@ -15,25 +15,22 @@ import ai.thepredict.apispec.TransactionMatchingApi
 import ai.thepredict.apispec.UserApi
 import ai.thepredict.configuration.ServerEndpoint
 import ai.thepredict.repository.api.UnifiedApi
-import org.kodein.di.DI
-import org.kodein.di.bind
-import org.kodein.di.instance
-import org.kodein.di.singleton
+import org.koin.dsl.module
 
-val repositoryDiModule by DI.Module("repository") {
-    bind<UnifiedApi>() with singleton { UnifiedApi.create(ServerEndpoint.PredictCloud) }
+val repositoryDiModule = module {
+    single<UnifiedApi> { UnifiedApi.create(ServerEndpoint.PredictCloud) }
 
-    bind<AuthApi>() with singleton { instance<UnifiedApi>() }
-    bind<CompanyApi>() with singleton { instance<UnifiedApi>() }
-    bind<CompanyMembersApi>() with singleton { instance<UnifiedApi>() }
-    bind<UserApi>() with singleton { instance<UnifiedApi>() }
-    bind<DocumentApi>() with singleton { instance<UnifiedApi>() }
-    bind<DocumentExtractionApi>() with singleton { instance<UnifiedApi>() }
-    bind<DocumentFileApi>() with singleton { instance<UnifiedApi>() }
-    bind<MatchingApi>() with singleton { instance<UnifiedApi>() }
-    bind<TransactionApi>() with singleton { instance<UnifiedApi>() }
-    bind<TransactionExtractionApi>() with singleton { instance<UnifiedApi>() }
-    bind<TransactionFileApi>() with singleton { instance<UnifiedApi>() }
-    bind<TransactionMatchingApi>() with singleton { instance<UnifiedApi>() }
-    bind<InfoApi>() with singleton { instance<UnifiedApi>() }
+    single<AuthApi> { get<UnifiedApi>() }
+    single<CompanyApi> { get<UnifiedApi>() }
+    single<CompanyMembersApi> { get<UnifiedApi>() }
+    single<UserApi> { get<UnifiedApi>() }
+    single<DocumentApi> { get<UnifiedApi>() }
+    single<DocumentExtractionApi> { get<UnifiedApi>() }
+    single<DocumentFileApi> { get<UnifiedApi>() }
+    single<MatchingApi> { get<UnifiedApi>() }
+    single<TransactionApi> { get<UnifiedApi>() }
+    single<TransactionExtractionApi> { get<UnifiedApi>() }
+    single<TransactionFileApi> { get<UnifiedApi>() }
+    single<TransactionMatchingApi> { get<UnifiedApi>() }
+    single<InfoApi> { get<UnifiedApi>() }
 }

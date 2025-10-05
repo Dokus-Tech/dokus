@@ -1,7 +1,6 @@
 package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
-import ai.thepredict.app.core.di
 import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
@@ -48,11 +47,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import org.kodein.di.instance
+import org.koin.compose.koinInject
 
 @Composable
 fun RegisterScreen(navigator: AppNavigator) {
-    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+    val backgroundAnimationViewModel = koinInject<BackgroundAnimationViewModel>()
     val viewModel = remember { RegisterViewModel() }
 
     val focusManager = LocalFocusManager.current

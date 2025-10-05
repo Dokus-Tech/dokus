@@ -1,7 +1,6 @@
 package ai.thepredict.app.onboarding.authentication.restore
 
 import ai.thepredict.app.core.constrains.isLargeScreen
-import ai.thepredict.app.core.di
 import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
@@ -33,11 +32,11 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import org.kodein.di.instance
+import org.koin.compose.koinInject
 
 @Composable
 fun NewPasswordScreen(navigator: AppNavigator) {
-    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+    val backgroundAnimationViewModel = koinInject<BackgroundAnimationViewModel>()
     val viewModel = remember { NewPasswordViewModel() }
 
     val data = viewModel.state.collectAsState()

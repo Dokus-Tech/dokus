@@ -1,6 +1,6 @@
 package ai.thepredict.app.inventory
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val inventoryDiModule by DI.Module("inventory") {
+val inventoryDiModule = module {
 }

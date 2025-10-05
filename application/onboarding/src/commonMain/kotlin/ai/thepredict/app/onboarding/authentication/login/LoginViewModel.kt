@@ -1,7 +1,6 @@
 package ai.thepredict.app.onboarding.authentication.login
 
 import ai.thepredict.apispec.AuthApi
-import ai.thepredict.app.core.di
 import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
@@ -17,13 +16,14 @@ import ai.thepredict.repository.extensions.user
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.kodein.di.instance
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle) {
+internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle), KoinComponent {
 
-    private val validateEmailUseCase: ValidateEmailUseCase by di.instance()
-    private val validatePasswordUseCase: ValidatePasswordUseCase by di.instance()
-    private val authApi: AuthApi by di.instance()
+    private val validateEmailUseCase: ValidateEmailUseCase by inject()
+    private val validatePasswordUseCase: ValidatePasswordUseCase by inject()
+    private val authApi: AuthApi by inject()
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
