@@ -35,7 +35,7 @@ kotlin {
         androidMain.dependencies {}
 
         commonMain.dependencies {
-            implementation(projects.shared.domain)
+            implementation(projects.foundation.domain)
         }
         desktopMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)

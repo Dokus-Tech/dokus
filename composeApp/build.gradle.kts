@@ -80,7 +80,7 @@ kotlin {
             implementation(projects.application.profile)
             implementation(projects.application.navigation)
 
-            implementation(projects.shared.configuration)
+            implementation(projects.foundation.configuration)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

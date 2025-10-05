@@ -42,7 +42,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.foundation.ui)
-            implementation(projects.shared.domain)
+            implementation(projects.foundation.domain)
 
             api(compose.runtime)
             api(compose.foundation)
