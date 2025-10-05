@@ -58,8 +58,9 @@ The project follows a feature-based modular architecture:
 - **`/server`**: Backend microservices (currently disabled in settings.gradle.kts)
 
 ### Key Architectural Patterns
-- **Dependency Injection**: Kodein DI throughout the application
-- **Navigation**: Voyager for type-safe navigation
+- **Dependency Injection**: Koin throughout the application
+- **Navigation**: JetBrains Compose Navigation for type-safe navigation
+- **Logging**: Kermit multiplatform logging via Logger wrapper in `platform` module
 - **Platform-specific code**: `expect`/`actual` declarations in the `platform` module
 - **Source sets**: Each module has `commonMain`, `androidMain`, `iosMain`, `desktopMain`, and `wasmJsMain`
 
@@ -71,8 +72,10 @@ All packages follow: `ai.thepredict.{module}.{feature}`
 - **Kotlin**: 2.2.10
 - **Compose Multiplatform**: 1.9.0
 - **Ktor**: 3.3.0 (HTTP client/server)
-- **Kodein**: 7.28.0 (DI)
-- **Voyager**: 1.1.0-beta03 (Navigation)
+- **Koin**: 4.0.0 (Dependency Injection)
+- **Compose Navigation**: 2.9.0 (Navigation)
+- **Kermit**: 2.0.4 (Logging)
+- **BuildKonfig**: 0.15.2 (Build Configuration)
 - **kotlinx.serialization**: 1.9.0
 
 ## Key Files & Entry Points
@@ -97,7 +100,7 @@ All packages follow: `ai.thepredict.{module}.{feature}`
 1. Create module in `/application/{feature-name}`
 2. Add to `settings.gradle.kts`
 3. Follow existing module structure with platform source sets
-4. Register in Kodein DI modules
+4. Register in Koin DI modules
 
 ### Working with platform-specific code
 1. Define interface with `expect` in `commonMain`
@@ -109,3 +112,53 @@ All packages follow: `ai.thepredict.{module}.{feature}`
 2. Verify dependencies in module's `build.gradle.kts`
 3. Ensure version catalog entries exist for new dependencies
 4. Run `./gradlew clean` before rebuilding
+
+### Using Logging
+The project uses Kermit for multiplatform logging, wrapped in a custom `Logger` class in the `platform` module.
+
+**Creating a logger:**
+```kotlin
+// Using class name as tag
+private val logger = Logger.forClass<MyViewModel>()
+
+// Using custom tag
+private val logger = Logger.withTag("CustomTag")
+```
+
+**Logging messages:**
+```kotlin
+logger.v { "Verbose message" }  // Verbose (only in debug builds)
+logger.d { "Debug message" }    // Debug (only in debug builds)
+logger.i { "Info message" }     // Info
+logger.w { "Warning message" }  // Warning
+logger.e { "Error message" }    // Error
+logger.a { "Assert/WTF" }       // Assert (critical errors)
+
+// With exceptions
+logger.e(exception) { "Error occurred" }
+```
+
+**Build configuration:**
+- Debug logging is controlled via BuildKonfig's `DEBUG` flag
+- Production builds: `./gradlew build` (DEBUG=false, Info+ logs only)
+- Development builds: `./gradlew build -PDEBUG=true` (DEBUG=true, all logs including Verbose/Debug)
+- The DEBUG flag is generated at compile time via the BuildKonfig plugin
+
+**Best practices:**
+- Use lazy message evaluation (lambdas) to avoid string construction when logging is disabled
+- Log levels are automatically configured: Verbose/Debug when DEBUG=true, Info+ when DEBUG=false
+- HTTP requests/responses are automatically logged via the `LoggingPlugin` in the repository layer
+- Each platform uses native logging: Logcat (Android), NSLog (iOS), Console (Desktop/Web)
+
+**Example usage in ViewModels:**
+```kotlin
+class LoginViewModel : BaseViewModel<State>(State.Idle), KoinComponent {
+    private val logger = Logger.forClass<LoginViewModel>()
+
+    fun login(email: String, password: String) = scope.launch {
+        logger.d { "Login attempt started" }
+        // ... login logic
+        logger.i { "Login successful" }
+    }
+}
+```
