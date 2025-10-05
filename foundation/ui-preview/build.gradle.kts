@@ -16,9 +16,15 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            export(libs.calf.ui)
+        }
+    }
 
     jvm("desktop")
 
@@ -31,20 +37,40 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
+            api(compose.preview)
+            api(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            implementation(projects.application.navigation)
-            implementation(projects.application.core)
-            implementation(projects.application.repository)
             implementation(projects.foundation.ui)
+            implementation(projects.foundation.domain)
+
+            api(compose.runtime)
+            api(compose.foundation)
+            api(compose.material3)
+            api(compose.ui)
+            api(compose.components.resources)
+            api(compose.components.uiToolingPreview)
+            api(libs.androidx.lifecycle.viewmodel)
+            api(libs.androidx.lifecycle.runtime.compose)
+
+            implementation(libs.voyager.navigator)
+
+            api(libs.calf.core)
+            api(libs.calf.ui)
+
+            api(libs.composeIcons.feather)
+
+            api(libs.materialKolor)
         }
         desktopMain.dependencies {
+            api(compose.preview)
+            api(compose.desktop.currentOs)
         }
     }
 }
 
 android {
-    namespace = "ai.thepredict.app.dashboard"
+    namespace = "ai.thepredict.ui"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -66,6 +92,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        compose = true
     }
 }
 

@@ -1,13 +1,14 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinPluginSerialization)
 }
+
+group = "ai.thepredict.apispec"
+version = "1.0.0"
 
 kotlin {
     androidTarget {
@@ -15,6 +16,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
+
 
     iosX64()
     iosArm64()
@@ -30,21 +32,19 @@ kotlin {
     sourceSets {
         val desktopMain by getting
 
-        androidMain.dependencies {
-        }
+        androidMain.dependencies {}
+
         commonMain.dependencies {
-            implementation(projects.application.navigation)
-            implementation(projects.application.core)
-            implementation(projects.application.repository)
-            implementation(projects.foundation.ui)
+            implementation(projects.foundation.domain)
         }
         desktopMain.dependencies {
+            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }
 
 android {
-    namespace = "ai.thepredict.app.dashboard"
+    namespace = "ai.thepredict.apispec"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -66,24 +66,5 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
-dependencies {
-    debugImplementation(compose.uiTooling)
-}
-
-compose.desktop {
-
-    application {
-        buildTypes {
-            release {
-                proguard {
-                    obfuscate = false
-                    optimize = false
-                    isEnabled = false
-                }
-            }
-        }
     }
 }

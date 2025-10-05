@@ -35,7 +35,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            implementation(projects.shared.configuration)
+            implementation(projects.foundation.configuration)
 
             implementation(compose.runtime)
             implementation(compose.foundation)
