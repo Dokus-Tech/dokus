@@ -13,7 +13,6 @@ import ai.thepredict.app.simulations.simulationScreensModule
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
 import cafe.adriel.voyager.core.registry.ScreenRegistry
-import cafe.adriel.voyager.jetpack.ProvideNavigatorLifecycleKMPSupport
 import cafe.adriel.voyager.navigator.Navigator
 
 @OptIn(ExperimentalVoyagerApi::class)
@@ -31,9 +30,7 @@ fun NavigationProvided(content: @Composable () -> Unit) {
         profileScreensModule()
     }
 
-    ProvideNavigatorLifecycleKMPSupport {
-        Navigator(SplashScreen()) {
-            content()
-        }
+    Navigator(SplashScreen()) {
+        content()
     }
 }
