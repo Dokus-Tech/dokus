@@ -44,7 +44,7 @@ kotlin {
 
             api(projects.foundation.platform)
 
-            implementation(libs.kodein)
+            implementation(libs.koin.core)
 
             implementation(libs.ktor.server.auth)
             implementation(libs.ktor.client.content.negotiation)

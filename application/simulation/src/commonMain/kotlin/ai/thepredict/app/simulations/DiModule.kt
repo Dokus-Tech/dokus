@@ -1,6 +1,6 @@
 package ai.thepredict.app.simulations
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val simulationDiModule by DI.Module("simulation") {
+val simulationDiModule = module {
 }

@@ -1,10 +1,8 @@
 package ai.thepredict.ui
 
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
-import org.kodein.di.DI
-import org.kodein.di.bind
-import org.kodein.di.singleton
+import org.koin.dsl.module
 
-val uiDiModule = DI.Module("ui") {
-    bind<BackgroundAnimationViewModel>() with singleton { BackgroundAnimationViewModel() }
+val uiDiModule = module {
+    single<BackgroundAnimationViewModel> { BackgroundAnimationViewModel() }
 }

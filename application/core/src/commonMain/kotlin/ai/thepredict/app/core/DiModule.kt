@@ -11,62 +11,60 @@ import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase
 import ai.thepredict.domain.usecases.validators.ValidatePostalCode
 import ai.thepredict.domain.usecases.validators.ValidateWorkspaceNameUseCase
 import ai.thepredict.domain.usecases.validators.ValidateWorkspaceTaxNumberUseCase
-import org.kodein.di.DI
-import org.kodein.di.bindProvider
-import org.kodein.di.instance
+import org.koin.dsl.module
 
-val coreDiModule by DI.Module("core") {
-    bindProvider<ValidateEmailUseCase> {
+val coreDiModule = module {
+    factory<ValidateEmailUseCase> {
         ValidateEmailUseCase()
     }
 
-    bindProvider<ValidatePasswordUseCase> {
+    factory<ValidatePasswordUseCase> {
         ValidatePasswordUseCase()
     }
 
-    bindProvider<ValidateNameUseCase> {
+    factory<ValidateNameUseCase> {
         ValidateNameUseCase()
     }
 
-    bindProvider<CreateNewUserUseCase> {
+    factory<CreateNewUserUseCase> {
         CreateNewUserUseCase(
-            emailValidator = instance<ValidateEmailUseCase>(),
-            passwordValidator = instance<ValidatePasswordUseCase>(),
-            nameValidator = instance<ValidateNameUseCase>()
+            emailValidator = get(),
+            passwordValidator = get(),
+            nameValidator = get()
         )
     }
 
-    bindProvider<ValidateWorkspaceNameUseCase> {
+    factory<ValidateWorkspaceNameUseCase> {
         ValidateWorkspaceNameUseCase()
     }
 
-    bindProvider<ValidateWorkspaceTaxNumberUseCase> {
+    factory<ValidateWorkspaceTaxNumberUseCase> {
         ValidateWorkspaceTaxNumberUseCase()
     }
 
-    bindProvider<ValidateNotShortUseCase> {
+    factory<ValidateNotShortUseCase> {
         ValidateNotShortUseCase()
     }
 
-    bindProvider<ValidatePostalCode> {
+    factory<ValidatePostalCode> {
         ValidatePostalCode(Country.BE)
     }
 
-    bindProvider<ValidateAddressUseCase> {
+    factory<ValidateAddressUseCase> {
         ValidateAddressUseCase(
             country = Country.BE,
-            streetNameValidator = instance<ValidateNotShortUseCase>(),
-            cityValidator = instance<ValidateNotShortUseCase>(),
-            postalCodeValidator = instance<ValidatePostalCode>(),
-            countryValidator = instance<ValidateNotShortUseCase>()
+            streetNameValidator = get(),
+            cityValidator = get(),
+            postalCodeValidator = get(),
+            countryValidator = get()
         )
     }
 
-    bindProvider<ValidateNewWorkspaceUseCase> {
+    factory<ValidateNewWorkspaceUseCase> {
         ValidateNewWorkspaceUseCase(
-            nameValidator = instance<ValidateWorkspaceNameUseCase>(),
-            taxNumberValidator = instance<ValidateWorkspaceTaxNumberUseCase>(),
-            addressValidator = instance<ValidateAddressUseCase>()
+            nameValidator = get(),
+            taxNumberValidator = get(),
+            addressValidator = get()
         )
     }
 }

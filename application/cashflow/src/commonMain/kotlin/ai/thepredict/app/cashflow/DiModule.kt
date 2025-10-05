@@ -1,6 +1,6 @@
 package ai.thepredict.app.cashflow
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val cashflowDiModule by DI.Module("cashflow") {
+val cashflowDiModule = module {
 }

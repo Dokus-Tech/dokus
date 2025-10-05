@@ -1,6 +1,6 @@
 package ai.thepredict.app.onboarding
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val onboardingDiModule by DI.Module("onboarding") {
+val onboardingDiModule = module {
 }
