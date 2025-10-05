@@ -40,11 +40,11 @@ kotlin {
             api(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            api(projects.shared.configuration)
+            api(projects.foundation.configuration)
             implementation(projects.foundation.platform)
             implementation(projects.application.core)
             implementation(projects.application.navigation)
-            implementation(projects.shared.domain)
+            implementation(projects.foundation.domain)
 
             api(compose.runtime)
             api(compose.foundation)
