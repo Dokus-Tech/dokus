@@ -137,9 +137,15 @@ logger.a { "Assert/WTF" }       // Assert (critical errors)
 logger.e(exception) { "Error occurred" }
 ```
 
+**Build configuration:**
+- Debug logging is controlled via BuildKonfig's `DEBUG` flag
+- Production builds: `./gradlew build` (DEBUG=false, Info+ logs only)
+- Development builds: `./gradlew build -PDEBUG=true` (DEBUG=true, all logs including Verbose/Debug)
+- The DEBUG flag is generated at compile time via the BuildKonfig plugin
+
 **Best practices:**
 - Use lazy message evaluation (lambdas) to avoid string construction when logging is disabled
-- Log levels are automatically configured: Verbose/Debug in debug builds, Info+ in release
+- Log levels are automatically configured: Verbose/Debug when DEBUG=true, Info+ when DEBUG=false
 - HTTP requests/responses are automatically logged via the `LoggingPlugin` in the repository layer
 - Each platform uses native logging: Logcat (Android), NSLog (iOS), Console (Desktop/Web)
 
