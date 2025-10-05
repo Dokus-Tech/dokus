@@ -84,7 +84,8 @@ All packages follow: `ai.thepredict.{module}.{feature}`
 - Version catalog: `/gradle/libs.versions.toml`
 - Module configuration: `/settings.gradle.kts`
 - Custom build plugins: `/build-logic/convention/`
-- Server endpoints: `/shared/configuration/src/commonMain/kotlin/ai/thepredict/configuration/ServerEndpoint.kt`
+- Server endpoints: `/foundation/configuration/src/commonMain/kotlin/ai/thepredict/configuration/Constants.kt`
+- Build configuration: `/foundation/platform/build.gradle.kts` (BuildKonfig setup)
 
 ## Development Guidelines
 
@@ -93,6 +94,58 @@ All packages follow: `ai.thepredict.{module}.{feature}`
 3. **Platform code**: Place platform-specific implementations in appropriate source sets
 4. **Testing**: Limited test coverage exists; server tests are in `/server/{module}/src/test/kotlin/`
 5. **Server modules**: Currently commented out in settings.gradle.kts; uncomment if server work is needed
+
+## Environment Configuration
+
+The project uses **BuildKonfig** to generate compile-time configuration for different environments. Configuration is set in `/foundation/platform/build.gradle.kts`.
+
+### Available Environments
+
+**Production (default):**
+```bash
+./gradlew build
+# API_HOST: api.thepredict.ai
+# API_PORT: null (uses HTTPS default port 443)
+# API_IS_LOCAL: false
+```
+
+**Local Development:**
+```bash
+./gradlew build -PENV=local
+# API_HOST: 127.0.0.1
+# API_PORT: 8000
+# API_IS_LOCAL: true
+```
+
+**Android Emulator:**
+```bash
+./gradlew build -PENV=localAndroid
+# API_HOST: 10.0.2.2 (emulator's localhost)
+# API_PORT: 8000
+# API_IS_LOCAL: true
+```
+
+**Custom Configuration:**
+```bash
+./gradlew build -PAPI_HOST=staging.example.com -PAPI_PORT=8080
+# Or combine with debug logging:
+./gradlew build -PENV=local -PDEBUG=true
+```
+
+### Accessing Configuration
+
+Configuration is available via `BuildConfig` object in the `platform` module:
+```kotlin
+import ai.thepredict.app.platform.BuildConfig
+
+// Access values
+val host = BuildConfig.API_HOST
+val port = BuildConfig.API_PORT  // -1 means no port (use default)
+val isLocal = BuildConfig.API_IS_LOCAL
+val isDebug = BuildConfig.DEBUG
+```
+
+The `ServerEndpoint` object automatically uses these values.
 
 ## Common Workflows
 

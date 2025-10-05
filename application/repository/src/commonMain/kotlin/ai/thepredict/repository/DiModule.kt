@@ -18,7 +18,7 @@ import ai.thepredict.repository.api.UnifiedApi
 import org.koin.dsl.module
 
 val repositoryDiModule = module {
-    single<UnifiedApi> { UnifiedApi.create(ServerEndpoint.PredictCloud) }
+    single<UnifiedApi> { UnifiedApi.create(ServerEndpoint) }
 
     single<AuthApi> { get<UnifiedApi>() }
     single<CompanyApi> { get<UnifiedApi>() }
