@@ -15,8 +15,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import thepredict.application.ui.generated.resources.Res
-import thepredict.application.ui.generated.resources.background_gradient
+import thepredict.foundation.ui.generated.resources.Res
+import thepredict.foundation.ui.generated.resources.background_gradient
 
 @Composable
 fun BackgroundGradientAnimated(

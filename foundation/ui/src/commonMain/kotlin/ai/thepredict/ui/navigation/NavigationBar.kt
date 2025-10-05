@@ -21,15 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import thepredict.application.ui.generated.resources.Res
-import thepredict.application.ui.generated.resources.cashflow
-import thepredict.application.ui.generated.resources.chart_bar_trend_up
-import thepredict.application.ui.generated.resources.plus
-import thepredict.application.ui.generated.resources.simulations
-import thepredict.application.ui.generated.resources.tasks_2
-import thepredict.application.ui.generated.resources.user
-import thepredict.application.ui.generated.resources.users
-import thepredict.application.ui.generated.resources.wallet_2
+import thepredict.foundation.ui.generated.resources.Res
+import thepredict.foundation.ui.generated.resources.cashflow
+import thepredict.foundation.ui.generated.resources.chart_bar_trend_up
+import thepredict.foundation.ui.generated.resources.plus
+import thepredict.foundation.ui.generated.resources.simulations
+import thepredict.foundation.ui.generated.resources.tasks_2
+import thepredict.foundation.ui.generated.resources.user
+import thepredict.foundation.ui.generated.resources.users
+import thepredict.foundation.ui.generated.resources.wallet_2
 
 
 sealed interface TabNavItem {

@@ -19,8 +19,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import thepredict.application.ui.generated.resources.Res
-import thepredict.application.ui.generated.resources.arrow_left
+import thepredict.foundation.ui.generated.resources.Res
+import thepredict.foundation.ui.generated.resources.arrow_left
 
 enum class PButtonVariant {
     Default,
