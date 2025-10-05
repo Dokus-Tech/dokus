@@ -75,6 +75,7 @@ All packages follow: `ai.thepredict.{module}.{feature}`
 - **Koin**: 4.0.0 (Dependency Injection)
 - **Compose Navigation**: 2.9.0 (Navigation)
 - **Kermit**: 2.0.4 (Logging)
+- **BuildKonfig**: 0.15.2 (Build Configuration)
 - **kotlinx.serialization**: 1.9.0
 
 ## Key Files & Entry Points
