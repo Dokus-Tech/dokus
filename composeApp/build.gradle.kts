@@ -66,8 +66,8 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.application.core)
-            implementation(projects.application.ui)
-            implementation(projects.application.platform)
+            implementation(projects.foundation.ui)
+            implementation(projects.foundation.platform)
             implementation(projects.application.repository)
             implementation(projects.application.onboarding)
             implementation(projects.application.home)
@@ -80,7 +80,7 @@ kotlin {
             implementation(projects.application.profile)
             implementation(projects.application.navigation)
 
-            implementation(projects.shared.configuration)
+            implementation(projects.foundation.configuration)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

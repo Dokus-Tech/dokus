@@ -37,12 +37,12 @@ kotlin {
         }
 
         commonMain.dependencies {
-            implementation(projects.shared.configuration)
+            implementation(projects.foundation.configuration)
 
-            api(projects.shared.domain)
-            api(projects.shared.apispec)
+            api(projects.foundation.domain)
+            api(projects.foundation.apispec)
 
-            api(projects.application.platform)
+            api(projects.foundation.platform)
 
             implementation(libs.kodein)
 
