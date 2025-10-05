@@ -8,7 +8,6 @@ import ai.thepredict.ui.navigation.NavigationRail
 import ai.thepredict.ui.navigation.TabNavItem
 import ai.thepredict.ui.navigation.navItems
 import ai.thepredict.ui.text.AppNameText
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -142,8 +141,7 @@ private fun HomeDesktopContent(
             modifier = Modifier
                 .width(250.dp)
                 .fillMaxHeight(),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
+            color = MaterialTheme.colorScheme.surface
         ) {
             Column {
                 NavigationRail(
