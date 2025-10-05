@@ -50,14 +50,11 @@ android {
 buildkonfig {
     packageName = "ai.thepredict.app.platform"
 
-    // Default configuration - production build
+    // Configuration
+    // By default, DEBUG is false (production)
+    // To build with debug logging: ./gradlew build -PDEBUG=true
     defaultConfigs {
-        buildConfigField(BOOLEAN, "DEBUG", "false")
-    }
-
-    // Debug configuration - can be overridden via gradle property
-    // To build with debug: ./gradlew build -PDEBUG=true
-    defaultConfigs("debug") {
-        buildConfigField(BOOLEAN, "DEBUG", findProperty("DEBUG")?.toString() ?: "true")
+        val isDebug = findProperty("DEBUG")?.toString()?.toBoolean() ?: false
+        buildConfigField(BOOLEAN, "DEBUG", isDebug.toString())
     }
 }
