@@ -41,7 +41,7 @@ kotlin {
             api(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            implementation(projects.application.ui)
+            implementation(projects.foundation.ui)
             implementation(projects.shared.domain)
 
             api(compose.runtime)
