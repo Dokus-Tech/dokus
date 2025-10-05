@@ -2,7 +2,7 @@ package ai.thepredict.app.onboarding.authentication.restore
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
-import ai.thepredict.app.navigation.OnboardingNavigation
+import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
@@ -36,64 +36,54 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.registry.rememberScreen
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import org.kodein.di.instance
 
-internal class ForgotPasswordScreen : Screen {
-    @Composable
-    override fun Content() {
-        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
-        val viewModel = rememberScreenModel { ForgotPasswordViewModel() }
+@Composable
+fun ForgotPasswordScreen(navigator: AppNavigator) {
+    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+    val viewModel = remember { ForgotPasswordViewModel() }
 
-        val data = viewModel.state.collectAsState()
-        val fieldsError: PredictException? =
-            (data.value as? ForgotPasswordViewModel.State.Error)?.exception
+    val data = viewModel.state.collectAsState()
+    val fieldsError: PredictException? =
+        (data.value as? ForgotPasswordViewModel.State.Error)?.exception
 
-        val navigator = LocalNavigator.currentOrThrow
-        val focusManager = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
 
-        val loginScreen = rememberScreen(OnboardingNavigation.Authorization.LoginScreen)
+    var email by remember { mutableStateOf("") }
+    val mutableInteractionSource = remember { MutableInteractionSource() }
 
-        var email by remember { mutableStateOf("") }
-        val mutableInteractionSource = remember { MutableInteractionSource() }
-
-        Scaffold { contentPadding ->
-            Box(
-                Modifier
-                    .padding(contentPadding)
-                    .clickable(
-                        indication = null,
-                        interactionSource = mutableInteractionSource
-                    ) {
-                        focusManager.clearFocus()
-                    }
-            ) {
-                if (isLargeScreen) {
-                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
-                        ForgotPasswordForm(
-                            focusManager = focusManager,
-                            email = email,
-                            onEmailChange = { email = it },
-                            fieldsError = fieldsError,
-                            onSubmit = { viewModel.submit(email) },
-                            onBackPress = { navigator.replace(loginScreen) },
-                        )
-                    }
-                } else {
-                    RegisterScreenMobileContent(
+    Scaffold { contentPadding ->
+        Box(
+            Modifier
+                .padding(contentPadding)
+                .clickable(
+                    indication = null,
+                    interactionSource = mutableInteractionSource
+                ) {
+                    focusManager.clearFocus()
+                }
+        ) {
+            if (isLargeScreen) {
+                SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
+                    ForgotPasswordForm(
                         focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
                         fieldsError = fieldsError,
                         onSubmit = { viewModel.submit(email) },
-                        onBackPress = { navigator.replace(loginScreen) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        onBackPress = { navigator.navigateBackToLogin() },
                     )
                 }
+            } else {
+                RegisterScreenMobileContent(
+                    focusManager = focusManager,
+                    email = email,
+                    onEmailChange = { email = it },
+                    fieldsError = fieldsError,
+                    onSubmit = { viewModel.submit(email) },
+                    onBackPress = { navigator.navigateBackToLogin() },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }

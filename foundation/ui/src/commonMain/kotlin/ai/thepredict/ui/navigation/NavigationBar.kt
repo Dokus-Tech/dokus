@@ -1,6 +1,5 @@
 package ai.thepredict.ui.navigation
 
-import ai.thepredict.app.navigation.HomeTabsNavigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,172 +38,150 @@ sealed interface TabNavItem {
     @get:Composable
     val title: String
     val route: String
-    val screenProvider: HomeTabsNavigation
     val showTopBar: Boolean
 
     data object Dashboard : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.chart_bar_trend_up)
         override val title: String @Composable get() = "Dashboard"
-        override val route: String = "dashboard"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Dashboard
+        override val route: String = "tab/dashboard"
         override val showTopBar: Boolean = false
     }
 
     data object Contacts : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.users)
         override val title: String @Composable get() = "Contacts"
-        override val route: String = "contacts"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Contacts
-        override val showTopBar: Boolean = true
+        override val route: String = "tab/contacts"
+        override val showTopBar: Boolean = false
     }
 
     data object Cashflow : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.cashflow)
         override val title: String @Composable get() = "Cashflow"
-        override val route: String = "cashflow"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Cashflow
-        override val showTopBar: Boolean = true
+        override val route: String = "tab/cashflow"
+        override val showTopBar: Boolean = false
     }
 
     data object Simulations : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.simulations)
         override val title: String @Composable get() = "Simulations"
-        override val route: String = "simulations"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Simulations
-        override val showTopBar: Boolean = true
+        override val route: String = "tab/simulations"
+        override val showTopBar: Boolean = false
     }
 
-    data object Inventory : TabNavItem {
+    data object Items : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.tasks_2)
         override val title: String @Composable get() = "Items"
-        override val route: String = "items"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Items
-        override val showTopBar: Boolean = true
+        override val route: String = "tab/inventory"
+        override val showTopBar: Boolean = false
     }
 
     data object Banking : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.wallet_2)
         override val title: String @Composable get() = "Banking"
-        override val route: String = "banking"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Banking
-        override val showTopBar: Boolean = true
+        override val route: String = "tab/banking"
+        override val showTopBar: Boolean = false
     }
 
     data object Profile : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.user)
         override val title: String @Composable get() = "Profile"
-        override val route: String = "profile"
-        override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.Profile
+        override val route: String = "tab/profile"
         override val showTopBar: Boolean = false
     }
 
-    sealed interface Fab : TabNavItem {
-        data object AddDocuments : Fab {
-            override val icon: Painter @Composable get() = painterResource(Res.drawable.plus)
-            override val title: String @Composable get() = "Add"
-            override val route: String = "documents/add"
-            override val screenProvider: HomeTabsNavigation = HomeTabsNavigation.AddDocuments
-            override val showTopBar: Boolean = true
-        }
-    }
-
-    companion object Companion {
-        val all = listOf(
-            Dashboard,
-            Contacts,
-            Cashflow,
-            Simulations,
-            Inventory,
-            Banking,
-            Profile
-        )
+    data object AddDocuments : TabNavItem {
+        override val icon: Painter @Composable get() = painterResource(Res.drawable.plus)
+        override val title: String @Composable get() = ""
+        override val route: String = "documents/add"
+        override val showTopBar: Boolean = false
     }
 }
 
-fun List<TabNavItem>.findByScreenKey(
-    screenKey: String,
-    default: TabNavItem = first()
-): TabNavItem {
-    return find { it.screenProvider.screenKey == screenKey } ?: default
+val navItems = listOf(
+    TabNavItem.Dashboard,
+    TabNavItem.Contacts,
+    TabNavItem.Cashflow,
+    TabNavItem.Simulations,
+    TabNavItem.Items,
+    TabNavItem.Banking,
+    TabNavItem.Profile
+)
+
+fun List<TabNavItem>.findByRoute(route: String): TabNavItem = first {
+    it.route == route
 }
 
 @Composable
 fun NavigationBar(
-    tabNavItems: List<TabNavItem>,
+    items: List<TabNavItem>,
     fabItem: TabNavItem,
     selectedIndex: Int,
-    modifier: Modifier = Modifier,
     onItemClick: (TabNavItem) -> Unit,
+    onFabClick: () -> Unit,
 ) {
-    val selectedItem = tabNavItems[selectedIndex]
-    val half = tabNavItems.size / 2
-    val firstHalf = tabNavItems.take(half)
-    val secondHalf = tabNavItems.drop(half)
-
-    Column(
-        modifier = modifier
+    val middleIndex = items.size / 2
+    val (firstHalf, secondHalf) = items.withIndex().partition { it.index < middleIndex }
+    Row(
+        modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .height(60.dp)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            Modifier
-                .height(1.dp)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+        firstHalf.forEach {
+            AppNavBarItem(it.value, it.index == selectedIndex, onItemClick)
+        }
+        FloatingActionButton(
+            onClick = onFabClick,
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.size(46.dp)
         ) {
-            firstHalf.forEach { item ->
-                NavigationButton(
-                    tabNavItem = item,
-                    onClick = { onItemClick(item) },
-                    selected = selectedItem == item
-                )
-            }
-
-            // Add button (FAB)
-            FloatingActionButton(
-                onClick = { onItemClick(fabItem) },
-                modifier = Modifier.size(48.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = CircleShape
-            ) {
-                Icon(
-                    painter = fabItem.icon,
-                    contentDescription = fabItem.title,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            secondHalf.forEach { item ->
-                NavigationButton(
-                    tabNavItem = item,
-                    onClick = { onItemClick(item) },
-                    selected = selectedItem == item
-                )
-            }
+            Icon(
+                painter = fabItem.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        secondHalf.forEach {
+            AppNavBarItem(it.value, it.index == selectedIndex, onItemClick)
         }
     }
 }
 
 @Composable
-private fun NavigationButton(
-    tabNavItem: TabNavItem,
-    onClick: () -> Unit,
-    selected: Boolean
+fun AppNavBarItem(
+    item: TabNavItem,
+    isSelected: Boolean,
+    onItemClick: (TabNavItem) -> Unit
 ) {
-    IconButton(onClick = onClick) {
-        Icon(
-            painter = tabNavItem.icon,
-            contentDescription = tabNavItem.title,
-            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(24.dp)
-        )
+    val color = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    }
+    Column(
+        modifier = Modifier.padding(horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        IconButton(
+            onClick = { onItemClick(item) }
+        ) {
+            Icon(
+                painter = item.icon,
+                contentDescription = item.title,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .size(width = 24.dp, height = 2.dp)
+                    .background(color = color, shape = CircleShape)
+            )
+        }
     }
 }

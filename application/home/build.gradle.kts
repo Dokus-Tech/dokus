@@ -37,6 +37,15 @@ kotlin {
             implementation(projects.application.core)
             implementation(projects.application.repository)
             implementation(projects.foundation.ui)
+
+            // Feature modules for tab screens
+            implementation(projects.application.dashboard)
+            implementation(projects.application.contacts)
+            implementation(projects.application.cashflow)
+            implementation(projects.application.simulation)
+            implementation(projects.application.inventory)
+            implementation(projects.application.banking)
+            implementation(projects.application.profile)
         }
         desktopMain.dependencies {
         }

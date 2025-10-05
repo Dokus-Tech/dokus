@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding.authentication.restore
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
+import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
@@ -32,64 +33,57 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import org.kodein.di.instance
 
-internal class NewPasswordScreen : Screen {
-    @Composable
-    override fun Content() {
-        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
-        val viewModel = rememberScreenModel { NewPasswordViewModel() }
+@Composable
+fun NewPasswordScreen(navigator: AppNavigator) {
+    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+    val viewModel = remember { NewPasswordViewModel() }
 
-        val data = viewModel.state.collectAsState()
-        val fieldsError: PredictException? =
-            (data.value as? NewPasswordViewModel.State.Error)?.exception
+    val data = viewModel.state.collectAsState()
+    val fieldsError: PredictException? =
+        (data.value as? NewPasswordViewModel.State.Error)?.exception
 
-        val navigator = LocalNavigator.currentOrThrow
-        val focusManager = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
 
-        var password by remember { mutableStateOf("") }
-        var passwordConfirmation by remember { mutableStateOf("") }
-        val mutableInteractionSource = remember { MutableInteractionSource() }
+    var password by remember { mutableStateOf("") }
+    var passwordConfirmation by remember { mutableStateOf("") }
+    val mutableInteractionSource = remember { MutableInteractionSource() }
 
-        Scaffold { contentPadding ->
-            Box(
-                Modifier
-                    .padding(contentPadding)
-                    .clickable(
-                        indication = null,
-                        interactionSource = mutableInteractionSource
-                    ) {
-                        focusManager.clearFocus()
-                    }
-            ) {
-                if (isLargeScreen) {
-                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
-                        NewPasswordForm(
-                            focusManager = focusManager,
-                            password = password,
-                            onPasswordChange = { password = it },
-                            passwordConfirmation = passwordConfirmation,
-                            onPasswordConfirmationChange = { passwordConfirmation = it },
-                            fieldsError = fieldsError,
-                            onContinueClick = { viewModel.submit(password, passwordConfirmation) }
-                        )
-                    }
-                } else {
-                    NewPasswordScreenMobileContent(
+    Scaffold { contentPadding ->
+        Box(
+            Modifier
+                .padding(contentPadding)
+                .clickable(
+                    indication = null,
+                    interactionSource = mutableInteractionSource
+                ) {
+                    focusManager.clearFocus()
+                }
+        ) {
+            if (isLargeScreen) {
+                SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
+                    NewPasswordForm(
                         focusManager = focusManager,
                         password = password,
                         onPasswordChange = { password = it },
                         passwordConfirmation = passwordConfirmation,
                         onPasswordConfirmationChange = { passwordConfirmation = it },
                         fieldsError = fieldsError,
-                        onContinueClick = { viewModel.submit(password, passwordConfirmation) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        onContinueClick = { viewModel.submit(password, passwordConfirmation) }
                     )
                 }
+            } else {
+                NewPasswordScreenMobileContent(
+                    focusManager = focusManager,
+                    password = password,
+                    onPasswordChange = { password = it },
+                    passwordConfirmation = passwordConfirmation,
+                    onPasswordConfirmationChange = { passwordConfirmation = it },
+                    fieldsError = fieldsError,
+                    onContinueClick = { viewModel.submit(password, passwordConfirmation) },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }

@@ -47,11 +47,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
-            api(libs.voyager.navigator)
-            api(libs.voyager.navigatorKmp)
-            api(libs.voyager.tabNavigator)
-            api(libs.voyager.transitions)
-            api(libs.voyager.screenModel)
+            api(libs.navigation.compose)
+            api(libs.lifecycle.viewmodel.compose)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

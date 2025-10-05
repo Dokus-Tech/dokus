@@ -1,10 +1,12 @@
 package ai.thepredict.app.home.screen
 
 import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.thepredict.app.navigation.AppNavigator
+import ai.thepredict.app.navigation.AppRoutes
 import ai.thepredict.ui.navigation.NavigationBar
 import ai.thepredict.ui.navigation.NavigationRail
 import ai.thepredict.ui.navigation.TabNavItem
-import ai.thepredict.ui.navigation.findByScreenKey
+import ai.thepredict.ui.navigation.navItems
 import ai.thepredict.ui.text.AppNameText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
@@ -22,167 +24,206 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.registry.rememberScreen
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.CurrentScreen
-import cafe.adriel.voyager.navigator.Navigator
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import ai.thepredict.app.banking.screen.BankingScreen
+import ai.thepredict.app.cashflow.screen.CashflowScreen
+import ai.thepredict.app.contacts.screen.ContactsScreen
+import ai.thepredict.app.dashboard.screen.DashboardScreen
+import ai.thepredict.app.inventory.screen.InventoryScreen
+import ai.thepredict.app.profile.screen.ProfileScreen
+import ai.thepredict.app.simulations.screen.SimulationScreen
 
-private val TabNavItem.Companion.items: List<TabNavItem>
-    @Composable get() = if (isLargeScreen) {
-        listOf(
-            TabNavItem.Dashboard,
-            TabNavItem.Contacts,
-            TabNavItem.Cashflow,
-            TabNavItem.Simulations,
-            TabNavItem.Inventory,
-            TabNavItem.Banking,
-            TabNavItem.Profile
-        )
+@Composable
+fun HomeScreen(
+    navigator: AppNavigator
+) {
+    val tabNavController = rememberNavController()
+    var currentRoute by remember { mutableStateOf(AppRoutes.TAB_DASHBOARD) }
+
+    val tabItems = if (isLargeScreen) {
+        navItems
     } else {
         listOf(
             TabNavItem.Dashboard,
             TabNavItem.Contacts,
-            TabNavItem.Inventory,
+            TabNavItem.Cashflow,
             TabNavItem.Banking
         )
     }
 
-internal class HomeScreen : Screen {
-    @Composable
-    override fun Content() {
-        val navItems = TabNavItem.items
+    val selectedIndex = tabItems.indexOfFirst { it.route == currentRoute }
 
-        val dashboardTab = rememberScreen(TabNavItem.Dashboard.screenProvider)
-        val contactsTab = rememberScreen(TabNavItem.Contacts.screenProvider)
-        val cashflowTab = rememberScreen(TabNavItem.Cashflow.screenProvider)
-        val simulationTab = rememberScreen(TabNavItem.Simulations.screenProvider)
-        val inventoryTab = rememberScreen(TabNavItem.Inventory.screenProvider)
-        val bankingTab = rememberScreen(TabNavItem.Banking.screenProvider)
-        val profileTab = rememberScreen(TabNavItem.Profile.screenProvider)
+    val onNavItemSelected: (TabNavItem) -> Unit = { item ->
+        currentRoute = item.route
+        tabNavController.navigate(item.route) {
+            popUpTo(AppRoutes.TAB_DASHBOARD)
+            launchSingleTop = true
+        }
+    }
 
-        Scaffold {
-            Navigator(dashboardTab) { navigator ->
-                val onNavItemSelected: (TabNavItem) -> Unit = { item ->
-                    when (item) {
-                        TabNavItem.Dashboard -> navigator.replaceAll(dashboardTab)
-                        TabNavItem.Contacts -> navigator.replaceAll(contactsTab)
-                        TabNavItem.Cashflow -> navigator.replaceAll(cashflowTab)
-                        TabNavItem.Simulations -> navigator.replaceAll(simulationTab)
-                        TabNavItem.Inventory -> navigator.replaceAll(inventoryTab)
-                        TabNavItem.Banking -> navigator.replaceAll(bankingTab)
-                        TabNavItem.Profile -> navigator.replaceAll(profileTab)
-                        else -> {}
-                    }
-                }
+    if (isLargeScreen) {
+        HomeDesktopContent(
+            tabNavController = tabNavController,
+            navigator = navigator,
+            selectedIndex = selectedIndex,
+            tabItems = tabItems,
+            onNavItemSelected = onNavItemSelected
+        )
+    } else {
+        HomeMobileContent(
+            tabNavController = tabNavController,
+            navigator = navigator,
+            selectedIndex = selectedIndex,
+            tabItems = tabItems,
+            onNavItemSelected = onNavItemSelected
+        )
+    }
+}
 
-                val selectedItem = navItems.findByScreenKey(navigator.lastItem.key)
+@Composable
+private fun HomeTabNavHost(
+    navController: NavHostController,
+    navigator: AppNavigator
+) {
+    NavHost(
+        navController = navController,
+        startDestination = AppRoutes.TAB_DASHBOARD
+    ) {
+        composable(AppRoutes.TAB_DASHBOARD) {
+            DashboardScreen(navigator)
+        }
 
-                val layout: @Composable (@Composable () -> Unit) -> Unit =
-                    if (isLargeScreen) {
-                        { content ->
-                            RailNavigationLayout(
-                                selectedItem,
-                                navItems,
-                                onNavItemSelected
-                            ) { content() }
-                        }
-                    } else {
-                        { content ->
-                            BottomNavigationLayout(
-                                selectedItem,
-                                navItems,
-                                onNavItemSelected
-                            ) { content() }
-                        }
-                    }
+        composable(AppRoutes.TAB_CONTACTS) {
+            ContactsScreen(navigator)
+        }
 
-                layout {
-                    CurrentScreen()
-                }
+        composable(AppRoutes.TAB_CASHFLOW) {
+            CashflowScreen(navigator)
+        }
+
+        composable(AppRoutes.TAB_SIMULATIONS) {
+            SimulationScreen(navigator)
+        }
+
+        composable(AppRoutes.TAB_INVENTORY) {
+            InventoryScreen(navigator)
+        }
+
+        composable(AppRoutes.TAB_BANKING) {
+            BankingScreen(navigator)
+        }
+
+        composable(AppRoutes.TAB_PROFILE) {
+            ProfileScreen(navigator)
+        }
+    }
+}
+
+@Composable
+private fun HomeDesktopContent(
+    tabNavController: NavHostController,
+    navigator: AppNavigator,
+    selectedIndex: Int,
+    tabItems: List<TabNavItem>,
+    onNavItemSelected: (TabNavItem) -> Unit
+) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier
+                .width(250.dp)
+                .fillMaxHeight(),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
+        ) {
+            Column {
+                NavigationRail(
+                    selectedItem = tabItems[selectedIndex.coerceIn(0, tabItems.size - 1)],
+                    navItems = tabItems,
+                    onSelectedItemChange = onNavItemSelected,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = { HomeTopBar() }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                HomeTabNavHost(
+                    navController = tabNavController,
+                    navigator = navigator
+                )
             }
         }
     }
 }
 
 @Composable
-private fun RailNavigationLayout(
-    selectedItem: TabNavItem,
-    navItems: List<TabNavItem>,
-    onSelectedItemChange: (TabNavItem) -> Unit,
-    content: @Composable () -> Unit
+private fun HomeMobileContent(
+    tabNavController: NavHostController,
+    navigator: AppNavigator,
+    selectedIndex: Int,
+    tabItems: List<TabNavItem>,
+    onNavItemSelected: (TabNavItem) -> Unit
 ) {
-    Row(Modifier.fillMaxSize()) {
-        Surface(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(240.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(16.dp)
-            ) {
-                AppNameText(modifier = Modifier.padding(bottom = 32.dp))
-
-                NavigationRail(
-                    selectedItem = selectedItem,
-                    navItems = navItems,
-                    onSelectedItemChange = onSelectedItemChange,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = { HomeTopBar() },
+        bottomBar = {
+            NavigationBar(
+                items = tabItems,
+                fabItem = TabNavItem.AddDocuments,
+                selectedIndex = selectedIndex,
+                onItemClick = onNavItemSelected,
+                onFabClick = {
+                    // Handle fab click - navigate to add documents
+                }
+            )
         }
-
+    ) { paddingValues ->
         Box(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 8.dp),
-            contentAlignment = Alignment.Center
+                .padding(paddingValues)
         ) {
-            content()
+            HomeTabNavHost(
+                navController = tabNavController,
+                navigator = navigator
+            )
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BottomNavigationLayout(
-    selectedItem: TabNavItem,
-    navItems: List<TabNavItem>,
-    onSelectedItemChange: (TabNavItem) -> Unit,
-    content: @Composable () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            if (selectedItem.showTopBar) {
-                CenterAlignedTopAppBar(
-                    title = { Text(selectedItem.title) }
+private fun HomeTopBar() {
+    CenterAlignedTopAppBar(
+        title = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AppNameText()
+                Text(
+                    text = "Dashboard",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
-        },
-        bottomBar = {
-            NavigationBar(
-                tabNavItems = navItems,
-                fabItem = TabNavItem.Fab.AddDocuments,
-                selectedIndex = navItems.indexOf(selectedItem),
-                modifier = Modifier.padding(bottom = 32.dp)
-            ) {
-                onSelectedItemChange(it)
-            }
         }
-    ) { innerPadding ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.Center
-        ) {
-            content()
-        }
-    }
+    )
 }

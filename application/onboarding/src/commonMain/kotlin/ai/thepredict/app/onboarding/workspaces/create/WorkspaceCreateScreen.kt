@@ -2,7 +2,7 @@ package ai.thepredict.app.onboarding.workspaces.create
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.flags.FeatureFlags
-import ai.thepredict.app.navigation.CoreNavigation
+import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.model.Address
 import ai.thepredict.domain.model.Country
@@ -52,11 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.registry.rememberScreen
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.MapPin
@@ -68,98 +63,90 @@ private val WorkspaceCreateViewModel.State.exceptionOrNull: PredictException?
         else -> null
     }
 
-internal class WorkspaceCreateScreen : Screen {
+@Composable
+fun WorkspaceCreateScreen(navigator: AppNavigator) {
+    val viewModel = remember { WorkspaceCreateViewModel() }
+    val data = viewModel.state.collectAsState()
 
-    @Composable
-    override fun Content() {
-        val viewModel = rememberScreenModel { WorkspaceCreateViewModel() }
-        val data = viewModel.state.collectAsState()
+    val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
 
-        val navigator = LocalNavigator.currentOrThrow
-        val focusManager = LocalFocusManager.current
-        val scope = rememberCoroutineScope()
+    val fieldsError: PredictException? = data.value.exceptionOrNull
 
-        val fieldsError: PredictException? = data.value.exceptionOrNull
+    val defaultCountry = Country.default.localized
 
-        val defaultCountry = Country.default.localized
+    var workspaceName by remember { mutableStateOf("") }
+    var taxNumber by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf(Address(country = defaultCountry)) }
+    val mutableInteractionSource = remember { MutableInteractionSource() }
 
-        var workspaceName by remember { mutableStateOf("") }
-        var taxNumber by remember { mutableStateOf("") }
-        var address by remember { mutableStateOf(Address(country = defaultCountry)) }
-        val mutableInteractionSource = remember { MutableInteractionSource() }
-
-        val homeScreen = rememberScreen(CoreNavigation.Core)
-
-        val handleEffect = { effect: WorkspaceCreateViewModel.Effect ->
-            when (effect) {
-                is WorkspaceCreateViewModel.Effect.NavigateHome -> navigator.replaceAll(
-                    homeScreen
-                )
-            }
+    val handleEffect = { effect: WorkspaceCreateViewModel.Effect ->
+        when (effect) {
+            is WorkspaceCreateViewModel.Effect.NavigateHome -> navigator.navigateToHome()
         }
+    }
 
-        LaunchedEffect("workspace-create") {
-            scope.launch { viewModel.effect.collect(handleEffect) }
-        }
+    LaunchedEffect("workspace-create") {
+        scope.launch { viewModel.effect.collect(handleEffect) }
+    }
 
-        Scaffold { contentPadding ->
-            Box(
-                Modifier
-                    .padding(contentPadding)
-                    .clickable(
-                        indication = null,
-                        interactionSource = mutableInteractionSource
-                    ) {
-                        focusManager.clearFocus()
-                    }
-            ) {
-                if (isLargeScreen) {
-                    WorkspaceCreateScreenDesktopContent(
-                        state = data.value,
-                        focusManager = focusManager,
-                        workspaceName = workspaceName,
-                        onWorkspaceNameChange = { workspaceName = it },
-                        vatNumber = taxNumber,
-                        onVatNumberChange = { taxNumber = it },
-                        address = address,
-                        onAddressChange = { address = it },
-                        fieldsError = fieldsError,
-                        onAddAvatarClick = {},
-                        onCreateClick = {
-                            viewModel.create(
-                                name = workspaceName,
-                                taxNumber = taxNumber,
-                                address = address
-                            )
-                        },
-                        onBackClick = {
-                            navigator.pop()
-                        },
-                    )
-                } else {
-                    WorkspaceCreateScreenMobileContent(
-                        focusManager = focusManager,
-                        workspaceName = workspaceName,
-                        onWorkspaceNameChange = { workspaceName = it },
-                        vatNumber = taxNumber,
-                        onVatNumberChange = { taxNumber = it },
-                        address = address,
-                        onAddressChange = { address = it },
-                        fieldsError = fieldsError,
-                        onAddAvatarClick = {},
-                        onCreateClick = {
-                            viewModel.create(
-                                name = workspaceName,
-                                taxNumber = taxNumber,
-                                address = address
-                            )
-                        },
-                        onBackClick = {
-                            navigator.pop()
-                        },
-                        modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize(),
-                    )
+    Scaffold { contentPadding ->
+        Box(
+            Modifier
+                .padding(contentPadding)
+                .clickable(
+                    indication = null,
+                    interactionSource = mutableInteractionSource
+                ) {
+                    focusManager.clearFocus()
                 }
+        ) {
+            if (isLargeScreen) {
+                WorkspaceCreateScreenDesktopContent(
+                    state = data.value,
+                    focusManager = focusManager,
+                    workspaceName = workspaceName,
+                    onWorkspaceNameChange = { workspaceName = it },
+                    vatNumber = taxNumber,
+                    onVatNumberChange = { taxNumber = it },
+                    address = address,
+                    onAddressChange = { address = it },
+                    fieldsError = fieldsError,
+                    onAddAvatarClick = {},
+                    onCreateClick = {
+                        viewModel.create(
+                            name = workspaceName,
+                            taxNumber = taxNumber,
+                            address = address
+                        )
+                    },
+                    onBackClick = {
+                        navigator.navigateBack()
+                    },
+                )
+            } else {
+                WorkspaceCreateScreenMobileContent(
+                    focusManager = focusManager,
+                    workspaceName = workspaceName,
+                    onWorkspaceNameChange = { workspaceName = it },
+                    vatNumber = taxNumber,
+                    onVatNumberChange = { taxNumber = it },
+                    address = address,
+                    onAddressChange = { address = it },
+                    fieldsError = fieldsError,
+                    onAddAvatarClick = {},
+                    onCreateClick = {
+                        viewModel.create(
+                            name = workspaceName,
+                            taxNumber = taxNumber,
+                            address = address
+                        )
+                    },
+                    onBackClick = {
+                        navigator.navigateBack()
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize(),
+                )
             }
         }
     }
