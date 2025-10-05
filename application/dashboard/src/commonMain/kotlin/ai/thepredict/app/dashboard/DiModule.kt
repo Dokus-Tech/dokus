@@ -1,6 +1,6 @@
 package ai.thepredict.app.dashboard
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val dashboardDiModule by DI.Module("dashboard") {
+val dashboardDiModule = module {
 }

@@ -1,11 +1,24 @@
 package ai.thepredict.app.core
 
-import org.kodein.di.DI
+import org.koin.core.KoinApplication
+import org.koin.core.context.startKoin
+import org.koin.core.module.Module
+import org.koin.dsl.KoinAppDeclaration
 
-lateinit var di: DI
+/**
+ * Initialize Koin dependency injection
+ */
+fun initKoin(appDeclaration: KoinAppDeclaration = {}): KoinApplication {
+    return startKoin {
+        appDeclaration()
+    }
+}
 
-fun configureDi(vararg modules: DI.Module) {
-    di = DI {
-        importAll(*modules)
+/**
+ * Configure and initialize Koin with modules
+ */
+fun configureDi(vararg modules: Module) {
+    initKoin {
+        modules(*modules)
     }
 }

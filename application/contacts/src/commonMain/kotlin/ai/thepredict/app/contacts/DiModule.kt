@@ -1,6 +1,6 @@
 package ai.thepredict.app.contacts
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val contactsDiModule by DI.Module("contacts") {
+val contactsDiModule = module {
 }

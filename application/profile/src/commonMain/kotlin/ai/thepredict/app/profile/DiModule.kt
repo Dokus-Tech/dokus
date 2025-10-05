@@ -1,6 +1,6 @@
 package ai.thepredict.app.profile
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val profileDiModule by DI.Module("profile") {
+val profileDiModule = module {
 }

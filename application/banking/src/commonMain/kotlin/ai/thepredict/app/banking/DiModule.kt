@@ -1,6 +1,6 @@
 package ai.thepredict.app.banking
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val bankingDiModule by DI.Module("banking") {
+val bankingDiModule = module {
 }
