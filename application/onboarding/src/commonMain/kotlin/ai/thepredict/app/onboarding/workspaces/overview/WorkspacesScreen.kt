@@ -1,8 +1,7 @@
 package ai.thepredict.app.onboarding.workspaces.overview
 
 import ai.thepredict.app.core.constrains.isLargeScreen
-import ai.thepredict.app.navigation.CoreNavigation
-import ai.thepredict.app.navigation.OnboardingNavigation
+import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.model.Company
 import ai.thepredict.ui.WorkspacesGrid
 import ai.thepredict.ui.common.ErrorBox
@@ -22,66 +21,51 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.registry.rememberScreen
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 import kotlinx.coroutines.launch
 
-internal class WorkspacesScreen : Screen {
+@Composable
+fun WorkspacesScreen(navigator: AppNavigator) {
+    val viewModel = remember { WorkspacesViewModel() }
+    val scope = rememberCoroutineScope()
 
-    @Composable
-    override fun Content() {
-        val viewModel = rememberScreenModel { WorkspacesViewModel() }
-        val scope = rememberCoroutineScope()
+    val data = viewModel.state.collectAsState()
+    val state = data.value
 
-        val data = viewModel.state.collectAsState()
-        val state = data.value
+    val handleEffect = { effect: WorkspacesViewModel.Effect ->
+        when (effect) {
+            is WorkspacesViewModel.Effect.NavigateCreateWorkspace -> navigator.navigateToWorkspaceCreate()
 
-        val navigator = LocalNavigator.currentOrThrow
-        val workspaceCreate = rememberScreen(OnboardingNavigation.Workspaces.Create)
-        val homeScreen = rememberScreen(CoreNavigation.Core)
-
-        val handleEffect = { effect: WorkspacesViewModel.Effect ->
-            when (effect) {
-                is WorkspacesViewModel.Effect.NavigateCreateWorkspace -> navigator.push(
-                    workspaceCreate
-                )
-
-                is WorkspacesViewModel.Effect.NavigateHome -> navigator.replaceAll(
-                    homeScreen
-                )
-            }
+            is WorkspacesViewModel.Effect.NavigateHome -> navigator.navigateToHome()
         }
+    }
 
-        LaunchedEffect("workspaces-overview") {
-            scope.launch { viewModel.effect.collect(handleEffect) }
-            viewModel.fetch()
-        }
+    LaunchedEffect("workspaces-overview") {
+        scope.launch { viewModel.effect.collect(handleEffect) }
+        viewModel.fetch()
+    }
 
-        Scaffold { contentPadding ->
-            Box(Modifier.padding(contentPadding)) {
-                if (isLargeScreen) {
-                    WorkspacesSelectionDesktopContent(
-                        state = state,
-                        onWorkspaceSelect = viewModel::selectWorkspace,
-                        onNewWorkspaceClick = viewModel::createWorkspace,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    WorkspacesSelectionMobileContent(
-                        state = state,
-                        onWorkspaceSelect = viewModel::selectWorkspace,
-                        onNewWorkspaceClick = viewModel::createWorkspace,
-                        modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize()
-                    )
-                }
+    Scaffold { contentPadding ->
+        Box(Modifier.padding(contentPadding)) {
+            if (isLargeScreen) {
+                WorkspacesSelectionDesktopContent(
+                    state = state,
+                    onWorkspaceSelect = viewModel::selectWorkspace,
+                    onNewWorkspaceClick = viewModel::createWorkspace,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                WorkspacesSelectionMobileContent(
+                    state = state,
+                    onWorkspaceSelect = viewModel::selectWorkspace,
+                    onNewWorkspaceClick = viewModel::createWorkspace,
+                    modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize()
+                )
             }
         }
     }

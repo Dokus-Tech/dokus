@@ -1,6 +1,7 @@
 package ai.thepredict.app.onboarding.workspaces.create
 
 import ai.thepredict.app.core.di
+import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
@@ -8,18 +9,16 @@ import ai.thepredict.domain.model.Address
 import ai.thepredict.domain.model.CreateCompanyRequest
 import ai.thepredict.domain.usecases.validators.ValidateNewWorkspaceUseCase
 import ai.thepredict.repository.api.UnifiedApi
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
 internal class WorkspaceCreateViewModel :
-    StateScreenModel<WorkspaceCreateViewModel.State>(State.Idle) {
+    BaseViewModel<WorkspaceCreateViewModel.State>(State.Idle) {
 
     private val validateNewWorkspaceUseCase: ValidateNewWorkspaceUseCase by di.instance()
-    private val api: UnifiedApi by di.instance { screenModelScope }
+    private val api: UnifiedApi by di.instance { scope }
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
@@ -29,7 +28,7 @@ internal class WorkspaceCreateViewModel :
         taxNumber: String,
         address: Address,
     ) {
-        screenModelScope.launch {
+        scope.launch {
             mutableState.value = State.Loading
 
             val request = CreateCompanyRequest(

@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding.authentication.login
 
 import ai.thepredict.apispec.AuthApi
 import ai.thepredict.app.core.di
+import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
@@ -13,14 +14,12 @@ import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
 import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase
 import ai.thepredict.repository.extensions.authCredentials
 import ai.thepredict.repository.extensions.user
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
-internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idle) {
+internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle) {
 
     private val validateEmailUseCase: ValidateEmailUseCase by di.instance()
     private val validatePasswordUseCase: ValidatePasswordUseCase by di.instance()
@@ -29,7 +28,7 @@ internal class LoginViewModel : StateScreenModel<LoginViewModel.State>(State.Idl
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun login(emailValue: String, passwordValue: String) = screenModelScope.launch {
+    fun login(emailValue: String, passwordValue: String) = scope.launch {
         mutableState.value = State.Loading
 
         if (!validateEmailUseCase(emailValue)) {

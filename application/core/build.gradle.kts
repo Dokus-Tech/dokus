@@ -44,7 +44,7 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
 
-            implementation(libs.voyager.screenModel)
+            implementation(libs.lifecycle.viewmodel.compose)
 
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
