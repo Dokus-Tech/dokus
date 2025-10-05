@@ -105,7 +105,7 @@ The project uses **BuildKonfig** to generate compile-time configuration for diff
 ```bash
 ./gradlew build
 # API_HOST: api.thepredict.ai
-# API_PORT: null (uses HTTPS default port 443)
+# API_PORT: 443 (HTTPS)
 # API_IS_LOCAL: false
 ```
 
@@ -139,10 +139,10 @@ Configuration is available via `BuildConfig` object in the `platform` module:
 import ai.thepredict.app.platform.BuildConfig
 
 // Access values
-val host = BuildConfig.API_HOST
-val port = BuildConfig.API_PORT  // -1 means no port (use default)
-val isLocal = BuildConfig.API_IS_LOCAL
-val isDebug = BuildConfig.DEBUG
+val host = BuildConfig.API_HOST        // String: hostname/IP
+val port = BuildConfig.API_PORT        // Int: port number (443 for production HTTPS)
+val isLocal = BuildConfig.API_IS_LOCAL // Boolean: true for local dev
+val isDebug = BuildConfig.DEBUG        // Boolean: enables debug logging
 ```
 
 The `ServerEndpoint` object automatically uses these values.

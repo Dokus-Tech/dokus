@@ -72,7 +72,7 @@ buildkonfig {
         val (apiHost, apiPort, isLocal) = when (env) {
             "local" -> Triple("127.0.0.1", 8000, true)
             "localAndroid" -> Triple("10.0.2.2", 8000, true)
-            else -> Triple("api.thepredict.ai", null, false)
+            else -> Triple("api.thepredict.ai", 443, false) // HTTPS default port
         }
 
         // Allow explicit overrides
@@ -82,11 +82,7 @@ buildkonfig {
             ?: (env != "production")
 
         buildConfigField(STRING, "API_HOST", finalHost)
-        if (finalPort != null) {
-            buildConfigField(INT, "API_PORT", finalPort.toString())
-        } else {
-            buildConfigField(INT, "API_PORT", "-1") // -1 indicates no port (use default)
-        }
+        buildConfigField(INT, "API_PORT", finalPort.toString())
         buildConfigField(BOOLEAN, "API_IS_LOCAL", finalIsLocal.toString())
     }
 }
