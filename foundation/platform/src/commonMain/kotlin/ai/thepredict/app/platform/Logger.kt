@@ -20,7 +20,7 @@ class Logger(private val tag: String) {
 
     private val kermit = KermitLogger(
         config = StaticConfig(
-            minSeverity = if (isDebugBuild()) Severity.Verbose else Severity.Info,
+            minSeverity = if (BuildKonfig.DEBUG) Severity.Verbose else Severity.Info,
             logWriterList = listOf(platformLogWriter())
         ),
         tag = tag
@@ -80,8 +80,3 @@ class Logger(private val tag: String) {
         inline fun <reified T> forClass(): Logger = Logger(T::class.simpleName ?: "Unknown")
     }
 }
-
-/**
- * Platform-specific check for debug build
- */
-internal expect fun isDebugBuild(): Boolean
