@@ -1,7 +1,6 @@
 package ai.thepredict.app.onboarding.workspaces.overview
 
 import ai.thepredict.apispec.CompanyApi
-import ai.thepredict.app.core.di
 import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
@@ -10,14 +9,15 @@ import ai.thepredict.domain.model.Company
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.kodein.di.instance
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(State.Loading) {
+internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(State.Loading), KoinComponent {
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    private val api: CompanyApi by di.instance()
+    private val api: CompanyApi by inject()
 
     fun fetch() {
         scope.launch {

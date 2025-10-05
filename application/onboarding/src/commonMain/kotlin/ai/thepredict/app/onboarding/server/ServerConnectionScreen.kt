@@ -1,7 +1,6 @@
 package ai.thepredict.app.onboarding.server
 
 import ai.thepredict.app.core.constrains.isLargeScreen
-import ai.thepredict.app.core.di
 import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
@@ -21,11 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.kodein.di.instance
+import org.koin.compose.koinInject
 
 @Composable
 fun ServerConnectionScreen(navigator: AppNavigator) {
-    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+    val backgroundAnimationViewModel = koinInject<BackgroundAnimationViewModel>()
 
     Scaffold { contentPadding ->
         Box(Modifier.padding(contentPadding)) {

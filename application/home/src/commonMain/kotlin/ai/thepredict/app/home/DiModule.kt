@@ -1,6 +1,6 @@
 package ai.thepredict.app.home
 
-import org.kodein.di.DI
+import org.koin.dsl.module
 
-val homeDiModule by DI.Module("home") {
+val homeDiModule = module {
 }

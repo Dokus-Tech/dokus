@@ -2,7 +2,6 @@ package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.apispec.AuthApi
 import ai.thepredict.apispec.UserApi
-import ai.thepredict.app.core.di
 import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
@@ -18,14 +17,15 @@ import ai.thepredict.repository.extensions.user
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.kodein.di.instance
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.Loading) {
+internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.Loading), KoinComponent {
 
-    private val createNewUserUseCase: CreateNewUserUseCase by di.instance()
+    private val createNewUserUseCase: CreateNewUserUseCase by inject()
 
-    private val authApi: AuthApi by di.instance()
-    private val userApi: UserApi by di.instance()
+    private val authApi: AuthApi by inject()
+    private val userApi: UserApi by inject()
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()

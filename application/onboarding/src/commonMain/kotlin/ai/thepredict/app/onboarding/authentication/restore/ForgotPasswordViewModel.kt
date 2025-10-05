@@ -1,18 +1,18 @@
 package ai.thepredict.app.onboarding.authentication.restore
 
-import ai.thepredict.app.core.di
 import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
 import ai.thepredict.repository.api.UnifiedApi
 import kotlinx.coroutines.launch
-import org.kodein.di.instance
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 internal class ForgotPasswordViewModel :
-    BaseViewModel<ForgotPasswordViewModel.State>(State.Idle) {
+    BaseViewModel<ForgotPasswordViewModel.State>(State.Idle), KoinComponent {
 
-    private val validateEmailUseCase: ValidateEmailUseCase by di.instance()
-    private val api: UnifiedApi by di.instance { scope }
+    private val validateEmailUseCase: ValidateEmailUseCase by inject()
+    private val api: UnifiedApi by inject()
 
     fun submit(emailValue: String) = scope.launch {
         mutableState.value = State.Loading

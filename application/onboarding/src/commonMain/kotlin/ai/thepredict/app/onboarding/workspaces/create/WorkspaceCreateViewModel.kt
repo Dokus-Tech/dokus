@@ -1,6 +1,5 @@
 package ai.thepredict.app.onboarding.workspaces.create
 
-import ai.thepredict.app.core.di
 import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
@@ -12,13 +11,14 @@ import ai.thepredict.repository.api.UnifiedApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.kodein.di.instance
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 internal class WorkspaceCreateViewModel :
-    BaseViewModel<WorkspaceCreateViewModel.State>(State.Idle) {
+    BaseViewModel<WorkspaceCreateViewModel.State>(State.Idle), KoinComponent {
 
-    private val validateNewWorkspaceUseCase: ValidateNewWorkspaceUseCase by di.instance()
-    private val api: UnifiedApi by di.instance { scope }
+    private val validateNewWorkspaceUseCase: ValidateNewWorkspaceUseCase by inject()
+    private val api: UnifiedApi by inject()
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()

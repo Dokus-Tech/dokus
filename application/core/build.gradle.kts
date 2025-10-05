@@ -51,7 +51,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
-            api(libs.kodein)
+            api(libs.koin.core)
+            api(libs.koin.compose)
+            api(libs.koin.compose.viewmodel)
 
             implementation(libs.calf.permissions)
             implementation(libs.calf.filePicker)
