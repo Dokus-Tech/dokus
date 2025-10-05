@@ -93,10 +93,8 @@ kotlin {
 
             implementation(libs.kodein)
 
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.navigatorKmp)
-            implementation(libs.voyager.tabNavigator)
-            implementation(libs.voyager.screenModel)
+            implementation(libs.navigation.compose)
+            implementation(libs.lifecycle.viewmodel.compose)
 
             implementation(libs.materialKolor)
         }

@@ -3,7 +3,7 @@ package ai.thepredict.app.onboarding.authentication.login
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
 import ai.thepredict.app.core.flags.FeatureFlags
-import ai.thepredict.app.navigation.OnboardingNavigation
+import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
@@ -51,81 +51,49 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.registry.rememberScreen
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
-internal class LoginScreen : Screen {
-    @Composable
-    override fun Content() {
-        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
-        val viewModel = rememberScreenModel { LoginViewModel() }
+@Composable
+fun LoginScreen(navigator: AppNavigator) {
+    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+    val viewModel = remember { LoginViewModel() }
 
-        val navigator = LocalNavigator.currentOrThrow
-        val focusManager = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
 
-        val scope = rememberCoroutineScope()
-
-        val registerScreen = rememberScreen(OnboardingNavigation.Authorization.RegisterScreen)
-        val forgetPasswordScreen =
-            rememberScreen(OnboardingNavigation.Authorization.ForgotPasswordScreen)
-        val serverConnectionScreen =
-            rememberScreen(OnboardingNavigation.Configuration.ServerConnectionScreen)
-        val workspacesScreen = rememberScreen(OnboardingNavigation.Workspaces.All)
-
-        val handleEffect = { effect: LoginViewModel.Effect ->
-            when (effect) {
-                is LoginViewModel.Effect.NavigateToWorkspaces -> navigator.replaceAll(
-                    workspacesScreen
-                )
-            }
+    val handleEffect = { effect: LoginViewModel.Effect ->
+        when (effect) {
+            is LoginViewModel.Effect.NavigateToWorkspaces -> navigator.navigateToWorkspacesList()
         }
+    }
 
-        LaunchedEffect("login-screen") {
-            scope.launch { viewModel.effect.collect(handleEffect) }
-        }
+    LaunchedEffect("login-screen") {
+        scope.launch { viewModel.effect.collect(handleEffect) }
+    }
 
-        val data = viewModel.state.collectAsState()
-        val fieldsError: PredictException? =
-            (data.value as? LoginViewModel.State.Error)?.exception
+    val data = viewModel.state.collectAsState()
+    val fieldsError: PredictException? =
+        (data.value as? LoginViewModel.State.Error)?.exception
 
-        var email by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        val mutableInteractionSource = remember { MutableInteractionSource() }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    val mutableInteractionSource = remember { MutableInteractionSource() }
 
-        Scaffold { contentPadding ->
-            Box(
-                Modifier
-                    .padding(contentPadding)
-                    .clickable(
-                        indication = null,
-                        interactionSource = mutableInteractionSource
-                    ) {
-                        focusManager.clearFocus()
-                    }
-            ) {
-                if (isLargeScreen) {
-                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
-                        LoginForm(
-                            focusManager = focusManager,
-                            email = email,
-                            onEmailChange = { email = it },
-                            password = password,
-                            onPasswordChange = { password = it },
-                            fieldsError = fieldsError,
-                            onLoginClick = { viewModel.login(email, password) },
-                            onRegisterClick = { navigator.push(registerScreen) },
-                            onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
-                            onConnectToServerClick = { navigator.push(serverConnectionScreen) },
-                            modifier = Modifier
-                        )
-                    }
-                } else {
-                    LoginScreenMobileContent(
+    Scaffold { contentPadding ->
+        Box(
+            Modifier
+                .padding(contentPadding)
+                .clickable(
+                    indication = null,
+                    interactionSource = mutableInteractionSource
+                ) {
+                    focusManager.clearFocus()
+                }
+        ) {
+            if (isLargeScreen) {
+                SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
+                    LoginForm(
                         focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
@@ -133,12 +101,26 @@ internal class LoginScreen : Screen {
                         onPasswordChange = { password = it },
                         fieldsError = fieldsError,
                         onLoginClick = { viewModel.login(email, password) },
-                        onRegisterClick = { navigator.push(registerScreen) },
-                        onForgetPasswordClick = { navigator.push(forgetPasswordScreen) },
-                        onConnectToServerClick = { navigator.push(serverConnectionScreen) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        onRegisterClick = { navigator.navigateToRegister() },
+                        onForgetPasswordClick = { navigator.navigateToForgotPassword() },
+                        onConnectToServerClick = { navigator.navigateToServerConnection() },
+                        modifier = Modifier
                     )
                 }
+            } else {
+                LoginScreenMobileContent(
+                    focusManager = focusManager,
+                    email = email,
+                    onEmailChange = { email = it },
+                    password = password,
+                    onPasswordChange = { password = it },
+                    fieldsError = fieldsError,
+                    onLoginClick = { viewModel.login(email, password) },
+                    onRegisterClick = { navigator.navigateToRegister() },
+                    onForgetPasswordClick = { navigator.navigateToForgotPassword() },
+                    onConnectToServerClick = { navigator.navigateToServerConnection() },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }
