@@ -46,7 +46,7 @@ include(":foundation:ui")
 include(":foundation:ui-preview")
 
 include(":application:core")
-include(":application:platform")
+include(":foundation:platform")
 include(":application:repository")
 include(":application:navigation")
 

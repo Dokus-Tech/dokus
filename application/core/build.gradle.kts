@@ -36,7 +36,7 @@ kotlin {
         }
         commonMain.dependencies {
             api(projects.shared.configuration)
-            api(projects.application.platform)
+            api(projects.foundation.platform)
             api(projects.shared.domain)
 
             implementation(compose.runtime)
