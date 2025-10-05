@@ -66,7 +66,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.application.core)
-            implementation(projects.application.ui)
+            implementation(projects.foundation.ui)
             implementation(projects.application.platform)
             implementation(projects.application.repository)
             implementation(projects.application.onboarding)
