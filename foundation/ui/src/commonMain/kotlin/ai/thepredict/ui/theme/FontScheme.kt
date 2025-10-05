@@ -5,9 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
 import org.jetbrains.compose.resources.Font
-import thepredict.application.ui.generated.resources.Res
-import thepredict.application.ui.generated.resources.direct
-import thepredict.application.ui.generated.resources.gilroy_extra_bold
+import thepredict.foundation.ui.generated.resources.Res
+import thepredict.foundation.ui.generated.resources.direct
+import thepredict.foundation.ui.generated.resources.gilroy_extra_bold
 
 @Composable
 fun Typography.withFontFamily(fontFamily: FontFamily): Typography {
