@@ -2,7 +2,7 @@ package ai.thepredict.app.onboarding.authentication.register
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
-import ai.thepredict.app.navigation.OnboardingNavigation
+import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.ui.PPrimaryButton
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
@@ -47,86 +47,51 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.registry.rememberScreen
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
-internal class RegisterScreen : Screen {
-    @Composable
-    override fun Content() {
-        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
-        val viewModel = rememberScreenModel { RegisterViewModel() }
+@Composable
+fun RegisterScreen(navigator: AppNavigator) {
+    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+    val viewModel = remember { RegisterViewModel() }
 
-        val navigator = LocalNavigator.currentOrThrow
-        val focusManager = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
 
-        val scope = rememberCoroutineScope()
-
-        val registrationConfirmationScreen =
-            rememberScreen(OnboardingNavigation.Authorization.RegisterConfirmationScreen)
-        val handleEffect = { effect: RegisterViewModel.Effect ->
-            when (effect) {
-                is RegisterViewModel.Effect.NavigateToRegistrationConfirmation -> navigator.replaceAll(
-                    registrationConfirmationScreen
-                )
-            }
+    val handleEffect = { effect: RegisterViewModel.Effect ->
+        when (effect) {
+            is RegisterViewModel.Effect.NavigateToRegistrationConfirmation -> navigator.navigateToRegisterConfirmation()
         }
+    }
 
-        LaunchedEffect("register-screen") {
-            scope.launch { viewModel.effect.collect(handleEffect) }
-        }
+    LaunchedEffect("register-screen") {
+        scope.launch { viewModel.effect.collect(handleEffect) }
+    }
 
-        val data = viewModel.state.collectAsState()
-        val fieldsError: PredictException? =
-            (data.value as? RegisterViewModel.State.Error)?.exception
+    val data = viewModel.state.collectAsState()
+    val fieldsError: PredictException? =
+        (data.value as? RegisterViewModel.State.Error)?.exception
 
-        var firstName by remember { mutableStateOf("") }
-        var lastName by remember { mutableStateOf("") }
-        var email by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        val mutableInteractionSource = remember { MutableInteractionSource() }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    val mutableInteractionSource = remember { MutableInteractionSource() }
 
-        Scaffold { contentPadding ->
-            Box(
-                Modifier
-                    .padding(contentPadding)
-                    .clickable(
-                        indication = null,
-                        interactionSource = mutableInteractionSource
-                    ) {
-                        focusManager.clearFocus()
-                    }
-            ) {
-                if (isLargeScreen) {
-                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
-                        RegisterForm(
-                            focusManager = focusManager,
-                            email = email,
-                            onEmailChange = { email = it },
-                            password = password,
-                            onPasswordChange = { password = it },
-                            firstName = firstName,
-                            onFirstNameChange = { firstName = it },
-                            lastName = lastName,
-                            onLastNameChange = { lastName = it },
-                            fieldsError = fieldsError,
-                            onLoginClick = { navigator.pop() },
-                            onRegisterClick = {
-                                viewModel.createUser(
-                                    newEmail = email,
-                                    newPassword = password,
-                                    firstName = firstName,
-                                    lastName = lastName
-                                )
-                            },
-                        )
-                    }
-                } else {
-                    RegisterScreenMobileContent(
+    Scaffold { contentPadding ->
+        Box(
+            Modifier
+                .padding(contentPadding)
+                .clickable(
+                    indication = null,
+                    interactionSource = mutableInteractionSource
+                ) {
+                    focusManager.clearFocus()
+                }
+        ) {
+            if (isLargeScreen) {
+                SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
+                    RegisterForm(
                         focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
@@ -134,10 +99,10 @@ internal class RegisterScreen : Screen {
                         onPasswordChange = { password = it },
                         firstName = firstName,
                         onFirstNameChange = { firstName = it },
-                        fieldsError = fieldsError,
-                        onLoginClick = { navigator.pop() },
                         lastName = lastName,
                         onLastNameChange = { lastName = it },
+                        fieldsError = fieldsError,
+                        onLoginClick = { navigator.navigateBack() },
                         onRegisterClick = {
                             viewModel.createUser(
                                 newEmail = email,
@@ -146,9 +111,31 @@ internal class RegisterScreen : Screen {
                                 lastName = lastName
                             )
                         },
-                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
+            } else {
+                RegisterScreenMobileContent(
+                    focusManager = focusManager,
+                    email = email,
+                    onEmailChange = { email = it },
+                    password = password,
+                    onPasswordChange = { password = it },
+                    firstName = firstName,
+                    onFirstNameChange = { firstName = it },
+                    fieldsError = fieldsError,
+                    onLoginClick = { navigator.navigateBack() },
+                    lastName = lastName,
+                    onLastNameChange = { lastName = it },
+                    onRegisterClick = {
+                        viewModel.createUser(
+                            newEmail = email,
+                            newPassword = password,
+                            firstName = firstName,
+                            lastName = lastName
+                        )
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }

@@ -1,16 +1,15 @@
 package ai.thepredict.app.home.splash
 
+import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.repository.extensions.authCredentials
 import ai.thepredict.repository.extensions.user
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
 
-internal class SplashScreenViewModel : StateScreenModel<SplashScreenViewModel.Effect>(Effect.Idle) {
+internal class SplashScreenViewModel : BaseViewModel<SplashScreenViewModel.Effect>(Effect.Idle) {
 
     fun checkOnboarding() {
-        screenModelScope.launch {
+        scope.launch {
             val effect = when {
                 checkIsNotLoggedIn() -> Effect.NavigateToLogin
                 noWorkspaceIsSelected() -> Effect.NavigateToWorkspacesOverview

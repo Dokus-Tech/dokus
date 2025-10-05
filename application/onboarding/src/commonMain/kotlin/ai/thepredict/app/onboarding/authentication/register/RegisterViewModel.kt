@@ -3,6 +3,7 @@ package ai.thepredict.app.onboarding.authentication.register
 import ai.thepredict.apispec.AuthApi
 import ai.thepredict.apispec.UserApi
 import ai.thepredict.app.core.di
+import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.app.platform.persistence
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.exceptions.asPredictException
@@ -14,14 +15,12 @@ import ai.thepredict.domain.model.User
 import ai.thepredict.domain.usecases.CreateNewUserUseCase
 import ai.thepredict.repository.extensions.authCredentials
 import ai.thepredict.repository.extensions.user
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
-internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(State.Loading) {
+internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.Loading) {
 
     private val createNewUserUseCase: CreateNewUserUseCase by di.instance()
 
@@ -32,7 +31,7 @@ internal class RegisterViewModel : StateScreenModel<RegisterViewModel.State>(Sta
     val effect = mutableEffect.asSharedFlow()
 
     fun createUser(newEmail: String, newPassword: String, firstName: String, lastName: String) {
-        screenModelScope.launch {
+        scope.launch {
             createNewUserUseCase(
                 firstName = firstName,
                 lastName = lastName,

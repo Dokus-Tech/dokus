@@ -1,22 +1,21 @@
 package ai.thepredict.app.onboarding.authentication.restore
 
 import ai.thepredict.app.core.di
+import ai.thepredict.app.core.viewmodel.BaseViewModel
 import ai.thepredict.domain.exceptions.PredictException
 import ai.thepredict.domain.usecases.validators.ValidateEmailUseCase
 import ai.thepredict.domain.usecases.validators.ValidatePasswordUseCase
 import ai.thepredict.repository.api.UnifiedApi
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.launch
 import org.kodein.di.instance
 
 internal class NewPasswordViewModel :
-    StateScreenModel<NewPasswordViewModel.State>(State.Idle) {
+    BaseViewModel<NewPasswordViewModel.State>(State.Idle) {
 
     private val validatePasswordUseCase: ValidatePasswordUseCase by di.instance()
-    private val api: UnifiedApi by di.instance { screenModelScope }
+    private val api: UnifiedApi by di.instance { scope }
 
-    fun submit(password: String, passwordConfirmation: String) = screenModelScope.launch {
+    fun submit(password: String, passwordConfirmation: String) = scope.launch {
         mutableState.value = State.Loading
 
         if (!validatePasswordUseCase(password)) {

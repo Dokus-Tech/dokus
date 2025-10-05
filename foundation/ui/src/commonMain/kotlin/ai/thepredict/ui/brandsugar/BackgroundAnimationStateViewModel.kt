@@ -1,9 +1,8 @@
 package ai.thepredict.ui.brandsugar
 
+import ai.thepredict.app.core.viewmodel.BaseViewModel
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +22,7 @@ data class BackgroundAnimationState(
     val boxSize: Offset
 )
 
-class BackgroundAnimationViewModel : StateScreenModel<BackgroundAnimationState>(initialState) {
+class BackgroundAnimationViewModel : BaseViewModel<BackgroundAnimationState>(initialState) {
     private companion object {
         private const val DOT_COUNT = 12
         private val initialBoxSize = Offset(2000f, 2000f)
@@ -56,7 +55,7 @@ class BackgroundAnimationViewModel : StateScreenModel<BackgroundAnimationState>(
         val count = subscriberCount.value + 1
         subscriberCount.value = count
         if (count == 1) {
-            animationJob = screenModelScope.launch {
+            animationJob = scope.launch {
                 animateBlur()
                 animateDots()
             }

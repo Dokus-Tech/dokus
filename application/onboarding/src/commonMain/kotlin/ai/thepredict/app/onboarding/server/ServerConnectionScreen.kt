@@ -2,6 +2,7 @@ package ai.thepredict.app.onboarding.server
 
 import ai.thepredict.app.core.constrains.isLargeScreen
 import ai.thepredict.app.core.di
+import ai.thepredict.app.navigation.AppNavigator
 import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
 import ai.thepredict.ui.brandsugar.SloganWithBackgroundWithLeftContent
 import ai.thepredict.ui.text.AppNameText
@@ -19,35 +20,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import org.kodein.di.instance
 
-internal class ServerConnectionScreen : Screen {
-    @Composable
-    override fun Content() {
-        val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
+@Composable
+fun ServerConnectionScreen(navigator: AppNavigator) {
+    val backgroundAnimationViewModel by di.instance<BackgroundAnimationViewModel>()
 
-        val navigator = LocalNavigator.currentOrThrow
-        val focusManager = LocalFocusManager.current
-
-        Scaffold { contentPadding ->
-            Box(Modifier.padding(contentPadding)) {
-                if (isLargeScreen) {
-                    SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
-                        ServerConnectionContent(
-                            onBackPress = { navigator.pop() },
-                        )
-                    }
-                } else {
-                    ServerConnectionScreenMobileContent(
-                        onBackPress = { navigator.pop() },
-                        modifier = Modifier.padding(horizontal = 16.dp)
+    Scaffold { contentPadding ->
+        Box(Modifier.padding(contentPadding)) {
+            if (isLargeScreen) {
+                SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
+                    ServerConnectionContent(
+                        onBackPress = { navigator.navigateBack() },
                     )
                 }
+            } else {
+                ServerConnectionScreenMobileContent(
+                    onBackPress = { navigator.navigateBack() },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }
