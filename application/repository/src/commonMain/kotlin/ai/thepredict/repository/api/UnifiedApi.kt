@@ -73,7 +73,7 @@ class UnifiedApi private constructor(
                             protocol = URLProtocol.HTTPS
                         }
                         host = endpoint.host
-                        endpoint.port?.let { port = it }
+                        port = endpoint.port
                     }
                 }
                 install(LoggingPlugin)
