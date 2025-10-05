@@ -28,7 +28,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.persistence.settings)
-            // put your Multiplatform dependencies here
+            api(libs.kermit)
         }
     }
 }
