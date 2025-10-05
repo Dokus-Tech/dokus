@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -5,6 +6,7 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.buildkonfig)
 }
 
 kotlin {
@@ -28,7 +30,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.persistence.settings)
-            // put your Multiplatform dependencies here
+            api(libs.kermit)
         }
     }
 }
@@ -42,5 +44,17 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+}
+
+buildkonfig {
+    packageName = "ai.thepredict.app.platform"
+
+    // Configuration
+    // By default, DEBUG is false (production)
+    // To build with debug logging: ./gradlew build -PDEBUG=true
+    defaultConfigs {
+        val isDebug = findProperty("DEBUG")?.toString()?.toBoolean() ?: false
+        buildConfigField(BOOLEAN, "DEBUG", isDebug.toString())
     }
 }
