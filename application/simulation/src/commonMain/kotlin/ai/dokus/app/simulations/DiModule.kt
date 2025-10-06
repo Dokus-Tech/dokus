@@ -1,4 +1,4 @@
-package ai.dokus.app.app.simulations
+package ai.dokus.app.simulations
 
 import org.koin.dsl.module
 

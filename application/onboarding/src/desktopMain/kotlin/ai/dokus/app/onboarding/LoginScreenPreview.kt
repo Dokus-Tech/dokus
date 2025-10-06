@@ -1,6 +1,6 @@
-package ai.dokus.app.app.onboarding
+package ai.dokus.app.onboarding
 
-import ai.dokus.app.app.onboarding.authentication.login.LoginForm
+import ai.dokus.app.onboarding.authentication.login.LoginForm
 import ai.dokus.foundation.ui.Themed
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent

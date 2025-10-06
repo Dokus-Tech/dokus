@@ -1,6 +1,6 @@
-package ai.dokus.app.app.onboarding
+package ai.dokus.app.onboarding
 
-import ai.dokus.app.app.onboarding.authentication.login.LoginScreenMobileContent
+import ai.dokus.app.onboarding.authentication.login.LoginScreenMobileContent
 import ai.dokus.foundation.ui.Themed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalFocusManager

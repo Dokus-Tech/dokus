@@ -1,6 +1,6 @@
-package ai.dokus.app.app.wrap
+package ai.dokus.app.wrap
 
-import ai.dokus.app.app.navigation.NavigationGraph
+import ai.dokus.app.navigation.NavigationGraph
 import androidx.compose.runtime.Composable
 
 @Composable

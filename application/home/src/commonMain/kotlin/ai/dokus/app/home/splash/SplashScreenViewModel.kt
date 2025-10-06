@@ -1,6 +1,6 @@
-package ai.dokus.app.app.home.splash
+package ai.dokus.app.home.splash
 
-import ai.dokus.app.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.platform.persistence
 import ai.dokus.app.repository.extensions.authCredentials
 import ai.dokus.app.repository.extensions.user

@@ -1,8 +1,8 @@
-package ai.dokus.app.app
+package ai.dokus.app
 
 import ai.dokus.foundation.platform.persistence
-import ai.dokus.app.app.wrap.Bootstrapped
-import ai.dokus.app.app.wrap.NavigationProvided
+import ai.dokus.app.wrap.Bootstrapped
+import ai.dokus.app.wrap.NavigationProvided
 import ai.dokus.foundation.ui.Themed
 import ai.dokus.app.repository.extensions.user
 import androidx.compose.runtime.Composable

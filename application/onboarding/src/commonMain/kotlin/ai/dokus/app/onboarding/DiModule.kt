@@ -1,4 +1,4 @@
-package ai.dokus.app.app.onboarding
+package ai.dokus.app.onboarding
 
 import org.koin.dsl.module
 

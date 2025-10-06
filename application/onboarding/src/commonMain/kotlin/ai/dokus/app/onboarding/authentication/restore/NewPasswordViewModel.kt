@@ -1,6 +1,6 @@
-package ai.dokus.app.app.onboarding.authentication.restore
+package ai.dokus.app.onboarding.authentication.restore
 
-import ai.dokus.app.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.exceptions.PredictException
 import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase

@@ -1,4 +1,4 @@
-package ai.dokus.app.app.cashflow
+package ai.dokus.app.cashflow
 
 import org.koin.dsl.module
 

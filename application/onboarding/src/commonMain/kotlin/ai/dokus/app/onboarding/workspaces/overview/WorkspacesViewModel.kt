@@ -1,7 +1,7 @@
-package ai.dokus.app.app.onboarding.workspaces.overview
+package ai.dokus.app.onboarding.workspaces.overview
 
 import ai.dokus.foundation.apispec.CompanyApi
-import ai.dokus.app.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.platform.persistence
 import ai.dokus.foundation.domain.exceptions.PredictException
 import ai.dokus.foundation.domain.exceptions.asPredictException

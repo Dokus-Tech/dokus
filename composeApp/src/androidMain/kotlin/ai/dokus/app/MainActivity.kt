@@ -1,4 +1,4 @@
-package ai.dokus.app.app
+package ai.dokus.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

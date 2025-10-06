@@ -1,4 +1,4 @@
-package ai.dokus.app.app
+package ai.dokus.app
 
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport

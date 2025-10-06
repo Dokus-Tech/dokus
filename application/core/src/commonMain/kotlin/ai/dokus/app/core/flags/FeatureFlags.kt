@@ -1,4 +1,4 @@
-package ai.dokus.app.app.core.flags
+package ai.dokus.app.core.flags
 
 object FeatureFlags {
     const val ownServers: Boolean = false
