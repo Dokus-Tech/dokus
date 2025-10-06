@@ -1,7 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.CompanyMembersApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Role
 import ai.thepredict.domain.model.User
 import io.ktor.client.HttpClient
