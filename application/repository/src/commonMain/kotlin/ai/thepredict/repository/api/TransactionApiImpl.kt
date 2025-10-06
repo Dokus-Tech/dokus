@@ -1,7 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.TransactionApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Transaction
 import ai.thepredict.domain.model.PaginatedResponse
 import ai.thepredict.domain.model.TransactionUploadResponse

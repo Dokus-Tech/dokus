@@ -37,8 +37,6 @@ kotlin {
         }
 
         commonMain.dependencies {
-            implementation(projects.foundation.configuration)
-
             api(projects.foundation.domain)
             api(projects.foundation.apispec)
 

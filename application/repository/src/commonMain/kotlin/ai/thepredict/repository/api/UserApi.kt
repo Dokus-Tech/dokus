@@ -1,7 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.UserApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.domain.model.CreateUserRequest
 import ai.thepredict.domain.model.UpdateUserRequest
 import ai.thepredict.domain.model.User

@@ -1,7 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.DocumentApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Document
 import ai.thepredict.domain.model.DocumentType
 import ai.thepredict.domain.model.DocumentUploadResponse
