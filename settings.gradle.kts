@@ -44,7 +44,6 @@ include(":application:inventory")
 include(":application:banking")
 include(":application:profile")
 include(":foundation:ui")
-include(":foundation:ui-preview")
 
 include(":application:core")
 include(":foundation:platform")
