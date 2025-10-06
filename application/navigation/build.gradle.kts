@@ -56,7 +56,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.navigation"
+    namespace = "ai.dokus.app.navigation"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

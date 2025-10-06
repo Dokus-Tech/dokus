@@ -25,7 +25,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            binaryOption("bundleId", "ai.thepredict.app")
+            binaryOption("bundleId", "ai.dokus.app")
             binaryOption("bundleVersion", "1")
         }
     }
@@ -108,11 +108,11 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app"
+    namespace = "ai.dokus.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "ai.thepredict.app"
+        applicationId = "ai.dokus.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -141,7 +141,7 @@ dependencies {
 compose.desktop {
 
     application {
-        mainClass = "ai.thepredict.app.MainKt"
+        mainClass = "ai.dokus.app.MainKt"
 
         buildTypes {
             release {
@@ -160,16 +160,16 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Pkg, TargetFormat.Msi, TargetFormat.Deb)
 
-            packageName = "The Predict"
+            packageName = "Dokus"
             packageVersion = "1.0.0"
             vendor = "Invoid Vision"
 
             macOS {
-                dockName = "Predict"
+                dockName = "Dokus"
                 appStore = false
-                bundleID = "ai.thepredict.app"
+                bundleID = "ai.dokus.app"
                 copyright = "Invoid Vision 2025"
-                description = "Predict your financial future"
+                description = "Dokus financial document management"
             }
 
             windows {

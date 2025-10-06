@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.contacts"
+    namespace = "ai.dokus.app.contacts"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
