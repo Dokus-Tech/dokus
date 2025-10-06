@@ -1,4 +1,4 @@
-package ai.thepredict.ui.theme
+package ai.dokus.foundation.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ripple

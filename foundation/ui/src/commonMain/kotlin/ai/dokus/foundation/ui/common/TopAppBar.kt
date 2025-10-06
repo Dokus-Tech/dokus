@@ -1,4 +1,4 @@
-package ai.thepredict.ui.common
+package ai.dokus.foundation.ui.common
 
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api

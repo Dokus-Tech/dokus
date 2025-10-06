@@ -1,7 +1,7 @@
-package ai.thepredict.ui
+package ai.dokus.foundation.ui
 
-import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.extensions.localized
+import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.ui.extensions.localized
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

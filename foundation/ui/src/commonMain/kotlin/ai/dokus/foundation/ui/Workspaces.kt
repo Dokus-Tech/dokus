@@ -1,7 +1,7 @@
-package ai.thepredict.ui
+package ai.dokus.foundation.ui
 
-import ai.thepredict.domain.model.Company
-import ai.thepredict.ui.extensions.clickableWithRipple
+import ai.dokus.foundation.domain.model.Company
+import ai.dokus.foundation.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow

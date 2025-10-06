@@ -1,6 +1,6 @@
-package ai.thepredict.ui
+package ai.dokus.foundation.ui
 
-import ai.thepredict.ui.extensions.clickableWithRipple
+import ai.dokus.foundation.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,8 +19,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import thepredict.foundation.ui.generated.resources.Res
-import thepredict.foundation.ui.generated.resources.arrow_left
+import dokus.foundation.ui.generated.resources.Res
+import dokus.foundation.ui.generated.resources.arrow_left
 
 enum class PButtonVariant {
     Default,

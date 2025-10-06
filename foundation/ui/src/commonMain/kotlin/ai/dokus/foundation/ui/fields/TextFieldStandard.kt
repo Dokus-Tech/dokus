@@ -1,6 +1,6 @@
-package ai.thepredict.ui.fields
+package ai.dokus.foundation.ui.fields
 
-import ai.thepredict.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.PredictException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

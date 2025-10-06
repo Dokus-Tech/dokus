@@ -1,6 +1,6 @@
-package ai.thepredict.ui.extensions
+package ai.dokus.foundation.ui.extensions
 
-import ai.thepredict.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.PredictException
 import androidx.compose.runtime.Composable
 
 val PredictException.localized: String

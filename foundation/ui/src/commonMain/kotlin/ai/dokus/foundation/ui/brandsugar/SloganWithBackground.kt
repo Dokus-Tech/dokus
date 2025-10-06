@@ -1,7 +1,7 @@
-package ai.thepredict.ui.brandsugar
+package ai.dokus.foundation.ui.brandsugar
 
-import ai.thepredict.ui.text.AppNameText
-import ai.thepredict.ui.text.CopyRightText
+import ai.dokus.foundation.ui.text.AppNameText
+import ai.dokus.foundation.ui.text.CopyRightText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package ai.thepredict.ui
+package ai.dokus.foundation.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
