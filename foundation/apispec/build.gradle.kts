@@ -44,7 +44,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.apispec"
+    namespace = "ai.dokus.foundation.apispec"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.simulations"
+    namespace = "ai.dokus.app.simulations"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

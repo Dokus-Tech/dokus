@@ -38,7 +38,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.platform"
+    namespace = "ai.dokus.foundation.platform"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -50,7 +50,7 @@ android {
 }
 
 buildkonfig {
-    packageName = "ai.thepredict.app.platform"
+    packageName = "ai.dokus.foundation.platform"
 
     // Make BuildKonfig public so it can be accessed from other modules
     exposeObjectWithName = "BuildConfig"
@@ -72,7 +72,7 @@ buildkonfig {
         val (apiHost, apiPort, isLocal) = when (env) {
             "local" -> Triple("127.0.0.1", 8000, true)
             "localAndroid" -> Triple("10.0.2.2", 8000, true)
-            else -> Triple("api.thepredict.ai", 443, false) // HTTPS default port
+            else -> Triple("api.dokus.ai", 443, false) // HTTPS default port
         }
 
         // Allow explicit overrides

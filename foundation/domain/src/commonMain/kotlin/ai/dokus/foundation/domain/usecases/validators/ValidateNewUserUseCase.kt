@@ -1,0 +1,16 @@
+package ai.dokus.foundation.domain.usecases.validators
+
+import ai.dokus.foundation.domain.exceptions.PredictException
+
+class ValidateNewUserUseCase(
+    private val emailValidator: Validator<String> = ValidateEmailUseCase(),
+    private val passwordValidator: Validator<String> = ValidatePasswordUseCase(),
+    private val nameValidator: Validator<String> = ValidateNameUseCase(),
+) : ValidatorThrowable<Any> {
+
+    override operator fun invoke(value: Any) {
+//        if (!emailValidator(value.email)) throw PredictException.InvalidEmail
+//        if (!passwordValidator(value.password)) throw PredictException.WeakPassword
+//        if (!nameValidator(value.name)) throw PredictException.InvalidName
+    }
+}

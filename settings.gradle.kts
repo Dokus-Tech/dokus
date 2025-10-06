@@ -1,4 +1,4 @@
-rootProject.name = "ThePredict"
+rootProject.name = "Dokus"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

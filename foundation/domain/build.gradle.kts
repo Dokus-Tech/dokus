@@ -35,7 +35,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.domain"
+    namespace = "ai.dokus.foundation.domain"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     compileOptions {
