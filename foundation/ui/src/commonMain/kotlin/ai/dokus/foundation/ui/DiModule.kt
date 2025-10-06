@@ -1,6 +1,6 @@
-package ai.thepredict.ui
+package ai.dokus.foundation.ui
 
-import ai.thepredict.ui.brandsugar.BackgroundAnimationViewModel
+import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import org.koin.dsl.module
 
 val uiDiModule = module {

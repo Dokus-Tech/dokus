@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ThePredict is a Kotlin Multiplatform (KMP) financial prediction application targeting Android, iOS, Desktop (JVM), and Web (WASM). The codebase uses Compose Multiplatform for UI and follows a feature-modular architecture.
+Dokus is a Kotlin Multiplatform (KMP) financial document management application targeting Android, iOS, Desktop (JVM), and Web (WASM). The codebase uses Compose Multiplatform for UI and follows a feature-modular architecture.
 
 ## Build Commands
 
@@ -53,8 +53,9 @@ The project follows a feature-based modular architecture:
 - **`/composeApp`**: Main application entry point with platform-specific configurations
 - **`/application`**: Feature modules and core infrastructure
   - Feature modules: `onboarding`, `home`, `dashboard`, `contacts`, `cashflow`, `simulation`, `inventory`, `banking`, `profile`
-  - Core modules: `core`, `platform`, `repository`, `navigation`, `ui`
-- **`/shared`**: Domain models and configuration shared across all modules
+  - Core modules: `core`, `repository`, `navigation`
+- **`/foundation`**: Foundation modules shared across all features
+  - Modules: `ui`, `domain`, `platform`, `apispec`
 - **`/server`**: Backend microservices (currently disabled in settings.gradle.kts)
 
 ### Key Architectural Patterns
@@ -65,7 +66,9 @@ The project follows a feature-based modular architecture:
 - **Source sets**: Each module has `commonMain`, `androidMain`, `iosMain`, `desktopMain`, and `wasmJsMain`
 
 ### Package Naming
-All packages follow: `ai.thepredict.{module}.{feature}`
+- **Foundation modules**: `ai.dokus.foundation.{module}` (e.g., `ai.dokus.foundation.ui`, `ai.dokus.foundation.domain`)
+- **Application modules**: `ai.dokus.app.{module}` (e.g., `ai.dokus.app.onboarding`, `ai.dokus.app.repository`)
+- **Backend modules**: `ai.dokus.backend.{service}` (when enabled)
 
 ## Technology Stack
 
@@ -80,11 +83,11 @@ All packages follow: `ai.thepredict.{module}.{feature}`
 
 ## Key Files & Entry Points
 
-- Main application: `/composeApp/src/commonMain/kotlin/ai/thepredict/app/App.kt`
+- Main application: `/composeApp/src/commonMain/kotlin/ai/dokus/app/app/App.kt`
 - Version catalog: `/gradle/libs.versions.toml`
 - Module configuration: `/settings.gradle.kts`
 - Custom build plugins: `/build-logic/convention/`
-- Server endpoints: `/foundation/configuration/src/commonMain/kotlin/ai/thepredict/configuration/Constants.kt`
+- Server endpoints: `/foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/configuration/Constants.kt`
 - Build configuration: `/foundation/platform/build.gradle.kts` (BuildKonfig setup)
 
 ## Development Guidelines
@@ -104,7 +107,7 @@ The project uses **BuildKonfig** to generate compile-time configuration for diff
 **Production (default):**
 ```bash
 ./gradlew build
-# API_HOST: api.thepredict.ai
+# API_HOST: api.dokus.ai
 # API_PORT: 443 (HTTPS)
 # API_IS_LOCAL: false
 ```
@@ -136,7 +139,7 @@ The project uses **BuildKonfig** to generate compile-time configuration for diff
 
 Configuration is available via `BuildConfig` object in the `platform` module:
 ```kotlin
-import ai.thepredict.app.platform.BuildConfig
+import ai.dokus.foundation.platform.BuildConfig
 
 // Access values
 val host = BuildConfig.API_HOST        // String: hostname/IP

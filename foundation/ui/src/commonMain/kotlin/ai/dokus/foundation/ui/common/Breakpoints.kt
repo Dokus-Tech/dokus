@@ -1,4 +1,4 @@
-package ai.thepredict.ui.common
+package ai.dokus.foundation.ui.common
 
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Modifier

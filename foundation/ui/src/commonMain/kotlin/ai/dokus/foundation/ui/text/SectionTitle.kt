@@ -1,6 +1,6 @@
-package ai.thepredict.ui.text
+package ai.dokus.foundation.ui.text
 
-import ai.thepredict.ui.PBackButton
+import ai.dokus.foundation.ui.PBackButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth

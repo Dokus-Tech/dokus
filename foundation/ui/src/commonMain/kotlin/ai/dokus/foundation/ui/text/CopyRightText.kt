@@ -1,6 +1,6 @@
-package ai.thepredict.ui.text
+package ai.dokus.foundation.ui.text
 
-import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.dokus.app.app.core.constrains.isLargeScreen
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

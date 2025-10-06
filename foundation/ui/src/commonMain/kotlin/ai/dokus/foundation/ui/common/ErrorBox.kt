@@ -1,9 +1,9 @@
-package ai.thepredict.ui.common
+package ai.dokus.foundation.ui.common
 
-import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.PButton
-import ai.thepredict.ui.PErrorText
-import ai.thepredict.ui.PTitle
+import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.ui.PButton
+import ai.dokus.foundation.ui.PErrorText
+import ai.dokus.foundation.ui.PTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

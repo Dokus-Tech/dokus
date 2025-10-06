@@ -1,6 +1,6 @@
-package ai.thepredict.ui.text
+package ai.dokus.foundation.ui.text
 
-import ai.thepredict.app.core.constrains.isLargeScreen
+import ai.dokus.app.app.core.constrains.isLargeScreen
 import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import org.jetbrains.compose.resources.painterResource
-import thepredict.foundation.ui.generated.resources.Res
-import thepredict.foundation.ui.generated.resources.app_logo
+import dokus.foundation.ui.generated.resources.Res
+import dokus.foundation.ui.generated.resources.app_logo
 
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {

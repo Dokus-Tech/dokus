@@ -1,6 +1,6 @@
-package ai.thepredict.ui.extensions
+package ai.dokus.foundation.ui.extensions
 
-import ai.thepredict.domain.model.Country
+import ai.dokus.foundation.domain.model.Country
 import androidx.compose.runtime.Composable
 
 val Country.localized

@@ -1,8 +1,8 @@
-package ai.thepredict.ui.fields
+package ai.dokus.foundation.ui.fields
 
-import ai.thepredict.domain.exceptions.PredictException
-import ai.thepredict.ui.PErrorText
-import ai.thepredict.ui.PIcon
+import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.ui.PErrorText
+import ai.dokus.foundation.ui.PIcon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement

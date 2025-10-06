@@ -1,4 +1,4 @@
-package ai.thepredict.ui.brandsugar
+package ai.dokus.foundation.ui.brandsugar
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -15,8 +15,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import thepredict.foundation.ui.generated.resources.Res
-import thepredict.foundation.ui.generated.resources.background_gradient
+import dokus.foundation.ui.generated.resources.Res
+import dokus.foundation.ui.generated.resources.background_gradient
 
 @Composable
 fun BackgroundGradientAnimated(

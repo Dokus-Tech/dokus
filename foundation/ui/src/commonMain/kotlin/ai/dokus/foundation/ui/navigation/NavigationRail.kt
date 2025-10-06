@@ -1,6 +1,6 @@
-package ai.thepredict.ui.navigation
+package ai.dokus.foundation.ui.navigation
 
-import ai.thepredict.ui.extensions.clickableWithRipple
+import ai.dokus.foundation.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

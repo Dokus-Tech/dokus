@@ -1,13 +1,13 @@
-package ai.thepredict.ui.theme
+package ai.dokus.foundation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
 import org.jetbrains.compose.resources.Font
-import thepredict.foundation.ui.generated.resources.Res
-import thepredict.foundation.ui.generated.resources.direct
-import thepredict.foundation.ui.generated.resources.gilroy_extra_bold
+import dokus.foundation.ui.generated.resources.Res
+import dokus.foundation.ui.generated.resources.direct
+import dokus.foundation.ui.generated.resources.gilroy_extra_bold
 
 @Composable
 fun Typography.withFontFamily(fontFamily: FontFamily): Typography {

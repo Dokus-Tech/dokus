@@ -1,4 +1,4 @@
-package ai.thepredict.ui
+package ai.dokus.foundation.ui
 
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor

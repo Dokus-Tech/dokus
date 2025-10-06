@@ -1,6 +1,6 @@
-package ai.thepredict.ui.extensions
+package ai.dokus.foundation.ui.extensions
 
-import ai.thepredict.ui.theme.ripple
+import ai.dokus.foundation.ui.theme.ripple
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.MaterialTheme
