@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ui.brandsugar
 
-import ai.dokus.app.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.core.viewmodel.BaseViewModel
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.Job
