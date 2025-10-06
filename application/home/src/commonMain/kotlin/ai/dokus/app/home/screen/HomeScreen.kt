@@ -1,8 +1,8 @@
-package ai.dokus.app.app.home.screen
+package ai.dokus.app.home.screen
 
-import ai.dokus.app.app.core.constrains.isLargeScreen
-import ai.dokus.app.app.navigation.AppNavigator
-import ai.dokus.app.app.navigation.AppRoutes
+import ai.dokus.app.core.constrains.isLargeScreen
+import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.app.navigation.AppRoutes
 import ai.dokus.foundation.ui.navigation.NavigationBar
 import ai.dokus.foundation.ui.navigation.NavigationRail
 import ai.dokus.foundation.ui.navigation.TabNavItem
@@ -34,13 +34,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import ai.dokus.app.app.banking.screen.BankingScreen
-import ai.dokus.app.app.cashflow.screen.CashflowScreen
-import ai.dokus.app.app.contacts.screen.ContactsScreen
-import ai.dokus.app.app.dashboard.screen.DashboardScreen
-import ai.dokus.app.app.inventory.screen.InventoryScreen
-import ai.dokus.app.app.profile.screen.ProfileScreen
-import ai.dokus.app.app.simulations.screen.SimulationScreen
+import ai.dokus.app.banking.screen.BankingScreen
+import ai.dokus.app.cashflow.screen.CashflowScreen
+import ai.dokus.app.contacts.screen.ContactsScreen
+import ai.dokus.app.dashboard.screen.DashboardScreen
+import ai.dokus.app.inventory.screen.InventoryScreen
+import ai.dokus.app.profile.screen.ProfileScreen
+import ai.dokus.app.simulations.screen.SimulationScreen
 
 @Composable
 fun HomeScreen(

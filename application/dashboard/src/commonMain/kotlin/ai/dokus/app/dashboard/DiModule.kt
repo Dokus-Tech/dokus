@@ -1,4 +1,4 @@
-package ai.dokus.app.app.dashboard
+package ai.dokus.app.dashboard
 
 import org.koin.dsl.module
 

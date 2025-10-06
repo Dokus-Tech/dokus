@@ -1,4 +1,4 @@
-package ai.dokus.app.app.banking
+package ai.dokus.app.banking
 
 import org.koin.dsl.module
 

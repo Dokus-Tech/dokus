@@ -1,4 +1,4 @@
-package ai.dokus.app.app.profile
+package ai.dokus.app.profile
 
 import org.koin.dsl.module
 

@@ -1,4 +1,4 @@
-package ai.dokus.app.app.core
+package ai.dokus.app.core
 
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin

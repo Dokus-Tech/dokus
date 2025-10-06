@@ -1,4 +1,4 @@
-package ai.dokus.app.app.core.constrains
+package ai.dokus.app.core.constrains
 
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Modifier

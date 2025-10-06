@@ -1,6 +1,6 @@
-package ai.dokus.app.app.onboarding
+package ai.dokus.app.onboarding
 
-import ai.dokus.app.app.onboarding.server.ServerConnectionContent
+import ai.dokus.app.onboarding.server.ServerConnectionContent
 import ai.dokus.foundation.ui.Themed
 import ai.dokus.foundation.ui.theme.createColorScheme
 import androidx.compose.material3.MaterialTheme

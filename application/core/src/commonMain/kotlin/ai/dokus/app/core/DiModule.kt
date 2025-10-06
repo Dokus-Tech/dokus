@@ -1,4 +1,4 @@
-package ai.dokus.app.app.core
+package ai.dokus.app.core
 
 import ai.dokus.foundation.domain.model.Country
 import ai.dokus.foundation.domain.usecases.CreateNewUserUseCase

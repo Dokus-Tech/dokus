@@ -1,7 +1,7 @@
-package ai.dokus.app.app.onboarding.authentication.login
+package ai.dokus.app.onboarding.authentication.login
 
 import ai.dokus.foundation.apispec.AuthApi
-import ai.dokus.app.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.platform.Logger
 import ai.dokus.foundation.platform.persistence
 import ai.dokus.foundation.domain.exceptions.PredictException

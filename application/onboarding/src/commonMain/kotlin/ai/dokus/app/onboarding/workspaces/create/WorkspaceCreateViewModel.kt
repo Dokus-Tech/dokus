@@ -1,6 +1,6 @@
-package ai.dokus.app.app.onboarding.workspaces.create
+package ai.dokus.app.onboarding.workspaces.create
 
-import ai.dokus.app.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.platform.persistence
 import ai.dokus.foundation.domain.exceptions.PredictException
 import ai.dokus.foundation.domain.exceptions.asPredictException
