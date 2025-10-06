@@ -44,7 +44,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.dashboard"
+    namespace = "ai.dokus.app.dashboard"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

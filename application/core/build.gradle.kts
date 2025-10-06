@@ -65,7 +65,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.core"
+    namespace = "ai.dokus.app.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
