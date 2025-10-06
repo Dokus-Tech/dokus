@@ -20,7 +20,7 @@ class Logger(private val tag: String) {
 
     private val kermit = KermitLogger(
         config = StaticConfig(
-            minSeverity = if (BuildKonfig.DEBUG) Severity.Verbose else Severity.Info,
+            minSeverity = if (BuildConfig.DEBUG) Severity.Verbose else Severity.Info,
             logWriterList = listOf(platformLogWriter())
         ),
         tag = tag
