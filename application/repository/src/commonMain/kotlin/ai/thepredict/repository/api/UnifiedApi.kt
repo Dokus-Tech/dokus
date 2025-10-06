@@ -14,7 +14,7 @@ import ai.thepredict.apispec.TransactionFileApi
 import ai.thepredict.apispec.TransactionMatchingApi
 import ai.thepredict.apispec.UserApi
 import ai.thepredict.app.platform.persistence
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.repository.httpClient
 import ai.thepredict.repository.utils.LoggingPlugin
 import io.ktor.client.HttpClient

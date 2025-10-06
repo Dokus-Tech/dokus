@@ -1,7 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.CompanyApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.domain.model.Company
 import ai.thepredict.domain.model.CreateCompanyRequest
 import ai.thepredict.domain.model.UpdateCompanyRequest

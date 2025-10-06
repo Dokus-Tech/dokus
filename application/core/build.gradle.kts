@@ -35,7 +35,6 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            api(projects.foundation.configuration)
             api(projects.foundation.platform)
             api(projects.foundation.domain)
 

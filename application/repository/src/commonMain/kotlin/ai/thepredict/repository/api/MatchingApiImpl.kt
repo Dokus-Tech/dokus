@@ -1,7 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.MatchingApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.domain.model.MatchedSchema
 import ai.thepredict.domain.model.SimpleMatchDocumentsResult
 import ai.thepredict.repository.extensions.withCompanyId

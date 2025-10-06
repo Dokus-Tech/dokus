@@ -1,6 +1,5 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -40,7 +39,6 @@ kotlin {
             api(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            api(projects.foundation.configuration)
             implementation(projects.foundation.platform)
             implementation(projects.application.core)
             implementation(projects.application.navigation)
