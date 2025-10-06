@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.inventory"
+    namespace = "ai.dokus.app.inventory"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

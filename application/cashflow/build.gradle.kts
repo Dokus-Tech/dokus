@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.cashflow"
+    namespace = "ai.dokus.app.cashflow"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

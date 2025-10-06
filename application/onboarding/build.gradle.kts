@@ -45,7 +45,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.thepredict.app.onboarding"
+    namespace = "ai.dokus.app.onboarding"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
