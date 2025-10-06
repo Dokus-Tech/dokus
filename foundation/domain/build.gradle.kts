@@ -29,6 +29,7 @@ kotlin {
         commonMain.dependencies {
             api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization)
+            implementation(projects.foundation.platform)
         }
     }
 }
