@@ -1,32 +1,18 @@
 package ai.thepredict.configuration
 
-sealed interface ServerEndpoint {
-    val host: String
-    val port: Int?
-    val isLocal: Boolean
+import ai.thepredict.app.platform.BuildConfig
 
-    data object PredictCloud : ServerEndpoint {
-        override val host = "api.thepredict.ai"
-        override val port = null
-        override val isLocal = false
-    }
-
-    data object LocalAndroid : ServerEndpoint {
-        override val host = "10.0.2.2"
-        override val port = 8000
-        override val isLocal = true
-    }
-
-    data object Local : ServerEndpoint {
-        override val host = "127.0.0.1"
-        override val port = 8000
-        override val isLocal = true
-    }
+/**
+ * Server endpoint configuration using BuildKonfig
+ *
+ * Configure via gradle properties:
+ * - Production (default): ./gradlew build -> api.thepredict.ai:443
+ * - Local development: ./gradlew build -PENV=local -> 127.0.0.1:8000
+ * - Android emulator: ./gradlew build -PENV=localAndroid -> 10.0.2.2:8000
+ * - Custom: ./gradlew build -PAPI_HOST=staging.example.com -PAPI_PORT=8080
+ */
+object ServerEndpoint {
+    val host: String = BuildConfig.API_HOST
+    val port: Int = BuildConfig.API_PORT
+    val isLocal: Boolean = BuildConfig.API_IS_LOCAL
 }
-
-private val ServerEndpoint.name: String
-    get() = when (this) {
-        is ServerEndpoint.PredictCloud -> "PredictCloud"
-        is ServerEndpoint.LocalAndroid -> "LocalAndroid"
-        is ServerEndpoint.Local -> "Local"
-    }
