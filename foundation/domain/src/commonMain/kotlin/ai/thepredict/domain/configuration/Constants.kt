@@ -1,4 +1,4 @@
-package ai.thepredict.configuration
+package ai.thepredict.domain.configuration
 
 import ai.thepredict.app.platform.BuildConfig
 

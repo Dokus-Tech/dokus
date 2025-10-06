@@ -50,6 +50,5 @@ include(":foundation:platform")
 include(":application:repository")
 include(":application:navigation")
 
-include(":foundation:configuration")
 include(":foundation:domain")
 include(":foundation:apispec")

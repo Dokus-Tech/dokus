@@ -1,7 +1,7 @@
 package ai.thepredict.repository.api
 
 import ai.thepredict.apispec.TransactionMatchingApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.domain.model.MatchedSchema
 import ai.thepredict.repository.extensions.withCompanyId
 import io.ktor.client.HttpClient

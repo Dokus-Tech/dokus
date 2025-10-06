@@ -13,7 +13,7 @@ import ai.thepredict.apispec.TransactionExtractionApi
 import ai.thepredict.apispec.TransactionFileApi
 import ai.thepredict.apispec.TransactionMatchingApi
 import ai.thepredict.apispec.UserApi
-import ai.thepredict.configuration.ServerEndpoint
+import ai.thepredict.domain.configuration.ServerEndpoint
 import ai.thepredict.repository.api.UnifiedApi
 import org.koin.dsl.module
 
