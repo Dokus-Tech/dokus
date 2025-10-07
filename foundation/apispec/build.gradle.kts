@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-group = "ai.thepredict.apispec"
+group = "ai.dokus.apispec"
 version = "1.0.0"
 
 kotlin {

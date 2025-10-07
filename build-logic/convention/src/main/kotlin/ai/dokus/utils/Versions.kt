@@ -1,4 +1,4 @@
-package ai.thepredict.utils
+package ai.dokus.utils
 
 object Versions {
     const val APP = "1.0.0"

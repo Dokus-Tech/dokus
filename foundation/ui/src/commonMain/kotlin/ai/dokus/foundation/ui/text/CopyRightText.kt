@@ -16,7 +16,7 @@ fun CopyRightText(modifier: Modifier = Modifier) {
     }
     Text(
         modifier = modifier,
-        text = "©2025 The Predict",
+        text = "©2025 Dokus",
         fontWeight = FontWeight.Medium,
         color = color,
         style = MaterialTheme.typography.titleSmall
