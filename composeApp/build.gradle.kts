@@ -51,11 +51,6 @@ kotlin {
         }
         binaries.executable()
     }
-//    js {
-//        browser {
-//        }
-//        binaries.executable()
-//    }
 
     sourceSets {
         val desktopMain by getting
@@ -152,10 +147,6 @@ compose.desktop {
                 }
             }
         }
-
-//        buildTypes.release.proguard {
-//            version.set("7.4.2")
-//        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Pkg, TargetFormat.Msi, TargetFormat.Deb)
