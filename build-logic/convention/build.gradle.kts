@@ -2,7 +2,7 @@ plugins {
     `kotlin-dsl`
 }
 
-group = "ai.thepredict.buildlogic"
+group = "ai.dokus.buildlogic"
 
 dependencies {
     implementation(libs.kotlin.gradlePlugin)
