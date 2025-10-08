@@ -49,6 +49,7 @@ include(":application:core")
 include(":foundation:platform")
 include(":application:repository")
 include(":foundation:navigation")
+include(":foundation:ktor-common")
 
 include(":foundation:domain")
 include(":foundation:apispec")
