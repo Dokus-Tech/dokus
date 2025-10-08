@@ -73,7 +73,7 @@ kotlin {
             implementation(projects.application.inventory)
             implementation(projects.application.banking)
             implementation(projects.application.profile)
-            implementation(projects.application.navigation)
+            implementation(projects.foundation.navigation)
 
             implementation(projects.foundation.domain)
 
