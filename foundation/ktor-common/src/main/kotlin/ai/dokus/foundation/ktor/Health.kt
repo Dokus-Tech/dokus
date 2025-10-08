@@ -1,4 +1,4 @@
-package be.police.pulse.foundation.ktor
+package ai.dokus.foundation.ktor
 
 import kotlinx.serialization.Serializable
 

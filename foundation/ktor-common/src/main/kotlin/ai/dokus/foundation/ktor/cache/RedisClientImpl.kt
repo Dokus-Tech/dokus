@@ -1,6 +1,6 @@
-package be.police.pulse.foundation.ktor.cache
+package ai.dokus.foundation.ktor.cache
 
-import be.police.pulse.foundation.ktor.CachingConfig
+import ai.dokus.foundation.ktor.CachingConfig
 import io.lettuce.core.RedisURI
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.async.RedisAsyncCommands
