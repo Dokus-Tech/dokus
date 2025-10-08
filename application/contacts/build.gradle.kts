@@ -32,7 +32,7 @@ kotlin {
         androidMain.dependencies {
         }
         commonMain.dependencies {
-            implementation(projects.application.navigation)
+            implementation(projects.foundation.navigation)
             implementation(projects.application.core)
             implementation(projects.application.repository)
             implementation(projects.foundation.ui)

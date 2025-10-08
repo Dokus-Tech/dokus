@@ -48,7 +48,7 @@ include(":foundation:ui")
 include(":application:core")
 include(":foundation:platform")
 include(":application:repository")
-include(":application:navigation")
+include(":foundation:navigation")
 
 include(":foundation:domain")
 include(":foundation:apispec")
