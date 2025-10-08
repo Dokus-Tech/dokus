@@ -1,6 +1,6 @@
-package be.police.pulse.foundation.ktor.db
+package ai.dokus.foundation.ktor.db
 
-import be.police.pulse.domain.db.DbEnum
+import ai.dokus.foundation.domain.database.DbEnum
 import org.jetbrains.exposed.sql.Table
 
 inline fun <reified T> Table.dbEnumeration(

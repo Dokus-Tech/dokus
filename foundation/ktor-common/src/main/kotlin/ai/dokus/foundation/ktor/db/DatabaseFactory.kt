@@ -1,6 +1,6 @@
-package be.police.pulse.foundation.ktor.db
+package ai.dokus.foundation.ktor.db
 
-import be.police.pulse.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.AppConfig
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers

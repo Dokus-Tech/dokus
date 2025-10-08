@@ -1,4 +1,4 @@
-package be.police.pulse.foundation.ktor.cache
+package ai.dokus.foundation.ktor.cache
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json

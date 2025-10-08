@@ -1,4 +1,4 @@
-package be.police.pulse.foundation.ktor.crypto
+package ai.dokus.foundation.ktor.crypto
 
 import be.police.pulse.domain.model.Password
 
