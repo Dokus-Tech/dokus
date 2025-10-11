@@ -1,10 +1,10 @@
 package ai.dokus.foundation.ktor.crypto
 
 import com.password4j.Password
-import be.police.pulse.domain.model.Password as PulsePassword
+import ai.dokus.foundation.domain.Password as DokusPassword
 
 class PasswordCryptoService4j : PasswordCryptoService {
-    override fun hashPassword(password: PulsePassword): String {
+    override fun hashPassword(password: DokusPassword): String {
         return Password.hash(password.value)
             .addRandomSalt(32)
             .withArgon2()

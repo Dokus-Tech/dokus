@@ -1,8 +1,11 @@
 package ai.dokus.app.onboarding.authentication.register
 
 import ai.dokus.app.core.constrains.isLargeScreen
-import ai.dokus.app.navigation.AppNavigator
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.navigation.AppNavigator
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.Password
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
@@ -68,13 +71,13 @@ fun RegisterScreen(navigator: AppNavigator) {
     }
 
     val data = viewModel.state.collectAsState()
-    val fieldsError: PredictException? =
+    val fieldsError: DokusException? =
         (data.value as? RegisterViewModel.State.Error)?.exception
 
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf(Name("")) }
+    var lastName by remember { mutableStateOf(Name("")) }
+    var email by remember { mutableStateOf(Email("")) }
+    var password by remember { mutableStateOf(Password("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
     Scaffold { contentPadding ->
@@ -130,7 +133,7 @@ fun RegisterScreen(navigator: AppNavigator) {
                             newEmail = email,
                             newPassword = password,
                             firstName = firstName,
-                            lastName = lastName
+                            lastName = lastName,
                         )
                     },
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -143,15 +146,15 @@ fun RegisterScreen(navigator: AppNavigator) {
 @Composable
 internal fun RegisterScreenMobileContent(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    firstName: String,
-    onFirstNameChange: (String) -> Unit,
-    lastName: String,
-    onLastNameChange: (String) -> Unit,
-    fieldsError: PredictException?,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
+    firstName: Name,
+    onFirstNameChange: (Name) -> Unit,
+    lastName: Name,
+    onLastNameChange: (Name) -> Unit,
+    fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -187,15 +190,15 @@ internal fun RegisterScreenMobileContent(
 @Composable
 internal fun RegisterForm(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    firstName: String,
-    onFirstNameChange: (String) -> Unit,
-    lastName: String,
-    onLastNameChange: (String) -> Unit,
-    fieldsError: PredictException?,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
+    firstName: Name,
+    onFirstNameChange: (Name) -> Unit,
+    lastName: Name,
+    onLastNameChange: (Name) -> Unit,
+    fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -216,7 +219,7 @@ internal fun RegisterForm(
         ) {
             PTextFieldName(
                 fieldName = "First name",
-                error = fieldsError.takeIf { it is PredictException.InvalidFirstName },
+                error = fieldsError.takeIf { it is DokusException.InvalidFirstName },
                 value = firstName,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
@@ -226,7 +229,7 @@ internal fun RegisterForm(
 
             PTextFieldName(
                 fieldName = "Last name",
-                error = fieldsError.takeIf { it is PredictException.InvalidFirstName },
+                error = fieldsError.takeIf { it is DokusException.InvalidFirstName },
                 value = lastName,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
@@ -236,7 +239,7 @@ internal fun RegisterForm(
 
             PTextFieldEmail(
                 fieldName = "Email address",
-                error = fieldsError.takeIf { it is PredictException.InvalidEmail },
+                error = fieldsError.takeIf { it is DokusException.InvalidEmail },
                 value = email,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
@@ -247,7 +250,7 @@ internal fun RegisterForm(
             PTextFieldPassword(
                 fieldName = "Password",
                 value = password,
-                error = fieldsError.takeIf { it is PredictException.WeakPassword },
+                error = fieldsError.takeIf { it is DokusException.WeakPassword },
                 onAction = { focusManager.clearFocus() },
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = onPasswordChange

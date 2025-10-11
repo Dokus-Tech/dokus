@@ -1,6 +1,7 @@
 package ai.dokus.foundation.ui.fields
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,19 +28,19 @@ object PTextFieldEmailDefaults {
 @Composable
 fun PTextFieldEmail(
     fieldName: String,
-    value: String,
+    value: Email,
     icon: ImageVector? = PTextFieldEmailDefaults.icon,
     singleLine: Boolean = PTextFieldEmailDefaults.singleLine,
     onAction: () -> Unit = PTextFieldEmailDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldEmailDefaults.keyboardOptions,
-    error: PredictException? = null,
+    error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldEmailDefaults.visualTransformation,
     modifier: Modifier = Modifier,
-    onValueChange: (String) -> Unit,
+    onValueChange: (Email) -> Unit,
 ) {
     PTextField(
         fieldName = fieldName,
-        value = value,
+        value = value.value,
         icon = icon,
         singleLine = singleLine,
         minLines = 1,
@@ -48,6 +49,6 @@ fun PTextFieldEmail(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
-        onValueChange = onValueChange
+        onValueChange = { onValueChange(Email(it.lowercase())) }
     )
 }

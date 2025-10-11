@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ui.fields
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -9,8 +9,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.User
 
 object PTextFieldStandardDefaults {
     val icon = null
@@ -32,7 +30,7 @@ fun PTextFieldStandard(
     singleLine: Boolean = PTextFieldStandardDefaults.singleLine,
     onAction: () -> Unit = PTextFieldStandardDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldStandardDefaults.keyboardOptions,
-    error: PredictException? = null,
+    error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldStandardDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,

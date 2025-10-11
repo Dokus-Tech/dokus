@@ -1,9 +1,10 @@
 package ai.dokus.app.onboarding.authentication.restore
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.domain.exceptions.PredictException
-import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import ai.dokus.app.repository.api.UnifiedApi
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -14,11 +15,11 @@ internal class ForgotPasswordViewModel :
     private val validateEmailUseCase: ValidateEmailUseCase by inject()
     private val api: UnifiedApi by inject()
 
-    fun submit(emailValue: String) = scope.launch {
+    fun submit(emailValue: Email) = scope.launch {
         mutableState.value = State.Loading
 
         if (!validateEmailUseCase(emailValue)) {
-            mutableState.value = State.Error(PredictException.InvalidEmail)
+            mutableState.value = State.Error(DokusException.InvalidEmail)
             return@launch
         }
 //
@@ -37,11 +38,11 @@ internal class ForgotPasswordViewModel :
 
         data object Authenticated : State
 
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface FieldsValidationState {
         data object Ok : FieldsValidationState
-        data class Error(val exception: PredictException) : FieldsValidationState
+        data class Error(val exception: DokusException) : FieldsValidationState
     }
 }

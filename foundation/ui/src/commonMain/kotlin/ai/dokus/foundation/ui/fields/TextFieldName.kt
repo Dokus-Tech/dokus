@@ -1,14 +1,17 @@
 package ai.dokus.foundation.ui.fields
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.intl.Locale
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.User
 
@@ -27,19 +30,20 @@ object PTextFieldNameDefaults {
 @Composable
 fun PTextFieldName(
     fieldName: String,
-    value: String,
+    value: Name,
     icon: ImageVector? = PTextFieldNameDefaults.icon,
     singleLine: Boolean = PTextFieldNameDefaults.singleLine,
     onAction: () -> Unit = PTextFieldNameDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldNameDefaults.keyboardOptions,
-    error: PredictException? = null,
+    error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldNameDefaults.visualTransformation,
     modifier: Modifier = Modifier,
-    onValueChange: (String) -> Unit,
+    onValueChange: (Name) -> Unit,
 ) {
+    val locale = Locale.current
     PTextField(
         fieldName = fieldName,
-        value = value,
+        value = value.value,
         icon = icon,
         singleLine = singleLine,
         minLines = 1,
@@ -48,6 +52,6 @@ fun PTextFieldName(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
-        onValueChange = onValueChange
+        onValueChange = { value -> onValueChange(Name(value.capitalize(locale))) }
     )
 }

@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ui.common
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PButton
 import ai.dokus.foundation.ui.PErrorText
 import ai.dokus.foundation.ui.PTitle
@@ -16,7 +16,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.RefreshCw
 
 @Composable
-fun ErrorBox(exception: PredictException, modifier: Modifier = Modifier, onRetry: () -> Unit) {
+fun ErrorBox(exception: DokusException, modifier: Modifier = Modifier, onRetry: () -> Unit) {
     Column(
         modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
