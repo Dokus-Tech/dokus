@@ -2,6 +2,7 @@ package ai.dokus.app.onboarding.authentication.restore
 
 import ai.dokus.app.core.constrains.isLargeScreen
 import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
@@ -45,8 +46,8 @@ fun NewPasswordScreen(navigator: AppNavigator) {
 
     val focusManager = LocalFocusManager.current
 
-    var password by remember { mutableStateOf("") }
-    var passwordConfirmation by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf(Password("")) }
+    var passwordConfirmation by remember { mutableStateOf(Password("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
     Scaffold { contentPadding ->
@@ -91,10 +92,10 @@ fun NewPasswordScreen(navigator: AppNavigator) {
 @Composable
 internal fun NewPasswordScreenMobileContent(
     focusManager: FocusManager,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    passwordConfirmation: String,
-    onPasswordConfirmationChange: (String) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
+    passwordConfirmation: Password,
+    onPasswordConfirmationChange: (Password) -> Unit,
     onContinueClick: () -> Unit,
     fieldsError: DokusException?,
     modifier: Modifier = Modifier
@@ -125,10 +126,10 @@ internal fun NewPasswordScreenMobileContent(
 @Composable
 internal fun NewPasswordForm(
     focusManager: FocusManager,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    passwordConfirmation: String,
-    onPasswordConfirmationChange: (String) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
+    passwordConfirmation: Password,
+    onPasswordConfirmationChange: (Password) -> Unit,
     onContinueClick: () -> Unit,
     fieldsError: DokusException?,
     modifier: Modifier = Modifier
