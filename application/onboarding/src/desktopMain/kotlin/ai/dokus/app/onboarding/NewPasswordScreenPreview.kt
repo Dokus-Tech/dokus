@@ -1,6 +1,7 @@
 package ai.dokus.app.onboarding
 
 import ai.dokus.app.onboarding.authentication.restore.NewPasswordForm
+import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.ui.Themed
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
@@ -16,9 +17,9 @@ fun NewPasswordScreenPreview() {
         SloganWithBackgroundWithLeftContent(remember { BackgroundAnimationViewModel() }) {
             NewPasswordForm(
                 focusManager = LocalFocusManager.current,
-                password = "",
+                password = Password(""),
                 onPasswordChange = { /*TODO*/ },
-                passwordConfirmation = "",
+                passwordConfirmation = Password(""),
                 onPasswordConfirmationChange = { /*TODO*/ },
                 onContinueClick = { /*TODO*/ },
                 fieldsError = null,

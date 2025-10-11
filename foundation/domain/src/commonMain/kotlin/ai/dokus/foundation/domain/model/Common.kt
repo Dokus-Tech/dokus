@@ -1,5 +1,8 @@
 package ai.dokus.foundation.domain.model
 
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.Password
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
@@ -73,8 +76,8 @@ data class User(
 
 @Serializable
 data class LoginRequest(
-    val email: String,
-    val password: String
+    val email: Email,
+    val password: Password
 )
 
 @Serializable
@@ -93,10 +96,10 @@ data class UpdateCompanyRequest(
 
 @Serializable
 data class CreateUserRequest(
-    val firstName: String,
-    val lastName: String,
-    val email: String,
-    val password: String
+    val firstName: Name,
+    val lastName: Name,
+    val email: Email,
+    val password: Password
 )
 
 @Serializable

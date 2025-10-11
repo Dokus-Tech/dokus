@@ -1,27 +1,27 @@
 package ai.dokus.foundation.ui.extensions
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.runtime.Composable
 
-val PredictException.localized: String
+val DokusException.localized: String
     @Composable get() = when (this) {
-        is PredictException.UserAlreadyExists -> "That user already exists!"
-        is PredictException.NotAuthenticated -> "You are not authenticated"
-        is PredictException.NotAuthorized -> "You are not authorized to perform this action"
-        is PredictException.Unknown -> message ?: "Unknown error happened"
-        is PredictException.InternalError -> errorMessage
-        is PredictException.ConnectionError -> "Unable to connect to the server"
-        is PredictException.InvalidEmail -> "Please enter the valid email"
-        is PredictException.WeakPassword -> "The password is too weak"
-        is PredictException.PasswordDoNotMatch -> "Passwords do not match"
-        is PredictException.InvalidFirstName -> "Please enter the valid first name"
-        is PredictException.InvalidLastName -> "Please enter the valid last name"
-        is PredictException.InvalidTaxNumber -> "Please enter the valid tax number"
-        is PredictException.InvalidWorkspaceName -> "Please enter the valid workspace name"
-        is PredictException.InvalidAddress -> when (this) {
-            is PredictException.InvalidAddress.InvalidStreetName -> "Please enter the valid street name"
-            is PredictException.InvalidAddress.InvalidCity -> "Please enter the valid city"
-            is PredictException.InvalidAddress.InvalidPostalCode -> "Please enter the valid postal code"
-            is PredictException.InvalidAddress.InvalidCountry -> "Please enter the valid country"
+        is DokusException.UserAlreadyExists -> "That user already exists!"
+        is DokusException.NotAuthenticated -> "You are not authenticated"
+        is DokusException.NotAuthorized -> "You are not authorized to perform this action"
+        is DokusException.Unknown -> message ?: "Unknown error happened"
+        is DokusException.InternalError -> errorMessage
+        is DokusException.ConnectionError -> "Unable to connect to the server"
+        is DokusException.InvalidEmail -> "Please enter the valid email"
+        is DokusException.WeakPassword -> "The password is too weak"
+        is DokusException.PasswordDoNotMatch -> "Passwords do not match"
+        is DokusException.InvalidFirstName -> "Please enter the valid first name"
+        is DokusException.InvalidLastName -> "Please enter the valid last name"
+        is DokusException.InvalidTaxNumber -> "Please enter the valid tax number"
+        is DokusException.InvalidWorkspaceName -> "Please enter the valid workspace name"
+        is DokusException.InvalidAddress -> when (this) {
+            is DokusException.InvalidAddress.InvalidStreetName -> "Please enter the valid street name"
+            is DokusException.InvalidAddress.InvalidCity -> "Please enter the valid city"
+            is DokusException.InvalidAddress.InvalidPostalCode -> "Please enter the valid postal code"
+            is DokusException.InvalidAddress.InvalidCountry -> "Please enter the valid country"
         }
     }

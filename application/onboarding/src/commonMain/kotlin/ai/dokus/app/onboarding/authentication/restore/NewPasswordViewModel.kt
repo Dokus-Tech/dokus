@@ -1,10 +1,10 @@
 package ai.dokus.app.onboarding.authentication.restore
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.domain.exceptions.PredictException
-import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
-import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
 import ai.dokus.app.repository.api.UnifiedApi
+import ai.dokus.foundation.domain.Password
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -15,11 +15,11 @@ internal class NewPasswordViewModel :
     private val validatePasswordUseCase: ValidatePasswordUseCase by inject()
     private val api: UnifiedApi by inject()
 
-    fun submit(password: String, passwordConfirmation: String) = scope.launch {
+    fun submit(password: Password, passwordConfirmation: Password) = scope.launch {
         mutableState.value = State.Loading
 
         if (!validatePasswordUseCase(password)) {
-            mutableState.value = State.Error(PredictException.WeakPassword)
+            mutableState.value = State.Error(DokusException.WeakPassword)
             return@launch
         }
 //
@@ -38,11 +38,11 @@ internal class NewPasswordViewModel :
 
         data object Authenticated : State
 
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface FieldsValidationState {
         data object Ok : FieldsValidationState
-        data class Error(val exception: PredictException) : FieldsValidationState
+        data class Error(val exception: DokusException) : FieldsValidationState
     }
 }

@@ -1,19 +1,21 @@
 package ai.dokus.app.onboarding.authentication.login
 
-import ai.dokus.foundation.apispec.AuthApi
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.platform.Logger
-import ai.dokus.foundation.platform.persistence
-import ai.dokus.foundation.domain.exceptions.PredictException
-import ai.dokus.foundation.domain.exceptions.asPredictException
+import ai.dokus.app.repository.extensions.authCredentials
+import ai.dokus.app.repository.extensions.user
+import ai.dokus.foundation.apispec.AuthApi
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Password
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.exceptions.asDokusException
+import ai.dokus.foundation.domain.model.AuthCredentials
 import ai.dokus.foundation.domain.model.JwtTokenDataSchema
 import ai.dokus.foundation.domain.model.LoginRequest
 import ai.dokus.foundation.domain.model.User
-import ai.dokus.foundation.domain.model.AuthCredentials
 import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
-import ai.dokus.app.repository.extensions.authCredentials
-import ai.dokus.app.repository.extensions.user
+import ai.dokus.foundation.platform.Logger
+import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -31,31 +33,31 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun login(emailValue: String, passwordValue: String) = scope.launch {
-        logger.d { "Login attempt started for email: ${emailValue.take(3)}***" }
+    fun login(emailValue: Email, passwordValue: Password) = scope.launch {
+        logger.d { "Login attempt started for email: ${emailValue.value.take(3)}***" }
         mutableState.value = State.Loading
 
         if (!validateEmailUseCase(emailValue)) {
             logger.w { "Login failed: invalid email format" }
-            mutableState.value = State.Error(PredictException.InvalidEmail)
+            mutableState.value = State.Error(DokusException.InvalidEmail)
             return@launch
         }
         if (!validatePasswordUseCase(passwordValue)) {
             logger.w { "Login failed: weak password" }
-            mutableState.value = State.Error(PredictException.WeakPassword)
+            mutableState.value = State.Error(DokusException.WeakPassword)
             return@launch
         }
 
         val loginRequest = LoginRequest(emailValue, passwordValue)
         val jwtRaw = authApi.login(loginRequest).getOrElse {
             logger.e(it) { "Login API call failed" }
-            mutableState.value = State.Error(it.asPredictException)
+            mutableState.value = State.Error(it.asDokusException)
             return@launch
         }
 
         val jwtSchema = JwtTokenDataSchema.from(jwtRaw).getOrElse {
             logger.e(it) { "JWT parsing failed" }
-            mutableState.value = State.Error(it.asPredictException)
+            mutableState.value = State.Error(it.asDokusException)
             return@launch
         }
 
@@ -71,7 +73,7 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
         data object Loading : State
 
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface Effect {
@@ -80,6 +82,6 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
     sealed interface FieldsValidationState {
         data object Ok : FieldsValidationState
-        data class Error(val exception: PredictException) : FieldsValidationState
+        data class Error(val exception: DokusException) : FieldsValidationState
     }
 }

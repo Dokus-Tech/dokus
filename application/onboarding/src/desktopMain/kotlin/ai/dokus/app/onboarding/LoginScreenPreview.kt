@@ -1,6 +1,8 @@
 package ai.dokus.app.onboarding
 
 import ai.dokus.app.onboarding.authentication.login.LoginForm
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.ui.Themed
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
@@ -17,9 +19,9 @@ fun LoginScreenPreview() {
         SloganWithBackgroundWithLeftContent(remember { BackgroundAnimationViewModel() }) {
             LoginForm(
                 focusManager = LocalFocusManager.current,
-                email = "",
+                email = Email(""),
                 onEmailChange = { /*TODO*/ },
-                password = "",
+                password = Password(""),
                 onPasswordChange = { /*TODO*/ },
                 fieldsError = null,
                 onLoginClick = { /*TODO*/ },
