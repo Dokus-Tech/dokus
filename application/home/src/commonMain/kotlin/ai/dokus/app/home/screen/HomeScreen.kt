@@ -1,8 +1,8 @@
 package ai.dokus.app.home.screen
 
 import ai.dokus.app.core.constrains.isLargeScreen
-import ai.dokus.app.navigation.AppNavigator
-import ai.dokus.app.navigation.AppRoutes
+import ai.dokus.foundation.navigation.AppNavigator
+import ai.dokus.foundation.navigation.AppRoutes
 import ai.dokus.foundation.ui.navigation.NavigationBar
 import ai.dokus.foundation.ui.navigation.NavigationRail
 import ai.dokus.foundation.ui.navigation.TabNavItem

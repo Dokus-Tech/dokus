@@ -2,7 +2,7 @@ package ai.dokus.app.onboarding.workspaces.create
 
 import ai.dokus.app.core.constrains.isLargeScreen
 import ai.dokus.app.core.flags.FeatureFlags
-import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.foundation.navigation.AppNavigator
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.Country

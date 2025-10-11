@@ -1,4 +1,4 @@
-package ai.dokus.app.navigation
+package ai.dokus.foundation.navigation
 
 import ai.dokus.app.banking.screen.BankingScreen
 import ai.dokus.app.cashflow.screen.CashflowScreen

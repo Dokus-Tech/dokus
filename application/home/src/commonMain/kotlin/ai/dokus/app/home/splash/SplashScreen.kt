@@ -1,6 +1,6 @@
 package ai.dokus.app.home.splash
 
-import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.foundation.navigation.AppNavigator
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text

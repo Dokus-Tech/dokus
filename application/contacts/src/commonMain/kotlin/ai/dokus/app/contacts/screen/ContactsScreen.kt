@@ -1,6 +1,6 @@
 package ai.dokus.app.contacts.screen
 
-import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.foundation.navigation.AppNavigator
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
