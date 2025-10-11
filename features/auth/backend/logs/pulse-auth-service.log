@@ -1,0 +1,37 @@
+2025-10-09 23:01:24,565 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,570 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully
+2025-10-09 23:01:24,585 [DefaultDispatcher-worker-1 @coroutine#2] WARN  b.p.pulse.service.GeoLocationService MDC={} - Failed to lookup IP address: not-an-ip
+java.net.UnknownHostException: not-an-ip: nodename nor servname provided, or not known
+	at java.base/java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+	at java.base/java.net.InetAddress$PlatformNameService.lookupAllHostAddr(InetAddress.java:934)
+	at java.base/java.net.InetAddress.getAddressesFromNameService(InetAddress.java:1543)
+	at java.base/java.net.InetAddress$NameServiceAddresses.get(InetAddress.java:852)
+	at java.base/java.net.InetAddress.getAllByName0(InetAddress.java:1533)
+	at java.base/java.net.InetAddress.getAllByName(InetAddress.java:1385)
+	at java.base/java.net.InetAddress.getAllByName(InetAddress.java:1306)
+	at java.base/java.net.InetAddress.getByName(InetAddress.java:1256)
+	at be.police.pulse.service.GeoLocationService.lookupCity(GeoLocationService.kt:86)
+	at be.police.pulse.service.GeoLocationService.access$lookupCity(GeoLocationService.kt:26)
+	at be.police.pulse.service.GeoLocationService$getCityFromIp$2.invokeSuspend(GeoLocationService.kt:67)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:820)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+2025-10-09 23:01:24,586 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,586 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully
+2025-10-09 23:01:24,587 [DefaultDispatcher-worker-1 @coroutine#3] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,587 [DefaultDispatcher-worker-1 @coroutine#3] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully
+2025-10-09 23:01:24,599 [DefaultDispatcher-worker-1 @coroutine#5] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,600 [DefaultDispatcher-worker-1 @coroutine#5] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully
+2025-10-09 23:01:24,602 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,602 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully
+2025-10-09 23:01:24,603 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,603 [Test worker] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully
+2025-10-09 23:01:24,605 [DefaultDispatcher-worker-2 @coroutine#10] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,605 [DefaultDispatcher-worker-2 @coroutine#10] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully
+2025-10-09 23:01:24,607 [DefaultDispatcher-worker-2 @coroutine#11] INFO  b.p.pulse.service.GeoLocationService MDC={} - Initializing GeoIP database reader from: /Users/voider/Developer/police/pulse/features/auth/backend/build/resources/test/GeoLite2-City.mmdb
+2025-10-09 23:01:24,607 [DefaultDispatcher-worker-2 @coroutine#11] INFO  b.p.pulse.service.GeoLocationService MDC={} - GeoIP database reader initialized successfully

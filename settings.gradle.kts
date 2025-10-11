@@ -51,5 +51,8 @@ include(":application:repository")
 include(":foundation:navigation")
 include(":foundation:ktor-common")
 
+include(":features:auth:backend")
+include(":features:auth:domain")
+
 include(":foundation:domain")
 include(":foundation:apispec")

@@ -1,19 +1,22 @@
 package ai.dokus.app.onboarding.authentication.register
 
+import ai.dokus.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.repository.extensions.authCredentials
+import ai.dokus.app.repository.extensions.user
 import ai.dokus.foundation.apispec.AuthApi
 import ai.dokus.foundation.apispec.UserApi
-import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.platform.persistence
-import ai.dokus.foundation.domain.exceptions.PredictException
-import ai.dokus.foundation.domain.exceptions.asPredictException
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.Password
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.AuthCredentials
 import ai.dokus.foundation.domain.model.CreateUserRequest
 import ai.dokus.foundation.domain.model.JwtTokenDataSchema
 import ai.dokus.foundation.domain.model.LoginRequest
 import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.usecases.CreateNewUserUseCase
-import ai.dokus.app.repository.extensions.authCredentials
-import ai.dokus.app.repository.extensions.user
+import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -30,7 +33,7 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun createUser(newEmail: String, newPassword: String, firstName: String, lastName: String) {
+    fun createUser(newEmail: Email, newPassword: Password, firstName: Name, lastName: Name) {
         scope.launch {
             createNewUserUseCase(
                 firstName = firstName,
@@ -38,7 +41,7 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
                 email = newEmail,
                 password = newPassword
             ).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
+                mutableState.value = State.Error(it.asDokusException)
                 return@launch
             }
 
@@ -49,18 +52,18 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
                 password = newPassword
             )
             val createdUser = userApi.createUser(request).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
+                mutableState.value = State.Error(it.asDokusException)
                 return@getOrElse
             }
 
             val loginRequest = LoginRequest(email = newEmail, password = newPassword)
             val jwtRaw = authApi.login(loginRequest).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
+                mutableState.value = State.Error(it.asDokusException)
                 return@launch
             }
 
             val jwtSchema = JwtTokenDataSchema.from(jwtRaw).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
+                mutableState.value = State.Error(it.asDokusException)
                 return@launch
             }
 
@@ -74,7 +77,7 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
     sealed interface State {
         data object Loading : State
 
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface Effect {

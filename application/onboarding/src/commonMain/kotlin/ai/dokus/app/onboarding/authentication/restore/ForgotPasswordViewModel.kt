@@ -1,7 +1,7 @@
 package ai.dokus.app.onboarding.authentication.restore
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import ai.dokus.app.repository.api.UnifiedApi
 import kotlinx.coroutines.launch
@@ -18,7 +18,7 @@ internal class ForgotPasswordViewModel :
         mutableState.value = State.Loading
 
         if (!validateEmailUseCase(emailValue)) {
-            mutableState.value = State.Error(PredictException.InvalidEmail)
+            mutableState.value = State.Error(DokusException.InvalidEmail)
             return@launch
         }
 //
@@ -37,11 +37,11 @@ internal class ForgotPasswordViewModel :
 
         data object Authenticated : State
 
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface FieldsValidationState {
         data object Ok : FieldsValidationState
-        data class Error(val exception: PredictException) : FieldsValidationState
+        data class Error(val exception: DokusException) : FieldsValidationState
     }
 }

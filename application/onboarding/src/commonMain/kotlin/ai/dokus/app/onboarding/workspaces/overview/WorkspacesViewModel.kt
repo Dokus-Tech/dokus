@@ -3,8 +3,8 @@ package ai.dokus.app.onboarding.workspaces.overview
 import ai.dokus.foundation.apispec.CompanyApi
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.platform.persistence
-import ai.dokus.foundation.domain.exceptions.PredictException
-import ai.dokus.foundation.domain.exceptions.asPredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.Company
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,7 +24,7 @@ internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(St
             mutableState.value = State.Loading
 
             val workspaces = api.getCompanies().getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
+                mutableState.value = State.Error(it.asDokusException)
                 return@launch
             }
 
@@ -48,7 +48,7 @@ internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(St
     sealed interface State {
         data object Loading : State
         data class Loaded(val workspaces: List<Company>) : State
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface Effect {

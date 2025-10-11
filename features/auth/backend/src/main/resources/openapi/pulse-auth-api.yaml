@@ -1,0 +1,444 @@
+openapi: 3.0.0
+info:
+  title: Pulse Authentication Service API
+  description: Authentication and user management service for Belgian Federal Police Pulse platform
+  version: 1.0.0
+  contact:
+    name: Pulse Development Team
+    email: pulse-dev@police.belgium.eu
+servers:
+  - url: http://localhost:8081
+    description: Development server
+  - url: https://api.pulse.police.be
+    description: Production server
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+tags:
+  - name: Authentication
+    description: Authentication operations
+  - name: Users
+    description: User management operations
+  - name: Health
+    description: Health check endpoints
+paths:
+  /api/identity/authenticate:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: Authenticate user with matricule and password
+      operationId: authenticate
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationResponse'
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Too many attempts
+  /api/identity/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Exchange refresh token for new access token
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          description: Invalid refresh token
+  /api/identity/validate:
+    post:
+      tags:
+        - Authentication
+      summary: Validate access token
+      description: Validate JWT access token
+      operationId: validateToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token is valid
+        '401':
+          description: Invalid token
+  /api/identity/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Logout user and revoke tokens
+      operationId: logout
+      responses:
+        '204':
+          description: Logout successful
+  /api/identity/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Register a new user account
+      operationId: register
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Invalid request data
+        '409':
+          description: User already exists
+  /api/users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '404':
+          description: User not found
+    put:
+      tags:
+        - Users
+      summary: Update user
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+        '404':
+          description: User not found
+    delete:
+      tags:
+        - Users
+      summary: Delete user
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+  /api/users:
+    get:
+      tags:
+        - Users
+      summary: Search users
+      operationId: searchUsers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: unitCode
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, SUSPENDED, LOCKED]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Users found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDto'
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+  /health/live:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      security: []
+      responses:
+        '200':
+          description: Service is alive
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      security: []
+      responses:
+        '200':
+          description: Service is ready
+        '503':
+          description: Service not ready
+  /metrics:
+    get:
+      tags:
+        - Health
+      summary: Prometheus metrics
+      security: []
+      responses:
+        '200':
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    AuthenticationRequest:
+      type: object
+      required:
+        - identifier
+        - password
+      properties:
+        identifier:
+          type: string
+          description: Matricule or email
+        password:
+          type: string
+          format: password
+    AuthenticationResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        tokenType:
+          type: string
+          default: Bearer
+        user:
+          $ref: '#/components/schemas/UserDto'
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+    RefreshResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+        tokenType:
+          type: string
+    RegisterRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - matricule
+        - email
+        - password
+        - unitCode
+        - rank
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        matricule:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        mobilePhone:
+          type: string
+        officePhone:
+          type: string
+        unitCode:
+          type: string
+        department:
+          type: string
+        rank:
+          type: string
+          enum: [ASPIRANT_INSPECTEUR, INSPECTEUR, INSPECTEUR_PRINCIPAL, COMMISSAIRE, COMMISSAIRE_DIVISIONNAIRE, DIRECTEUR]
+        language:
+          type: string
+          enum: [FR, NL, DE, EN]
+        roles:
+          type: array
+          items:
+            type: string
+    RegisterResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        message:
+          type: string
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        mobilePhone:
+          type: string
+        officePhone:
+          type: string
+        unitCode:
+          type: string
+        department:
+          type: string
+        language:
+          type: string
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        matricule:
+          type: string
+        email:
+          type: string
+        mobilePhone:
+          type: string
+        officePhone:
+          type: string
+        unitCode:
+          type: string
+        department:
+          type: string
+        rank:
+          type: string
+        language:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, LOCKED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

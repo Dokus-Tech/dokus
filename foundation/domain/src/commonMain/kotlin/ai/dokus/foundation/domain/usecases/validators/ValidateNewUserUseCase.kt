@@ -1,7 +1,5 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.exceptions.PredictException
-
 class ValidateNewUserUseCase(
     private val emailValidator: Validator<String> = ValidateEmailUseCase(),
     private val passwordValidator: Validator<String> = ValidatePasswordUseCase(),

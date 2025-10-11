@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ui
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.extensions.localized
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +34,6 @@ fun PErrorText(text: String, modifier: Modifier = Modifier.padding(all = 16.dp))
 }
 
 @Composable
-fun PErrorText(exception: PredictException, modifier: Modifier = Modifier.padding(all = 16.dp)) {
+fun PErrorText(exception: DokusException, modifier: Modifier = Modifier.padding(all = 16.dp)) {
     PErrorText(exception.localized, modifier)
 }

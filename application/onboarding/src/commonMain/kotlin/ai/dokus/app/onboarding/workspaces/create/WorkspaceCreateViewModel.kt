@@ -2,8 +2,8 @@ package ai.dokus.app.onboarding.workspaces.create
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.platform.persistence
-import ai.dokus.foundation.domain.exceptions.PredictException
-import ai.dokus.foundation.domain.exceptions.asPredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.CreateCompanyRequest
 import ai.dokus.foundation.domain.usecases.validators.ValidateNewWorkspaceUseCase
@@ -37,12 +37,12 @@ internal class WorkspaceCreateViewModel :
                 address = address,
             )
             runCatching { validateNewWorkspaceUseCase(request) }.getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
+                mutableState.value = State.Error(it.asDokusException)
                 return@launch
             }
 
             val company = api.createCompany(request).getOrElse {
-                mutableState.value = State.Error(it.asPredictException)
+                mutableState.value = State.Error(it.asDokusException)
                 return@launch
             }
 
@@ -56,7 +56,7 @@ internal class WorkspaceCreateViewModel :
 
         data object Loading : State
 
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface Effect {

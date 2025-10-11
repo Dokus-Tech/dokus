@@ -1,11 +1,11 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-class ValidatePasswordUseCase : Validator<String> {
-    private companion object {
-        const val MIN_LENGTH = 8
-    }
+import ai.dokus.foundation.domain.Password
 
-    override operator fun invoke(value: String): Boolean {
-        return value.length >= MIN_LENGTH
+object ValidatePasswordUseCase : Validator<Password> {
+    private const val MIN_LENGTH = 8
+
+    override operator fun invoke(value: Password): Boolean {
+        return value.value.length >= MIN_LENGTH
     }
 }

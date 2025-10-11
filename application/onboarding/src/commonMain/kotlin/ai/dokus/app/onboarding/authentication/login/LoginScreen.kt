@@ -3,7 +3,7 @@ package ai.dokus.app.onboarding.authentication.login
 import ai.dokus.app.core.constrains.isLargeScreen
 import ai.dokus.app.core.flags.FeatureFlags
 import ai.dokus.app.navigation.AppNavigator
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
@@ -72,7 +72,7 @@ fun LoginScreen(navigator: AppNavigator) {
     }
 
     val data = viewModel.state.collectAsState()
-    val fieldsError: PredictException? =
+    val fieldsError: DokusException? =
         (data.value as? LoginViewModel.State.Error)?.exception
 
     var email by remember { mutableStateOf("") }
@@ -132,7 +132,7 @@ internal fun LoginScreenMobileContent(
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    fieldsError: PredictException?,
+    fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     onForgetPasswordClick: () -> Unit,
@@ -172,7 +172,7 @@ internal fun LoginForm(
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    fieldsError: PredictException?,
+    fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     onForgetPasswordClick: () -> Unit,
@@ -196,7 +196,7 @@ internal fun LoginForm(
             // Email Field - Using OutlinedTextField with light background
             PTextFieldEmail(
                 fieldName = "Email address",
-                error = fieldsError.takeIf { it is PredictException.InvalidEmail },
+                error = fieldsError.takeIf { it is DokusException.InvalidEmail },
                 value = email,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
@@ -207,7 +207,7 @@ internal fun LoginForm(
             PTextFieldPassword(
                 fieldName = "Password",
                 value = password,
-                error = fieldsError.takeIf { it is PredictException.WeakPassword },
+                error = fieldsError.takeIf { it is DokusException.WeakPassword },
                 onAction = { focusManager.clearFocus() },
                 modifier = Modifier.fillMaxWidth(), onValueChange = onPasswordChange
             )
