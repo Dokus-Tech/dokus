@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ui.fields
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,7 +32,7 @@ fun PTextFieldName(
     singleLine: Boolean = PTextFieldNameDefaults.singleLine,
     onAction: () -> Unit = PTextFieldNameDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldNameDefaults.keyboardOptions,
-    error: PredictException? = null,
+    error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldNameDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,

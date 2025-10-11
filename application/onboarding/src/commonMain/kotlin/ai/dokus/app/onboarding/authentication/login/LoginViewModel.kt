@@ -4,8 +4,8 @@ import ai.dokus.foundation.apispec.AuthApi
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.platform.Logger
 import ai.dokus.foundation.platform.persistence
-import ai.dokus.foundation.domain.exceptions.PredictException
-import ai.dokus.foundation.domain.exceptions.asPredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.JwtTokenDataSchema
 import ai.dokus.foundation.domain.model.LoginRequest
 import ai.dokus.foundation.domain.model.User
@@ -37,25 +37,25 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
         if (!validateEmailUseCase(emailValue)) {
             logger.w { "Login failed: invalid email format" }
-            mutableState.value = State.Error(PredictException.InvalidEmail)
+            mutableState.value = State.Error(DokusException.InvalidEmail)
             return@launch
         }
         if (!validatePasswordUseCase(passwordValue)) {
             logger.w { "Login failed: weak password" }
-            mutableState.value = State.Error(PredictException.WeakPassword)
+            mutableState.value = State.Error(DokusException.WeakPassword)
             return@launch
         }
 
         val loginRequest = LoginRequest(emailValue, passwordValue)
         val jwtRaw = authApi.login(loginRequest).getOrElse {
             logger.e(it) { "Login API call failed" }
-            mutableState.value = State.Error(it.asPredictException)
+            mutableState.value = State.Error(it.asDokusException)
             return@launch
         }
 
         val jwtSchema = JwtTokenDataSchema.from(jwtRaw).getOrElse {
             logger.e(it) { "JWT parsing failed" }
-            mutableState.value = State.Error(it.asPredictException)
+            mutableState.value = State.Error(it.asDokusException)
             return@launch
         }
 
@@ -71,7 +71,7 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
         data object Loading : State
 
-        data class Error(val exception: PredictException) : State
+        data class Error(val exception: DokusException) : State
     }
 
     sealed interface Effect {
@@ -80,6 +80,6 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
     sealed interface FieldsValidationState {
         data object Ok : FieldsValidationState
-        data class Error(val exception: PredictException) : FieldsValidationState
+        data class Error(val exception: DokusException) : FieldsValidationState
     }
 }

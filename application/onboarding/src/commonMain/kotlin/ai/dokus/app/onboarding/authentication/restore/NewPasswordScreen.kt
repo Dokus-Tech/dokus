@@ -2,7 +2,7 @@ package ai.dokus.app.onboarding.authentication.restore
 
 import ai.dokus.app.core.constrains.isLargeScreen
 import ai.dokus.app.navigation.AppNavigator
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
@@ -40,7 +40,7 @@ fun NewPasswordScreen(navigator: AppNavigator) {
     val viewModel = remember { NewPasswordViewModel() }
 
     val data = viewModel.state.collectAsState()
-    val fieldsError: PredictException? =
+    val fieldsError: DokusException? =
         (data.value as? NewPasswordViewModel.State.Error)?.exception
 
     val focusManager = LocalFocusManager.current
@@ -96,7 +96,7 @@ internal fun NewPasswordScreenMobileContent(
     passwordConfirmation: String,
     onPasswordConfirmationChange: (String) -> Unit,
     onContinueClick: () -> Unit,
-    fieldsError: PredictException?,
+    fieldsError: DokusException?,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -130,7 +130,7 @@ internal fun NewPasswordForm(
     passwordConfirmation: String,
     onPasswordConfirmationChange: (String) -> Unit,
     onContinueClick: () -> Unit,
-    fieldsError: PredictException?,
+    fieldsError: DokusException?,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -151,7 +151,7 @@ internal fun NewPasswordForm(
             PTextFieldPassword(
                 fieldName = "Password",
                 value = password,
-                error = fieldsError.takeIf { it is PredictException.WeakPassword },
+                error = fieldsError.takeIf { it is DokusException.WeakPassword },
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = onPasswordChange
@@ -160,7 +160,7 @@ internal fun NewPasswordForm(
             PTextFieldPassword(
                 fieldName = "Confirm Password",
                 value = passwordConfirmation,
-                error = fieldsError.takeIf { it is PredictException.PasswordDoNotMatch },
+                error = fieldsError.takeIf { it is DokusException.PasswordDoNotMatch },
                 onAction = { focusManager.clearFocus() },
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = onPasswordConfirmationChange

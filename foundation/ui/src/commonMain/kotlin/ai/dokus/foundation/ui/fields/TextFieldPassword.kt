@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ui.fields
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -33,7 +33,7 @@ fun PTextFieldPassword(
     singleLine: Boolean = PTextFieldPasswordDefaults.singleLine,
     onAction: () -> Unit = PTextFieldPasswordDefaults.onAction,
     keyboardOptions: KeyboardOptions = PTextFieldPasswordDefaults.keyboardOptions,
-    error: PredictException? = null,
+    error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldPasswordDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,

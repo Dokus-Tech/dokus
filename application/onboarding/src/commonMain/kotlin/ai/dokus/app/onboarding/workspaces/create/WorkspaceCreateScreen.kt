@@ -3,7 +3,7 @@ package ai.dokus.app.onboarding.workspaces.create
 import ai.dokus.app.core.constrains.isLargeScreen
 import ai.dokus.app.core.flags.FeatureFlags
 import ai.dokus.app.navigation.AppNavigator
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.Country
 import ai.dokus.foundation.ui.PCardPlusIcon
@@ -57,7 +57,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.MapPin
 import kotlinx.coroutines.launch
 
-private val WorkspaceCreateViewModel.State.exceptionOrNull: PredictException?
+private val WorkspaceCreateViewModel.State.exceptionOrNull: DokusException?
     get() = when (this) {
         is WorkspaceCreateViewModel.State.Error -> exception
         else -> null
@@ -71,7 +71,7 @@ fun WorkspaceCreateScreen(navigator: AppNavigator) {
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
 
-    val fieldsError: PredictException? = data.value.exceptionOrNull
+    val fieldsError: DokusException? = data.value.exceptionOrNull
 
     val defaultCountry = Country.default.localized
 
@@ -161,7 +161,7 @@ internal fun WorkspaceCreateScreenMobileContent(
     onVatNumberChange: (String) -> Unit,
     address: Address,
     onAddressChange: (Address) -> Unit,
-    fieldsError: PredictException?,
+    fieldsError: DokusException?,
     onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -203,7 +203,7 @@ internal fun WorkspaceCreateScreenDesktopContent(
     onVatNumberChange: (String) -> Unit,
     address: Address,
     onAddressChange: (Address) -> Unit,
-    fieldsError: PredictException?,
+    fieldsError: DokusException?,
     onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -256,7 +256,7 @@ internal fun WorkspaceCreateForm(
     onVatNumberChange: (String) -> Unit,
     address: Address,
     onAddressChange: (Address) -> Unit,
-    fieldsError: PredictException?,
+    fieldsError: DokusException?,
     onAddAvatarClick: () -> Unit,
     onCreateClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -308,7 +308,7 @@ internal fun WorkspaceCreateForm(
             item {
                 PTextFieldWorkspaceName(
                     fieldName = "Company name",
-                    error = fieldsError.takeIf { it is PredictException.InvalidWorkspaceName },
+                    error = fieldsError.takeIf { it is DokusException.InvalidWorkspaceName },
                     value = workspaceName,
                     keyboardOptions = PTextFieldWorkspaceNameDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                     onAction = { focusManager.moveFocus(FocusDirection.Next) },
@@ -319,7 +319,7 @@ internal fun WorkspaceCreateForm(
             item {
                 PTextFieldTaxNumber(
                     fieldName = "VAT number",
-                    error = fieldsError.takeIf { it is PredictException.InvalidTaxNumber },
+                    error = fieldsError.takeIf { it is DokusException.InvalidTaxNumber },
                     value = vatNumber,
                     singleLine = true,
                     keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
@@ -331,7 +331,7 @@ internal fun WorkspaceCreateForm(
             item {
                 PTextFieldStandard(
                     fieldName = "Street",
-                    error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                    error = fieldsError.takeIf { it is DokusException.InvalidAddress.InvalidStreetName },
                     value = address.streetName.orEmpty(),
                     singleLine = true,
                     keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
@@ -346,7 +346,7 @@ internal fun WorkspaceCreateForm(
             item {
                 PTextFieldStandard(
                     fieldName = "City",
-                    error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                    error = fieldsError.takeIf { it is DokusException.InvalidAddress.InvalidStreetName },
                     value = address.city.orEmpty(),
                     singleLine = true,
                     keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
@@ -365,7 +365,7 @@ internal fun WorkspaceCreateForm(
                 ) {
                     PTextFieldStandard(
                         fieldName = "Postal code",
-                        error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                        error = fieldsError.takeIf { it is DokusException.InvalidAddress.InvalidStreetName },
                         value = address.postalCode.orEmpty(),
                         singleLine = true,
                         keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(
@@ -381,7 +381,7 @@ internal fun WorkspaceCreateForm(
                     )
                     PTextFieldStandard(
                         fieldName = "Country",
-                        error = fieldsError.takeIf { it is PredictException.InvalidAddress.InvalidStreetName },
+                        error = fieldsError.takeIf { it is DokusException.InvalidAddress.InvalidStreetName },
                         value = address.country.orEmpty(),
                         singleLine = true,
                         keyboardOptions = PTextFieldTaxNumberDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),

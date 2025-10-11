@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.Country
 
@@ -12,11 +12,11 @@ class ValidateAddressUseCase(
     private val countryValidator: Validator<String>,
 ) : ValidatorThrowable<Address> {
 
-    @Throws(PredictException::class)
+    @Throws(DokusException::class)
     override fun invoke(value: Address) {
-        if (value.streetName != null && !streetNameValidator(value.streetName)) throw PredictException.InvalidAddress.InvalidStreetName
-        if (value.city != null && !cityValidator(value.city)) throw PredictException.InvalidAddress.InvalidCity
-        if (value.postalCode != null && !postalCodeValidator(value.postalCode)) throw PredictException.InvalidAddress.InvalidPostalCode
-        if (value.country != null && !countryValidator(value.country)) throw PredictException.InvalidAddress.InvalidCity
+        if (value.streetName != null && !streetNameValidator(value.streetName)) throw DokusException.InvalidAddress.InvalidStreetName
+        if (value.city != null && !cityValidator(value.city)) throw DokusException.InvalidAddress.InvalidCity
+        if (value.postalCode != null && !postalCodeValidator(value.postalCode)) throw DokusException.InvalidAddress.InvalidPostalCode
+        if (value.country != null && !countryValidator(value.country)) throw DokusException.InvalidAddress.InvalidCity
     }
 }

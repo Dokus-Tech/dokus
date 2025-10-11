@@ -1,8 +1,8 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 
 interface ValidatorThrowable<T> {
-    @Throws(PredictException::class)
+    @Throws(DokusException::class)
     operator fun invoke(value: T)
 }

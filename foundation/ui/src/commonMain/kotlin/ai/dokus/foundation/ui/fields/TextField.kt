@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ui.fields
 
-import ai.dokus.foundation.domain.exceptions.PredictException
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PErrorText
 import ai.dokus.foundation.ui.PIcon
 import androidx.compose.foundation.background
@@ -38,7 +38,7 @@ fun PTextField(
     minLines: Int,
     onAction: () -> Unit,
     keyboardOptions: KeyboardOptions,
-    error: PredictException?,
+    error: DokusException?,
     visualTransformation: VisualTransformation,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,

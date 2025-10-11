@@ -55,7 +55,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
         }
         wasmJsMain.dependencies {
-            implementation(libs.ktor.client.js)
+//            implementation(libs.ktor.client.js)
         }
     }
 }
