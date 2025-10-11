@@ -1,7 +1,7 @@
 package ai.dokus.app.onboarding.workspaces.overview
 
 import ai.dokus.app.core.constrains.isLargeScreen
-import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.foundation.navigation.AppNavigator
 import ai.dokus.foundation.domain.model.Company
 import ai.dokus.foundation.ui.WorkspacesGrid
 import ai.dokus.foundation.ui.common.ErrorBox

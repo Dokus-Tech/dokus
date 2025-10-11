@@ -1,4 +1,4 @@
-package ai.dokus.app.navigation
+package ai.dokus.foundation.navigation
 
 import androidx.navigation.NavHostController
 
