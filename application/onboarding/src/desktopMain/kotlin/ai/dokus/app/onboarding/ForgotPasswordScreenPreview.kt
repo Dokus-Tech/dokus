@@ -1,6 +1,7 @@
 package ai.dokus.app.onboarding
 
 import ai.dokus.app.onboarding.authentication.restore.ForgotPasswordForm
+import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.ui.Themed
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
@@ -17,7 +18,7 @@ fun ForgotPasswordScreenPreview() {
         SloganWithBackgroundWithLeftContent(remember { BackgroundAnimationViewModel() }) {
             ForgotPasswordForm(
                 focusManager = LocalFocusManager.current,
-                email = "",
+                email = Email(""),
                 onEmailChange = { /*TODO*/ },
                 fieldsError = null,
                 onSubmit = { /*TODO*/ },
