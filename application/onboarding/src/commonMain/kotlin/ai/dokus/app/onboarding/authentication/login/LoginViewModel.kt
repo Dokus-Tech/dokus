@@ -1,19 +1,21 @@
 package ai.dokus.app.onboarding.authentication.login
 
-import ai.dokus.foundation.apispec.AuthApi
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.platform.Logger
-import ai.dokus.foundation.platform.persistence
+import ai.dokus.app.repository.extensions.authCredentials
+import ai.dokus.app.repository.extensions.user
+import ai.dokus.foundation.apispec.AuthApi
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.exceptions.asDokusException
+import ai.dokus.foundation.domain.model.AuthCredentials
 import ai.dokus.foundation.domain.model.JwtTokenDataSchema
 import ai.dokus.foundation.domain.model.LoginRequest
 import ai.dokus.foundation.domain.model.User
-import ai.dokus.foundation.domain.model.AuthCredentials
 import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
-import ai.dokus.app.repository.extensions.authCredentials
-import ai.dokus.app.repository.extensions.user
+import ai.dokus.foundation.platform.Logger
+import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -31,8 +33,8 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun login(emailValue: String, passwordValue: String) = scope.launch {
-        logger.d { "Login attempt started for email: ${emailValue.take(3)}***" }
+    fun login(emailValue: Email, passwordValue: Password) = scope.launch {
+        logger.d { "Login attempt started for email: ${emailValue.value.take(3)}***" }
         mutableState.value = State.Loading
 
         if (!validateEmailUseCase(emailValue)) {

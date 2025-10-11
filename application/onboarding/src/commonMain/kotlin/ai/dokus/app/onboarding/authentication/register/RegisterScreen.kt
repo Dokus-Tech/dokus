@@ -74,10 +74,10 @@ fun RegisterScreen(navigator: AppNavigator) {
     val fieldsError: DokusException? =
         (data.value as? RegisterViewModel.State.Error)?.exception
 
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf(Name("")) }
+    var lastName by remember { mutableStateOf(Name("")) }
+    var email by remember { mutableStateOf(Email("")) }
+    var password by remember { mutableStateOf(Password("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
     Scaffold { contentPadding ->
@@ -107,10 +107,10 @@ fun RegisterScreen(navigator: AppNavigator) {
                         onLoginClick = { navigator.navigateBack() },
                         onRegisterClick = {
                             viewModel.createUser(
-                                newEmail = Email(email),
-                                newPassword = Password(password),
-                                firstName = Name(firstName),
-                                lastName = Name(lastName)
+                                newEmail = email,
+                                newPassword = password,
+                                firstName = firstName,
+                                lastName = lastName
                             )
                         },
                     )
@@ -130,10 +130,10 @@ fun RegisterScreen(navigator: AppNavigator) {
                     onLastNameChange = { lastName = it },
                     onRegisterClick = {
                         viewModel.createUser(
-                            newEmail = Email(email),
-                            newPassword = Password(password),
-                            firstName = Name(firstName),
-                            lastName = Name(lastName)
+                            newEmail = email,
+                            newPassword = password,
+                            firstName = firstName,
+                            lastName = lastName,
                         )
                     },
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -146,14 +146,14 @@ fun RegisterScreen(navigator: AppNavigator) {
 @Composable
 internal fun RegisterScreenMobileContent(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    firstName: String,
-    onFirstNameChange: (String) -> Unit,
-    lastName: String,
-    onLastNameChange: (String) -> Unit,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
+    firstName: Name,
+    onFirstNameChange: (Name) -> Unit,
+    lastName: Name,
+    onLastNameChange: (Name) -> Unit,
     fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
@@ -190,14 +190,14 @@ internal fun RegisterScreenMobileContent(
 @Composable
 internal fun RegisterForm(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    firstName: String,
-    onFirstNameChange: (String) -> Unit,
-    lastName: String,
-    onLastNameChange: (String) -> Unit,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
+    firstName: Name,
+    onFirstNameChange: (Name) -> Unit,
+    lastName: Name,
+    onLastNameChange: (Name) -> Unit,
     fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,

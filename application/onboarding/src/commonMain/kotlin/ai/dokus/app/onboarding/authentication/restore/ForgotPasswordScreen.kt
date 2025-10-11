@@ -2,6 +2,7 @@ package ai.dokus.app.onboarding.authentication.restore
 
 import ai.dokus.app.core.constrains.isLargeScreen
 import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
@@ -48,7 +49,7 @@ fun ForgotPasswordScreen(navigator: AppNavigator) {
 
     val focusManager = LocalFocusManager.current
 
-    var email by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(Email("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
     Scaffold { contentPadding ->
@@ -91,8 +92,8 @@ fun ForgotPasswordScreen(navigator: AppNavigator) {
 @Composable
 internal fun RegisterScreenMobileContent(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
     fieldsError: DokusException?,
     onSubmit: () -> Unit,
     onBackPress: () -> Unit,
@@ -123,8 +124,8 @@ internal fun RegisterScreenMobileContent(
 @Composable
 internal fun ForgotPasswordForm(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
     fieldsError: DokusException?,
     onSubmit: () -> Unit,
     onBackPress: () -> Unit,
