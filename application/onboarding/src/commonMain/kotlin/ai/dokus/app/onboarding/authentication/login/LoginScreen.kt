@@ -3,6 +3,8 @@ package ai.dokus.app.onboarding.authentication.login
 import ai.dokus.app.core.constrains.isLargeScreen
 import ai.dokus.app.core.flags.FeatureFlags
 import ai.dokus.app.navigation.AppNavigator
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
@@ -75,8 +77,8 @@ fun LoginScreen(navigator: AppNavigator) {
     val fieldsError: DokusException? =
         (data.value as? LoginViewModel.State.Error)?.exception
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(Email("")) }
+    var password by remember { mutableStateOf(Password("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
     Scaffold { contentPadding ->
@@ -128,10 +130,10 @@ fun LoginScreen(navigator: AppNavigator) {
 @Composable
 internal fun LoginScreenMobileContent(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
     fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
@@ -168,10 +170,10 @@ internal fun LoginScreenMobileContent(
 @Composable
 internal fun LoginForm(
     focusManager: FocusManager,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
+    email: Email,
+    onEmailChange: (Email) -> Unit,
+    password: Password,
+    onPasswordChange: (Password) -> Unit,
     fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,

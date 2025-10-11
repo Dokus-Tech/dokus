@@ -1,9 +1,10 @@
 package ai.dokus.app.onboarding.authentication.restore
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
+import ai.dokus.app.repository.api.UnifiedApi
+import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
-import ai.dokus.app.repository.api.UnifiedApi
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -14,7 +15,7 @@ internal class NewPasswordViewModel :
     private val validatePasswordUseCase: ValidatePasswordUseCase by inject()
     private val api: UnifiedApi by inject()
 
-    fun submit(password: String, passwordConfirmation: String) = scope.launch {
+    fun submit(password: Password, passwordConfirmation: Password) = scope.launch {
         mutableState.value = State.Loading
 
         if (!validatePasswordUseCase(password)) {
