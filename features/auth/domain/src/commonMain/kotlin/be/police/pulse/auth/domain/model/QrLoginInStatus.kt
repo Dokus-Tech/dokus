@@ -1,9 +1,7 @@
 package be.police.pulse.auth.domain.model
 
 import ai.dokus.foundation.domain.DeviceType
-import ai.dokus.foundation.domain.SessionId
 import ai.dokus.foundation.domain.current
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
