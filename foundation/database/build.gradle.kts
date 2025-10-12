@@ -1,10 +1,16 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinPluginSerialization)
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    application
 }
 
-group = "ai.dokus.foundation.database"
+group = "ai.dokus.database"
 version = "1.0.0"
+
+application {
+    mainClass.set("ai.dokus.foundation.database.ApplicationKt")
+}
 
 kotlin {
     jvmToolchain(17)
@@ -62,4 +68,52 @@ dependencies {
     implementation(libs.kotlinx.serialization)
 
     implementation(libs.password4j)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+tasks.shadowJar {
+    manifest {
+        attributes["Main-Class"] = "ai.dokus.foundation.database.ApplicationKt"
+    }
+    mergeServiceFiles()
+    archiveClassifier.set("")
+    // Exclude duplicate files
+    exclude("META-INF/*.SF")
+    exclude("META-INF/*.DSA")
+    exclude("META-INF/*.RSA")
+}
+
+tasks.named<Tar>("distTar") {
+    dependsOn("shadowJar")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named<Zip>("distZip") {
+    dependsOn("shadowJar")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named("startScripts") {
+    dependsOn("shadowJar")
+}
+
+// Disable unnecessary shadow tasks that conflict with regular tasks
+tasks.named("startShadowScripts") {
+    enabled = false
+}
+
+tasks.named("shadowDistTar") {
+    enabled = false
+}
+
+tasks.named("shadowDistZip") {
+    enabled = false
+}
+
+// Ensure build task runs shadowJar
+tasks.named("build") {
+    dependsOn("shadowJar")
 }

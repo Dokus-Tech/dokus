@@ -5,11 +5,11 @@ plugins {
     application
 }
 
-group = "be.police.pulse.microservice.users"
+group = "ai.dokus.users"
 version = "1.0.0"
 
 application {
-    mainClass.set("be.police.pulse.ApplicationKt")
+    mainClass.set("ai.dokus.auth.backend.ApplicationKt")
 }
 
 kotlin {
@@ -79,7 +79,7 @@ tasks.test {
 
 tasks.shadowJar {
     manifest {
-        attributes["Main-Class"] = "be.police.pulse.ApplicationKt"
+        attributes["Main-Class"] = "ai.dokus.auth.backend.ApplicationKt"
     }
     mergeServiceFiles()
     archiveClassifier.set("")
