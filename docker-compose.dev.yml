@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: devpassword
     ports:
-      - "5541:5432"
+      - "5543:5432"
     volumes:
       - postgres-dev:/var/lib/postgresql/data
       - ./foundation/database/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
@@ -26,7 +26,7 @@ services:
     image: redis:8-alpine
     container_name: dokus-redis-dev
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis-data-dev:/data
     command: redis-server --appendonly yes --requirepass devredispass
@@ -47,7 +47,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
       JWT_SECRET: dev-secret-key
-      JWT_ISSUER: http://localhost:9091
+      JWT_ISSUER: http://localhost:9093
       JWT_AUDIENCE: dokus-api-dev
       REDIS_HOST: redis-dev
       REDIS_PORT: 6379
@@ -56,8 +56,8 @@ services:
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     ports:
-      - "9091:9091"
-      - "5005:5005"
+      - "9093:9091"
+      - "5007:5005"
     depends_on:
       postgres-dev:
         condition: service_healthy
@@ -83,7 +83,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
       JWT_SECRET: dev-secret-key
-      JWT_ISSUER: http://localhost:9070
+      JWT_ISSUER: http://localhost:9071
       JWT_AUDIENCE: dokus-api-dev
       REDIS_HOST: redis-dev
       REDIS_PORT: 6379
@@ -91,8 +91,8 @@ services:
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     ports:
-      - "9070:9070"
-      - "5006:5006"
+      - "9071:9070"
+      - "5008:5006"
     depends_on:
       postgres-dev:
         condition: service_healthy

@@ -244,7 +244,7 @@ start_services() {
         sleep 3  # Give it a moment to start
         printf "  ${CYAN}▸${NC} Auth Service        "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9091/metrics > /dev/null 2>&1; then
+            if curl -f -s http://localhost:9093/metrics > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -255,7 +255,7 @@ start_services() {
         # Wait for Database Service
         printf "  ${CYAN}▸${NC} Database Service    "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9070/metrics > /dev/null 2>&1; then
+            if curl -f -s http://localhost:9071/metrics > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -327,7 +327,7 @@ show_status() {
 
     # Auth Service
     printf "  ${CYAN}▸${NC} Auth Service        "
-    if curl -f -s http://localhost:9091/metrics > /dev/null 2>&1; then
+    if curl -f -s http://localhost:9093/metrics > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -335,7 +335,7 @@ show_status() {
 
     # Database Service
     printf "  ${CYAN}▸${NC} Database Service    "
-    if curl -f -s http://localhost:9070/metrics > /dev/null 2>&1; then
+    if curl -f -s http://localhost:9071/metrics > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -442,24 +442,24 @@ print_services_info() {
 
     # Auth Service
     echo -e "  ${MAGENTA}▸ Auth Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9091${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9091/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9091/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5005${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9093${NC}"
+    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9093/metrics${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9093/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5007${NC}"
     echo ""
 
     # Database Service
     echo -e "  ${MAGENTA}▸ Database Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9070${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9070/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9070/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5006${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9071${NC}"
+    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9071/metrics${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9071/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5008${NC}"
     echo ""
 
     # Databases
     echo -e "  ${MAGENTA}▸ Infrastructure${NC}"
-    echo -e "    ${GRAY}•${NC} PostgreSQL: ${WHITE}localhost:5541${NC} ${DIM}(user: $DB_USER, db: $DB_NAME)${NC}"
-    echo -e "    ${GRAY}•${NC} Redis:      ${WHITE}localhost:6379${NC} ${DIM}(password: devredispass)${NC}"
+    echo -e "    ${GRAY}•${NC} PostgreSQL: ${WHITE}localhost:5543${NC} ${DIM}(user: $DB_USER, db: $DB_NAME)${NC}"
+    echo -e "    ${GRAY}•${NC} Redis:      ${WHITE}localhost:6380${NC} ${DIM}(password: devredispass)${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
         echo -e "    ${GRAY}•${NC} pgAdmin:    ${WHITE}http://localhost:5050${NC} ${DIM}(admin@dokus.ai / admin)${NC}"
