@@ -36,6 +36,8 @@ kotlin {
             implementation(projects.application.core)
             implementation(projects.application.repository)
             implementation(projects.foundation.ui)
+
+            implementation(project.dependencies.platform(libs.koin.bom))
         }
         desktopMain.dependencies {
         }

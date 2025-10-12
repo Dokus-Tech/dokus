@@ -7,9 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * Base ViewModel class that provides state management similar to Voyager's StateScreenModel
- */
 abstract class BaseViewModel<S>(initialState: S) : ViewModel() {
 
     protected val mutableState = MutableStateFlow(initialState)

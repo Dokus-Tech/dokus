@@ -42,6 +42,7 @@ kotlin {
 
             api(projects.foundation.platform)
 
+            implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)
 
             implementation(libs.ktor.server.auth)

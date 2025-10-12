@@ -4,9 +4,9 @@ import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.db.DatabaseFactory
-import ai.dokus.auth.backend.database.repository.LoginAttemptRepository
-import ai.dokus.auth.backend.database.repository.SessionRepository
-import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.foundation.ktor.db.repository.LoginAttemptRepository
+import ai.dokus.foundation.ktor.db.repository.SessionRepository
+import ai.dokus.foundation.ktor.db.repository.UserRepository
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import org.koin.dsl.module

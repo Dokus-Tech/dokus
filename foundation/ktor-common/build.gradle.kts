@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flywaydb.flyway.database.postgresql)
 
+    implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.ktor)
 
     implementation(libs.kotlinx.serialization)

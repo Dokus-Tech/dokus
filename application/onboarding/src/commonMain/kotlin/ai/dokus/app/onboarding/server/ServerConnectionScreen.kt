@@ -1,6 +1,6 @@
 package ai.dokus.app.onboarding.server
 
-import ai.dokus.app.core.constrains.isLargeScreen
+import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.navigation.AppNavigator
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent

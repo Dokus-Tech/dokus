@@ -1,6 +1,6 @@
 package ai.dokus.app.home.screen
 
-import ai.dokus.app.core.constrains.isLargeScreen
+import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.navigation.AppNavigator
 import ai.dokus.foundation.navigation.AppRoutes
 import ai.dokus.foundation.ui.navigation.NavigationBar
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CenterAlignedTopAppBar

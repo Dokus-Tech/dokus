@@ -1,9 +1,9 @@
 package ai.dokus.auth.backend.mapper
 
 import ai.dokus.foundation.domain.SessionId
-import ai.dokus.auth.domain.model.IpLocationInfo
-import ai.dokus.auth.domain.model.SessionDto
-import ai.dokus.auth.backend.database.entity.UserSession
+import ai.dokus.foundation.domain.model.auth.IpLocationInfo
+import ai.dokus.foundation.domain.model.auth.SessionDto
+import ai.dokus.foundation.ktor.db.entity.UserSession
 
 fun SessionDto.Companion.fromEntity(entity: UserSession): SessionDto {
     return SessionDto(
