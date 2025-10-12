@@ -72,10 +72,10 @@ dependencies {
     implementation(libs.password4j)
 
     // Test dependencies
-    testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-    testImplementation("com.h2database:h2:2.2.224")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.h2)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.test {
