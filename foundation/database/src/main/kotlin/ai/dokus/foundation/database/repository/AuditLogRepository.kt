@@ -19,22 +19,26 @@ class AuditLogRepository {
     private val json = Json { prettyPrint = false }
 
     suspend fun log(
-        tenantId: UUID,
-        userId: UUID? = null,
+        tenantId: String,
+        userId: String? = null,
         action: AuditAction,
         entityType: EntityType,
-        entityId: UUID,
+        entityId: String,
         oldValues: Map<String, Any?>? = null,
         newValues: Map<String, Any?>? = null,
         ipAddress: String? = null,
         userAgent: String? = null
     ): Unit = dbQuery {
+        val tenantUuid = UUID.fromString(tenantId)
+        val userUuid = userId?.let { UUID.fromString(it) }
+        val entityUuid = UUID.fromString(entityId)
+
         AuditLogsTable.insert {
-            it[AuditLogsTable.tenantId] = tenantId
-            it[AuditLogsTable.userId] = userId
+            it[AuditLogsTable.tenantId] = tenantUuid
+            it[AuditLogsTable.userId] = userUuid
             it[AuditLogsTable.action] = action
             it[AuditLogsTable.entityType] = entityType
-            it[AuditLogsTable.entityId] = entityId
+            it[AuditLogsTable.entityId] = entityUuid
             it[AuditLogsTable.oldValues] = oldValues?.let { values ->
                 json.encodeToString(values.mapValues { it.value.toString() })
             }
@@ -52,11 +56,11 @@ class AuditLogRepository {
      * Log a financial operation (higher priority logging)
      */
     suspend fun logFinancial(
-        tenantId: UUID,
-        userId: UUID? = null,
+        tenantId: String,
+        userId: String? = null,
         action: AuditAction,
         entityType: EntityType,
-        entityId: UUID,
+        entityId: String,
         amount: String,
         details: Map<String, Any?>,
         ipAddress: String? = null
