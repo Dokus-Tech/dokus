@@ -1,16 +1,17 @@
-package ai.dokus.app.onboarding.authentication.login
+package ai.dokus.app.auth.screen
 
-import ai.dokus.foundation.ui.constrains.isLargeScreen
-import ai.dokus.foundation.domain.flags.FeatureFlags
-import ai.dokus.foundation.navigation.AppNavigator
+import ai.dokus.app.auth.viewmodel.RegisterViewModel
 import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
+import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.ui.fields.PTextFieldEmail
 import ai.dokus.foundation.ui.fields.PTextFieldEmailDefaults
+import ai.dokus.foundation.ui.fields.PTextFieldName
 import ai.dokus.foundation.ui.fields.PTextFieldPassword
 import ai.dokus.foundation.ui.text.AppNameText
 import ai.dokus.foundation.ui.text.SectionTitle
@@ -19,16 +20,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,31 +49,32 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun LoginScreen(navigator: AppNavigator) {
+fun RegisterScreen() {
     val backgroundAnimationViewModel = koinInject<BackgroundAnimationViewModel>()
-    val viewModel = remember { LoginViewModel() }
+    val viewModel = remember { RegisterViewModel() }
 
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
 
-    val handleEffect = { effect: LoginViewModel.Effect ->
-        when (effect) {
-            is LoginViewModel.Effect.NavigateToWorkspaces -> navigator.navigateToWorkspacesList()
-        }
-    }
+//    val handleEffect = { effect: RegisterViewModel.Effect ->
+//        when (effect) {
+//            is RegisterViewModel.Effect.NavigateToRegistrationConfirmation -> navigator.navigateToRegisterConfirmation()
+//        }
+//    }
 
-    LaunchedEffect("login-screen") {
-        scope.launch { viewModel.effect.collect(handleEffect) }
+    LaunchedEffect("register-screen") {
+//        scope.launch { viewModel.effect.collect(handleEffect) }
     }
 
     val data = viewModel.state.collectAsState()
     val fieldsError: DokusException? =
-        (data.value as? LoginViewModel.State.Error)?.exception
+        (data.value as? RegisterViewModel.State.Error)?.exception
 
+    var firstName by remember { mutableStateOf(Name("")) }
+    var lastName by remember { mutableStateOf(Name("")) }
     var email by remember { mutableStateOf(Email("")) }
     var password by remember { mutableStateOf(Password("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
@@ -94,32 +92,49 @@ fun LoginScreen(navigator: AppNavigator) {
         ) {
             if (isLargeScreen) {
                 SloganWithBackgroundWithLeftContent(backgroundAnimationViewModel) {
-                    LoginForm(
+                    RegisterForm(
                         focusManager = focusManager,
                         email = email,
                         onEmailChange = { email = it },
                         password = password,
                         onPasswordChange = { password = it },
+                        firstName = firstName,
+                        onFirstNameChange = { firstName = it },
+                        lastName = lastName,
+                        onLastNameChange = { lastName = it },
                         fieldsError = fieldsError,
-                        onLoginClick = { viewModel.login(email, password) },
-                        onRegisterClick = { navigator.navigateToRegister() },
-                        onForgetPasswordClick = { navigator.navigateToForgotPassword() },
-                        onConnectToServerClick = { navigator.navigateToServerConnection() },
-                        modifier = Modifier
+                        onLoginClick = {  },
+                        onRegisterClick = {
+                            viewModel.createUser(
+                                newEmail = email,
+                                newPassword = password,
+                                firstName = firstName,
+                                lastName = lastName
+                            )
+                        },
                     )
                 }
             } else {
-                LoginScreenMobileContent(
+                RegisterScreenMobileContent(
                     focusManager = focusManager,
                     email = email,
                     onEmailChange = { email = it },
                     password = password,
                     onPasswordChange = { password = it },
+                    firstName = firstName,
+                    onFirstNameChange = { firstName = it },
                     fieldsError = fieldsError,
-                    onLoginClick = { viewModel.login(email, password) },
-                    onRegisterClick = { navigator.navigateToRegister() },
-                    onForgetPasswordClick = { navigator.navigateToForgotPassword() },
-                    onConnectToServerClick = { navigator.navigateToServerConnection() },
+                    onLoginClick = {  },
+                    lastName = lastName,
+                    onLastNameChange = { lastName = it },
+                    onRegisterClick = {
+                        viewModel.createUser(
+                            newEmail = email,
+                            newPassword = password,
+                            firstName = firstName,
+                            lastName = lastName,
+                        )
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
@@ -128,17 +143,19 @@ fun LoginScreen(navigator: AppNavigator) {
 }
 
 @Composable
-internal fun LoginScreenMobileContent(
+internal fun RegisterScreenMobileContent(
     focusManager: FocusManager,
     email: Email,
     onEmailChange: (Email) -> Unit,
     password: Password,
     onPasswordChange: (Password) -> Unit,
+    firstName: Name,
+    onFirstNameChange: (Name) -> Unit,
+    lastName: Name,
+    onLastNameChange: (Name) -> Unit,
     fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onForgetPasswordClick: () -> Unit,
-    onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -149,7 +166,7 @@ internal fun LoginScreenMobileContent(
 
         AppNameText()
 
-        LoginForm(
+        RegisterForm(
             focusManager = focusManager,
             email = email,
             onEmailChange = onEmailChange,
@@ -158,8 +175,10 @@ internal fun LoginScreenMobileContent(
             fieldsError = fieldsError,
             onLoginClick = onLoginClick,
             onRegisterClick = onRegisterClick,
-            onForgetPasswordClick = onForgetPasswordClick,
-            onConnectToServerClick = onConnectToServerClick,
+            firstName = firstName,
+            onFirstNameChange = onFirstNameChange,
+            lastName = lastName,
+            onLastNameChange = onLastNameChange,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -168,25 +187,27 @@ internal fun LoginScreenMobileContent(
 }
 
 @Composable
-internal fun LoginForm(
+internal fun RegisterForm(
     focusManager: FocusManager,
     email: Email,
     onEmailChange: (Email) -> Unit,
     password: Password,
     onPasswordChange: (Password) -> Unit,
+    firstName: Name,
+    onFirstNameChange: (Name) -> Unit,
+    lastName: Name,
+    onLastNameChange: (Name) -> Unit,
     fieldsError: DokusException?,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onForgetPasswordClick: () -> Unit,
-    onConnectToServerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.Start, // Center content horizontally
-        verticalArrangement = Arrangement.Center // Center content vertically
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Center,
     ) {
-        SectionTitle("Login to account")
+        SectionTitle("Register")
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -195,46 +216,52 @@ internal fun LoginForm(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Email Field - Using OutlinedTextField with light background
+            PTextFieldName(
+                fieldName = "First name",
+                error = fieldsError.takeIf { it is DokusException.InvalidFirstName },
+                value = firstName,
+                keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onFirstNameChange
+            )
+
+            PTextFieldName(
+                fieldName = "Last name",
+                error = fieldsError.takeIf { it is DokusException.InvalidFirstName },
+                value = lastName,
+                keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
+                onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onLastNameChange
+            )
+
             PTextFieldEmail(
                 fieldName = "Email address",
                 error = fieldsError.takeIf { it is DokusException.InvalidEmail },
                 value = email,
                 keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
                 onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                modifier = Modifier.fillMaxWidth(), onValueChange = onEmailChange
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onEmailChange
             )
 
-            // Password Field - Using OutlinedTextField with light background
             PTextFieldPassword(
                 fieldName = "Password",
                 value = password,
                 error = fieldsError.takeIf { it is DokusException.WeakPassword },
                 onAction = { focusManager.clearFocus() },
-                modifier = Modifier.fillMaxWidth(), onValueChange = onPasswordChange
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onPasswordChange
             )
-        }
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            TextButton(onClick = onForgetPasswordClick) {
-                Text(
-                    text = "Forgot password?",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         PPrimaryButton(
-            text = "Login",
+            text = "Register",
             modifier = Modifier.fillMaxWidth(),
-            onClick = onLoginClick
+            onClick = onRegisterClick
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -242,7 +269,7 @@ internal fun LoginForm(
         // Sign up text - moved up here to match Figma
         TextButton(
             modifier = Modifier.align(Alignment.Start),
-            onClick = onRegisterClick
+            onClick = onLoginClick
         ) {
             Text(
                 text = buildAnnotatedString {
@@ -253,7 +280,7 @@ internal fun LoginForm(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                     ) {
-                        append("Don't have an account? ")
+                        append("Already have an account? ")
                     }
                     withStyle(
                         SpanStyle(
@@ -262,7 +289,7 @@ internal fun LoginForm(
                             color = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        append("Sign up")
+                        append("Login")
                     }
                 },
                 style = MaterialTheme.typography.bodyMedium
@@ -270,48 +297,5 @@ internal fun LoginForm(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        // Divider with "or"
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            HorizontalDivider(
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
-
-            Text(
-                text = "or",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            HorizontalDivider(
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Connect to server button - simple outlined button
-        OutlinedButton(
-            onClick = onConnectToServerClick,
-            enabled = FeatureFlags.ownServers,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(42.dp),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = "Connect to server",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
-        }
     }
 }

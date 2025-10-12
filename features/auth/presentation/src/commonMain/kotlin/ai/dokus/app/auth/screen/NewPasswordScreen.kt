@@ -1,12 +1,12 @@
-package ai.dokus.app.onboarding.authentication.restore
+package ai.dokus.app.auth.screen
 
-import ai.dokus.foundation.ui.constrains.isLargeScreen
-import ai.dokus.foundation.navigation.AppNavigator
+import ai.dokus.app.auth.viewmodel.NewPasswordViewModel
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ui.PPrimaryButton
 import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
 import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
+import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.ui.fields.PTextFieldPassword
 import ai.dokus.foundation.ui.text.AppNameText
 import ai.dokus.foundation.ui.text.SectionTitle
@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 
 @Composable
-fun NewPasswordScreen(navigator: AppNavigator) {
+fun NewPasswordScreen() {
     val backgroundAnimationViewModel = koinInject<BackgroundAnimationViewModel>()
     val viewModel = remember { NewPasswordViewModel() }
 

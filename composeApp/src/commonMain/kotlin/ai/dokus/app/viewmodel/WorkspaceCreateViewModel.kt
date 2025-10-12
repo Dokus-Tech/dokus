@@ -1,13 +1,13 @@
-package ai.dokus.app.onboarding.workspaces.create
+package ai.dokus.app.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.platform.persistence
+import ai.dokus.app.repository.api.UnifiedApi
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.CreateCompanyRequest
 import ai.dokus.foundation.domain.usecases.validators.ValidateNewWorkspaceUseCase
-import ai.dokus.app.repository.api.UnifiedApi
+import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package ai.dokus.app.onboarding.authentication.restore
+package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.app.repository.api.UnifiedApi

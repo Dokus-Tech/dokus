@@ -1,8 +1,7 @@
-package ai.dokus.app.onboarding.authentication.register
+package ai.dokus.app.auth.screen
 
-import ai.dokus.foundation.ui.constrains.isLargeScreen
-import ai.dokus.foundation.navigation.AppNavigator
 import ai.dokus.foundation.ui.PPrimaryButton
+import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.ui.text.AppNameText
 import ai.dokus.foundation.ui.text.CopyRightText
 import ai.dokus.foundation.ui.text.SectionTitle
@@ -26,16 +25,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RegisterConfirmationScreen(navigator: AppNavigator) {
+fun RegisterConfirmationScreen() {
     Scaffold { contentPadding ->
         Box(Modifier.padding(contentPadding)) {
             if (isLargeScreen) {
                 RegisterConfirmationFormDesktop {
-                    navigator.navigateToHome()
+//                    navigator.navigateToHome()
                 }
             } else {
                 RegistrationConfirmationForm {
-                    navigator.navigateToHome()
+//                    navigator.navigateToHome()
                 }
             }
         }
