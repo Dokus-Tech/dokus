@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database.tables
 
-import ai.dokus.auth.domain.model.SessionRevokeReason
+import ai.dokus.foundation.database.dbEnumeration
 import ai.dokus.foundation.domain.DeviceType
-import ai.dokus.foundation.ktor.db.dbEnumeration
+import ai.dokus.foundation.domain.model.auth.SessionRevokeReason
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 

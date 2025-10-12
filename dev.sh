@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Pulse Development Environment Manager
-# This script manages the local development environment for Pulse Services
+# Dokus Development Environment Manager
+# This script manages the local development environment for Dokus Services
 
 set -e  # Exit on error
 
@@ -32,10 +32,11 @@ BOX_HB="╩"
 BOX_CROSS="╬"
 
 # Configuration
-PROJECT_NAME="pulse"
+PROJECT_NAME="dokus"
 COMPOSE_FILE="docker-compose.dev.yml"
 AUTH_SERVICE_DIR="features/auth/backend"
-OPERATION_SERVICE_DIR="features/operation/backend"
+DATABASE_SERVICE_DIR="foundation/database"
+DB_NAME="dokus"
 DB_USER="dev"
 DB_PASSWORD="devpassword"
 
@@ -158,19 +159,19 @@ build_app() {
     fi
     print_status success "Auth Service JAR built"
 
-    # Build Operation Service JAR
-    print_status loading "Building Operation Service JAR..."
+    # Build Database Service JAR
+    print_status loading "Building Database Service JAR..."
     if [ -f "./gradlew" ]; then
-        ./gradlew :features:operation:backend:shadowJar -x test -q
+        ./gradlew :foundation:database:shadowJar -x test -q
     else
-        gradle :features:operation:backend:shadowJar -x test -q
+        gradle :foundation:database:shadowJar -x test -q
     fi
 
     if [ $? -ne 0 ]; then
-        print_status error "Operation Service JAR build failed"
+        print_status error "Database Service JAR build failed"
         exit 1
     fi
-    print_status success "Operation Service JAR built"
+    print_status success "Database Service JAR built"
 
     print_divider
     echo ""
@@ -179,21 +180,21 @@ build_app() {
 
     # Auth Service image
     print_status loading "Building Auth Service image..."
-    docker build -f features/auth/backend/Dockerfile.dev -t federal-police/pulse-auth:dev-latest . -q > /dev/null 2>&1
+    docker build -f features/auth/backend/Dockerfile.dev -t invoid-vision/dokus-auth:dev-latest . -q > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         print_status error "Auth Service Docker image build failed"
         exit 1
     fi
     print_status success "Auth Service image built"
 
-    # Operation Service image
-    print_status loading "Building Operation Service image..."
-    docker build -f features/operation/backend/Dockerfile.dev -t federal-police/pulse-operation:dev-latest . -q > /dev/null 2>&1
+    # Database Service image
+    print_status loading "Building Database Service image..."
+    docker build -f foundation/database/Dockerfile.dev -t invoid-vision/dokus-database:dev-latest . -q > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        print_status error "Operation Service Docker image build failed"
+        print_status error "Database Service Docker image build failed"
         exit 1
     fi
-    print_status success "Operation Service image built"
+    print_status success "Database Service image built"
 
     echo ""
 }
@@ -217,21 +218,10 @@ start_services() {
         print_status loading "Waiting for services to become healthy..."
         echo ""
 
-        # Wait for Auth PostgreSQL
-        printf "  ${CYAN}▸${NC} Auth PostgreSQL     "
+        # Wait for PostgreSQL
+        printf "  ${CYAN}▸${NC} PostgreSQL          "
         for i in {1..30}; do
-            if docker-compose -f $COMPOSE_FILE exec -T postgres-auth-dev pg_isready -U $DB_USER -d auth &>/dev/null; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
-        done
-
-        # Wait for Operation PostgreSQL
-        printf "  ${CYAN}▸${NC} Operation PostgreSQL "
-        for i in {1..30}; do
-            if docker-compose -f $COMPOSE_FILE exec -T postgres-operation-dev pg_isready -U $DB_USER -d operations &>/dev/null; then
+            if docker-compose -f $COMPOSE_FILE exec -T postgres-dev pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -262,10 +252,10 @@ start_services() {
             sleep 1
         done
 
-        # Wait for Operation Service
-        printf "  ${CYAN}▸${NC} Operation Service   "
+        # Wait for Database Service
+        printf "  ${CYAN}▸${NC} Database Service    "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9092/metrics > /dev/null 2>&1; then
+            if curl -f -s http://localhost:9070/metrics > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -319,24 +309,16 @@ show_status() {
     print_divider
     echo -e "\n  ${CYAN}${BOLD}Health Checks${NC}\n"
 
-    # Auth PostgreSQL
-    printf "  ${CYAN}▸${NC} Auth PostgreSQL      "
-    if docker-compose -f $COMPOSE_FILE exec -T postgres-auth-dev pg_isready -U $DB_USER -d auth &>/dev/null; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
-
-    # Operation PostgreSQL
-    printf "  ${CYAN}▸${NC} Operation PostgreSQL "
-    if docker-compose -f $COMPOSE_FILE exec -T postgres-operation-dev pg_isready -U $DB_USER -d operations &>/dev/null; then
+    # PostgreSQL
+    printf "  ${CYAN}▸${NC} PostgreSQL          "
+    if docker-compose -f $COMPOSE_FILE exec -T postgres-dev pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
     fi
 
     # Redis
-    printf "  ${CYAN}▸${NC} Redis                "
+    printf "  ${CYAN}▸${NC} Redis               "
     if docker-compose -f $COMPOSE_FILE exec -T redis-dev redis-cli --pass devredispass ping &>/dev/null; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
@@ -344,16 +326,16 @@ show_status() {
     fi
 
     # Auth Service
-    printf "  ${CYAN}▸${NC} Auth Service         "
+    printf "  ${CYAN}▸${NC} Auth Service        "
     if curl -f -s http://localhost:9091/metrics > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
     fi
 
-    # Operation Service
-    printf "  ${CYAN}▸${NC} Operation Service    "
-    if curl -f -s http://localhost:9092/metrics > /dev/null 2>&1; then
+    # Database Service
+    printf "  ${CYAN}▸${NC} Database Service    "
+    if curl -f -s http://localhost:9070/metrics > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -386,15 +368,8 @@ clean_all() {
 
 # Function to reset database
 reset_db() {
-    db_service=${1:-all}
-
-    if [ "$db_service" = "all" ]; then
-        print_box_header "🔄 Reset All Databases"
-        print_status warning "This will reset ALL databases!"
-    else
-        print_box_header "🔄 Reset ${db_service^} Database"
-        print_status warning "This will reset the $db_service database!"
-    fi
+    print_box_header "🔄 Reset Database"
+    print_status warning "This will reset the database!"
 
     echo ""
     printf "  ${BOLD}Are you sure? (y/N):${NC} "
@@ -403,23 +378,12 @@ reset_db() {
     echo ""
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        if [ "$db_service" = "all" ] || [ "$db_service" = "auth" ]; then
-            print_status loading "Resetting Auth database..."
-            docker-compose -f $COMPOSE_FILE stop postgres-auth-dev > /dev/null 2>&1
-            docker-compose -f $COMPOSE_FILE rm -f postgres-auth-dev > /dev/null 2>&1
-            docker volume rm pulse_postgres-auth-data-dev 2>/dev/null || true
-            docker-compose -f $COMPOSE_FILE up -d postgres-auth-dev > /dev/null 2>&1
-            print_status success "Auth database reset complete"
-        fi
-
-        if [ "$db_service" = "all" ] || [ "$db_service" = "operation" ]; then
-            print_status loading "Resetting Operation database..."
-            docker-compose -f $COMPOSE_FILE stop postgres-operation-dev > /dev/null 2>&1
-            docker-compose -f $COMPOSE_FILE rm -f postgres-operation-dev > /dev/null 2>&1
-            docker volume rm pulse_postgres-operation-data-dev 2>/dev/null || true
-            docker-compose -f $COMPOSE_FILE up -d postgres-operation-dev > /dev/null 2>&1
-            print_status success "Operation database reset complete"
-        fi
+        print_status loading "Resetting database..."
+        docker-compose -f $COMPOSE_FILE stop postgres-dev > /dev/null 2>&1
+        docker-compose -f $COMPOSE_FILE rm -f postgres-dev > /dev/null 2>&1
+        docker volume rm dokus_postgres-dev 2>/dev/null || true
+        docker-compose -f $COMPOSE_FILE up -d postgres-dev > /dev/null 2>&1
+        print_status success "Database reset complete"
     else
         print_status info "Cancelled"
     fi
@@ -428,18 +392,8 @@ reset_db() {
 
 # Function to access database
 access_db() {
-    db_type=${1:-auth}
-
-    if [ "$db_type" = "auth" ]; then
-        print_box_header "🗄️ Accessing Auth PostgreSQL"
-        docker-compose -f $COMPOSE_FILE exec postgres-auth-dev psql -U $DB_USER -d auth
-    elif [ "$db_type" = "operation" ]; then
-        print_box_header "🗄️ Accessing Operation PostgreSQL"
-        docker-compose -f $COMPOSE_FILE exec postgres-operation-dev psql -U $DB_USER -d operations
-    else
-        print_status error "Invalid database type. Use 'auth' or 'operation'"
-        exit 1
-    fi
+    print_box_header "🗄️ Accessing PostgreSQL"
+    docker-compose -f $COMPOSE_FILE exec postgres-dev psql -U $DB_USER -d $DB_NAME
 }
 
 # Function to access Redis
@@ -455,9 +409,9 @@ run_tests() {
     if [ "$service" = "all" ]; then
         print_box_header "🧪 Running All Tests"
         if [ -f "./gradlew" ]; then
-            ./gradlew :features:auth:backend:test :features:operation:backend:test
+            ./gradlew :features:auth:backend:test :foundation:database:test
         else
-            gradle :features:auth:backend:test :features:operation:backend:test
+            gradle :features:auth:backend:test :foundation:database:test
         fi
     elif [ "$service" = "auth" ]; then
         print_box_header "🧪 Running Auth Service Tests"
@@ -466,15 +420,15 @@ run_tests() {
         else
             gradle :features:auth:backend:test
         fi
-    elif [ "$service" = "operation" ]; then
-        print_box_header "🧪 Running Operation Service Tests"
+    elif [ "$service" = "database" ]; then
+        print_box_header "🧪 Running Database Service Tests"
         if [ -f "./gradlew" ]; then
-            ./gradlew :features:operation:backend:test
+            ./gradlew :foundation:database:test
         else
-            gradle :features:operation:backend:test
+            gradle :foundation:database:test
         fi
     else
-        print_status error "Invalid service type. Use 'all', 'auth', or 'operation'"
+        print_status error "Invalid service type. Use 'all', 'auth', or 'database'"
         exit 1
     fi
     echo ""
@@ -494,22 +448,21 @@ print_services_info() {
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5005${NC}"
     echo ""
 
-    # Operation Service
-    echo -e "  ${MAGENTA}▸ Operation Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9092${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9092/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9092/health${NC}"
+    # Database Service
+    echo -e "  ${MAGENTA}▸ Database Service${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9070${NC}"
+    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9070/metrics${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9070/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5006${NC}"
     echo ""
 
     # Databases
-    echo -e "  ${MAGENTA}▸ Databases${NC}"
-    echo -e "    ${GRAY}•${NC} Auth DB:    ${WHITE}localhost:5541${NC} ${DIM}(user: $DB_USER, db: auth)${NC}"
-    echo -e "    ${GRAY}•${NC} Operation:  ${WHITE}localhost:5542${NC} ${DIM}(user: $DB_USER, db: operations)${NC}"
+    echo -e "  ${MAGENTA}▸ Infrastructure${NC}"
+    echo -e "    ${GRAY}•${NC} PostgreSQL: ${WHITE}localhost:5541${NC} ${DIM}(user: $DB_USER, db: $DB_NAME)${NC}"
     echo -e "    ${GRAY}•${NC} Redis:      ${WHITE}localhost:6379${NC} ${DIM}(password: devredispass)${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
-        echo -e "    ${GRAY}•${NC} pgAdmin:    ${WHITE}http://localhost:5050${NC} ${DIM}(admin@pulse.be / admin)${NC}"
+        echo -e "    ${GRAY}•${NC} pgAdmin:    ${WHITE}http://localhost:5050${NC} ${DIM}(admin@dokus.ai / admin)${NC}"
     fi
 
     echo ""
@@ -517,7 +470,7 @@ print_services_info() {
     echo ""
     echo -e "  ${CYAN}${BOLD}🔧 Quick Commands${NC}\n"
     echo -e "    ${GRAY}./dev.sh logs${NC}         View all logs"
-    echo -e "    ${GRAY}./dev.sh db auth${NC}      Access auth database"
+    echo -e "    ${GRAY}./dev.sh db${NC}           Access PostgreSQL database"
     echo -e "    ${GRAY}./dev.sh redis${NC}        Access Redis CLI"
     echo -e "    ${GRAY}./dev.sh status${NC}       Check service health"
     echo -e "    ${GRAY}./dev.sh test${NC}         Run all tests"
@@ -530,7 +483,7 @@ start_pgadmin() {
     docker-compose -f $COMPOSE_FILE --profile tools up -d pgadmin
     echo ""
     print_status success "pgAdmin started at http://localhost:5050"
-    print_status info "Login: admin@pulse.be / admin"
+    print_status info "Login: admin@dokus.ai / admin"
     echo ""
 }
 
@@ -548,10 +501,10 @@ watch_mode() {
     # Watch for changes (requires fswatch or inotify-tools)
     if command -v fswatch &> /dev/null; then
         if [ "$service" = "all" ]; then
-            fswatch -o $AUTH_SERVICE_DIR/src $OPERATION_SERVICE_DIR/src | while read num ; do
+            fswatch -o $AUTH_SERVICE_DIR/src $DATABASE_SERVICE_DIR/src | while read num ; do
                 print_color "$YELLOW" "🔄 Changes detected, rebuilding..."
                 build_app
-                docker-compose -f $COMPOSE_FILE restart auth-service-dev operation-service-dev
+                docker-compose -f $COMPOSE_FILE restart auth-service-dev database-service-dev
                 print_color "$GREEN" "✓ Services restarted"
             done
         elif [ "$service" = "auth" ]; then
@@ -562,21 +515,21 @@ watch_mode() {
                 else
                     gradle :features:auth:backend:shadowJar -x test
                 fi
-                docker build -f features/auth/backend/Dockerfile.dev -t federal-police/pulse-auth:dev-latest .
+                docker build -f features/auth/backend/Dockerfile.dev -t invoid-vision/dokus-auth:dev-latest .
                 docker-compose -f $COMPOSE_FILE restart auth-service-dev
                 print_color "$GREEN" "✓ Auth Service restarted"
             done
-        elif [ "$service" = "operation" ]; then
-            fswatch -o $OPERATION_SERVICE_DIR/src | while read num ; do
-                print_color "$YELLOW" "🔄 Operation Service changes detected, rebuilding..."
+        elif [ "$service" = "database" ]; then
+            fswatch -o $DATABASE_SERVICE_DIR/src | while read num ; do
+                print_color "$YELLOW" "🔄 Database Service changes detected, rebuilding..."
                 if [ -f "./gradlew" ]; then
-                    ./gradlew :features:operation:backend:shadowJar -x test
+                    ./gradlew :foundation:database:shadowJar -x test
                 else
-                    gradle :features:operation:backend:shadowJar -x test
+                    gradle :foundation:database:shadowJar -x test
                 fi
-                docker build -f features/operation/backend/Dockerfile.dev -t federal-police/pulse-operation:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart operation-service-dev
-                print_color "$GREEN" "✓ Operation Service restarted"
+                docker build -f foundation/database/Dockerfile.dev -t invoid-vision/dokus-database:dev-latest .
+                docker-compose -f $COMPOSE_FILE restart database-service-dev
+                print_color "$GREEN" "✓ Database Service restarted"
             done
         fi
     else
@@ -616,10 +569,10 @@ main() {
             clean_all
             ;;
         reset-db)
-            reset_db ${2:-all}
+            reset_db
             ;;
         db)
-            access_db ${2:-auth}
+            access_db
             ;;
         redis)
             access_redis
@@ -646,7 +599,7 @@ main() {
 
 # Function to show help
 show_help() {
-    print_box_header "🚀 Pulse Development Environment Manager"
+    print_box_header "🚀 Dokus Development Environment Manager"
 
     echo -e "  ${BOLD}Usage:${NC} ./dev.sh [command] [options]\n"
 
@@ -664,14 +617,14 @@ show_help() {
 
     echo -e "  ${MAGENTA}Build & Development${NC}"
     echo -e "    ${WHITE}build${NC}              Build all services"
-    echo -e "    ${WHITE}test${NC} [service]     Run tests (auth|operation|all)"
+    echo -e "    ${WHITE}test${NC} [service]     Run tests (auth|database|all)"
     echo -e "    ${WHITE}watch${NC} [service]    Watch mode with auto-rebuild"
     echo ""
 
     echo -e "  ${YELLOW}Database & Cache${NC}"
-    echo -e "    ${WHITE}db${NC} [type]          Access PostgreSQL CLI (auth|operation)"
+    echo -e "    ${WHITE}db${NC}                 Access PostgreSQL CLI"
     echo -e "    ${WHITE}redis${NC}              Access Redis CLI"
-    echo -e "    ${WHITE}reset-db${NC} [db]      Reset database(s) (auth|operation|all)"
+    echo -e "    ${WHITE}reset-db${NC}           Reset database"
     echo -e "    ${WHITE}pgadmin${NC}            Start pgAdmin interface"
     echo ""
 
@@ -689,9 +642,9 @@ show_help() {
 
     echo -e "    ${GRAY}./dev.sh start${NC}                   Start everything"
     echo -e "    ${GRAY}./dev.sh logs auth-service-dev${NC}   Show auth service logs"
-    echo -e "    ${GRAY}./dev.sh db auth${NC}                 Access auth database"
+    echo -e "    ${GRAY}./dev.sh db${NC}                      Access PostgreSQL database"
     echo -e "    ${GRAY}./dev.sh test auth${NC}               Run auth service tests"
-    echo -e "    ${GRAY}./dev.sh reset-db operation${NC}      Reset operation database"
+    echo -e "    ${GRAY}./dev.sh reset-db${NC}                Reset database"
     echo -e "    ${GRAY}./dev.sh watch all${NC}               Watch and auto-rebuild all"
     echo ""
 }
@@ -702,7 +655,7 @@ show_menu() {
     echo ""
     echo -e "${CYAN}${BOX_TL}$(printf '%.0s═' {1..58})${BOX_TR}${NC}"
     echo -e "${CYAN}${BOX_V}                                                          ${BOX_V}${NC}"
-    echo -e "${CYAN}${BOX_V}        ${WHITE}${BOLD}🚀 Pulse Development Environment${NC}${CYAN}           ${BOX_V}${NC}"
+    echo -e "${CYAN}${BOX_V}        ${WHITE}${BOLD}🚀 Dokus Development Environment${NC}${CYAN}           ${BOX_V}${NC}"
     echo -e "${CYAN}${BOX_V}                                                          ${BOX_V}${NC}"
     echo -e "${CYAN}${BOX_BL}$(printf '%.0s═' {1..58})${BOX_BR}${NC}"
     echo ""
@@ -717,21 +670,20 @@ show_menu() {
 
     echo -e "  ${MAGENTA}Development Tools${NC}"
     echo -e "    ${CYAN}5${NC})  View logs"
-    echo -e "    ${CYAN}6${NC})  Access Auth database"
-    echo -e "    ${CYAN}7${NC})  Access Operation database"
-    echo -e "    ${CYAN}8${NC})  Access Redis"
-    echo -e "    ${CYAN}9${NC})  Run all tests"
+    echo -e "    ${CYAN}6${NC})  Access database"
+    echo -e "    ${CYAN}7${NC})  Access Redis"
+    echo -e "    ${CYAN}8${NC})  Run all tests"
     echo ""
 
     echo -e "  ${YELLOW}Utilities${NC}"
-    echo -e "    ${CYAN}10${NC}) Start pgAdmin"
-    echo -e "    ${CYAN}11${NC}) Clean everything"
+    echo -e "    ${CYAN}9${NC})  Start pgAdmin"
+    echo -e "    ${CYAN}10${NC}) Clean everything"
     echo ""
 
     echo -e "  ${GRAY}0${NC})  Exit"
     echo ""
 
-    printf "  ${BOLD}Enter choice [0-11]:${NC} "
+    printf "  ${BOLD}Enter choice [0-10]:${NC} "
     read choice
 
     echo ""
@@ -742,12 +694,11 @@ show_menu() {
         3) check_requirements && build_app && restart_services ;;
         4) show_status ;;
         5) show_logs ;;
-        6) access_db auth ;;
-        7) access_db operation ;;
-        8) access_redis ;;
-        9) run_tests all ;;
-        10) start_pgadmin ;;
-        11) clean_all ;;
+        6) access_db ;;
+        7) access_redis ;;
+        8) run_tests all ;;
+        9) start_pgadmin ;;
+        10) clean_all ;;
         0) echo -e "${CYAN}👋 Goodbye!${NC}" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 2 && show_menu ;;
     esac

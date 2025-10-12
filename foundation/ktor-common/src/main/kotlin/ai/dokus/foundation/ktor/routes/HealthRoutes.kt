@@ -11,21 +11,14 @@ import ai.dokus.foundation.ktor.NonHeapMemoryInfo
 import ai.dokus.foundation.ktor.ServerStatus
 import ai.dokus.foundation.ktor.SystemInfo
 import ai.dokus.foundation.ktor.ThreadInfo
-import ai.dokus.foundation.ktor.db.DatabaseFactory
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
-import kotlinx.coroutines.withTimeout
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.koin.ktor.ext.inject
 import java.io.File
 import java.lang.management.ManagementFactory
-import kotlin.time.Duration.Companion.seconds
 
 fun Routing.healthRoutes() {
-    val databaseFactory by inject<DatabaseFactory>()
-
     get("/health/live") {
         call.respond(
             HttpStatusCode.OK, HealthStatus(
@@ -41,13 +34,6 @@ fun Routing.healthRoutes() {
         // Readiness check - service is ready to handle requests
         val checks = mutableMapOf<String, HealthCheck>()
         var overallStatus = ServerStatus.UP
-
-        // Database check
-        val dbCheck = checkDatabase(databaseFactory)
-        checks["database"] = dbCheck
-        if (dbCheck.status != ServerStatus.UP) {
-            overallStatus = ServerStatus.DOWN
-        }
 
         // Memory check
         val memoryCheck = checkMemory()
@@ -122,34 +108,6 @@ fun Routing.healthRoutes() {
         )
 
         call.respond(HttpStatusCode.OK, healthInfo)
-    }
-}
-
-private suspend fun checkDatabase(databaseFactory: DatabaseFactory): HealthCheck {
-    return try {
-        withTimeout(5.seconds) {
-            transaction(databaseFactory.database) {
-                exec("SELECT 1") { rs ->
-                    rs.next()
-                }
-            }
-        }
-        HealthCheck(
-            status = ServerStatus.UP,
-            message = "Database connection is healthy",
-            details = mapOf(
-                "type" to "PostgreSQL",
-                "response_time" to "< 5s"
-            )
-        )
-    } catch (e: Exception) {
-        HealthCheck(
-            status = ServerStatus.DOWN,
-            message = "Database connection failed: ${e.message}",
-            details = mapOf(
-                "error" to (e.message ?: "Unknown error")
-            )
-        )
     }
 }
 

@@ -5,11 +5,9 @@ import ai.dokus.foundation.database.tables.UserPermissionsTable
 import ai.dokus.foundation.database.tables.UserRolesTable
 import ai.dokus.foundation.database.tables.UserSpecializationsTable
 import ai.dokus.foundation.database.tables.UsersTable
-import ai.dokus.auth.domain.model.Email
-import ai.dokus.auth.domain.model.UserRole
-import ai.dokus.auth.domain.model.UserSearchCriteria
-import ai.dokus.auth.domain.model.UserStatus
 import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.model.User
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.ResultRow
@@ -154,15 +152,6 @@ class UserRepository {
         UsersTable
             .selectAll().where {
                 (UsersTable.department eq department) and
-                        (UsersTable.status eq UserStatus.ACTIVE)
-            }
-            .mapNotNull { it.toUser() }
-    }
-
-    suspend fun findByRole(role: UserRole): List<User> = dbQuery {
-        (UsersTable innerJoin UserRolesTable)
-            .selectAll().where {
-                (UserRolesTable.role eq role) and
                         (UsersTable.status eq UserStatus.ACTIVE)
             }
             .mapNotNull { it.toUser() }
@@ -395,16 +384,12 @@ class UserRepository {
             passwordExpiresAt = this[UsersTable.passwordExpiresAt],
             unitCode = this[UsersTable.unitCode],
             department = this[UsersTable.department],
-            rank = this[UsersTable.rank],
             isOGP = this[UsersTable.isOGP],
             isOBP = this[UsersTable.isOBP],
-            clearanceLevel = this[UsersTable.clearanceLevel],
-            language = this[UsersTable.language],
             radioCallSign = this[UsersTable.radioCallSign],
             roles = roles,
             permissions = permissions,
             specializations = specializations,
-            status = this[UsersTable.status],
             lockedUntil = this[UsersTable.lockedUntil],
             failedLoginAttempts = this[UsersTable.failedLoginAttempts],
             lastLoginAt = this[UsersTable.lastLoginAt],

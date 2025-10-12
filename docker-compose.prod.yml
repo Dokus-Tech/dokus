@@ -1,51 +1,30 @@
 # Production Docker Compose configuration
 
 services:
-  # Auth Service Database
-  postgres-auth-prod:
+  # Shared PostgreSQL Database for all services
+  postgres-prod:
     image: postgres:17-alpine
-    container_name: pulse-postgres-auth-prod
+    container_name: dokus-postgres-prod
     environment:
-      POSTGRES_DB: auth
+      POSTGRES_DB: dokus
       POSTGRES_USER: ${DB_USERNAME:-produser}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5441:5432"
     volumes:
-      - postgres-auth-data-prod:/var/lib/postgresql/data
-      - ./features/auth/backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+      - postgres-data-prod:/var/lib/postgresql/data
+      - ./foundation/database/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
     networks:
-      - pulse-prod-network
+      - dokus-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d auth"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # Operation Service Database
-  postgres-operation-prod:
-    image: postgres:17-alpine
-    container_name: pulse-postgres-operation-prod
-    environment:
-      POSTGRES_DB: operations
-      POSTGRES_USER: ${DB_USERNAME:-produser}
-      POSTGRES_PASSWORD: ${OPERATION_DB_PASSWORD:-${DB_PASSWORD}}
-    ports:
-      - "5442:5432"
-    volumes:
-      - postgres-operation-data-prod:/var/lib/postgresql/data
-      - ./features/operation/backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
-    networks:
-      - pulse-prod-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d operations"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis-prod:
     image: redis:8-alpine
-    container_name: pulse-redis-prod
+    container_name: dokus-redis-prod
     command: >
       redis-server
       --appendonly yes
@@ -62,7 +41,7 @@ services:
     volumes:
       - redis-data-prod:/data
     networks:
-      - pulse-prod-network
+      - dokus-prod-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
@@ -71,16 +50,16 @@ services:
       retries: 5
 
   auth-service-prod:
-    image: federal-police/pulse-auth:prod-${BUILD_NUMBER:-latest}
-    container_name: pulse-auth-prod
+    image: invoid-vision/dokus-auth:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-auth-prod
     environment:
       ENVIRONMENT: prod
-      DB_URL: jdbc:postgresql://postgres-auth-prod:5432/auth
+      DB_URL: jdbc:postgresql://postgres-prod:5432/dokus
       DB_USERNAME: ${DB_USERNAME:-produser}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-https://pulse.be}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-pulse-api}
+      JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
       REDIS_HOST: redis-prod
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -90,12 +69,12 @@ services:
     ports:
       - "8091:8091"
     depends_on:
-      postgres-auth-prod:
+      postgres-prod:
         condition: service_healthy
       redis-prod:
         condition: service_healthy
     networks:
-      - pulse-prod-network
+      - dokus-prod-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8091/metrics"]
       interval: 30s
@@ -106,33 +85,33 @@ services:
       - ./logs-prod:/app/logs
     restart: unless-stopped
 
-  operation-service-prod:
-    image: federal-police/pulse-operation:prod-${BUILD_NUMBER:-latest}
-    container_name: pulse-operation-prod
+  database-service-prod:
+    image: invoid-vision/dokus-database:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-database-prod
     environment:
       ENVIRONMENT: prod
-      DB_URL: jdbc:postgresql://postgres-operation-prod:5432/operations
+      DB_URL: jdbc:postgresql://postgres-prod:5432/dokus
       DB_USERNAME: ${DB_USERNAME:-produser}
-      DB_PASSWORD: ${OPERATION_DB_PASSWORD:-${DB_PASSWORD}}
+      DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-https://pulse.be}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-pulse-api}
+      JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
       REDIS_HOST: redis-prod
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_PATH: /app/logs
     ports:
-      - "8092:8092"
+      - "8070:8070"
     depends_on:
-      postgres-operation-prod:
+      postgres-prod:
         condition: service_healthy
       redis-prod:
         condition: service_healthy
     networks:
-      - pulse-prod-network
+      - dokus-prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8092/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:8070/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -142,13 +121,11 @@ services:
     restart: unless-stopped
 
 networks:
-  pulse-prod-network:
+  dokus-prod-network:
     driver: bridge
 
 volumes:
-  postgres-auth-data-prod:
-    driver: local
-  postgres-operation-data-prod:
+  postgres-data-prod:
     driver: local
   redis-data-prod:
     driver: local

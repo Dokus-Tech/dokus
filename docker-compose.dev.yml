@@ -1,23 +1,23 @@
 # Development Docker Compose configuration
 
 services:
-  # Auth Service Database
+  # Shared PostgreSQL Database for all services
   postgres-dev:
     image: postgres:17-alpine
     container_name: dokus-postgres-dev
     environment:
-      POSTGRES_DB: auth
+      POSTGRES_DB: dokus
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: devpassword
     ports:
       - "5541:5432"
     volumes:
       - postgres-dev:/var/lib/postgresql/data
-      - ./features/auth/backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+      - ./foundation/database/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d auth"]
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -43,7 +43,7 @@ services:
     container_name: dokus-auth-dev
     environment:
       ENVIRONMENT: dev
-      DB_URL: jdbc:postgresql://postgres-dev:5432/auth
+      DB_URL: jdbc:postgresql://postgres-dev:5432/dokus
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
       JWT_SECRET: dev-secret-key
@@ -75,15 +75,15 @@ services:
       - ./logs-dev:/app/logs
 
   database-service-dev:
-    image: invoid-vision/dokus-data:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-data-dev
+    image: invoid-vision/dokus-database:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-database-dev
     environment:
       ENVIRONMENT: dev
-      DB_URL: jdbc:postgresql://postgres-operation-dev:5432/operations
+      DB_URL: jdbc:postgresql://postgres-dev:5432/dokus
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
       JWT_SECRET: dev-secret-key
-      JWT_ISSUER: http://localhost:9092
+      JWT_ISSUER: http://localhost:9070
       JWT_AUDIENCE: dokus-api-dev
       REDIS_HOST: redis-dev
       REDIS_PORT: 6379
@@ -91,23 +91,42 @@ services:
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     ports:
-      - "9092:9092"
+      - "9070:9070"
       - "5006:5006"
     depends_on:
-      postgres-operation-dev:
+      postgres-dev:
         condition: service_healthy
       redis-dev:
         condition: service_healthy
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9092/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:9070/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     volumes:
       - ./logs-dev:/app/logs
+
+  # pgAdmin for database management (profile: tools)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dokus-pgadmin-dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@dokus.ai
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - dokus-dev-network
+    profiles:
+      - tools
+    depends_on:
+      - postgres-dev
 
 networks:
   dokus-dev-network:
@@ -117,4 +136,6 @@ volumes:
   postgres-dev:
     driver: local
   redis-data-dev:
+    driver: local
+  pgadmin-data:
     driver: local
