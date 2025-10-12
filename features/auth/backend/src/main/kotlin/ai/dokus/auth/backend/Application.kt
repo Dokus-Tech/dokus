@@ -5,6 +5,7 @@ import ai.dokus.auth.backend.config.configureDependencyInjection
 import ai.dokus.auth.backend.routes.identityRoutes
 import ai.dokus.auth.backend.routes.passwordlessAuthRoutes
 import ai.dokus.auth.backend.routes.userRoutes
+import ai.dokus.foundation.apispec.*
 import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
@@ -13,9 +14,14 @@ import ai.dokus.foundation.ktor.configure.configureSerialization
 import ai.dokus.foundation.ktor.routes.healthRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
+import kotlinx.rpc.krpc.ktor.server.RPC
+import kotlinx.rpc.krpc.ktor.server.rpc
+import kotlinx.rpc.krpc.serialization.json.json
+import org.koin.ktor.ext.get
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("Application")
@@ -57,12 +63,31 @@ fun Application.module(appConfig: AppConfig) {
     configureAuthentication(appConfig)
     configureMonitoring()
 
+    // Install KotlinX RPC plugin
+    install(RPC)
+
     // Configure routes
     routing {
         healthRoutes()
         identityRoutes()
         userRoutes()
         passwordlessAuthRoutes()
+
+        // Register public RPC APIs
+        rpc("/api") {
+            rpcConfig {
+                serialization {
+                    json()
+                }
+            }
+
+            registerService<TenantApi> { ctx -> get<TenantApi>() }
+            registerService<ClientApi> { ctx -> get<ClientApi>() }
+            registerService<InvoiceApi> { ctx -> get<InvoiceApi>() }
+            registerService<ExpenseApi> { ctx -> get<ExpenseApi>() }
+        }
+
+        logger.info("Public RPC APIs registered at /api")
     }
 
     // Configure graceful shutdown
