@@ -46,7 +46,7 @@ fun main() {
 
 fun Application.module(appConfig: AppConfig) {
     // Log application startup
-    logger.info("Starting Pulse Auth Service...")
+    logger.info("Starting Dokus Auth Service...")
     logger.info("Environment: ${appConfig.ktor.deployment.environment}")
 
     // Configure application
@@ -71,5 +71,5 @@ fun Application.module(appConfig: AppConfig) {
         logger.info("Cleanup complete")
     }
 
-    logger.info("Pulse Auth Service started successfully")
+    logger.info("Dokus Auth Service started successfully")
 }
