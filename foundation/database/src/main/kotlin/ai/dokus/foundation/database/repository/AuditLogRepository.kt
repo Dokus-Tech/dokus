@@ -1,7 +1,7 @@
 package ai.dokus.foundation.database.repository
 
-import ai.dokus.foundation.database.enums.AuditAction
-import ai.dokus.foundation.database.enums.EntityType
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.database.tables.AuditLogsTable
 import ai.dokus.foundation.database.utils.dbQuery
 import ai.dokus.foundation.domain.*

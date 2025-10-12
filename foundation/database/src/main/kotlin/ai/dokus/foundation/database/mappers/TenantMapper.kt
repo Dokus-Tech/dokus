@@ -1,11 +1,10 @@
 package ai.dokus.foundation.database.mappers
 
-import ai.dokus.foundation.database.tables.TenantsTable
-import ai.dokus.foundation.database.tables.TenantSettingsTable
+import ai.dokus.foundation.database.tables.*
+import ai.dokus.foundation.database.utils.toKotlinLocalDate
+import ai.dokus.foundation.database.utils.toKotlinLocalDateTime
 import ai.dokus.foundation.domain.*
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
-import kotlinx.datetime.toKotlinLocalDateTime
+import ai.dokus.foundation.domain.model.*
 import org.jetbrains.exposed.sql.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -19,11 +18,11 @@ object TenantMapper {
         email = this[TenantsTable.email],
         plan = this[TenantsTable.plan],
         status = this[TenantsTable.status],
+        trialEndsAt = this[TenantsTable.trialEndsAt]?.toKotlinLocalDateTime(),
+        subscriptionStartedAt = this[TenantsTable.subscriptionStartedAt]?.toKotlinLocalDateTime(),
         country = this[TenantsTable.country],
         language = this[TenantsTable.language],
         vatNumber = this[TenantsTable.vatNumber]?.let { VatNumber(it) },
-        trialEndsAt = this[TenantsTable.trialEndsAt]?.toKotlinLocalDateTime(),
-        subscriptionStartedAt = this[TenantsTable.subscriptionStartedAt]?.toKotlinLocalDateTime(),
         createdAt = this[TenantsTable.createdAt].toKotlinLocalDateTime(),
         updatedAt = this[TenantsTable.updatedAt].toKotlinLocalDateTime()
     )
