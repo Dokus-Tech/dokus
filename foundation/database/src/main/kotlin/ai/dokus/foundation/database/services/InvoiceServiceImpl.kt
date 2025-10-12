@@ -270,25 +270,23 @@ class InvoiceServiceImpl(
         ccEmails: List<String>?,
         message: String?
     ) {
-        // TODO: Implement email sending integration
         logger.info("Sending invoice $invoiceId via email to $recipientEmail")
+        throw NotImplementedError("Email sending integration not yet implemented")
     }
 
     override suspend fun sendViaPeppol(invoiceId: InvoiceId) {
-        // TODO: Implement Peppol integration
         logger.info("Sending invoice $invoiceId via Peppol")
+        throw NotImplementedError("Peppol integration not yet implemented")
     }
 
     override suspend fun generatePDF(invoiceId: InvoiceId): ByteArray {
-        // TODO: Implement PDF generation
         logger.info("Generating PDF for invoice $invoiceId")
-        return ByteArray(0)
+        throw NotImplementedError("PDF generation not yet implemented")
     }
 
     override suspend fun generatePaymentLink(invoiceId: InvoiceId, expiresAt: Instant?): String {
-        // TODO: Implement payment link generation (Stripe/Mollie)
         logger.info("Generating payment link for invoice $invoiceId")
-        return "https://pay.dokus.ai/invoice/$invoiceId"
+        throw NotImplementedError("Payment link generation not yet implemented")
     }
 
     override suspend fun markAsSent(invoiceId: InvoiceId) = dbQuery {
@@ -329,8 +327,7 @@ class InvoiceServiceImpl(
         fromDate: LocalDate?,
         toDate: LocalDate?
     ): Map<String, Money> {
-        // TODO: Implement statistics calculation
-        return emptyMap()
+        throw NotImplementedError("Statistics calculation not yet implemented")
     }
 
     private suspend fun getInvoiceWithItems(invoiceId: kotlin.uuid.Uuid): Invoice {
