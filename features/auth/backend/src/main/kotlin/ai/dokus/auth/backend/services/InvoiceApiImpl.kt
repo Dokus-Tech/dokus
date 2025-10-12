@@ -58,7 +58,7 @@ class InvoiceApiImpl(
         invoiceService.markAsSent(invoiceId)
     }
 
-    override suspend fun watchInvoices(tenantId: TenantId): Flow<Invoice> {
+    override fun watchInvoices(tenantId: TenantId): Flow<Invoice> {
         return invoiceService.watchInvoices(tenantId)
     }
 

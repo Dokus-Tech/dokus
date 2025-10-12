@@ -6,14 +6,14 @@ import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.InvoiceItem
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface InvoiceApi {
-    companion object
 
     suspend fun createInvoice(request: CreateInvoiceRequest): Result<Invoice>
 
@@ -40,7 +40,7 @@ interface InvoiceApi {
 
     suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit>
 
-    suspend fun watchInvoices(tenantId: TenantId): Flow<Invoice>
+    fun watchInvoices(tenantId: TenantId): Flow<Invoice>
 
-    suspend fun calculateInvoiceTotals(items: List<CreateInvoiceRequest.InvoiceItemRequest>): Result<Triple<Money, Money, Money>>
+    suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): Result<Triple<Money, Money, Money>>
 }

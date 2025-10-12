@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.kotlinxRpcPlugin)
     id("com.github.johnrengelman.shadow") version "8.1.1"
     application
 }
@@ -25,10 +26,11 @@ dependencies {
 
     implementation(libs.kotlinx.serialization)
 
-    // KotlinX RPC Client
+    // KotlinX RPC Client & Server
     implementation(libs.kotlinx.rpc.core)
     implementation(libs.kotlinx.rpc.krpc.serialization.json)
     implementation(libs.kotlinx.rpc.krpc.ktor.client)
+    implementation(libs.kotlinx.rpc.krpc.ktor.server)
 
     // Ktor Server
     implementation(libs.ktor.server.core)

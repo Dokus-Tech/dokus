@@ -10,9 +10,9 @@ import ai.dokus.foundation.domain.model.BankConnection
 import ai.dokus.foundation.domain.model.BankTransaction
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface BankService {
     /**
      * Connects a bank account via Plaid/Tink/Nordigen

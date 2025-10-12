@@ -299,7 +299,7 @@ class InvoiceServiceImpl(
         logger.info("Marked invoice $invoiceId as sent")
     }
 
-    override suspend fun watchInvoices(tenantId: TenantId): Flow<Invoice> {
+    override fun watchInvoices(tenantId: TenantId): Flow<Invoice> {
         return invoiceUpdates
     }
 

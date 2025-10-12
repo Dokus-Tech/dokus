@@ -37,6 +37,10 @@ kotlin {
 
         commonMain.dependencies {
             implementation(projects.foundation.domain)
+
+            // KotlinX RPC
+            implementation(libs.kotlinx.rpc.core)
+            implementation(libs.kotlinx.rpc.krpc.serialization.json)
         }
         desktopMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)

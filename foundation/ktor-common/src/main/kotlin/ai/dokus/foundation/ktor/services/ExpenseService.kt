@@ -10,9 +10,9 @@ import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface ExpenseService {
     /**
      * Creates a new expense
@@ -155,7 +155,7 @@ interface ExpenseService {
      * @param tenantId The tenant's unique identifier
      * @return Flow of expense updates
      */
-    suspend fun watchExpenses(tenantId: TenantId): Flow<Expense>
+    fun watchExpenses(tenantId: TenantId): Flow<Expense>
 
     /**
      * Gets expense statistics for a tenant

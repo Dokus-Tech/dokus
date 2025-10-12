@@ -7,11 +7,10 @@ import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface ExpenseApi {
-    companion object
 
     suspend fun createExpense(request: CreateExpenseRequest): Result<Expense>
 
@@ -35,5 +34,5 @@ interface ExpenseApi {
 
     suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit>
 
-    suspend fun watchExpenses(tenantId: TenantId): Flow<Expense>
+    fun watchExpenses(tenantId: TenantId): Flow<Expense>
 }

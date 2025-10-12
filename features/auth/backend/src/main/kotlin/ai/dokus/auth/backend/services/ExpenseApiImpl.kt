@@ -48,7 +48,7 @@ class ExpenseApiImpl(
         expenseService.delete(expenseId)
     }
 
-    override suspend fun watchExpenses(tenantId: TenantId): Flow<Expense> {
+    override fun watchExpenses(tenantId: TenantId): Flow<Expense> {
         return expenseService.watchExpenses(tenantId)
     }
 }

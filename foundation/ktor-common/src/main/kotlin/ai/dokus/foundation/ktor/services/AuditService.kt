@@ -7,10 +7,12 @@ import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.AuditLog
 import kotlinx.datetime.Instant
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@RPC
+@OptIn(ExperimentalUuidApi::class)
+@Rpc
 interface AuditService {
     /**
      * Logs an audit event
