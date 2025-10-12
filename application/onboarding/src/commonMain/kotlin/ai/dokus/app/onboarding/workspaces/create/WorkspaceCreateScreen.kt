@@ -1,7 +1,7 @@
 package ai.dokus.app.onboarding.workspaces.create
 
-import ai.dokus.app.core.constrains.isLargeScreen
-import ai.dokus.app.core.flags.FeatureFlags
+import ai.dokus.foundation.ui.constrains.isLargeScreen
+import ai.dokus.foundation.domain.flags.FeatureFlags
 import ai.dokus.foundation.navigation.AppNavigator
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.Address
