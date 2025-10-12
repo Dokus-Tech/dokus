@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.profile"
+    namespace = "ai.dokus.app.auth"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

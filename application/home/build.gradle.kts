@@ -1,6 +1,6 @@
+
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -45,7 +45,6 @@ kotlin {
             implementation(projects.application.simulation)
             implementation(projects.application.inventory)
             implementation(projects.application.banking)
-            implementation(projects.application.profile)
         }
         desktopMain.dependencies {
         }

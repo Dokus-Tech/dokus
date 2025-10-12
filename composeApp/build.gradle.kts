@@ -72,7 +72,6 @@ kotlin {
             implementation(projects.application.simulation)
             implementation(projects.application.inventory)
             implementation(projects.application.banking)
-            implementation(projects.application.profile)
             implementation(projects.foundation.navigation)
 
             implementation(projects.foundation.domain)
