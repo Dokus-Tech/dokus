@@ -33,7 +33,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.foundation.navigation)
-            implementation(projects.application.appCommon)
+            implementation(projects.foundation.appCommon)
             implementation(projects.foundation.ui)
         }
         desktopMain.dependencies {
