@@ -4,6 +4,7 @@ import ai.dokus.foundation.database.enums.AuditAction
 import ai.dokus.foundation.database.enums.EntityType
 import ai.dokus.foundation.database.tables.AuditLogsTable
 import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.domain.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.insert
@@ -22,19 +23,19 @@ class AuditLogRepository {
     private val json = Json { prettyPrint = false }
 
     suspend fun log(
-        tenantId: Uuid,
-        userId: Uuid? = null,
+        tenantId: TenantId,
+        userId: BusinessUserId? = null,
         action: AuditAction,
         entityType: EntityType,
-        entityId: Uuid,
+        entityId: String, // Generic entity ID as string since it could be any entity type
         oldValues: Map<String, Any?>? = null,
         newValues: Map<String, Any?>? = null,
         ipAddress: String? = null,
         userAgent: String? = null
     ): Unit = dbQuery {
-        val tenantJavaUuid = tenantId.toJavaUuid()
-        val userJavaUuid = userId?.toJavaUuid()
-        val entityJavaUuid = entityId.toJavaUuid()
+        val tenantJavaUuid = tenantId.value.toJavaUuid()
+        val userJavaUuid = userId?.value?.toJavaUuid()
+        val entityJavaUuid = Uuid.parse(entityId).toJavaUuid()
 
         AuditLogsTable.insert {
             it[AuditLogsTable.tenantId] = tenantJavaUuid
@@ -59,16 +60,16 @@ class AuditLogRepository {
      * Log a financial operation (higher priority logging)
      */
     suspend fun logFinancial(
-        tenantId: Uuid,
-        userId: Uuid? = null,
+        tenantId: TenantId,
+        userId: BusinessUserId? = null,
         action: AuditAction,
         entityType: EntityType,
-        entityId: Uuid,
-        amount: String,
+        entityId: String, // Generic entity ID as string since it could be any entity type
+        amount: Money,
         details: Map<String, Any?>,
         ipAddress: String? = null
     ) {
-        val enrichedDetails = details + mapOf("amount" to amount)
+        val enrichedDetails = details + mapOf("amount" to amount.value)
 
         log(
             tenantId = tenantId,
@@ -80,6 +81,6 @@ class AuditLogRepository {
             ipAddress = ipAddress
         )
 
-        logger.info("FINANCIAL AUDIT: tenant=$tenantId action=${action.dbValue} amount=$amount")
+        logger.info("FINANCIAL AUDIT: tenant=$tenantId action=${action.dbValue} amount=${amount.value}")
     }
 }

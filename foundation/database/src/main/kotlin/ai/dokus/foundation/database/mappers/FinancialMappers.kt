@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.mappers
 
 import ai.dokus.foundation.database.tables.*
+import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.model.*
 import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.datetime.toKotlinLocalDateTime
@@ -13,19 +14,19 @@ import kotlin.uuid.toKotlinUuid
 object ExpenseMapper {
 
     fun ResultRow.toExpense(): Expense = Expense(
-        id = this[ExpensesTable.id].value.toKotlinUuid(),
-        tenantId = this[ExpensesTable.tenantId].value.toKotlinUuid(),
+        id = ExpenseId(this[ExpensesTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[ExpensesTable.tenantId].value.toKotlinUuid()),
         date = this[ExpensesTable.date].toKotlinLocalDate(),
         merchant = this[ExpensesTable.merchant],
-        amount = this[ExpensesTable.amount].toString(),
-        vatAmount = this[ExpensesTable.vatAmount]?.toString(),
-        vatRate = this[ExpensesTable.vatRate]?.toString(),
+        amount = Money(this[ExpensesTable.amount].toString()),
+        vatAmount = this[ExpensesTable.vatAmount]?.toString()?.let { Money(it) },
+        vatRate = this[ExpensesTable.vatRate]?.toString()?.let { VatRate(it) },
         category = this[ExpensesTable.category],
         description = this[ExpensesTable.description],
         receiptUrl = this[ExpensesTable.receiptUrl],
         receiptFilename = this[ExpensesTable.receiptFilename],
         isDeductible = this[ExpensesTable.isDeductible],
-        deductiblePercentage = this[ExpensesTable.deductiblePercentage].toString(),
+        deductiblePercentage = Percentage(this[ExpensesTable.deductiblePercentage].toString()),
         paymentMethod = this[ExpensesTable.paymentMethod],
         isRecurring = this[ExpensesTable.isRecurring],
         notes = this[ExpensesTable.notes],
@@ -38,13 +39,13 @@ object ExpenseMapper {
 object PaymentMapper {
 
     fun ResultRow.toPayment(): Payment = Payment(
-        id = this[PaymentsTable.id].value.toKotlinUuid(),
-        tenantId = this[PaymentsTable.tenantId].value.toKotlinUuid(),
-        invoiceId = this[PaymentsTable.invoiceId].value.toKotlinUuid(),
-        amount = this[PaymentsTable.amount].toString(),
+        id = PaymentId(this[PaymentsTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[PaymentsTable.tenantId].value.toKotlinUuid()),
+        invoiceId = InvoiceId(this[PaymentsTable.invoiceId].value.toKotlinUuid()),
+        amount = Money(this[PaymentsTable.amount].toString()),
         paymentDate = this[PaymentsTable.paymentDate].toKotlinLocalDate(),
         paymentMethod = this[PaymentsTable.paymentMethod],
-        transactionId = this[PaymentsTable.transactionId],
+        transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },
         notes = this[PaymentsTable.notes],
         createdAt = this[PaymentsTable.createdAt].toKotlinLocalDateTime()
     )
@@ -54,8 +55,8 @@ object PaymentMapper {
 object BankingMapper {
 
     fun ResultRow.toBankConnection(): BankConnection = BankConnection(
-        id = this[BankConnectionsTable.id].value.toKotlinUuid(),
-        tenantId = this[BankConnectionsTable.tenantId].value.toKotlinUuid(),
+        id = BankConnectionId(this[BankConnectionsTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[BankConnectionsTable.tenantId].value.toKotlinUuid()),
         provider = this[BankConnectionsTable.provider],
         institutionId = this[BankConnectionsTable.institutionId],
         institutionName = this[BankConnectionsTable.institutionName],
@@ -70,18 +71,18 @@ object BankingMapper {
     )
 
     fun ResultRow.toBankTransaction(): BankTransaction = BankTransaction(
-        id = this[BankTransactionsTable.id].value.toKotlinUuid(),
-        bankConnectionId = this[BankTransactionsTable.bankConnectionId].value.toKotlinUuid(),
-        tenantId = this[BankTransactionsTable.tenantId].value.toKotlinUuid(),
+        id = BankTransactionId(this[BankTransactionsTable.id].value.toKotlinUuid()),
+        bankConnectionId = BankConnectionId(this[BankTransactionsTable.bankConnectionId].value.toKotlinUuid()),
+        tenantId = TenantId(this[BankTransactionsTable.tenantId].value.toKotlinUuid()),
         externalId = this[BankTransactionsTable.externalId],
         date = this[BankTransactionsTable.date].toKotlinLocalDate(),
-        amount = this[BankTransactionsTable.amount].toString(),
+        amount = Money(this[BankTransactionsTable.amount].toString()),
         description = this[BankTransactionsTable.description],
         merchantName = this[BankTransactionsTable.merchantName],
         category = this[BankTransactionsTable.category],
         isPending = this[BankTransactionsTable.isPending],
-        expenseId = this[BankTransactionsTable.expenseId]?.value?.toKotlinUuid(),
-        invoiceId = this[BankTransactionsTable.invoiceId]?.value?.toKotlinUuid(),
+        expenseId = this[BankTransactionsTable.expenseId]?.value?.toKotlinUuid()?.let { ExpenseId(it) },
+        invoiceId = this[BankTransactionsTable.invoiceId]?.value?.toKotlinUuid()?.let { InvoiceId(it) },
         isReconciled = this[BankTransactionsTable.isReconciled],
         createdAt = this[BankTransactionsTable.createdAt].toKotlinLocalDateTime()
     )
@@ -91,13 +92,13 @@ object BankingMapper {
 object VatMapper {
 
     fun ResultRow.toVatReturn(): VatReturn = VatReturn(
-        id = this[VatReturnsTable.id].value.toKotlinUuid(),
-        tenantId = this[VatReturnsTable.tenantId].value.toKotlinUuid(),
+        id = VatReturnId(this[VatReturnsTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[VatReturnsTable.tenantId].value.toKotlinUuid()),
         quarter = this[VatReturnsTable.quarter],
         year = this[VatReturnsTable.year],
-        salesVat = this[VatReturnsTable.salesVat].toString(),
-        purchaseVat = this[VatReturnsTable.purchaseVat].toString(),
-        netVat = this[VatReturnsTable.netVat].toString(),
+        salesVat = Money(this[VatReturnsTable.salesVat].toString()),
+        purchaseVat = Money(this[VatReturnsTable.purchaseVat].toString()),
+        netVat = Money(this[VatReturnsTable.netVat].toString()),
         status = this[VatReturnsTable.status],
         filedAt = this[VatReturnsTable.filedAt]?.toKotlinLocalDateTime(),
         paidAt = this[VatReturnsTable.paidAt]?.toKotlinLocalDateTime(),
@@ -111,12 +112,12 @@ object AuditMapper {
     private val json = Json { ignoreUnknownKeys = true }
 
     fun ResultRow.toAuditLog(): AuditLog = AuditLog(
-        id = this[AuditLogsTable.id].value.toKotlinUuid(),
-        tenantId = this[AuditLogsTable.tenantId].value.toKotlinUuid(),
-        userId = this[AuditLogsTable.userId]?.value?.toKotlinUuid(),
+        id = AuditLogId(this[AuditLogsTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[AuditLogsTable.tenantId].value.toKotlinUuid()),
+        userId = this[AuditLogsTable.userId]?.value?.toKotlinUuid()?.let { BusinessUserId(it) },
         action = this[AuditLogsTable.action],
         entityType = this[AuditLogsTable.entityType],
-        entityId = this[AuditLogsTable.entityId].toKotlinUuid(),
+        entityId = this[AuditLogsTable.entityId].toString(), // Generic entity ID as string
         oldValues = this[AuditLogsTable.oldValues]?.let {
             json.decodeFromString<Map<String, String>>(it)
         },
@@ -133,10 +134,10 @@ object AuditMapper {
 object AttachmentMapper {
 
     fun ResultRow.toAttachment(): Attachment = Attachment(
-        id = this[AttachmentsTable.id].value.toKotlinUuid(),
-        tenantId = this[AttachmentsTable.tenantId].value.toKotlinUuid(),
+        id = AttachmentId(this[AttachmentsTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[AttachmentsTable.tenantId].value.toKotlinUuid()),
         entityType = this[AttachmentsTable.entityType],
-        entityId = this[AttachmentsTable.entityId].toKotlinUuid(),
+        entityId = this[AttachmentsTable.entityId].toString(), // Generic entity ID as string
         filename = this[AttachmentsTable.filename],
         mimeType = this[AttachmentsTable.mimeType],
         sizeBytes = this[AttachmentsTable.sizeBytes],
@@ -150,9 +151,9 @@ object AttachmentMapper {
 object UserMapper {
 
     fun ResultRow.toBusinessUser(): BusinessUser = BusinessUser(
-        id = this[UsersTable.id].value.toKotlinUuid(),
-        tenantId = this[UsersTable.tenantId].value.toKotlinUuid(),
-        email = this[UsersTable.email],
+        id = BusinessUserId(this[UsersTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[UsersTable.tenantId].value.toKotlinUuid()),
+        email = Email(this[UsersTable.email]),
         role = this[UsersTable.role],
         firstName = this[UsersTable.firstName],
         lastName = this[UsersTable.lastName],
