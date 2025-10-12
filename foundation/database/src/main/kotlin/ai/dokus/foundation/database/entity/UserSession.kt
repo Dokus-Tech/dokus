@@ -1,7 +1,7 @@
-package ai.dokus.foundation.ktor.db.entity
+package ai.dokus.foundation.database.entity
 
 import ai.dokus.foundation.domain.DeviceType
-import ai.dokus.auth.domain.model.SessionRevokeReason
+import ai.dokus.foundation.domain.model.auth.SessionRevokeReason
 import kotlinx.datetime.Instant
 import java.util.UUID
 

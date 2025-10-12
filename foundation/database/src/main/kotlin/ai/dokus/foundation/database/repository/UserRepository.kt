@@ -1,15 +1,15 @@
-package ai.dokus.foundation.ktor.db.repository
+package ai.dokus.foundation.database.repository
 
 import ai.dokus.auth.backend.database.entity.User
-import ai.dokus.foundation.ktor.db.tables.UserPermissionsTable
-import ai.dokus.foundation.ktor.db.tables.UserRolesTable
-import ai.dokus.foundation.ktor.db.tables.UserSpecializationsTable
-import ai.dokus.foundation.ktor.db.tables.UsersTable
+import ai.dokus.foundation.database.tables.UserPermissionsTable
+import ai.dokus.foundation.database.tables.UserRolesTable
+import ai.dokus.foundation.database.tables.UserSpecializationsTable
+import ai.dokus.foundation.database.tables.UsersTable
 import ai.dokus.auth.domain.model.Email
 import ai.dokus.auth.domain.model.UserRole
 import ai.dokus.auth.domain.model.UserSearchCriteria
 import ai.dokus.auth.domain.model.UserStatus
-import ai.dokus.foundation.ktor.db.dbQuery
+import ai.dokus.foundation.database.utils.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.ResultRow

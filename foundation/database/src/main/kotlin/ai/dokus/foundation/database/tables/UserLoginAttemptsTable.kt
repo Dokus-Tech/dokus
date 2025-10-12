@@ -1,6 +1,6 @@
-package ai.dokus.foundation.ktor.db.tables
+package ai.dokus.foundation.database.tables
 
-import ai.dokus.foundation.ktor.db.entity.LoginResult
+import ai.dokus.foundation.database.entity.LoginResult
 import ai.dokus.foundation.ktor.db.dbEnumeration
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp

@@ -1,4 +1,4 @@
-package ai.dokus.foundation.ktor.db.tables
+package ai.dokus.foundation.database.tables
 
 import ai.dokus.auth.domain.model.SessionRevokeReason
 import ai.dokus.foundation.domain.DeviceType
