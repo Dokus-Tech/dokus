@@ -8,6 +8,7 @@ import ai.dokus.foundation.database.mappers.TenantMapper.toTenantSettings
 import ai.dokus.foundation.database.tables.TenantsTable
 import ai.dokus.foundation.database.tables.TenantSettingsTable
 import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import kotlinx.datetime.Clock
@@ -16,7 +17,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
@@ -30,15 +30,15 @@ class TenantRepository {
         plan: TenantPlan = TenantPlan.FREE,
         country: String = "BE",
         language: Language = Language.EN,
-        vatNumber: String? = null
-    ): Uuid = dbQuery {
+        vatNumber: VatNumber? = null
+    ): TenantId = dbQuery {
         val tenantId = TenantsTable.insertAndGetId {
             it[TenantsTable.name] = name
             it[TenantsTable.email] = email
             it[TenantsTable.plan] = plan
             it[TenantsTable.country] = country
             it[TenantsTable.language] = language
-            it[TenantsTable.vatNumber] = vatNumber
+            it[TenantsTable.vatNumber] = vatNumber?.value
             it[status] = TenantStatus.ACTIVE
         }.value
 
@@ -48,11 +48,11 @@ class TenantRepository {
         }
 
         logger.info("Created new tenant: $tenantId with email: $email")
-        tenantId
-    }.toKotlinUuid()
+        TenantId(tenantId.toKotlinUuid())
+    }
 
-    suspend fun findById(id: Uuid): Tenant? = dbQuery {
-        val javaUuid = id.toJavaUuid()
+    suspend fun findById(id: TenantId): Tenant? = dbQuery {
+        val javaUuid = id.value.toJavaUuid()
         TenantsTable
             .selectAll()
             .where { TenantsTable.id eq javaUuid }
@@ -68,8 +68,8 @@ class TenantRepository {
             ?.toTenant()
     }
 
-    suspend fun getSettings(tenantId: Uuid): TenantSettings = dbQuery {
-        val javaUuid = tenantId.toJavaUuid()
+    suspend fun getSettings(tenantId: TenantId): TenantSettings = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
         TenantSettingsTable
             .selectAll()
             .where { TenantSettingsTable.tenantId eq javaUuid }
@@ -79,16 +79,17 @@ class TenantRepository {
     }
 
     suspend fun updateSettings(settings: TenantSettings): Unit = dbQuery {
-        val javaUuid = settings.tenantId.toJavaUuid()
+        val javaUuid = settings.tenantId.value.toJavaUuid()
         TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
             it[invoicePrefix] = settings.invoicePrefix
             it[nextInvoiceNumber] = settings.nextInvoiceNumber
             it[defaultPaymentTerms] = settings.defaultPaymentTerms
-            it[defaultVatRate] = BigDecimal(settings.defaultVatRate)
+            it[defaultVatRate] = BigDecimal(settings.defaultVatRate.value)
             it[companyName] = settings.companyName
-            it[companyVatNumber] = settings.companyVatNumber
-            it[companyIban] = settings.companyIban
-            it[companyBic] = settings.companyBic
+            it[companyAddress] = settings.companyAddress
+            it[companyVatNumber] = settings.companyVatNumber?.value
+            it[companyIban] = settings.companyIban?.value
+            it[companyBic] = settings.companyBic?.value
             it[companyLogoUrl] = settings.companyLogoUrl
             it[emailInvoiceReminders] = settings.emailInvoiceReminders
             it[emailPaymentConfirmations] = settings.emailPaymentConfirmations
@@ -98,8 +99,8 @@ class TenantRepository {
         }
     }
 
-    suspend fun getNextInvoiceNumber(tenantId: Uuid): String = dbQuery {
-        val javaUuid = tenantId.toJavaUuid()
+    suspend fun getNextInvoiceNumber(tenantId: TenantId): InvoiceNumber = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
         val settings = TenantSettingsTable
             .selectAll()
             .where { TenantSettingsTable.tenantId eq javaUuid }
@@ -115,7 +116,7 @@ class TenantRepository {
             }
         }
 
-        "$prefix-${number.toString().padStart(4, '0')}"
+        InvoiceNumber("$prefix-${number.toString().padStart(4, '0')}")
     }
 
     suspend fun listActiveTenants(): List<Tenant> = dbQuery {
