@@ -74,7 +74,7 @@ fun Routing.healthRoutes() {
         val healthInfo = DetailedHealthInfo(
             status = ServerStatus.UP,
             application = ApplicationInfo(
-                name = "pulse-auth-service",
+                name = "dokus-service",
                 version = "1.0.0",
                 environment = System.getenv("ENVIRONMENT") ?: "development"
             ),

@@ -23,26 +23,26 @@ fun Application.configureErrorHandling() {
         exception<DokusException> { call, cause ->
             val statusCode = HttpStatusCode.InternalServerError
 //            val statusCode = when (cause) {
-//                is PredictException.InvalidCredentials -> HttpStatusCode.Unauthorized
-//                is PredictException.UserNotFound -> HttpStatusCode.NotFound
-//                is PredictException.UserLocked -> HttpStatusCode.Forbidden
-//                is PredictException.AccountNotVerified -> HttpStatusCode.Forbidden
-//                is PulseException.PasswordExpired -> HttpStatusCode.Forbidden
-//                is PulseException.InvalidToken -> HttpStatusCode.Unauthorized
-//                is PulseException.TokenExpired -> HttpStatusCode.Unauthorized
-//                is PulseException.TooManyRequests -> HttpStatusCode.TooManyRequests
-//                is PulseException.EntityAlreadyExists -> HttpStatusCode.Conflict
-//                is PulseException.ValidationError -> HttpStatusCode.BadRequest
-//                is PulseException.PermissionDenied -> HttpStatusCode.Forbidden
-//                is PulseException.SystemError -> HttpStatusCode.InternalServerError
+//                is DokusException.InvalidCredentials -> HttpStatusCode.Unauthorized
+//                is DokusException.UserNotFound -> HttpStatusCode.NotFound
+//                is DokusException.UserLocked -> HttpStatusCode.Forbidden
+//                is DokusException.AccountNotVerified -> HttpStatusCode.Forbidden
+//                is DokusException.PasswordExpired -> HttpStatusCode.Forbidden
+//                is DokusException.InvalidToken -> HttpStatusCode.Unauthorized
+//                is DokusException.TokenExpired -> HttpStatusCode.Unauthorized
+//                is DokusException.TooManyRequests -> HttpStatusCode.TooManyRequests
+//                is DokusException.EntityAlreadyExists -> HttpStatusCode.Conflict
+//                is DokusException.ValidationError -> HttpStatusCode.BadRequest
+//                is DokusException.PermissionDenied -> HttpStatusCode.Forbidden
+//                is DokusException.SystemError -> HttpStatusCode.InternalServerError
 //                else -> HttpStatusCode.InternalServerError
 //            }
 
-            logger.warn("PulseException: ${cause.message}")
+            logger.warn("DokusException: ${cause.message}")
             call.respond(
                 statusCode,
                 ErrorResponse(
-                    error = cause.cause?.javaClass?.simpleName ?: "PredictException",
+                    error = cause.cause?.javaClass?.simpleName ?: "DokusException",
                     message = cause.message ?: "An error occurred"
                 )
             )
