@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.InvoiceItem
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import ai.dokus.foundation.ktor.services.InvoiceService
@@ -116,7 +117,7 @@ class InvoiceServiceImpl(
         }
     }
 
-    override suspend fun updateItems(invoiceId: InvoiceId, items: List<CreateInvoiceRequest.InvoiceItemRequest>) = dbQuery {
+    override suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>) = dbQuery {
         val javaUuid = invoiceId.value.toJavaUuid()
 
         // Check if invoice is draft
@@ -302,7 +303,7 @@ class InvoiceServiceImpl(
         return invoiceUpdates
     }
 
-    override suspend fun calculateTotals(items: List<CreateInvoiceRequest.InvoiceItemRequest>): Triple<Money, Money, Money> {
+    override suspend fun calculateTotals(items: List<InvoiceItem>): Triple<Money, Money, Money> {
         var subtotal = BigDecimal.ZERO
         var vatTotal = BigDecimal.ZERO
 

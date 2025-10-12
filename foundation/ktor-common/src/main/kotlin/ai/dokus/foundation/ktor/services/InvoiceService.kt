@@ -8,6 +8,7 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.InvoiceItem
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import kotlinx.coroutines.flow.Flow
@@ -55,7 +56,7 @@ interface InvoiceService {
      * @param items The new list of invoice items
      * @throws IllegalArgumentException if invoice not found or not in draft status
      */
-    suspend fun updateItems(invoiceId: InvoiceId, items: List<CreateInvoiceRequest.InvoiceItemRequest>)
+    suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>)
 
     /**
      * Soft deletes an invoice by marking it as cancelled
@@ -199,7 +200,7 @@ interface InvoiceService {
      * @param items List of invoice items
      * @return Triple of (subtotal, vatAmount, total)
      */
-    suspend fun calculateTotals(items: List<CreateInvoiceRequest.InvoiceItemRequest>): Triple<Money, Money, Money>
+    suspend fun calculateTotals(items: List<InvoiceItem>): Triple<Money, Money, Money>
 
     /**
      * Gets invoice statistics for a tenant
