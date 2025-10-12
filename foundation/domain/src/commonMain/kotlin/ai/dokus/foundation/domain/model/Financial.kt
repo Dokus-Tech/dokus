@@ -4,14 +4,17 @@ import ai.dokus.foundation.database.enums.*
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 // ============================================================================
 // TENANT & USER MANAGEMENT
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class Tenant(
-    val id: String,
+    val id: Uuid,
     val name: String,
     val email: String,
     val plan: TenantPlan,
@@ -25,9 +28,10 @@ data class Tenant(
     val updatedAt: LocalDateTime
 )
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class TenantSettings(
-    val tenantId: String,
+    val tenantId: Uuid,
     val invoicePrefix: String = "INV",
     val nextInvoiceNumber: Int = 1,
     val defaultPaymentTerms: Int = 30,
@@ -47,10 +51,11 @@ data class TenantSettings(
     val updatedAt: LocalDateTime
 )
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class BusinessUser(
-    val id: String,
-    val tenantId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
     val email: String,
     val role: UserRole,
     val firstName: String? = null,
@@ -65,10 +70,11 @@ data class BusinessUser(
 // INVOICING
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class Client(
-    val id: String,
-    val tenantId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
     val name: String,
     val email: String? = null,
     val vatNumber: String? = null,
@@ -85,11 +91,12 @@ data class Client(
     val updatedAt: LocalDateTime
 )
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class Invoice(
-    val id: String,
-    val tenantId: String,
-    val clientId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
+    val clientId: Uuid,
     val invoiceNumber: String,
     val issueDate: LocalDate,
     val dueDate: LocalDate,
@@ -113,10 +120,11 @@ data class Invoice(
     val updatedAt: LocalDateTime
 )
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class InvoiceItem(
-    val id: String? = null,
-    val invoiceId: String? = null,
+    val id: Uuid? = null,
+    val invoiceId: Uuid? = null,
     val description: String,
     val quantity: String,
     val unitPrice: String,
@@ -130,10 +138,11 @@ data class InvoiceItem(
 // EXPENSES
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class Expense(
-    val id: String,
-    val tenantId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
     val date: LocalDate,
     val merchant: String,
     val amount: String,
@@ -156,11 +165,12 @@ data class Expense(
 // PAYMENTS
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class Payment(
-    val id: String,
-    val tenantId: String,
-    val invoiceId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
+    val invoiceId: Uuid,
     val amount: String,
     val paymentDate: LocalDate,
     val paymentMethod: PaymentMethod,
@@ -173,10 +183,11 @@ data class Payment(
 // BANKING
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class BankConnection(
-    val id: String,
-    val tenantId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
     val provider: BankProvider,
     val institutionId: String,
     val institutionName: String,
@@ -190,11 +201,12 @@ data class BankConnection(
     val updatedAt: LocalDateTime
 )
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class BankTransaction(
-    val id: String,
-    val bankConnectionId: String,
-    val tenantId: String,
+    val id: Uuid,
+    val bankConnectionId: Uuid,
+    val tenantId: Uuid,
     val externalId: String,
     val date: LocalDate,
     val amount: String,
@@ -202,8 +214,8 @@ data class BankTransaction(
     val merchantName: String? = null,
     val category: String? = null,
     val isPending: Boolean = false,
-    val expenseId: String? = null,
-    val invoiceId: String? = null,
+    val expenseId: Uuid? = null,
+    val invoiceId: Uuid? = null,
     val isReconciled: Boolean = false,
     val createdAt: LocalDateTime
 )
@@ -212,10 +224,11 @@ data class BankTransaction(
 // VAT RETURNS
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class VatReturn(
-    val id: String,
-    val tenantId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
     val quarter: Int,
     val year: Int,
     val salesVat: String,
@@ -232,14 +245,15 @@ data class VatReturn(
 // AUDIT & ATTACHMENTS
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class AuditLog(
-    val id: String,
-    val tenantId: String,
-    val userId: String? = null,
+    val id: Uuid,
+    val tenantId: Uuid,
+    val userId: Uuid? = null,
     val action: AuditAction,
     val entityType: EntityType,
-    val entityId: String,
+    val entityId: Uuid,
     val oldValues: Map<String, String>? = null,
     val newValues: Map<String, String>? = null,
     val ipAddress: String? = null,
@@ -247,12 +261,13 @@ data class AuditLog(
     val createdAt: LocalDateTime
 )
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class Attachment(
-    val id: String,
-    val tenantId: String,
+    val id: Uuid,
+    val tenantId: Uuid,
     val entityType: EntityType,
-    val entityId: String,
+    val entityId: Uuid,
     val filename: String,
     val mimeType: String,
     val sizeBytes: Long,
@@ -265,9 +280,10 @@ data class Attachment(
 // REQUEST/RESPONSE MODELS
 // ============================================================================
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class CreateInvoiceRequest(
-    val clientId: String,
+    val clientId: Uuid,
     val items: List<InvoiceItem>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
@@ -279,9 +295,10 @@ data class UpdateInvoiceStatusRequest(
     val status: InvoiceStatus
 )
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 data class RecordPaymentRequest(
-    val invoiceId: String,
+    val invoiceId: Uuid,
     val amount: String,
     val paymentDate: LocalDate,
     val paymentMethod: PaymentMethod,

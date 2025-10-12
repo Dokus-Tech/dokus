@@ -8,37 +8,40 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.insert
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 /**
  * Repository for immutable audit logging
  * Critical for compliance and debugging
  */
+@OptIn(ExperimentalUuidApi::class)
 class AuditLogRepository {
     private val logger = LoggerFactory.getLogger(AuditLogRepository::class.java)
     private val json = Json { prettyPrint = false }
 
     suspend fun log(
-        tenantId: String,
-        userId: String? = null,
+        tenantId: Uuid,
+        userId: Uuid? = null,
         action: AuditAction,
         entityType: EntityType,
-        entityId: String,
+        entityId: Uuid,
         oldValues: Map<String, Any?>? = null,
         newValues: Map<String, Any?>? = null,
         ipAddress: String? = null,
         userAgent: String? = null
     ): Unit = dbQuery {
-        val tenantUuid = UUID.fromString(tenantId)
-        val userUuid = userId?.let { UUID.fromString(it) }
-        val entityUuid = UUID.fromString(entityId)
+        val tenantJavaUuid = tenantId.toJavaUuid()
+        val userJavaUuid = userId?.toJavaUuid()
+        val entityJavaUuid = entityId.toJavaUuid()
 
         AuditLogsTable.insert {
-            it[AuditLogsTable.tenantId] = tenantUuid
-            it[AuditLogsTable.userId] = userUuid
+            it[AuditLogsTable.tenantId] = tenantJavaUuid
+            it[AuditLogsTable.userId] = userJavaUuid
             it[AuditLogsTable.action] = action
             it[AuditLogsTable.entityType] = entityType
-            it[AuditLogsTable.entityId] = entityUuid
+            it[AuditLogsTable.entityId] = entityJavaUuid
             it[AuditLogsTable.oldValues] = oldValues?.let { values ->
                 json.encodeToString(values.mapValues { it.value.toString() })
             }
@@ -56,11 +59,11 @@ class AuditLogRepository {
      * Log a financial operation (higher priority logging)
      */
     suspend fun logFinancial(
-        tenantId: String,
-        userId: String? = null,
+        tenantId: Uuid,
+        userId: Uuid? = null,
         action: AuditAction,
         entityType: EntityType,
-        entityId: String,
+        entityId: Uuid,
         amount: String,
         details: Map<String, Any?>,
         ipAddress: String? = null

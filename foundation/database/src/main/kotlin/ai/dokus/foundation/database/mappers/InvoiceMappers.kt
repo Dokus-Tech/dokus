@@ -9,14 +9,16 @@ import ai.dokus.foundation.domain.model.Client
 import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.datetime.toKotlinLocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalUuidApi::class)
 object InvoiceMapper {
 
     fun ResultRow.toInvoice(): Invoice = Invoice(
-        id = this[InvoicesTable.id].value.toString(),
-        tenantId = this[InvoicesTable.tenantId].value.toString(),
-        clientId = this[InvoicesTable.clientId].value.toString(),
+        id = this[InvoicesTable.id].value.toKotlinUuid(),
+        tenantId = this[InvoicesTable.tenantId].value.toKotlinUuid(),
+        clientId = this[InvoicesTable.clientId].value.toKotlinUuid(),
         invoiceNumber = this[InvoicesTable.invoiceNumber],
         issueDate = this[InvoicesTable.issueDate].toKotlinLocalDate(),
         dueDate = this[InvoicesTable.dueDate].toKotlinLocalDate(),
@@ -40,8 +42,8 @@ object InvoiceMapper {
     )
 
     fun ResultRow.toInvoiceItem(): InvoiceItem = InvoiceItem(
-        id = this[InvoiceItemsTable.id].value.toString(),
-        invoiceId = this[InvoiceItemsTable.invoiceId].value.toString(),
+        id = this[InvoiceItemsTable.id].value.toKotlinUuid(),
+        invoiceId = this[InvoiceItemsTable.invoiceId].value.toKotlinUuid(),
         description = this[InvoiceItemsTable.description],
         quantity = this[InvoiceItemsTable.quantity].toString(),
         unitPrice = this[InvoiceItemsTable.unitPrice].toString(),
@@ -52,11 +54,12 @@ object InvoiceMapper {
     )
 }
 
+@OptIn(ExperimentalUuidApi::class)
 object ClientMapper {
 
     fun ResultRow.toClient(): Client = Client(
-        id = this[ClientsTable.id].value.toString(),
-        tenantId = this[ClientsTable.tenantId].value.toString(),
+        id = this[ClientsTable.id].value.toKotlinUuid(),
+        tenantId = this[ClientsTable.tenantId].value.toKotlinUuid(),
         name = this[ClientsTable.name],
         email = this[ClientsTable.email],
         vatNumber = this[ClientsTable.vatNumber],
