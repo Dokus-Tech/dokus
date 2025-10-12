@@ -55,3 +55,4 @@ include(":features:auth:presentation")
 
 include(":foundation:domain")
 include(":foundation:apispec")
+include(":foundation:database")
