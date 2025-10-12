@@ -1,10 +1,10 @@
-package ai.dokus.app.onboarding.workspaces.overview
+package ai.dokus.app.screens
 
-import ai.dokus.foundation.ui.constrains.isLargeScreen
-import ai.dokus.foundation.navigation.AppNavigator
+import ai.dokus.app.viewmodel.WorkspacesViewModel
 import ai.dokus.foundation.domain.model.Company
 import ai.dokus.foundation.ui.WorkspacesGrid
 import ai.dokus.foundation.ui.common.ErrorBox
+import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.ui.text.AppNameText
 import ai.dokus.foundation.ui.text.CopyRightText
 import ai.dokus.foundation.ui.text.SectionTitle
@@ -30,7 +30,7 @@ import com.mohamedrejeb.calf.ui.progress.AdaptiveCircularProgressIndicator
 import kotlinx.coroutines.launch
 
 @Composable
-fun WorkspacesScreen(navigator: AppNavigator) {
+fun WorkspacesScreen() {
     val viewModel = remember { WorkspacesViewModel() }
     val scope = rememberCoroutineScope()
 
@@ -39,9 +39,9 @@ fun WorkspacesScreen(navigator: AppNavigator) {
 
     val handleEffect = { effect: WorkspacesViewModel.Effect ->
         when (effect) {
-            is WorkspacesViewModel.Effect.NavigateCreateWorkspace -> navigator.navigateToWorkspaceCreate()
+            is WorkspacesViewModel.Effect.NavigateCreateWorkspace -> {}
 
-            is WorkspacesViewModel.Effect.NavigateHome -> navigator.navigateToHome()
+            is WorkspacesViewModel.Effect.NavigateHome -> {}
         }
     }
 

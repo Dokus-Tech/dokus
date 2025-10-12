@@ -1,18 +1,19 @@
-package ai.dokus.app.onboarding.workspaces.overview
+package ai.dokus.app.viewmodel
 
-import ai.dokus.foundation.apispec.CompanyApi
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.platform.persistence
+import ai.dokus.foundation.apispec.CompanyApi
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.Company
+import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(State.Loading), KoinComponent {
+internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(State.Loading),
+    KoinComponent {
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()

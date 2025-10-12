@@ -1,4 +1,4 @@
-package ai.dokus.app.onboarding.authentication.login
+package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.app.repository.extensions.authCredentials
@@ -24,7 +24,7 @@ import org.koin.core.component.inject
 
 internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle), KoinComponent {
 
-    private val logger = Logger.forClass<LoginViewModel>()
+    private val logger = Logger.Companion.forClass<LoginViewModel>()
 
     private val validateEmailUseCase: ValidateEmailUseCase by inject()
     private val validatePasswordUseCase: ValidatePasswordUseCase by inject()
@@ -55,14 +55,14 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
             return@launch
         }
 
-        val jwtSchema = JwtTokenDataSchema.from(jwtRaw).getOrElse {
+        val jwtSchema = JwtTokenDataSchema.Companion.from(jwtRaw).getOrElse {
             logger.e(it) { "JWT parsing failed" }
             mutableState.value = State.Error(it.asDokusException)
             return@launch
         }
 
-        persistence.authCredentials = AuthCredentials.from(jwtSchema, jwtRaw)
-        persistence.user = User.from(jwtSchema)
+        persistence.authCredentials = AuthCredentials.Companion.from(jwtSchema, jwtRaw)
+        persistence.user = User.Companion.from(jwtSchema)
 
         logger.i { "Login successful, navigating to workspaces" }
         mutableEffect.emit(Effect.NavigateToWorkspaces)

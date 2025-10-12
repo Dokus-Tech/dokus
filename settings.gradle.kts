@@ -35,12 +35,6 @@ dependencyResolutionManagement {
 include(":composeApp")
 
 include(":application:onboarding")
-include(":application:dashboard")
-include(":application:contacts")
-include(":application:cashflow")
-include(":application:simulation")
-include(":application:inventory")
-include(":application:banking")
 include(":foundation:ui")
 
 include(":application:core")

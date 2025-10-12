@@ -1,13 +1,13 @@
-package ai.dokus.app.onboarding.workspaces.create
+package ai.dokus.app.screens
 
-import ai.dokus.foundation.ui.constrains.isLargeScreen
-import ai.dokus.foundation.domain.flags.FeatureFlags
-import ai.dokus.foundation.navigation.AppNavigator
+import ai.dokus.app.viewmodel.WorkspaceCreateViewModel
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.flags.FeatureFlags
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.Country
 import ai.dokus.foundation.ui.PCardPlusIcon
 import ai.dokus.foundation.ui.PPrimaryButton
+import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.ui.extensions.localized
 import ai.dokus.foundation.ui.fields.PTextFieldStandard
 import ai.dokus.foundation.ui.fields.PTextFieldTaxNumber
@@ -64,7 +64,7 @@ private val WorkspaceCreateViewModel.State.exceptionOrNull: DokusException?
     }
 
 @Composable
-fun WorkspaceCreateScreen(navigator: AppNavigator) {
+fun WorkspaceCreateScreen() {
     val viewModel = remember { WorkspaceCreateViewModel() }
     val data = viewModel.state.collectAsState()
 
@@ -82,7 +82,7 @@ fun WorkspaceCreateScreen(navigator: AppNavigator) {
 
     val handleEffect = { effect: WorkspaceCreateViewModel.Effect ->
         when (effect) {
-            is WorkspaceCreateViewModel.Effect.NavigateHome -> navigator.navigateToHome()
+            is WorkspaceCreateViewModel.Effect.NavigateHome -> {}
         }
     }
 
@@ -121,7 +121,7 @@ fun WorkspaceCreateScreen(navigator: AppNavigator) {
                         )
                     },
                     onBackClick = {
-                        navigator.navigateBack()
+//                        navigator.navigateBack()
                     },
                 )
             } else {
@@ -143,7 +143,7 @@ fun WorkspaceCreateScreen(navigator: AppNavigator) {
                         )
                     },
                     onBackClick = {
-                        navigator.navigateBack()
+//                        navigator.navigateBack()
                     },
                     modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize(),
                 )

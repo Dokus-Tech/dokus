@@ -1,4 +1,4 @@
-package ai.dokus.app.onboarding.authentication.restore
+package ai.dokus.app.auth.screen
 
 import ai.dokus.foundation.ui.constrains.isLargeScreen
 import ai.dokus.foundation.navigation.AppNavigator
