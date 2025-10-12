@@ -34,7 +34,6 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 
-include(":application:onboarding")
 include(":foundation:ui")
 
 include(":application:core")
