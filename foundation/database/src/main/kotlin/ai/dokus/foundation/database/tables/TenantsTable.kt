@@ -18,14 +18,14 @@ object TenantsTable : UUIDTable("tenants") {
     val email = varchar("email", 255).uniqueIndex()
 
     // Subscription
-    val plan = tenantPlanEnumeration("plan")
-    val status = tenantStatusEnumeration("status").default(TenantStatus.ACTIVE)
+    val plan = dbEnumeration<TenantPlan>("plan")
+    val status = dbEnumeration<TenantStatus>("status").default(TenantStatus.Active)
     val trialEndsAt = datetime("trial_ends_at").nullable()
     val subscriptionStartedAt = datetime("subscription_started_at").nullable()
 
     // Localization
     val country = varchar("country", 2).default("BE") // ISO 3166-1 alpha-2
-    val language = languageEnumeration("language").default(Language.EN)
+    val language = dbEnumeration<Language>("language").default(Language.En)
 
     // Business info
     val vatNumber = varchar("vat_number", 50).nullable()

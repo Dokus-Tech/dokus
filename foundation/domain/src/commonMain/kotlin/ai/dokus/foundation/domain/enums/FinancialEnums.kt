@@ -1,5 +1,6 @@
 package ai.dokus.foundation.domain.enums
 
+import ai.dokus.foundation.domain.database.DbEnum
 import kotlinx.serialization.Serializable
 
 // ============================================================================
@@ -7,37 +8,37 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 @Serializable
-enum class TenantPlan {
-    FREE,
-    STARTER,
-    PROFESSIONAL,
-    ENTERPRISE
+enum class TenantPlan(override val dbValue: String) : DbEnum {
+    Free("FREE"),
+    Starter("STARTER"),
+    Professional("PROFESSIONAL"),
+    Enterprise("ENTERPRISE")
 }
 
 @Serializable
-enum class TenantStatus {
-    ACTIVE,
-    SUSPENDED,
-    CANCELLED,
-    TRIAL
+enum class TenantStatus(override val dbValue: String) : DbEnum {
+    Active("ACTIVE"),
+    Suspended("SUSPENDED"),
+    Cancelled("CANCELLED"),
+    Trial("TRIAL")
 }
 
 @Serializable
-enum class Language {
-    EN,
-    FR,
-    NL,
-    DE,
-    ES,
-    IT
+enum class Language(override val dbValue: String) : DbEnum {
+    En("EN"),
+    Fr("FR"),
+    Nl("NL"),
+    De("DE"),
+    Es("ES"),
+    It("IT")
 }
 
 @Serializable
-enum class UserRole {
-    OWNER,
-    ADMIN,
-    ACCOUNTANT,
-    VIEWER
+enum class UserRole(override val dbValue: String) : DbEnum {
+    Owner("OWNER"),
+    Admin("ADMIN"),
+    Accountant("ACCOUNTANT"),
+    Viewer("VIEWER")
 }
 
 // ============================================================================
@@ -45,34 +46,34 @@ enum class UserRole {
 // ============================================================================
 
 @Serializable
-enum class InvoiceStatus {
-    DRAFT,
-    SENT,
-    VIEWED,
-    PARTIALLY_PAID,
-    PAID,
-    OVERDUE,
-    CANCELLED,
-    REFUNDED
+enum class InvoiceStatus(override val dbValue: String) : DbEnum {
+    Draft("DRAFT"),
+    Sent("SENT"),
+    Viewed("VIEWED"),
+    PartiallyPaid("PARTIALLY_PAID"),
+    Paid("PAID"),
+    Overdue("OVERDUE"),
+    Cancelled("CANCELLED"),
+    Refunded("REFUNDED")
 }
 
 @Serializable
-enum class Currency {
-    EUR,
-    USD,
-    GBP,
-    CHF,
-    CAD,
-    AUD
+enum class Currency(override val dbValue: String) : DbEnum {
+    Eur("EUR"),
+    Usd("USD"),
+    Gbp("GBP"),
+    Chf("CHF"),
+    Cad("CAD"),
+    Aud("AUD")
 }
 
 @Serializable
-enum class PeppolStatus {
-    PENDING,
-    SENT,
-    DELIVERED,
-    FAILED,
-    REJECTED
+enum class PeppolStatus(override val dbValue: String) : DbEnum {
+    Pending("PENDING"),
+    Sent("SENT"),
+    Delivered("DELIVERED"),
+    Failed("FAILED"),
+    Rejected("REJECTED")
 }
 
 // ============================================================================
@@ -80,20 +81,20 @@ enum class PeppolStatus {
 // ============================================================================
 
 @Serializable
-enum class ExpenseCategory {
-    OFFICE_SUPPLIES,
-    TRAVEL,
-    MEALS,
-    SOFTWARE,
-    HARDWARE,
-    UTILITIES,
-    RENT,
-    INSURANCE,
-    MARKETING,
-    PROFESSIONAL_SERVICES,
-    TELECOMMUNICATIONS,
-    VEHICLE,
-    OTHER
+enum class ExpenseCategory(override val dbValue: String) : DbEnum {
+    OfficeSupplies("OFFICE_SUPPLIES"),
+    Travel("TRAVEL"),
+    Meals("MEALS"),
+    Software("SOFTWARE"),
+    Hardware("HARDWARE"),
+    Utilities("UTILITIES"),
+    Rent("RENT"),
+    Insurance("INSURANCE"),
+    Marketing("MARKETING"),
+    ProfessionalServices("PROFESSIONAL_SERVICES"),
+    Telecommunications("TELECOMMUNICATIONS"),
+    Vehicle("VEHICLE"),
+    Other("OTHER")
 }
 
 // ============================================================================
@@ -101,15 +102,15 @@ enum class ExpenseCategory {
 // ============================================================================
 
 @Serializable
-enum class PaymentMethod {
-    BANK_TRANSFER,
-    CREDIT_CARD,
-    DEBIT_CARD,
-    PAYPAL,
-    STRIPE,
-    CASH,
-    CHECK,
-    OTHER
+enum class PaymentMethod(override val dbValue: String) : DbEnum {
+    BankTransfer("BANK_TRANSFER"),
+    CreditCard("CREDIT_CARD"),
+    DebitCard("DEBIT_CARD"),
+    PayPal("PAYPAL"),
+    Stripe("STRIPE"),
+    Cash("CASH"),
+    Check("CHECK"),
+    Other("OTHER")
 }
 
 // ============================================================================
@@ -117,21 +118,21 @@ enum class PaymentMethod {
 // ============================================================================
 
 @Serializable
-enum class BankProvider {
-    PLAID,
-    YODLEE,
-    TINK,
-    SALT_EDGE,
-    MANUAL
+enum class BankProvider(override val dbValue: String) : DbEnum {
+    Plaid("PLAID"),
+    Yodlee("YODLEE"),
+    Tink("TINK"),
+    SaltEdge("SALT_EDGE"),
+    Manual("MANUAL")
 }
 
 @Serializable
-enum class BankAccountType {
-    CHECKING,
-    SAVINGS,
-    CREDIT_CARD,
-    BUSINESS,
-    INVESTMENT
+enum class BankAccountType(override val dbValue: String) : DbEnum {
+    Checking("CHECKING"),
+    Savings("SAVINGS"),
+    CreditCard("CREDIT_CARD"),
+    Business("BUSINESS"),
+    Investment("INVESTMENT")
 }
 
 // ============================================================================
@@ -139,12 +140,12 @@ enum class BankAccountType {
 // ============================================================================
 
 @Serializable
-enum class VatReturnStatus {
-    DRAFT,
-    SUBMITTED,
-    ACCEPTED,
-    REJECTED,
-    PAID
+enum class VatReturnStatus(override val dbValue: String) : DbEnum {
+    Draft("DRAFT"),
+    Submitted("SUBMITTED"),
+    Accepted("ACCEPTED"),
+    Rejected("REJECTED"),
+    Paid("PAID")
 }
 
 // ============================================================================
@@ -152,62 +153,62 @@ enum class VatReturnStatus {
 // ============================================================================
 
 @Serializable
-enum class AuditAction {
+enum class AuditAction(override val dbValue: String) : DbEnum {
     // Invoice actions
-    INVOICE_CREATED,
-    INVOICE_UPDATED,
-    INVOICE_DELETED,
-    INVOICE_SENT,
-    INVOICE_STATUS_CHANGED,
+    InvoiceCreated("INVOICE_CREATED"),
+    InvoiceUpdated("INVOICE_UPDATED"),
+    InvoiceDeleted("INVOICE_DELETED"),
+    InvoiceSent("INVOICE_SENT"),
+    InvoiceStatusChanged("INVOICE_STATUS_CHANGED"),
 
     // Payment actions
-    PAYMENT_RECORDED,
-    PAYMENT_UPDATED,
-    PAYMENT_DELETED,
+    PaymentRecorded("PAYMENT_RECORDED"),
+    PaymentUpdated("PAYMENT_UPDATED"),
+    PaymentDeleted("PAYMENT_DELETED"),
 
     // Expense actions
-    EXPENSE_CREATED,
-    EXPENSE_UPDATED,
-    EXPENSE_DELETED,
+    ExpenseCreated("EXPENSE_CREATED"),
+    ExpenseUpdated("EXPENSE_UPDATED"),
+    ExpenseDeleted("EXPENSE_DELETED"),
 
     // Client actions
-    CLIENT_CREATED,
-    CLIENT_UPDATED,
-    CLIENT_DELETED,
+    ClientCreated("CLIENT_CREATED"),
+    ClientUpdated("CLIENT_UPDATED"),
+    ClientDeleted("CLIENT_DELETED"),
 
     // User actions
-    USER_LOGIN,
-    USER_LOGOUT,
-    USER_CREATED,
-    USER_UPDATED,
-    USER_DELETED,
+    UserLogin("USER_LOGIN"),
+    UserLogout("USER_LOGOUT"),
+    UserCreated("USER_CREATED"),
+    UserUpdated("USER_UPDATED"),
+    UserDeleted("USER_DELETED"),
 
     // Settings actions
-    SETTINGS_UPDATED,
+    SettingsUpdated("SETTINGS_UPDATED"),
 
     // Banking actions
-    BANK_CONNECTED,
-    BANK_DISCONNECTED,
-    BANK_SYNC,
+    BankConnected("BANK_CONNECTED"),
+    BankDisconnected("BANK_DISCONNECTED"),
+    BankSync("BANK_SYNC"),
 
     // VAT actions
-    VAT_RETURN_CREATED,
-    VAT_RETURN_SUBMITTED,
-    VAT_RETURN_PAID
+    VatReturnCreated("VAT_RETURN_CREATED"),
+    VatReturnSubmitted("VAT_RETURN_SUBMITTED"),
+    VatReturnPaid("VAT_RETURN_PAID")
 }
 
 @Serializable
-enum class EntityType {
-    INVOICE,
-    INVOICE_ITEM,
-    CLIENT,
-    EXPENSE,
-    PAYMENT,
-    BANK_CONNECTION,
-    BANK_TRANSACTION,
-    VAT_RETURN,
-    USER,
-    TENANT,
-    SETTINGS,
-    ATTACHMENT
+enum class EntityType(override val dbValue: String) : DbEnum {
+    Invoice("INVOICE"),
+    InvoiceItem("INVOICE_ITEM"),
+    Client("CLIENT"),
+    Expense("EXPENSE"),
+    Payment("PAYMENT"),
+    BankConnection("BANK_CONNECTION"),
+    BankTransaction("BANK_TRANSACTION"),
+    VatReturn("VAT_RETURN"),
+    User("USER"),
+    Tenant("TENANT"),
+    Settings("SETTINGS"),
+    Attachment("ATTACHMENT")
 }

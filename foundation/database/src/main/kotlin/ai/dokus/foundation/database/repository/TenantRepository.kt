@@ -27,9 +27,9 @@ class TenantRepository {
     suspend fun create(
         name: String,
         email: String,
-        plan: TenantPlan = TenantPlan.FREE,
+        plan: TenantPlan = TenantPlan.Free,
         country: String = "BE",
-        language: Language = Language.EN,
+        language: Language = Language.En,
         vatNumber: VatNumber? = null
     ): TenantId = dbQuery {
         val tenantId = TenantsTable.insertAndGetId {
@@ -39,7 +39,7 @@ class TenantRepository {
             it[TenantsTable.country] = country
             it[TenantsTable.language] = language
             it[TenantsTable.vatNumber] = vatNumber?.value
-            it[status] = TenantStatus.ACTIVE
+            it[status] = TenantStatus.Active
         }.value
 
         // Create default settings for the tenant
@@ -122,7 +122,7 @@ class TenantRepository {
     suspend fun listActiveTenants(): List<Tenant> = dbQuery {
         TenantsTable
             .selectAll()
-            .where { TenantsTable.status eq TenantStatus.ACTIVE }
+            .where { TenantsTable.status eq TenantStatus.Active }
             .map { it.toTenant() }
     }
 }
