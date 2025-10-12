@@ -1,5 +1,8 @@
 package ai.dokus.foundation.database.repository
 
+import ai.dokus.foundation.database.enums.Language
+import ai.dokus.foundation.database.enums.TenantPlan
+import ai.dokus.foundation.database.enums.TenantStatus
 import ai.dokus.foundation.database.tables.TenantsTable
 import ai.dokus.foundation.database.tables.TenantSettingsTable
 import ai.dokus.foundation.database.utils.dbQuery
@@ -14,10 +17,10 @@ data class Tenant(
     val id: UUID,
     val name: String,
     val email: String,
-    val plan: String,
-    val status: String,
+    val plan: TenantPlan,
+    val status: TenantStatus,
     val country: String,
-    val language: String,
+    val language: Language,
     val vatNumber: String? = null
 )
 
@@ -40,9 +43,9 @@ class TenantRepository {
     suspend fun create(
         name: String,
         email: String,
-        plan: String = "free",
+        plan: TenantPlan = TenantPlan.FREE,
         country: String = "BE",
-        language: String = "en",
+        language: Language = Language.EN,
         vatNumber: String? = null
     ): UUID = dbQuery {
         val tenantId = TenantsTable.insertAndGetId {
@@ -52,7 +55,7 @@ class TenantRepository {
             it[TenantsTable.country] = country
             it[TenantsTable.language] = language
             it[TenantsTable.vatNumber] = vatNumber
-            it[status] = "active"
+            it[status] = TenantStatus.ACTIVE
         }.value
 
         // Create default settings for the tenant
@@ -66,21 +69,24 @@ class TenantRepository {
 
     suspend fun findById(id: UUID): Tenant? = dbQuery {
         TenantsTable
-            .select { TenantsTable.id eq id }
+            .selectAll()
+            .where { TenantsTable.id eq id }
             .singleOrNull()
             ?.toTenant()
     }
 
     suspend fun findByEmail(email: String): Tenant? = dbQuery {
         TenantsTable
-            .select { TenantsTable.email eq email }
+            .selectAll()
+            .where { TenantsTable.email eq email }
             .singleOrNull()
             ?.toTenant()
     }
 
     suspend fun getSettings(tenantId: UUID): TenantSettings = dbQuery {
         TenantSettingsTable
-            .select { TenantSettingsTable.tenantId eq tenantId }
+            .selectAll()
+            .where { TenantSettingsTable.tenantId eq tenantId }
             .singleOrNull()
             ?.toTenantSettings()
             ?: throw IllegalArgumentException("No settings found for tenant: $tenantId")
@@ -102,7 +108,8 @@ class TenantRepository {
 
     suspend fun getNextInvoiceNumber(tenantId: UUID): String = dbQuery {
         val settings = TenantSettingsTable
-            .select { TenantSettingsTable.tenantId eq tenantId }
+            .selectAll()
+            .where { TenantSettingsTable.tenantId eq tenantId }
             .single()
 
         val prefix = settings[TenantSettingsTable.invoicePrefix]
@@ -120,7 +127,8 @@ class TenantRepository {
 
     suspend fun listActiveTenants(): List<Tenant> = dbQuery {
         TenantsTable
-            .select { TenantsTable.status eq "active" }
+            .selectAll()
+            .where { TenantsTable.status eq TenantStatus.ACTIVE }
             .map { it.toTenant() }
     }
 

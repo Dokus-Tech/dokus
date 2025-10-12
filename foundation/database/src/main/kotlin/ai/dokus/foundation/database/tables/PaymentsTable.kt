@@ -1,5 +1,7 @@
 package ai.dokus.foundation.database.tables
 
+import ai.dokus.foundation.database.dbEnumeration
+import ai.dokus.foundation.database.enums.PaymentMethod
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
@@ -17,8 +19,7 @@ object PaymentsTable : UUIDTable("payments") {
     val amount = decimal("amount", 12, 2)
     val paymentDate = date("payment_date")
 
-    // Payment method: 'bank_transfer', 'stripe', 'mollie', 'cash', 'cheque'
-    val paymentMethod = varchar("payment_method", 50)
+    val paymentMethod = dbEnumeration<PaymentMethod>("payment_method")
 
     val transactionId = varchar("transaction_id", 255).nullable()  // External ID
     val notes = text("notes").nullable()

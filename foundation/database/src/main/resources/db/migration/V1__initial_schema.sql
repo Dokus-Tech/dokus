@@ -10,12 +10,12 @@ CREATE TABLE tenants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    plan VARCHAR(50) NOT NULL,
-    status VARCHAR(50) DEFAULT 'active' NOT NULL,
+    plan VARCHAR(50) NOT NULL CHECK (plan IN ('free', 'professional', 'business', 'enterprise')),
+    status VARCHAR(50) DEFAULT 'active' NOT NULL CHECK (status IN ('active', 'suspended', 'cancelled', 'trial')),
     trial_ends_at TIMESTAMP,
     subscription_started_at TIMESTAMP,
     country VARCHAR(2) DEFAULT 'BE' NOT NULL,
-    language VARCHAR(5) DEFAULT 'en' NOT NULL,
+    language VARCHAR(50) DEFAULT 'en' NOT NULL CHECK (language IN ('en', 'nl', 'fr', 'de')),
     vat_number VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -31,7 +31,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     mfa_secret VARCHAR(255),
-    role VARCHAR(50) NOT NULL, -- 'owner', 'member', 'accountant', 'viewer'
+    role VARCHAR(50) NOT NULL CHECK (role IN ('owner', 'member', 'accountant', 'viewer')),
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     is_active BOOLEAN DEFAULT true NOT NULL,
@@ -98,15 +98,15 @@ CREATE TABLE invoices (
     vat_amount NUMERIC(12, 2) NOT NULL,
     total_amount NUMERIC(12, 2) NOT NULL,
     paid_amount NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
-    status VARCHAR(50) NOT NULL, -- 'draft', 'sent', 'viewed', 'paid', 'overdue', 'cancelled'
+    status VARCHAR(50) NOT NULL CHECK (status IN ('draft', 'sent', 'viewed', 'paid', 'partially_paid', 'overdue', 'cancelled')),
     peppol_id VARCHAR(255),
     peppol_sent_at TIMESTAMP,
-    peppol_status VARCHAR(50),
+    peppol_status VARCHAR(50) CHECK (peppol_status IS NULL OR peppol_status IN ('pending', 'sent', 'delivered', 'accepted', 'rejected', 'error')),
     payment_link VARCHAR(500),
     payment_link_expires_at TIMESTAMP,
     paid_at TIMESTAMP,
-    payment_method VARCHAR(50),
-    currency VARCHAR(3) DEFAULT 'EUR' NOT NULL,
+    payment_method VARCHAR(50) CHECK (payment_method IS NULL OR payment_method IN ('bank_transfer', 'stripe', 'mollie', 'paypal', 'cash', 'cheque', 'credit_card', 'other')),
+    currency VARCHAR(50) DEFAULT 'EUR' NOT NULL CHECK (currency IN ('EUR', 'USD', 'GBP', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK')),
     notes TEXT,
     terms_and_conditions TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -146,13 +146,13 @@ CREATE TABLE expenses (
     amount NUMERIC(12, 2) NOT NULL,
     vat_amount NUMERIC(12, 2),
     vat_rate NUMERIC(5, 2),
-    category VARCHAR(100) NOT NULL, -- 'software', 'hardware', 'travel', etc.
+    category VARCHAR(100) NOT NULL CHECK (category IN ('software', 'hardware', 'travel', 'office', 'meals', 'marketing', 'professional_services', 'utilities', 'rent', 'insurance', 'taxes', 'other')),
     description TEXT,
     receipt_url VARCHAR(500),
     receipt_filename VARCHAR(255),
     is_deductible BOOLEAN DEFAULT true NOT NULL,
     deductible_percentage NUMERIC(5, 2) DEFAULT 100.00 NOT NULL,
-    payment_method VARCHAR(50),
+    payment_method VARCHAR(50) CHECK (payment_method IS NULL OR payment_method IN ('bank_transfer', 'stripe', 'mollie', 'paypal', 'cash', 'cheque', 'credit_card', 'other')),
     is_recurring BOOLEAN DEFAULT false NOT NULL,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE payments (
     invoice_id UUID NOT NULL REFERENCES invoices(id) ON DELETE RESTRICT,
     amount NUMERIC(12, 2) NOT NULL,
     payment_date DATE NOT NULL,
-    payment_method VARCHAR(50) NOT NULL, -- 'bank_transfer', 'stripe', 'mollie', etc.
+    payment_method VARCHAR(50) NOT NULL CHECK (payment_method IN ('bank_transfer', 'stripe', 'mollie', 'paypal', 'cash', 'cheque', 'credit_card', 'other')),
     transaction_id VARCHAR(255),
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -191,13 +191,13 @@ CREATE INDEX idx_payments_tenant_date ON payments(tenant_id, payment_date);
 CREATE TABLE bank_connections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    provider VARCHAR(50) NOT NULL, -- 'plaid', 'tink', 'nordigen'
+    provider VARCHAR(50) NOT NULL CHECK (provider IN ('plaid', 'tink', 'nordigen', 'yapily', 'manual')),
     institution_id VARCHAR(100) NOT NULL,
     institution_name VARCHAR(255) NOT NULL,
     account_id VARCHAR(255) NOT NULL,
     account_name VARCHAR(255),
-    account_type VARCHAR(50),
-    currency VARCHAR(3) DEFAULT 'EUR' NOT NULL,
+    account_type VARCHAR(50) CHECK (account_type IS NULL OR account_type IN ('checking', 'savings', 'credit_card', 'investment', 'other')),
+    currency VARCHAR(50) DEFAULT 'EUR' NOT NULL CHECK (currency IN ('EUR', 'USD', 'GBP', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK')),
     access_token TEXT NOT NULL, -- Must be encrypted
     last_synced_at TIMESTAMP,
     is_active BOOLEAN DEFAULT true NOT NULL,
@@ -245,7 +245,7 @@ CREATE TABLE vat_returns (
     sales_vat NUMERIC(12, 2) NOT NULL,
     purchase_vat NUMERIC(12, 2) NOT NULL,
     net_vat NUMERIC(12, 2) NOT NULL,
-    status VARCHAR(50) NOT NULL, -- 'draft', 'filed', 'paid'
+    status VARCHAR(50) NOT NULL CHECK (status IN ('draft', 'filed', 'paid', 'amended')),
     filed_at TIMESTAMP,
     paid_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -261,8 +261,8 @@ CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    action VARCHAR(100) NOT NULL, -- 'invoice.created', 'expense.updated', etc.
-    entity_type VARCHAR(50) NOT NULL, -- 'invoice', 'expense', 'payment'
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('invoice', 'expense', 'client', 'payment', 'vat_return', 'bank_transaction', 'user', 'tenant')),
     entity_id UUID NOT NULL,
     old_values TEXT, -- JSON before state
     new_values TEXT, -- JSON after state
@@ -308,7 +308,7 @@ CREATE TABLE tenant_settings (
 CREATE TABLE attachments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_type VARCHAR(50) NOT NULL, -- 'invoice', 'expense', 'client'
+    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('invoice', 'expense', 'client', 'payment', 'vat_return', 'bank_transaction', 'user', 'tenant')),
     entity_id UUID NOT NULL,
     filename VARCHAR(255) NOT NULL,
     mime_type VARCHAR(100) NOT NULL,
