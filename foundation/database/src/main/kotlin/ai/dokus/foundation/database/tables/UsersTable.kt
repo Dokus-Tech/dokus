@@ -1,10 +1,5 @@
 package ai.dokus.foundation.database.tables
 
-import ai.dokus.auth.domain.model.ClearanceLevel
-import ai.dokus.auth.domain.model.PoliceRank
-import ai.dokus.auth.domain.model.UserStatus
-import ai.dokus.auth.domain.model.Language
-import ai.dokus.foundation.ktor.db.dbEnumeration
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
@@ -22,17 +17,9 @@ object UsersTable : UUIDTable("users") {
 
     val unitCode = varchar("unit_code", 100).nullable()
     val department = varchar("department", 100).nullable()
-    val rank = dbEnumeration<PoliceRank>("rank")
     val isOGP = bool("is_ogp").default(false)
     val isOBP = bool("is_obp").default(false)
-
-    val clearanceLevel = dbEnumeration<ClearanceLevel>("clearance_level")
-        .default(ClearanceLevel.INTERNAL_USE)
-    val language = dbEnumeration<Language>("language")
-
     val radioCallSign = varchar("radio_call_sign", 50).nullable()
-
-    val status = dbEnumeration<UserStatus>("status").default(UserStatus.ACTIVE)
     val lockedUntil = timestamp("locked_until").nullable()
     val failedLoginAttempts = integer("failed_login_attempts").default(0)
     val lastLoginAt = timestamp("last_login_at").nullable()
@@ -58,6 +45,5 @@ object UsersTable : UUIDTable("users") {
 
     init {
         index("idx_user_unit", false, unitCode)
-        index("idx_user_status", false, status)
     }
 }
