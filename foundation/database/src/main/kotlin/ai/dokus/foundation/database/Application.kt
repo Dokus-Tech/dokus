@@ -1,12 +1,7 @@
 package ai.dokus.foundation.database
 
 import ai.dokus.foundation.database.configuration.configureDependencyInjection
-import ai.dokus.foundation.database.tables.UserLoginAttemptsTable
-import ai.dokus.foundation.database.tables.UserPermissionsTable
-import ai.dokus.foundation.database.tables.UserRolesTable
-import ai.dokus.foundation.database.tables.UserSessionsTable
-import ai.dokus.foundation.database.tables.UserSpecializationsTable
-import ai.dokus.foundation.database.tables.UsersTable
+import ai.dokus.foundation.database.tables.*
 import ai.dokus.foundation.database.utils.DatabaseFactory
 import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
@@ -30,7 +25,6 @@ fun main() {
 
     logger.info("Loaded configuration: ${appConfig.ktor.deployment.environment}")
 
-
     val server = embeddedServer(
         Netty,
         port = appConfig.ktor.deployment.port,
@@ -53,6 +47,7 @@ fun Application.module(appConfig: AppConfig) {
     // Log application startup
     logger.info("Starting Dokus Database Service...")
     logger.info("Environment: ${appConfig.ktor.deployment.environment}")
+    logger.info("Financial Management System - Multi-tenant SaaS")
 
     // Configure application
     configureDependencyInjection(appConfig)
@@ -61,17 +56,38 @@ fun Application.module(appConfig: AppConfig) {
     configureSecurity(appConfig.security)
     configureMonitoring()
 
-    // Initialize database
+    // Initialize database with all financial tables
     runBlocking {
         val dbFactory by inject<DatabaseFactory>()
+        logger.info("Initializing database schema...")
+
         dbFactory.init(
+            // Authentication & Multi-tenancy
+            TenantsTable,
             UsersTable,
-            UserSessionsTable,
-            UserLoginAttemptsTable,
-            UserRolesTable,
-            UserPermissionsTable,
-            UserSpecializationsTable
+            RefreshTokensTable,
+
+            // Business Entities
+            ClientsTable,
+            InvoicesTable,
+            InvoiceItemsTable,
+            ExpensesTable,
+            PaymentsTable,
+
+            // Bank Integration
+            BankConnectionsTable,
+            BankTransactionsTable,
+
+            // Tax & Compliance
+            VatReturnsTable,
+            AuditLogsTable,
+
+            // Configuration
+            TenantSettingsTable,
+            AttachmentsTable
         )
+
+        logger.info("Database schema initialized successfully")
     }
 
     // Configure routes
@@ -91,4 +107,6 @@ fun Application.module(appConfig: AppConfig) {
     }
 
     logger.info("Dokus Database Service started successfully")
+    logger.info("Financial precision: NUMERIC(12,2) for all monetary values")
+    logger.info("Multi-tenant isolation: All queries filtered by tenant_id")
 }
