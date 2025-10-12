@@ -26,11 +26,6 @@ private val appModule = module {
     single<InvoiceService> { InvoiceServiceImpl(get()) }
     single<ExpenseService> { ExpenseServiceImpl() }
     single<PaymentService> { PaymentServiceImpl() }
-    // TODO: Add remaining services when implemented
-    // single<BankService> { BankServiceImpl() }
-    // single<VatService> { VatServiceImpl() }
-    // single<AuditService> { AuditServiceImpl() }
-    // single<AttachmentService> { AttachmentServiceImpl() }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppConfig) {
