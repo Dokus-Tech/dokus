@@ -198,7 +198,17 @@ value class Money(val value: String) {
         val ZERO = Money("0.00")
 
         fun parse(value: String): Money = Money(value)
-        fun fromDouble(value: Double): Money = Money("%.2f".format(value))
+        fun fromDouble(value: Double): Money {
+            // Format to 2 decimal places
+            val formatted = ((value * 100).toLong() / 100.0).toString()
+            return if (formatted.contains('.')) {
+                val parts = formatted.split('.')
+                val decimals = if (parts[1].length == 1) "${parts[1]}0" else parts[1].take(2)
+                Money("${parts[0]}.$decimals")
+            } else {
+                Money("$formatted.00")
+            }
+        }
         fun fromInt(value: Int): Money = Money("$value.00")
     }
 }

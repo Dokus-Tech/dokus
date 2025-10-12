@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database.tables
 
-import ai.dokus.foundation.database.dbEnumeration
-import ai.dokus.foundation.database.enums.AuditAction
-import ai.dokus.foundation.database.enums.EntityType
+import ai.dokus.foundation.database.*
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
@@ -16,8 +16,8 @@ object AuditLogsTable : UUIDTable("audit_logs") {
     val tenantId = reference("tenant_id", TenantsTable, onDelete = ReferenceOption.CASCADE)
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.SET_NULL).nullable()
 
-    val action = dbEnumeration<AuditAction>("action")
-    val entityType = dbEnumeration<EntityType>("entity_type")
+    val action = auditActionEnumeration("action")
+    val entityType = entityTypeEnumeration("entity_type")
     val entityId = uuid("entity_id")
 
     // Change tracking (JSON)

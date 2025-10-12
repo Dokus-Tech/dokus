@@ -1,10 +1,10 @@
 package ai.dokus.foundation.database.mappers
 
 import ai.dokus.foundation.database.tables.*
+import ai.dokus.foundation.database.utils.toKotlinLocalDate
+import ai.dokus.foundation.database.utils.toKotlinLocalDateTime
 import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.model.*
-import kotlinx.datetime.toKotlinLocalDate
-import kotlinx.datetime.toKotlinLocalDateTime
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.ResultRow
 import kotlin.uuid.ExperimentalUuidApi

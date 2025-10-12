@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database.repository
 
-import ai.dokus.foundation.database.enums.Language
-import ai.dokus.foundation.database.enums.TenantPlan
-import ai.dokus.foundation.database.enums.TenantStatus
+import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.database.mappers.TenantMapper.toTenant
 import ai.dokus.foundation.database.mappers.TenantMapper.toTenantSettings
 import ai.dokus.foundation.database.tables.TenantsTable

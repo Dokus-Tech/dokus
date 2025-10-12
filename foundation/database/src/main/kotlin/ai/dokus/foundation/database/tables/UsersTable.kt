@@ -1,7 +1,7 @@
 package ai.dokus.foundation.database.tables
 
-import ai.dokus.foundation.database.dbEnumeration
-import ai.dokus.foundation.database.enums.UserRole
+import ai.dokus.foundation.database.*
+import ai.dokus.foundation.domain.enums.UserRole
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
@@ -20,7 +20,7 @@ object UsersTable : UUIDTable("users") {
     val mfaSecret = varchar("mfa_secret", 255).nullable() // TOTP, must be encrypted!
 
     // Authorization
-    val role = dbEnumeration<UserRole>("role")
+    val role = userRoleEnumeration("role")
 
     // Profile
     val firstName = varchar("first_name", 100).nullable()

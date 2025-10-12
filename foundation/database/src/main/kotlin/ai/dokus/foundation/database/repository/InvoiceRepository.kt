@@ -1,12 +1,12 @@
 package ai.dokus.foundation.database.repository
 
-import ai.dokus.foundation.database.enums.AuditAction
-import ai.dokus.foundation.database.enums.EntityType
-import ai.dokus.foundation.database.enums.InvoiceStatus
-import ai.dokus.foundation.database.enums.PaymentMethod
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoice
 import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoiceItem
-import ai.dokus.foundation.database.mappers.toJavaLocalDate
+import ai.dokus.foundation.database.utils.toJavaLocalDate
 import ai.dokus.foundation.database.tables.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.InvoicesTable
 import ai.dokus.foundation.database.tables.PaymentsTable

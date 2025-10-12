@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.database.enums.*
 import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.enums.*
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
