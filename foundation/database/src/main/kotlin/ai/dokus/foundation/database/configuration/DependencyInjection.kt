@@ -1,5 +1,6 @@
 package ai.dokus.foundation.database.configuration
 
+import ai.dokus.foundation.database.utils.DatabaseFactory
 import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -9,6 +10,7 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
+    single { DatabaseFactory(get(), "dokus-database-pool") }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppConfig) {
