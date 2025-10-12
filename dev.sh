@@ -244,7 +244,7 @@ start_services() {
         sleep 3  # Give it a moment to start
         printf "  ${CYAN}▸${NC} Auth Service        "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9093/metrics > /dev/null 2>&1; then
+            if curl -f -s http://localhost:9091/metrics > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -442,9 +442,9 @@ print_services_info() {
 
     # Auth Service
     echo -e "  ${MAGENTA}▸ Auth Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9093${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9093/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9093/health${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9091${NC}"
+    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9091/metrics${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9091/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5007${NC}"
     echo ""
 
