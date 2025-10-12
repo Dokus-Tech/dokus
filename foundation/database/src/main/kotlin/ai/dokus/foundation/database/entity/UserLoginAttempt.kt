@@ -1,4 +1,4 @@
-package ai.dokus.foundation.ktor.db.entity
+package ai.dokus.foundation.database.entity
 
 import ai.dokus.foundation.domain.database.DbEnum
 import kotlinx.datetime.Instant

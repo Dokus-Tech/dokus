@@ -1,9 +1,9 @@
-package ai.dokus.foundation.ktor.db.repository
+package ai.dokus.foundation.database.repository
 
 import ai.dokus.auth.domain.model.SessionRevokeReason
-import ai.dokus.foundation.ktor.db.dbQuery
-import ai.dokus.foundation.ktor.db.entity.UserSession
-import ai.dokus.foundation.ktor.db.tables.UserSessionsTable
+import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.database.entity.UserSession
+import ai.dokus.foundation.database.tables.UserSessionsTable
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less

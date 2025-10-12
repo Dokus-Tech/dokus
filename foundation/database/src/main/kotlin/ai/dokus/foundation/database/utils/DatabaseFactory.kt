@@ -1,4 +1,4 @@
-package ai.dokus.foundation.ktor.db
+package ai.dokus.foundation.database.utils
 
 import ai.dokus.foundation.ktor.AppConfig
 import com.zaxxer.hikari.HikariConfig

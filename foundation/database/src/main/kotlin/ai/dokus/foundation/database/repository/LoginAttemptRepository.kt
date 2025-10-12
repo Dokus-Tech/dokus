@@ -1,9 +1,9 @@
-package ai.dokus.foundation.ktor.db.repository
+package ai.dokus.foundation.database.repository
 
-import ai.dokus.foundation.ktor.db.entity.LoginResult
-import ai.dokus.foundation.ktor.db.entity.UserLoginAttempt
-import ai.dokus.foundation.ktor.db.tables.UserLoginAttemptsTable
-import ai.dokus.foundation.ktor.db.dbQuery
+import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.database.tables.UserLoginAttemptsTable
+import ai.dokus.foundation.database.entity.LoginResult
+import ai.dokus.foundation.database.entity.UserLoginAttempt
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.ResultRow

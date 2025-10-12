@@ -1,4 +1,4 @@
-package ai.dokus.auth.backend.config
+package ai.dokus.foundation.database.configuration
 
 import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace

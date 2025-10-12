@@ -1,4 +1,4 @@
-package ai.dokus.foundation.ktor.db.tables
+package ai.dokus.foundation.database.tables
 
 import org.jetbrains.exposed.sql.Table
 
