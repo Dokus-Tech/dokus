@@ -147,8 +147,7 @@ class PaymentServiceImpl : PaymentService {
         fromDate: LocalDate?,
         toDate: LocalDate?
     ): Map<String, Any> {
-        // TODO: Implement statistics calculation
-        return emptyMap()
+        throw NotImplementedError("Statistics calculation not yet implemented")
     }
 
     override suspend fun getTotalPaid(invoiceId: InvoiceId): Money = dbQuery {
