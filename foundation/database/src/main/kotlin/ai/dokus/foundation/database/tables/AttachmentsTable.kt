@@ -15,7 +15,7 @@ object AttachmentsTable : UUIDTable("attachments") {
     val tenantId = reference("tenant_id", TenantsTable, onDelete = ReferenceOption.CASCADE)
 
     // Entity linking
-    val entityType = entityTypeEnumeration("entity_type")
+    val entityType = dbEnumeration<EntityType>("entity_type")
     val entityId = uuid("entity_id")
 
     // File metadata

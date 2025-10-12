@@ -19,7 +19,7 @@ object PaymentsTable : UUIDTable("payments") {
     val amount = decimal("amount", 12, 2)
     val paymentDate = date("payment_date")
 
-    val paymentMethod = paymentMethodEnumeration("payment_method")
+    val paymentMethod = dbEnumeration<PaymentMethod>("payment_method")
 
     val transactionId = varchar("transaction_id", 255).nullable()  // External ID
     val notes = text("notes").nullable()

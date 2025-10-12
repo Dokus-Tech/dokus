@@ -73,7 +73,7 @@ class InvoiceRepository {
                 it[vatAmount] = vatTotal
                 it[totalAmount] = total
                 it[paidAmount] = BigDecimal.ZERO
-                it[status] = InvoiceStatus.DRAFT
+                it[status] = InvoiceStatus.Draft
                 it[InvoicesTable.notes] = notes
             }.value
 
@@ -183,7 +183,7 @@ class InvoiceRepository {
                 (InvoicesTable.id eq invoiceJavaUuid) and (InvoicesTable.tenantId eq tenantJavaUuid)
             }) {
                 it[InvoicesTable.status] = newStatus
-                if (newStatus == InvoiceStatus.PAID) {
+                if (newStatus == InvoiceStatus.Paid) {
                     it[paidAt] = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 }
             }
@@ -238,15 +238,15 @@ class InvoiceRepository {
             val newPaidAmount = invoice[InvoicesTable.paidAmount] + amountDecimal
             val totalAmount = invoice[InvoicesTable.totalAmount]
             val newStatus = when {
-                newPaidAmount >= totalAmount -> InvoiceStatus.PAID
-                newPaidAmount > BigDecimal.ZERO -> InvoiceStatus.PARTIALLY_PAID
+                newPaidAmount >= totalAmount -> InvoiceStatus.Paid
+                newPaidAmount > BigDecimal.ZERO -> InvoiceStatus.PartiallyPaid
                 else -> invoice[InvoicesTable.status]
             }
 
             InvoicesTable.update({ InvoicesTable.id eq invoiceJavaUuid }) {
                 it[paidAmount] = newPaidAmount
                 it[status] = newStatus
-                if (newStatus == InvoiceStatus.PAID) {
+                if (newStatus == InvoiceStatus.Paid) {
                     it[paidAt] = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 }
             }

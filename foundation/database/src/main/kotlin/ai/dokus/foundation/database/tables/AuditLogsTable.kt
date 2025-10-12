@@ -16,8 +16,8 @@ object AuditLogsTable : UUIDTable("audit_logs") {
     val tenantId = reference("tenant_id", TenantsTable, onDelete = ReferenceOption.CASCADE)
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.SET_NULL).nullable()
 
-    val action = auditActionEnumeration("action")
-    val entityType = entityTypeEnumeration("entity_type")
+    val action = dbEnumeration<AuditAction>("action")
+    val entityType = dbEnumeration<EntityType>("entity_type")
     val entityId = uuid("entity_id")
 
     // Change tracking (JSON)

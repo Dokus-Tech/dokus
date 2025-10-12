@@ -32,21 +32,21 @@ object InvoicesTable : UUIDTable("invoices") {
     val paidAmount = decimal("paid_amount", 12, 2).default(BigDecimal.ZERO)
 
     // Status
-    val status = invoiceStatusEnumeration("status")
+    val status = dbEnumeration<InvoiceStatus>("status")
 
     // Peppol e-invoicing (Belgium 2026 requirement)
     val peppolId = varchar("peppol_id", 255).nullable()
     val peppolSentAt = datetime("peppol_sent_at").nullable()
-    val peppolStatus = peppolStatusEnumeration("peppol_status").nullable()
+    val peppolStatus = dbEnumeration<PeppolStatus>("peppol_status").nullable()
 
     // Payment integration
     val paymentLink = varchar("payment_link", 500).nullable()
     val paymentLinkExpiresAt = datetime("payment_link_expires_at").nullable()
     val paidAt = datetime("paid_at").nullable()
-    val paymentMethod = paymentMethodEnumeration("payment_method").nullable()
+    val paymentMethod = dbEnumeration<PaymentMethod>("payment_method").nullable()
 
     // Additional
-    val currency = currencyEnumeration("currency").default(Currency.EUR)
+    val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
     val notes = text("notes").nullable()
     val termsAndConditions = text("terms_and_conditions").nullable()
 

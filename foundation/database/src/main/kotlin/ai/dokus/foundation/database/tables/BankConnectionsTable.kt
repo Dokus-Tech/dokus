@@ -17,15 +17,15 @@ object BankConnectionsTable : UUIDTable("bank_connections") {
     val tenantId = reference("tenant_id", TenantsTable, onDelete = ReferenceOption.CASCADE)
 
     // Provider
-    val provider = bankProviderEnumeration("provider")
+    val provider = dbEnumeration<BankProvider>("provider")
     val institutionId = varchar("institution_id", 100)
     val institutionName = varchar("institution_name", 255)
 
     // Account
     val accountId = varchar("account_id", 255)
     val accountName = varchar("account_name", 255).nullable()
-    val accountType = bankAccountTypeEnumeration("account_type").nullable()
-    val currency = currencyEnumeration("currency").default(Currency.EUR)
+    val accountType = dbEnumeration<BankAccountType>("account_type").nullable()
+    val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // CRITICAL: Must be encrypted at rest
     val accessToken = text("access_token")  // AES-256-GCM encrypted

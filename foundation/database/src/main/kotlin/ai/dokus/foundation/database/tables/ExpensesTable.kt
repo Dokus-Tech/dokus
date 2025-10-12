@@ -22,7 +22,7 @@ object ExpensesTable : UUIDTable("expenses") {
     val vatAmount = decimal("vat_amount", 12, 2).nullable()
     val vatRate = decimal("vat_rate", 5, 2).nullable()
 
-    val category = expenseCategoryEnumeration("category")
+    val category = dbEnumeration<ExpenseCategory>("category")
 
     val description = text("description").nullable()
 
@@ -35,7 +35,7 @@ object ExpensesTable : UUIDTable("expenses") {
     val deductiblePercentage = decimal("deductible_percentage", 5, 2)
         .default(java.math.BigDecimal("100.00"))
 
-    val paymentMethod = paymentMethodEnumeration("payment_method").nullable()
+    val paymentMethod = dbEnumeration<PaymentMethod>("payment_method").nullable()
     val isRecurring = bool("is_recurring").default(false)
     val notes = text("notes").nullable()
 

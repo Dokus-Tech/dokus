@@ -20,7 +20,7 @@ object UsersTable : UUIDTable("users") {
     val mfaSecret = varchar("mfa_secret", 255).nullable() // TOTP, must be encrypted!
 
     // Authorization
-    val role = userRoleEnumeration("role")
+    val role = dbEnumeration<UserRole>("role")
 
     // Profile
     val firstName = varchar("first_name", 100).nullable()
