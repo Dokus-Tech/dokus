@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- For Bluetooth LE -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <!-- For Bluetooth Scan -->
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <!-- For Bluetooth Connect -->
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <!-- For Bluetooth Advertise -->
-    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>

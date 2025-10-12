@@ -4,8 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinPluginSerialization)
 }
 
 kotlin {
@@ -30,20 +29,41 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
+            implementation(libs.ktor.client.cio)
         }
+
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+
         commonMain.dependencies {
-            implementation(projects.foundation.navigation)
-            implementation(projects.application.core)
-            implementation(projects.application.data)
-            implementation(projects.foundation.ui)
+            api(projects.foundation.domain)
+            api(projects.foundation.apispec)
+            api(projects.application.core)
+
+            api(projects.foundation.platform)
+
+            implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(libs.koin.core)
+
+            implementation(libs.ktor.server.auth)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
         }
+
         desktopMain.dependencies {
+            implementation(libs.ktor.client.cio)
+            implementation(libs.kotlinx.coroutines.swing)
         }
+//        wasmJsMain.dependencies {
+//            implementation(libs.ktor.client.js)
+//        }
     }
 }
 
 android {
-    namespace = "ai.dokus.app.auth"
+    namespace = "ai.dokus.app.repository"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -69,20 +89,4 @@ android {
 }
 
 dependencies {
-    debugImplementation(compose.uiTooling)
-}
-
-compose.desktop {
-
-    application {
-        buildTypes {
-            release {
-                proguard {
-                    obfuscate = false
-                    optimize = false
-                    isEnabled = false
-                }
-            }
-        }
-    }
 }

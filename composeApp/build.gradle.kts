@@ -63,7 +63,7 @@ kotlin {
             implementation(projects.application.core)
             implementation(projects.foundation.ui)
             implementation(projects.foundation.platform)
-            implementation(projects.application.repository)
+            implementation(projects.application.data)
             implementation(projects.foundation.navigation)
 
             implementation(projects.foundation.domain)
