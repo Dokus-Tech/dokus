@@ -7,9 +7,9 @@ import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface PaymentService {
     /**
      * Records a payment against an invoice

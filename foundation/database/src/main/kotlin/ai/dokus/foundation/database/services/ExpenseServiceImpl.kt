@@ -184,7 +184,7 @@ class ExpenseServiceImpl : ExpenseService {
             .map { it.toExpense() }
     }
 
-    override suspend fun watchExpenses(tenantId: TenantId): Flow<Expense> {
+    override fun watchExpenses(tenantId: TenantId): Flow<Expense> {
         return expenseUpdates
     }
 

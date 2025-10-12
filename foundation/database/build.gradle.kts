@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.kotlinxRpcPlugin)
     id("com.github.johnrengelman.shadow") version "8.1.1"
     application
 }

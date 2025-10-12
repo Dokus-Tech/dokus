@@ -5,9 +5,9 @@ import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.BusinessUser
 import kotlinx.datetime.Instant
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface UserService {
     /**
      * Registers a new user for a tenant

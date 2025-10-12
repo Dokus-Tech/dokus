@@ -6,9 +6,9 @@ import ai.dokus.foundation.domain.VatReturnId
 import ai.dokus.foundation.domain.enums.VatReturnStatus
 import ai.dokus.foundation.domain.model.VatReturn
 import kotlinx.datetime.Instant
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface VatService {
     /**
      * Calculates VAT for a quarter

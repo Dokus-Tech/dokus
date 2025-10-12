@@ -14,9 +14,9 @@ import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.RPC
+import kotlinx.rpc.annotations.Rpc
 
-@RPC
+@Rpc
 interface InvoiceService {
     /**
      * Creates a new invoice with items
@@ -191,7 +191,7 @@ interface InvoiceService {
      * @param tenantId The tenant's unique identifier
      * @return Flow of invoice updates
      */
-    suspend fun watchInvoices(tenantId: TenantId): Flow<Invoice>
+    fun watchInvoices(tenantId: TenantId): Flow<Invoice>
 
     /**
      * Calculates totals for an invoice
