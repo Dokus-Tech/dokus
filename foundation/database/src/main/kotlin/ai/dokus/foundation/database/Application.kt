@@ -9,12 +9,17 @@ import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
 import ai.dokus.foundation.ktor.routes.healthRoutes
+import ai.dokus.foundation.ktor.services.*
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
+import kotlinx.rpc.krpc.ktor.server.RPC
+import kotlinx.rpc.krpc.ktor.server.rpc
+import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 
@@ -90,9 +95,31 @@ fun Application.module(appConfig: AppConfig) {
         logger.info("Database schema initialized successfully")
     }
 
+    // Install KotlinX RPC plugin
+    install(RPC)
+
     // Configure routes
     routing {
         healthRoutes()
+
+        // Register RPC services
+        rpc("/api/rpc") {
+            rpcConfig {
+                serialization {
+                    json()
+                }
+            }
+
+            // Register all RPC service implementations
+            registerService<TenantService> { ctx -> get<TenantService>() }
+            registerService<UserService> { ctx -> get<UserService>() }
+            registerService<ClientService> { ctx -> get<ClientService>() }
+            registerService<InvoiceService> { ctx -> get<InvoiceService>() }
+            registerService<ExpenseService> { ctx -> get<ExpenseService>() }
+            registerService<PaymentService> { ctx -> get<PaymentService>() }
+        }
+
+        logger.info("RPC services registered at /api/rpc")
     }
 
     // Configure graceful shutdown
