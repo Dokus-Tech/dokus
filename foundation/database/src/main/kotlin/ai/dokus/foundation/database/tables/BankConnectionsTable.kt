@@ -1,5 +1,9 @@
 package ai.dokus.foundation.database.tables
 
+import ai.dokus.foundation.database.dbEnumeration
+import ai.dokus.foundation.database.enums.BankAccountType
+import ai.dokus.foundation.database.enums.BankProvider
+import ai.dokus.foundation.database.enums.Currency
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
@@ -13,15 +17,15 @@ object BankConnectionsTable : UUIDTable("bank_connections") {
     val tenantId = reference("tenant_id", TenantsTable, onDelete = ReferenceOption.CASCADE)
 
     // Provider
-    val provider = varchar("provider", 50)  // 'plaid', 'tink', 'nordigen'
+    val provider = dbEnumeration<BankProvider>("provider")
     val institutionId = varchar("institution_id", 100)
     val institutionName = varchar("institution_name", 255)
 
     // Account
     val accountId = varchar("account_id", 255)
     val accountName = varchar("account_name", 255).nullable()
-    val accountType = varchar("account_type", 50).nullable()
-    val currency = varchar("currency", 3).default("EUR")
+    val accountType = dbEnumeration<BankAccountType>("account_type").nullable()
+    val currency = dbEnumeration<Currency>("currency").default(Currency.EUR)
 
     // CRITICAL: Must be encrypted at rest
     val accessToken = text("access_token")  // AES-256-GCM encrypted

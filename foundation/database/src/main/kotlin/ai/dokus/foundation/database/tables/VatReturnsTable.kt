@@ -1,5 +1,7 @@
 package ai.dokus.foundation.database.tables
 
+import ai.dokus.foundation.database.dbEnumeration
+import ai.dokus.foundation.database.enums.VatReturnStatus
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
@@ -20,7 +22,7 @@ object VatReturnsTable : UUIDTable("vat_returns") {
     val purchaseVat = decimal("purchase_vat", 12, 2) // Paid on expenses
     val netVat = decimal("net_vat", 12, 2)          // To pay or reclaim
 
-    val status = varchar("status", 50)  // 'draft', 'filed', 'paid'
+    val status = dbEnumeration<VatReturnStatus>("status")
     val filedAt = datetime("filed_at").nullable()
     val paidAt = datetime("paid_at").nullable()
 

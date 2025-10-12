@@ -1,5 +1,8 @@
 package ai.dokus.foundation.database.tables
 
+import ai.dokus.foundation.database.dbEnumeration
+import ai.dokus.foundation.database.enums.ExpenseCategory
+import ai.dokus.foundation.database.enums.PaymentMethod
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
@@ -19,8 +22,7 @@ object ExpensesTable : UUIDTable("expenses") {
     val vatAmount = decimal("vat_amount", 12, 2).nullable()
     val vatRate = decimal("vat_rate", 5, 2).nullable()
 
-    // Category: 'software', 'hardware', 'travel', 'office', 'meals', 'marketing', 'other'
-    val category = varchar("category", 100)
+    val category = dbEnumeration<ExpenseCategory>("category")
 
     val description = text("description").nullable()
 
@@ -33,7 +35,7 @@ object ExpensesTable : UUIDTable("expenses") {
     val deductiblePercentage = decimal("deductible_percentage", 5, 2)
         .default(java.math.BigDecimal("100.00"))
 
-    val paymentMethod = varchar("payment_method", 50).nullable()
+    val paymentMethod = dbEnumeration<PaymentMethod>("payment_method").nullable()
     val isRecurring = bool("is_recurring").default(false)
     val notes = text("notes").nullable()
 

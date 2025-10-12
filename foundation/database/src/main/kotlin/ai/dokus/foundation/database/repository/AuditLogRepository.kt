@@ -1,5 +1,7 @@
 package ai.dokus.foundation.database.repository
 
+import ai.dokus.foundation.database.enums.AuditAction
+import ai.dokus.foundation.database.enums.EntityType
 import ai.dokus.foundation.database.tables.AuditLogsTable
 import ai.dokus.foundation.database.utils.dbQuery
 import kotlinx.serialization.encodeToString
@@ -19,8 +21,8 @@ class AuditLogRepository {
     suspend fun log(
         tenantId: UUID,
         userId: UUID? = null,
-        action: String,
-        entityType: String,
+        action: AuditAction,
+        entityType: EntityType,
         entityId: UUID,
         oldValues: Map<String, Any?>? = null,
         newValues: Map<String, Any?>? = null,
@@ -43,7 +45,7 @@ class AuditLogRepository {
             it[AuditLogsTable.userAgent] = userAgent
         }
 
-        logger.debug("Audit log: tenant=$tenantId action=$action entity=$entityType/$entityId")
+        logger.debug("Audit log: tenant=$tenantId action=${action.dbValue} entity=${entityType.dbValue}/$entityId")
     }
 
     /**
@@ -52,8 +54,8 @@ class AuditLogRepository {
     suspend fun logFinancial(
         tenantId: UUID,
         userId: UUID? = null,
-        action: String,
-        entityType: String,
+        action: AuditAction,
+        entityType: EntityType,
         entityId: UUID,
         amount: String,
         details: Map<String, Any?>,
@@ -71,6 +73,6 @@ class AuditLogRepository {
             ipAddress = ipAddress
         )
 
-        logger.info("FINANCIAL AUDIT: tenant=$tenantId action=$action amount=$amount")
+        logger.info("FINANCIAL AUDIT: tenant=$tenantId action=${action.dbValue} amount=$amount")
     }
 }
