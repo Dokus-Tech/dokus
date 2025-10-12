@@ -25,6 +25,11 @@ dependencies {
 
     implementation(libs.kotlinx.serialization)
 
+    // KotlinX RPC Client
+    implementation(libs.kotlinx.rpc.core)
+    implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    implementation(libs.kotlinx.rpc.krpc.ktor.client)
+
     // Ktor Server
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
@@ -38,6 +43,11 @@ dependencies {
     implementation(libs.ktor.server.rate.limit)
     implementation(libs.ktor.server.openapi)
     implementation(libs.ktor.server.swagger)
+
+    // Ktor Client (for RPC)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
 
     // Database - Exposed
     implementation(libs.exposed.core)
