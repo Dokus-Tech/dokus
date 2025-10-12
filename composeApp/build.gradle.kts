@@ -61,7 +61,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.foundation.appCommon)
-            implementation(projects.foundation.ui)
+            implementation(projects.foundation.designSystem)
             implementation(projects.foundation.platform)
             implementation(projects.foundation.navigation)
 
