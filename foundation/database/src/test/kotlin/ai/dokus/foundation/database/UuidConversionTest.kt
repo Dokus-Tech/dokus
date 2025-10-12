@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database
 
-import ai.dokus.foundation.database.enums.Language
-import ai.dokus.foundation.database.enums.TenantPlan
-import ai.dokus.foundation.database.enums.TenantStatus
+import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.database.mappers.TenantMapper.toTenant
 import ai.dokus.foundation.database.repository.TenantRepository
 import ai.dokus.foundation.database.tables.TenantsTable
@@ -46,9 +46,9 @@ class UuidConversionTest {
         val createdId: Uuid = repository.create(
             name = "Test Company",
             email = "test@example.com",
-            plan = TenantPlan.PROFESSIONAL,
+            plan = TenantPlan.Professional,
             country = "US",
-            language = Language.EN,
+            language = Language.En,
             vatNumber = "US123456789"
         )
 
@@ -61,7 +61,7 @@ class UuidConversionTest {
         assertNotNull(retrievedTenant)
         assertEquals("Test Company", retrievedTenant.name)
         assertEquals("test@example.com", retrievedTenant.email)
-        assertEquals(TenantPlan.PROFESSIONAL, retrievedTenant.plan)
+        assertEquals(TenantPlan.Professional, retrievedTenant.plan)
         assertEquals(createdId, retrievedTenant.id)
 
         // Step 3: Verify that the database is actually storing Java UUID
