@@ -1,16 +1,13 @@
 package ai.dokus.app.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.apispec.CompanyApi
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.Company
 import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(State.Loading),
     KoinComponent {
@@ -18,18 +15,18 @@ internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(St
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    private val api: CompanyApi by inject()
+//    private val api: CompanyApi by inject()
 
     fun fetch() {
         scope.launch {
             mutableState.value = State.Loading
+//
+//            val workspaces = api.getCompanies().getOrElse {
+//                mutableState.value = State.Error(it.asDokusException)
+//                return@launch
+//            }
 
-            val workspaces = api.getCompanies().getOrElse {
-                mutableState.value = State.Error(it.asDokusException)
-                return@launch
-            }
-
-            mutableState.value = State.Loaded(workspaces)
+//            mutableState.value = State.Loaded(workspaces)
         }
     }
 

@@ -1,8 +1,6 @@
 package ai.dokus.app.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.app.repository.extensions.authCredentials
-import ai.dokus.app.repository.extensions.user
 import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.launch
 
@@ -20,7 +18,8 @@ internal class SplashScreenViewModel : BaseViewModel<SplashScreenViewModel.Effec
     }
 
     private fun checkIsNotLoggedIn(): Boolean {
-        return persistence.authCredentials == null || persistence.user == null
+        return true
+//        return persistence.authCredentials == null || persistence.user == null
     }
 
     private fun noWorkspaceIsSelected(): Boolean {

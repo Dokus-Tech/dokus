@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import org.jetbrains.compose.resources.painterResource
-import dokus.foundation.ui.generated.resources.Res
-import dokus.foundation.ui.generated.resources.app_logo
+import dokus.foundation.design_system.generated.resources.Res
+import dokus.foundation.design_system.generated.resources.app_logo
 
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {

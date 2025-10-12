@@ -15,8 +15,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import dokus.foundation.ui.generated.resources.Res
-import dokus.foundation.ui.generated.resources.background_gradient
+import dokus.foundation.design_system.generated.resources.Res
+import dokus.foundation.design_system.generated.resources.background_gradient
 
 @Composable
 fun BackgroundGradientAnimated(
