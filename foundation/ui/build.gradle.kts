@@ -40,7 +40,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.foundation.platform)
-            implementation(projects.application.core)
+            implementation(projects.application.appCommon)
             implementation(projects.foundation.navigation)
             implementation(projects.foundation.domain)
 

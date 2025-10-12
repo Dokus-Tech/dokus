@@ -60,10 +60,9 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            implementation(projects.application.core)
+            implementation(projects.application.appCommon)
             implementation(projects.foundation.ui)
             implementation(projects.foundation.platform)
-            implementation(projects.application.data)
             implementation(projects.foundation.navigation)
 
             implementation(projects.foundation.domain)
