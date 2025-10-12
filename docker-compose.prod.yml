@@ -1,0 +1,154 @@
+# Production Docker Compose configuration
+
+services:
+  # Auth Service Database
+  postgres-auth-prod:
+    image: postgres:17-alpine
+    container_name: pulse-postgres-auth-prod
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5441:5432"
+    volumes:
+      - postgres-auth-data-prod:/var/lib/postgresql/data
+      - ./features/auth/backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+    networks:
+      - pulse-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Operation Service Database
+  postgres-operation-prod:
+    image: postgres:17-alpine
+    container_name: pulse-postgres-operation-prod
+    environment:
+      POSTGRES_DB: operations
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${OPERATION_DB_PASSWORD:-${DB_PASSWORD}}
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres-operation-data-prod:/var/lib/postgresql/data
+      - ./features/operation/backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+    networks:
+      - pulse-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d operations"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-prod:
+    image: redis:8-alpine
+    container_name: pulse-redis-prod
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --tcp-backlog 511
+      --timeout 0
+      --tcp-keepalive 300
+      --dir /data
+      --logfile ""
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-prod:/data
+    networks:
+      - pulse-prod-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service-prod:
+    image: federal-police/pulse-auth:prod-${BUILD_NUMBER:-latest}
+    container_name: pulse-auth-prod
+    environment:
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-auth-prod:5432/auth
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-https://pulse.be}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-pulse-api}
+      REDIS_HOST: redis-prod
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      GEOIP_DATABASE_PATH: resources/GeoLite2-City.mmdb
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_PATH: /app/logs
+    ports:
+      - "8091:8091"
+    depends_on:
+      postgres-auth-prod:
+        condition: service_healthy
+      redis-prod:
+        condition: service_healthy
+    networks:
+      - pulse-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+  operation-service-prod:
+    image: federal-police/pulse-operation:prod-${BUILD_NUMBER:-latest}
+    container_name: pulse-operation-prod
+    environment:
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-operation-prod:5432/operations
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${OPERATION_DB_PASSWORD:-${DB_PASSWORD}}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-https://pulse.be}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-pulse-api}
+      REDIS_HOST: redis-prod
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_PATH: /app/logs
+    ports:
+      - "8092:8092"
+    depends_on:
+      postgres-operation-prod:
+        condition: service_healthy
+      redis-prod:
+        condition: service_healthy
+    networks:
+      - pulse-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8092/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+networks:
+  pulse-prod-network:
+    driver: bridge
+
+volumes:
+  postgres-auth-data-prod:
+    driver: local
+  postgres-operation-data-prod:
+    driver: local
+  redis-data-prod:
+    driver: local

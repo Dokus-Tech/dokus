@@ -1,0 +1,120 @@
+# Development Docker Compose configuration
+
+services:
+  # Auth Service Database
+  postgres-dev:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-dev
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5541:5432"
+    volumes:
+      - postgres-dev:/var/lib/postgresql/data
+      - ./features/auth/backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-dev:
+    image: redis:8-alpine
+    container_name: dokus-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-dev:/data
+    command: redis-server --appendonly yes --requirepass devredispass
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service-dev:
+    image: invoid-vision/dokus-auth:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-auth-dev
+    environment:
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-dev:5432/auth
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      JWT_SECRET: dev-secret-key
+      JWT_ISSUER: http://localhost:9091
+      JWT_AUDIENCE: dokus-api-dev
+      REDIS_HOST: redis-dev
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: devredispass
+      GEOIP_DATABASE_PATH: resources/GeoLite2-City.mmdb
+      LOG_LEVEL: DEBUG
+      LOG_PATH: /app/logs
+    ports:
+      - "9091:9091"
+      - "5005:5005"
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
+  database-service-dev:
+    image: invoid-vision/dokus-data:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-data-dev
+    environment:
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-operation-dev:5432/operations
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      JWT_SECRET: dev-secret-key
+      JWT_ISSUER: http://localhost:9092
+      JWT_AUDIENCE: dokus-api-dev
+      REDIS_HOST: redis-dev
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: devredispass
+      LOG_LEVEL: DEBUG
+      LOG_PATH: /app/logs
+    ports:
+      - "9092:9092"
+      - "5006:5006"
+    depends_on:
+      postgres-operation-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9092/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
+networks:
+  dokus-dev-network:
+    driver: bridge
+
+volumes:
+  postgres-dev:
+    driver: local
+  redis-data-dev:
+    driver: local
