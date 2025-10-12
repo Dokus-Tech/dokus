@@ -148,24 +148,13 @@ class ExpenseServiceImpl : ExpenseService {
         filename: String,
         contentType: String
     ): String {
-        // TODO: Implement S3/MinIO upload
-        val url = "https://storage.dokus.ai/receipts/${expenseId.value}/$filename"
-
-        dbQuery {
-            ExpensesTable.update({ ExpensesTable.id eq expenseId.value.toJavaUuid() }) {
-                it[receiptUrl] = url
-                it[receiptFilename] = filename
-            }
-        }
-
-        logger.info("Uploaded receipt for expense $expenseId: $filename")
-        return url
+        logger.info("Uploading receipt for expense $expenseId: $filename")
+        throw NotImplementedError("S3/MinIO file upload not yet implemented")
     }
 
     override suspend fun downloadReceipt(expenseId: ExpenseId): ByteArray? {
-        // TODO: Implement S3/MinIO download
         logger.info("Downloading receipt for expense $expenseId")
-        return null
+        throw NotImplementedError("S3/MinIO file download not yet implemented")
     }
 
     override suspend fun deleteReceipt(expenseId: ExpenseId) = dbQuery {
@@ -178,7 +167,6 @@ class ExpenseServiceImpl : ExpenseService {
     }
 
     override suspend fun categorize(merchant: String, description: String?): ExpenseCategory {
-        // Simple rule-based categorization (TODO: AI/ML integration)
         return when {
             merchant.contains("aws", ignoreCase = true) || merchant.contains("cloud", ignoreCase = true) -> ExpenseCategory.Software
             merchant.contains("uber", ignoreCase = true) || merchant.contains("taxi", ignoreCase = true) -> ExpenseCategory.Travel
@@ -205,8 +193,7 @@ class ExpenseServiceImpl : ExpenseService {
         fromDate: LocalDate?,
         toDate: LocalDate?
     ): Map<String, Any> {
-        // TODO: Implement statistics calculation
-        return emptyMap()
+        throw NotImplementedError("Statistics calculation not yet implemented")
     }
 
     override suspend fun calculateDeductible(amount: Money, deductiblePercentage: Double): Money {
