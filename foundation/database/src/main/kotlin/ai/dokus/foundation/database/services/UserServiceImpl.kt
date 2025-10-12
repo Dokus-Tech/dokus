@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 class UserServiceImpl(
