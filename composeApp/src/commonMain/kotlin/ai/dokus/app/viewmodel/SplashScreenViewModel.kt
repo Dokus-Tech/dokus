@@ -1,9 +1,9 @@
-package ai.dokus.app.home.splash
+package ai.dokus.app.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.platform.persistence
 import ai.dokus.app.repository.extensions.authCredentials
 import ai.dokus.app.repository.extensions.user
+import ai.dokus.foundation.platform.persistence
 import kotlinx.coroutines.launch
 
 internal class SplashScreenViewModel : BaseViewModel<SplashScreenViewModel.Effect>(Effect.Idle) {

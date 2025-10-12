@@ -65,7 +65,6 @@ kotlin {
             implementation(projects.foundation.platform)
             implementation(projects.application.repository)
             implementation(projects.application.onboarding)
-            implementation(projects.application.home)
             implementation(projects.application.dashboard)
             implementation(projects.application.contacts)
             implementation(projects.application.cashflow)
