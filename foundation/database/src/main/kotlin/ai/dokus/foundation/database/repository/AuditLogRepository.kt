@@ -1,11 +1,12 @@
 package ai.dokus.foundation.database.repository
 
-import ai.dokus.foundation.domain.enums.AuditAction
-import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.database.tables.AuditLogsTable
 import ai.dokus.foundation.database.utils.dbQuery
-import ai.dokus.foundation.domain.*
-import kotlinx.serialization.encodeToString
+import ai.dokus.foundation.domain.BusinessUserId
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.insert
 import org.slf4j.LoggerFactory
@@ -53,7 +54,13 @@ class AuditLogRepository {
             it[AuditLogsTable.userAgent] = userAgent
         }
 
-        logger.debug("Audit log: tenant=$tenantId action=${action.dbValue} entity=${entityType.dbValue}/$entityId")
+        logger.debug(
+            "Audit log: tenant={} action={} entity={}/{}",
+            tenantId,
+            action.dbValue,
+            entityType.dbValue,
+            entityId
+        )
     }
 
     /**
