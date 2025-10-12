@@ -97,8 +97,8 @@ class InvoiceRepository {
         auditLogRepository.log(
             tenantId = tenantId,
             userId = userId,
-            action = AuditAction.INVOICE_CREATED,
-            entityType = EntityType.INVOICE,
+            action = AuditAction.InvoiceCreated,
+            entityType = EntityType.Invoice,
             entityId = invoiceId.value.toString(),
             newValues = mapOf(
                 "invoice_number" to invoiceNumber.value,
@@ -195,8 +195,8 @@ class InvoiceRepository {
         auditLogRepository.log(
             tenantId = tenantId,
             userId = userId,
-            action = AuditAction.INVOICE_STATUS_CHANGED,
-            entityType = EntityType.INVOICE,
+            action = AuditAction.InvoiceStatusChanged,
+            entityType = EntityType.Invoice,
             entityId = invoiceId.value.toString(),
             oldValues = mapOf("status" to oldStatus.dbValue),
             newValues = mapOf("status" to newStatus.dbValue)
@@ -258,8 +258,8 @@ class InvoiceRepository {
         auditLogRepository.log(
             tenantId = tenantId,
             userId = userId,
-            action = AuditAction.PAYMENT_RECORDED,
-            entityType = EntityType.PAYMENT,
+            action = AuditAction.PaymentRecorded,
+            entityType = EntityType.Payment,
             entityId = paymentId.value.toString(),
             newValues = mapOf(
                 "amount" to amount.value,
