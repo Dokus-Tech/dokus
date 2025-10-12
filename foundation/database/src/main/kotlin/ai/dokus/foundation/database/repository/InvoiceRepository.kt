@@ -1,17 +1,22 @@
 package ai.dokus.foundation.database.repository
 
-import ai.dokus.foundation.domain.enums.AuditAction
-import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoice
 import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoiceItem
-import ai.dokus.foundation.database.utils.toJavaLocalDate
 import ai.dokus.foundation.database.tables.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.InvoicesTable
 import ai.dokus.foundation.database.tables.PaymentsTable
 import ai.dokus.foundation.database.utils.dbQuery
-import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.BusinessUserId
+import ai.dokus.foundation.domain.ClientId
+import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.PaymentId
+import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.TransactionId
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
 import kotlinx.datetime.Clock
@@ -31,7 +36,6 @@ import org.jetbrains.exposed.sql.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
@@ -67,8 +71,8 @@ class InvoiceRepository {
                 it[InvoicesTable.tenantId] = tenantJavaUuid
                 it[InvoicesTable.clientId] = clientJavaUuid
                 it[InvoicesTable.invoiceNumber] = invoiceNumber.value
-                it[InvoicesTable.issueDate] = issueDate.toJavaLocalDate()
-                it[InvoicesTable.dueDate] = dueDate.toJavaLocalDate()
+                it[InvoicesTable.issueDate] = issueDate
+                it[InvoicesTable.dueDate] = dueDate
                 it[subtotalAmount] = subtotal
                 it[vatAmount] = vatTotal
                 it[totalAmount] = total
@@ -149,11 +153,11 @@ class InvoiceRepository {
         }
 
         fromDate?.let {
-            query = query.andWhere { InvoicesTable.issueDate greaterEq it.toJavaLocalDate() }
+            query = query.andWhere { InvoicesTable.issueDate greaterEq it }
         }
 
         toDate?.let {
-            query = query.andWhere { InvoicesTable.issueDate lessEq it.toJavaLocalDate() }
+            query = query.andWhere { InvoicesTable.issueDate lessEq it }
         }
 
         query
@@ -228,7 +232,7 @@ class InvoiceRepository {
                 it[PaymentsTable.tenantId] = tenantJavaUuid
                 it[PaymentsTable.invoiceId] = invoiceJavaUuid
                 it[PaymentsTable.amount] = amountDecimal
-                it[PaymentsTable.paymentDate] = paymentDate.toJavaLocalDate()
+                it[PaymentsTable.paymentDate] = paymentDate
                 it[PaymentsTable.paymentMethod] = paymentMethod
                 it[PaymentsTable.transactionId] = transactionId?.value
                 it[PaymentsTable.notes] = notes
