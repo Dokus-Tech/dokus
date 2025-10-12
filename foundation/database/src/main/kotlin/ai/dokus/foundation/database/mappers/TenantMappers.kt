@@ -6,12 +6,14 @@ import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import kotlinx.datetime.toKotlinLocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalUuidApi::class)
 object TenantMapper {
 
     fun ResultRow.toTenant(): Tenant = Tenant(
-        id = this[TenantsTable.id].value.toString(),
+        id = this[TenantsTable.id].value.toKotlinUuid(),
         name = this[TenantsTable.name],
         email = this[TenantsTable.email],
         plan = this[TenantsTable.plan],
@@ -26,7 +28,7 @@ object TenantMapper {
     )
 
     fun ResultRow.toTenantSettings(): TenantSettings = TenantSettings(
-        tenantId = this[TenantSettingsTable.tenantId].value.toString(),
+        tenantId = this[TenantSettingsTable.tenantId].value.toKotlinUuid(),
         invoicePrefix = this[TenantSettingsTable.invoicePrefix],
         nextInvoiceNumber = this[TenantSettingsTable.nextInvoiceNumber],
         defaultPaymentTerms = this[TenantSettingsTable.defaultPaymentTerms],

@@ -15,8 +15,12 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalUuidApi::class)
 class TenantRepository {
     private val logger = LoggerFactory.getLogger(TenantRepository::class.java)
 
@@ -27,7 +31,7 @@ class TenantRepository {
         country: String = "BE",
         language: Language = Language.EN,
         vatNumber: String? = null
-    ): String = dbQuery {
+    ): Uuid = dbQuery {
         val tenantId = TenantsTable.insertAndGetId {
             it[TenantsTable.name] = name
             it[TenantsTable.email] = email
@@ -44,14 +48,14 @@ class TenantRepository {
         }
 
         logger.info("Created new tenant: $tenantId with email: $email")
-        tenantId.toString()
-    }
+        tenantId
+    }.toKotlinUuid()
 
-    suspend fun findById(id: String): Tenant? = dbQuery {
-        val uuid = UUID.fromString(id)
+    suspend fun findById(id: Uuid): Tenant? = dbQuery {
+        val javaUuid = id.toJavaUuid()
         TenantsTable
             .selectAll()
-            .where { TenantsTable.id eq uuid }
+            .where { TenantsTable.id eq javaUuid }
             .singleOrNull()
             ?.toTenant()
     }
@@ -64,19 +68,19 @@ class TenantRepository {
             ?.toTenant()
     }
 
-    suspend fun getSettings(tenantId: String): TenantSettings = dbQuery {
-        val uuid = UUID.fromString(tenantId)
+    suspend fun getSettings(tenantId: Uuid): TenantSettings = dbQuery {
+        val javaUuid = tenantId.toJavaUuid()
         TenantSettingsTable
             .selectAll()
-            .where { TenantSettingsTable.tenantId eq uuid }
+            .where { TenantSettingsTable.tenantId eq javaUuid }
             .singleOrNull()
             ?.toTenantSettings()
             ?: throw IllegalArgumentException("No settings found for tenant: $tenantId")
     }
 
     suspend fun updateSettings(settings: TenantSettings): Unit = dbQuery {
-        val uuid = UUID.fromString(settings.tenantId)
-        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq uuid }) {
+        val javaUuid = settings.tenantId.toJavaUuid()
+        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
             it[invoicePrefix] = settings.invoicePrefix
             it[nextInvoiceNumber] = settings.nextInvoiceNumber
             it[defaultPaymentTerms] = settings.defaultPaymentTerms
@@ -94,18 +98,18 @@ class TenantRepository {
         }
     }
 
-    suspend fun getNextInvoiceNumber(tenantId: String): String = dbQuery {
-        val uuid = UUID.fromString(tenantId)
+    suspend fun getNextInvoiceNumber(tenantId: Uuid): String = dbQuery {
+        val javaUuid = tenantId.toJavaUuid()
         val settings = TenantSettingsTable
             .selectAll()
-            .where { TenantSettingsTable.tenantId eq uuid }
+            .where { TenantSettingsTable.tenantId eq javaUuid }
             .single()
 
         val prefix = settings[TenantSettingsTable.invoicePrefix]
         val number = settings[TenantSettingsTable.nextInvoiceNumber]
 
         // Increment the counter
-        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq uuid }) {
+        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
             with(SqlExpressionBuilder) {
                 it[nextInvoiceNumber] = nextInvoiceNumber + 1
             }

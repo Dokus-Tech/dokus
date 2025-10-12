@@ -29,22 +29,26 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalUuidApi::class)
 class InvoiceRepository {
     private val logger = LoggerFactory.getLogger(InvoiceRepository::class.java)
     private val tenantRepository = TenantRepository()
     private val auditLogRepository = AuditLogRepository()
 
     suspend fun create(
-        tenantId: String,
-        clientId: String,
+        tenantId: Uuid,
+        clientId: Uuid,
         items: List<InvoiceItem>,
         issueDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
         dueDate: LocalDate = issueDate.plus(30, DateTimeUnit.DAY),
         notes: String? = null,
-        userId: String? = null
-    ): String {
+        userId: Uuid? = null
+    ): Uuid {
         // Get next invoice number (this is a suspend function, called outside dbQuery)
         val invoiceNumber = tenantRepository.getNextInvoiceNumber(tenantId)
 
@@ -53,14 +57,14 @@ class InvoiceRepository {
         val vatTotal = items.sumOf { BigDecimal(it.vatAmount) }
         val total = subtotal + vatTotal
 
-        val tenantUuid = UUID.fromString(tenantId)
-        val clientUuid = UUID.fromString(clientId)
+        val tenantJavaUuid = tenantId.toJavaUuid()
+        val clientJavaUuid = clientId.toJavaUuid()
 
         val invoiceId = dbQuery {
             // Insert invoice
             val id = InvoicesTable.insertAndGetId {
-                it[InvoicesTable.tenantId] = tenantUuid
-                it[InvoicesTable.clientId] = clientUuid
+                it[InvoicesTable.tenantId] = tenantJavaUuid
+                it[InvoicesTable.clientId] = clientJavaUuid
                 it[InvoicesTable.invoiceNumber] = invoiceNumber
                 it[InvoicesTable.issueDate] = issueDate.toJavaLocalDate()
                 it[InvoicesTable.dueDate] = dueDate.toJavaLocalDate()
@@ -86,7 +90,7 @@ class InvoiceRepository {
                 }
             }
             id
-        }
+        }.toKotlinUuid()
 
         // Audit log (called outside dbQuery as it's a suspend function)
         auditLogRepository.log(
@@ -94,31 +98,31 @@ class InvoiceRepository {
             userId = userId,
             action = AuditAction.INVOICE_CREATED,
             entityType = EntityType.INVOICE,
-            entityId = invoiceId.toString(),
+            entityId = invoiceId,
             newValues = mapOf(
                 "invoice_number" to invoiceNumber,
                 "total" to total.toString(),
-                "client_id" to clientId
+                "client_id" to clientId.toString()
             )
         )
 
         logger.info("Created invoice $invoiceNumber for tenant $tenantId")
-        return invoiceId.toString()
+        return invoiceId
     }
 
-    suspend fun findById(invoiceId: String, tenantId: String): Invoice? = dbQuery {
-        val invoiceUuid = UUID.fromString(invoiceId)
-        val tenantUuid = UUID.fromString(tenantId)
+    suspend fun findById(invoiceId: Uuid, tenantId: Uuid): Invoice? = dbQuery {
+        val invoiceJavaUuid = invoiceId.toJavaUuid()
+        val tenantJavaUuid = tenantId.toJavaUuid()
         val invoice = InvoicesTable
             .selectAll()
-            .where { (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid) }
+            .where { (InvoicesTable.id eq invoiceJavaUuid) and (InvoicesTable.tenantId eq tenantJavaUuid) }
             .singleOrNull()
             ?.toInvoice()
 
         invoice?.let {
             val items = InvoiceItemsTable
                 .selectAll()
-                .where { InvoiceItemsTable.invoiceId eq invoiceUuid }
+                .where { InvoiceItemsTable.invoiceId eq invoiceJavaUuid }
                 .orderBy(InvoiceItemsTable.sortOrder)
                 .map { it.toInvoiceItem() }
 
@@ -127,17 +131,17 @@ class InvoiceRepository {
     }
 
     suspend fun listByTenant(
-        tenantId: String,
+        tenantId: Uuid,
         status: InvoiceStatus? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Long = 0
     ): List<Invoice> = dbQuery {
-        val tenantUuid = UUID.fromString(tenantId)
+        val tenantJavaUuid = tenantId.toJavaUuid()
         var query = InvoicesTable
             .selectAll()
-            .where { InvoicesTable.tenantId eq tenantUuid }
+            .where { InvoicesTable.tenantId eq tenantJavaUuid }
 
         status?.let {
             query = query.andWhere { InvoicesTable.status eq it }
@@ -159,23 +163,23 @@ class InvoiceRepository {
     }
 
     suspend fun updateStatus(
-        invoiceId: String,
-        tenantId: String,
+        invoiceId: Uuid,
+        tenantId: Uuid,
         newStatus: InvoiceStatus,
-        userId: String? = null
+        userId: Uuid? = null
     ) {
-        val invoiceUuid = UUID.fromString(invoiceId)
-        val tenantUuid = UUID.fromString(tenantId)
+        val invoiceJavaUuid = invoiceId.toJavaUuid()
+        val tenantJavaUuid = tenantId.toJavaUuid()
         val oldStatus = dbQuery {
             val oldInvoice = InvoicesTable
                 .selectAll()
-                .where { (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid) }
+                .where { (InvoicesTable.id eq invoiceJavaUuid) and (InvoicesTable.tenantId eq tenantJavaUuid) }
                 .singleOrNull() ?: throw IllegalArgumentException("Invoice not found")
 
             val status = oldInvoice[InvoicesTable.status]
 
             InvoicesTable.update({
-                (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid)
+                (InvoicesTable.id eq invoiceJavaUuid) and (InvoicesTable.tenantId eq tenantJavaUuid)
             }) {
                 it[InvoicesTable.status] = newStatus
                 if (newStatus == InvoiceStatus.PAID) {
@@ -199,29 +203,29 @@ class InvoiceRepository {
     }
 
     suspend fun recordPayment(
-        invoiceId: String,
-        tenantId: String,
+        invoiceId: Uuid,
+        tenantId: Uuid,
         amount: String,
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod,
         transactionId: String? = null,
         notes: String? = null,
-        userId: String? = null
-    ): String {
-        val invoiceUuid = UUID.fromString(invoiceId)
-        val tenantUuid = UUID.fromString(tenantId)
+        userId: Uuid? = null
+    ): Uuid {
+        val invoiceJavaUuid = invoiceId.toJavaUuid()
+        val tenantJavaUuid = tenantId.toJavaUuid()
         val amountDecimal = BigDecimal(amount)
         val paymentId = dbQuery {
             // Verify invoice belongs to tenant
             val invoice = InvoicesTable
                 .selectAll()
-                .where { (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid) }
+                .where { (InvoicesTable.id eq invoiceJavaUuid) and (InvoicesTable.tenantId eq tenantJavaUuid) }
                 .singleOrNull() ?: throw IllegalArgumentException("Invoice not found")
 
             // Record payment
             val id = PaymentsTable.insertAndGetId {
-                it[PaymentsTable.tenantId] = tenantUuid
-                it[PaymentsTable.invoiceId] = invoiceUuid
+                it[PaymentsTable.tenantId] = tenantJavaUuid
+                it[PaymentsTable.invoiceId] = invoiceJavaUuid
                 it[PaymentsTable.amount] = amountDecimal
                 it[PaymentsTable.paymentDate] = paymentDate.toJavaLocalDate()
                 it[PaymentsTable.paymentMethod] = paymentMethod
@@ -238,7 +242,7 @@ class InvoiceRepository {
                 else -> invoice[InvoicesTable.status]
             }
 
-            InvoicesTable.update({ InvoicesTable.id eq invoiceUuid }) {
+            InvoicesTable.update({ InvoicesTable.id eq invoiceJavaUuid }) {
                 it[paidAmount] = newPaidAmount
                 it[status] = newStatus
                 if (newStatus == InvoiceStatus.PAID) {
@@ -247,7 +251,7 @@ class InvoiceRepository {
             }
 
             id
-        }
+        }.toKotlinUuid()
 
         // Audit log (called outside dbQuery as it's a suspend function)
         auditLogRepository.log(
@@ -255,15 +259,15 @@ class InvoiceRepository {
             userId = userId,
             action = AuditAction.PAYMENT_RECORDED,
             entityType = EntityType.PAYMENT,
-            entityId = paymentId.toString(),
+            entityId = paymentId,
             newValues = mapOf(
                 "amount" to amount,
-                "invoice_id" to invoiceId,
+                "invoice_id" to invoiceId.toString(),
                 "method" to paymentMethod.dbValue
             )
         )
 
         logger.info("Recorded payment of $amount for invoice $invoiceId")
-        return paymentId.toString()
+        return paymentId
     }
 }
