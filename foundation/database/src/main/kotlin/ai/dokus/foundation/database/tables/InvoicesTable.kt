@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.kotlin.datetime.date
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import java.math.BigDecimal
 
 /**
  * Core financial documents sent to clients
@@ -28,7 +29,7 @@ object InvoicesTable : UUIDTable("invoices") {
     val subtotalAmount = decimal("subtotal_amount", 12, 2)
     val vatAmount = decimal("vat_amount", 12, 2)
     val totalAmount = decimal("total_amount", 12, 2)
-    val paidAmount = decimal("paid_amount", 12, 2).default(java.math.BigDecimal.ZERO)
+    val paidAmount = decimal("paid_amount", 12, 2).default(BigDecimal.ZERO)
 
     // Status
     val status = dbEnumeration<InvoiceStatus>("status")
