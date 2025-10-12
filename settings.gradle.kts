@@ -42,7 +42,6 @@ include(":application:cashflow")
 include(":application:simulation")
 include(":application:inventory")
 include(":application:banking")
-include(":application:profile")
 include(":foundation:ui")
 
 include(":application:core")
@@ -52,6 +51,7 @@ include(":foundation:navigation")
 include(":foundation:ktor-common")
 
 include(":features:auth:backend")
+include(":features:auth:presentation")
 
 include(":foundation:domain")
 include(":foundation:apispec")
