@@ -38,7 +38,7 @@ include(":foundation:ui")
 
 include(":application:core")
 include(":foundation:platform")
-include(":application:repository")
+include(":application:data")
 include(":foundation:navigation")
 include(":foundation:ktor-common")
 
