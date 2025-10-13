@@ -17,10 +17,10 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
-import kotlinx.rpc.krpc.ktor.server.RPC
+import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
-import org.koin.ktor.ext.inject
+import org.koin.ktor.ext.get
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("Application")
@@ -63,7 +63,7 @@ fun Application.module(appConfig: AppConfig) {
 
     // Initialize database with all financial tables
     runBlocking {
-        val dbFactory by inject<DatabaseFactory>()
+        val dbFactory = get<DatabaseFactory>()
         logger.info("Initializing database schema...")
 
         dbFactory.init(
@@ -96,7 +96,7 @@ fun Application.module(appConfig: AppConfig) {
     }
 
     // Install KotlinX RPC plugin
-    install(RPC)
+    install(Krpc)
 
     // Configure routes
     routing {
@@ -111,12 +111,12 @@ fun Application.module(appConfig: AppConfig) {
             }
 
             // Register all RPC service implementations
-            registerService<TenantService> { ctx -> get<TenantService>() }
-            registerService<UserService> { ctx -> get<UserService>() }
-            registerService<ClientService> { ctx -> get<ClientService>() }
-            registerService<InvoiceService> { ctx -> get<InvoiceService>() }
-            registerService<ExpenseService> { ctx -> get<ExpenseService>() }
-            registerService<PaymentService> { ctx -> get<PaymentService>() }
+            registerService<TenantService> { get<TenantService>() }
+            registerService<UserService> { get<UserService>() }
+            registerService<ClientService> { get<ClientService>() }
+            registerService<InvoiceService> { get<InvoiceService>() }
+            registerService<ExpenseService> { get<ExpenseService>() }
+            registerService<PaymentService> { get<PaymentService>() }
         }
 
         logger.info("RPC services registered at /api/rpc")
@@ -126,7 +126,7 @@ fun Application.module(appConfig: AppConfig) {
     monitor.subscribe(ApplicationStopping) {
         logger.info("Application stopping, cleaning up resources...")
         runBlocking {
-            val dbFactory by inject<DatabaseFactory>()
+            val dbFactory = get<DatabaseFactory>()
             // Close database connections
             dbFactory.close()
         }

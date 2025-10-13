@@ -4,13 +4,17 @@ import ai.dokus.foundation.database.mappers.PaymentMapper.toPayment
 import ai.dokus.foundation.database.tables.InvoicesTable
 import ai.dokus.foundation.database.tables.PaymentsTable
 import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.database.utils.toJavaLocalDate
+import ai.dokus.foundation.database.utils.toJavaInstant
 import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
 import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
@@ -40,8 +44,8 @@ class PaymentServiceImpl : PaymentService {
         val paymentId = PaymentsTable.insertAndGetId {
             it[PaymentsTable.tenantId] = tenantId.value.toJavaUuid()
             it[PaymentsTable.invoiceId] = invoiceId.value.toJavaUuid()
-            it[PaymentsTable.amount] = BigDecimal(amount.amount)
-            it[PaymentsTable.paymentDate] = kotlinx.datetime.toJavaLocalDate(paymentDate)
+            it[PaymentsTable.amount] = BigDecimal(amount.value)
+            it[PaymentsTable.paymentDate] = paymentDate
             it[PaymentsTable.paymentMethod] = paymentMethod
             it[PaymentsTable.transactionId] = transactionId
             it[PaymentsTable.notes] = notes
@@ -49,14 +53,14 @@ class PaymentServiceImpl : PaymentService {
 
         // Update invoice paid amount
         val currentPaid = invoice[InvoicesTable.paidAmount]
-        val newPaid = currentPaid + BigDecimal(amount.amount)
+        val newPaid = currentPaid + BigDecimal(amount.value)
         val total = invoice[InvoicesTable.totalAmount]
 
         InvoicesTable.update({ InvoicesTable.id eq invoiceId.value.toJavaUuid() }) {
             it[paidAmount] = newPaid
             if (newPaid >= total) {
                 it[status] = InvoiceStatus.Paid
-                it[paidAt] = kotlinx.datetime.toJavaInstant(kotlinx.datetime.Clock.System.now())
+                it[paidAt] = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
             }
         }
 
@@ -92,11 +96,11 @@ class PaymentServiceImpl : PaymentService {
     ): List<Payment> = dbQuery {
         var query = PaymentsTable.selectAll().where { PaymentsTable.tenantId eq tenantId.value.toJavaUuid() }
 
-        if (fromDate != null) query = query.andWhere { PaymentsTable.paymentDate greaterEq kotlinx.datetime.toJavaLocalDate(fromDate) }
-        if (toDate != null) query = query.andWhere { PaymentsTable.paymentDate lessEq kotlinx.datetime.toJavaLocalDate(toDate) }
+        if (fromDate != null) query = query.andWhere { PaymentsTable.paymentDate greaterEq fromDate }
+        if (toDate != null) query = query.andWhere { PaymentsTable.paymentDate lessEq toDate }
         if (paymentMethod != null) query = query.andWhere { PaymentsTable.paymentMethod eq paymentMethod }
         if (limit != null) query = query.limit(limit)
-        if (offset != null) query = query.limit(limit ?: 100, offset.toLong())
+        if (offset != null) query = query.offset(offset.toLong())
 
         query.orderBy(PaymentsTable.paymentDate to SortOrder.DESC)
             .map { it.toPayment() }
@@ -114,7 +118,7 @@ class PaymentServiceImpl : PaymentService {
             .where { InvoicesTable.id eq payment.invoiceId.value.toJavaUuid() }
             .single()
 
-        val newPaid = invoice[InvoicesTable.paidAmount] - BigDecimal(payment.amount.amount)
+        val newPaid = invoice[InvoicesTable.paidAmount] - BigDecimal(payment.amount.value)
 
         InvoicesTable.update({ InvoicesTable.id eq payment.invoiceId.value.toJavaUuid() }) {
             it[paidAmount] = newPaid
@@ -125,7 +129,7 @@ class PaymentServiceImpl : PaymentService {
         }
 
         // Delete payment
-        PaymentsTable.deleteWhere { PaymentsTable.id eq paymentId.value.toJavaUuid() }
+        PaymentsTable.deleteWhere { id eq paymentId.value.toJavaUuid() }
 
         logger.info("Deleted payment $paymentId and updated invoice ${payment.invoiceId}")
     }

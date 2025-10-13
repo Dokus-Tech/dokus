@@ -18,7 +18,7 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
-import kotlinx.rpc.krpc.ktor.server.RPC
+import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.ktor.ext.get
@@ -64,7 +64,7 @@ fun Application.module(appConfig: AppConfig) {
     configureMonitoring()
 
     // Install KotlinX RPC plugin
-    install(RPC)
+    install(Krpc)
 
     // Configure routes
     routing {
@@ -81,10 +81,10 @@ fun Application.module(appConfig: AppConfig) {
                 }
             }
 
-            registerService<TenantApi> { ctx -> get<TenantApi>() }
-            registerService<ClientApi> { ctx -> get<ClientApi>() }
-            registerService<InvoiceApi> { ctx -> get<InvoiceApi>() }
-            registerService<ExpenseApi> { ctx -> get<ExpenseApi>() }
+            registerService<TenantApi> { get<TenantApi>() }
+            registerService<ClientApi> { get<ClientApi>() }
+            registerService<InvoiceApi> { get<InvoiceApi>() }
+            registerService<ExpenseApi> { get<ExpenseApi>() }
         }
 
         logger.info("Public RPC APIs registered at /api")

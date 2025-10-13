@@ -3,6 +3,7 @@ package ai.dokus.foundation.database.services
 import ai.dokus.foundation.database.mappers.UserMapper.toBusinessUser
 import ai.dokus.foundation.database.tables.UsersTable
 import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.database.utils.toJavaInstant
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.UserId
@@ -11,9 +12,9 @@ import ai.dokus.foundation.domain.model.BusinessUser
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.services.UserService
 import kotlinx.datetime.Instant
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -66,7 +67,7 @@ class UserServiceImpl(
     }
 
     override suspend fun findById(id: UserId): BusinessUser? = dbQuery {
-        val javaUuid = id.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(id.value)
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }
@@ -96,7 +97,7 @@ class UserServiceImpl(
     }
 
     override suspend fun updateRole(userId: UserId, newRole: UserRole) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[role] = newRole
         }
@@ -109,7 +110,7 @@ class UserServiceImpl(
     }
 
     override suspend fun updateProfile(userId: UserId, firstName: String?, lastName: String?) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             if (firstName != null) it[UsersTable.firstName] = firstName
             if (lastName != null) it[UsersTable.lastName] = lastName
@@ -123,7 +124,7 @@ class UserServiceImpl(
     }
 
     override suspend fun deactivate(userId: UserId) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[isActive] = false
         }
@@ -136,7 +137,7 @@ class UserServiceImpl(
     }
 
     override suspend fun reactivate(userId: UserId) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[isActive] = true
         }
@@ -149,7 +150,7 @@ class UserServiceImpl(
     }
 
     override suspend fun updatePassword(userId: UserId, newPassword: String) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         val passwordHash = passwordCrypto.hashPassword(Password(newPassword))
 
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
@@ -164,16 +165,16 @@ class UserServiceImpl(
     }
 
     override suspend fun recordLogin(userId: UserId, loginTime: Instant) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         UsersTable.update({ UsersTable.id eq javaUuid }) {
-            it[lastLoginAt] = kotlinx.datetime.toJavaInstant(loginTime)
+            it[lastLoginAt] = loginTime.toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
         }
 
         logger.debug("Recorded login for user $userId at $loginTime")
     }
 
     override suspend fun setupMfa(userId: UserId, mfaSecret: String) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[UsersTable.mfaSecret] = mfaSecret
         }
@@ -186,7 +187,7 @@ class UserServiceImpl(
     }
 
     override suspend fun removeMfa(userId: UserId) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
+        val javaUuid = java.util.UUID.fromString(userId.value)
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[mfaSecret] = null
         }

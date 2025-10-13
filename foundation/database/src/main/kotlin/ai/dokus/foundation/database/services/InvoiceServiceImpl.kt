@@ -5,7 +5,11 @@ import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoiceItem
 import ai.dokus.foundation.database.tables.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.InvoicesTable
 import ai.dokus.foundation.database.utils.dbQuery
-import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.ClientId
+import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.InvoiceNumber
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
@@ -14,16 +18,28 @@ import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.TenantService
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import org.jetbrains.exposed.sql.*
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
 class InvoiceServiceImpl(
@@ -31,59 +47,47 @@ class InvoiceServiceImpl(
 ) : InvoiceService {
     private val logger = LoggerFactory.getLogger(InvoiceServiceImpl::class.java)
 
-    // Shared flow for real-time invoice updates
-    private val invoiceUpdates = MutableSharedFlow<Invoice>(
-        replay = 0,
-        extraBufferCapacity = 100,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-
-    override suspend fun create(request: CreateInvoiceRequest): Invoice = dbQuery {
-        // Generate invoice number
+    override suspend fun create(request: CreateInvoiceRequest): Invoice {
         val invoiceNumber = tenantService.getNextInvoiceNumber(request.tenantId)
-
-        // Calculate totals
         val (subtotal, vatTotal, total) = calculateTotals(request.items)
+        val today = Clock.System.todayIn(TimeZone.UTC)
 
-        // Insert invoice
-        val invoiceId = InvoicesTable.insertAndGetId {
-            it[tenantId] = request.tenantId.value.toJavaUuid()
-            it[clientId] = request.clientId.value.toJavaUuid()
-            it[InvoicesTable.invoiceNumber] = invoiceNumber.value
-            it[issueDate] = kotlinx.datetime.toJavaLocalDate(request.issueDate)
-            it[dueDate] = kotlinx.datetime.toJavaLocalDate(request.dueDate)
-            it[subtotalAmount] = BigDecimal(subtotal.amount)
-            it[vatAmount] = BigDecimal(vatTotal.amount)
-            it[totalAmount] = BigDecimal(total.amount)
-            it[paidAmount] = BigDecimal.ZERO
-            it[status] = InvoiceStatus.Draft
-            it[notes] = request.notes
-            it[termsAndConditions] = request.termsAndConditions
-        }.value
+        val invoiceId = dbQuery {
+            val id = InvoicesTable.insertAndGetId {
+                it[tenantId] = request.tenantId.value.toJavaUuid()
+                it[clientId] = request.clientId.value.toJavaUuid()
+                it[InvoicesTable.invoiceNumber] = invoiceNumber.value
+                it[issueDate] = request.issueDate ?: today
+                it[dueDate] = request.dueDate ?: today.plus(DatePeriod(days = 30))
+                it[subtotalAmount] = BigDecimal(subtotal.value)
+                it[InvoicesTable.vatAmount] = BigDecimal(vatTotal.value)
+                it[totalAmount] = BigDecimal(total.value)
+                it[paidAmount] = BigDecimal.ZERO
+                it[status] = InvoiceStatus.Draft
+                it[notes] = request.notes
+            }.value
 
-        // Insert invoice items
-        request.items.forEachIndexed { index, item ->
-            val lineTotal = Money((BigDecimal(item.quantity.value) * BigDecimal(item.unitPrice.amount)).toString())
-            val vatAmount = Money((BigDecimal(lineTotal.amount) * BigDecimal(item.vatRate.value) / BigDecimal("100")).toString())
+            request.items.forEachIndexed { index, item ->
+                val lineTotal = Money((BigDecimal(item.quantity.value) * BigDecimal(item.unitPrice.value)).toString())
+                val itemVatAmount = Money((BigDecimal(lineTotal.value) * BigDecimal(item.vatRate.value) / BigDecimal("100")).toString())
 
-            InvoiceItemsTable.insert {
-                it[InvoiceItemsTable.invoiceId] = invoiceId
-                it[description] = item.description
-                it[quantity] = BigDecimal(item.quantity.value)
-                it[unitPrice] = BigDecimal(item.unitPrice.amount)
-                it[vatRate] = BigDecimal(item.vatRate.value)
-                it[InvoiceItemsTable.lineTotal] = BigDecimal(lineTotal.amount)
-                it[InvoiceItemsTable.vatAmount] = BigDecimal(vatAmount.amount)
-                it[sortOrder] = index
+                InvoiceItemsTable.insert {
+                    it[InvoiceItemsTable.invoiceId] = id
+                    it[description] = item.description
+                    it[quantity] = BigDecimal(item.quantity.value)
+                    it[unitPrice] = BigDecimal(item.unitPrice.value)
+                    it[vatRate] = BigDecimal(item.vatRate.value)
+                    it[InvoiceItemsTable.lineTotal] = BigDecimal(lineTotal.value)
+                    it[InvoiceItemsTable.vatAmount] = BigDecimal(itemVatAmount.value)
+                    it[sortOrder] = index
+                }
             }
+
+            id
         }
 
         logger.info("Created invoice $invoiceNumber for tenant ${request.tenantId}")
-
-        // Fetch and return complete invoice
-        val invoice = getInvoiceWithItems(invoiceId.toKotlinUuid())
-        invoiceUpdates.emit(invoice)
-        invoice
+        return getInvoiceWithItems(invoiceId.toKotlinUuid())
     }
 
     override suspend fun update(
@@ -95,7 +99,6 @@ class InvoiceServiceImpl(
     ) = dbQuery {
         val javaUuid = invoiceId.value.toJavaUuid()
 
-        // Check if invoice is draft
         val invoice = InvoicesTable.selectAll().where { InvoicesTable.id eq javaUuid }.singleOrNull()
             ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
 
@@ -103,62 +106,55 @@ class InvoiceServiceImpl(
             throw IllegalArgumentException("Can only update draft invoices")
         }
 
-        val updated = InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
-            if (issueDate != null) it[InvoicesTable.issueDate] = kotlinx.datetime.toJavaLocalDate(issueDate)
-            if (dueDate != null) it[InvoicesTable.dueDate] = kotlinx.datetime.toJavaLocalDate(dueDate)
+        InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
+            if (issueDate != null) it[InvoicesTable.issueDate] = issueDate
+            if (dueDate != null) it[InvoicesTable.dueDate] = dueDate
             if (notes != null) it[InvoicesTable.notes] = notes
             if (termsAndConditions != null) it[InvoicesTable.termsAndConditions] = termsAndConditions
         }
 
-        if (updated > 0) {
-            logger.info("Updated invoice $invoiceId")
-            val updatedInvoice = getInvoiceWithItems(invoiceId.value)
-            invoiceUpdates.emit(updatedInvoice)
-        }
+        logger.info("Updated invoice $invoiceId")
     }
 
-    override suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>) = dbQuery {
-        val javaUuid = invoiceId.value.toJavaUuid()
+    override suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>) {
+        val (subtotal, vatTotal, total) = calculateTotals(items)
 
-        // Check if invoice is draft
-        val invoice = InvoicesTable.selectAll().where { InvoicesTable.id eq javaUuid }.singleOrNull()
-            ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
+        dbQuery {
+            val javaUuid = invoiceId.value.toJavaUuid()
 
-        if (invoice[InvoicesTable.status] != InvoiceStatus.Draft) {
-            throw IllegalArgumentException("Can only update items for draft invoices")
-        }
+            val invoice = InvoicesTable.selectAll().where { InvoicesTable.id eq javaUuid }.singleOrNull()
+                ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
 
-        // Delete existing items
-        InvoiceItemsTable.deleteWhere { InvoiceItemsTable.invoiceId eq javaUuid }
+            if (invoice[InvoicesTable.status] != InvoiceStatus.Draft) {
+                throw IllegalArgumentException("Can only update items for draft invoices")
+            }
 
-        // Insert new items
-        items.forEachIndexed { index, item ->
-            val lineTotal = Money((BigDecimal(item.quantity.value) * BigDecimal(item.unitPrice.amount)).toString())
-            val vatAmount = Money((BigDecimal(lineTotal.amount) * BigDecimal(item.vatRate.value) / BigDecimal("100")).toString())
+            InvoiceItemsTable.deleteWhere { InvoiceItemsTable.invoiceId eq javaUuid }
 
-            InvoiceItemsTable.insert {
-                it[InvoiceItemsTable.invoiceId] = javaUuid
-                it[description] = item.description
-                it[quantity] = BigDecimal(item.quantity.value)
-                it[unitPrice] = BigDecimal(item.unitPrice.amount)
-                it[vatRate] = BigDecimal(item.vatRate.value)
-                it[InvoiceItemsTable.lineTotal] = BigDecimal(lineTotal.amount)
-                it[InvoiceItemsTable.vatAmount] = BigDecimal(vatAmount.amount)
-                it[sortOrder] = index
+            items.forEachIndexed { index, item ->
+                val lineTotal = Money((BigDecimal(item.quantity.value) * BigDecimal(item.unitPrice.value)).toString())
+                val itemVatAmount = Money((BigDecimal(lineTotal.value) * BigDecimal(item.vatRate.value) / BigDecimal("100")).toString())
+
+                InvoiceItemsTable.insert {
+                    it[InvoiceItemsTable.invoiceId] = javaUuid
+                    it[description] = item.description
+                    it[quantity] = BigDecimal(item.quantity.value)
+                    it[unitPrice] = BigDecimal(item.unitPrice.value)
+                    it[vatRate] = BigDecimal(item.vatRate.value)
+                    it[InvoiceItemsTable.lineTotal] = BigDecimal(lineTotal.value)
+                    it[InvoiceItemsTable.vatAmount] = BigDecimal(itemVatAmount.value)
+                    it[sortOrder] = index
+                }
+            }
+
+            InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
+                it[subtotalAmount] = BigDecimal(subtotal.value)
+                it[InvoicesTable.vatAmount] = BigDecimal(vatTotal.value)
+                it[totalAmount] = BigDecimal(total.value)
             }
         }
 
-        // Recalculate totals
-        val (subtotal, vatTotal, total) = calculateTotals(items)
-        InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
-            it[subtotalAmount] = BigDecimal(subtotal.amount)
-            it[vatAmount] = BigDecimal(vatTotal.amount)
-            it[totalAmount] = BigDecimal(total.amount)
-        }
-
         logger.info("Updated items for invoice $invoiceId")
-        val updatedInvoice = getInvoiceWithItems(invoiceId.value)
-        invoiceUpdates.emit(updatedInvoice)
     }
 
     override suspend fun delete(invoiceId: InvoiceId) = dbQuery {
@@ -196,10 +192,10 @@ class InvoiceServiceImpl(
 
         if (status != null) query = query.andWhere { InvoicesTable.status eq status }
         if (clientId != null) query = query.andWhere { InvoicesTable.clientId eq clientId.value.toJavaUuid() }
-        if (fromDate != null) query = query.andWhere { InvoicesTable.issueDate greaterEq kotlinx.datetime.toJavaLocalDate(fromDate) }
-        if (toDate != null) query = query.andWhere { InvoicesTable.issueDate lessEq kotlinx.datetime.toJavaLocalDate(toDate) }
+        if (fromDate != null) query = query.andWhere { InvoicesTable.issueDate greaterEq fromDate }
+        if (toDate != null) query = query.andWhere { InvoicesTable.issueDate lessEq toDate }
         if (limit != null) query = query.limit(limit)
-        if (offset != null) query = query.limit(limit ?: 100, offset.toLong())
+        if (offset != null) query = query.offset(offset.toLong())
 
         query.orderBy(InvoicesTable.issueDate to SortOrder.DESC)
             .map { row ->
@@ -224,7 +220,7 @@ class InvoiceServiceImpl(
         InvoicesTable.selectAll()
             .where { InvoicesTable.tenantId eq tenantId.value.toJavaUuid() }
             .andWhere { InvoicesTable.status eq InvoiceStatus.Sent }
-            .andWhere { InvoicesTable.dueDate less kotlinx.datetime.toJavaLocalDate(kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.UTC)) }
+            .andWhere { InvoicesTable.dueDate less kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.UTC) }
             .map { row ->
                 val invoice = row.toInvoice()
                 val items = getInvoiceItems(invoice.id.value)
@@ -239,8 +235,6 @@ class InvoiceServiceImpl(
         }
 
         logger.info("Updated status for invoice ${request.invoiceId} to ${request.status}")
-        val updatedInvoice = getInvoiceWithItems(request.invoiceId.value)
-        invoiceUpdates.emit(updatedInvoice)
     }
 
     override suspend fun recordPayment(request: RecordPaymentRequest) = dbQuery {
@@ -249,20 +243,18 @@ class InvoiceServiceImpl(
             ?: throw IllegalArgumentException("Invoice not found: ${request.invoiceId}")
 
         val currentPaid = invoice[InvoicesTable.paidAmount]
-        val newPaid = currentPaid + BigDecimal(request.amount.amount)
+        val newPaid = currentPaid + BigDecimal(request.amount.value)
         val total = invoice[InvoicesTable.totalAmount]
 
         InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
             it[paidAmount] = newPaid
             if (newPaid >= total) {
                 it[status] = InvoiceStatus.Paid
-                it[paidAt] = kotlinx.datetime.toJavaInstant(kotlinx.datetime.Clock.System.now())
+                it[paidAt] = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             }
         }
 
         logger.info("Recorded payment of ${request.amount} for invoice ${request.invoiceId}")
-        val updatedInvoice = getInvoiceWithItems(request.invoiceId.value)
-        invoiceUpdates.emit(updatedInvoice)
     }
 
     override suspend fun sendViaEmail(
@@ -300,7 +292,7 @@ class InvoiceServiceImpl(
     }
 
     override fun watchInvoices(tenantId: TenantId): Flow<Invoice> {
-        return invoiceUpdates
+        throw NotImplementedError("Flow-based invoice streaming not yet implemented")
     }
 
     override suspend fun calculateTotals(items: List<InvoiceItem>): Triple<Money, Money, Money> {
@@ -308,7 +300,7 @@ class InvoiceServiceImpl(
         var vatTotal = BigDecimal.ZERO
 
         items.forEach { item ->
-            val lineTotal = BigDecimal(item.quantity.value) * BigDecimal(item.unitPrice.amount)
+            val lineTotal = BigDecimal(item.quantity.value) * BigDecimal(item.unitPrice.value)
             val vatAmount = lineTotal * BigDecimal(item.vatRate.value) / BigDecimal("100")
             subtotal += lineTotal
             vatTotal += vatAmount
@@ -331,7 +323,7 @@ class InvoiceServiceImpl(
         throw NotImplementedError("Statistics calculation not yet implemented")
     }
 
-    private suspend fun getInvoiceWithItems(invoiceId: kotlin.uuid.Uuid): Invoice {
+    private fun getInvoiceWithItems(invoiceId: kotlin.uuid.Uuid): Invoice {
         val invoice = InvoicesTable.selectAll()
             .where { InvoicesTable.id eq invoiceId.toJavaUuid() }
             .singleOrNull()
@@ -341,8 +333,8 @@ class InvoiceServiceImpl(
                 tenantId = TenantId(kotlin.uuid.Uuid.random()),
                 clientId = ClientId(kotlin.uuid.Uuid.random()),
                 invoiceNumber = InvoiceNumber(""),
-                issueDate = kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.UTC),
-                dueDate = kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.UTC),
+                issueDate = Clock.System.todayIn(TimeZone.UTC),
+                dueDate = Clock.System.todayIn(TimeZone.UTC),
                 subtotalAmount = Money("0"),
                 vatAmount = Money("0"),
                 totalAmount = Money("0"),
@@ -350,8 +342,8 @@ class InvoiceServiceImpl(
                 status = InvoiceStatus.Draft,
                 paidAt = null,
                 notes = null,
-                createdAt = kotlinx.datetime.Clock.System.now(),
-                updatedAt = kotlinx.datetime.Clock.System.now(),
+                createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
+                updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
                 items = emptyList()
             )
 
@@ -359,8 +351,8 @@ class InvoiceServiceImpl(
         return invoice.copy(items = items)
     }
 
-    private suspend fun getInvoiceItems(invoiceId: kotlin.uuid.Uuid) = dbQuery {
-        InvoiceItemsTable.selectAll()
+    private fun getInvoiceItems(invoiceId: kotlin.uuid.Uuid): List<InvoiceItem> {
+        return InvoiceItemsTable.selectAll()
             .where { InvoiceItemsTable.invoiceId eq invoiceId.toJavaUuid() }
             .orderBy(InvoiceItemsTable.sortOrder)
             .map { it.toInvoiceItem() }

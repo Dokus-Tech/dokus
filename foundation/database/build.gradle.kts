@@ -23,6 +23,11 @@ dependencies {
 
     implementation(libs.kotlinx.datetime)
 
+    // KotlinX RPC Server
+    implementation(libs.kotlinx.rpc.core)
+    implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    implementation(libs.kotlinx.rpc.krpc.ktor.server)
+
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.netty)
