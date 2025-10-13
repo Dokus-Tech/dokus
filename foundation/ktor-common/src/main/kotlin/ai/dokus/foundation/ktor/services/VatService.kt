@@ -4,6 +4,8 @@ import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatReturnId
 import ai.dokus.foundation.domain.enums.VatReturnStatus
+import ai.dokus.foundation.domain.model.QuarterInfo
+import ai.dokus.foundation.domain.model.VatCalculation
 import ai.dokus.foundation.domain.model.VatReturn
 import kotlinx.datetime.Instant
 import kotlinx.rpc.annotations.Rpc
@@ -17,9 +19,9 @@ interface VatService {
      * @param tenantId The tenant's unique identifier
      * @param year The year
      * @param quarter The quarter (1, 2, 3, 4)
-     * @return Triple of (salesVat, purchaseVat, netVat)
+     * @return VAT calculation with sales VAT, purchase VAT, and net VAT
      */
-    suspend fun calculateVat(tenantId: TenantId, year: Int, quarter: Int): Triple<Money, Money, Money>
+    suspend fun calculateVat(tenantId: TenantId, year: Int, quarter: Int): VatCalculation
 
     /**
      * Creates a VAT return for a quarter
@@ -119,27 +121,27 @@ interface VatService {
     /**
      * Gets the current quarter based on current date
      *
-     * @return Pair of (year, quarter)
+     * @return Current quarter information with year and quarter
      */
-    suspend fun getCurrentQuarter(): Pair<Int, Int>
+    suspend fun getCurrentQuarter(): QuarterInfo
 
     /**
      * Gets the previous quarter
      *
      * @param year The current year
      * @param quarter The current quarter
-     * @return Pair of (previousYear, previousQuarter)
+     * @return Previous quarter information with year and quarter
      */
-    suspend fun getPreviousQuarter(year: Int, quarter: Int): Pair<Int, Int>
+    suspend fun getPreviousQuarter(year: Int, quarter: Int): QuarterInfo
 
     /**
      * Gets the next quarter
      *
      * @param year The current year
      * @param quarter The current quarter
-     * @return Pair of (nextYear, nextQuarter)
+     * @return Next quarter information with year and quarter
      */
-    suspend fun getNextQuarter(year: Int, quarter: Int): Pair<Int, Int>
+    suspend fun getNextQuarter(year: Int, quarter: Int): QuarterInfo
 
     /**
      * Validates a quarter number

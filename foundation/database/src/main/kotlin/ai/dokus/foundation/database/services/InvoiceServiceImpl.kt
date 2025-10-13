@@ -14,6 +14,7 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import ai.dokus.foundation.ktor.services.InvoiceService
@@ -49,7 +50,7 @@ class InvoiceServiceImpl(
 
     override suspend fun create(request: CreateInvoiceRequest): Invoice {
         val invoiceNumber = tenantService.getNextInvoiceNumber(request.tenantId)
-        val (subtotal, vatTotal, total) = calculateTotals(request.items)
+        val totals = calculateTotals(request.items)
         val today = Clock.System.todayIn(TimeZone.UTC)
 
         val invoiceId = dbQuery {
@@ -59,9 +60,9 @@ class InvoiceServiceImpl(
                 it[InvoicesTable.invoiceNumber] = invoiceNumber.value
                 it[issueDate] = request.issueDate ?: today
                 it[dueDate] = request.dueDate ?: today.plus(DatePeriod(days = 30))
-                it[subtotalAmount] = BigDecimal(subtotal.value)
-                it[InvoicesTable.vatAmount] = BigDecimal(vatTotal.value)
-                it[totalAmount] = BigDecimal(total.value)
+                it[subtotalAmount] = BigDecimal(totals.subtotal.value)
+                it[InvoicesTable.vatAmount] = BigDecimal(totals.vatAmount.value)
+                it[totalAmount] = BigDecimal(totals.total.value)
                 it[paidAmount] = BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
                 it[notes] = request.notes
@@ -117,7 +118,7 @@ class InvoiceServiceImpl(
     }
 
     override suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>) {
-        val (subtotal, vatTotal, total) = calculateTotals(items)
+        val totals = calculateTotals(items)
 
         dbQuery {
             val javaUuid = invoiceId.value.toJavaUuid()
@@ -148,9 +149,9 @@ class InvoiceServiceImpl(
             }
 
             InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
-                it[subtotalAmount] = BigDecimal(subtotal.value)
-                it[InvoicesTable.vatAmount] = BigDecimal(vatTotal.value)
-                it[totalAmount] = BigDecimal(total.value)
+                it[subtotalAmount] = BigDecimal(totals.subtotal.value)
+                it[InvoicesTable.vatAmount] = BigDecimal(totals.vatAmount.value)
+                it[totalAmount] = BigDecimal(totals.total.value)
             }
         }
 
@@ -295,7 +296,7 @@ class InvoiceServiceImpl(
         throw NotImplementedError("Flow-based invoice streaming not yet implemented")
     }
 
-    override suspend fun calculateTotals(items: List<InvoiceItem>): Triple<Money, Money, Money> {
+    override suspend fun calculateTotals(items: List<InvoiceItem>): InvoiceTotals {
         var subtotal = BigDecimal.ZERO
         var vatTotal = BigDecimal.ZERO
 
@@ -308,10 +309,10 @@ class InvoiceServiceImpl(
 
         val total = subtotal + vatTotal
 
-        return Triple(
-            Money(subtotal.toString()),
-            Money(vatTotal.toString()),
-            Money(total.toString())
+        return InvoiceTotals(
+            subtotal = Money(subtotal.toString()),
+            vatAmount = Money(vatTotal.toString()),
+            total = Money(total.toString())
         )
     }
 

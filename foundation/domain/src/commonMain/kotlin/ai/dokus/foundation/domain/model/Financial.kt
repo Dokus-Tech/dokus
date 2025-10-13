@@ -310,3 +310,29 @@ data class CreateExpenseRequest(
     val paymentMethod: PaymentMethod? = null,
     val notes: String? = null
 )
+
+@Serializable
+data class InvoiceTotals(
+    val subtotal: Money,
+    val vatAmount: Money,
+    val total: Money
+)
+
+@Serializable
+data class VatCalculation(
+    val salesVat: Money,
+    val purchaseVat: Money,
+    val netVat: Money
+)
+
+@Serializable
+data class UploadInfo(
+    val uploadUrl: String,
+    val s3Key: String
+)
+
+@Serializable
+data class QuarterInfo(
+    val year: Int,
+    val quarter: Int
+)
