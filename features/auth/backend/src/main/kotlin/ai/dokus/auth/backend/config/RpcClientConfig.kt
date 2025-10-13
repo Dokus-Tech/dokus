@@ -3,21 +3,28 @@ package ai.dokus.auth.backend.config
 import ai.dokus.foundation.ktor.services.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.http.*
+import kotlinx.rpc.krpc.ktor.client.KtorRpcClient
 import kotlinx.rpc.krpc.ktor.client.installKrpc
 import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
+import kotlinx.rpc.krpc.ktor.client.withService
 import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.dsl.module
 
 val rpcClientModule = module {
-    single {
-        val databaseServiceUrl = System.getenv("DATABASE_SERVICE_URL") ?: "http://localhost:9070"
-
+    single<KtorRpcClient> {
         val httpClient = HttpClient(CIO) {
             installKrpc()
         }
 
-        httpClient.rpc("$databaseServiceUrl/api/rpc") {
+        httpClient.rpc {
+            url {
+                host = System.getenv("DATABASE_SERVICE_HOST") ?: "localhost"
+                port = System.getenv("DATABASE_SERVICE_PORT")?.toIntOrNull() ?: 9070
+                encodedPath = "/api/rpc"
+            }
+
             rpcConfig {
                 serialization {
                     json()
@@ -27,26 +34,26 @@ val rpcClientModule = module {
     }
 
     single<TenantService> {
-        get<kotlinx.rpc.krpc.client.KrpcClient>().withService<TenantService>()
+        get<KtorRpcClient>().withService<TenantService>()
     }
 
     single<UserService> {
-        get<kotlinx.rpc.krpc.client.KrpcClient>().withService<UserService>()
+        get<KtorRpcClient>().withService<UserService>()
     }
 
     single<ClientService> {
-        get<kotlinx.rpc.krpc.client.KrpcClient>().withService<ClientService>()
+        get<KtorRpcClient>().withService<ClientService>()
     }
 
     single<InvoiceService> {
-        get<kotlinx.rpc.krpc.client.KrpcClient>().withService<InvoiceService>()
+        get<KtorRpcClient>().withService<InvoiceService>()
     }
 
     single<ExpenseService> {
-        get<kotlinx.rpc.krpc.client.KrpcClient>().withService<ExpenseService>()
+        get<KtorRpcClient>().withService<ExpenseService>()
     }
 
     single<PaymentService> {
-        get<kotlinx.rpc.krpc.client.KrpcClient>().withService<PaymentService>()
+        get<KtorRpcClient>().withService<PaymentService>()
     }
 }

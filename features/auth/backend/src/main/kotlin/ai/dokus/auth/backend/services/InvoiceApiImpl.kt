@@ -2,11 +2,12 @@ package ai.dokus.auth.backend.services
 
 import ai.dokus.foundation.apispec.InvoiceApi
 import ai.dokus.foundation.domain.InvoiceId
-import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import ai.dokus.foundation.ktor.services.InvoiceService
@@ -63,8 +64,8 @@ class InvoiceApiImpl(
     }
 
     override suspend fun calculateInvoiceTotals(
-        items: List<InvoiceItemRequest>
-    ): Result<Triple<Money, Money, Money>> = runCatching {
+        items: List<InvoiceItem>
+    ): Result<InvoiceTotals> = runCatching {
         invoiceService.calculateTotals(items)
     }
 }
