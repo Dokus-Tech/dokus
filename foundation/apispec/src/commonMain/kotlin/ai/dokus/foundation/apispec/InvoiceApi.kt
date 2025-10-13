@@ -7,6 +7,7 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
@@ -42,5 +43,5 @@ interface InvoiceApi {
 
     fun watchInvoices(tenantId: TenantId): Flow<Invoice>
 
-    suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): Result<Triple<Money, Money, Money>>
+    suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): Result<InvoiceTotals>
 }
