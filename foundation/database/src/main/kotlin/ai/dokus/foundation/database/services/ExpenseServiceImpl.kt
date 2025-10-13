@@ -3,17 +3,17 @@ package ai.dokus.foundation.database.services
 import ai.dokus.foundation.database.mappers.ExpenseMapper.toExpense
 import ai.dokus.foundation.database.tables.ExpensesTable
 import ai.dokus.foundation.database.utils.dbQuery
+import ai.dokus.foundation.database.utils.toJavaLocalDate
 import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.Expense
 import ai.dokus.foundation.ktor.services.ExpenseService
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
@@ -23,19 +23,13 @@ import kotlin.uuid.toJavaUuid
 class ExpenseServiceImpl : ExpenseService {
     private val logger = LoggerFactory.getLogger(ExpenseServiceImpl::class.java)
 
-    private val expenseUpdates = MutableSharedFlow<Expense>(
-        replay = 0,
-        extraBufferCapacity = 100,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-
     override suspend fun create(request: CreateExpenseRequest): Expense = dbQuery {
         val expenseId = ExpensesTable.insertAndGetId {
             it[tenantId] = request.tenantId.value.toJavaUuid()
-            it[date] = kotlinx.datetime.toJavaLocalDate(request.date)
+            it[date] = request.date
             it[merchant] = request.merchant
-            it[amount] = BigDecimal(request.amount.amount)
-            it[vatAmount] = request.vatAmount?.let { BigDecimal(it.amount) }
+            it[amount] = BigDecimal(request.amount.value)
+            it[vatAmount] = request.vatAmount?.let { BigDecimal(it.value) }
             it[vatRate] = request.vatRate?.let { BigDecimal(it.value) }
             it[category] = request.category
             it[description] = request.description
@@ -53,7 +47,6 @@ class ExpenseServiceImpl : ExpenseService {
             .single()
             .toExpense()
 
-        expenseUpdates.emit(expense)
         expense
     }
 
@@ -74,10 +67,10 @@ class ExpenseServiceImpl : ExpenseService {
     ) = dbQuery {
         val javaUuid = expenseId.value.toJavaUuid()
         val updated = ExpensesTable.update({ ExpensesTable.id eq javaUuid }) {
-            if (date != null) it[ExpensesTable.date] = kotlinx.datetime.toJavaLocalDate(date)
+            if (date != null) it[ExpensesTable.date] = date
             if (merchant != null) it[ExpensesTable.merchant] = merchant
-            if (amount != null) it[ExpensesTable.amount] = BigDecimal(amount.amount)
-            if (vatAmount != null) it[ExpensesTable.vatAmount] = BigDecimal(vatAmount.amount)
+            if (amount != null) it[ExpensesTable.amount] = BigDecimal(amount.value)
+            if (vatAmount != null) it[ExpensesTable.vatAmount] = BigDecimal(vatAmount.value)
             if (vatRate != null) it[ExpensesTable.vatRate] = BigDecimal(vatRate.value)
             if (category != null) it[ExpensesTable.category] = category
             if (description != null) it[ExpensesTable.description] = description
@@ -93,16 +86,11 @@ class ExpenseServiceImpl : ExpenseService {
         }
 
         logger.info("Updated expense $expenseId")
-        val expense = ExpensesTable.selectAll()
-            .where { ExpensesTable.id eq javaUuid }
-            .single()
-            .toExpense()
-        expenseUpdates.emit(expense)
     }
 
     override suspend fun delete(expenseId: ExpenseId) = dbQuery {
         val javaUuid = expenseId.value.toJavaUuid()
-        val deleted = ExpensesTable.deleteWhere { ExpensesTable.id eq javaUuid }
+        val deleted = ExpensesTable.deleteWhere { id eq javaUuid }
 
         if (deleted == 0) {
             throw IllegalArgumentException("Expense not found: $expenseId")
@@ -132,11 +120,11 @@ class ExpenseServiceImpl : ExpenseService {
         var query = ExpensesTable.selectAll().where { ExpensesTable.tenantId eq javaUuid }
 
         if (category != null) query = query.andWhere { ExpensesTable.category eq category }
-        if (fromDate != null) query = query.andWhere { ExpensesTable.date greaterEq kotlinx.datetime.toJavaLocalDate(fromDate) }
-        if (toDate != null) query = query.andWhere { ExpensesTable.date lessEq kotlinx.datetime.toJavaLocalDate(toDate) }
+        if (fromDate != null) query = query.andWhere { ExpensesTable.date greaterEq fromDate }
+        if (toDate != null) query = query.andWhere { ExpensesTable.date lessEq toDate }
         if (merchant != null) query = query.andWhere { ExpensesTable.merchant.lowerCase() like "%${merchant.lowercase()}%" }
         if (limit != null) query = query.limit(limit)
-        if (offset != null) query = query.limit(limit ?: 100, offset.toLong())
+        if (offset != null) query = query.offset(offset.toLong())
 
         query.orderBy(ExpensesTable.date to SortOrder.DESC)
             .map { it.toExpense() }
@@ -185,7 +173,7 @@ class ExpenseServiceImpl : ExpenseService {
     }
 
     override fun watchExpenses(tenantId: TenantId): Flow<Expense> {
-        return expenseUpdates
+        throw NotImplementedError("Flow-based expense streaming not yet implemented")
     }
 
     override suspend fun getStatistics(
@@ -197,7 +185,7 @@ class ExpenseServiceImpl : ExpenseService {
     }
 
     override suspend fun calculateDeductible(amount: Money, deductiblePercentage: Double): Money {
-        val deductible = BigDecimal(amount.amount) * BigDecimal(deductiblePercentage.toString()) / BigDecimal("100")
+        val deductible = BigDecimal(amount.value) * BigDecimal(deductiblePercentage.toString()) / BigDecimal("100")
         return Money(deductible.toString())
     }
 }

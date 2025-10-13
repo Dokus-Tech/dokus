@@ -26,3 +26,9 @@ fun LocalDateTime.toJavaLocalDateTime(): java.time.LocalDateTime =
         this.second,
         this.nanosecond
     )
+
+fun Instant.toJavaInstant(): java.time.Instant =
+    java.time.Instant.ofEpochSecond(this.epochSeconds, this.nanosecondsOfSecond.toLong())
+
+fun java.time.Instant.toKotlinInstant(): Instant =
+    Instant.fromEpochSeconds(this.epochSecond, this.nano)

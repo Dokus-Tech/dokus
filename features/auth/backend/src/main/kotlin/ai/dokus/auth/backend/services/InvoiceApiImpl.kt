@@ -63,7 +63,7 @@ class InvoiceApiImpl(
     }
 
     override suspend fun calculateInvoiceTotals(
-        items: List<CreateInvoiceRequest.InvoiceItemRequest>
+        items: List<InvoiceItemRequest>
     ): Result<Triple<Money, Money, Money>> = runCatching {
         invoiceService.calculateTotals(items)
     }
