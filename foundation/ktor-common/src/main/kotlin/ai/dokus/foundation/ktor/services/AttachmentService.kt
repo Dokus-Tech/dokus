@@ -4,6 +4,7 @@ import ai.dokus.foundation.domain.AttachmentId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.UploadInfo
 import kotlinx.rpc.annotations.Rpc
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -105,7 +106,7 @@ interface AttachmentService {
      * @param filename The filename for the upload
      * @param mimeType The file MIME type
      * @param expiresInSeconds URL expiration time in seconds (defaults to 3600 = 1 hour)
-     * @return Pair of (uploadUrl, s3Key) - use s3Key to create metadata after upload
+     * @return Upload information with uploadUrl and s3Key - use s3Key to create metadata after upload
      * @throws IllegalArgumentException if validation fails
      */
     suspend fun getPresignedUploadUrl(
@@ -115,7 +116,7 @@ interface AttachmentService {
         filename: String,
         mimeType: String,
         expiresInSeconds: Int = 3600
-    ): Pair<String, String>
+    ): UploadInfo
 
     /**
      * Creates attachment metadata after a presigned upload

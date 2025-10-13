@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import kotlinx.coroutines.flow.Flow
@@ -198,9 +199,9 @@ interface InvoiceService {
      * Used for validation and preview
      *
      * @param items List of invoice items
-     * @return Triple of (subtotal, vatAmount, total)
+     * @return Invoice totals calculation
      */
-    suspend fun calculateTotals(items: List<InvoiceItem>): Triple<Money, Money, Money>
+    suspend fun calculateTotals(items: List<InvoiceItem>): InvoiceTotals
 
     /**
      * Gets invoice statistics for a tenant
