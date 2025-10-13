@@ -3,7 +3,7 @@
     <!-- Property for environment -->
     <property name="LOG_LEVEL" value="${LOG_LEVEL:-INFO}" />
     <property name="LOG_PATH" value="${LOG_PATH:-./logs}" />
-    <property name="APP_NAME" value="pulse-auth-service" />
+    <property name="APP_NAME" value="dokus-auth-service" />
 
     <!-- Console Appender for Development -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -60,7 +60,7 @@
     </logger>
 
     <!-- Logger for application packages -->
-    <logger name="be.police.pulse" level="${LOG_LEVEL}" additivity="false">
+    <logger name="ai.dokus" level="${LOG_LEVEL}" additivity="false">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="ASYNC_FILE" />
         <appender-ref ref="ERROR_FILE" />

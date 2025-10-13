@@ -1,0 +1,131 @@
+# Production Docker Compose configuration
+
+services:
+  # Shared PostgreSQL Database for all services
+  postgres-prod:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-prod
+    environment:
+      POSTGRES_DB: dokus
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5441:5432"
+    volumes:
+      - postgres-data-prod:/var/lib/postgresql/data
+      - ./foundation/database/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-prod:
+    image: redis:8-alpine
+    container_name: dokus-redis-prod
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --tcp-backlog 511
+      --timeout 0
+      --tcp-keepalive 300
+      --dir /data
+      --logfile ""
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-prod:/data
+    networks:
+      - dokus-prod-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service-prod:
+    image: invoid-vision/dokus-auth:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-auth-prod
+    environment:
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-prod:5432/dokus
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
+      REDIS_HOST: redis-prod
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      GEOIP_DATABASE_PATH: resources/GeoLite2-City.mmdb
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_PATH: /app/logs
+    ports:
+      - "8091:8091"
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+      redis-prod:
+        condition: service_healthy
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+  database-service-prod:
+    image: invoid-vision/dokus-database:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-database-prod
+    environment:
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-prod:5432/dokus
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
+      REDIS_HOST: redis-prod
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_PATH: /app/logs
+    ports:
+      - "8070:8070"
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+      redis-prod:
+        condition: service_healthy
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8070/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+networks:
+  dokus-prod-network:
+    driver: bridge
+
+volumes:
+  postgres-data-prod:
+    driver: local
+  redis-data-prod:
+    driver: local

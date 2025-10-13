@@ -29,6 +29,9 @@ kotlin {
         commonMain.dependencies {
             api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization)
+
+            implementation(libs.ktor.client.core)
+
             implementation(projects.foundation.platform)
         }
     }

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.kotlinxRpcPlugin)
 }
 
 group = "ai.dokus.foundation.ktor"
@@ -12,6 +13,11 @@ kotlin {
 
 dependencies {
     implementation(projects.foundation.domain)
+
+    // KotlinX RPC
+    implementation(libs.kotlinx.rpc.core)
+    implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    implementation(libs.kotlinx.rpc.krpc.ktor.server)
 
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cors)
@@ -55,6 +61,7 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flywaydb.flyway.database.postgresql)
 
+    implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.ktor)
 
     implementation(libs.kotlinx.serialization)

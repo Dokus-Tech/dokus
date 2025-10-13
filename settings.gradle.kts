@@ -34,25 +34,16 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 
-include(":application:onboarding")
-include(":application:home")
-include(":application:dashboard")
-include(":application:contacts")
-include(":application:cashflow")
-include(":application:simulation")
-include(":application:inventory")
-include(":application:banking")
-include(":application:profile")
-include(":foundation:ui")
+include(":foundation:design-system")
 
-include(":application:core")
+include(":foundation:app-common")
 include(":foundation:platform")
-include(":application:repository")
 include(":foundation:navigation")
 include(":foundation:ktor-common")
 
 include(":features:auth:backend")
-include(":features:auth:domain")
+include(":features:auth:presentation")
 
 include(":foundation:domain")
 include(":foundation:apispec")
+include(":foundation:database")
