@@ -3,6 +3,7 @@ package ai.dokus.foundation.domain.model
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password
+import ai.dokus.foundation.domain.enums.Currency
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
@@ -27,9 +28,6 @@ enum class ProcessStatus {
     ongoing,
     incomplete
 }
-
-@Serializable
-enum class Currency { EUR, USD }
 
 @Serializable
 data class Address(

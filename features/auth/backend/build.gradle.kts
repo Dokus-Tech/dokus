@@ -1,15 +1,16 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.kotlinxRpcPlugin)
     id("com.github.johnrengelman.shadow") version "8.1.1"
     application
 }
 
-group = "be.police.pulse.microservice.users"
+group = "ai.dokus.users"
 version = "1.0.0"
 
 application {
-    mainClass.set("be.police.pulse.ApplicationKt")
+    mainClass.set("ai.dokus.auth.backend.ApplicationKt")
 }
 
 kotlin {
@@ -19,12 +20,17 @@ kotlin {
 }
 
 dependencies {
-    implementation(projects.features.auth.domain)
-
     implementation(projects.foundation.domain)
     implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.apispec)
 
     implementation(libs.kotlinx.serialization)
+
+    // KotlinX RPC Client & Server
+    implementation(libs.kotlinx.rpc.core)
+    implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    implementation(libs.kotlinx.rpc.krpc.ktor.client)
+    implementation(libs.kotlinx.rpc.krpc.ktor.server)
 
     // Ktor Server
     implementation(libs.ktor.server.core)
@@ -40,6 +46,11 @@ dependencies {
     implementation(libs.ktor.server.openapi)
     implementation(libs.ktor.server.swagger)
 
+    // Ktor Client (for RPC)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+
     // Database - Exposed
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
@@ -51,6 +62,7 @@ dependencies {
     implementation(libs.hikaricp)
 
     // Dependency Injection
+    implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.ktor)
 
     // Security
@@ -80,7 +92,7 @@ tasks.test {
 
 tasks.shadowJar {
     manifest {
-        attributes["Main-Class"] = "be.police.pulse.ApplicationKt"
+        attributes["Main-Class"] = "ai.dokus.auth.backend.ApplicationKt"
     }
     mergeServiceFiles()
     archiveClassifier.set("")
