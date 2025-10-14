@@ -99,6 +99,10 @@ services:
       REDIS_HOST: redis-prod
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      MINIO_ENDPOINT: http://minio-prod:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: dokus-attachments
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_PATH: /app/logs
     ports:
@@ -107,6 +111,8 @@ services:
       postgres-prod:
         condition: service_healthy
       redis-prod:
+        condition: service_healthy
+      minio-prod:
         condition: service_healthy
     networks:
       - dokus-prod-network
@@ -120,6 +126,45 @@ services:
       - ./logs-prod:/app/logs
     restart: unless-stopped
 
+  minio-prod:
+    image: minio/minio:latest
+    container_name: dokus-minio-prod
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_URL:-http://localhost:9001}
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Web Console
+    volumes:
+      - minio-data-prod:/data
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Create MinIO bucket on startup
+  minio-init-prod:
+    image: minio/mc:latest
+    container_name: dokus-minio-init-prod
+    depends_on:
+      minio-prod:
+        condition: service_healthy
+    networks:
+      - dokus-prod-network
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set minio http://minio-prod:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY};
+      mc mb --ignore-existing minio/dokus-attachments;
+      mc anonymous set download minio/dokus-attachments;
+      exit 0;
+      "
+
 networks:
   dokus-prod-network:
     driver: bridge
@@ -128,4 +173,6 @@ volumes:
   postgres-data-prod:
     driver: local
   redis-data-prod:
+    driver: local
+  minio-data-prod:
     driver: local
