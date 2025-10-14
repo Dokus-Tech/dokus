@@ -43,15 +43,15 @@ class ExpenseRepository {
             it[ExpensesTable.tenantId] = javaUuid
             it[ExpensesTable.date] = date
             it[ExpensesTable.merchant] = merchant
-            it[ExpensesTable.amount] = amount.value
-            it[ExpensesTable.vatAmount] = vatAmount?.value
+            it[ExpensesTable.amount] = BigDecimal(amount.value)
+            it[ExpensesTable.vatAmount] = vatAmount?.let { v -> BigDecimal(v.value) }
             it[ExpensesTable.vatRate] = vatRate?.let { rate -> BigDecimal(rate.value) }
             it[ExpensesTable.category] = category
             it[ExpensesTable.description] = description
             it[ExpensesTable.receiptUrl] = receiptUrl
             it[ExpensesTable.receiptFilename] = receiptFilename
             it[ExpensesTable.isDeductible] = isDeductible
-            it[ExpensesTable.deductiblePercentage] = deductiblePercentage.value
+            it[ExpensesTable.deductiblePercentage] = BigDecimal(deductiblePercentage.value)
             it[ExpensesTable.paymentMethod] = paymentMethod
             it[ExpensesTable.isRecurring] = isRecurring
             it[ExpensesTable.notes] = notes
@@ -119,7 +119,8 @@ class ExpenseRepository {
 
         query
             .orderBy(ExpensesTable.date to SortOrder.DESC)
-            .limit(limit, offset.toLong())
+            .limit(limit)
+            .offset(offset.toLong())
             .map { it.toExpense() }
     }
 
@@ -168,15 +169,15 @@ class ExpenseRepository {
         }) {
             date?.let { value -> it[ExpensesTable.date] = value }
             merchant?.let { value -> it[ExpensesTable.merchant] = value }
-            amount?.let { value -> it[ExpensesTable.amount] = value.value }
-            vatAmount?.let { value -> it[ExpensesTable.vatAmount] = value.value }
+            amount?.let { value -> it[ExpensesTable.amount] = BigDecimal(value.value) }
+            vatAmount?.let { value -> it[ExpensesTable.vatAmount] = BigDecimal(value.value) }
             vatRate?.let { rate -> it[ExpensesTable.vatRate] = BigDecimal(rate.value) }
             category?.let { value -> it[ExpensesTable.category] = value }
             description?.let { value -> it[ExpensesTable.description] = value }
             receiptUrl?.let { value -> it[ExpensesTable.receiptUrl] = value }
             receiptFilename?.let { value -> it[ExpensesTable.receiptFilename] = value }
             isDeductible?.let { value -> it[ExpensesTable.isDeductible] = value }
-            deductiblePercentage?.let { value -> it[ExpensesTable.deductiblePercentage] = value.value }
+            deductiblePercentage?.let { value -> it[ExpensesTable.deductiblePercentage] = BigDecimal(value.value) }
             paymentMethod?.let { value -> it[ExpensesTable.paymentMethod] = value }
             isRecurring?.let { value -> it[ExpensesTable.isRecurring] = value }
             notes?.let { value -> it[ExpensesTable.notes] = value }
@@ -253,7 +254,7 @@ class ExpenseRepository {
         }
 
         val sum = query.singleOrNull()?.get(ExpensesTable.amount.sum())
-        Money(sum ?: BigDecimal.ZERO)
+        Money((sum ?: BigDecimal.ZERO).toString())
     }
 
     /**
@@ -278,6 +279,6 @@ class ExpenseRepository {
             .singleOrNull()
             ?.get(ExpensesTable.vatAmount.sum())
 
-        Money(sum ?: BigDecimal.ZERO)
+        Money((sum ?: BigDecimal.ZERO).toString())
     }
 }
