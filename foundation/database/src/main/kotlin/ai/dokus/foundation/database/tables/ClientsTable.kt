@@ -28,7 +28,17 @@ object ClientsTable : UUIDTable("clients") {
     val contactPerson = varchar("contact_person", 255).nullable()
     val phone = varchar("phone", 50).nullable()
 
+    // Financial settings
+    val companyNumber = varchar("company_number", 50).nullable()
+    val defaultPaymentTerms = integer("default_payment_terms").default(30) // days
+    val defaultVatRate = decimal("default_vat_rate", 5, 2).nullable()
+
+    // Peppol e-invoicing (required for Belgium 2026)
+    val peppolId = varchar("peppol_id", 100).nullable() // e.g., "0208:BE0123456789"
+    val peppolEnabled = bool("peppol_enabled").default(false)
+
     // Additional
+    val tags = varchar("tags", 500).nullable() // Comma-separated tags
     val notes = text("notes").nullable()
     val isActive = bool("is_active").default(true)
 
