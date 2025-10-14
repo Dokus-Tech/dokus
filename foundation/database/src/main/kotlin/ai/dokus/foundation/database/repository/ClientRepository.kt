@@ -100,7 +100,8 @@ class ClientRepository {
 
         query
             .orderBy(ClientsTable.name)
-            .limit(limit, offset.toLong())
+            .limit(limit)
+            .offset(offset.toLong())
             .map { it.toClient() }
     }
 

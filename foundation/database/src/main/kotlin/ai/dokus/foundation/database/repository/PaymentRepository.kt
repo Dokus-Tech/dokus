@@ -34,7 +34,7 @@ class PaymentRepository {
         val paymentId = PaymentsTable.insertAndGetId {
             it[PaymentsTable.tenantId] = javaTenantId
             it[PaymentsTable.invoiceId] = javaInvoiceId
-            it[PaymentsTable.amount] = amount.value
+            it[PaymentsTable.amount] = BigDecimal(amount.value)
             it[PaymentsTable.paymentDate] = paymentDate
             it[PaymentsTable.paymentMethod] = paymentMethod
             it[PaymentsTable.transactionId] = transactionId?.value
@@ -88,7 +88,8 @@ class PaymentRepository {
 
         query
             .orderBy(PaymentsTable.paymentDate to SortOrder.DESC)
-            .limit(limit, offset.toLong())
+            .limit(limit)
+            .offset(offset.toLong())
             .map { it.toPayment() }
     }
 
@@ -127,7 +128,7 @@ class PaymentRepository {
             .singleOrNull()
             ?.get(PaymentsTable.amount.sum())
 
-        Money(sum ?: BigDecimal.ZERO)
+        Money((sum ?: BigDecimal.ZERO).toString())
     }
 
     suspend fun update(
@@ -146,7 +147,7 @@ class PaymentRepository {
             (PaymentsTable.id eq javaPaymentId) and
             (PaymentsTable.tenantId eq javaTenantId)
         }) {
-            amount?.let { value -> it[PaymentsTable.amount] = value.value }
+            amount?.let { value -> it[PaymentsTable.amount] = BigDecimal(value.value) }
             paymentDate?.let { value -> it[PaymentsTable.paymentDate] = value }
             paymentMethod?.let { value -> it[PaymentsTable.paymentMethod] = value }
             transactionId?.let { value -> it[PaymentsTable.transactionId] = value.value }
@@ -249,6 +250,6 @@ class PaymentRepository {
             .singleOrNull()
             ?.get(PaymentsTable.amount.sum())
 
-        Money(sum ?: BigDecimal.ZERO)
+        Money((sum ?: BigDecimal.ZERO).toString())
     }
 }
