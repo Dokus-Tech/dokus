@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Expense
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi

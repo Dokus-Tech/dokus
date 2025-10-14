@@ -16,7 +16,7 @@ object PaymentMapper {
         id = PaymentId(this[PaymentsTable.id].value.toKotlinUuid()),
         tenantId = TenantId(this[PaymentsTable.tenantId].value.toKotlinUuid()),
         invoiceId = InvoiceId(this[PaymentsTable.invoiceId].value.toKotlinUuid()),
-        amount = Money(this[PaymentsTable.amount]),
+        amount = Money(this[PaymentsTable.amount].toString()),
         paymentDate = this[PaymentsTable.paymentDate].toKotlinLocalDate(),
         paymentMethod = this[PaymentsTable.paymentMethod],
         transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },
