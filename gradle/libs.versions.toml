@@ -43,15 +43,15 @@ compose-icons = "1.1.1"
 # kolor 3.0.+ is broken in skiko
 materialKolor = "2.0.0"
 
-flywayDatabasePostgresql = "11.14.0"
-flywayCore = "11.14.0"
+flywayDatabasePostgresql = "11.14.1"
+flywayCore = "11.14.1"
 hikaricp = "7.0.2"
 javaJwt = "4.5.0"
 javaKeyring = "1.0.4"
 lettuceCore = "6.5.0.RELEASE"
 
-micrometerCore = "1.15.4"
-micrometerRegistryPrometheus = "1.15.4"
+micrometerCore = "1.15.5"
+micrometerRegistryPrometheus = "1.15.5"
 commonsPool2 = "2.12.1"
 
 [libraries]
