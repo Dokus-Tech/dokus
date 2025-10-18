@@ -119,7 +119,7 @@ object TestFixtures {
     )
 
     fun createTestInvoiceItem(
-        id: InvoiceItemId? = InvoiceItemId("50000000-0000-0000-0000-000000000001"),
+        id: InvoiceItemId? = InvoiceItemId(Uuid.parse("50000000-0000-0000-0000-000000000001")),
         invoiceId: InvoiceId? = invoice1Id,
         description: String = "Software Development Services",
         quantity: Quantity = Quantity("10.00"),
