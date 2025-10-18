@@ -215,6 +215,20 @@ build_app() {
     fi
     print_status success "Payment Service JAR built"
 
+    # Build Reporting Service JAR
+    print_status loading "Building Reporting Service JAR..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :features:reporting:backend:shadowJar -x test -q
+    else
+        gradle :features:reporting:backend:shadowJar -x test -q
+    fi
+
+    if [ $? -ne 0 ]; then
+        print_status error "Reporting Service JAR build failed"
+        exit 1
+    fi
+    print_status success "Reporting Service JAR built"
+
     print_divider
     echo ""
     print_status loading "Building Docker images..."
@@ -264,6 +278,15 @@ build_app() {
         exit 1
     fi
     print_status success "Payment Service image built"
+
+    # Reporting Service image
+    print_status loading "Building Reporting Service image..."
+    docker build -f features/reporting/backend/Dockerfile.dev -t invoid-vision/dokus-reporting:dev-latest . -q > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "Reporting Service Docker image build failed"
+        exit 1
+    fi
+    print_status success "Reporting Service image built"
 
     echo ""
 }
@@ -358,6 +381,17 @@ start_services() {
         printf "  ${CYAN}▸${NC} Payment Service     "
         for i in {1..30}; do
             if curl -f -s http://localhost:9094/health > /dev/null 2>&1; then
+                echo -e "${GREEN}✔ Ready${NC}"
+                break
+            fi
+            echo -n "."
+            sleep 1
+        done
+
+        # Wait for Reporting Service
+        printf "  ${CYAN}▸${NC} Reporting Service   "
+        for i in {1..30}; do
+            if curl -f -s http://localhost:9095/health > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -462,6 +496,14 @@ show_status() {
     # Payment Service
     printf "  ${CYAN}▸${NC} Payment Service     "
     if curl -f -s http://localhost:9094/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✔ Healthy${NC}"
+    else
+        echo -e "${RED}✖ Not responding${NC}"
+    fi
+
+    # Reporting Service
+    printf "  ${CYAN}▸${NC} Reporting Service   "
+    if curl -f -s http://localhost:9095/health > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -601,6 +643,13 @@ print_services_info() {
     echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9094${NC}"
     echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9094/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5011${NC}"
+    echo ""
+
+    # Reporting Service
+    echo -e "  ${MAGENTA}▸ Reporting Service${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9095${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9095/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5012${NC}"
     echo ""
 
     # Databases
