@@ -28,22 +28,19 @@ class ExpenseApiImpl(
         fromDate: LocalDate?,
         toDate: LocalDate?
     ): Result<List<Expense>> = runCatching {
-        expenseService.listByTenant(tenantId, 1000, 0)
-            .filter { expense ->
-                (category == null || expense.category == category) &&
-                (fromDate == null || expense.date >= fromDate) &&
-                (toDate == null || expense.date <= toDate)
-            }
+        expenseService.listByTenant(
+            tenantId = tenantId,
+            category = category,
+            fromDate = fromDate,
+            toDate = toDate,
+            merchant = null,
+            limit = null,
+            offset = null
+        )
     }
 
     override suspend fun categorizeExpense(merchant: String, description: String?): Result<ExpenseCategory> = runCatching {
-        // Simple categorization logic - can be enhanced with ML later
-        when {
-            merchant.contains("software", ignoreCase = true) -> ExpenseCategory.SOFTWARE
-            merchant.contains("travel", ignoreCase = true) -> ExpenseCategory.TRAVEL
-            merchant.contains("office", ignoreCase = true) -> ExpenseCategory.OFFICE_SUPPLIES
-            else -> ExpenseCategory.OTHER
-        }
+        expenseService.categorize(merchant, description)
     }
 
     override suspend fun uploadReceipt(
@@ -52,8 +49,7 @@ class ExpenseApiImpl(
         filename: String,
         contentType: String
     ): Result<String> = runCatching {
-        // TODO: Implement S3 upload
-        "receipt-url-placeholder"
+        expenseService.uploadReceipt(expenseId, fileContent, filename, contentType)
     }
 
     override suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit> = runCatching {

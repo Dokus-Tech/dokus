@@ -149,11 +149,11 @@ class ClientApiImpl(
     }
 
     override suspend fun findClientByPeppolId(peppolId: String, tenantId: TenantId): Result<Client?> = runCatching {
-        // Note: ClientService doesn't have findByPeppolId method yet
-        // We'd need to add this to the service layer or use repository directly
-        // For now, return null to indicate not found
-        // TODO: Add findByPeppolId to ClientService
-        null
+        // ClientService doesn't provide findByPeppolId directly
+        // Search through all clients and filter by peppolId
+        val allClients = clientService.listByTenant(tenantId)
+
+        allClients.firstOrNull { it.peppolId == peppolId }
     }
 
     override suspend fun getClientStats(tenantId: TenantId): Result<ClientStats> = runCatching {
