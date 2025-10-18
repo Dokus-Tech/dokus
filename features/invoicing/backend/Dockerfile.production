@@ -1,0 +1,59 @@
+# Production Dockerfile for Invoicing Service
+# Multi-stage build for minimal image size
+
+# Stage 1: Builder
+FROM gradle:8.13-jdk21-alpine AS builder
+
+WORKDIR /build
+
+# Copy gradle files for dependency caching
+COPY gradle gradle
+COPY gradlew .
+COPY settings.gradle.kts .
+COPY gradle.properties .
+COPY build-logic build-logic
+
+# Copy version catalog
+COPY gradle/libs.versions.toml gradle/libs.versions.toml
+
+# Copy source code
+COPY foundation foundation
+COPY features/invoicing features/invoicing
+
+# Build the fat JAR
+RUN ./gradlew :features:invoicing:backend:shadowJar --no-daemon --stacktrace
+
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
+
+# Create non-root user
+RUN addgroup -g 1001 -S dokus && \
+    adduser -u 1001 -S dokus -G dokus
+
+WORKDIR /app
+
+# Copy JAR from builder
+COPY --from=builder /build/features/invoicing/backend/build/libs/backend-1.0.0.jar /app/invoicing-service.jar
+
+# Change ownership
+RUN chown -R dokus:dokus /app
+
+# Switch to non-root user
+USER dokus
+
+# Expose port
+EXPOSE 9092
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:9092/health || exit 1
+
+# JVM optimization for containers
+ENV JAVA_OPTS="-XX:+UseG1GC \
+    -XX:MaxGCPauseMillis=100 \
+    -XX:+UseStringDeduplication \
+    -XX:+OptimizeStringConcat \
+    -Djava.security.egd=file:/dev/./urandom"
+
+# Run the application
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/invoicing-service.jar"]

@@ -80,6 +80,12 @@ data class Client(
     val country: String? = null,
     val contactPerson: String? = null,
     val phone: String? = null,
+    val companyNumber: String? = null,
+    val defaultPaymentTerms: Int = 30,
+    val defaultVatRate: VatRate? = null,
+    val peppolId: String? = null, // Peppol participant ID for e-invoicing (Belgium 2026)
+    val peppolEnabled: Boolean = false,
+    val tags: String? = null,
     val notes: String? = null,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,

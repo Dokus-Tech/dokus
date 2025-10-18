@@ -1,0 +1,403 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: dokus-production
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'dokus-production'
+        environment: 'production'
+
+    # Alertmanager configuration
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager:9093
+
+    # Load rules once and periodically evaluate them
+    rule_files:
+      - '/etc/prometheus/rules/*.yml'
+
+    # Scrape configurations
+    scrape_configs:
+      # Scrape Prometheus itself
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Scrape Kubernetes API server
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Scrape Kubernetes nodes
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+
+      # Scrape Kubernetes pods with prometheus.io/scrape annotation
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          # Only scrape pods with prometheus.io/scrape: "true" annotation
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+
+          # Use prometheus.io/path annotation if present
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+
+          # Use prometheus.io/port annotation if present
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+
+          # Add namespace label
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+
+          # Add pod name label
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+          # Add app label
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: replace
+            target_label: app
+
+      # Scrape Dokus database service
+      - job_name: 'dokus-database'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - dokus-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: dokus-database
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            target_label: __address__
+            regex: (.+)
+            replacement: $1
+
+      # Scrape PostgreSQL Exporter
+      - job_name: 'postgres'
+        static_configs:
+          - targets: ['postgres-exporter:9187']
+            labels:
+              service: 'postgres'
+
+      # Scrape Redis Exporter
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis-exporter:9121']
+            labels:
+              service: 'redis'
+
+      # Scrape Node Exporter
+      - job_name: 'node-exporter'
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - source_labels: [__address__]
+            regex: '(.*):10250'
+            replacement: '${1}:9100'
+            target_label: __address__
+
+  alerts.yml: |
+    groups:
+      - name: dokus_alerts
+        interval: 30s
+        rules:
+          # Service down alert
+          - alert: ServiceDown
+            expr: up{job="dokus-database"} == 0
+            for: 2m
+            labels:
+              severity: critical
+              service: dokus-database
+            annotations:
+              summary: "Dokus Database Service is down"
+              description: "{{ $labels.kubernetes_pod_name }} has been down for more than 2 minutes"
+
+          # High CPU usage
+          - alert: HighCPUUsage
+            expr: rate(container_cpu_usage_seconds_total{pod=~"dokus-database.*"}[5m]) > 0.8
+            for: 5m
+            labels:
+              severity: warning
+              service: dokus-database
+            annotations:
+              summary: "High CPU usage detected"
+              description: "{{ $labels.pod }} is using > 80% CPU for 5 minutes"
+
+          # High memory usage
+          - alert: HighMemoryUsage
+            expr: (container_memory_usage_bytes{pod=~"dokus-database.*"} / container_spec_memory_limit_bytes{pod=~"dokus-database.*"}) > 0.85
+            for: 5m
+            labels:
+              severity: warning
+              service: dokus-database
+            annotations:
+              summary: "High memory usage detected"
+              description: "{{ $labels.pod }} is using > 85% memory for 5 minutes"
+
+          # High request latency
+          - alert: HighRequestLatency
+            expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="dokus-database"}[5m])) > 0.1
+            for: 5m
+            labels:
+              severity: warning
+              service: dokus-database
+            annotations:
+              summary: "High request latency detected"
+              description: "95th percentile latency is > 100ms for 5 minutes"
+
+          # High error rate
+          - alert: HighErrorRate
+            expr: rate(http_requests_total{job="dokus-database",status=~"5.."}[5m]) > 0.05
+            for: 2m
+            labels:
+              severity: critical
+              service: dokus-database
+            annotations:
+              summary: "High error rate detected"
+              description: "Error rate is > 5% for 2 minutes"
+
+          # Database connection pool exhaustion
+          - alert: DatabaseConnectionPoolExhausted
+            expr: hikaricp_connections_active / hikaricp_connections_total > 0.9
+            for: 2m
+            labels:
+              severity: warning
+              service: dokus-database
+            annotations:
+              summary: "Database connection pool nearly exhausted"
+              description: "Using > 90% of database connections"
+
+          # Pod restart alert
+          - alert: PodRestarting
+            expr: rate(kube_pod_container_status_restarts_total{pod=~"dokus-database.*"}[15m]) > 0
+            for: 5m
+            labels:
+              severity: warning
+              service: dokus-database
+            annotations:
+              summary: "Pod is restarting frequently"
+              description: "{{ $labels.pod }} has restarted {{ $value }} times in 15 minutes"
+
+          # PostgreSQL down
+          - alert: PostgreSQLDown
+            expr: pg_up == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: postgres
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "PostgreSQL database is not responding"
+
+          # Redis down
+          - alert: RedisDown
+            expr: redis_up == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: redis
+            annotations:
+              summary: "Redis is down"
+              description: "Redis cache is not responding"
+
+          # Disk space low
+          - alert: DiskSpaceLow
+            expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.15
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Disk space is running low"
+              description: "Disk has < 15% free space remaining"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: dokus-production
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: prometheus
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: dokus-production
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.48.0
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--storage.tsdb.retention.time=30d'
+          - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+          - '--web.console.templates=/usr/share/prometheus/consoles'
+          - '--web.enable-lifecycle'
+
+        ports:
+        - name: web
+          containerPort: 9090
+
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: web
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: web
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: rules
+          mountPath: /etc/prometheus/rules
+        - name: data
+          mountPath: /prometheus
+
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-config
+          items:
+          - key: prometheus.yml
+            path: prometheus.yml
+      - name: rules
+        configMap:
+          name: prometheus-config
+          items:
+          - key: alerts.yml
+            path: alerts.yml
+      - name: data
+        persistentVolumeClaim:
+          claimName: prometheus-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data
+  namespace: dokus-production
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: dokus-production
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: dokus-production

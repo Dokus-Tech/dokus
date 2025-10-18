@@ -1,0 +1,308 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-script
+  namespace: dokus-production
+data:
+  backup-database.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    # Configuration
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    BACKUP_FILE="dokus-${ENVIRONMENT}-${TIMESTAMP}.sql.gz"
+
+    echo "[$(date)] Starting database backup..."
+
+    # Create backup
+    PGPASSWORD="${DB_PASSWORD}" pg_dump \
+      --host="${DB_HOST}" \
+      --port="${DB_PORT}" \
+      --username="${DB_USER}" \
+      --dbname="${DB_NAME}" \
+      --format=plain \
+      --no-owner \
+      --no-privileges | gzip -9 > "/tmp/${BACKUP_FILE}"
+
+    # Verify backup
+    if [ -s "/tmp/${BACKUP_FILE}" ]; then
+      BACKUP_SIZE=$(du -h "/tmp/${BACKUP_FILE}" | cut -f1)
+      echo "[$(date)] Backup created: ${BACKUP_SIZE}"
+    else
+      echo "[$(date)] ERROR: Backup file is empty"
+      exit 1
+    fi
+
+    # Upload to S3
+    aws s3 cp "/tmp/${BACKUP_FILE}" \
+      "s3://${S3_BUCKET}/postgres-backups/${ENVIRONMENT}/${BACKUP_FILE}" \
+      --region "${S3_REGION}" \
+      --storage-class STANDARD_IA \
+      --server-side-encryption AES256
+
+    if [ $? -eq 0 ]; then
+      echo "[$(date)] Backup uploaded successfully to S3"
+    else
+      echo "[$(date)] ERROR: Failed to upload backup"
+      exit 1
+    fi
+
+    # Cleanup local file
+    rm -f "/tmp/${BACKUP_FILE}"
+
+    # Cleanup old backups (keep last 30 days)
+    CUTOFF_DATE=$(date -d "30 days ago" +%Y%m%d 2>/dev/null || date -v-30d +%Y%m%d)
+    aws s3 ls "s3://${S3_BUCKET}/postgres-backups/${ENVIRONMENT}/" --region "${S3_REGION}" | \
+    awk '{print $4}' | grep "^dokus-${ENVIRONMENT}-" | while read filename; do
+      if [[ "$filename" =~ dokus-${ENVIRONMENT}-([0-9]{8})_ ]]; then
+        BACKUP_DATE="${BASH_REMATCH[1]}"
+        if [ "$BACKUP_DATE" -lt "$CUTOFF_DATE" ]; then
+          echo "[$(date)] Deleting old backup: $filename"
+          aws s3 rm "s3://${S3_BUCKET}/postgres-backups/${ENVIRONMENT}/${filename}" --region "${S3_REGION}"
+        fi
+      fi
+    done
+
+    echo "[$(date)] Backup completed successfully"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-secrets
+  namespace: dokus-production
+type: Opaque
+stringData:
+  DB_PASSWORD: ""  # Set via kubectl
+  AWS_ACCESS_KEY_ID: ""  # Set via kubectl
+  AWS_SECRET_ACCESS_KEY: ""  # Set via kubectl
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: dokus-production
+  labels:
+    app: database-backup
+spec:
+  # Run daily at 2 AM UTC
+  schedule: "0 2 * * *"
+
+  # Keep last 3 successful and 1 failed job
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+
+  # Don't run if previous job is still running
+  concurrencyPolicy: Forbid
+
+  jobTemplate:
+    metadata:
+      labels:
+        app: database-backup
+    spec:
+      # Retry once on failure
+      backoffLimit: 1
+
+      # Job should complete within 1 hour
+      activeDeadlineSeconds: 3600
+
+      template:
+        metadata:
+          labels:
+            app: database-backup
+        spec:
+          restartPolicy: OnFailure
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            fsGroup: 1001
+
+          containers:
+          - name: backup
+            image: amazon/aws-cli:latest
+            command:
+            - /bin/bash
+            - /scripts/backup-database.sh
+
+            env:
+            # Database configuration
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "dokus"
+            - name: DB_USER
+              value: "produser"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backup-secrets
+                  key: DB_PASSWORD
+
+            # AWS configuration
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              value: "eu-central-1"
+            - name: S3_BUCKET
+              value: "dokus-backups"
+            - name: S3_REGION
+              value: "eu-central-1"
+            - name: ENVIRONMENT
+              value: "production"
+
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+
+            volumeMounts:
+            - name: backup-script
+              mountPath: /scripts
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+
+          volumes:
+          - name: backup-script
+            configMap:
+              name: backup-script
+              defaultMode: 0755
+          - name: tmp
+            emptyDir: {}
+---
+# Optional: Backup restore job (run manually)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-restore
+  namespace: dokus-production
+  labels:
+    app: database-restore
+spec:
+  # Don't retry - restore should be manual
+  backoffLimit: 0
+
+  template:
+    metadata:
+      labels:
+        app: database-restore
+    spec:
+      restartPolicy: Never
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+
+      containers:
+      - name: restore
+        image: amazon/aws-cli:latest
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -euo pipefail
+
+          # Configuration
+          BACKUP_FILE="${RESTORE_BACKUP_FILE}"
+
+          if [ -z "$BACKUP_FILE" ]; then
+            echo "ERROR: RESTORE_BACKUP_FILE environment variable must be set"
+            exit 1
+          fi
+
+          echo "[$(date)] Starting database restore..."
+          echo "[$(date)] Backup file: $BACKUP_FILE"
+
+          # Download from S3
+          aws s3 cp "s3://${S3_BUCKET}/postgres-backups/${ENVIRONMENT}/${BACKUP_FILE}" \
+            "/tmp/${BACKUP_FILE}" \
+            --region "${S3_REGION}"
+
+          if [ ! -f "/tmp/${BACKUP_FILE}" ]; then
+            echo "ERROR: Failed to download backup file"
+            exit 1
+          fi
+
+          # Restore database
+          gunzip -c "/tmp/${BACKUP_FILE}" | \
+          PGPASSWORD="${DB_PASSWORD}" psql \
+            --host="${DB_HOST}" \
+            --port="${DB_PORT}" \
+            --username="${DB_USER}" \
+            --dbname="${DB_NAME}"
+
+          if [ $? -eq 0 ]; then
+            echo "[$(date)] Database restored successfully"
+          else
+            echo "[$(date)] ERROR: Failed to restore database"
+            exit 1
+          fi
+
+          # Cleanup
+          rm -f "/tmp/${BACKUP_FILE}"
+          echo "[$(date)] Restore completed"
+
+        env:
+        - name: RESTORE_BACKUP_FILE
+          value: ""  # Set this before running: kubectl set env job/database-restore RESTORE_BACKUP_FILE=dokus-production-20250114_020000.sql.gz
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "dokus"
+        - name: DB_USER
+          value: "produser"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: backup-secrets
+              key: DB_PASSWORD
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: backup-secrets
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backup-secrets
+              key: AWS_SECRET_ACCESS_KEY
+        - name: AWS_DEFAULT_REGION
+          value: "eu-central-1"
+        - name: S3_BUCKET
+          value: "dokus-backups"
+        - name: S3_REGION
+          value: "eu-central-1"
+        - name: ENVIRONMENT
+          value: "production"
+
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+
+      volumes:
+      - name: tmp
+        emptyDir: {}

@@ -1,0 +1,318 @@
+---
+# Pod Security Standards for Dokus Production
+# Enforces restricted security profile across all pods
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dokus-production
+  labels:
+    # Enforce restricted pod security standard
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+
+---
+# Security Context Constraints
+# These should be applied to all pod templates
+
+# Example secure pod template
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secure-pod-template
+  namespace: dokus-production
+data:
+  security-context.yaml: |
+    # Apply this security context to all pods
+    securityContext:
+      # Run as non-root user
+      runAsNonRoot: true
+      runAsUser: 1001
+      fsGroup: 1001
+
+      # Drop all capabilities and add only what's needed
+      seccompProfile:
+        type: RuntimeDefault
+
+    # Container security context
+    containerSecurityContext:
+      # Read-only root filesystem
+      readOnlyRootFilesystem: true
+
+      # Don't allow privilege escalation
+      allowPrivilegeEscalation: false
+
+      # Drop all capabilities
+      capabilities:
+        drop:
+        - ALL
+
+      # Run as non-root
+      runAsNonRoot: true
+      runAsUser: 1001
+
+---
+# Service Account for database service with minimal permissions
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dokus-database-sa
+  namespace: dokus-production
+  labels:
+    app: dokus-database
+automountServiceAccountToken: false  # Don't mount by default
+
+---
+# Service Account for auth service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dokus-auth-sa
+  namespace: dokus-production
+  labels:
+    app: dokus-auth
+automountServiceAccountToken: false
+
+---
+# Role for database service (minimal permissions)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dokus-database-role
+  namespace: dokus-production
+rules:
+# No permissions - service doesn't need to access Kubernetes API
+[]
+
+---
+# RoleBinding for database service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dokus-database-rolebinding
+  namespace: dokus-production
+subjects:
+- kind: ServiceAccount
+  name: dokus-database-sa
+  namespace: dokus-production
+roleRef:
+  kind: Role
+  name: dokus-database-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Role for auth service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dokus-auth-role
+  namespace: dokus-production
+rules:
+# No permissions - service doesn't need to access Kubernetes API
+[]
+
+---
+# RoleBinding for auth service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dokus-auth-rolebinding
+  namespace: dokus-production
+subjects:
+- kind: ServiceAccount
+  name: dokus-auth-sa
+  namespace: dokus-production
+roleRef:
+  kind: Role
+  name: dokus-auth-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Resource Quotas to prevent resource exhaustion
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: dokus-production-quota
+  namespace: dokus-production
+spec:
+  hard:
+    # Compute resources
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+
+    # Storage
+    persistentvolumeclaims: "10"
+    requests.storage: 500Gi
+
+    # Object counts
+    pods: "50"
+    services: "20"
+    configmaps: "50"
+    secrets: "50"
+    replicationcontrollers: "0"  # We use Deployments
+
+---
+# Limit Range to enforce minimum and maximum resource requests
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: dokus-production-limits
+  namespace: dokus-production
+spec:
+  limits:
+  # Container limits
+  - type: Container
+    max:
+      cpu: "4"
+      memory: 8Gi
+    min:
+      cpu: "50m"
+      memory: 64Mi
+    default:
+      cpu: "500m"
+      memory: 512Mi
+    defaultRequest:
+      cpu: "100m"
+      memory: 128Mi
+    maxLimitRequestRatio:
+      cpu: "4"
+      memory: "4"
+
+  # Pod limits
+  - type: Pod
+    max:
+      cpu: "8"
+      memory: 16Gi
+    min:
+      cpu: "100m"
+      memory: 128Mi
+
+  # PVC limits
+  - type: PersistentVolumeClaim
+    max:
+      storage: 200Gi
+    min:
+      storage: 1Gi
+
+---
+# Secrets encryption at rest - configure via kube-apiserver
+# This is a reference configuration for cluster administrators
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: encryption-config-reference
+  namespace: kube-system
+data:
+  encryption-config.yaml: |
+    apiVersion: apiserver.config.k8s.io/v1
+    kind: EncryptionConfiguration
+    resources:
+      - resources:
+          - secrets
+        providers:
+          - aescbc:
+              keys:
+                - name: key1
+                  secret: <base64-encoded-32-byte-key>
+          - identity: {}
+
+---
+# Image Pull Policy and Admission Controller recommendations
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-recommendations
+  namespace: dokus-production
+data:
+  README.md: |
+    # Security Recommendations
+
+    ## Cluster-Level Security
+
+    ### 1. Enable Pod Security Admission
+    The namespace is already configured with restricted pod security standards.
+
+    ### 2. Enable Image Scanning
+    Use Trivy or similar to scan images before deployment:
+    ```bash
+    trivy image ghcr.io/invoid-vision/dokus-database:latest
+    ```
+
+    ### 3. Enable Network Policies
+    Network policies are configured in network-policies.yml
+    Ensure your CNI plugin supports NetworkPolicy (Calico, Cilium, etc.)
+
+    ### 4. Enable Audit Logging
+    Configure audit logging on kube-apiserver:
+    ```bash
+    --audit-policy-file=/etc/kubernetes/audit-policy.yaml
+    --audit-log-path=/var/log/kubernetes/audit.log
+    --audit-log-maxage=30
+    --audit-log-maxbackup=10
+    --audit-log-maxsize=100
+    ```
+
+    ### 5. Enable Secrets Encryption at Rest
+    Configure encryption-config.yaml on kube-apiserver:
+    ```bash
+    --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+    ```
+
+    ### 6. Restrict Anonymous Access
+    ```bash
+    --anonymous-auth=false
+    ```
+
+    ### 7. Enable RBAC
+    ```bash
+    --authorization-mode=Node,RBAC
+    ```
+
+    ## Application-Level Security
+
+    ### 1. Keep Images Updated
+    Regularly rebuild images with latest security patches:
+    ```bash
+    docker build --pull --no-cache -f Dockerfile.production .
+    ```
+
+    ### 2. Scan Dependencies
+    Use dependency scanning tools:
+    ```bash
+    ./gradlew dependencyCheckAnalyze
+    ```
+
+    ### 3. Rotate Secrets Regularly
+    Rotate database passwords, JWT secrets, API keys every 90 days
+
+    ### 4. Monitor Security Events
+    Check ModSecurity logs:
+    ```bash
+    kubectl logs -f deployment/nginx-ingress-controller | grep modsec
+    ```
+
+    ### 5. Backup Encryption
+    Ensure backups are encrypted:
+    ```bash
+    aws s3 cp backup.sql.gz s3://bucket/ --sse AES256
+    ```
+
+    ## Compliance Checklist
+
+    - [ ] All pods run as non-root
+    - [ ] Read-only root filesystems enabled
+    - [ ] No privileged containers
+    - [ ] Capabilities dropped
+    - [ ] Network policies enforced
+    - [ ] Resource limits set
+    - [ ] Image scanning enabled
+    - [ ] Secrets encrypted at rest
+    - [ ] TLS everywhere
+    - [ ] WAF enabled (ModSecurity)
+    - [ ] Rate limiting configured
+    - [ ] Audit logging enabled
+    - [ ] Regular security scans
+    - [ ] Incident response plan in place

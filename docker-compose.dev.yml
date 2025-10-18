@@ -109,6 +109,106 @@ services:
     volumes:
       - ./logs-dev:/app/logs
 
+  invoicing-service-dev:
+    image: invoid-vision/dokus-invoicing:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-invoicing-dev
+    environment:
+      PORT: 9092
+      DATABASE_SERVICE_HOST: database-service-dev
+      DATABASE_SERVICE_PORT: 9070
+      LOG_LEVEL: DEBUG
+    ports:
+      - "9092:9092"
+      - "5009:5009"
+    depends_on:
+      database-service-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9092/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
+  expense-service-dev:
+    image: invoid-vision/dokus-expense:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-expense-dev
+    environment:
+      PORT: 9093
+      DATABASE_SERVICE_HOST: database-service-dev
+      DATABASE_SERVICE_PORT: 9070
+      LOG_LEVEL: DEBUG
+    ports:
+      - "9093:9093"
+      - "5010:5010"
+    depends_on:
+      database-service-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9093/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
+  payment-service-dev:
+    image: invoid-vision/dokus-payment:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-payment-dev
+    environment:
+      PORT: 9094
+      DATABASE_SERVICE_HOST: database-service-dev
+      DATABASE_SERVICE_PORT: 9070
+      LOG_LEVEL: DEBUG
+    ports:
+      - "9094:9094"
+      - "5011:5011"
+    depends_on:
+      database-service-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9094/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
+  reporting-service-dev:
+    image: invoid-vision/dokus-reporting:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-reporting-dev
+    environment:
+      PORT: 9095
+      DATABASE_SERVICE_HOST: database-service-dev
+      DATABASE_SERVICE_PORT: 9070
+      LOG_LEVEL: DEBUG
+    ports:
+      - "9095:9095"
+      - "5012:5012"
+    depends_on:
+      database-service-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9095/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
   # pgAdmin for database management (profile: tools)
   pgadmin:
     image: dpage/pgadmin4:latest

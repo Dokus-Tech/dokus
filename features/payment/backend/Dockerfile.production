@@ -1,0 +1,44 @@
+# Multi-stage build for production
+
+# Stage 1: Build
+FROM gradle:8.5-jdk21 AS builder
+WORKDIR /build
+
+# Copy gradle files
+COPY gradle gradle
+COPY gradlew .
+COPY gradle.properties .
+COPY settings.gradle.kts .
+COPY build.gradle.kts .
+COPY gradle/libs.versions.toml gradle/
+COPY build-logic build-logic
+
+# Copy source
+COPY foundation foundation
+COPY features/payment features/payment
+
+# Build fat JAR
+RUN ./gradlew :features:payment:backend:shadowJar --no-daemon
+
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# Copy JAR from builder
+COPY --from=builder /build/features/payment/backend/build/libs/backend-1.0.0.jar /app/payment-service.jar
+
+# Create non-root user
+RUN addgroup -g 1001 -S appuser && adduser -u 1001 -S appuser -G appuser
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+USER appuser
+
+# Expose application port
+EXPOSE 9094
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:9094/health || exit 1
+
+# Run application
+ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/payment-service.jar"]
