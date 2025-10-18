@@ -1,0 +1,16 @@
+# Development Dockerfile for Invoicing Service
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# Copy the fat JAR
+COPY features/invoicing/backend/build/libs/backend-1.0.0.jar /app/invoicing-service.jar
+
+# Expose port and debug port
+EXPOSE 9092
+EXPOSE 5009
+
+# Run with remote debugging enabled
+ENTRYPOINT ["java", \
+    "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5009", \
+    "-jar", "/app/invoicing-service.jar"]
