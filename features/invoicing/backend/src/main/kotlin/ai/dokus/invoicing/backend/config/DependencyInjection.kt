@@ -1,5 +1,7 @@
 package ai.dokus.invoicing.backend.config
 
+import ai.dokus.foundation.apispec.InvoiceApi
+import ai.dokus.invoicing.backend.services.InvoiceApiImpl
 import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -8,7 +10,12 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
-    // Invoice-specific business logic services will go here
+    // API implementations
+    single<InvoiceApi> {
+        InvoiceApiImpl(
+            invoiceService = get()
+        )
+    }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppConfig) {

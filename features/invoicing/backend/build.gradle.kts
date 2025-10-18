@@ -13,12 +13,6 @@ application {
     mainClass.set("ai.dokus.invoicing.backend.ApplicationKt")
 }
 
-kotlin {
-    compilerOptions {
-        suppressWarnings.set(true)
-    }
-}
-
 dependencies {
     implementation(projects.foundation.domain)
     implementation(projects.foundation.ktorCommon)
@@ -26,7 +20,7 @@ dependencies {
 
     implementation(libs.kotlinx.serialization)
 
-    // KotlinX RPC Client & Server
+    // KotlinX RPC
     implementation(libs.kotlinx.rpc.core)
     implementation(libs.kotlinx.rpc.krpc.serialization.json)
     implementation(libs.kotlinx.rpc.krpc.ktor.client)
@@ -35,16 +29,10 @@ dependencies {
     // Ktor Server
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
-    implementation(libs.ktor.server.auth)
-    implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.call.logging)
-    implementation(libs.ktor.server.metrics.micrometer)
-    implementation(libs.ktor.server.rate.limit)
-    implementation(libs.ktor.server.openapi)
-    implementation(libs.ktor.server.swagger)
+    implementation(libs.ktor.server.status.pages)
 
     // Ktor Client (for RPC)
     implementation(libs.ktor.client.core)
@@ -55,58 +43,14 @@ dependencies {
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.ktor)
 
-    // Security
-    implementation(libs.java.jwt)
-
     // Logging
     implementation(libs.logback)
-
-    // Metrics
-    implementation(libs.micrometer.registry.prometheus)
-    implementation(libs.micrometer.core)
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
-tasks.shadowJar {
-    manifest {
-        attributes["Main-Class"] = "ai.dokus.invoicing.backend.ApplicationKt"
+tasks {
+    shadowJar {
+        archiveBaseName.set("backend")
+        archiveVersion.set(project.version.toString())
+        mergeServiceFiles()
     }
-    mergeServiceFiles()
-    archiveClassifier.set("")
-    exclude("META-INF/*.SF")
-    exclude("META-INF/*.DSA")
-    exclude("META-INF/*.RSA")
-}
-
-tasks.named<Tar>("distTar") {
-    dependsOn("shadowJar")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-tasks.named<Zip>("distZip") {
-    dependsOn("shadowJar")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-tasks.named("startScripts") {
-    dependsOn("shadowJar")
-}
-
-tasks.named("startShadowScripts") {
-    enabled = false
-}
-
-tasks.named("shadowDistTar") {
-    enabled = false
-}
-
-tasks.named("shadowDistZip") {
-    enabled = false
-}
-
-tasks.named("build") {
-    dependsOn("shadowJar")
 }
