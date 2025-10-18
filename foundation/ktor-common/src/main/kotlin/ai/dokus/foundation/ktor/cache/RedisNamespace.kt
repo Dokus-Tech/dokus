@@ -6,7 +6,10 @@ package ai.dokus.foundation.ktor.cache
  */
 enum class RedisNamespace(val value: String) {
     Auth("auth"),
-    Invoicing("invoicing");
+    Invoicing("invoicing"),
+    Expense("expense"),
+    Payment("payment"),
+    Reporting("reporting");
 
     override fun toString(): String = value
 }
