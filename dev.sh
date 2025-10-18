@@ -187,6 +187,34 @@ build_app() {
     fi
     print_status success "Invoicing Service JAR built"
 
+    # Build Expense Service JAR
+    print_status loading "Building Expense Service JAR..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :features:expense:backend:shadowJar -x test -q
+    else
+        gradle :features:expense:backend:shadowJar -x test -q
+    fi
+
+    if [ $? -ne 0 ]; then
+        print_status error "Expense Service JAR build failed"
+        exit 1
+    fi
+    print_status success "Expense Service JAR built"
+
+    # Build Payment Service JAR
+    print_status loading "Building Payment Service JAR..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :features:payment:backend:shadowJar -x test -q
+    else
+        gradle :features:payment:backend:shadowJar -x test -q
+    fi
+
+    if [ $? -ne 0 ]; then
+        print_status error "Payment Service JAR build failed"
+        exit 1
+    fi
+    print_status success "Payment Service JAR built"
+
     print_divider
     echo ""
     print_status loading "Building Docker images..."
@@ -218,6 +246,24 @@ build_app() {
         exit 1
     fi
     print_status success "Invoicing Service image built"
+
+    # Expense Service image
+    print_status loading "Building Expense Service image..."
+    docker build -f features/expense/backend/Dockerfile.dev -t invoid-vision/dokus-expense:dev-latest . -q > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "Expense Service Docker image build failed"
+        exit 1
+    fi
+    print_status success "Expense Service image built"
+
+    # Payment Service image
+    print_status loading "Building Payment Service image..."
+    docker build -f features/payment/backend/Dockerfile.dev -t invoid-vision/dokus-payment:dev-latest . -q > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "Payment Service Docker image build failed"
+        exit 1
+    fi
+    print_status success "Payment Service image built"
 
     echo ""
 }
@@ -279,6 +325,39 @@ start_services() {
         printf "  ${CYAN}▸${NC} Database Service    "
         for i in {1..30}; do
             if curl -f -s http://localhost:9071/metrics > /dev/null 2>&1; then
+                echo -e "${GREEN}✔ Ready${NC}"
+                break
+            fi
+            echo -n "."
+            sleep 1
+        done
+
+        # Wait for Invoicing Service
+        printf "  ${CYAN}▸${NC} Invoicing Service   "
+        for i in {1..30}; do
+            if curl -f -s http://localhost:9092/health > /dev/null 2>&1; then
+                echo -e "${GREEN}✔ Ready${NC}"
+                break
+            fi
+            echo -n "."
+            sleep 1
+        done
+
+        # Wait for Expense Service
+        printf "  ${CYAN}▸${NC} Expense Service     "
+        for i in {1..30}; do
+            if curl -f -s http://localhost:9093/health > /dev/null 2>&1; then
+                echo -e "${GREEN}✔ Ready${NC}"
+                break
+            fi
+            echo -n "."
+            sleep 1
+        done
+
+        # Wait for Payment Service
+        printf "  ${CYAN}▸${NC} Payment Service     "
+        for i in {1..30}; do
+            if curl -f -s http://localhost:9094/health > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -350,7 +429,7 @@ show_status() {
 
     # Auth Service
     printf "  ${CYAN}▸${NC} Auth Service        "
-    if curl -f -s http://localhost:9093/metrics > /dev/null 2>&1; then
+    if curl -f -s http://localhost:9091/metrics > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -359,6 +438,30 @@ show_status() {
     # Database Service
     printf "  ${CYAN}▸${NC} Database Service    "
     if curl -f -s http://localhost:9071/metrics > /dev/null 2>&1; then
+        echo -e "${GREEN}✔ Healthy${NC}"
+    else
+        echo -e "${RED}✖ Not responding${NC}"
+    fi
+
+    # Invoicing Service
+    printf "  ${CYAN}▸${NC} Invoicing Service   "
+    if curl -f -s http://localhost:9092/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✔ Healthy${NC}"
+    else
+        echo -e "${RED}✖ Not responding${NC}"
+    fi
+
+    # Expense Service
+    printf "  ${CYAN}▸${NC} Expense Service     "
+    if curl -f -s http://localhost:9093/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✔ Healthy${NC}"
+    else
+        echo -e "${RED}✖ Not responding${NC}"
+    fi
+
+    # Payment Service
+    printf "  ${CYAN}▸${NC} Payment Service     "
+    if curl -f -s http://localhost:9094/health > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -477,6 +580,27 @@ print_services_info() {
     echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9071/metrics${NC}"
     echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9071/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5008${NC}"
+    echo ""
+
+    # Invoicing Service
+    echo -e "  ${MAGENTA}▸ Invoicing Service${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9092${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9092/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5009${NC}"
+    echo ""
+
+    # Expense Service
+    echo -e "  ${MAGENTA}▸ Expense Service${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9093${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9093/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5010${NC}"
+    echo ""
+
+    # Payment Service
+    echo -e "  ${MAGENTA}▸ Payment Service${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9094${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9094/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5011${NC}"
     echo ""
 
     # Databases

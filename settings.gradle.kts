@@ -45,6 +45,9 @@ include(":features:auth:backend")
 include(":features:auth:presentation")
 
 include(":features:invoicing:backend")
+include(":features:expense:backend")
+include(":features:payment:backend")
+include(":features:reporting:backend")
 
 include(":foundation:domain")
 include(":foundation:apispec")
