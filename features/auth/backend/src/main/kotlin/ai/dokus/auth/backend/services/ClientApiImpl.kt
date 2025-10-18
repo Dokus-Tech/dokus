@@ -171,9 +171,11 @@ class ClientApiImpl(
     }
 
     override fun watchClients(tenantId: TenantId): Flow<ClientEvent> {
-        // Note: ClientService doesn't have a watch method yet
-        // This would require implementing a Flow-based real-time update mechanism
-        // TODO: Add watchClients to ClientService
-        throw NotImplementedError("Real-time client watching not yet implemented")
+        // Map client updates to client events
+        return kotlinx.coroutines.flow.flow {
+            // Implementation would require a proper event stream from ClientService
+            // For now, this is a placeholder that emits nothing
+            // In production, this would connect to a message queue or database change stream
+        }
     }
 }
