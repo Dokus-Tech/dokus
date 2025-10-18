@@ -173,6 +173,20 @@ build_app() {
     fi
     print_status success "Database Service JAR built"
 
+    # Build Invoicing Service JAR
+    print_status loading "Building Invoicing Service JAR..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :features:invoicing:backend:shadowJar -x test -q
+    else
+        gradle :features:invoicing:backend:shadowJar -x test -q
+    fi
+
+    if [ $? -ne 0 ]; then
+        print_status error "Invoicing Service JAR build failed"
+        exit 1
+    fi
+    print_status success "Invoicing Service JAR built"
+
     print_divider
     echo ""
     print_status loading "Building Docker images..."
@@ -195,6 +209,15 @@ build_app() {
         exit 1
     fi
     print_status success "Database Service image built"
+
+    # Invoicing Service image
+    print_status loading "Building Invoicing Service image..."
+    docker build -f features/invoicing/backend/Dockerfile.dev -t invoid-vision/dokus-invoicing:dev-latest . -q > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "Invoicing Service Docker image build failed"
+        exit 1
+    fi
+    print_status success "Invoicing Service image built"
 
     echo ""
 }
