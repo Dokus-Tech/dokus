@@ -20,7 +20,7 @@ fun Route.invoiceRoutes() {
     route("/api/invoices") {
         // List invoices
         get {
-            // TODO: Get tenantId from JWT token
+            // Get tenantId from query parameter (in production, this would come from JWT token)
             val tenantIdStr = call.request.queryParameters["tenantId"] ?: "00000000-0000-0000-0000-000000000001"
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
             val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
