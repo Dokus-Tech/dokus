@@ -1,5 +1,6 @@
 package ai.dokus.invoicing.backend
 
+import ai.dokus.foundation.apispec.InvoiceApi
 import ai.dokus.invoicing.backend.config.configureDependencyInjection
 import ai.dokus.invoicing.backend.routes.invoiceRoutes
 import ai.dokus.foundation.ktor.AppConfig
@@ -10,9 +11,14 @@ import ai.dokus.foundation.ktor.configure.configureSerialization
 import ai.dokus.foundation.ktor.routes.healthRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
+import kotlinx.rpc.krpc.ktor.server.Krpc
+import kotlinx.rpc.krpc.ktor.server.rpc
+import kotlinx.rpc.krpc.serialization.json.json
+import org.koin.ktor.ext.get
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("Application")
@@ -52,10 +58,26 @@ fun Application.module(appConfig: AppConfig) {
     configureSecurity(appConfig.security)
     configureMonitoring()
 
+    // Install KotlinX RPC plugin
+    install(Krpc)
+
     // Configure routes
     routing {
         healthRoutes()
         invoiceRoutes()
+
+        // Register RPC APIs
+        rpc("/api") {
+            rpcConfig {
+                serialization {
+                    json()
+                }
+            }
+
+            registerService<InvoiceApi> { get<InvoiceApi>() }
+        }
+
+        logger.info("RPC APIs registered at /api")
     }
 
     // Configure graceful shutdown

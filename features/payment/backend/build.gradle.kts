@@ -18,7 +18,15 @@ dependencies {
     implementation(projects.foundation.ktorCommon)
     implementation(projects.foundation.apispec)
 
-    // Ktor
+    implementation(libs.kotlinx.serialization)
+
+    // KotlinX RPC
+    implementation(libs.kotlinx.rpc.core)
+    implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    implementation(libs.kotlinx.rpc.krpc.ktor.client)
+    implementation(libs.kotlinx.rpc.krpc.ktor.server)
+
+    // Ktor Server
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)
@@ -26,30 +34,17 @@ dependencies {
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.status.pages)
 
-    // KotlinX RPC
-    implementation(libs.kotlinx.rpc.krpc.server)
-    implementation(libs.kotlinx.rpc.krpc.client)
-    implementation(libs.kotlinx.rpc.krpc.serialization.json)
-    implementation(libs.kotlinx.rpc.krpc.ktor.server)
-    implementation(libs.kotlinx.rpc.krpc.ktor.client)
-
-    // HTTP Client for RPC
+    // Ktor Client (for RPC)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.client.websocket)
 
     // Dependency Injection
-    implementation(libs.koin.core)
+    implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.ktor)
 
     // Logging
-    implementation(libs.logback.classic)
-    implementation(libs.kotlin.logging)
-
-    // Testing
-    testImplementation(libs.kotlin.test.junit)
-    testImplementation(libs.ktor.server.tests)
+    implementation(libs.logback)
 }
 
 tasks {
