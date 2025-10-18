@@ -3,6 +3,7 @@ package ai.dokus.auth.backend.config
 import ai.dokus.foundation.ktor.services.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import kotlinx.rpc.RpcClient
 import kotlinx.rpc.krpc.ktor.client.Krpc
@@ -13,9 +14,10 @@ import kotlinx.rpc.withService
 import org.koin.dsl.module
 
 val rpcClientModule = module {
-    // Shared HTTP client with Krpc plugin
+    // Shared HTTP client with WebSockets and Krpc plugins
     single<HttpClient> {
         HttpClient(CIO) {
+            install(WebSockets)
             install(Krpc)
         }
     }
@@ -25,7 +27,7 @@ val rpcClientModule = module {
         val httpClient = get<HttpClient>()
         httpClient.rpc {
             url {
-                protocol = URLProtocol.HTTP
+                protocol = URLProtocol.WS
                 host = System.getenv("DATABASE_SERVICE_HOST") ?: "localhost"
                 port = System.getenv("DATABASE_SERVICE_PORT")?.toIntOrNull() ?: 9070
                 path("/api/rpc")
