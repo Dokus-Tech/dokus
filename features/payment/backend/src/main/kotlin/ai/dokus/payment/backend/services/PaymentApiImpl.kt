@@ -180,12 +180,40 @@ class PaymentApiImpl(
     }
 
     override fun watchPayments(tenantId: TenantId): Flow<PaymentEvent> {
-        // Map payment updates to payment events
-        // Currently only supports PaymentRecorded events
+        // Implement polling-based watching since PaymentService doesn't provide streaming
         return kotlinx.coroutines.flow.flow {
-            // Implementation would require a proper event stream from PaymentService
-            // For now, this is a placeholder that emits nothing
-            // In production, this would connect to a message queue or database change stream
+            var lastSeenPayments = emptySet<PaymentId>()
+
+            while (true) {
+                // Poll for new payments every 5 seconds
+                kotlinx.coroutines.delay(5000)
+
+                try {
+                    val currentPayments = paymentService.listByTenant(
+                        tenantId = tenantId,
+                        fromDate = null,
+                        toDate = null,
+                        paymentMethod = null,
+                        limit = 100,
+                        offset = null
+                    )
+
+                    val currentIds = currentPayments.map { it.id }.toSet()
+                    val newPaymentIds = currentIds - lastSeenPayments
+
+                    // Emit events for new payments
+                    currentPayments
+                        .filter { it.id in newPaymentIds }
+                        .forEach { payment ->
+                            emit(PaymentEvent.PaymentRecorded(payment))
+                        }
+
+                    lastSeenPayments = currentIds
+                } catch (e: Exception) {
+                    // Log error but continue polling
+                    // In production, this would use proper logging
+                }
+            }
         }
     }
 }

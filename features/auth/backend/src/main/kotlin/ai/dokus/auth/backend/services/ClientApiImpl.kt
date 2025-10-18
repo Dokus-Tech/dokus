@@ -171,11 +171,45 @@ class ClientApiImpl(
     }
 
     override fun watchClients(tenantId: TenantId): Flow<ClientEvent> {
-        // Map client updates to client events
+        // Implement polling-based watching since ClientService doesn't provide streaming
         return kotlinx.coroutines.flow.flow {
-            // Implementation would require a proper event stream from ClientService
-            // For now, this is a placeholder that emits nothing
-            // In production, this would connect to a message queue or database change stream
+            var lastSeenClients = emptyMap<ClientId, Client>()
+
+            while (true) {
+                // Poll for client changes every 5 seconds
+                kotlinx.coroutines.delay(5000)
+
+                try {
+                    val currentClients = clientService.listByTenant(tenantId, activeOnly = false)
+                    val currentMap = currentClients.associateBy { it.id }
+
+                    currentClients.forEach { client ->
+                        val previous = lastSeenClients[client.id]
+                        when {
+                            previous == null -> {
+                                // New client
+                                emit(ClientEvent.ClientCreated(client))
+                            }
+                            previous != client -> {
+                                // Updated client (comparing entire object)
+                                emit(ClientEvent.ClientUpdated(client))
+                            }
+                        }
+                    }
+
+                    // Check for deleted clients
+                    lastSeenClients.keys.forEach { oldId ->
+                        if (oldId !in currentMap) {
+                            emit(ClientEvent.ClientDeleted(oldId))
+                        }
+                    }
+
+                    lastSeenClients = currentMap
+                } catch (e: Exception) {
+                    // Log error but continue polling
+                    // In production, this would use proper logging
+                }
+            }
         }
     }
 }
