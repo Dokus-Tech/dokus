@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database.services
 
+import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 import java.time.Instant
-import java.util.*
 
 /**
  * Peppol Access Point Client
@@ -57,7 +57,7 @@ interface PeppolAccessPoint {
 /**
  * Peppol transmission result
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class PeppolTransmissionResult(
     val messageId: String,
     val timestamp: String,
