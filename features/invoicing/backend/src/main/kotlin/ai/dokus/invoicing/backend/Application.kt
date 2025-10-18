@@ -13,6 +13,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
+import org.slf4j.LoggerFactory
 
 fun main() {
     embeddedServer(
@@ -24,6 +25,8 @@ fun main() {
 }
 
 fun Application.module() {
+    val logger = LoggerFactory.getLogger("ai.dokus.invoicing.backend.Application")
+
     // Content Negotiation
     install(ContentNegotiation) {
         json(Json {
@@ -41,6 +44,9 @@ fun Application.module() {
     // Status Pages
     install(StatusPages) {
         exception<Throwable> { call, cause ->
+            // Log the full exception with stack trace
+            logger.error("Request failed: ${cause.message}", cause)
+            cause.printStackTrace()  // Print to stderr for immediate visibility
             call.respond(
                 io.ktor.http.HttpStatusCode.InternalServerError,
                 mapOf("error" to (cause.message ?: "Unknown error"))

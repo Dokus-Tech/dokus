@@ -38,9 +38,9 @@ val rpcClientModule = module {
         }
     }
 
-    // Service proxies for invoicing module
+    // Service proxies using shared RPC client (only services registered in database service)
     single<InvoiceService> { get<RpcClient>().withService() }
     single<ClientService> { get<RpcClient>().withService() }
-    single<VatService> { get<RpcClient>().withService() }
-    single<AttachmentService> { get<RpcClient>().withService() }
+    single<ExpenseService> { get<RpcClient>().withService() }
+    single<PaymentService> { get<RpcClient>().withService() }
 }
