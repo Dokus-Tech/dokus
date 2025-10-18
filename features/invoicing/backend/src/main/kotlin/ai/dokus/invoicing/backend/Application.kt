@@ -2,74 +2,67 @@ package ai.dokus.invoicing.backend
 
 import ai.dokus.invoicing.backend.config.configureDependencyInjection
 import ai.dokus.invoicing.backend.routes.invoiceRoutes
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import io.ktor.server.plugins.calllogging.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.statuspages.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import kotlinx.serialization.json.Json
-import org.slf4j.event.Level
+import ai.dokus.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.configure.configureErrorHandling
+import ai.dokus.foundation.ktor.configure.configureMonitoring
+import ai.dokus.foundation.ktor.configure.configureSecurity
+import ai.dokus.foundation.ktor.configure.configureSerialization
+import ai.dokus.foundation.ktor.routes.healthRoutes
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import io.ktor.server.routing.routing
 import org.slf4j.LoggerFactory
 
+private val logger = LoggerFactory.getLogger("Application")
+
 fun main() {
-    embeddedServer(
+    val appConfig = AppConfig.load()
+
+    logger.info("Loaded configuration: ${appConfig.ktor.deployment.environment}")
+
+    val server = embeddedServer(
         Netty,
-        port = System.getenv("PORT")?.toIntOrNull() ?: 9092,
-        host = "0.0.0.0",
-        module = Application::module
-    ).start(wait = true)
+        port = appConfig.ktor.deployment.port,
+        host = appConfig.ktor.deployment.host,
+    ) {
+        module(appConfig)
+    }
+
+    // Setup shutdown hook for graceful shutdown
+    Runtime.getRuntime().addShutdownHook(Thread {
+        logger.info("Shutting down server gracefully...")
+        server.stop(5000, 10000)
+        logger.info("Server shutdown complete")
+    })
+
+    server.start(wait = true)
 }
 
-fun Application.module() {
-    val logger = LoggerFactory.getLogger("ai.dokus.invoicing.backend.Application")
+fun Application.module(appConfig: AppConfig) {
+    // Log application startup
+    logger.info("Starting Dokus Invoicing Service...")
+    logger.info("Environment: ${appConfig.ktor.deployment.environment}")
 
-    // Content Negotiation
-    install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-            ignoreUnknownKeys = true
-        })
-    }
+    // Configure application
+    configureDependencyInjection(appConfig)
+    configureSerialization()
+    configureErrorHandling()
+    configureSecurity(appConfig.security)
+    configureMonitoring()
 
-    // Call Logging
-    install(CallLogging) {
-        level = Level.INFO
-    }
-
-    // Status Pages
-    install(StatusPages) {
-        exception<Throwable> { call, cause ->
-            // Log the full exception with stack trace
-            logger.error("Request failed: ${cause.message}", cause)
-            cause.printStackTrace()  // Print to stderr for immediate visibility
-            call.respond(
-                io.ktor.http.HttpStatusCode.InternalServerError,
-                mapOf("error" to (cause.message ?: "Unknown error"))
-            )
-        }
-    }
-
-    // Dependency Injection
-    configureDependencyInjection()
-
-    // Routes
+    // Configure routes
     routing {
-        // Health check
-        get("/health") {
-            call.respond(mapOf("status" to "healthy", "service" to "invoicing"))
-        }
-
-        // Metrics
-        get("/metrics") {
-            call.respond(mapOf("service" to "invoicing", "status" to "ok"))
-        }
-
-        // Invoice routes
+        healthRoutes()
         invoiceRoutes()
     }
+
+    // Configure graceful shutdown
+    monitor.subscribe(ApplicationStopping) {
+        logger.info("Application stopping, cleaning up resources...")
+        logger.info("Cleanup complete")
+    }
+
+    logger.info("Dokus Invoicing Service started successfully")
 }

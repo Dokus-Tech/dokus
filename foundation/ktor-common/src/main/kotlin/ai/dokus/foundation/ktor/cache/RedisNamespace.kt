@@ -5,7 +5,8 @@ package ai.dokus.foundation.ktor.cache
  * Each namespace isolates keys to prevent conflicts between modules
  */
 enum class RedisNamespace(val value: String) {
-    Auth("auth");
+    Auth("auth"),
+    Invoicing("invoicing");
 
     override fun toString(): String = value
 }

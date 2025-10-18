@@ -10,9 +10,11 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 
 @OptIn(ExperimentalUuidApi::class)
 fun Route.invoiceRoutes() {
+    val logger = LoggerFactory.getLogger("InvoiceRoutes")
     val invoiceService by inject<InvoiceService>()
 
     route("/api/invoices") {
@@ -30,8 +32,9 @@ fun Route.invoiceRoutes() {
                     limit = limit,
                     offset = offset
                 )
-                call.respond(HttpStatusCode.OK, mapOf("invoices" to invoices, "limit" to limit, "offset" to offset))
+                call.respond(HttpStatusCode.OK, invoices)
             } catch (e: Exception) {
+                logger.error("Error listing invoices", e)
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Failed to list invoices")))
             }
         }

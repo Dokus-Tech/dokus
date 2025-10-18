@@ -1,10 +1,22 @@
 package ai.dokus.invoicing.backend.config
 
+import ai.dokus.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.cache.RedisNamespace
+import ai.dokus.foundation.ktor.cache.redisModule
 import io.ktor.server.application.*
+import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
-fun Application.configureDependencyInjection() {
+private val appModule = module {
+    // Invoice-specific business logic services will go here
+}
+
+fun Application.configureDependencyInjection(appConfig: AppConfig) {
+    val coreModule = module {
+        single<AppConfig> { appConfig }
+    }
+
     install(Koin) {
-        modules(rpcClientModule)
+        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Invoicing), rpcClientModule)
     }
 }
