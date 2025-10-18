@@ -13,7 +13,8 @@ private val appModule = module {
     // API implementations
     single<PaymentApi> {
         PaymentApiImpl(
-            paymentService = get()
+            paymentService = get(),
+            invoiceService = get()
         )
     }
 }

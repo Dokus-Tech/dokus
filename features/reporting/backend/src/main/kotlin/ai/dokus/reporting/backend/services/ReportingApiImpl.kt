@@ -7,7 +7,9 @@ import ai.dokus.foundation.ktor.services.ExpenseService
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.datetime.LocalDate
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 class ReportingApiImpl(
     private val invoiceService: InvoiceService,
     private val expenseService: ExpenseService,
@@ -19,30 +21,55 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Result<FinancialSummary> = runCatching {
-        val invoices = invoiceService.listByTenant(tenantId, null, null, startDate, endDate)
-        val expenses = expenseService.listByTenant(tenantId, 10000, 0)
-            .filter { expense ->
-                (startDate == null || expense.date >= startDate) &&
-                (endDate == null || expense.date <= endDate)
-            }
-        val payments = paymentService.listByTenant(tenantId, 10000, 0)
-            .filter { payment ->
-                (startDate == null || payment.paymentDate >= startDate) &&
-                (endDate == null || payment.paymentDate <= endDate)
-            }
+        val invoices = invoiceService.listByTenant(
+            tenantId = tenantId,
+            status = null,
+            clientId = null,
+            fromDate = startDate,
+            toDate = endDate,
+            limit = null,
+            offset = null
+        )
+        val expenses = expenseService.listByTenant(
+            tenantId = tenantId,
+            category = null,
+            fromDate = startDate,
+            toDate = endDate,
+            merchant = null,
+            limit = null,
+            offset = null
+        )
+        val payments = paymentService.listByTenant(
+            tenantId = tenantId,
+            fromDate = startDate,
+            toDate = endDate,
+            paymentMethod = null,
+            limit = null,
+            offset = null
+        )
 
-        val totalRevenue = payments.fold(Money.ZERO) { acc, p -> acc + p.amount }
-        val totalExpenses = expenses.fold(Money.ZERO) { acc, e -> acc + e.amount }
-        val outstandingAmount = invoices
-            .filter { it.status.name in listOf("SENT", "OVERDUE", "PARTIALLY_PAID") }
-            .fold(Money.ZERO) { acc, inv -> acc + (inv.total - inv.paidAmount) }
+        val totalRevenue = Money(
+            payments.sumOf { java.math.BigDecimal(it.amount.value) }.toString()
+        )
+        val totalExpenses = Money(
+            expenses.sumOf { java.math.BigDecimal(it.amount.value) }.toString()
+        )
+        val outstandingAmount = Money(
+            invoices
+                .filter { it.status.name in listOf("SENT", "OVERDUE", "PARTIALLY_PAID") }
+                .sumOf {
+                    java.math.BigDecimal(it.totalAmount.value) - java.math.BigDecimal(it.paidAmount.value)
+                }.toString()
+        )
 
         FinancialSummary(
             tenantId = tenantId.value.toString(),
             period = DateRange(startDate, endDate),
             totalRevenue = totalRevenue,
             totalExpenses = totalExpenses,
-            netProfit = totalRevenue - totalExpenses,
+            netProfit = Money(
+                (java.math.BigDecimal(totalRevenue.value) - java.math.BigDecimal(totalExpenses.value)).toString()
+            ),
             invoiceCount = invoices.size,
             expenseCount = expenses.size,
             paymentCount = payments.size,
@@ -55,20 +82,40 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Result<InvoiceAnalytics> = runCatching {
-        val invoices = invoiceService.listByTenant(tenantId, null, null, startDate, endDate)
+        val invoices = invoiceService.listByTenant(
+            tenantId = tenantId,
+            status = null,
+            clientId = null,
+            fromDate = startDate,
+            toDate = endDate,
+            limit = null,
+            offset = null
+        )
 
-        val totalAmount = invoices.fold(Money.ZERO) { acc, inv -> acc + inv.total }
-        val paidAmount = invoices.fold(Money.ZERO) { acc, inv -> acc + inv.paidAmount }
-        val outstandingAmount = totalAmount - paidAmount
+        val totalAmount = Money(
+            invoices.sumOf { java.math.BigDecimal(it.totalAmount.value) }.toString()
+        )
+        val paidAmount = Money(
+            invoices.sumOf { java.math.BigDecimal(it.paidAmount.value) }.toString()
+        )
+        val outstandingAmount = Money(
+            (java.math.BigDecimal(totalAmount.value) - java.math.BigDecimal(paidAmount.value)).toString()
+        )
 
         val overdueInvoices = invoiceService.listOverdue(tenantId)
-        val overdueAmount = overdueInvoices.fold(Money.ZERO) { acc, inv -> acc + (inv.total - inv.paidAmount) }
+        val overdueAmount = Money(
+            overdueInvoices.sumOf {
+                java.math.BigDecimal(it.totalAmount.value) - java.math.BigDecimal(it.paidAmount.value)
+            }.toString()
+        )
 
         val statusBreakdown = invoices.groupBy { it.status.name }
             .mapValues { it.value.size }
 
         val averageInvoiceValue = if (invoices.isNotEmpty()) {
-            totalAmount / invoices.size
+            Money(
+                (java.math.BigDecimal(totalAmount.value) / java.math.BigDecimal(invoices.size.toString())).toString()
+            )
         } else {
             Money.ZERO
         }
@@ -89,25 +136,38 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Result<ExpenseAnalytics> = runCatching {
-        val expenses = expenseService.listByTenant(tenantId, 10000, 0)
-            .filter { expense ->
-                (startDate == null || expense.date >= startDate) &&
-                (endDate == null || expense.date <= endDate)
+        val expenses = expenseService.listByTenant(
+            tenantId = tenantId,
+            category = null,
+            fromDate = startDate,
+            toDate = endDate,
+            merchant = null,
+            limit = null,
+            offset = null
+        )
+
+        val totalAmount = Money(
+            expenses.sumOf { java.math.BigDecimal(it.amount.value) }.toString()
+        )
+        val categoryBreakdown = expenses.groupBy { it.category.name }
+            .mapValues { entry ->
+                Money(entry.value.sumOf { java.math.BigDecimal(it.amount.value) }.toString())
             }
 
-        val totalAmount = expenses.fold(Money.ZERO) { acc, e -> acc + e.amount }
-        val categoryBreakdown = expenses.groupBy { it.category.name }
-            .mapValues { it.value.fold(Money.ZERO) { acc, e -> acc + e.amount } }
-
         val averageExpenseValue = if (expenses.isNotEmpty()) {
-            totalAmount / expenses.size
+            Money(
+                (java.math.BigDecimal(totalAmount.value) / java.math.BigDecimal(expenses.size.toString())).toString()
+            )
         } else {
             Money.ZERO
         }
 
-        val deductibleAmount = expenses
-            .filter { it.isDeductible }
-            .fold(Money.ZERO) { acc, e -> acc + e.amount }
+        val deductibleAmount = Money(
+            expenses
+                .filter { it.isDeductible }
+                .sumOf { java.math.BigDecimal(it.amount.value) }
+                .toString()
+        )
 
         ExpenseAnalytics(
             totalExpenses = expenses.size,
@@ -123,29 +183,42 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Result<CashFlowReport> = runCatching {
-        val payments = paymentService.listByTenant(tenantId, 10000, 0)
-            .filter { payment ->
-                (startDate == null || payment.paymentDate >= startDate) &&
-                (endDate == null || payment.paymentDate <= endDate)
-            }
+        val payments = paymentService.listByTenant(
+            tenantId = tenantId,
+            fromDate = startDate,
+            toDate = endDate,
+            paymentMethod = null,
+            limit = null,
+            offset = null
+        )
 
-        val expenses = expenseService.listByTenant(tenantId, 10000, 0)
-            .filter { expense ->
-                (startDate == null || expense.date >= startDate) &&
-                (endDate == null || expense.date <= endDate)
-            }
+        val expenses = expenseService.listByTenant(
+            tenantId = tenantId,
+            category = null,
+            fromDate = startDate,
+            toDate = endDate,
+            merchant = null,
+            limit = null,
+            offset = null
+        )
 
-        val totalInflow = payments.fold(Money.ZERO) { acc, p -> acc + p.amount }
-        val totalOutflow = expenses.fold(Money.ZERO) { acc, e -> acc + e.amount }
+        val totalInflow = Money(
+            payments.sumOf { java.math.BigDecimal(it.amount.value) }.toString()
+        )
+        val totalOutflow = Money(
+            expenses.sumOf { java.math.BigDecimal(it.amount.value) }.toString()
+        )
 
-        // Group by month (simplified - you might want more sophisticated grouping)
-        val monthlyData = emptyList<MonthlyCashFlow>() // TODO: Implement monthly grouping
+        // Group by month and calculate monthly cash flow
+        val monthlyData = buildMonthlyData(payments, expenses)
 
         CashFlowReport(
             period = DateRange(startDate, endDate),
             totalInflow = totalInflow,
             totalOutflow = totalOutflow,
-            netCashFlow = totalInflow - totalOutflow,
+            netCashFlow = Money(
+                (java.math.BigDecimal(totalInflow.value) - java.math.BigDecimal(totalOutflow.value)).toString()
+            ),
             monthlyData = monthlyData
         )
     }
@@ -155,23 +228,74 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Result<VatReport> = runCatching {
-        val invoices = invoiceService.listByTenant(tenantId, null, null, startDate, endDate)
-        val expenses = expenseService.listByTenant(tenantId, 10000, 0)
-            .filter { expense ->
-                (startDate == null || expense.date >= startDate) &&
-                (endDate == null || expense.date <= endDate)
-            }
+        val invoices = invoiceService.listByTenant(
+            tenantId = tenantId,
+            status = null,
+            clientId = null,
+            fromDate = startDate,
+            toDate = endDate,
+            limit = null,
+            offset = null
+        )
+        val expenses = expenseService.listByTenant(
+            tenantId = tenantId,
+            category = null,
+            fromDate = startDate,
+            toDate = endDate,
+            merchant = null,
+            limit = null,
+            offset = null
+        )
 
-        val vatCollected = invoices.fold(Money.ZERO) { acc, inv -> acc + inv.vatAmount }
-        val vatPaid = expenses.fold(Money.ZERO) { acc, e -> acc + (e.vatAmount ?: Money.ZERO) }
+        val vatCollected = Money(
+            invoices.sumOf { java.math.BigDecimal(it.vatAmount.value) }.toString()
+        )
+        val vatPaid = Money(
+            expenses.sumOf { java.math.BigDecimal(it.vatAmount?.value ?: "0") }.toString()
+        )
 
         VatReport(
             period = DateRange(startDate, endDate),
             vatCollected = vatCollected,
             vatPaid = vatPaid,
-            vatOwed = vatCollected - vatPaid,
+            vatOwed = Money(
+                (java.math.BigDecimal(vatCollected.value) - java.math.BigDecimal(vatPaid.value)).toString()
+            ),
             salesCount = invoices.size,
             purchaseCount = expenses.size
         )
+    }
+
+    private fun buildMonthlyData(
+        payments: List<ai.dokus.foundation.domain.model.Payment>,
+        expenses: List<ai.dokus.foundation.domain.model.Expense>
+    ): List<MonthlyCashFlow> {
+        // Group payments and expenses by month
+        val paymentsByMonth = payments.groupBy { "${it.paymentDate.year}-${it.paymentDate.monthNumber.toString().padStart(2, '0')}" }
+        val expensesByMonth = expenses.groupBy { "${it.date.year}-${it.date.monthNumber.toString().padStart(2, '0')}" }
+
+        // Get all unique months
+        val allMonths = (paymentsByMonth.keys + expensesByMonth.keys).distinct().sorted()
+
+        return allMonths.map { month ->
+            val monthPayments = paymentsByMonth[month] ?: emptyList()
+            val monthExpenses = expensesByMonth[month] ?: emptyList()
+
+            val inflow = Money(
+                monthPayments.sumOf { java.math.BigDecimal(it.amount.value) }.toString()
+            )
+            val outflow = Money(
+                monthExpenses.sumOf { java.math.BigDecimal(it.amount.value) }.toString()
+            )
+
+            MonthlyCashFlow(
+                month = month,
+                inflow = inflow,
+                outflow = outflow,
+                net = Money(
+                    (java.math.BigDecimal(inflow.value) - java.math.BigDecimal(outflow.value)).toString()
+                )
+            )
+        }
     }
 }
