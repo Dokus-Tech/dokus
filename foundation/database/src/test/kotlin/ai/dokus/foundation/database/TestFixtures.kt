@@ -3,32 +3,35 @@ package ai.dokus.foundation.database
 import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.*
 import ai.dokus.foundation.domain.model.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.datetime.*
 
 /**
  * Test fixtures for creating test data
  * Provides consistent test data across all test suites
  */
+@OptIn(ExperimentalUuidApi::class)
 object TestFixtures {
     // Test tenant IDs
-    val tenant1Id = TenantId("00000000-0000-0000-0000-000000000001")
-    val tenant2Id = TenantId("00000000-0000-0000-0000-000000000002")
+    val tenant1Id = TenantId(Uuid.parse("00000000-0000-0000-0000-000000000001"))
+    val tenant2Id = TenantId(Uuid.parse("00000000-0000-0000-0000-000000000002"))
 
     // Test client IDs
-    val client1Id = ClientId("10000000-0000-0000-0000-000000000001")
-    val client2Id = ClientId("10000000-0000-0000-0000-000000000002")
+    val client1Id = ClientId(Uuid.parse("10000000-0000-0000-0000-000000000001"))
+    val client2Id = ClientId(Uuid.parse("10000000-0000-0000-0000-000000000002"))
 
     // Test invoice IDs
-    val invoice1Id = InvoiceId("20000000-0000-0000-0000-000000000001")
-    val invoice2Id = InvoiceId("20000000-0000-0000-0000-000000000002")
+    val invoice1Id = InvoiceId(Uuid.parse("20000000-0000-0000-0000-000000000001"))
+    val invoice2Id = InvoiceId(Uuid.parse("20000000-0000-0000-0000-000000000002"))
 
     // Test expense IDs
-    val expense1Id = ExpenseId("30000000-0000-0000-0000-000000000001")
-    val expense2Id = ExpenseId("30000000-0000-0000-0000-000000000002")
+    val expense1Id = ExpenseId(Uuid.parse("30000000-0000-0000-0000-000000000001"))
+    val expense2Id = ExpenseId(Uuid.parse("30000000-0000-0000-0000-000000000002"))
 
     // Test payment IDs
-    val payment1Id = PaymentId("40000000-0000-0000-0000-000000000001")
-    val payment2Id = PaymentId("40000000-0000-0000-0000-000000000002")
+    val payment1Id = PaymentId(Uuid.parse("40000000-0000-0000-0000-000000000001"))
+    val payment2Id = PaymentId(Uuid.parse("40000000-0000-0000-0000-000000000002"))
 
     // Common test values
     val now: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)

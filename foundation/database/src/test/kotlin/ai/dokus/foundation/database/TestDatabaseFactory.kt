@@ -31,7 +31,8 @@ object TestDatabaseFactory {
                 SchemaUtils.create(
                     TenantsTable,
                     TenantSettingsTable,
-                    BusinessUsersTable,
+                    UsersTable,
+                    RefreshTokensTable,
                     ClientsTable,
                     InvoicesTable,
                     InvoiceItemsTable,
@@ -64,7 +65,8 @@ object TestDatabaseFactory {
                 InvoiceItemsTable,
                 InvoicesTable,
                 ClientsTable,
-                BusinessUsersTable,
+                RefreshTokensTable,
+                UsersTable,
                 TenantSettingsTable,
                 TenantsTable
             )
@@ -72,7 +74,8 @@ object TestDatabaseFactory {
             SchemaUtils.create(
                 TenantsTable,
                 TenantSettingsTable,
-                BusinessUsersTable,
+                UsersTable,
+                RefreshTokensTable,
                 ClientsTable,
                 InvoicesTable,
                 InvoiceItemsTable,
