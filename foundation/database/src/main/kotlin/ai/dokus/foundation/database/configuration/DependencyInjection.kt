@@ -19,11 +19,14 @@ private val appModule = module {
     // Password crypto service
     single<PasswordCryptoService> { PasswordCryptoService4j() }
 
+    // Audit Service
+    single<AuditService> { AuditService() }
+
     // RPC Service Implementations
     single<TenantService> { TenantServiceImpl() }
     single<UserService> { UserServiceImpl(get()) }
     single<ClientService> { ClientServiceImpl() }
-    single<InvoiceService> { InvoiceServiceImpl(get()) }
+    single<InvoiceService> { InvoiceServiceImpl(get(), get()) }
     single<ExpenseService> { ExpenseServiceImpl() }
     single<PaymentService> { PaymentServiceImpl() }
 }
