@@ -1,11 +1,8 @@
 package ai.dokus.foundation.database.configuration
 
-import ai.dokus.foundation.database.services.ClientServiceImpl
-import ai.dokus.foundation.database.services.ExpenseServiceImpl
-import ai.dokus.foundation.database.services.InvoiceServiceImpl
-import ai.dokus.foundation.database.services.PaymentServiceImpl
-import ai.dokus.foundation.database.services.TenantServiceImpl
-import ai.dokus.foundation.database.services.UserServiceImpl
+import ai.dokus.foundation.database.services.*
+import ai.dokus.foundation.database.storage.FileStorage
+import ai.dokus.foundation.database.storage.LocalFileStorage
 import ai.dokus.foundation.database.utils.DatabaseFactory
 import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
@@ -25,7 +22,12 @@ private val appModule = module {
     single<PasswordCryptoService> { PasswordCryptoService4j() }
 
     // Audit Service
-    single { ai.dokus.foundation.database.services.AuditServiceImpl() }
+    single { AuditServiceImpl() }
+
+    // File Storage
+    // Configure storage directory via environment variable DOKUS_STORAGE_DIR or default to ./storage
+    val storageDir = System.getenv("DOKUS_STORAGE_DIR") ?: "./storage"
+    single<FileStorage> { LocalFileStorage(storageDir) }
 
     // RPC Service Implementations
     single<TenantService> { TenantServiceImpl() }
@@ -34,6 +36,7 @@ private val appModule = module {
     single<InvoiceService> { InvoiceServiceImpl(get(), get()) }
     single<ExpenseService> { ExpenseServiceImpl(get()) }
     single<PaymentService> { PaymentServiceImpl(get()) }
+    single<AttachmentService> { AttachmentServiceImpl(get()) }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppConfig) {
