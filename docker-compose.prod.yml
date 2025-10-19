@@ -103,6 +103,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET: dokus-attachments
+      DOKUS_STORAGE_DIR: /app/storage
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_PATH: /app/logs
     ports:
@@ -124,6 +125,7 @@ services:
       start_period: 40s
     volumes:
       - ./logs-prod:/app/logs
+      - dokus-storage-prod:/app/storage
     restart: unless-stopped
 
   minio-prod:
@@ -175,4 +177,6 @@ volumes:
   redis-data-prod:
     driver: local
   minio-data-prod:
+    driver: local
+  dokus-storage-prod:
     driver: local

@@ -21,28 +21,58 @@ fun Application.configureErrorHandling() {
 
     install(StatusPages) {
         exception<DokusException> { call, cause ->
-            val statusCode = HttpStatusCode.InternalServerError
-//            val statusCode = when (cause) {
-//                is DokusException.InvalidCredentials -> HttpStatusCode.Unauthorized
-//                is DokusException.UserNotFound -> HttpStatusCode.NotFound
-//                is DokusException.UserLocked -> HttpStatusCode.Forbidden
-//                is DokusException.AccountNotVerified -> HttpStatusCode.Forbidden
-//                is DokusException.PasswordExpired -> HttpStatusCode.Forbidden
-//                is DokusException.InvalidToken -> HttpStatusCode.Unauthorized
-//                is DokusException.TokenExpired -> HttpStatusCode.Unauthorized
-//                is DokusException.TooManyRequests -> HttpStatusCode.TooManyRequests
-//                is DokusException.EntityAlreadyExists -> HttpStatusCode.Conflict
-//                is DokusException.ValidationError -> HttpStatusCode.BadRequest
-//                is DokusException.PermissionDenied -> HttpStatusCode.Forbidden
-//                is DokusException.SystemError -> HttpStatusCode.InternalServerError
-//                else -> HttpStatusCode.InternalServerError
-//            }
+            val statusCode = when (cause) {
+                // Authentication & Authorization
+                is DokusException.NotAuthenticated -> HttpStatusCode.Unauthorized
+                is DokusException.NotAuthorized -> HttpStatusCode.Forbidden
 
-            logger.warn("DokusException: ${cause.message}")
+                // User Management
+                is DokusException.UserAlreadyExists -> HttpStatusCode.Conflict
+
+                // Connection & Server Errors
+                is DokusException.ConnectionError -> HttpStatusCode.ServiceUnavailable
+                is DokusException.InternalError -> HttpStatusCode.InternalServerError
+                is DokusException.Unknown -> HttpStatusCode.InternalServerError
+
+                // Validation Errors - User Input (400 Bad Request)
+                is DokusException.InvalidEmail -> HttpStatusCode.BadRequest
+                is DokusException.WeakPassword -> HttpStatusCode.BadRequest
+                is DokusException.PasswordDoNotMatch -> HttpStatusCode.BadRequest
+                is DokusException.InvalidFirstName -> HttpStatusCode.BadRequest
+                is DokusException.InvalidLastName -> HttpStatusCode.BadRequest
+                is DokusException.InvalidTaxNumber -> HttpStatusCode.BadRequest
+                is DokusException.InvalidWorkspaceName -> HttpStatusCode.BadRequest
+
+                // Financial Validation Errors (400 Bad Request)
+                is DokusException.InvalidVatNumber -> HttpStatusCode.BadRequest
+                is DokusException.InvalidIban -> HttpStatusCode.BadRequest
+                is DokusException.InvalidBic -> HttpStatusCode.BadRequest
+                is DokusException.InvalidPeppolId -> HttpStatusCode.BadRequest
+                is DokusException.InvalidInvoiceNumber -> HttpStatusCode.BadRequest
+                is DokusException.InvalidMoney -> HttpStatusCode.BadRequest
+                is DokusException.InvalidVatRate -> HttpStatusCode.BadRequest
+                is DokusException.InvalidPercentage -> HttpStatusCode.BadRequest
+                is DokusException.InvalidQuantity -> HttpStatusCode.BadRequest
+
+                // Address Validation Errors (400 Bad Request)
+                is DokusException.InvalidAddress.InvalidStreetName -> HttpStatusCode.BadRequest
+                is DokusException.InvalidAddress.InvalidCity -> HttpStatusCode.BadRequest
+                is DokusException.InvalidAddress.InvalidPostalCode -> HttpStatusCode.BadRequest
+                is DokusException.InvalidAddress.InvalidCountry -> HttpStatusCode.BadRequest
+            }
+
+            val errorName = cause::class.simpleName ?: "DokusException"
+
+            if (statusCode.value >= 500) {
+                logger.error("DokusException [$errorName]: ${cause.message}", cause)
+            } else {
+                logger.warn("DokusException [$errorName]: ${cause.message}")
+            }
+
             call.respond(
                 statusCode,
                 ErrorResponse(
-                    error = cause.cause?.javaClass?.simpleName ?: "DokusException",
+                    error = errorName,
                     message = cause.message ?: "An error occurred"
                 )
             )

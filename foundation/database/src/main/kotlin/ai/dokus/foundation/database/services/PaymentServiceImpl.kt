@@ -7,6 +7,8 @@ import ai.dokus.foundation.database.utils.dbQuery
 import ai.dokus.foundation.database.utils.toJavaLocalDate
 import ai.dokus.foundation.database.utils.toJavaInstant
 import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
@@ -19,9 +21,12 @@ import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-class PaymentServiceImpl : PaymentService {
+class PaymentServiceImpl(
+    private val auditService: AuditServiceImpl
+) : PaymentService {
     private val logger = LoggerFactory.getLogger(PaymentServiceImpl::class.java)
 
     override suspend fun recordPayment(
@@ -32,44 +37,64 @@ class PaymentServiceImpl : PaymentService {
         paymentMethod: PaymentMethod,
         transactionId: String?,
         notes: String?
-    ): Payment = dbQuery {
-        // Verify invoice exists and belongs to tenant
-        val invoice = InvoicesTable.selectAll()
-            .where { InvoicesTable.id eq invoiceId.value.toJavaUuid() }
-            .andWhere { InvoicesTable.tenantId eq tenantId.value.toJavaUuid() }
-            .singleOrNull()
-            ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
+    ): Payment {
+        val payment = dbQuery {
+            // Verify invoice exists and belongs to tenant
+            val invoice = InvoicesTable.selectAll()
+                .where { InvoicesTable.id eq invoiceId.value.toJavaUuid() }
+                .andWhere { InvoicesTable.tenantId eq tenantId.value.toJavaUuid() }
+                .singleOrNull()
+                ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
 
-        // Create payment record
-        val paymentId = PaymentsTable.insertAndGetId {
-            it[PaymentsTable.tenantId] = tenantId.value.toJavaUuid()
-            it[PaymentsTable.invoiceId] = invoiceId.value.toJavaUuid()
-            it[PaymentsTable.amount] = BigDecimal(amount.value)
-            it[PaymentsTable.paymentDate] = paymentDate
-            it[PaymentsTable.paymentMethod] = paymentMethod
-            it[PaymentsTable.transactionId] = transactionId
-            it[PaymentsTable.notes] = notes
-        }.value
+            // Create payment record
+            val paymentId = PaymentsTable.insertAndGetId {
+                it[PaymentsTable.tenantId] = tenantId.value.toJavaUuid()
+                it[PaymentsTable.invoiceId] = invoiceId.value.toJavaUuid()
+                it[PaymentsTable.amount] = BigDecimal(amount.value)
+                it[PaymentsTable.paymentDate] = paymentDate
+                it[PaymentsTable.paymentMethod] = paymentMethod
+                it[PaymentsTable.transactionId] = transactionId
+                it[PaymentsTable.notes] = notes
+            }.value
 
-        // Update invoice paid amount
-        val currentPaid = invoice[InvoicesTable.paidAmount]
-        val newPaid = currentPaid + BigDecimal(amount.value)
-        val total = invoice[InvoicesTable.totalAmount]
+            // Update invoice paid amount
+            val currentPaid = invoice[InvoicesTable.paidAmount]
+            val newPaid = currentPaid + BigDecimal(amount.value)
+            val total = invoice[InvoicesTable.totalAmount]
 
-        InvoicesTable.update({ InvoicesTable.id eq invoiceId.value.toJavaUuid() }) {
-            it[paidAmount] = newPaid
-            if (newPaid >= total) {
-                it[status] = InvoiceStatus.Paid
-                it[paidAt] = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
+            InvoicesTable.update({ InvoicesTable.id eq invoiceId.value.toJavaUuid() }) {
+                it[paidAmount] = newPaid
+                if (newPaid >= total) {
+                    it[status] = InvoiceStatus.Paid
+                    it[paidAt] = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
+                }
             }
+
+            logger.info("Recorded payment of $amount for invoice $invoiceId")
+
+            PaymentsTable.selectAll()
+                .where { PaymentsTable.id eq paymentId }
+                .single()
+                .toPayment()
         }
 
-        logger.info("Recorded payment of $amount for invoice $invoiceId")
+        // Audit log
+        auditService.logAction(
+            tenantId = tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.PaymentRecorded,
+            entityType = EntityType.Payment,
+            entityId = payment.id.value,
+            oldValues = null,
+            newValues = mapOf(
+                "invoiceId" to invoiceId.value.toString(),
+                "amount" to amount.value,
+                "paymentMethod" to paymentMethod.name,
+                "paymentDate" to paymentDate.toString()
+            )
+        )
 
-        PaymentsTable.selectAll()
-            .where { PaymentsTable.id eq paymentId }
-            .single()
-            .toPayment()
+        return payment
     }
 
     override suspend fun findById(id: PaymentId): Payment? = dbQuery {
@@ -106,32 +131,58 @@ class PaymentServiceImpl : PaymentService {
             .map { it.toPayment() }
     }
 
-    override suspend fun delete(paymentId: PaymentId) = dbQuery {
-        val payment = PaymentsTable.selectAll()
-            .where { PaymentsTable.id eq paymentId.value.toJavaUuid() }
-            .singleOrNull()
-            ?.toPayment()
-            ?: throw IllegalArgumentException("Payment not found: $paymentId")
+    override suspend fun delete(paymentId: PaymentId) {
+        data class DeletedPaymentInfo(
+            val tenantId: TenantId,
+            val invoiceId: InvoiceId,
+            val amount: Money,
+            val paymentMethod: PaymentMethod
+        )
 
-        // Update invoice paid amount
-        val invoice = InvoicesTable.selectAll()
-            .where { InvoicesTable.id eq payment.invoiceId.value.toJavaUuid() }
-            .single()
+        val paymentInfo = dbQuery {
+            val payment = PaymentsTable.selectAll()
+                .where { PaymentsTable.id eq paymentId.value.toJavaUuid() }
+                .singleOrNull()
+                ?.toPayment()
+                ?: throw IllegalArgumentException("Payment not found: $paymentId")
 
-        val newPaid = invoice[InvoicesTable.paidAmount] - BigDecimal(payment.amount.value)
+            // Update invoice paid amount
+            val invoice = InvoicesTable.selectAll()
+                .where { InvoicesTable.id eq payment.invoiceId.value.toJavaUuid() }
+                .single()
 
-        InvoicesTable.update({ InvoicesTable.id eq payment.invoiceId.value.toJavaUuid() }) {
-            it[paidAmount] = newPaid
-            if (newPaid < invoice[InvoicesTable.totalAmount]) {
-                it[status] = InvoiceStatus.Sent
-                it[paidAt] = null
+            val newPaid = invoice[InvoicesTable.paidAmount] - BigDecimal(payment.amount.value)
+
+            InvoicesTable.update({ InvoicesTable.id eq payment.invoiceId.value.toJavaUuid() }) {
+                it[paidAmount] = newPaid
+                if (newPaid < invoice[InvoicesTable.totalAmount]) {
+                    it[status] = InvoiceStatus.Sent
+                    it[paidAt] = null
+                }
             }
+
+            // Delete payment
+            PaymentsTable.deleteWhere { id eq paymentId.value.toJavaUuid() }
+
+            logger.info("Deleted payment $paymentId and updated invoice ${payment.invoiceId}")
+
+            DeletedPaymentInfo(payment.tenantId, payment.invoiceId, payment.amount, payment.paymentMethod)
         }
 
-        // Delete payment
-        PaymentsTable.deleteWhere { id eq paymentId.value.toJavaUuid() }
-
-        logger.info("Deleted payment $paymentId and updated invoice ${payment.invoiceId}")
+        // Audit log
+        auditService.logAction(
+            tenantId = paymentInfo.tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.PaymentDeleted,
+            entityType = EntityType.Payment,
+            entityId = paymentId.value,
+            oldValues = mapOf(
+                "invoiceId" to paymentInfo.invoiceId.value.toString(),
+                "amount" to paymentInfo.amount.value,
+                "paymentMethod" to paymentInfo.paymentMethod.name
+            ),
+            newValues = null
+        )
     }
 
     override suspend fun reconcile(paymentId: PaymentId, transactionId: String) = dbQuery {
@@ -150,8 +201,54 @@ class PaymentServiceImpl : PaymentService {
         tenantId: TenantId,
         fromDate: LocalDate?,
         toDate: LocalDate?
-    ): Map<String, Any> {
-        throw NotImplementedError("Statistics calculation not yet implemented")
+    ): Map<String, Any> = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        var query = PaymentsTable.selectAll().where { PaymentsTable.tenantId eq javaUuid }
+
+        // Apply date filters if provided
+        if (fromDate != null) query = query.andWhere { PaymentsTable.paymentDate greaterEq fromDate }
+        if (toDate != null) query = query.andWhere { PaymentsTable.paymentDate lessEq toDate }
+
+        val payments = query.toList()
+
+        // Calculate statistics
+        var totalPayments = BigDecimal.ZERO
+        var paymentCount = 0
+        val paymentsByMethod = mutableMapOf<String, BigDecimal>()
+        val paymentCountByMethod = mutableMapOf<String, Int>()
+
+        payments.forEach { row ->
+            val amount = row[PaymentsTable.amount]
+            val paymentMethod = row[PaymentsTable.paymentMethod]
+
+            totalPayments += amount
+            paymentCount++
+
+            // Group by payment method
+            val methodName = paymentMethod.name
+            paymentsByMethod[methodName] =
+                paymentsByMethod.getOrDefault(methodName, BigDecimal.ZERO) + amount
+            paymentCountByMethod[methodName] =
+                paymentCountByMethod.getOrDefault(methodName, 0) + 1
+        }
+
+        // Calculate average payment amount
+        val averagePayment = if (paymentCount > 0) {
+            totalPayments / BigDecimal(paymentCount)
+        } else {
+            BigDecimal.ZERO
+        }
+
+        // Convert payment method maps to Money values
+        val methodStats = paymentsByMethod.mapValues { Money(it.value.toString()) }
+
+        mapOf(
+            "totalPayments" to Money(totalPayments.toString()),
+            "paymentCount" to paymentCount,
+            "averagePayment" to Money(averagePayment.toString()),
+            "paymentsByMethod" to methodStats,
+            "paymentCountByMethod" to paymentCountByMethod
+        )
     }
 
     override suspend fun getTotalPaid(invoiceId: InvoiceId): Money = dbQuery {

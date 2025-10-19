@@ -1,28 +1,66 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop, Server.
+# Dokus 🇧🇪
 
-* `/composeApp` is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - `commonMain` is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    `iosMain` would be the right folder for such calls.
+> Open source PEPPOL invoicing for Belgium's 2026 mandate
 
-* `/iosApp` contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform, 
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+[![GitHub stars](https://img.shields.io/github/stars/dokus/dokus?style=social)](https://github.com/dokus/dokus/stargazers)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Discord](https://img.shields.io/discord/xxx?label=Discord&logo=discord)](https://discord.gg/dokus)
 
-* `/server` is for the Ktor server application.
+## 🚨 Belgium mandates PEPPOL e-invoicing January 1, 2026
 
-* `/shared` is for the code that will be shared between all targets in the project.
-  The most important subfolder is `commonMain`. If preferred, you can add code to the platform-specific folders here too.
+Penalties for non-compliance: €1,500-5,000
 
+Dokus is the first open-source solution that:
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+✅ Generates PEPPOL BIS 3.0 compliant UBL invoices  
+✅ Handles Belgian VAT rules (21%, 12%, 6%)  
+✅ Sends invoices via PEPPOL network  
+✅ Self-host (AGPL v3) or use our cloud (€18/mo)
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [GitHub](https://github.com/JetBrains/compose-multiplatform/issues).
+## ⚡ Quick Start (5 minutes)
 
-You can open the web application by running the `:composeApp:wasmJsBrowserDevelopmentRun` Gradle task.
+### Self-Hosted (Docker)
+```bash
+git clone https://github.com/dokus/dokus
+cd dokus
+docker-compose up
+```
 
-./gradlew wasmJsBrowserRun -t
+Visit http://localhost:8080
+
+### Cloud (Free Trial)
+[Start 30-day free trial →](https://dokus.io/signup)
+
+## 📖 Documentation
+
+- [Installation Guide](docs/installation.md)
+- [PEPPOL Setup](docs/peppol.md)
+- [API Reference](docs/api.md)
+- [Belgian Compliance](docs/belgium-2026.md)
+
+## 🛠️ Built With
+
+- Kotlin + Ktor (Backend)
+- PostgreSQL (Database)
+- PEPPOL BIS 3.0 (Invoicing)
+- AGPL v3 (License)
+
+## 🤝 Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## 📝 License
+
+AGPL-3.0 - See [LICENSE](LICENSE)
+
+Self-host for free. Cloud hosting available at [dokus.io](https://dokus.io)
+
+## 🙋 Support
+
+- [Discord Community](https://discord.gg/dokus)
+- [Documentation](https://docs.dokus.io)
+- [GitHub Issues](https://github.com/dokus/dokus/issues)
+
+---
+
+**⭐ Star us on GitHub if this helps you avoid 2026 penalties!**

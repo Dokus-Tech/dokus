@@ -3,7 +3,7 @@ package ai.dokus.foundation.ktor
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
-data class AppConfig(
+data class AppBaseConfig(
     val ktor: KtorConfig,
     val database: DatabaseConfig,
     val flyway: FlywayConfig,
@@ -12,11 +12,12 @@ data class AppConfig(
     val logging: LoggingConfig,
     val metrics: MetricsConfig,
     val security: SecurityConfig,
-    val caching: CachingConfig
+    val caching: CachingConfig,
+    internal val config: Config,
 ) {
-    companion object {
-        fun fromConfig(config: Config): AppConfig {
-            return AppConfig(
+    companion object Companion {
+        fun fromConfig(config: Config): AppBaseConfig {
+            return AppBaseConfig(
                 ktor = KtorConfig.fromConfig(config.getConfig("ktor")),
                 database = DatabaseConfig.fromConfig(config.getConfig("database")),
                 flyway = FlywayConfig.fromConfig(config.getConfig("flyway")),
@@ -25,11 +26,12 @@ data class AppConfig(
                 logging = LoggingConfig.fromConfig(config.getConfig("logging")),
                 metrics = MetricsConfig.fromConfig(config.getConfig("metrics")),
                 security = SecurityConfig.fromConfig(config.getConfig("security")),
-                caching = CachingConfig.fromConfig(config.getConfig("caching"))
+                caching = CachingConfig.fromConfig(config.getConfig("caching")),
+                config = config,
             )
         }
 
-        fun load(): AppConfig {
+        fun load(): AppBaseConfig {
             val environment = System.getenv("ENVIRONMENT") ?: "dev"
             val configName = "application-$environment.conf"
             return fromConfig(ConfigFactory.load(configName))
@@ -307,6 +309,25 @@ data class CachingConfig(
                     )
                 )
             )
+        }
+    }
+}
+
+data class StorageConfig(
+    val type: String,
+    val directory: String
+) {
+    companion object {
+        fun fromConfig(config: Config): StorageConfig {
+            val storage = config.getConfig("storage")
+            return StorageConfig(
+                type = config.getString("type"),
+                directory = config.getString("directory")
+            )
+        }
+
+        fun load(baseConfig: AppBaseConfig): StorageConfig {
+            return fromConfig(baseConfig.config.getConfig("storage"))
         }
     }
 }

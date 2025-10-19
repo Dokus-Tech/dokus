@@ -1,6 +1,6 @@
 package ai.dokus.foundation.database.utils
 
-import ai.dokus.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.AppBaseConfig
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import javax.sql.DataSource
 
 class DatabaseFactory(
-    private val appConfig: AppConfig,
+    private val appConfig: AppBaseConfig,
     private val poolName: String
 ) {
     private val logger = LoggerFactory.getLogger(DatabaseFactory::class.java)
