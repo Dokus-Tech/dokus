@@ -119,50 +119,55 @@ class InvoiceServiceImpl(
         dueDate: LocalDate?,
         notes: String?,
         termsAndConditions: String?
-    ) = dbQuery {
-        val javaUuid = invoiceId.value.toJavaUuid()
+    ) {
+        // Capture old values and perform update
+        val (tenantId, oldValues, newValues) = dbQuery {
+            val javaUuid = invoiceId.value.toJavaUuid()
 
-        val invoice = InvoicesTable.selectAll().where { InvoicesTable.id eq javaUuid }.singleOrNull()
-            ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
+            val invoice = InvoicesTable.selectAll().where { InvoicesTable.id eq javaUuid }.singleOrNull()
+                ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
 
-        if (invoice[InvoicesTable.status] != InvoiceStatus.Draft) {
-            throw IllegalArgumentException("Can only update draft invoices")
-        }
+            if (invoice[InvoicesTable.status] != InvoiceStatus.Draft) {
+                throw IllegalArgumentException("Can only update draft invoices")
+            }
 
-        // Capture old values
-        val oldValues = mutableMapOf<String, Any?>()
-        val newValues = mutableMapOf<String, Any?>()
-        if (issueDate != null) {
-            oldValues["issueDate"] = invoice[InvoicesTable.issueDate].toString()
-            newValues["issueDate"] = issueDate.toString()
-        }
-        if (dueDate != null) {
-            oldValues["dueDate"] = invoice[InvoicesTable.dueDate].toString()
-            newValues["dueDate"] = dueDate.toString()
-        }
-        if (notes != null) {
-            oldValues["notes"] = invoice[InvoicesTable.notes]
-            newValues["notes"] = notes
-        }
-        if (termsAndConditions != null) {
-            oldValues["termsAndConditions"] = invoice[InvoicesTable.termsAndConditions]
-            newValues["termsAndConditions"] = termsAndConditions
-        }
+            // Capture old values
+            val oldVals = mutableMapOf<String, Any?>()
+            val newVals = mutableMapOf<String, Any?>()
+            if (issueDate != null) {
+                oldVals["issueDate"] = invoice[InvoicesTable.issueDate].toString()
+                newVals["issueDate"] = issueDate.toString()
+            }
+            if (dueDate != null) {
+                oldVals["dueDate"] = invoice[InvoicesTable.dueDate].toString()
+                newVals["dueDate"] = dueDate.toString()
+            }
+            if (notes != null) {
+                oldVals["notes"] = invoice[InvoicesTable.notes]
+                newVals["notes"] = notes
+            }
+            if (termsAndConditions != null) {
+                oldVals["termsAndConditions"] = invoice[InvoicesTable.termsAndConditions]
+                newVals["termsAndConditions"] = termsAndConditions
+            }
 
-        InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
-            if (issueDate != null) it[InvoicesTable.issueDate] = issueDate
-            if (dueDate != null) it[InvoicesTable.dueDate] = dueDate
-            if (notes != null) it[InvoicesTable.notes] = notes
-            if (termsAndConditions != null) it[InvoicesTable.termsAndConditions] = termsAndConditions
+            InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
+                if (issueDate != null) it[InvoicesTable.issueDate] = issueDate
+                if (dueDate != null) it[InvoicesTable.dueDate] = dueDate
+                if (notes != null) it[InvoicesTable.notes] = notes
+                if (termsAndConditions != null) it[InvoicesTable.termsAndConditions] = termsAndConditions
+            }
+
+            Triple(TenantId(invoice[InvoicesTable.tenantId].value.toKotlinUuid()), oldVals, newVals)
         }
 
         logger.info("Updated invoice $invoiceId")
 
         // Audit log
         auditService.logAction(
-            tenantId = TenantId(invoice[InvoicesTable.tenantId].toKotlinUuid()),
+            tenantId = tenantId,
             userId = null, // TODO: Get from authenticated context
-            action = AuditAction.Update,
+            action = AuditAction.InvoiceUpdated,
             entityType = EntityType.Invoice,
             entityId = invoiceId.value,
             oldValues = oldValues,
@@ -211,34 +216,38 @@ class InvoiceServiceImpl(
         logger.info("Updated items for invoice $invoiceId")
     }
 
-    override suspend fun delete(invoiceId: InvoiceId) = dbQuery {
-        val javaUuid = invoiceId.value.toJavaUuid()
+    override suspend fun delete(invoiceId: InvoiceId) {
+        val (tenantId, oldValues) = dbQuery {
+            val javaUuid = invoiceId.value.toJavaUuid()
 
-        val invoice = InvoicesTable.selectAll().where { InvoicesTable.id eq javaUuid }.singleOrNull()
-            ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
+            val invoice = InvoicesTable.selectAll().where { InvoicesTable.id eq javaUuid }.singleOrNull()
+                ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
 
-        if (invoice[InvoicesTable.status] != InvoiceStatus.Draft) {
-            throw IllegalArgumentException("Can only delete draft invoices")
-        }
+            if (invoice[InvoicesTable.status] != InvoiceStatus.Draft) {
+                throw IllegalArgumentException("Can only delete draft invoices")
+            }
 
-        // Capture invoice details before deletion
-        val oldValues = mapOf(
-            "invoiceNumber" to invoice[InvoicesTable.invoiceNumber],
-            "status" to invoice[InvoicesTable.status].name,
-            "totalAmount" to invoice[InvoicesTable.totalAmount].toString()
-        )
+            // Capture invoice details before deletion
+            val oldVals = mapOf(
+                "invoiceNumber" to invoice[InvoicesTable.invoiceNumber],
+                "status" to invoice[InvoicesTable.status].name,
+                "totalAmount" to invoice[InvoicesTable.totalAmount].toString()
+            )
 
-        InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
-            it[status] = InvoiceStatus.Cancelled
+            InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
+                it[status] = InvoiceStatus.Cancelled
+            }
+
+            Pair(TenantId(invoice[InvoicesTable.tenantId].value.toKotlinUuid()), oldVals)
         }
 
         logger.info("Cancelled invoice $invoiceId")
 
         // Audit log
         auditService.logAction(
-            tenantId = TenantId(invoice[InvoicesTable.tenantId].toKotlinUuid()),
+            tenantId = tenantId,
             userId = null, // TODO: Get from authenticated context
-            action = AuditAction.Delete,
+            action = AuditAction.InvoiceDeleted,
             entityType = EntityType.Invoice,
             entityId = invoiceId.value,
             oldValues = oldValues,
