@@ -15,8 +15,8 @@ import io.ktor.server.application.install
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
-private val appModule = module {
-    single { DatabaseFactory(get(), "dokus-database-pool") }
+fun appModule(appConfig: AppConfig) = module {
+    single { DatabaseFactory(appConfig, "dokus-database-pool") }
 
     // Password crypto service
     single<PasswordCryptoService> { PasswordCryptoService4j() }
@@ -25,9 +25,7 @@ private val appModule = module {
     single { AuditServiceImpl() }
 
     // File Storage
-    // Configure storage directory via environment variable DOKUS_STORAGE_DIR or default to ./storage
-    val storageDir = System.getenv("DOKUS_STORAGE_DIR") ?: "./storage"
-    single<FileStorage> { LocalFileStorage(storageDir) }
+    single<FileStorage> { LocalFileStorage(appConfig.storage.directory) }
 
     // RPC Service Implementations
     single<TenantService> { TenantServiceImpl() }
@@ -45,6 +43,6 @@ fun Application.configureDependencyInjection(appConfig: AppConfig) {
     }
 
     install(Koin) {
-        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Auth))
+        modules(coreModule, appModule(appConfig), redisModule(appConfig, RedisNamespace.Auth))
     }
 }

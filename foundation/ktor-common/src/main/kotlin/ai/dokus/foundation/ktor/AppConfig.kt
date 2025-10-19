@@ -12,7 +12,8 @@ data class AppConfig(
     val logging: LoggingConfig,
     val metrics: MetricsConfig,
     val security: SecurityConfig,
-    val caching: CachingConfig
+    val caching: CachingConfig,
+    val storage: StorageConfig
 ) {
     companion object {
         fun fromConfig(config: Config): AppConfig {
@@ -25,7 +26,8 @@ data class AppConfig(
                 logging = LoggingConfig.fromConfig(config.getConfig("logging")),
                 metrics = MetricsConfig.fromConfig(config.getConfig("metrics")),
                 security = SecurityConfig.fromConfig(config.getConfig("security")),
-                caching = CachingConfig.fromConfig(config.getConfig("caching"))
+                caching = CachingConfig.fromConfig(config.getConfig("caching")),
+                storage = StorageConfig.fromConfig(config.getConfig("storage"))
             )
         }
 
@@ -306,6 +308,20 @@ data class CachingConfig(
                         command = timeoutConfig.getLong("command")
                     )
                 )
+            )
+        }
+    }
+}
+
+data class StorageConfig(
+    val type: String,
+    val directory: String
+) {
+    companion object {
+        fun fromConfig(config: Config): StorageConfig {
+            return StorageConfig(
+                type = config.getString("type"),
+                directory = config.getString("directory")
             )
         }
     }
