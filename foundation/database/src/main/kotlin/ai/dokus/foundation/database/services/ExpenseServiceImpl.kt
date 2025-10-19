@@ -5,6 +5,8 @@ import ai.dokus.foundation.database.tables.ExpensesTable
 import ai.dokus.foundation.database.utils.dbQuery
 import ai.dokus.foundation.database.utils.toJavaLocalDate
 import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
@@ -18,36 +20,57 @@ import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-class ExpenseServiceImpl : ExpenseService {
+class ExpenseServiceImpl(
+    private val auditService: AuditServiceImpl
+) : ExpenseService {
     private val logger = LoggerFactory.getLogger(ExpenseServiceImpl::class.java)
 
-    override suspend fun create(request: CreateExpenseRequest): Expense = dbQuery {
-        val expenseId = ExpensesTable.insertAndGetId {
-            it[tenantId] = request.tenantId.value.toJavaUuid()
-            it[date] = request.date
-            it[merchant] = request.merchant
-            it[amount] = BigDecimal(request.amount.value)
-            it[vatAmount] = request.vatAmount?.let { BigDecimal(it.value) }
-            it[vatRate] = request.vatRate?.let { BigDecimal(it.value) }
-            it[category] = request.category
-            it[description] = request.description
-            it[paymentMethod] = request.paymentMethod
-            it[isDeductible] = request.isDeductible ?: true
-            it[deductiblePercentage] = request.deductiblePercentage?.let { BigDecimal(it.value) } ?: BigDecimal("100.00")
-            it[isRecurring] = request.isRecurring ?: false
-            it[notes] = request.notes
-        }.value
+    override suspend fun create(request: CreateExpenseRequest): Expense {
+        val expense = dbQuery {
+            val expenseId = ExpensesTable.insertAndGetId {
+                it[tenantId] = request.tenantId.value.toJavaUuid()
+                it[date] = request.date
+                it[merchant] = request.merchant
+                it[amount] = BigDecimal(request.amount.value)
+                it[vatAmount] = request.vatAmount?.let { BigDecimal(it.value) }
+                it[vatRate] = request.vatRate?.let { BigDecimal(it.value) }
+                it[category] = request.category
+                it[description] = request.description
+                it[paymentMethod] = request.paymentMethod
+                it[isDeductible] = request.isDeductible ?: true
+                it[deductiblePercentage] = request.deductiblePercentage?.let { BigDecimal(it.value) } ?: BigDecimal("100.00")
+                it[isRecurring] = request.isRecurring ?: false
+                it[notes] = request.notes
+            }.value
 
-        logger.info("Created expense $expenseId for tenant ${request.tenantId}")
+            logger.info("Created expense $expenseId for tenant ${request.tenantId}")
 
-        val expense = ExpensesTable.selectAll()
-            .where { ExpensesTable.id eq expenseId }
-            .single()
-            .toExpense()
+            ExpensesTable.selectAll()
+                .where { ExpensesTable.id eq expenseId }
+                .single()
+                .toExpense()
+        }
 
-        expense
+        // Audit log
+        auditService.logAction(
+            tenantId = request.tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.ExpenseCreated,
+            entityType = EntityType.Expense,
+            entityId = expense.id.value,
+            oldValues = null,
+            newValues = mapOf(
+                "merchant" to request.merchant,
+                "amount" to request.amount.value,
+                "category" to request.category.name,
+                "date" to request.date.toString()
+            )
+        )
+
+        return expense
     }
 
     override suspend fun update(
@@ -64,39 +87,104 @@ class ExpenseServiceImpl : ExpenseService {
         deductiblePercentage: Double?,
         isRecurring: Boolean?,
         notes: String?
-    ) = dbQuery {
-        val javaUuid = expenseId.value.toJavaUuid()
-        val updated = ExpensesTable.update({ ExpensesTable.id eq javaUuid }) {
-            if (date != null) it[ExpensesTable.date] = date
-            if (merchant != null) it[ExpensesTable.merchant] = merchant
-            if (amount != null) it[ExpensesTable.amount] = BigDecimal(amount.value)
-            if (vatAmount != null) it[ExpensesTable.vatAmount] = BigDecimal(vatAmount.value)
-            if (vatRate != null) it[ExpensesTable.vatRate] = BigDecimal(vatRate.value)
-            if (category != null) it[ExpensesTable.category] = category
-            if (description != null) it[ExpensesTable.description] = description
-            if (paymentMethod != null) it[ExpensesTable.paymentMethod] = paymentMethod
-            if (isDeductible != null) it[ExpensesTable.isDeductible] = isDeductible
-            if (deductiblePercentage != null) it[ExpensesTable.deductiblePercentage] = BigDecimal(deductiblePercentage.toString())
-            if (isRecurring != null) it[ExpensesTable.isRecurring] = isRecurring
-            if (notes != null) it[ExpensesTable.notes] = notes
-        }
+    ) {
+        val (tenantId, oldValues, newValues) = dbQuery {
+            val javaUuid = expenseId.value.toJavaUuid()
 
-        if (updated == 0) {
-            throw IllegalArgumentException("Expense not found: $expenseId")
+            // Get existing expense data
+            val expense = ExpensesTable.selectAll().where { ExpensesTable.id eq javaUuid }.singleOrNull()
+                ?: throw IllegalArgumentException("Expense not found: $expenseId")
+
+            // Capture old/new values
+            val oldVals = mutableMapOf<String, Any?>()
+            val newVals = mutableMapOf<String, Any?>()
+
+            if (merchant != null) {
+                oldVals["merchant"] = expense[ExpensesTable.merchant]
+                newVals["merchant"] = merchant
+            }
+            if (amount != null) {
+                oldVals["amount"] = expense[ExpensesTable.amount].toString()
+                newVals["amount"] = amount.value
+            }
+            if (category != null) {
+                oldVals["category"] = expense[ExpensesTable.category].name
+                newVals["category"] = category.name
+            }
+            if (date != null) {
+                oldVals["date"] = expense[ExpensesTable.date].toString()
+                newVals["date"] = date.toString()
+            }
+
+            val updated = ExpensesTable.update({ ExpensesTable.id eq javaUuid }) {
+                if (date != null) it[ExpensesTable.date] = date
+                if (merchant != null) it[ExpensesTable.merchant] = merchant
+                if (amount != null) it[ExpensesTable.amount] = BigDecimal(amount.value)
+                if (vatAmount != null) it[ExpensesTable.vatAmount] = BigDecimal(vatAmount.value)
+                if (vatRate != null) it[ExpensesTable.vatRate] = BigDecimal(vatRate.value)
+                if (category != null) it[ExpensesTable.category] = category
+                if (description != null) it[ExpensesTable.description] = description
+                if (paymentMethod != null) it[ExpensesTable.paymentMethod] = paymentMethod
+                if (isDeductible != null) it[ExpensesTable.isDeductible] = isDeductible
+                if (deductiblePercentage != null) it[ExpensesTable.deductiblePercentage] = BigDecimal(deductiblePercentage.toString())
+                if (isRecurring != null) it[ExpensesTable.isRecurring] = isRecurring
+                if (notes != null) it[ExpensesTable.notes] = notes
+            }
+
+            if (updated == 0) {
+                throw IllegalArgumentException("Expense not found: $expenseId")
+            }
+
+            Triple(TenantId(expense[ExpensesTable.tenantId].value.toKotlinUuid()), oldVals, newVals)
         }
 
         logger.info("Updated expense $expenseId")
+
+        // Audit log
+        auditService.logAction(
+            tenantId = tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.ExpenseUpdated,
+            entityType = EntityType.Expense,
+            entityId = expenseId.value,
+            oldValues = oldValues,
+            newValues = newValues
+        )
     }
 
-    override suspend fun delete(expenseId: ExpenseId) = dbQuery {
-        val javaUuid = expenseId.value.toJavaUuid()
-        val deleted = ExpensesTable.deleteWhere { id eq javaUuid }
+    override suspend fun delete(expenseId: ExpenseId) {
+        val (tenantId, merchant, amount) = dbQuery {
+            val javaUuid = expenseId.value.toJavaUuid()
 
-        if (deleted == 0) {
-            throw IllegalArgumentException("Expense not found: $expenseId")
+            // Get expense info before deletion
+            val expense = ExpensesTable.selectAll().where { ExpensesTable.id eq javaUuid }.singleOrNull()
+                ?: throw IllegalArgumentException("Expense not found: $expenseId")
+
+            val deleted = ExpensesTable.deleteWhere { id eq javaUuid }
+
+            if (deleted == 0) {
+                throw IllegalArgumentException("Expense not found: $expenseId")
+            }
+
+            Triple(
+                TenantId(expense[ExpensesTable.tenantId].value.toKotlinUuid()),
+                expense[ExpensesTable.merchant],
+                expense[ExpensesTable.amount].toString()
+            )
         }
 
         logger.info("Deleted expense $expenseId")
+
+        // Audit log
+        auditService.logAction(
+            tenantId = tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.ExpenseDeleted,
+            entityType = EntityType.Expense,
+            entityId = expenseId.value,
+            oldValues = mapOf("merchant" to merchant, "amount" to amount),
+            newValues = null
+        )
     }
 
     override suspend fun findById(id: ExpenseId): Expense? = dbQuery {
@@ -135,51 +223,66 @@ class ExpenseServiceImpl : ExpenseService {
         fileContent: ByteArray,
         filename: String,
         contentType: String
-    ): String = dbQuery {
-        logger.info("Uploading receipt for expense $expenseId: $filename")
+    ): String {
+        val (tenantId, receiptUrl) = dbQuery {
+            logger.info("Uploading receipt for expense $expenseId: $filename")
 
-        // Verify expense exists
-        val expense = ExpensesTable.selectAll()
-            .where { ExpensesTable.id eq expenseId.value.toJavaUuid() }
-            .singleOrNull()
-            ?: throw IllegalArgumentException("Expense not found: $expenseId")
+            // Verify expense exists
+            val expense = ExpensesTable.selectAll()
+                .where { ExpensesTable.id eq expenseId.value.toJavaUuid() }
+                .singleOrNull()
+                ?: throw IllegalArgumentException("Expense not found: $expenseId")
 
-        val tenantId = expense[ExpensesTable.tenantId]
+            val tid = expense[ExpensesTable.tenantId]
 
-        // Generate unique file path
-        val sanitizedFilename = filename.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        val fileExtension = sanitizedFilename.substringAfterLast(".", "")
-        val fileKey = "receipts/$tenantId/${expenseId.value}/${System.currentTimeMillis()}_$sanitizedFilename"
+            // Generate unique file path
+            val sanitizedFilename = filename.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+            val fileExtension = sanitizedFilename.substringAfterLast(".", "")
+            val fileKey = "receipts/$tid/${expenseId.value}/${System.currentTimeMillis()}_$sanitizedFilename"
 
-        // TODO: Integrate with S3/MinIO object storage
-        // Example S3 integration:
-        // val s3Client = S3Client.builder()
-        //     .region(Region.EU_WEST_1)
-        //     .build()
-        //
-        // val putObjectRequest = PutObjectRequest.builder()
-        //     .bucket("dokus-receipts")
-        //     .key(fileKey)
-        //     .contentType(contentType)
-        //     .build()
-        //
-        // s3Client.putObject(putObjectRequest, RequestBody.fromBytes(fileContent))
-        //
-        // val receiptUrl = "https://dokus-receipts.s3.eu-west-1.amazonaws.com/$fileKey"
+            // TODO: Integrate with S3/MinIO object storage
+            // Example S3 integration:
+            // val s3Client = S3Client.builder()
+            //     .region(Region.EU_WEST_1)
+            //     .build()
+            //
+            // val putObjectRequest = PutObjectRequest.builder()
+            //     .bucket("dokus-receipts")
+            //     .key(fileKey)
+            //     .contentType(contentType)
+            //     .build()
+            //
+            // s3Client.putObject(putObjectRequest, RequestBody.fromBytes(fileContent))
+            //
+            // val receiptUrl = "https://dokus-receipts.s3.eu-west-1.amazonaws.com/$fileKey"
 
-        // For now, generate a placeholder URL
-        val receiptUrl = "https://storage.dokus.ai/$fileKey"
+            // For now, generate a placeholder URL
+            val url = "https://storage.dokus.ai/$fileKey"
 
-        // Update expense record with receipt URL
-        ExpensesTable.update({ ExpensesTable.id eq expenseId.value.toJavaUuid() }) {
-            it[ExpensesTable.receiptUrl] = receiptUrl
-            it[ExpensesTable.receiptFilename] = sanitizedFilename
+            // Update expense record with receipt URL
+            ExpensesTable.update({ ExpensesTable.id eq expenseId.value.toJavaUuid() }) {
+                it[ExpensesTable.receiptUrl] = url
+                it[ExpensesTable.receiptFilename] = sanitizedFilename
+            }
+
+            logger.info("Receipt uploaded for expense $expenseId: $url (${fileContent.size} bytes)")
+            logger.warn("S3/MinIO integration not yet implemented - file not actually stored")
+
+            Pair(TenantId(tid.value.toKotlinUuid()), url)
         }
 
-        logger.info("Receipt uploaded for expense $expenseId: $receiptUrl (${fileContent.size} bytes)")
-        logger.warn("S3/MinIO integration not yet implemented - file not actually stored")
+        // Audit log
+        auditService.logAction(
+            tenantId = tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.ExpenseUpdated,
+            entityType = EntityType.Expense,
+            entityId = expenseId.value,
+            oldValues = mapOf("receiptUrl" to null),
+            newValues = mapOf("receiptUrl" to receiptUrl, "filename" to filename)
+        )
 
-        receiptUrl
+        return receiptUrl
     }
 
     override suspend fun downloadReceipt(expenseId: ExpenseId): ByteArray? = dbQuery {
@@ -219,13 +322,36 @@ class ExpenseServiceImpl : ExpenseService {
         "Receipt file content would be here for expense $expenseId".toByteArray(Charsets.UTF_8)
     }
 
-    override suspend fun deleteReceipt(expenseId: ExpenseId) = dbQuery {
-        ExpensesTable.update({ ExpensesTable.id eq expenseId.value.toJavaUuid() }) {
-            it[receiptUrl] = null
-            it[receiptFilename] = null
+    override suspend fun deleteReceipt(expenseId: ExpenseId) {
+        val (tenantId, oldReceiptUrl) = dbQuery {
+            val javaUuid = expenseId.value.toJavaUuid()
+
+            // Get expense info before deletion
+            val expense = ExpensesTable.selectAll().where { ExpensesTable.id eq javaUuid }.singleOrNull()
+                ?: throw IllegalArgumentException("Expense not found: $expenseId")
+
+            val oldUrl = expense[ExpensesTable.receiptUrl]
+
+            ExpensesTable.update({ ExpensesTable.id eq javaUuid }) {
+                it[receiptUrl] = null
+                it[receiptFilename] = null
+            }
+
+            Pair(TenantId(expense[ExpensesTable.tenantId].value.toKotlinUuid()), oldUrl)
         }
 
         logger.info("Deleted receipt for expense $expenseId")
+
+        // Audit log
+        auditService.logAction(
+            tenantId = tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.ExpenseUpdated,
+            entityType = EntityType.Expense,
+            entityId = expenseId.value,
+            oldValues = mapOf("receiptUrl" to oldReceiptUrl),
+            newValues = mapOf("receiptUrl" to null)
+        )
     }
 
     override suspend fun categorize(merchant: String, description: String?): ExpenseCategory {
