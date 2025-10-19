@@ -88,6 +88,7 @@ services:
       REDIS_HOST: redis-dev
       REDIS_PORT: 6379
       REDIS_PASSWORD: devredispass
+      DOKUS_STORAGE_DIR: /app/storage
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     ports:
@@ -108,6 +109,7 @@ services:
       start_period: 40s
     volumes:
       - ./logs-dev:/app/logs
+      - dokus-storage-dev:/app/storage
 
   invoicing-service-dev:
     image: invoid-vision/dokus-invoicing:dev-${BUILD_NUMBER:-latest}
@@ -238,4 +240,6 @@ volumes:
   redis-data-dev:
     driver: local
   pgadmin-data:
+    driver: local
+  dokus-storage-dev:
     driver: local
