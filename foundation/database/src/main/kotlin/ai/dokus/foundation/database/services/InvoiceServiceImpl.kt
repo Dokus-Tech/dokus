@@ -2,6 +2,7 @@ package ai.dokus.foundation.database.services
 
 import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoice
 import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoiceItem
+import ai.dokus.foundation.database.pdf.InvoicePdfGenerator
 import ai.dokus.foundation.database.tables.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.InvoicesTable
 import ai.dokus.foundation.database.utils.dbQuery
@@ -50,6 +51,7 @@ class InvoiceServiceImpl(
     private val auditService: AuditServiceImpl
 ) : InvoiceService {
     private val logger = LoggerFactory.getLogger(InvoiceServiceImpl::class.java)
+    private val pdfGenerator = InvoicePdfGenerator()
 
     override suspend fun create(request: CreateInvoiceRequest): Invoice {
         val invoiceNumber = tenantService.getNextInvoiceNumber(request.tenantId)
@@ -451,61 +453,17 @@ class InvoiceServiceImpl(
     override suspend fun generatePDF(invoiceId: InvoiceId): ByteArray {
         logger.info("Generating PDF for invoice $invoiceId")
 
-        // Fetch invoice with full details
         val invoice = findById(invoiceId)
             ?: throw IllegalArgumentException("Invoice not found: $invoiceId")
 
-        // TODO: Add PDF library dependency (e.g., Apache PDFBox or iText)
-        // For now, generate a simple text-based representation
-        val pdfContent = buildString {
-            appendLine("=".repeat(60))
-            appendLine("INVOICE")
-            appendLine("=".repeat(60))
-            appendLine()
-            appendLine("Invoice Number: ${invoice.invoiceNumber.value}")
-            appendLine("Issue Date: ${invoice.issueDate}")
-            appendLine("Due Date: ${invoice.dueDate}")
-            appendLine("Status: ${invoice.status}")
-            appendLine()
-            appendLine("-".repeat(60))
-            appendLine("ITEMS")
-            appendLine("-".repeat(60))
-            appendLine()
-
-            invoice.items.forEach { item ->
-                appendLine("Description: ${item.description}")
-                appendLine("Quantity: ${item.quantity.value}")
-                appendLine("Unit Price: ${item.unitPrice.value}")
-                appendLine("VAT Rate: ${item.vatRate.value}%")
-                val lineTotal = BigDecimal(item.quantity.value) * BigDecimal(item.unitPrice.value)
-                appendLine("Line Total: $lineTotal")
-                appendLine()
-            }
-
-            appendLine("-".repeat(60))
-            appendLine("TOTALS")
-            appendLine("-".repeat(60))
-            appendLine("Subtotal: ${invoice.subtotalAmount.value}")
-            appendLine("VAT Amount: ${invoice.vatAmount.value}")
-            appendLine("Total Amount: ${invoice.totalAmount.value}")
-            appendLine("Paid Amount: ${invoice.paidAmount.value}")
-            val remaining = BigDecimal(invoice.totalAmount.value) - BigDecimal(invoice.paidAmount.value)
-            appendLine("Amount Due: $remaining")
-            appendLine()
-
-            if (invoice.notes != null) {
-                appendLine("-".repeat(60))
-                appendLine("NOTES")
-                appendLine("-".repeat(60))
-                appendLine(invoice.notes)
-                appendLine()
-            }
-
-            appendLine("=".repeat(60))
-        }
-
-        // Return as bytes (in production, this would be actual PDF bytes)
-        return pdfContent.toByteArray(Charsets.UTF_8)
+        // TODO: Fetch company details from tenant settings
+        // For now, use placeholder values
+        return pdfGenerator.generate(
+            invoice = invoice,
+            companyName = "Your Company Name",
+            companyAddress = "Your Company Address\nCity, ZIP Code\nBelgium",
+            companyVat = "BE0123456789"
+        )
     }
 
     override suspend fun generatePaymentLink(invoiceId: InvoiceId, expiresAt: Instant?): String {
