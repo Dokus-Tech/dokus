@@ -150,8 +150,54 @@ class PaymentServiceImpl : PaymentService {
         tenantId: TenantId,
         fromDate: LocalDate?,
         toDate: LocalDate?
-    ): Map<String, Any> {
-        throw NotImplementedError("Statistics calculation not yet implemented")
+    ): Map<String, Any> = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        var query = PaymentsTable.selectAll().where { PaymentsTable.tenantId eq javaUuid }
+
+        // Apply date filters if provided
+        if (fromDate != null) query = query.andWhere { PaymentsTable.paymentDate greaterEq fromDate }
+        if (toDate != null) query = query.andWhere { PaymentsTable.paymentDate lessEq toDate }
+
+        val payments = query.toList()
+
+        // Calculate statistics
+        var totalPayments = BigDecimal.ZERO
+        var paymentCount = 0
+        val paymentsByMethod = mutableMapOf<String, BigDecimal>()
+        val paymentCountByMethod = mutableMapOf<String, Int>()
+
+        payments.forEach { row ->
+            val amount = row[PaymentsTable.amount]
+            val paymentMethod = row[PaymentsTable.paymentMethod]
+
+            totalPayments += amount
+            paymentCount++
+
+            // Group by payment method
+            val methodName = paymentMethod.name
+            paymentsByMethod[methodName] =
+                paymentsByMethod.getOrDefault(methodName, BigDecimal.ZERO) + amount
+            paymentCountByMethod[methodName] =
+                paymentCountByMethod.getOrDefault(methodName, 0) + 1
+        }
+
+        // Calculate average payment amount
+        val averagePayment = if (paymentCount > 0) {
+            totalPayments / BigDecimal(paymentCount)
+        } else {
+            BigDecimal.ZERO
+        }
+
+        // Convert payment method maps to Money values
+        val methodStats = paymentsByMethod.mapValues { Money(it.value.toString()) }
+
+        mapOf(
+            "totalPayments" to Money(totalPayments.toString()),
+            "paymentCount" to paymentCount,
+            "averagePayment" to Money(averagePayment.toString()),
+            "paymentsByMethod" to methodStats,
+            "paymentCountByMethod" to paymentCountByMethod
+        )
     }
 
     override suspend fun getTotalPaid(invoiceId: InvoiceId): Money = dbQuery {
