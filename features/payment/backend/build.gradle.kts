@@ -49,8 +49,15 @@ dependencies {
 
 tasks {
     shadowJar {
+        manifest {
+            attributes["Main-Class"] = "ai.dokus.payment.backend.ApplicationKt"
+        }
         archiveBaseName.set("backend")
         archiveVersion.set(project.version.toString())
         mergeServiceFiles()
+        archiveClassifier.set("")
+        exclude("META-INF/*.SF")
+        exclude("META-INF/*.DSA")
+        exclude("META-INF/*.RSA")
     }
 }
