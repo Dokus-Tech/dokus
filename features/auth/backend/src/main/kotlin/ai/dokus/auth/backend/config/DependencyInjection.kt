@@ -2,7 +2,7 @@ package ai.dokus.auth.backend.config
 
 import ai.dokus.auth.backend.services.*
 import ai.dokus.foundation.apispec.*
-import ai.dokus.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import io.ktor.server.application.Application
@@ -17,9 +17,9 @@ private val appModule = module {
     single<ExpenseApi> { ExpenseApiImpl(get()) }
 }
 
-fun Application.configureDependencyInjection(appConfig: AppConfig) {
+fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     val coreModule = module {
-        single<AppConfig> { appConfig }
+        single<AppBaseConfig> { appConfig }
     }
 
     install(Koin) {
