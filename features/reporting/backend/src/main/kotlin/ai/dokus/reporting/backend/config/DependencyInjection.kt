@@ -2,7 +2,7 @@ package ai.dokus.reporting.backend.config
 
 import ai.dokus.foundation.apispec.ReportingApi
 import ai.dokus.reporting.backend.services.ReportingApiImpl
-import ai.dokus.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import io.ktor.server.application.*
@@ -20,9 +20,9 @@ private val appModule = module {
     }
 }
 
-fun Application.configureDependencyInjection(appConfig: AppConfig) {
+fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     val coreModule = module {
-        single<AppConfig> { appConfig }
+        single<AppBaseConfig> { appConfig }
     }
 
     install(Koin) {
