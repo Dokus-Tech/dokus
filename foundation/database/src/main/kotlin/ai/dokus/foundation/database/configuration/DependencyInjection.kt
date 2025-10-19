@@ -32,8 +32,8 @@ private val appModule = module {
     single<UserService> { UserServiceImpl(get()) }
     single<ClientService> { ClientServiceImpl(get()) }
     single<InvoiceService> { InvoiceServiceImpl(get(), get()) }
-    single<ExpenseService> { ExpenseServiceImpl() }
-    single<PaymentService> { PaymentServiceImpl() }
+    single<ExpenseService> { ExpenseServiceImpl(get()) }
+    single<PaymentService> { PaymentServiceImpl(get()) }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppConfig) {

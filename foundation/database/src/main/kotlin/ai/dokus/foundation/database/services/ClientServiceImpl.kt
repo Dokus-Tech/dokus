@@ -35,29 +35,31 @@ class ClientServiceImpl(
         contactPerson: String?,
         phone: String?,
         notes: String?
-    ): Client = dbQuery {
-        val clientId = ClientsTable.insertAndGetId {
-            it[ClientsTable.tenantId] = tenantId.value.toJavaUuid()
-            it[ClientsTable.name] = name
-            it[ClientsTable.email] = email
-            it[ClientsTable.vatNumber] = vatNumber?.value
-            it[ClientsTable.addressLine1] = addressLine1
-            it[ClientsTable.addressLine2] = addressLine2
-            it[ClientsTable.city] = city
-            it[ClientsTable.postalCode] = postalCode
-            it[ClientsTable.country] = country
-            it[ClientsTable.contactPerson] = contactPerson
-            it[ClientsTable.phone] = phone
-            it[ClientsTable.notes] = notes
-            it[isActive] = true
-        }.value
+    ): Client {
+        val client = dbQuery {
+            val clientId = ClientsTable.insertAndGetId {
+                it[ClientsTable.tenantId] = tenantId.value.toJavaUuid()
+                it[ClientsTable.name] = name
+                it[ClientsTable.email] = email
+                it[ClientsTable.vatNumber] = vatNumber?.value
+                it[ClientsTable.addressLine1] = addressLine1
+                it[ClientsTable.addressLine2] = addressLine2
+                it[ClientsTable.city] = city
+                it[ClientsTable.postalCode] = postalCode
+                it[ClientsTable.country] = country
+                it[ClientsTable.contactPerson] = contactPerson
+                it[ClientsTable.phone] = phone
+                it[ClientsTable.notes] = notes
+                it[isActive] = true
+            }.value
 
-        logger.info("Created client $clientId for tenant $tenantId: $name")
+            logger.info("Created client $clientId for tenant $tenantId: $name")
 
-        val client = ClientsTable.selectAll()
-            .where { ClientsTable.id eq clientId }
-            .single()
-            .toClient()
+            ClientsTable.selectAll()
+                .where { ClientsTable.id eq clientId }
+                .single()
+                .toClient()
+        }
 
         // Audit log
         auditService.logAction(
@@ -76,7 +78,7 @@ class ClientServiceImpl(
             )
         )
 
-        client
+        return client
     }
 
     override suspend fun update(
