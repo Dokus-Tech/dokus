@@ -1,5 +1,10 @@
 package ai.dokus.foundation.domain
 
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.usecases.validators.ValidateBicUseCase
+import ai.dokus.foundation.domain.usecases.validators.ValidateIbanUseCase
+import ai.dokus.foundation.domain.usecases.validators.ValidatePeppolIdUseCase
+import ai.dokus.foundation.domain.usecases.validators.ValidateVatNumberUseCase
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
@@ -266,48 +271,38 @@ value class Percentage(val value: String) {
 
 @Serializable
 @JvmInline
-value class VatNumber(val value: String) {
+value class VatNumber(override val value: String) : ValueClass<String>, Validatable<VatNumber> {
     override fun toString(): String = value
 
-    init {
-        require(value.isNotBlank()) { "VAT number cannot be blank" }
-        // Basic VAT number validation - can be enhanced per country
-        require(value.matches(Regex("^[A-Z]{2}[A-Z0-9]+$"))) {
-            "Invalid VAT number format: $value"
-        }
-    }
+    override val isValid: Boolean
+        get() = ValidateVatNumberUseCase(this)
+
+    override val validOrThrows: VatNumber
+        get() = if (isValid) this else throw DokusException.InvalidVatNumber
 }
 
 @Serializable
 @JvmInline
-value class Iban(val value: String) {
+value class Iban(override val value: String) : ValueClass<String>, Validatable<Iban> {
     override fun toString(): String = value
 
-    init {
-        require(value.isNotBlank()) { "IBAN cannot be blank" }
-        // Basic IBAN validation
-        val cleanIban = value.replace(" ", "").uppercase()
-        require(cleanIban.matches(Regex("^[A-Z]{2}\\d{2}[A-Z0-9]+$"))) {
-            "Invalid IBAN format: $value"
-        }
-        require(cleanIban.length in 15..34) {
-            "IBAN length must be between 15 and 34 characters: $value"
-        }
-    }
+    override val isValid: Boolean
+        get() = ValidateIbanUseCase(this)
+
+    override val validOrThrows: Iban
+        get() = if (isValid) this else throw DokusException.InvalidIban
 }
 
 @Serializable
 @JvmInline
-value class Bic(val value: String) {
+value class Bic(override val value: String) : ValueClass<String>, Validatable<Bic> {
     override fun toString(): String = value
 
-    init {
-        require(value.isNotBlank()) { "BIC cannot be blank" }
-        // BIC/SWIFT code validation
-        require(value.matches(Regex("^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"))) {
-            "Invalid BIC/SWIFT code format: $value"
-        }
-    }
+    override val isValid: Boolean
+        get() = ValidateBicUseCase(this)
+
+    override val validOrThrows: Bic
+        get() = if (isValid) this else throw DokusException.InvalidBic
 }
 
 @Serializable
@@ -322,12 +317,14 @@ value class TransactionId(val value: String) {
 
 @Serializable
 @JvmInline
-value class PeppolId(val value: String) {
+value class PeppolId(override val value: String) : ValueClass<String>, Validatable<PeppolId> {
     override fun toString(): String = value
 
-    init {
-        require(value.isNotBlank()) { "PEPPOL ID cannot be blank" }
-    }
+    override val isValid: Boolean
+        get() = ValidatePeppolIdUseCase(this)
+
+    override val validOrThrows: PeppolId
+        get() = if (isValid) this else throw DokusException.InvalidPeppolId
 }
 
 @Serializable

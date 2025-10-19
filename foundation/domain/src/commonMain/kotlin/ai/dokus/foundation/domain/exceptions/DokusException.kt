@@ -43,6 +43,18 @@ sealed class DokusException(val recoverable: Boolean = false) : Exception() {
     @Serializable
     data object InvalidWorkspaceName : DokusException()
 
+    @Serializable
+    data object InvalidVatNumber : DokusException()
+
+    @Serializable
+    data object InvalidIban : DokusException()
+
+    @Serializable
+    data object InvalidBic : DokusException()
+
+    @Serializable
+    data object InvalidPeppolId : DokusException()
+
     sealed class InvalidAddress : DokusException() {
         @Serializable
         data object InvalidStreetName : InvalidAddress()
