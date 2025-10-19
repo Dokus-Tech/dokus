@@ -10,6 +10,8 @@ import ai.dokus.foundation.domain.InvoiceId
 import ai.dokus.foundation.domain.InvoiceNumber
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
@@ -44,7 +46,8 @@ import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
 class InvoiceServiceImpl(
-    private val tenantService: TenantService
+    private val tenantService: TenantService,
+    private val auditService: AuditService
 ) : InvoiceService {
     private val logger = LoggerFactory.getLogger(InvoiceServiceImpl::class.java)
 
@@ -88,7 +91,26 @@ class InvoiceServiceImpl(
         }
 
         logger.info("Created invoice $invoiceNumber for tenant ${request.tenantId}")
-        return getInvoiceWithItems(invoiceId.toKotlinUuid())
+
+        val invoice = getInvoiceWithItems(invoiceId.toKotlinUuid())
+
+        // Audit log
+        auditService.logAction(
+            tenantId = request.tenantId,
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.InvoiceCreated,
+            entityType = EntityType.Invoice,
+            entityId = invoice.id.value,
+            oldValues = null,
+            newValues = mapOf(
+                "invoiceNumber" to invoice.invoiceNumber.value,
+                "clientId" to invoice.clientId.value.toString(),
+                "total" to invoice.totalAmount.value,
+                "status" to invoice.status.name
+            )
+        )
+
+        return invoice
     }
 
     override suspend fun update(
@@ -107,6 +129,26 @@ class InvoiceServiceImpl(
             throw IllegalArgumentException("Can only update draft invoices")
         }
 
+        // Capture old values
+        val oldValues = mutableMapOf<String, Any?>()
+        val newValues = mutableMapOf<String, Any?>()
+        if (issueDate != null) {
+            oldValues["issueDate"] = invoice[InvoicesTable.issueDate].toString()
+            newValues["issueDate"] = issueDate.toString()
+        }
+        if (dueDate != null) {
+            oldValues["dueDate"] = invoice[InvoicesTable.dueDate].toString()
+            newValues["dueDate"] = dueDate.toString()
+        }
+        if (notes != null) {
+            oldValues["notes"] = invoice[InvoicesTable.notes]
+            newValues["notes"] = notes
+        }
+        if (termsAndConditions != null) {
+            oldValues["termsAndConditions"] = invoice[InvoicesTable.termsAndConditions]
+            newValues["termsAndConditions"] = termsAndConditions
+        }
+
         InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
             if (issueDate != null) it[InvoicesTable.issueDate] = issueDate
             if (dueDate != null) it[InvoicesTable.dueDate] = dueDate
@@ -115,6 +157,17 @@ class InvoiceServiceImpl(
         }
 
         logger.info("Updated invoice $invoiceId")
+
+        // Audit log
+        auditService.logAction(
+            tenantId = TenantId(invoice[InvoicesTable.tenantId].toKotlinUuid()),
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.Update,
+            entityType = EntityType.Invoice,
+            entityId = invoiceId.value,
+            oldValues = oldValues,
+            newValues = newValues
+        )
     }
 
     override suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>) {
@@ -168,11 +221,29 @@ class InvoiceServiceImpl(
             throw IllegalArgumentException("Can only delete draft invoices")
         }
 
+        // Capture invoice details before deletion
+        val oldValues = mapOf(
+            "invoiceNumber" to invoice[InvoicesTable.invoiceNumber],
+            "status" to invoice[InvoicesTable.status].name,
+            "totalAmount" to invoice[InvoicesTable.totalAmount].toString()
+        )
+
         InvoicesTable.update({ InvoicesTable.id eq javaUuid }) {
             it[status] = InvoiceStatus.Cancelled
         }
 
         logger.info("Cancelled invoice $invoiceId")
+
+        // Audit log
+        auditService.logAction(
+            tenantId = TenantId(invoice[InvoicesTable.tenantId].toKotlinUuid()),
+            userId = null, // TODO: Get from authenticated context
+            action = AuditAction.Delete,
+            entityType = EntityType.Invoice,
+            entityId = invoiceId.value,
+            oldValues = oldValues,
+            newValues = mapOf("status" to InvoiceStatus.Cancelled.name)
+        )
     }
 
     override suspend fun findById(id: InvoiceId): Invoice? = dbQuery {
