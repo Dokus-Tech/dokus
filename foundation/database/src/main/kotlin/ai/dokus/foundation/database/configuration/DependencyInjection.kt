@@ -1,6 +1,11 @@
 package ai.dokus.foundation.database.configuration
 
-import ai.dokus.foundation.database.services.*
+import ai.dokus.foundation.database.services.ClientServiceImpl
+import ai.dokus.foundation.database.services.ExpenseServiceImpl
+import ai.dokus.foundation.database.services.InvoiceServiceImpl
+import ai.dokus.foundation.database.services.PaymentServiceImpl
+import ai.dokus.foundation.database.services.TenantServiceImpl
+import ai.dokus.foundation.database.services.UserServiceImpl
 import ai.dokus.foundation.database.utils.DatabaseFactory
 import ai.dokus.foundation.ktor.AppConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
@@ -20,12 +25,12 @@ private val appModule = module {
     single<PasswordCryptoService> { PasswordCryptoService4j() }
 
     // Audit Service
-    single<AuditService> { AuditService() }
+    single { ai.dokus.foundation.database.services.AuditServiceImpl() }
 
     // RPC Service Implementations
     single<TenantService> { TenantServiceImpl() }
     single<UserService> { UserServiceImpl(get()) }
-    single<ClientService> { ClientServiceImpl() }
+    single<ClientService> { ClientServiceImpl(get()) }
     single<InvoiceService> { InvoiceServiceImpl(get(), get()) }
     single<ExpenseService> { ExpenseServiceImpl() }
     single<PaymentService> { PaymentServiceImpl() }

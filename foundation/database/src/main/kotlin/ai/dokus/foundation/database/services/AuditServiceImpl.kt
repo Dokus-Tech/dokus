@@ -6,9 +6,7 @@ import ai.dokus.foundation.domain.BusinessUserId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
@@ -26,8 +24,8 @@ import kotlin.uuid.toKotlinUuid
  * Security: Helps detect unauthorized access
  */
 @OptIn(ExperimentalUuidApi::class)
-class AuditService {
-    private val logger = LoggerFactory.getLogger(AuditService::class.java)
+class AuditServiceImpl {
+    private val logger = LoggerFactory.getLogger(AuditServiceImpl::class.java)
     private val json = Json { prettyPrint = false }
 
     /**

@@ -47,7 +47,7 @@ import kotlin.uuid.toKotlinUuid
 @OptIn(ExperimentalUuidApi::class)
 class InvoiceServiceImpl(
     private val tenantService: TenantService,
-    private val auditService: AuditService
+    private val auditService: AuditServiceImpl
 ) : InvoiceService {
     private val logger = LoggerFactory.getLogger(InvoiceServiceImpl::class.java)
 
