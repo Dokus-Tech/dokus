@@ -81,25 +81,27 @@ object TestDatabaseFactory {
                 InvoiceItemsTable,
                 ExpensesTable,
                 PaymentsTable,
-                BankConnectionsTable,
-                BankTransactionsTable,
-                VatReturnsTable,
+                AttachmentsTable,
                 AuditLogsTable,
-                AttachmentsTable
+                VatReturnsTable,
+                BankConnectionsTable,
+                BankTransactionsTable
             )
         }
     }
 
     /**
-     * Execute database query in test transaction
-     */
-    suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO, database) { block() }
-
-    /**
      * Close database connection
      */
     fun close() {
+        dataSource?.close()
         database = null
+        dataSource = null
     }
+
+    /**
+     * Execute a database query in a transaction
+     */
+    suspend fun <T> dbQuery(block: suspend (Transaction) -> T): T =
+        newSuspendedTransaction(Dispatchers.IO) { block(this) }
 }
