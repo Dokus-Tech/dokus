@@ -77,6 +77,9 @@ dependencies {
 
     implementation(libs.password4j)
 
+    // PDF Generation - iText
+    implementation("com.itextpdf:itext7-core:8.0.3")
+
     // Test dependencies
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit.jupiter)

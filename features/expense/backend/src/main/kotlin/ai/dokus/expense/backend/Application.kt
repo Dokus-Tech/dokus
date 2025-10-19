@@ -3,7 +3,7 @@ package ai.dokus.expense.backend
 import ai.dokus.foundation.apispec.ExpenseApi
 import ai.dokus.expense.backend.config.configureDependencyInjection
 import ai.dokus.expense.backend.routes.expenseRoutes
-import ai.dokus.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 private val logger = LoggerFactory.getLogger("Application")
 
 fun main() {
-    val appConfig = AppConfig.load()
+    val appConfig = AppBaseConfig.load()
     logger.info("Loaded configuration: ${appConfig.ktor.deployment.environment}")
 
     val server = embeddedServer(
@@ -44,7 +44,7 @@ fun main() {
     server.start(wait = true)
 }
 
-fun Application.module(appConfig: AppConfig) {
+fun Application.module(appConfig: AppBaseConfig) {
     logger.info("Starting Dokus Expense Service...")
     logger.info("Environment: ${appConfig.ktor.deployment.environment}")
 

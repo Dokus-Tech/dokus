@@ -3,7 +3,7 @@ package ai.dokus.invoicing.backend
 import ai.dokus.foundation.apispec.InvoiceApi
 import ai.dokus.invoicing.backend.config.configureDependencyInjection
 import ai.dokus.invoicing.backend.routes.invoiceRoutes
-import ai.dokus.foundation.ktor.AppConfig
+import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 private val logger = LoggerFactory.getLogger("Application")
 
 fun main() {
-    val appConfig = AppConfig.load()
+    val appConfig = AppBaseConfig.load()
 
     logger.info("Loaded configuration: ${appConfig.ktor.deployment.environment}")
 
@@ -46,7 +46,7 @@ fun main() {
     server.start(wait = true)
 }
 
-fun Application.module(appConfig: AppConfig) {
+fun Application.module(appConfig: AppBaseConfig) {
     // Log application startup
     logger.info("Starting Dokus Invoicing Service...")
     logger.info("Environment: ${appConfig.ktor.deployment.environment}")
