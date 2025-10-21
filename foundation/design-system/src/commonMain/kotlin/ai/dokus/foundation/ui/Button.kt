@@ -1,8 +1,6 @@
 package ai.dokus.foundation.ui
 
-import ai.dokus.foundation.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,9 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
 import dokus.foundation.design_system.generated.resources.Res
 import dokus.foundation.design_system.generated.resources.arrow_left
+import org.jetbrains.compose.resources.painterResource
 
 enum class PButtonVariant {
     Default,
@@ -125,6 +123,6 @@ fun PBackButton(
     Icon(
         painter = painterResource(Res.drawable.arrow_left),
         contentDescription = "Back",
-        modifier = modifier.clickableWithRipple { onBackPress() }.size(24.dp)
+        modifier = modifier.clickable { onBackPress() }.size(24.dp)
     )
 }
