@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ui
 
 import ai.dokus.foundation.domain.model.Company
-import ai.dokus.foundation.ui.extensions.clickableWithRipple
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -23,7 +23,7 @@ fun WorkspaceItemCreateNew(
     onAddClick: () -> Unit,
 ) {
     Column(
-        modifier = modifier.clickableWithRipple { onAddClick() },
+        modifier = modifier.clickable { onAddClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -57,7 +57,7 @@ fun WorkspaceItem(
     onClick: (() -> Unit)? = null
 ) {
     Column(
-        modifier = modifier.clickableWithRipple { onClick?.invoke() },
+        modifier = modifier.clickable { onClick?.invoke() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {

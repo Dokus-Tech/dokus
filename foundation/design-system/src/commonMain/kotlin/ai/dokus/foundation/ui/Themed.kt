@@ -5,11 +5,15 @@ import ai.dokus.foundation.platform.isWeb
 import ai.dokus.foundation.ui.theme.createColorScheme
 import ai.dokus.foundation.ui.theme.createFontFamily
 import ai.dokus.foundation.ui.theme.createFontFamilyDisplay
+import ai.dokus.foundation.ui.theme.rippleColor
 import ai.dokus.foundation.ui.theme.withFontFamily
 import ai.dokus.foundation.ui.theme.withFontFamilyForDisplay
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 
 @Composable
 fun Themed(
@@ -26,10 +30,9 @@ fun Themed(
         if (activePlatform.isWeb) this
         else withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay)
     }
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = typography
-    ) {
-        content()
+    CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration(color = colorScheme.rippleColor)) {
+        MaterialTheme(colorScheme = colorScheme, typography = typography) {
+            content()
+        }
     }
 }

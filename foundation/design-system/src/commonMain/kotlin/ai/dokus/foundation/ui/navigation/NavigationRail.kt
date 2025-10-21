@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ui.navigation
 
-import ai.dokus.foundation.ui.extensions.clickableWithRipple
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -43,9 +43,7 @@ fun ColumnScope.NavigationRail(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickableWithRipple(
-                        onClick = { onSelectedItemChange(item) },
-                    ),
+                    .clickable { onSelectedItemChange(item) },
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isSelected) {
@@ -98,7 +96,7 @@ fun ColumnScope.NavigationRail(
     OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickableWithRipple { onSelectedItemChange(profileItem) },
+            .clickable { onSelectedItemChange(profileItem) },
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(
             1.dp,
