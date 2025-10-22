@@ -72,7 +72,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.foundation.ui"
+    namespace = "ai.dokus.foundation.design"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

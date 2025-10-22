@@ -2,12 +2,12 @@ package ai.dokus.app.screens
 
 import ai.dokus.app.viewmodel.WorkspacesViewModel
 import ai.dokus.foundation.domain.model.Company
-import ai.dokus.foundation.ui.WorkspacesGrid
-import ai.dokus.foundation.ui.common.ErrorBox
-import ai.dokus.foundation.ui.constrains.isLargeScreen
-import ai.dokus.foundation.ui.text.AppNameText
-import ai.dokus.foundation.ui.text.CopyRightText
-import ai.dokus.foundation.ui.text.SectionTitle
+import ai.dokus.foundation.design.components.WorkspacesGrid
+import ai.dokus.foundation.design.components.common.ErrorBox
+import ai.dokus.foundation.design.constrains.isLargeScreen
+import ai.dokus.foundation.design.components.text.AppNameText
+import ai.dokus.foundation.design.components.text.CopyRightText
+import ai.dokus.foundation.design.components.text.SectionTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
