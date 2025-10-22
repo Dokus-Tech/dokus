@@ -1,6 +1,6 @@
 package ai.dokus.app
 
-import ai.dokus.foundation.ui.constrains.Constrains
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application

@@ -1,10 +1,10 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.foundation.ui.PPrimaryButton
-import ai.dokus.foundation.ui.constrains.isLargeScreen
-import ai.dokus.foundation.ui.text.AppNameText
-import ai.dokus.foundation.ui.text.CopyRightText
-import ai.dokus.foundation.ui.text.SectionTitle
+import ai.dokus.foundation.design.components.PPrimaryButton
+import ai.dokus.foundation.design.constrains.isLargeScreen
+import ai.dokus.foundation.design.components.text.AppNameText
+import ai.dokus.foundation.design.components.text.CopyRightText
+import ai.dokus.foundation.design.components.text.SectionTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

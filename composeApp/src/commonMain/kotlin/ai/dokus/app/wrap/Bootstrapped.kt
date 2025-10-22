@@ -1,7 +1,7 @@
 package ai.dokus.app.wrap
 
 import ai.dokus.app.core.coreDiModule
-import ai.dokus.foundation.ui.uiDiModule
+import ai.dokus.foundation.design.uiDiModule
 import androidx.compose.runtime.Composable
 import org.koin.compose.KoinApplication
 

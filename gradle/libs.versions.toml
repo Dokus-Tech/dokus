@@ -54,6 +54,15 @@ micrometerCore = "1.15.5"
 micrometerRegistryPrometheus = "1.15.5"
 commonsPool2 = "2.12.1"
 
+datastore = "1.1.7"
+datastoreCoreJvm = "1.1.7"
+securityCrypto = "1.1.0"
+
+androidx-testExt = "1.3.0"
+core = "1.7.0"
+robolectric = "4.16"
+
+
 [libraries]
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -122,6 +131,18 @@ micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-p
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometerCore" }
 exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
+androidx-datastore-core-jvm = { module = "androidx.datastore:datastore-core-jvm", version.ref = "datastoreCoreJvm" }
+androidx-datastore-core-okio = { module = "androidx.datastore:datastore-core-okio", version.ref = "datastore" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-core = { module = "androidx.test:core", version.ref = "core" }
+androidx-testExt-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-testExt" }
+androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
+kotlinx-coroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 password4j = { module = "com.password4j:password4j", version.ref = "password4j" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
@@ -160,6 +181,8 @@ persistence-settingsTest = { group = "com.russhwolf", name = "multiplatform-sett
 
 [bundles]
 database = ["exposed-core", "exposed-jdbc", "exposed-dao", "exposed-kotlin-datetime", "postgresql", "postgres-pgjdbc", "h2"]
+datastore-jvm = ["androidx-datastore-core-okio", "androidx-datastore-core-jvm"]
+androidx-test-unit = ["junit", "androidx-core", "androidx-testExt-junit", "robolectric"]
 #krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
 
 [plugins]

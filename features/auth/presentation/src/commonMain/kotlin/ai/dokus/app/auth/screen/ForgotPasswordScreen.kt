@@ -1,16 +1,16 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.foundation.ui.constrains.isLargeScreen
+import ai.dokus.foundation.design.constrains.isLargeScreen
 import ai.dokus.foundation.navigation.AppNavigator
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.ui.PPrimaryButton
-import ai.dokus.foundation.ui.brandsugar.BackgroundAnimationViewModel
-import ai.dokus.foundation.ui.brandsugar.SloganWithBackgroundWithLeftContent
-import ai.dokus.foundation.ui.fields.PTextFieldEmail
-import ai.dokus.foundation.ui.fields.PTextFieldEmailDefaults
-import ai.dokus.foundation.ui.text.AppNameText
-import ai.dokus.foundation.ui.text.SectionTitle
+import ai.dokus.foundation.design.components.PPrimaryButton
+import ai.dokus.foundation.design.brandsugar.BackgroundAnimationViewModel
+import ai.dokus.foundation.design.brandsugar.SloganWithBackgroundWithLeftContent
+import ai.dokus.foundation.design.components.fields.PTextFieldEmail
+import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
+import ai.dokus.foundation.design.components.text.AppNameText
+import ai.dokus.foundation.design.components.text.SectionTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement

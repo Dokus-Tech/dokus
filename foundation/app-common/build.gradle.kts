@@ -38,6 +38,8 @@ kotlin {
         commonMain.dependencies {
             api(projects.foundation.platform)
             api(projects.foundation.domain)
+            api(projects.foundation.navigation)
+            api(projects.foundation.designSystem)
 
             implementation(compose.runtime)
             implementation(compose.foundation)
