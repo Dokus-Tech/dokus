@@ -1,18 +1,32 @@
 package ai.dokus.app
 
-import ai.dokus.app.wrap.Bootstrapped
-import ai.dokus.app.wrap.NavigationProvided
+import ai.dokus.app.core.navigationProviders
+import ai.dokus.app.local.AppModulesProvided
+import ai.dokus.app.local.KoinProvided
+import ai.dokus.foundation.design.local.ScreenSizeProvided
 import ai.dokus.foundation.design.style.Themed
 import androidx.compose.runtime.Composable
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.remember
+import androidx.navigation.NavController
+import ai.dokus.app.navigation.secondary.DualPanelNavigationContainer
 
-@Preview
 @Composable
-fun App() {
-    Bootstrapped {
-        Themed {
-            NavigationProvided {
-                // Navigation content is handled by NavigationGraph
+fun App(
+    onNavHostReady: suspend (NavController) -> Unit = {}
+) {
+    val modules = remember { appModules }
+    val navigationProviders = remember(modules) { modules.navigationProviders }
+    val diModules = remember(modules) { modules.diModules }
+
+    AppModulesProvided(modules) {
+        KoinProvided(diModules) {
+            Themed {
+                ScreenSizeProvided {
+                    DualPanelNavigationContainer(
+                        navigationProviders = navigationProviders,
+                        onPrimaryNavHostReady = onNavHostReady
+                    )
+                }
             }
         }
     }

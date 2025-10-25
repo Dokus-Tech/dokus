@@ -1,6 +1,6 @@
 package ai.dokus.invoicing.backend.config
 
-import ai.dokus.foundation.apispec.InvoiceApi
+import ai.dokus.foundation.domain.rpc.InvoiceApi
 import ai.dokus.invoicing.backend.services.InvoiceApiImpl
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace

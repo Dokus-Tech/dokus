@@ -9,8 +9,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 
-internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(State.Loading),
-    KoinComponent {
+internal class WorkspacesViewModel : BaseViewModel<WorkspacesViewModel.State>(State.Loading) {
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()

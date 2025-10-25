@@ -1,8 +1,8 @@
 package ai.dokus.auth.backend.services
 
-import ai.dokus.foundation.apispec.ClientApi
-import ai.dokus.foundation.apispec.ClientEvent
-import ai.dokus.foundation.apispec.ClientStats
+import ai.dokus.foundation.domain.rpc.ClientApi
+import ai.dokus.foundation.domain.rpc.ClientEvent
+import ai.dokus.foundation.domain.rpc.ClientStats
 import ai.dokus.foundation.domain.ClientId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber

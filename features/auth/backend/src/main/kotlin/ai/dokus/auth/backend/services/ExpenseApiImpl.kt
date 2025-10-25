@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.services
 
-import ai.dokus.foundation.apispec.ExpenseApi
+import ai.dokus.foundation.domain.rpc.ExpenseApi
 import ai.dokus.foundation.domain.ExpenseId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.ExpenseCategory

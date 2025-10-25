@@ -143,7 +143,7 @@ data class SimpleMatchDocumentsResult(
 @Serializable
 sealed class Document {
     @Serializable
-    @SerialName("invoice")
+    @SerialName("Document.InvoiceDoc")
     data class InvoiceDoc(
         val id: String,
         val fileName: String,
@@ -163,7 +163,7 @@ sealed class Document {
     ) : Document()
 
     @Serializable
-    @SerialName("receipt")
+    @SerialName("Document.ReceiptDoc")
     data class ReceiptDoc(
         val id: String,
         val fileName: String,

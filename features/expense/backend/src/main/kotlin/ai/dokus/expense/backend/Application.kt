@@ -1,6 +1,6 @@
 package ai.dokus.expense.backend
 
-import ai.dokus.foundation.apispec.ExpenseApi
+import ai.dokus.foundation.domain.rpc.ExpenseApi
 import ai.dokus.expense.backend.config.configureDependencyInjection
 import ai.dokus.expense.backend.routes.expenseRoutes
 import ai.dokus.foundation.ktor.AppBaseConfig

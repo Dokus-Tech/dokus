@@ -1,31 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pulse-auth-service
-  namespace: pulse
+  name: dokus-auth-service
+  namespace: dokus
   labels:
-    app: pulse-auth
+    app: dokus-auth
     component: backend
     tier: service
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: pulse-auth
+      app: dokus-auth
   template:
     metadata:
       labels:
-        app: pulse-auth
+        app: dokus-auth
         version: v1
     spec:
-      serviceAccountName: pulse-auth
+      serviceAccountName: dokus-auth
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
         fsGroup: 1001
       containers:
       - name: auth-service
-        image: registry.police.be/pulse/auth-service:latest
+        image: registry.dokus.ai/dokus/auth-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8081
@@ -40,35 +40,35 @@ spec:
         - name: DB_URL
           valueFrom:
             secretKeyRef:
-              name: pulse-auth-db
+              name: dokus-auth-db
               key: url
         - name: DB_USERNAME
           valueFrom:
             secretKeyRef:
-              name: pulse-auth-db
+              name: dokus-auth-db
               key: username
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pulse-auth-db
+              name: dokus-auth-db
               key: password
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: pulse-auth-jwt
+              name: dokus-auth-jwt
               key: secret
         - name: JWT_ISSUER
-          value: "https://api.pulse.police.be"
+          value: "https://api.dokus.ai"
         - name: JWT_AUDIENCE
-          value: "pulse-api"
+          value: "dokus-api"
         - name: REDIS_HOST
-          value: "pulse-redis-service"
+          value: "dokus-redis-service"
         - name: REDIS_PORT
           value: "6379"
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pulse-redis
+              name: dokus-redis
               key: password
         - name: LOG_LEVEL
           value: "INFO"
@@ -100,25 +100,25 @@ spec:
           mountPath: /app/config
           readOnly: true
         - name: logs
-          mountPath: /var/log/pulse
+          mountPath: /var/log/dokus
       volumes:
       - name: config
         configMap:
-          name: pulse-auth-config
+          name: dokus-auth-config
       - name: logs
         emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: pulse-auth-service
-  namespace: pulse
+  name: dokus-auth-service
+  namespace: dokus
   labels:
-    app: pulse-auth
+    app: dokus-auth
 spec:
   type: ClusterIP
   selector:
-    app: pulse-auth
+    app: dokus-auth
   ports:
   - port: 8081
     targetPort: http
@@ -132,14 +132,14 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: pulse-auth
-  namespace: pulse
+  name: dokus-auth
+  namespace: dokus
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pulse-auth-config
-  namespace: pulse
+  name: dokus-auth-config
+  namespace: dokus
 data:
   application.conf: |
     ktor {
@@ -151,26 +151,26 @@ data:
 
     security {
         cors {
-            allowedHosts = ["pulse.police.be", "10.13.4.103"]
+            allowedHosts = ["dokus.ai", "10.13.4.103"]
         }
     }
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pulse-auth-db
-  namespace: pulse
+  name: dokus-auth-db
+  namespace: dokus
 type: Opaque
 stringData:
-  url: "jdbc:postgresql://postgres-service:5432/pulse_auth"
-  username: "pulse_user"
+  url: "jdbc:postgresql://postgres-service:5432/dokus_auth"
+  username: "dokus_user"
   password: "change-in-production"
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pulse-auth-jwt
-  namespace: pulse
+  name: dokus-auth-jwt
+  namespace: dokus
 type: Opaque
 stringData:
   secret: "change-this-secret-in-production"
@@ -178,8 +178,8 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pulse-redis
-  namespace: pulse
+  name: dokus-redis
+  namespace: dokus
 type: Opaque
 stringData:
   password: "redis-password-change-in-production"
@@ -187,13 +187,13 @@ stringData:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: pulse-auth-hpa
-  namespace: pulse
+  name: dokus-auth-hpa
+  namespace: dokus
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: pulse-auth-service
+    name: dokus-auth-service
   minReplicas: 3
   maxReplicas: 10
   metrics:
@@ -213,23 +213,23 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: pulse-auth-pdb
-  namespace: pulse
+  name: dokus-auth-pdb
+  namespace: dokus
 spec:
   minAvailable: 2
   selector:
     matchLabels:
-      app: pulse-auth
+      app: dokus-auth
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: pulse-auth-netpol
-  namespace: pulse
+  name: dokus-auth-netpol
+  namespace: dokus
 spec:
   podSelector:
     matchLabels:
-      app: pulse-auth
+      app: dokus-auth
   policyTypes:
   - Ingress
   - Egress
@@ -237,10 +237,10 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: pulse
+          name: dokus
     - podSelector:
         matchLabels:
-          app: pulse-gateway
+          app: dokus-gateway
     ports:
     - protocol: TCP
       port: 8081
@@ -255,7 +255,7 @@ spec:
   - to:
     - namespaceSelector:
         matchLabels:
-          name: pulse
+          name: dokus
     - podSelector:
         matchLabels:
           app: postgres
@@ -265,7 +265,7 @@ spec:
   - to:
     - namespaceSelector:
         matchLabels:
-          name: pulse
+          name: dokus
     - podSelector:
         matchLabels:
           app: redis

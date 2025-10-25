@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.flags
 
-object FeatureFlags {
-    const val ownServers: Boolean = false
-    const val addWorkspaceAvatar: Boolean = false
+enum class FeatureFlag(val defaultState: Boolean) {
+    OwnServers(false),
+    AddWorkspaceAvatar(false);
 }

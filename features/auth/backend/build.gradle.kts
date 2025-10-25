@@ -22,7 +22,7 @@ kotlin {
 dependencies {
     implementation(projects.foundation.domain)
     implementation(projects.foundation.ktorCommon)
-    implementation(projects.foundation.apispec)
+    implementation(projects.foundation.domain)
 
     implementation(libs.kotlinx.serialization)
 

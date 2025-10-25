@@ -5,7 +5,7 @@ import ai.dokus.auth.backend.config.configureDependencyInjection
 import ai.dokus.auth.backend.routes.identityRoutes
 import ai.dokus.auth.backend.routes.passwordlessAuthRoutes
 import ai.dokus.auth.backend.routes.userRoutes
-import ai.dokus.foundation.apispec.*
+import ai.dokus.foundation.domain.rpc.*
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring

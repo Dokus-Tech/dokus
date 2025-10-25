@@ -1,12 +1,9 @@
 package ai.dokus.foundation.database.services
 
-import ai.dokus.foundation.domain.*
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.Payment
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toJavaLocalDate
+import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.Money
+import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
-import java.math.BigDecimal
 
 /**
  * Payment gateway interface for processing online payments
@@ -88,7 +85,7 @@ interface PaymentGateway {
 /**
  * Payment intent creation result
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class PaymentIntentResult(
     val paymentIntentId: String,
     val clientSecret: String,
@@ -100,7 +97,7 @@ data class PaymentIntentResult(
 /**
  * Payment confirmation details
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class PaymentConfirmation(
     val paymentIntentId: String,
     val transactionId: String,
@@ -114,7 +111,7 @@ data class PaymentConfirmation(
 /**
  * Refund result
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class RefundResult(
     val refundId: String,
     val paymentIntentId: String,
@@ -126,7 +123,7 @@ data class RefundResult(
 /**
  * Payment details from gateway
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class PaymentDetails(
     val paymentIntentId: String,
     val amount: Money,

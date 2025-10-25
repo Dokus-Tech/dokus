@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dokus.foundation.design_system.generated.resources.Res
-import dokus.foundation.design_system.generated.resources.arrow_left
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.arrow_left
 import org.jetbrains.compose.resources.painterResource
 
 enum class PButtonVariant {

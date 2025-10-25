@@ -1,6 +1,6 @@
 package ai.dokus.reporting.backend
 
-import ai.dokus.foundation.apispec.ReportingApi
+import ai.dokus.foundation.domain.rpc.ReportingApi
 import ai.dokus.reporting.backend.config.configureDependencyInjection
 import ai.dokus.reporting.backend.routes.reportRoutes
 import ai.dokus.foundation.ktor.AppBaseConfig

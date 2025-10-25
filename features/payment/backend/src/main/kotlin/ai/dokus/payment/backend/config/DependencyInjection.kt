@@ -1,6 +1,6 @@
 package ai.dokus.payment.backend.config
 
-import ai.dokus.foundation.apispec.PaymentApi
+import ai.dokus.foundation.domain.rpc.PaymentApi
 import ai.dokus.payment.backend.services.PaymentApiImpl
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace

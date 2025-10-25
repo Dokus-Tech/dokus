@@ -1,6 +1,6 @@
 package ai.dokus.invoicing.backend.services
 
-import ai.dokus.foundation.apispec.InvoiceApi
+import ai.dokus.foundation.domain.rpc.InvoiceApi
 import ai.dokus.foundation.domain.InvoiceId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.InvoiceStatus

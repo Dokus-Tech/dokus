@@ -1,6 +1,6 @@
 package ai.dokus.reporting.backend.config
 
-import ai.dokus.foundation.apispec.ReportingApi
+import ai.dokus.foundation.domain.rpc.ReportingApi
 import ai.dokus.reporting.backend.services.ReportingApiImpl
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
