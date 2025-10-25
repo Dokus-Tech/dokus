@@ -48,7 +48,7 @@ internal class JVMSecureStorage(
     private val storageDir = initializeStorageDirectory()
     private val dataFile = File(storageDir, "${hashServiceName()}.db")
     private val keyStoreFile = File(storageDir, "${hashServiceName()}.ks")
-    private val keyAlias = "pulse_${serviceName}_key"
+    private val keyAlias = "dokus_${serviceName}_key"
 
     private val keyStorePassword = deriveKeyStorePassword()
     private val json = Json {
@@ -93,21 +93,21 @@ internal class JVMSecureStorage(
         val dir = when (osType) {
             OSType.WINDOWS -> {
                 val appData = System.getenv("LOCALAPPDATA") ?: "$userHome/AppData/Local"
-                File(appData, "FederalPolice/Pulse/data")
+                File(appData, "Dokus/data")
             }
 
             OSType.MACOS -> {
-                File(userHome, "Library/Application Support/be.police.pulse/data")
+                File(userHome, "Library/Application Support/ai.dokus/data")
             }
 
             OSType.LINUX -> {
                 val xdgDataHome = System.getenv("XDG_DATA_HOME") ?: "$userHome/.local/share"
-                File(xdgDataHome, "be.police.pulse/data")
+                File(xdgDataHome, "ai.dokus/data")
             }
 
             OSType.UNKNOWN -> {
                 // Fallback to hidden directory in user home
-                File(userHome, ".pulse/data")
+                File(userHome, ".dokus/data")
             }
         }
 
@@ -120,7 +120,7 @@ internal class JVMSecureStorage(
      */
     private fun hashServiceName(): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest("$serviceName-pulse".toByteArray())
+        val hash = digest.digest("$serviceName-dokus".toByteArray())
         return hash.take(8).joinToString("") { "%02x".format(it) }
     }
 
@@ -145,7 +145,7 @@ internal class JVMSecureStorage(
 
         // Combine all factors
         val combined = factors.joinToString("|")
-        val salt = "FedPolPulse-$serviceName-${osType.name}".toByteArray()
+        val salt = "Dokus-$serviceName-${osType.name}".toByteArray()
 
         // Use PBKDF2 to derive a strong password
         val spec = PBEKeySpec(

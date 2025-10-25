@@ -1,6 +1,5 @@
-package ai.dokus.app.profile.screen
+package ai.dokus.app.auth.screen
 
-import ai.dokus.foundation.navigation.AppNavigator
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -10,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun ProfileScreen(navigator: AppNavigator) {
+fun ProfileScreen() {
     Scaffold {
         Box(modifier = Modifier.padding(it)) {
             Text("Profile", modifier = Modifier.align(Alignment.Center))

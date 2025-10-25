@@ -25,10 +25,10 @@ class OSKeychainSecureStorage(
 ) : SecureStorage() {
 
     companion object {
-        private const val KEY_PREFIX = "be.police.pulse"
+        private const val KEY_PREFIX = "ai.dokus"
         private const val SEPARATOR = "."
         private const val MAX_VALUE_LENGTH = 2048 // Some keychains have limits
-        private const val DEFAULT_ACCOUNT = "pulse-secure-storage"
+        private const val DEFAULT_ACCOUNT = "dokus-secure-storage"
     }
 
     private val keyring: Keyring? = try {

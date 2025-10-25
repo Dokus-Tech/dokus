@@ -1,6 +1,6 @@
 package ai.dokus.reporting.backend.services
 
-import ai.dokus.foundation.apispec.*
+import ai.dokus.foundation.domain.rpc.*
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.ktor.services.ExpenseService

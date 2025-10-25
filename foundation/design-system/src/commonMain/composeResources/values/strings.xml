@@ -1,0 +1,43 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">Dokus</string>
+    <string name="app_slogan">Dokus slogan</string>
+    <string name="develop_by">Developed by Company owner to Company owners</string>
+    <string name="copyright">©2025 Dokus</string>
+    <string name="back">Back</string>
+    <string name="approve">Approve</string>
+    <string name="reject">Reject</string>
+
+    <!-- Core - Splash -->
+    <string name="bootstrap_state_initializing">Initializing application...</string>
+    <string name="bootstrap_state_authenticating">Verifying authentication...</string>
+    <string name="bootstrap_state_app_version_check">Verifying application version...</string>
+    <string name="bootstrap_state_checking_account_status">Verifying account status...</string>
+
+    <!-- Home -->
+    <string name="home_dashboard">Dashboard</string>
+    <string name="home_users">Users</string>
+    <string name="home_settings">Settings</string>
+
+    <!-- Device Types -->
+    <string name="device_type_ios">iOS</string>
+    <string name="device_type_android">Android</string>
+    <string name="device_type_web">Web</string>
+    <string name="device_type_desktop">Computer</string>
+    <string name="device_type_tablet">Tablet</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Building Something Reliable</string>
+    <string name="under_development_subtitle">This feature is being carefully developed.\nBuilt to serve your needs.</string>
+
+    <!-- Dashboard - Feature -->
+    <string name="feature_auth">Authentication</string>
+
+    <!-- Users -->
+    <string name="users_selected">Selected users</string>
+    <string name="users_not_selected">No users selected</string>
+
+    <!-- Keyboard Modifiers -->
+    <string name="key_cmd">CMD</string>
+    <string name="key_ctrl">CTRL</string>
+</resources>

@@ -4,10 +4,10 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.direct
+import ai.dokus.app.resources.generated.gilroy_extra_bold
 import org.jetbrains.compose.resources.Font
-import dokus.foundation.design_system.generated.resources.Res
-import dokus.foundation.design_system.generated.resources.direct
-import dokus.foundation.design_system.generated.resources.gilroy_extra_bold
 
 @Composable
 fun Typography.withFontFamily(fontFamily: FontFamily): Typography {

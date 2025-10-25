@@ -1,6 +1,6 @@
 package ai.dokus.invoicing.backend
 
-import ai.dokus.foundation.apispec.InvoiceApi
+import ai.dokus.foundation.domain.rpc.InvoiceApi
 import ai.dokus.invoicing.backend.config.configureDependencyInjection
 import ai.dokus.invoicing.backend.routes.invoiceRoutes
 import ai.dokus.foundation.ktor.AppBaseConfig

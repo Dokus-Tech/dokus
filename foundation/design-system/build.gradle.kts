@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.composeHotReload)
 }
 
 kotlin {
@@ -34,10 +35,6 @@ kotlin {
 
     sourceSets {
         val desktopMain by getting
-
-        androidMain.dependencies {
-            api(libs.androidx.activity.compose)
-        }
         commonMain.dependencies {
             implementation(projects.foundation.platform)
             implementation(projects.foundation.navigation)
@@ -60,6 +57,7 @@ kotlin {
 
             api(libs.composeIcons.feather)
             api(libs.composeIcons.fontAwesome)
+            api(compose.materialIconsExtended)
 
             api(libs.materialKolor)
         }
@@ -73,30 +71,12 @@ kotlin {
 android {
     namespace = "ai.dokus.foundation.design"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
-
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    lint {
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    buildFeatures {
-        compose = true
     }
 }
 
@@ -104,17 +84,8 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
-compose.desktop {
-
-    application {
-        buildTypes {
-            release {
-                proguard {
-                    obfuscate = false
-                    optimize = false
-                    isEnabled = false
-                }
-            }
-        }
-    }
+compose.resources {
+    publicResClass = true  // Makes Res class public
+    packageOfResClass = "ai.dokus.app.resources.generated"
+    generateResClass = always // Ensures generation happens
 }

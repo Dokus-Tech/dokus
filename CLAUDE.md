@@ -4,7 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Dokus is a Kotlin Multiplatform (KMP) financial document management application targeting Android, iOS, Desktop (JVM), and Web (WASM). The codebase uses Compose Multiplatform for UI and follows a feature-modular architecture.
+**Dokus** is a Kotlin Multiplatform (KMP) financial management application targeting Android, iOS, Desktop (JVM), and Web (WASM). The codebase uses Compose Multiplatform for UI and follows a feature-modular architecture.
+
+### Vision
+
+**"Make financial compliance invisible for European developers and freelancers"**
+
+Dokus is "anti-accounting software" - a system so automated and intelligent that developers never think about finances except when making business decisions. It focuses on Belgian IT freelancers with Belgium's 2026 Peppol e-invoicing mandate as the key market driver.
 
 ## Build Commands
 
@@ -55,8 +61,9 @@ The project follows a feature-based modular architecture:
   - Feature modules: `onboarding`, `home`, `dashboard`, `contacts`, `cashflow`, `simulation`, `inventory`, `banking`, `profile`
   - Core modules: `core`, `repository`, `navigation`
 - **`/foundation`**: Foundation modules shared across all features
-  - Modules: `ui`, `domain`, `platform`, `apispec`
-- **`/server`**: Backend microservices (currently disabled in settings.gradle.kts)
+  - Modules: `design-system`, `app-common`, `platform`, `navigation`, `domain`, `database`, `sstorage`, `ktor-common`
+  - RPC interfaces: Located in `foundation/domain/rpc/` (KotlinX RPC service definitions)
+- **`/features`**: Backend microservices (auth, invoicing, expense, payment, reporting)
 
 ### Key Architectural Patterns
 - **Dependency Injection**: Koin throughout the application
@@ -218,3 +225,112 @@ class LoginViewModel : BaseViewModel<State>(State.Idle), KoinComponent {
     }
 }
 ```
+
+## Critical Database & Security Rules
+
+### Multi-Tenant Security (CRITICAL!)
+
+**Rule #1: ALWAYS filter by `tenant_id` in every query**
+
+This is the most critical security rule. Every database query MUST include tenant_id filtering.
+
+```kotlin
+// ❌ SECURITY VULNERABILITY - NEVER DO THIS
+fun getInvoice(invoiceId: UUID) = transaction {
+    Invoices.select { Invoices.id eq invoiceId }
+}
+
+// ✅ CORRECT - Always filter by tenant
+fun getInvoice(invoiceId: UUID, tenantId: UUID) = transaction {
+    Invoices.select {
+        (Invoices.id eq invoiceId) and (Invoices.tenantId eq tenantId)
+    }
+}
+```
+
+### Financial Data Handling
+
+**Rule #2: Use NUMERIC, NEVER FLOAT for money**
+
+```kotlin
+// ❌ WRONG - Causes rounding errors
+val price = 19.99f
+val total = price * 3f  // 59.970005 instead of 59.97!
+
+// ✅ CORRECT - Exact decimal arithmetic
+val price = BigDecimal("19.99")
+val total = price * BigDecimal("3")  // Exactly 59.97
+
+// In Exposed schema
+val totalAmount = decimal("total_amount", 12, 2)  // NUMERIC(12,2)
+```
+
+**Rounding Rules:**
+```kotlin
+import java.math.RoundingMode
+
+val amount = BigDecimal("10.555")
+val rounded = amount.setScale(2, RoundingMode.HALF_UP)  // 10.56
+```
+
+### RPC Service Design with KotlinX RPC
+
+All RPC interfaces are marked with `@Rpc` annotation and located in `foundation/domain/rpc/`:
+
+```kotlin
+@Rpc
+interface InvoiceApi {
+    suspend fun createInvoice(request: CreateInvoiceRequest): Result<Invoice>
+    suspend fun getInvoice(id: InvoiceId): Result<Invoice>
+    fun watchInvoices(tenantId: TenantId): Flow<Invoice>
+}
+```
+
+**Sealed classes for events must include @SerialName:**
+```kotlin
+@Serializable
+sealed class ClientEvent {
+    @Serializable
+    @SerialName("ClientEvent.ClientCreated")
+    data class ClientCreated(val client: Client) : ClientEvent()
+}
+```
+
+### Audit Logging
+
+Every financial operation MUST be logged:
+
+```kotlin
+suspend fun logAudit(
+    tenantId: UUID,
+    userId: UUID?,
+    action: String,
+    entityType: String,
+    entityId: UUID,
+    oldValues: JsonObject?,
+    newValues: JsonObject?
+) {
+    // Log to audit_logs table (immutable, 7-year retention)
+}
+```
+
+### Transaction Management
+
+```kotlin
+// ✅ CORRECT - Entire operation is atomic
+suspend fun createInvoice(...) = transaction {
+    val invoiceId = Invoices.insertAndGetId { ... }
+    items.forEach { InvoiceItems.insert { ... } }
+    AuditLogs.insert { ... }
+    invoiceId  // All succeed or all fail
+}
+```
+
+### Performance Best Practices
+
+1. **Avoid N+1 queries** - Use joins instead of loops
+2. **Batch operations** - Use `batchInsert` for multiple rows
+3. **Index properly** - Index all foreign keys and query filters
+4. **Connection pooling** - Configure HikariCP with appropriate pool size
+
+See `docs/DATABASE.md` and `docs/SECURITY.md` for complete details.

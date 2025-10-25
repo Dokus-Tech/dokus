@@ -1,7 +1,6 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.app.repository.api.UnifiedApi
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
@@ -13,7 +12,6 @@ internal class ForgotPasswordViewModel :
     BaseViewModel<ForgotPasswordViewModel.State>(State.Idle), KoinComponent {
 
     private val validateEmailUseCase: ValidateEmailUseCase by inject()
-    private val api: UnifiedApi by inject()
 
     fun submit(emailValue: Email) = scope.launch {
         mutableState.value = State.Loading

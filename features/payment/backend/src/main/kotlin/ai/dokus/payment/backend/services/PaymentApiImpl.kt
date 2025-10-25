@@ -1,8 +1,8 @@
 package ai.dokus.payment.backend.services
 
-import ai.dokus.foundation.apispec.PaymentApi
-import ai.dokus.foundation.apispec.PaymentEvent
-import ai.dokus.foundation.apispec.PaymentStats
+import ai.dokus.foundation.domain.rpc.PaymentApi
+import ai.dokus.foundation.domain.rpc.PaymentEvent
+import ai.dokus.foundation.domain.rpc.PaymentStats
 import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment

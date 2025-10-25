@@ -1,6 +1,6 @@
 package ai.dokus.payment.backend
 
-import ai.dokus.foundation.apispec.PaymentApi
+import ai.dokus.foundation.domain.rpc.PaymentApi
 import ai.dokus.payment.backend.config.configureDependencyInjection
 import ai.dokus.payment.backend.routes.paymentRoutes
 import ai.dokus.foundation.ktor.AppBaseConfig

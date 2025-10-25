@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.services
 
-import ai.dokus.foundation.apispec.TenantApi
+import ai.dokus.foundation.domain.rpc.TenantApi
 import ai.dokus.foundation.domain.InvoiceNumber
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber

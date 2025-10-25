@@ -1,7 +1,7 @@
 package ai.dokus.auth.backend.config
 
 import ai.dokus.auth.backend.services.*
-import ai.dokus.foundation.apispec.*
+import ai.dokus.foundation.domain.rpc.*
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule

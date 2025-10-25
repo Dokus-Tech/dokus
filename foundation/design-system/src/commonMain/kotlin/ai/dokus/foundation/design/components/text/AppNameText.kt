@@ -7,9 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.app_logo
 import org.jetbrains.compose.resources.painterResource
-import dokus.foundation.design_system.generated.resources.Res
-import dokus.foundation.design_system.generated.resources.app_logo
 
 @Composable
 fun AppNameText(modifier: Modifier = Modifier) {
@@ -25,10 +25,4 @@ fun AppNameText(modifier: Modifier = Modifier) {
         colorFilter = ColorFilter.tint(color),
         modifier = modifier
     )
-//    Text(
-//        modifier = modifier,
-//        text = "Predict",
-//        color = color,
-//        style = MaterialTheme.typography.displaySmall
-//    )
 }

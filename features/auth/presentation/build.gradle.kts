@@ -32,6 +32,9 @@ kotlin {
         androidMain.dependencies {
         }
         commonMain.dependencies {
+            implementation(projects.features.auth.data)
+            implementation(projects.foundation.domain)
+
             implementation(projects.foundation.navigation)
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.designSystem)

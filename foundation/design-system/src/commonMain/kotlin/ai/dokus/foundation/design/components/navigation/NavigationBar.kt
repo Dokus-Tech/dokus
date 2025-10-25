@@ -19,16 +19,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow
+import ai.dokus.app.resources.generated.chart_bar_trend_up
+import ai.dokus.app.resources.generated.plus
+import ai.dokus.app.resources.generated.simulations
+import ai.dokus.app.resources.generated.tasks_2
+import ai.dokus.app.resources.generated.user
+import ai.dokus.app.resources.generated.users
+import ai.dokus.app.resources.generated.wallet_2
 import org.jetbrains.compose.resources.painterResource
-import dokus.foundation.design_system.generated.resources.Res
-import dokus.foundation.design_system.generated.resources.cashflow
-import dokus.foundation.design_system.generated.resources.chart_bar_trend_up
-import dokus.foundation.design_system.generated.resources.plus
-import dokus.foundation.design_system.generated.resources.simulations
-import dokus.foundation.design_system.generated.resources.tasks_2
-import dokus.foundation.design_system.generated.resources.user
-import dokus.foundation.design_system.generated.resources.users
-import dokus.foundation.design_system.generated.resources.wallet_2
 
 
 sealed interface TabNavItem {

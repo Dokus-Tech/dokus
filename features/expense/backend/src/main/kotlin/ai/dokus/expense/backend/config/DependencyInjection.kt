@@ -1,6 +1,6 @@
 package ai.dokus.expense.backend.config
 
-import ai.dokus.foundation.apispec.ExpenseApi
+import ai.dokus.foundation.domain.rpc.ExpenseApi
 import ai.dokus.expense.backend.services.ExpenseApiImpl
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
