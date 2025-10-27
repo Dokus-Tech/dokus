@@ -1,5 +1,6 @@
 package ai.dokus.app
 
+import ai.dokus.app.auth.authAppModule
 import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.ModuleSettingsGroup
 import ai.dokus.foundation.design.model.HomeItem
@@ -7,7 +8,10 @@ import ai.dokus.foundation.navigation.NavigationProvider
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module
 
-private val baseAppModules = listOf<AppModule>()
+private val baseAppModules = listOf<AppModule>(
+    appModule,
+    authAppModule
+)
 
 private val conditionalModules = emptyList<AppModule>()
 

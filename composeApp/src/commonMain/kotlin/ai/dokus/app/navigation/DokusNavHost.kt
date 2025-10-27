@@ -1,6 +1,5 @@
 package ai.dokus.app.navigation
 
-import ai.dokus.app.core.local.LocalAppModules
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.asbtractions.AuthManager
@@ -9,6 +8,7 @@ import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.animation.TransitionsProvider
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
+import ai.dokus.foundation.navigation.destinations.NavigationDestination
 import ai.dokus.foundation.navigation.navigateTo
 import ai.dokus.foundation.navigation.replace
 import androidx.compose.foundation.background
@@ -33,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun DokusNavHost(
     navController: NavHostController,
-    navigationProvider: List<NavigationProvider> = LocalAppModules.current.mapNotNull { it.navigationProvider },
+    navigationProvider: List<NavigationProvider>,
     onNavHostReady: suspend (NavController) -> Unit = {},
     authManager: AuthManager = koinInject(),
 ) {
@@ -81,7 +81,7 @@ fun DokusNavHost(
     }
     NavHost(
         navController = navController,
-        startDestination = CoreDestination.Splash,
+        startDestination = CoreDestination.Splash as NavigationDestination,
         enterTransition = { with(transitionsProvider) { enterTransition } },
         exitTransition = { with(transitionsProvider) { exitTransition } },
         popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
