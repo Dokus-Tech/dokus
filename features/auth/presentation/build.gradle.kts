@@ -38,6 +38,8 @@ kotlin {
             implementation(projects.foundation.navigation)
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.designSystem)
+
+            implementation(libs.bundles.koin.compose)
         }
         desktopMain.dependencies {
         }

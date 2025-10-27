@@ -1,5 +1,10 @@
 package ai.dokus.app.screens
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.bootstrap_state_app_version_check
+import ai.dokus.app.resources.generated.bootstrap_state_authenticating
+import ai.dokus.app.resources.generated.bootstrap_state_checking_account_status
+import ai.dokus.app.resources.generated.bootstrap_state_initializing
 import ai.dokus.app.viewmodel.BootstrapViewModel
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
@@ -28,12 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.bootstrap_state_app_version_check
-import ai.dokus.app.resources.generated.bootstrap_state_authenticating
-import ai.dokus.app.resources.generated.bootstrap_state_checking_account_status
-import ai.dokus.app.resources.generated.bootstrap_state_initializing
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -87,7 +86,7 @@ fun SplashScreen(
     val navController = LocalNavController.current
 
     LaunchedEffect("SplashScreen") {
-        scope.launch { viewModel.effect.collect { it.handle(navController) } }
+//        scope.launch { viewModel.effect.collect { it.handle(navController) } }
         viewModel.load()
     }
 

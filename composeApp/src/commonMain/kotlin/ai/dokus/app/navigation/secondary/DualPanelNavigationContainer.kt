@@ -1,5 +1,6 @@
 package ai.dokus.app.navigation.secondary
 
+import ai.dokus.app.navigation.DokusNavHost
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.navigation.NavigationProvider
@@ -7,43 +8,39 @@ import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.local.LocalSecondaryNavController
 import ai.dokus.foundation.navigation.local.LocalSecondaryNavigationState
 import ai.dokus.foundation.navigation.local.rememberSecondaryNavigationState
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import ai.dokus.app.navigation.DokusNavHost
 
 /**
  * Container for dual-panel navigation.
@@ -63,88 +60,60 @@ fun DualPanelNavigationContainer(
     val isPanelVisible by secondaryNavigationState.isPanelVisible.collectAsState()
     val complimentary by secondaryNavigationState.complimentary.collectAsState()
 
-    val primaryWeight by remember(largeScreen, isPanelVisible, complimentary) {
-        derivedStateOf {
-            when {
-                largeScreen && isPanelVisible && !complimentary -> 0.5f
-                largeScreen && isPanelVisible && complimentary -> 0.55f
-                else -> 1.0f
-            }
-        }
+    val targetSecondaryFraction = when {
+        largeScreen && isPanelVisible && !complimentary -> 0.5f
+        largeScreen && isPanelVisible && complimentary -> 0.45f
+        else -> 0f // collapse completely when hidden or on small screens
     }
-    val secondaryWeight by remember(largeScreen, isPanelVisible, complimentary) {
-        derivedStateOf {
-            when {
-                largeScreen && isPanelVisible && !complimentary -> 0.5f
-                largeScreen && isPanelVisible && complimentary -> 0.45f
-                else -> 1.0f
-            }
-        }
-    }
+    val animatedSecondaryFraction by animateFloatAsState(
+        targetValue = targetSecondaryFraction,
+        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+        label = "secondary_panel_width_fraction"
+    )
 
-    // Auto-hide secondary panel on small screens
     LaunchedEffect(largeScreen) {
         if (!largeScreen && isPanelVisible) {
             secondaryNavigationState.hidePanel()
         }
     }
 
-    // Provide secondary navigation state and controller to children
     CompositionLocalProvider(
         LocalNavController provides navController,
         LocalSecondaryNavigationState provides secondaryNavigationState,
         LocalSecondaryNavController provides secondaryNavController
     ) {
         Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            // Main content in a Row
-            Row(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(primaryWeight)
-                        .fillMaxHeight()
-                ) {
-                    DokusNavHost(
-                        navController = navController,
-                        navigationProvider = navigationProviders,
-                        onNavHostReady = onPrimaryNavHostReady
-                    )
-                }
+            // Measure available width once so we can drive a width-based animation
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val maxWidthDp = this.maxWidth
+                val secondaryWidthDp = maxWidthDp * animatedSecondaryFraction
 
-                if (complimentary && isPanelVisible) {
-                    SecondaryPanel(
-                        isPanelVisible,
-                        largeScreen,
-                        secondaryNavController,
-                        navigationProviders,
-                        modifier = Modifier.weight(secondaryWeight)
-                    )
-                } else if (isPanelVisible) {
-                    Surface(
-                        modifier = Modifier
-                            .weight(secondaryWeight)
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.surface)
-                    ) {
-                        SecondaryNavHost(
-                            navController = secondaryNavController,
-                            navigationProvider = navigationProviders
-                        )
-                    }
-                }
-
-                // Hidden SecondaryNavHost to ensure navigation graph is always set
-                // This is positioned off-screen so it doesn't interfere with the UI
-                if (!isPanelVisible || !largeScreen) {
+                // Primary + Secondary arranged in a Row; secondary has animated fixed width,
+                // primary fills the remaining space smoothly.
+                Row(modifier = Modifier.fillMaxSize()) {
                     Box(
-                        modifier = Modifier.size(0.dp)
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f)
                     ) {
-                        SecondaryNavHost(
-                            navController = secondaryNavController,
-                            navigationProvider = navigationProviders
+                        DokusNavHost(
+                            navController = navController,
+                            navigationProvider = navigationProviders,
+                            onNavHostReady = onPrimaryNavHostReady
                         )
                     }
+
+                    // Single always-composed secondary panel; width animates to 0 when hidden
+                    SecondaryPanel(
+                        isPanelVisible = isPanelVisible,
+                        largeScreen = largeScreen,
+                        complimentary = complimentary,
+                        secondaryNavController = secondaryNavController,
+                        navigationProviders = navigationProviders,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(secondaryWidthDp)
+                    )
                 }
             }
         }
@@ -152,66 +121,66 @@ fun DualPanelNavigationContainer(
 }
 
 @Composable
-private fun RowScope.SecondaryPanel(
+private fun SecondaryPanel(
     isPanelVisible: Boolean,
     largeScreen: Boolean,
+    complimentary: Boolean,
     secondaryNavController: NavHostController,
     navigationProviders: List<NavigationProvider>,
     modifier: Modifier,
 ) {
     val showPanel = isPanelVisible && largeScreen
 
-    // Animate the elevation when the complementary panel appears
+    // Drive a subtle fade + slide while keeping content in composition
+    val visibilityProgress by animateFloatAsState(
+        targetValue = if (showPanel) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = if (showPanel) 240 else 200,
+            easing = FastOutSlowInEasing
+        ),
+        label = "secondary_panel_visibility"
+    )
+
+    // Elevation only when complimentary panel is enabled
+    val targetElevation = if (complimentary && showPanel) 8.dp else 0.dp
     val panelElevation: Dp by animateDpAsState(
-        targetValue = if (showPanel) 8.dp else 0.dp,
+        targetValue = targetElevation,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
         label = "secondary_panel_elevation"
     )
 
-    // Complementary panel with animated reveal and elevation
-    AnimatedVisibility(
-        modifier = modifier.fillMaxHeight(),
-        visible = showPanel,
-        enter = fadeIn(animationSpec = tween(180)) +
-                slideInHorizontally(
-                    animationSpec = tween(
-                        durationMillis = 320,
-                        easing = FastOutSlowInEasing
-                    ),
-                    initialOffsetX = { it / 6 }
-                ),
-        exit = slideOutHorizontally(
-            animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
-            targetOffsetX = { it / 6 }
-        ) + fadeOut(animationSpec = tween(160))
-    ) {
-        // Gentle continuous levitation for the complementary panel
-        val levitationTransition =
-            rememberInfiniteTransition(label = "secondary_panel_levitation")
-        val levitationOffsetRaw by levitationTransition.animateFloat(
-            initialValue = -1f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "secondary_panel_levitation_offset"
-        )
-        val levitationOffsetDp = levitationOffsetRaw.dp
+    val levitationTransition = rememberInfiniteTransition(label = "secondary_panel_levitation")
+    val levitationOffsetRaw by levitationTransition.animateFloat(
+        initialValue = -1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "secondary_panel_levitation_offset"
+    )
+    val levitationOffsetDp =
+        if (complimentary) (levitationOffsetRaw * visibilityProgress).dp else 0.dp
 
-        Surface(
-            modifier = Modifier
-                .padding(12.dp) // detach from screen edges
-                .offset(y = levitationOffsetDp)
-                .fillMaxSize(),
-            shape = MaterialTheme.shapes.large,
-            tonalElevation = 0.dp,
-            shadowElevation = panelElevation
-        ) {
-            SecondaryNavHost(
-                navController = secondaryNavController,
-                navigationProvider = navigationProviders
-            )
-        }
+    val slidePx = with(LocalDensity.current) { 24.dp.toPx() }
+
+    Surface(
+        modifier = modifier
+            // Edge-to-edge when not complimentary; otherwise detach from edges
+            .padding(if (complimentary) 12.dp * visibilityProgress else 0.dp)
+            .graphicsLayer {
+                // slight slide-in effect; translation scales with visibility
+                translationX = if (complimentary) (1f - visibilityProgress) * slidePx else 0f
+                alpha = if (complimentary) visibilityProgress else 1f
+            }
+            .offset(y = levitationOffsetDp),
+        shape = if (complimentary) MaterialTheme.shapes.large else RoundedCornerShape(0.dp),
+        tonalElevation = 0.dp,
+        shadowElevation = panelElevation
+    ) {
+        SecondaryNavHost(
+            navController = secondaryNavController,
+            navigationProvider = navigationProviders
+        )
     }
 }

@@ -203,6 +203,7 @@ sqldelight = ["sqldelight-runtime", "sqldelight-coroutines"]
 rpc-client = ["kotlinx-rpc-krpc-client", "kotlinx-rpc-krpc-ktor-client", "kotlinx-rpc-krpc-serialization-json"]
 rpc-server = ["kotlinx-rpc-krpc-server", "kotlinx-rpc-krpc-ktor-server", "kotlinx-rpc-krpc-serialization-json"]
 #krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
+koin-compose = ["koin-core", "koin-compose", "koin-viewmodel", "koin-navigation"]
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
