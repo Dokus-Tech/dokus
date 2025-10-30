@@ -9,4 +9,5 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.kotlinPluginSerialization) apply false
     alias(libs.plugins.composeHotReload) apply false
+    alias(libs.plugins.buildKonfig) apply false
 }

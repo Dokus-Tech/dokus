@@ -1,9 +1,9 @@
 package ai.dokus.foundation.platform
 
-import co.touchlab.kermit.Logger as KermitLogger
 import co.touchlab.kermit.Severity
 import co.touchlab.kermit.StaticConfig
 import co.touchlab.kermit.platformLogWriter
+import co.touchlab.kermit.Logger as KermitLogger
 
 /**
  * Multiplatform logger wrapper around Kermit
@@ -20,7 +20,7 @@ class Logger(private val tag: String) {
 
     private val kermit = KermitLogger(
         config = StaticConfig(
-            minSeverity = if (BuildConfig.DEBUG) Severity.Verbose else Severity.Info,
+            minSeverity = Severity.Verbose,
             logWriterList = listOf(platformLogWriter())
         ),
         tag = tag
