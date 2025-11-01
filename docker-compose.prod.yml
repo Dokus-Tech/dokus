@@ -67,7 +67,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_PATH: /app/logs
     ports:
-      - "8091:8091"
+      - "6091:6091"
     depends_on:
       postgres-prod:
         condition: service_healthy
@@ -76,7 +76,7 @@ services:
     networks:
       - dokus-prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8091/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:6091/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -107,7 +107,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_PATH: /app/logs
     ports:
-      - "8070:8070"
+      - "6070:6070"
     depends_on:
       postgres-prod:
         condition: service_healthy
@@ -118,7 +118,7 @@ services:
     networks:
       - dokus-prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8070/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:6070/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3

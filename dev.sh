@@ -336,7 +336,7 @@ start_services() {
         sleep 3  # Give it a moment to start
         printf "  ${CYAN}▸${NC} Auth Service        "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9091/metrics > /dev/null 2>&1; then
+            if curl -f -s http://localhost:7091/metrics > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -347,7 +347,7 @@ start_services() {
         # Wait for Database Service
         printf "  ${CYAN}▸${NC} Database Service    "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9071/metrics > /dev/null 2>&1; then
+            if curl -f -s http://localhost:7070/metrics > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -358,7 +358,7 @@ start_services() {
         # Wait for Invoicing Service
         printf "  ${CYAN}▸${NC} Invoicing Service   "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9092/health > /dev/null 2>&1; then
+            if curl -f -s http://localhost:7092/health > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -369,7 +369,7 @@ start_services() {
         # Wait for Expense Service
         printf "  ${CYAN}▸${NC} Expense Service     "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9093/health > /dev/null 2>&1; then
+            if curl -f -s http://localhost:7093/health > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -380,7 +380,7 @@ start_services() {
         # Wait for Payment Service
         printf "  ${CYAN}▸${NC} Payment Service     "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9094/health > /dev/null 2>&1; then
+            if curl -f -s http://localhost:7094/health > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -391,7 +391,7 @@ start_services() {
         # Wait for Reporting Service
         printf "  ${CYAN}▸${NC} Reporting Service   "
         for i in {1..30}; do
-            if curl -f -s http://localhost:9095/health > /dev/null 2>&1; then
+            if curl -f -s http://localhost:7095/health > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -463,7 +463,7 @@ show_status() {
 
     # Auth Service
     printf "  ${CYAN}▸${NC} Auth Service        "
-    if curl -f -s http://localhost:9091/metrics > /dev/null 2>&1; then
+    if curl -f -s http://localhost:7091/metrics > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -471,7 +471,7 @@ show_status() {
 
     # Database Service
     printf "  ${CYAN}▸${NC} Database Service    "
-    if curl -f -s http://localhost:9071/metrics > /dev/null 2>&1; then
+    if curl -f -s http://localhost:7070/metrics > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -479,7 +479,7 @@ show_status() {
 
     # Invoicing Service
     printf "  ${CYAN}▸${NC} Invoicing Service   "
-    if curl -f -s http://localhost:9092/health > /dev/null 2>&1; then
+    if curl -f -s http://localhost:7092/health > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -487,7 +487,7 @@ show_status() {
 
     # Expense Service
     printf "  ${CYAN}▸${NC} Expense Service     "
-    if curl -f -s http://localhost:9093/health > /dev/null 2>&1; then
+    if curl -f -s http://localhost:7093/health > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -495,7 +495,7 @@ show_status() {
 
     # Payment Service
     printf "  ${CYAN}▸${NC} Payment Service     "
-    if curl -f -s http://localhost:9094/health > /dev/null 2>&1; then
+    if curl -f -s http://localhost:7094/health > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -503,7 +503,7 @@ show_status() {
 
     # Reporting Service
     printf "  ${CYAN}▸${NC} Reporting Service   "
-    if curl -f -s http://localhost:9095/health > /dev/null 2>&1; then
+    if curl -f -s http://localhost:7095/health > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -610,45 +610,45 @@ print_services_info() {
 
     # Auth Service
     echo -e "  ${MAGENTA}▸ Auth Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9091${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9091/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9091/health${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7091${NC}"
+    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:7091/metrics${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7091/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5007${NC}"
     echo ""
 
     # Database Service
     echo -e "  ${MAGENTA}▸ Database Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9071${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:9071/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9071/health${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7070${NC}"
+    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:7070/metrics${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7070/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5008${NC}"
     echo ""
 
     # Invoicing Service
     echo -e "  ${MAGENTA}▸ Invoicing Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9092${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9092/health${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7092${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7092/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5009${NC}"
     echo ""
 
     # Expense Service
     echo -e "  ${MAGENTA}▸ Expense Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9093${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9093/health${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7093${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7093/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5010${NC}"
     echo ""
 
     # Payment Service
     echo -e "  ${MAGENTA}▸ Payment Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9094${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9094/health${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7094${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7094/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5011${NC}"
     echo ""
 
     # Reporting Service
     echo -e "  ${MAGENTA}▸ Reporting Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:9095${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:9095/health${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7095${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7095/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5012${NC}"
     echo ""
 

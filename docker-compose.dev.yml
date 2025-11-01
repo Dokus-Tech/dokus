@@ -47,7 +47,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
       JWT_SECRET: dev-secret-key
-      JWT_ISSUER: http://localhost:9091
+      JWT_ISSUER: http://localhost:7091
       JWT_AUDIENCE: dokus-api-dev
       REDIS_HOST: redis-dev
       REDIS_PORT: 6379
@@ -56,7 +56,7 @@ services:
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     ports:
-      - "9091:9091"
+      - "7091:7091"
       - "5007:5005"
     depends_on:
       postgres-dev:
@@ -66,7 +66,7 @@ services:
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9091/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:7091/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -83,7 +83,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
       JWT_SECRET: dev-secret-key
-      JWT_ISSUER: http://localhost:9071
+      JWT_ISSUER: http://localhost:7071
       JWT_AUDIENCE: dokus-api-dev
       REDIS_HOST: redis-dev
       REDIS_PORT: 6379
@@ -92,7 +92,7 @@ services:
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     ports:
-      - "9071:9070"
+      - "7070:7070"
       - "5008:5006"
     depends_on:
       postgres-dev:
@@ -102,7 +102,7 @@ services:
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9070/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:7070/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -115,12 +115,12 @@ services:
     image: invoid-vision/dokus-invoicing:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-invoicing-dev
     environment:
-      PORT: 9092
+      PORT: 7092
       DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 9070
+      DATABASE_SERVICE_PORT: 7070
       LOG_LEVEL: DEBUG
     ports:
-      - "9092:9092"
+      - "7092:7092"
       - "5009:5009"
     depends_on:
       database-service-dev:
@@ -128,7 +128,7 @@ services:
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9092/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7092/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -140,12 +140,12 @@ services:
     image: invoid-vision/dokus-expense:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-expense-dev
     environment:
-      PORT: 9093
+      PORT: 7093
       DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 9070
+      DATABASE_SERVICE_PORT: 7070
       LOG_LEVEL: DEBUG
     ports:
-      - "9093:9093"
+      - "7093:7093"
       - "5010:5010"
     depends_on:
       database-service-dev:
@@ -153,7 +153,7 @@ services:
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9093/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7093/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -165,12 +165,12 @@ services:
     image: invoid-vision/dokus-payment:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-payment-dev
     environment:
-      PORT: 9094
+      PORT: 7094
       DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 9070
+      DATABASE_SERVICE_PORT: 7070
       LOG_LEVEL: DEBUG
     ports:
-      - "9094:9094"
+      - "7094:7094"
       - "5011:5011"
     depends_on:
       database-service-dev:
@@ -178,7 +178,7 @@ services:
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9094/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7094/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -190,12 +190,12 @@ services:
     image: invoid-vision/dokus-reporting:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-reporting-dev
     environment:
-      PORT: 9095
+      PORT: 7095
       DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 9070
+      DATABASE_SERVICE_PORT: 7070
       LOG_LEVEL: DEBUG
     ports:
-      - "9095:9095"
+      - "7095:7095"
       - "5012:5012"
     depends_on:
       database-service-dev:
@@ -203,7 +203,7 @@ services:
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9095/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7095/health"]
       interval: 30s
       timeout: 10s
       retries: 3
