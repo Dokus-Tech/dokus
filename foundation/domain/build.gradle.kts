@@ -64,11 +64,11 @@ buildkonfig {
 
         // External endpoints (for clients outside Docker)
         buildConfigField(STRING, "authHost", "10.13.4.103")
-        buildConfigField(INT, "authPort", "8091")
+        buildConfigField(INT, "authPort", "6091")
 
         // Internal endpoints (for inter-service communication in Docker)
         buildConfigField(STRING, "authInternalHost", "auth-service-dev")
-        buildConfigField(INT, "authInternalPort", "8091")
+        buildConfigField(INT, "authInternalPort", "6091")
     }
     defaultConfigs("prod") {}
     defaultConfigs("dev") {
@@ -76,22 +76,22 @@ buildkonfig {
 
         // External endpoints (for clients outside Docker)
         buildConfigField(STRING, "authHost", "10.13.4.103")
-        buildConfigField(INT, "authPort", "9091")
+        buildConfigField(INT, "authPort", "7091")
 
         // Internal endpoints (for inter-service communication in Docker)
         buildConfigField(STRING, "authInternalHost", "auth-service-dev")
-        buildConfigField(INT, "authInternalPort", "9091")
+        buildConfigField(INT, "authInternalPort", "7091")
     }
     defaultConfigs("local") {
         buildConfigField(STRING, "env", "local")
 
         // External endpoints (same as internal for local development)
         buildConfigField(STRING, "authHost", "0.0.0.0")
-        buildConfigField(INT, "authPort", "9091")
+        buildConfigField(INT, "authPort", "7091")
 
         // Internal endpoints (for inter-service communication in Docker)
         buildConfigField(STRING, "authInternalHost", "auth-service-dev")
-        buildConfigField(INT, "authInternalPort", "9091")
+        buildConfigField(INT, "authInternalPort", "7091")
     }
     targetConfigs("local") {
         create("wasmJs") {
