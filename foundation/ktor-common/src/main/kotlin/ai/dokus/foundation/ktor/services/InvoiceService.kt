@@ -5,7 +5,6 @@ import ai.dokus.foundation.domain.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
+import kotlin.time.ExperimentalTime
 
 @Rpc
 interface InvoiceService {
@@ -175,6 +175,7 @@ interface InvoiceService {
      * @return The payment link URL
      * @throws IllegalArgumentException if invoice not found or already paid
      */
+    @OptIn(ExperimentalTime::class)
     suspend fun generatePaymentLink(invoiceId: InvoiceId, expiresAt: Instant? = null): String
 
     /**

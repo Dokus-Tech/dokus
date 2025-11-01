@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.model.VatCalculation
 import ai.dokus.foundation.domain.model.VatReturn
 import kotlinx.datetime.Instant
 import kotlinx.rpc.annotations.Rpc
+import kotlin.time.ExperimentalTime
 
 @Rpc
 interface VatService {
@@ -67,6 +68,7 @@ interface VatService {
      * @param paidAt The payment timestamp
      * @throws IllegalArgumentException if return not found or not submitted
      */
+    @OptIn(ExperimentalTime::class)
     suspend fun markAsPaid(returnId: VatReturnId, paidAt: Instant)
 
     /**

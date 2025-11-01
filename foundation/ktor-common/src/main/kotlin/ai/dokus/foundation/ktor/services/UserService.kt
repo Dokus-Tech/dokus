@@ -6,6 +6,7 @@ import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.BusinessUser
 import kotlinx.datetime.Instant
 import kotlinx.rpc.annotations.Rpc
+import kotlin.time.ExperimentalTime
 
 @Rpc
 interface UserService {
@@ -107,6 +108,7 @@ interface UserService {
      * @param userId The user's unique identifier
      * @param loginTime The timestamp of the login
      */
+    @OptIn(ExperimentalTime::class)
     suspend fun recordLogin(userId: UserId, loginTime: Instant)
 
     /**

@@ -11,6 +11,7 @@ import ai.dokus.foundation.domain.model.BankTransaction
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
+import kotlin.time.ExperimentalTime
 
 @Rpc
 interface BankService {
@@ -182,6 +183,7 @@ interface BankService {
      * @param connectionId The bank connection's unique identifier
      * @return The last sync timestamp, or null if never synced
      */
+    @OptIn(ExperimentalTime::class)
     suspend fun getLastSyncTime(connectionId: BankConnectionId): Instant?
 
     /**

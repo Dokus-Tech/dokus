@@ -8,10 +8,11 @@ import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.AuditLog
 import kotlinx.datetime.Instant
 import kotlinx.rpc.annotations.Rpc
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @Rpc
 interface AuditService {
     /**

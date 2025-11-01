@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalTime::class)
+
 package ai.dokus.foundation.database.utils
 
 import kotlinx.datetime.*
+import kotlin.time.ExperimentalTime
 
 /**
  * Utility functions for date/time handling in the database layer
