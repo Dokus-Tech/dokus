@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package ai.dokus.foundation.database.services
 
 import ai.dokus.foundation.database.mappers.PaymentMapper.toPayment
@@ -15,6 +17,7 @@ import ai.dokus.foundation.domain.model.Payment
 import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
@@ -66,7 +69,7 @@ class PaymentServiceImpl(
                 it[paidAmount] = newPaid
                 if (newPaid >= total) {
                     it[status] = InvoiceStatus.Paid
-                    it[paidAt] = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
+                    it[paidAt] = Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
                 }
             }
 

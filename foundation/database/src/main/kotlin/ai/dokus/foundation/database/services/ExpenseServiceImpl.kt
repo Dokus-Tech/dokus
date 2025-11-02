@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package ai.dokus.foundation.database.services
 
 import ai.dokus.foundation.database.mappers.ExpenseMapper.toExpense
@@ -14,6 +16,7 @@ import ai.dokus.foundation.domain.model.Expense
 import ai.dokus.foundation.ktor.services.ExpenseService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
@@ -238,7 +241,7 @@ class ExpenseServiceImpl(
             // Generate unique file path
             val sanitizedFilename = filename.replace(Regex("[^a-zA-Z0-9._-]"), "_")
             val fileExtension = sanitizedFilename.substringAfterLast(".", "")
-            val fileKey = "receipts/$tid/${expenseId.value}/${System.currentTimeMillis()}_$sanitizedFilename"
+            val fileKey = "receipts/$tid/${expenseId.value}/${Clock.System.now().toEpochMilliseconds()}_$sanitizedFilename"
 
             // TODO: Integrate with S3/MinIO object storage
             // Example S3 integration:
