@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package ai.dokus.foundation.database.services
 
 import ai.dokus.foundation.database.mappers.UserMapper.toBusinessUser

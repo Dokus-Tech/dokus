@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package ai.dokus.foundation.database.services
 
 import ai.dokus.foundation.database.mappers.InvoiceMapper.toInvoice
@@ -23,7 +25,6 @@ import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.TenantService
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -31,6 +32,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
+import kotlin.time.Clock
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.andWhere
@@ -303,7 +305,7 @@ class InvoiceServiceImpl(
         InvoicesTable.selectAll()
             .where { InvoicesTable.tenantId eq tenantId.value.toJavaUuid() }
             .andWhere { InvoicesTable.status eq InvoiceStatus.Sent }
-            .andWhere { InvoicesTable.dueDate less kotlinx.datetime.Clock.System.todayIn(kotlinx.datetime.TimeZone.UTC) }
+            .andWhere { InvoicesTable.dueDate less Clock.System.todayIn(kotlinx.datetime.TimeZone.UTC) }
             .map { row ->
                 val invoice = row.toInvoice()
                 val items = getInvoiceItems(invoice.id.value)
