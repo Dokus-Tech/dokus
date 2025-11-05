@@ -39,6 +39,20 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
 
+    // Database - Exposed
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.kotlin.datetime)
+
+    // Database - PostgreSQL
+    implementation(libs.postgresql)
+    implementation(libs.hikaricp)
+
+    // Database migrations
+    implementation(libs.flyway.core)
+    implementation(libs.flywaydb.flyway.database.postgresql)
+
     // Dependency Injection
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.ktor)

@@ -35,7 +35,8 @@ BOX_CROSS="╬"
 PROJECT_NAME="dokus"
 COMPOSE_FILE="docker-compose.dev.yml"
 AUTH_SERVICE_DIR="features/auth/backend"
-DATABASE_SERVICE_DIR="foundation/database"
+AUDIT_SERVICE_DIR="features/audit/backend"
+BANKING_SERVICE_DIR="features/banking/backend"
 DB_NAME="dokus"
 DB_USER="dev"
 DB_PASSWORD="devpassword"
@@ -159,19 +160,33 @@ build_app() {
     fi
     print_status success "Auth Service JAR built"
 
-    # Build Database Service JAR
-    print_status loading "Building Database Service JAR..."
+    # Build Audit Service JAR
+    print_status loading "Building Audit Service JAR..."
     if [ -f "./gradlew" ]; then
-        ./gradlew :foundation:database:shadowJar -x test -q
+        ./gradlew :features:audit:backend:shadowJar -x test -q
     else
-        gradle :foundation:database:shadowJar -x test -q
+        gradle :features:audit:backend:shadowJar -x test -q
     fi
 
     if [ $? -ne 0 ]; then
-        print_status error "Database Service JAR build failed"
+        print_status error "Audit Service JAR build failed"
         exit 1
     fi
-    print_status success "Database Service JAR built"
+    print_status success "Audit Service JAR built"
+
+    # Build Banking Service JAR
+    print_status loading "Building Banking Service JAR..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :features:banking:backend:shadowJar -x test -q
+    else
+        gradle :features:banking:backend:shadowJar -x test -q
+    fi
+
+    if [ $? -ne 0 ]; then
+        print_status error "Banking Service JAR build failed"
+        exit 1
+    fi
+    print_status success "Banking Service JAR built"
 
     # Build Invoicing Service JAR
     print_status loading "Building Invoicing Service JAR..."
@@ -243,14 +258,23 @@ build_app() {
     fi
     print_status success "Auth Service image built"
 
-    # Database Service image
-    print_status loading "Building Database Service image..."
-    docker build -f foundation/database/Dockerfile.dev -t invoid-vision/dokus-database:dev-latest . -q > /dev/null 2>&1
+    # Audit Service image
+    print_status loading "Building Audit Service image..."
+    docker build -f features/audit/backend/Dockerfile.dev -t invoid-vision/dokus-audit:dev-latest . -q > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        print_status error "Database Service Docker image build failed"
+        print_status error "Audit Service Docker image build failed"
         exit 1
     fi
-    print_status success "Database Service image built"
+    print_status success "Audit Service image built"
+
+    # Banking Service image
+    print_status loading "Building Banking Service image..."
+    docker build -f features/banking/backend/Dockerfile.dev -t invoid-vision/dokus-banking:dev-latest . -q > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "Banking Service Docker image build failed"
+        exit 1
+    fi
+    print_status success "Banking Service image built"
 
     # Invoicing Service image
     print_status loading "Building Invoicing Service image..."
@@ -344,10 +368,21 @@ start_services() {
             sleep 1
         done
 
-        # Wait for Database Service
-        printf "  ${CYAN}▸${NC} Database Service    "
+        # Wait for Audit Service
+        printf "  ${CYAN}▸${NC} Audit Service       "
         for i in {1..30}; do
-            if curl -f -s http://localhost:7070/metrics > /dev/null 2>&1; then
+            if curl -f -s http://localhost:7096/health > /dev/null 2>&1; then
+                echo -e "${GREEN}✔ Ready${NC}"
+                break
+            fi
+            echo -n "."
+            sleep 1
+        done
+
+        # Wait for Banking Service
+        printf "  ${CYAN}▸${NC} Banking Service     "
+        for i in {1..30}; do
+            if curl -f -s http://localhost:7097/health > /dev/null 2>&1; then
                 echo -e "${GREEN}✔ Ready${NC}"
                 break
             fi
@@ -469,9 +504,17 @@ show_status() {
         echo -e "${RED}✖ Not responding${NC}"
     fi
 
-    # Database Service
-    printf "  ${CYAN}▸${NC} Database Service    "
-    if curl -f -s http://localhost:7070/metrics > /dev/null 2>&1; then
+    # Audit Service
+    printf "  ${CYAN}▸${NC} Audit Service       "
+    if curl -f -s http://localhost:7096/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✔ Healthy${NC}"
+    else
+        echo -e "${RED}✖ Not responding${NC}"
+    fi
+
+    # Banking Service
+    printf "  ${CYAN}▸${NC} Banking Service     "
+    if curl -f -s http://localhost:7097/health > /dev/null 2>&1; then
         echo -e "${GREEN}✔ Healthy${NC}"
     else
         echo -e "${RED}✖ Not responding${NC}"
@@ -577,9 +620,9 @@ run_tests() {
     if [ "$service" = "all" ]; then
         print_box_header "🧪 Running All Tests"
         if [ -f "./gradlew" ]; then
-            ./gradlew :features:auth:backend:test :foundation:database:test
+            ./gradlew :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test
         else
-            gradle :features:auth:backend:test :foundation:database:test
+            gradle :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test
         fi
     elif [ "$service" = "auth" ]; then
         print_box_header "🧪 Running Auth Service Tests"
@@ -588,15 +631,22 @@ run_tests() {
         else
             gradle :features:auth:backend:test
         fi
-    elif [ "$service" = "database" ]; then
-        print_box_header "🧪 Running Database Service Tests"
+    elif [ "$service" = "audit" ]; then
+        print_box_header "🧪 Running Audit Service Tests"
         if [ -f "./gradlew" ]; then
-            ./gradlew :foundation:database:test
+            ./gradlew :features:audit:backend:test
         else
-            gradle :foundation:database:test
+            gradle :features:audit:backend:test
+        fi
+    elif [ "$service" = "banking" ]; then
+        print_box_header "🧪 Running Banking Service Tests"
+        if [ -f "./gradlew" ]; then
+            ./gradlew :features:banking:backend:test
+        else
+            gradle :features:banking:backend:test
         fi
     else
-        print_status error "Invalid service type. Use 'all', 'auth', or 'database'"
+        print_status error "Invalid service type. Use 'all', 'auth', 'audit', or 'banking'"
         exit 1
     fi
     echo ""
@@ -614,14 +664,6 @@ print_services_info() {
     echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:7091/metrics${NC}"
     echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7091/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5007${NC}"
-    echo ""
-
-    # Database Service
-    echo -e "  ${MAGENTA}▸ Database Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7070${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:7070/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7070/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5008${NC}"
     echo ""
 
     # Invoicing Service
@@ -650,6 +692,20 @@ print_services_info() {
     echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7095${NC}"
     echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7095/health${NC}"
     echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5012${NC}"
+    echo ""
+
+    # Audit Service
+    echo -e "  ${MAGENTA}▸ Audit Service${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7096${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7096/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5013${NC}"
+    echo ""
+
+    # Banking Service
+    echo -e "  ${MAGENTA}▸ Banking Service${NC}"
+    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7097${NC}"
+    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7097/health${NC}"
+    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5014${NC}"
     echo ""
 
     # Databases
@@ -697,10 +753,10 @@ watch_mode() {
     # Watch for changes (requires fswatch or inotify-tools)
     if command -v fswatch &> /dev/null; then
         if [ "$service" = "all" ]; then
-            fswatch -o $AUTH_SERVICE_DIR/src $DATABASE_SERVICE_DIR/src | while read num ; do
+            fswatch -o $AUTH_SERVICE_DIR/src $AUDIT_SERVICE_DIR/src $BANKING_SERVICE_DIR/src | while read num ; do
                 print_color "$YELLOW" "🔄 Changes detected, rebuilding..."
                 build_app
-                docker-compose -f $COMPOSE_FILE restart auth-service-dev database-service-dev
+                docker-compose -f $COMPOSE_FILE restart auth-service-dev audit-service-dev banking-service-dev
                 print_color "$GREEN" "✓ Services restarted"
             done
         elif [ "$service" = "auth" ]; then
@@ -715,17 +771,29 @@ watch_mode() {
                 docker-compose -f $COMPOSE_FILE restart auth-service-dev
                 print_color "$GREEN" "✓ Auth Service restarted"
             done
-        elif [ "$service" = "database" ]; then
-            fswatch -o $DATABASE_SERVICE_DIR/src | while read num ; do
-                print_color "$YELLOW" "🔄 Database Service changes detected, rebuilding..."
+        elif [ "$service" = "audit" ]; then
+            fswatch -o $AUDIT_SERVICE_DIR/src | while read num ; do
+                print_color "$YELLOW" "🔄 Audit Service changes detected, rebuilding..."
                 if [ -f "./gradlew" ]; then
-                    ./gradlew :foundation:database:shadowJar -x test
+                    ./gradlew :features:audit:backend:shadowJar -x test
                 else
-                    gradle :foundation:database:shadowJar -x test
+                    gradle :features:audit:backend:shadowJar -x test
                 fi
-                docker build -f foundation/database/Dockerfile.dev -t invoid-vision/dokus-database:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart database-service-dev
-                print_color "$GREEN" "✓ Database Service restarted"
+                docker build -f features/audit/backend/Dockerfile.dev -t invoid-vision/dokus-audit:dev-latest .
+                docker-compose -f $COMPOSE_FILE restart audit-service-dev
+                print_color "$GREEN" "✓ Audit Service restarted"
+            done
+        elif [ "$service" = "banking" ]; then
+            fswatch -o $BANKING_SERVICE_DIR/src | while read num ; do
+                print_color "$YELLOW" "🔄 Banking Service changes detected, rebuilding..."
+                if [ -f "./gradlew" ]; then
+                    ./gradlew :features:banking:backend:shadowJar -x test
+                else
+                    gradle :features:banking:backend:shadowJar -x test
+                fi
+                docker build -f features/banking/backend/Dockerfile.dev -t invoid-vision/dokus-banking:dev-latest .
+                docker-compose -f $COMPOSE_FILE restart banking-service-dev
+                print_color "$GREEN" "✓ Banking Service restarted"
             done
         fi
     else

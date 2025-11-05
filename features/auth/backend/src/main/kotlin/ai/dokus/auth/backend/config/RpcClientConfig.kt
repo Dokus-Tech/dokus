@@ -1,5 +1,6 @@
 package ai.dokus.auth.backend.config
 
+import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.ktor.services.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -11,10 +12,11 @@ import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
 import kotlinx.rpc.krpc.serialization.json.json
 import kotlinx.rpc.withService
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val rpcClientModule = module {
-    // Shared HTTP client with WebSockets and Krpc plugins
+    // Shared HTTP client with WebSockets and Krpc plugins for calling other services
     single<HttpClient> {
         HttpClient(CIO) {
             install(WebSockets)
@@ -22,14 +24,15 @@ val rpcClientModule = module {
         }
     }
 
-    // Shared RPC client configured once
-    single<RpcClient> {
+    // RPC client for Invoicing Service (uses internal host for inter-service communication)
+    single<RpcClient>(named("invoicingClient")) {
         val httpClient = get<HttpClient>()
+        val endpoint = DokusEndpoint.Invoicing
         httpClient.rpc {
             url {
                 protocol = URLProtocol.WS
-                host = System.getenv("DATABASE_SERVICE_HOST") ?: "localhost"
-                port = System.getenv("DATABASE_SERVICE_PORT")?.toIntOrNull() ?: 9070
+                host = endpoint.internalHost
+                port = endpoint.internalPort
                 path("/api/rpc")
             }
             rpcConfig {
@@ -40,11 +43,8 @@ val rpcClientModule = module {
         }
     }
 
-    // Service proxies using shared RPC client
-    single<TenantService> { get<RpcClient>().withService() }
-    single<UserService> { get<RpcClient>().withService() }
-    single<ClientService> { get<RpcClient>().withService() }
-    single<InvoiceService> { get<RpcClient>().withService() }
-    single<ExpenseService> { get<RpcClient>().withService() }
-    single<PaymentService> { get<RpcClient>().withService() }
+    // Service proxies for other backends
+    single<ClientService> { get<RpcClient>(named("invoicingClient")).withService() }
+    single<InvoiceService> { get<RpcClient>(named("invoicingClient")).withService() }
+    // TODO: Add RPC clients for expense, payment services when needed
 }

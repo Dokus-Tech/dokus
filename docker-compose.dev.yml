@@ -1,27 +1,148 @@
 # Development Docker Compose configuration
+# Each service has its own PostgreSQL database
 
 services:
-  # Shared PostgreSQL Database for all services
-  postgres-dev:
+  # PostgreSQL Database for Auth Service
+  postgres-auth-dev:
     image: postgres:17-alpine
-    container_name: dokus-postgres-dev
+    container_name: dokus-postgres-auth-dev
     environment:
-      POSTGRES_DB: dokus
+      POSTGRES_DB: dokus_auth
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5541:5432"
+    volumes:
+      - postgres-auth-dev:/var/lib/postgresql/data
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # PostgreSQL Database for Invoicing Service
+  postgres-invoicing-dev:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-invoicing-dev
+    environment:
+      POSTGRES_DB: dokus_invoicing
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5542:5432"
+    volumes:
+      - postgres-invoicing-dev:/var/lib/postgresql/data
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_invoicing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # PostgreSQL Database for Expense Service
+  postgres-expense-dev:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-expense-dev
+    environment:
+      POSTGRES_DB: dokus_expense
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: devpassword
     ports:
       - "5543:5432"
     volumes:
-      - postgres-dev:/var/lib/postgresql/data
-      - ./foundation/database/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+      - postgres-expense-dev:/var/lib/postgresql/data
     networks:
       - dokus-dev-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus"]
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_expense"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # PostgreSQL Database for Payment Service
+  postgres-payment-dev:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-payment-dev
+    environment:
+      POSTGRES_DB: dokus_payment
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5544:5432"
+    volumes:
+      - postgres-payment-dev:/var/lib/postgresql/data
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_payment"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # PostgreSQL Database for Reporting Service
+  postgres-reporting-dev:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-reporting-dev
+    environment:
+      POSTGRES_DB: dokus_reporting
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5545:5432"
+    volumes:
+      - postgres-reporting-dev:/var/lib/postgresql/data
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_reporting"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # PostgreSQL Database for Audit Service
+  postgres-audit-dev:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-audit-dev
+    environment:
+      POSTGRES_DB: dokus_audit
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5546:5432"
+    volumes:
+      - postgres-audit-dev:/var/lib/postgresql/data
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_audit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # PostgreSQL Database for Banking Service
+  postgres-banking-dev:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-banking-dev
+    environment:
+      POSTGRES_DB: dokus_banking
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5547:5432"
+    volumes:
+      - postgres-banking-dev:/var/lib/postgresql/data
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_banking"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Shared Redis
   redis-dev:
     image: redis:8-alpine
     container_name: dokus-redis-dev
@@ -38,12 +159,13 @@ services:
       timeout: 5s
       retries: 10
 
+  # Auth Service
   auth-service-dev:
     image: invoid-vision/dokus-auth:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-auth-dev
     environment:
       ENVIRONMENT: dev
-      DB_URL: jdbc:postgresql://postgres-dev:5432/dokus
+      DB_URL: jdbc:postgresql://postgres-auth-dev:5432/dokus_auth
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
       JWT_SECRET: dev-secret-key
@@ -59,7 +181,7 @@ services:
       - "7091:7091"
       - "5007:5005"
     depends_on:
-      postgres-dev:
+      postgres-auth-dev:
         condition: service_healthy
       redis-dev:
         condition: service_healthy
@@ -74,56 +196,22 @@ services:
     volumes:
       - ./logs-dev:/app/logs
 
-  database-service-dev:
-    image: invoid-vision/dokus-database:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-database-dev
-    environment:
-      ENVIRONMENT: dev
-      DB_URL: jdbc:postgresql://postgres-dev:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: dev-secret-key
-      JWT_ISSUER: http://localhost:7071
-      JWT_AUDIENCE: dokus-api-dev
-      REDIS_HOST: redis-dev
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: devredispass
-      DOKUS_STORAGE_DIR: /app/storage
-      LOG_LEVEL: DEBUG
-      LOG_PATH: /app/logs
-    ports:
-      - "7070:7070"
-      - "5008:5006"
-    depends_on:
-      postgres-dev:
-        condition: service_healthy
-      redis-dev:
-        condition: service_healthy
-    networks:
-      - dokus-dev-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7070/metrics"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-dev:/app/logs
-      - dokus-storage-dev:/app/storage
-
+  # Invoicing Service
   invoicing-service-dev:
     image: invoid-vision/dokus-invoicing:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-invoicing-dev
     environment:
       PORT: 7092
-      DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 7070
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-invoicing-dev:5432/dokus_invoicing
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
       LOG_LEVEL: DEBUG
     ports:
       - "7092:7092"
       - "5009:5009"
     depends_on:
-      database-service-dev:
+      postgres-invoicing-dev:
         condition: service_healthy
     networks:
       - dokus-dev-network
@@ -136,19 +224,22 @@ services:
     volumes:
       - ./logs-dev:/app/logs
 
+  # Expense Service
   expense-service-dev:
     image: invoid-vision/dokus-expense:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-expense-dev
     environment:
       PORT: 7093
-      DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 7070
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-expense-dev:5432/dokus_expense
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
       LOG_LEVEL: DEBUG
     ports:
       - "7093:7093"
       - "5010:5010"
     depends_on:
-      database-service-dev:
+      postgres-expense-dev:
         condition: service_healthy
     networks:
       - dokus-dev-network
@@ -161,19 +252,22 @@ services:
     volumes:
       - ./logs-dev:/app/logs
 
+  # Payment Service
   payment-service-dev:
     image: invoid-vision/dokus-payment:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-payment-dev
     environment:
       PORT: 7094
-      DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 7070
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-payment-dev:5432/dokus_payment
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
       LOG_LEVEL: DEBUG
     ports:
       - "7094:7094"
       - "5011:5011"
     depends_on:
-      database-service-dev:
+      postgres-payment-dev:
         condition: service_healthy
     networks:
       - dokus-dev-network
@@ -186,19 +280,22 @@ services:
     volumes:
       - ./logs-dev:/app/logs
 
+  # Reporting Service
   reporting-service-dev:
     image: invoid-vision/dokus-reporting:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-reporting-dev
     environment:
       PORT: 7095
-      DATABASE_SERVICE_HOST: database-service-dev
-      DATABASE_SERVICE_PORT: 7070
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-reporting-dev:5432/dokus_reporting
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
       LOG_LEVEL: DEBUG
     ports:
       - "7095:7095"
       - "5012:5012"
     depends_on:
-      database-service-dev:
+      postgres-reporting-dev:
         condition: service_healthy
     networks:
       - dokus-dev-network
@@ -211,14 +308,69 @@ services:
     volumes:
       - ./logs-dev:/app/logs
 
+  # Audit Service (NEW)
+  audit-service-dev:
+    image: invoid-vision/dokus-audit:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-audit-dev
+    environment:
+      PORT: 7096
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-audit-dev:5432/dokus_audit
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      LOG_LEVEL: DEBUG
+    ports:
+      - "7096:7096"
+      - "5013:5013"
+    depends_on:
+      postgres-audit-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
+  # Banking Service (NEW)
+  banking-service-dev:
+    image: invoid-vision/dokus-banking:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-banking-dev
+    environment:
+      PORT: 7097
+      ENVIRONMENT: dev
+      DB_URL: jdbc:postgresql://postgres-banking-dev:5432/dokus_banking
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      LOG_LEVEL: DEBUG
+    ports:
+      - "7097:7097"
+      - "5014:5014"
+    depends_on:
+      postgres-banking-dev:
+        condition: service_healthy
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-dev:/app/logs
+
   # pgAdmin for database management (profile: tools)
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: dokus-pgadmin-dev
+    container_name: dokus-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@dokus.ai
       PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "5050:80"
     volumes:
@@ -227,19 +379,18 @@ services:
       - dokus-dev-network
     profiles:
       - tools
-    depends_on:
-      - postgres-dev
 
 networks:
   dokus-dev-network:
     driver: bridge
 
 volumes:
-  postgres-dev:
-    driver: local
+  postgres-auth-dev:
+  postgres-invoicing-dev:
+  postgres-expense-dev:
+  postgres-payment-dev:
+  postgres-reporting-dev:
+  postgres-audit-dev:
+  postgres-banking-dev:
   redis-data-dev:
-    driver: local
   pgadmin-data:
-    driver: local
-  dokus-storage-dev:
-    driver: local

@@ -1,5 +1,6 @@
 package ai.dokus.payment.backend.config
 
+import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.ktor.services.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -11,6 +12,7 @@ import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
 import kotlinx.rpc.krpc.serialization.json.json
 import kotlinx.rpc.withService
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val rpcClientModule = module {
@@ -22,14 +24,15 @@ val rpcClientModule = module {
         }
     }
 
-    // Shared RPC client configured once
-    single<RpcClient> {
+    // RPC client for Auth Service
+    single<RpcClient>(named("authClient")) {
         val httpClient = get<HttpClient>()
+        val endpoint = DokusEndpoint.Auth
         httpClient.rpc {
             url {
                 protocol = URLProtocol.WS
-                host = System.getenv("DATABASE_SERVICE_HOST") ?: "localhost"
-                port = System.getenv("DATABASE_SERVICE_PORT")?.toIntOrNull() ?: 9070
+                host = endpoint.internalHost
+                port = endpoint.internalPort
                 path("/api/rpc")
             }
             rpcConfig {
@@ -40,8 +43,48 @@ val rpcClientModule = module {
         }
     }
 
-    // Service proxies using shared RPC client (only services registered in database service)
-    single<PaymentService> { get<RpcClient>().withService() }
-    single<ClientService> { get<RpcClient>().withService() }
-    single<InvoiceService> { get<RpcClient>().withService() }
+    // RPC client for Invoicing Service
+    single<RpcClient>(named("invoicingClient")) {
+        val httpClient = get<HttpClient>()
+        val endpoint = DokusEndpoint.Invoicing
+        httpClient.rpc {
+            url {
+                protocol = URLProtocol.WS
+                host = endpoint.internalHost
+                port = endpoint.internalPort
+                path("/api/rpc")
+            }
+            rpcConfig {
+                serialization {
+                    json()
+                }
+            }
+        }
+    }
+
+    // RPC client for Audit Service
+    single<RpcClient>(named("auditClient")) {
+        val httpClient = get<HttpClient>()
+        val endpoint = DokusEndpoint.Audit
+        httpClient.rpc {
+            url {
+                protocol = URLProtocol.WS
+                host = endpoint.internalHost
+                port = endpoint.internalPort
+                path("/api/rpc")
+            }
+            rpcConfig {
+                serialization {
+                    json()
+                }
+            }
+        }
+    }
+
+    // Service proxies using named RPC clients
+    single<TenantService> { get<RpcClient>(named("authClient")).withService() }
+    single<UserService> { get<RpcClient>(named("authClient")).withService() }
+    single<InvoiceService> { get<RpcClient>(named("invoicingClient")).withService() }
+    single<ClientService> { get<RpcClient>(named("invoicingClient")).withService() }
+    single<AuditService> { get<RpcClient>(named("auditClient")).withService() }
 }
