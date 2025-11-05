@@ -9,7 +9,9 @@ enum class RedisNamespace(val value: String) {
     Invoicing("invoicing"),
     Expense("expense"),
     Payment("payment"),
-    Reporting("reporting");
+    Reporting("reporting"),
+    Audit("audit"),
+    Banking("banking");
 
     override fun toString(): String = value
 }

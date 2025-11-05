@@ -1,60 +1,171 @@
 # Production Docker Compose configuration
+# Each service has its own PostgreSQL database
 
 services:
-  # Shared PostgreSQL Database for all services
-  postgres-prod:
+  # PostgreSQL Database for Auth Service
+  postgres-auth-prod:
     image: postgres:17-alpine
-    container_name: dokus-postgres-prod
+    container_name: dokus-postgres-auth-prod
     environment:
-      POSTGRES_DB: dokus
+      POSTGRES_DB: dokus_auth
       POSTGRES_USER: ${DB_USERNAME:-produser}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5441:5432"
     volumes:
-      - postgres-data-prod:/var/lib/postgresql/data
-      - ./foundation/database/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+      - postgres-auth-prod:/var/lib/postgresql/data
     networks:
       - dokus-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  redis-prod:
-    image: redis:8-alpine
-    container_name: dokus-redis-prod
-    command: >
-      redis-server
-      --appendonly yes
-      --requirepass ${REDIS_PASSWORD}
-      --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
-      --tcp-backlog 511
-      --timeout 0
-      --tcp-keepalive 300
-      --dir /data
-      --logfile ""
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data-prod:/data
-    networks:
-      - dokus-prod-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus_auth"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # PostgreSQL Database for Invoicing Service
+  postgres-invoicing-prod:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-invoicing-prod
+    environment:
+      POSTGRES_DB: dokus_invoicing
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres-invoicing-prod:/var/lib/postgresql/data
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus_invoicing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Database for Expense Service
+  postgres-expense-prod:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-expense-prod
+    environment:
+      POSTGRES_DB: dokus_expense
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5443:5432"
+    volumes:
+      - postgres-expense-prod:/var/lib/postgresql/data
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus_expense"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Database for Payment Service
+  postgres-payment-prod:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-payment-prod
+    environment:
+      POSTGRES_DB: dokus_payment
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5444:5432"
+    volumes:
+      - postgres-payment-prod:/var/lib/postgresql/data
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus_payment"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Database for Reporting Service
+  postgres-reporting-prod:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-reporting-prod
+    environment:
+      POSTGRES_DB: dokus_reporting
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5445:5432"
+    volumes:
+      - postgres-reporting-prod:/var/lib/postgresql/data
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus_reporting"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Database for Audit Service
+  postgres-audit-prod:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-audit-prod
+    environment:
+      POSTGRES_DB: dokus_audit
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5446:5432"
+    volumes:
+      - postgres-audit-prod:/var/lib/postgresql/data
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus_audit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Database for Banking Service
+  postgres-banking-prod:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-banking-prod
+    environment:
+      POSTGRES_DB: dokus_banking
+      POSTGRES_USER: ${DB_USERNAME:-produser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5447:5432"
+    volumes:
+      - postgres-banking-prod:/var/lib/postgresql/data
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-produser} -d dokus_banking"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Shared Redis
+  redis-prod:
+    image: redis:8-alpine
+    container_name: dokus-redis-prod
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-prod:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Auth Service
   auth-service-prod:
     image: invoid-vision/dokus-auth:prod-${BUILD_NUMBER:-latest}
     container_name: dokus-auth-prod
     environment:
       ENVIRONMENT: prod
-      DB_URL: jdbc:postgresql://postgres-prod:5432/dokus
+      DB_URL: jdbc:postgresql://postgres-auth-prod:5432/dokus_auth
       DB_USERNAME: ${DB_USERNAME:-produser}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -69,7 +180,7 @@ services:
     ports:
       - "6091:6091"
     depends_on:
-      postgres-prod:
+      postgres-auth-prod:
         condition: service_healthy
       redis-prod:
         condition: service_healthy
@@ -85,98 +196,184 @@ services:
       - ./logs-prod:/app/logs
     restart: unless-stopped
 
-  database-service-prod:
-    image: invoid-vision/dokus-database:prod-${BUILD_NUMBER:-latest}
-    container_name: dokus-database-prod
+  # Invoicing Service
+  invoicing-service-prod:
+    image: invoid-vision/dokus-invoicing:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-invoicing-prod
     environment:
+      PORT: 6092
       ENVIRONMENT: prod
-      DB_URL: jdbc:postgresql://postgres-prod:5432/dokus
+      DB_URL: jdbc:postgresql://postgres-invoicing-prod:5432/dokus_invoicing
       DB_USERNAME: ${DB_USERNAME:-produser}
       DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
-      REDIS_HOST: redis-prod
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      MINIO_ENDPOINT: http://minio-prod:9000
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_BUCKET: dokus-attachments
-      DOKUS_STORAGE_DIR: /app/storage
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      LOG_PATH: /app/logs
     ports:
-      - "6070:6070"
+      - "6092:6092"
     depends_on:
-      postgres-prod:
-        condition: service_healthy
-      redis-prod:
-        condition: service_healthy
-      minio-prod:
+      postgres-invoicing-prod:
         condition: service_healthy
     networks:
       - dokus-prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6070/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:6092/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     volumes:
       - ./logs-prod:/app/logs
-      - dokus-storage-prod:/app/storage
     restart: unless-stopped
 
-  minio-prod:
-    image: minio/minio:latest
-    container_name: dokus-minio-prod
-    command: server /data --console-address ":9001"
+  # Expense Service
+  expense-service-prod:
+    image: invoid-vision/dokus-expense:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-expense-prod
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
-      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_URL:-http://localhost:9001}
+      PORT: 6093
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-expense-prod:5432/dokus_expense
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "9000:9000"  # S3 API
-      - "9001:9001"  # Web Console
-    volumes:
-      - minio-data-prod:/data
-    networks:
-      - dokus-prod-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: unless-stopped
-
-  # Create MinIO bucket on startup
-  minio-init-prod:
-    image: minio/mc:latest
-    container_name: dokus-minio-init-prod
+      - "6093:6093"
     depends_on:
-      minio-prod:
+      postgres-expense-prod:
         condition: service_healthy
     networks:
       - dokus-prod-network
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set minio http://minio-prod:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY};
-      mc mb --ignore-existing minio/dokus-attachments;
-      mc anonymous set download minio/dokus-attachments;
-      exit 0;
-      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6093/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+  # Payment Service
+  payment-service-prod:
+    image: invoid-vision/dokus-payment:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-payment-prod
+    environment:
+      PORT: 6094
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-payment-prod:5432/dokus_payment
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6094:6094"
+    depends_on:
+      postgres-payment-prod:
+        condition: service_healthy
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6094/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+  # Reporting Service
+  reporting-service-prod:
+    image: invoid-vision/dokus-reporting:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-reporting-prod
+    environment:
+      PORT: 6095
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-reporting-prod:5432/dokus_reporting
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6095:6095"
+    depends_on:
+      postgres-reporting-prod:
+        condition: service_healthy
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6095/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+  # Audit Service
+  audit-service-prod:
+    image: invoid-vision/dokus-audit:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-audit-prod
+    environment:
+      PORT: 6096
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-audit-prod:5432/dokus_audit
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6096:6096"
+    depends_on:
+      postgres-audit-prod:
+        condition: service_healthy
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
+
+  # Banking Service
+  banking-service-prod:
+    image: invoid-vision/dokus-banking:prod-${BUILD_NUMBER:-latest}
+    container_name: dokus-banking-prod
+    environment:
+      PORT: 6097
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-banking-prod:5432/dokus_banking
+      DB_USERNAME: ${DB_USERNAME:-produser}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6097:6097"
+    depends_on:
+      postgres-banking-prod:
+        condition: service_healthy
+    networks:
+      - dokus-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-prod:/app/logs
+    restart: unless-stopped
 
 networks:
   dokus-prod-network:
     driver: bridge
 
 volumes:
-  postgres-data-prod:
-    driver: local
+  postgres-auth-prod:
+  postgres-invoicing-prod:
+  postgres-expense-prod:
+  postgres-payment-prod:
+  postgres-reporting-prod:
+  postgres-audit-prod:
+  postgres-banking-prod:
   redis-data-prod:
-    driver: local
-  minio-data-prod:
-    driver: local
-  dokus-storage-prod:
-    driver: local
