@@ -1,1 +1,2 @@
+features/auth/backend/src/main/resources/GeoLite2-City.mmdb filter=lfs diff=lfs merge=lfs -text
 **/snapshots/**/*.png filter=lfs diff=lfs merge=lfs -text
