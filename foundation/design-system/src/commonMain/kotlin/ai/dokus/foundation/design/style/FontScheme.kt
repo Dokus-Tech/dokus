@@ -1,12 +1,11 @@
 package ai.dokus.foundation.design.style
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.SpaceGrotesk_VariableFont_wght
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.direct
-import ai.dokus.app.resources.generated.gilroy_extra_bold
 import org.jetbrains.compose.resources.Font
 
 @Composable
@@ -41,12 +40,12 @@ fun Typography.withFontFamilyForDisplay(fontFamily: FontFamily): Typography {
 
 @Composable
 fun createFontFamilyDisplay(): FontFamily {
-    val font = Font(Res.font.gilroy_extra_bold)
+    val font = Font(Res.font.SpaceGrotesk_VariableFont_wght)
     return remember { FontFamily(font) }
 }
 
 @Composable
 fun createFontFamily(): FontFamily {
-    val font = Font(Res.font.direct)
+    val font = Font(Res.font.SpaceGrotesk_VariableFont_wght)
     return remember { FontFamily(font) }
 }

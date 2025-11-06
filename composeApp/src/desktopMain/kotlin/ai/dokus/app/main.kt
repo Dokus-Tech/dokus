@@ -9,7 +9,7 @@ import androidx.compose.ui.window.rememberWindowState
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "Dokus",
+        title = "D[#]kus",
         state = rememberWindowState(
             size = DpSize(
                 width = Constrains.largeScreenWidth,

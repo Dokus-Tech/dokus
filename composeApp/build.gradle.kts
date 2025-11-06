@@ -151,7 +151,7 @@ compose.desktop {
             vendor = "Invoid Vision"
 
             macOS {
-                dockName = "Dokus"
+                dockName = "D[#]kus"
                 appStore = false
                 bundleID = "ai.dokus.app"
                 copyright = "Invoid Vision 2025"
