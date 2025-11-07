@@ -128,7 +128,7 @@ Dokus follows a **microservices architecture** with a **Kotlin Multiplatform cli
 - Lightweight and fast
 - Kotlin-native with coroutines
 
-**RPC Framework:** KotlinX RPC 0.10.0
+**RPC Framework:** KotlinX RPC 0.10.1
 - Type-safe client-server communication
 - Shared API definitions
 - Automatic serialization
