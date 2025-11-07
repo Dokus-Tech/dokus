@@ -1,7 +1,7 @@
 # API Reference
 
 **Last Updated:** October 2025
-**Protocol:** KotlinX RPC 0.10.0 over HTTP
+**Protocol:** KotlinX RPC 0.10.1 over HTTP
 **Status:** Production API
 
 ---
