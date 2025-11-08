@@ -143,6 +143,53 @@ chore: update Compose Multiplatform to 1.9.1
 - **Platform-specific code** - Must be tested on target platform
 - **Database operations** - Must handle multi-tenancy correctly
 
+### Updating the Changelog
+
+Keep [CHANGELOG.md](CHANGELOG.md) up-to-date with user-friendly descriptions of your changes:
+
+**When to update:**
+- New features
+- Bug fixes users should know about
+- Breaking changes
+- Security fixes
+
+**How to write entries:**
+- Write for end users, not developers
+- Focus on what changed, not how
+- Use clear, simple language
+- Group related changes together
+
+**Examples:**
+
+```markdown
+✅ Good (user-friendly):
+- Fixed crash when exporting invoices on Android
+- Added support for multi-currency invoices
+- Improved dashboard loading speed by 2x
+
+❌ Avoid (too technical):
+- Refactored InvoiceRepository.kt to use coroutines
+- Updated Gradle to 8.5
+- Fixed NPE in line 234 of MainActivity.kt
+```
+
+**Format:**
+
+Add your entry to the `[Unreleased]` section:
+
+```markdown
+## [Unreleased]
+
+### What's New
+- Your new feature here
+
+### Fixed
+- Your bug fix here
+
+### Security
+- Your security improvement here
+```
+
 ## 🎯 Priority Areas
 
 Given our deadline, we're focusing on:
@@ -164,20 +211,16 @@ To maintain focus, please avoid:
 
 ## 🤝 Code of Conduct
 
-### Our Standards
+This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
 
+By participating, you are expected to uphold this code. Please report unacceptable behavior to artem@invoid.vision.
+
+**In short:**
 - **Be respectful** - We're all trying to meet a deadline
 - **Be constructive** - Criticism is fine, but offer solutions
 - **Be inclusive** - Welcome to all skill levels
 - **Be patient** - We're racing against time, but not at the cost of quality
 - **Think security-first** - This handles financial data
-
-### Unacceptable Behavior
-
-- Harassment or discrimination
-- Publishing private information
-- Trolling or insulting comments
-- Anything that compromises financial data security
 
 ## 📜 License
 
