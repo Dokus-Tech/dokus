@@ -74,4 +74,15 @@ tasks {
         exclude("META-INF/*.DSA")
         exclude("META-INF/*.RSA")
     }
+
+    // Fix task dependencies for application plugin
+    named("distZip") {
+        dependsOn("shadowJar")
+    }
+    named("distTar") {
+        dependsOn("shadowJar")
+    }
+    named("startScripts") {
+        dependsOn("shadowJar")
+    }
 }
