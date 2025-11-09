@@ -85,4 +85,20 @@ tasks {
     named("startScripts") {
         dependsOn("shadowJar")
     }
+
+    // Disable unnecessary shadow tasks that conflict with regular tasks
+    named("startShadowScripts") {
+        enabled = false
+    }
+    named("shadowDistTar") {
+        enabled = false
+    }
+    named("shadowDistZip") {
+        enabled = false
+    }
+
+    // Ensure build task runs shadowJar
+    named("build") {
+        dependsOn("shadowJar")
+    }
 }
