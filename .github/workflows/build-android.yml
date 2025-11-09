@@ -1,0 +1,162 @@
+name: Build Android APK
+
+on:
+  workflow_call:
+    inputs:
+      build-type:
+        description: 'Build type: debug or release'
+        required: false
+        type: string
+        default: 'debug'
+    secrets:
+      KEYSTORE_FILE:
+        description: 'Base64 encoded keystore file'
+        required: false
+      KEYSTORE_PASSWORD:
+        description: 'Keystore password'
+        required: false
+      KEY_ALIAS:
+        description: 'Key alias'
+        required: false
+      KEY_PASSWORD:
+        description: 'Key password'
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for version code generation
+
+      - name: Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: Generate version information
+        id: version
+        run: |
+          # Use git commit count as version code
+          VERSION_CODE=$(git rev-list --count HEAD)
+
+          # Extract version name from gradle if available, otherwise use date
+          VERSION_NAME="${GITHUB_REF_NAME}-${GITHUB_SHA::7}"
+
+          echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
+
+          echo "📦 Version Code: $VERSION_CODE"
+          echo "📦 Version Name: $VERSION_NAME"
+
+      - name: Setup signing (Release only)
+        if: inputs.build-type == 'release' && secrets.KEYSTORE_FILE != ''
+        run: |
+          # Decode and save keystore
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > keystore.jks
+
+          # Set signing properties
+          echo "KEYSTORE_FILE=../keystore.jks" >> gradle.properties
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
+
+      - name: Build Debug APK
+        if: inputs.build-type == 'debug'
+        run: ./gradlew :composeApp:assembleDebug --no-daemon --stacktrace
+
+      - name: Build Release APK
+        if: inputs.build-type == 'release'
+        run: ./gradlew :composeApp:assembleRelease --no-daemon --stacktrace
+
+      - name: Build Release Bundle (AAB)
+        if: inputs.build-type == 'release'
+        run: ./gradlew :composeApp:bundleRelease --no-daemon --stacktrace
+
+      - name: Find APK files
+        id: find-apk
+        run: |
+          if [ "${{ inputs.build-type }}" == "release" ]; then
+            APK_PATH=$(find composeApp/build/outputs/apk/release -name "*.apk" | head -1)
+            AAB_PATH=$(find composeApp/build/outputs/bundle/release -name "*.aab" | head -1)
+            echo "aab-path=$AAB_PATH" >> $GITHUB_OUTPUT
+          else
+            APK_PATH=$(find composeApp/build/outputs/apk/debug -name "*.apk" | head -1)
+          fi
+
+          echo "apk-path=$APK_PATH" >> $GITHUB_OUTPUT
+
+          if [ -n "$APK_PATH" ]; then
+            echo "✅ Found APK: $APK_PATH"
+            ls -lh "$APK_PATH"
+          else
+            echo "❌ APK not found!"
+            exit 1
+          fi
+
+      - name: Rename APK with version
+        id: rename
+        run: |
+          APK_PATH="${{ steps.find-apk.outputs.apk-path }}"
+          VERSION_NAME="${{ steps.version.outputs.version-name }}"
+          BUILD_TYPE="${{ inputs.build-type }}"
+
+          # Generate new filename
+          NEW_NAME="dokus-${BUILD_TYPE}-${VERSION_NAME}.apk"
+          NEW_PATH="$(dirname $APK_PATH)/$NEW_NAME"
+
+          # Rename the file
+          mv "$APK_PATH" "$NEW_PATH"
+          echo "renamed-apk-path=$NEW_PATH" >> $GITHUB_OUTPUT
+          echo "apk-name=$NEW_NAME" >> $GITHUB_OUTPUT
+
+          echo "📦 Renamed APK: $NEW_NAME"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.build-type }}-apk
+          path: ${{ steps.rename.outputs.renamed-apk-path }}
+          retention-days: 30
+
+      - name: Upload AAB artifact (Release only)
+        if: inputs.build-type == 'release' && steps.find-apk.outputs.aab-path != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle
+          path: ${{ steps.find-apk.outputs.aab-path }}
+          retention-days: 90
+
+      - name: Create GitHub Release (Release builds on main)
+        if: |
+          inputs.build-type == 'release' &&
+          github.ref == 'refs/heads/main' &&
+          github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version-name }}
+          name: Release ${{ steps.version.outputs.version-name }}
+          body: |
+            ## 🚀 Release ${{ steps.version.outputs.version-name }}
+
+            **Version Code:** ${{ steps.version.outputs.version-code }}
+            **Commit:** ${{ github.sha }}
+
+            ### Downloads
+            - **APK**: ${{ steps.rename.outputs.apk-name }}
+            - **AAB**: Available as workflow artifact
+
+            ### Installation
+            Download the APK and install on your Android device.
+          files: |
+            ${{ steps.rename.outputs.renamed-apk-path }}
+          draft: false
+          prerelease: false
+
+      - name: Cleanup signing files
+        if: always() && inputs.build-type == 'release'
+        run: |
+          rm -f keystore.jks
+          rm -f gradle.properties
