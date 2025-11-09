@@ -21,8 +21,8 @@ fun App(
 
     AppModulesProvided(modules) {
         KoinProvided(diModules) {
-            AppModulesInitializer(modules) {
-                Themed {
+            Themed {
+                AppModulesInitializer(modules) {
                     ScreenSizeProvided {
                         DualPanelNavigationContainer(
                             navigationProviders = navigationProviders,
