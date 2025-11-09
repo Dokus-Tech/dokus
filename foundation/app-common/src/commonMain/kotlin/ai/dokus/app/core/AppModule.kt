@@ -1,6 +1,5 @@
 package ai.dokus.app.core
 
-import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.NavigationDestination
 import androidx.compose.runtime.Immutable
@@ -8,14 +7,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module
 
-interface AppModule {
-    val navigationProvider: NavigationProvider?
-    val homeNavigationProvider: NavigationProvider?
-    val diModules: List<Module>
-    val homeItems: List<HomeItem>
-    val settingsGroups: List<ModuleSettingsGroup>
-    val dashboardWidgets: List<DashboardWidget>
-}
+/**
+ * Defines a feature module in the Dokus application architecture.
+ *
+ * Each feature (auth, invoicing, expense, etc.) implements this interface to register navigation,
+ * dependency injection modules, home items, settings, and dashboard widgets. Enables plugin-like
+ * architecture where features are self-contained and independently manageable.
+ */
+interface AppModule : AppPresentationModule, AppDataModule, AppDomainModule
 
 @Immutable
 data class ModuleSettingsGroup(
@@ -36,3 +35,10 @@ val Collection<AppModule>.navigationProviders: List<NavigationProvider>
 
 val Collection<ModuleSettingsGroup>.allDestinations: List<NavigationDestination>
     get() = flatMap { it.sections.map { section -> section.destination } }
+
+val AppModule.diModules: List<Module>
+    get() = buildList {
+        addAll(presentationDi.allModules)
+        addAll(dataDi.allModules)
+        addAll(domainDi.allModules)
+    }

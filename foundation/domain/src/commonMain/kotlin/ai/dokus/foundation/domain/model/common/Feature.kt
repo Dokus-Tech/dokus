@@ -1,9 +1,39 @@
 package ai.dokus.foundation.domain.model.common
 
-enum class Feature(val serviceName: String, val fullPackageName: String, val poolName: String) {
-    Auth("auth", "ai.dokus..auth", "dokus-auth"),
-    Expense("expense", "ai.dokus.expense", "dokus-expense"),
-    Invoicing("invoicing", "ai.dokus.invoicing", "dokus-invoicing"),
-    Payment("payment", "ai.dokus.payment", "dokus-payment"),
-    Reporting("reporting", "ai.dokus.reporting", "dokus-reporting"),
+enum class Feature(
+    val serviceName: String,
+    val fullPackageName: String,
+    val poolName: String,
+    val frontendDbName: String
+) {
+    Auth(
+        serviceName = "auth",
+        fullPackageName = "ai.dokus.auth",
+        poolName = "dokus-auth",
+        frontendDbName = "dokus_auth"
+    ),
+    Expense(
+        serviceName = "expense",
+        fullPackageName = "ai.dokus.expense",
+        poolName = "dokus-expense",
+        frontendDbName = "dokus_expense"
+    ),
+    Invoicing(
+        serviceName = "invoicing",
+        fullPackageName = "ai.dokus.invoicing",
+        poolName = "dokus-invoicing",
+        frontendDbName = "dokus_invoicing"
+    ),
+    Payment(
+        serviceName = "payment",
+        fullPackageName = "ai.dokus.payment",
+        poolName = "dokus-payment",
+        frontendDbName = "dokus_payment"
+    ),
+    Reporting(
+        serviceName = "reporting",
+        fullPackageName = "ai.dokus.reporting",
+        poolName = "dokus-reporting",
+        frontendDbName = "dokus_reporting"
+    ),
 }
