@@ -1,7 +1,6 @@
 package ai.dokus.app.local
 
 import ai.dokus.app.core.AppModule
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +29,6 @@ fun AppModulesInitializer(
     if (isInitialized) {
         content()
     } else {
-        Surface {}
+        // TODO: Splash
     }
 }
