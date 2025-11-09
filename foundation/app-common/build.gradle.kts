@@ -80,6 +80,7 @@ kotlin {
             implementation(libs.sqldelight.wasm)
             implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.1.0"))
             implementation(npm("sql.js", "1.8.0"))
+            implementation(devNpm("copy-webpack-plugin", "9.1.0"))
             implementation(libs.ktor.client.wasm)
         }
     }
