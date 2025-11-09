@@ -32,7 +32,3 @@ val List<AppModule>.settingsGroups: List<ModuleSettingsGroup>
 
 val List<AppModule>.settingsGroupsCombined: Map<StringResource, List<ModuleSettingsGroup>>
     get() = flatMap { it.settingsGroups }.groupBy { it.title }
-
-suspend fun List<AppModule>.initializeData() {
-    forEach { it.initializeData() }
-}
