@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -12,54 +12,70 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+  JAVA_VERSION: '21'
+
 jobs:
-  # Determine which platforms to test based on changed files
-  changes:
+  # Quick validation checks that fail fast
+  validation:
+    name: 🔍 Validation
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ✅ Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: 📊 Check for TODO/FIXME
+        run: |
+          echo "Checking for unresolved TODOs and FIXMEs..."
+          if git diff origin/${{ github.base_ref }}...HEAD | grep -E "^\+.*\b(TODO|FIXME)\b" | grep -v "github/workflows"; then
+            echo "⚠️ Warning: New TODOs or FIXMEs found in this PR"
+          fi
+        continue-on-error: true
+
+  # Determine which platforms need testing
+  changes:
+    name: 🔎 Detect Changes
+    runs-on: ubuntu-latest
     outputs:
       android: ${{ steps.filter.outputs.android }}
       ios: ${{ steps.filter.outputs.ios }}
       desktop: ${{ steps.filter.outputs.desktop }}
       wasm: ${{ steps.filter.outputs.wasm }}
       common: ${{ steps.filter.outputs.common }}
-    steps:
-      - uses: actions/checkout@v4
+      has-changes: ${{ steps.filter.outputs.changes }}
 
-      - uses: dorny/paths-filter@v3
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check changed files
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
             android:
               - 'composeApp/src/androidMain/**'
-              - 'composeApp/src/commonMain/**'
               - 'features/**/androidMain/**'
               - 'foundation/**/androidMain/**'
-              - '*.gradle.kts'
-              - 'gradle/**'
             ios:
               - 'composeApp/src/iosMain/**'
-              - 'composeApp/src/commonMain/**'
               - 'features/**/iosMain/**'
               - 'foundation/**/iosMain/**'
-              - '*.gradle.kts'
-              - 'gradle/**'
             desktop:
               - 'composeApp/src/desktopMain/**'
               - 'composeApp/src/jvmMain/**'
-              - 'composeApp/src/commonMain/**'
               - 'features/**/jvmMain/**'
               - 'foundation/**/jvmMain/**'
-              - '*.gradle.kts'
-              - 'gradle/**'
             wasm:
               - 'composeApp/src/wasmJsMain/**'
-              - 'composeApp/src/commonMain/**'
               - 'features/**/wasmJsMain/**'
               - 'foundation/**/wasmJsMain/**'
-              - '*.gradle.kts'
-              - 'gradle/**'
             common:
               - 'composeApp/src/commonMain/**'
               - 'features/**/commonMain/**'
@@ -67,25 +83,59 @@ jobs:
               - '*.gradle.kts'
               - 'gradle/**'
 
+  # Code quality checks
+  lint:
+    name: 🧹 Code Quality
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: 🧹 Run ktlint
+        run: |
+          echo "Running Kotlin linter..."
+          ./gradlew ktlintCheck --continue || echo "⚠️ Linting issues found"
+        continue-on-error: true
+
+      - name: 📊 Generate dependency graph
+        run: ./gradlew dependencies > dependencies.txt || true
+
+      - name: 📤 Upload dependency report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-report
+          path: dependencies.txt
+          retention-days: 7
+
   # Run tests for affected platforms
   test:
-    needs: changes
+    name: 🧪 Tests
+    needs: [validation, changes]
     if: |
       github.event_name == 'push' ||
       needs.changes.outputs.android == 'true' ||
       needs.changes.outputs.ios == 'true' ||
       needs.changes.outputs.desktop == 'true' ||
-      needs.changes.outputs.wasm == 'true' ||
       needs.changes.outputs.common == 'true'
     uses: ./.github/workflows/test.yml
     with:
       run-android: ${{ github.event_name == 'push' || needs.changes.outputs.android == 'true' || needs.changes.outputs.common == 'true' }}
       run-desktop: ${{ github.event_name == 'push' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.common == 'true' }}
-      run-ios: ${{ github.event_name == 'push' || needs.changes.outputs.ios == 'true' || needs.changes.outputs.common == 'true' }}
+      run-ios: false  # Disabled by default due to cost, enable for releases
 
   # Build Android APK
   build-android:
-    needs: test
+    name: 🏗️ Build Android
+    needs: [test, changes]
     if: |
       always() &&
       (needs.test.result == 'success' || needs.test.result == 'skipped') &&
@@ -93,22 +143,145 @@ jobs:
     uses: ./.github/workflows/build-android.yml
     with:
       build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
+      create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     secrets: inherit
 
-  # Check if all required jobs passed
-  ci-success:
+  # Summary and status reporting
+  ci-status:
+    name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [test, build-android]
+    needs: [validation, changes, lint, test, build-android]
     if: always()
-    steps:
-      - name: Check job results
-        run: |
-          echo "Test result: ${{ needs.test.result }}"
-          echo "Build Android result: ${{ needs.build-android.result }}"
 
-          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.build-android.result }}" == "failure" ]; then
-            echo "❌ CI failed"
+    steps:
+      - name: 📊 Generate status report
+        run: |
+          echo "# 📊 CI Pipeline Status Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | ${{ needs.validation.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.lint.result == 'success' && '✅ Passed' || needs.lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Android | ${{ needs.build-android.result == 'success' && '✅ Passed' || needs.build-android.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Platform changes detected
+          echo "## 🔍 Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Android: ${{ needs.changes.outputs.android == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- iOS: ${{ needs.changes.outputs.ios == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Desktop: ${{ needs.changes.outputs.desktop == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- WASM: ${{ needs.changes.outputs.wasm == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Common: ${{ needs.changes.outputs.common == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: ✅ Check overall status
+        run: |
+          if [ "${{ needs.validation.result }}" == "failure" ] || \
+             [ "${{ needs.test.result }}" == "failure" ] || \
+             [ "${{ needs.build-android.result }}" == "failure" ]; then
+            echo "❌ CI Pipeline Failed"
             exit 1
           fi
+          echo "✅ CI Pipeline Passed"
 
-          echo "✅ CI passed"
+  # Automatic release on main branch
+  release:
+    name: 🚀 Create Release
+    needs: [build-android]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.build-android.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Generate version tag
+        id: version
+        run: |
+          # Generate version from commit count and short SHA
+          VERSION_CODE=$(git rev-list --count HEAD)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION_TAG="v1.0.${VERSION_CODE}"
+
+          echo "version-tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+          echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+          echo "📦 Version: $VERSION_TAG (build $VERSION_CODE)"
+
+      - name: 📝 Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" -n 10)
+          else
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)")
+          fi
+
+          # Save to file for multiline
+          echo "$COMMITS" > changelog.txt
+
+          echo "📋 Generated changelog"
+
+      - name: 📥 Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: ./artifacts
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version-tag }}
+          name: Release ${{ steps.version.outputs.version-tag }}
+          body: |
+            # 🚀 Dokus Release ${{ steps.version.outputs.version-tag }}
+
+            **Build:** ${{ steps.version.outputs.version-code }}
+            **Commit:** ${{ steps.version.outputs.short-sha }}
+            **Branch:** ${{ github.ref_name }}
+            **Date:** ${{ github.event.head_commit.timestamp }}
+
+            ## 📝 Changes
+
+            ${{ steps.changelog.outputs.commits }}
+
+            ## 📦 Downloads
+
+            - **Android APK**: See assets below
+            - **Release Bundle (AAB)**: Available in [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ## 📱 Installation
+
+            1. Download the APK from assets
+            2. Enable "Install from unknown sources" on your Android device
+            3. Install the APK
+
+            ## 🔐 Verification
+
+            This release was automatically built and signed by GitHub Actions.
+
+            - Workflow: [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - Commit: [${{ steps.version.outputs.short-sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+          files: ./artifacts/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      - name: 🎉 Release created
+        run: |
+          echo "✅ Release ${{ steps.version.outputs.version-tag }} created successfully!"
+          echo "🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version-tag }}"
