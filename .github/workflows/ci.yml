@@ -153,11 +153,24 @@ jobs:
       create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     secrets: inherit
 
+  # Build macOS DMG
+  build-macos:
+    name: 🏗️ Build macOS
+    needs: [test, changes]
+    if: |
+      always() &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
+      (github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.desktop == 'true')
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
+      create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+
   # Summary and status reporting
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [validation, changes, lint, test, build-android]
+    needs: [validation, changes, lint, test, build-android, build-macos]
     if: always()
 
     steps:
@@ -173,6 +186,7 @@ jobs:
           echo "| Code Quality | ${{ needs.lint.result == 'success' && '✅ Passed' || needs.lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build Android | ${{ needs.build-android.result == 'success' && '✅ Passed' || needs.build-android.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build macOS | ${{ needs.build-macos.result == 'success' && '✅ Passed' || needs.build-macos.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Platform changes detected
@@ -187,7 +201,8 @@ jobs:
         run: |
           if [ "${{ needs.validation.result }}" == "failure" ] || \
              [ "${{ needs.test.result }}" == "failure" ] || \
-             [ "${{ needs.build-android.result }}" == "failure" ]; then
+             [ "${{ needs.build-android.result }}" == "failure" ] || \
+             [ "${{ needs.build-macos.result }}" == "failure" ]; then
             echo "❌ CI Pipeline Failed"
             exit 1
           fi
@@ -196,11 +211,12 @@ jobs:
   # Automatic release on main branch
   release:
     name: 🚀 Create Release
-    needs: [build-android]
+    needs: [build-android, build-macos]
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.build-android.result == 'success'
+      needs.build-android.result == 'success' &&
+      needs.build-macos.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -217,7 +233,7 @@ jobs:
           # Generate version from commit count and short SHA
           VERSION_CODE=$(git rev-list --count HEAD)
           SHORT_SHA=$(git rev-parse --short HEAD)
-          VERSION_TAG="v1.0.${VERSION_CODE}"
+          VERSION_TAG="v0.0.${VERSION_CODE}"
 
           echo "version-tag=$VERSION_TAG" >> $GITHUB_OUTPUT
           echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
@@ -242,10 +258,16 @@ jobs:
 
           echo "📋 Generated changelog"
 
-      - name: 📥 Download APK artifact
+      - name: 📥 Download Android APK
         uses: actions/download-artifact@v4
         with:
           name: release-apk
+          path: ./artifacts
+
+      - name: 📥 Download macOS DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dmg
           path: ./artifacts
 
       - name: 🚀 Create GitHub Release
@@ -268,13 +290,20 @@ jobs:
             ## 📦 Downloads
 
             - **Android APK**: See assets below
+            - **macOS DMG**: See assets below
             - **Release Bundle (AAB)**: Available in [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
             ## 📱 Installation
 
+            ### Android
             1. Download the APK from assets
             2. Enable "Install from unknown sources" on your Android device
             3. Install the APK
+
+            ### macOS
+            1. Download the DMG from assets
+            2. Open the DMG file
+            3. Drag the app to your Applications folder
 
             ## 🔐 Verification
 
@@ -282,9 +311,11 @@ jobs:
 
             - Workflow: [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - Commit: [${{ steps.version.outputs.short-sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-          files: ./artifacts/*.apk
+          files: |
+            ./artifacts/*.apk
+            ./artifacts/*.dmg
           draft: false
-          prerelease: false
+          prerelease: true
           generate_release_notes: true
 
       - name: 🎉 Release created
