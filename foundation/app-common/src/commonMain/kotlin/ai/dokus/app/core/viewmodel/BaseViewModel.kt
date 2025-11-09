@@ -8,13 +8,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 abstract class BaseViewModel<S>(initialState: S) : ViewModel() {
-
     protected val mutableState = MutableStateFlow(initialState)
     val state: StateFlow<S> = mutableState.asStateFlow()
 
     /**
      * Provides access to viewModelScope for launching coroutines
      */
-    protected val scope: CoroutineScope
-        get() = viewModelScope
+    protected val scope: CoroutineScope get() = viewModelScope
 }

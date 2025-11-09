@@ -1,7 +1,7 @@
 package ai.dokus.app.viewmodel
 
 import ai.dokus.app.auth.AuthInitializer
-import androidx.lifecycle.ViewModel
+import ai.dokus.app.core.viewmodel.BaseViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,18 +11,12 @@ import kotlinx.coroutines.launch
 class BootstrapViewModel(
     private val authInitializer: AuthInitializer,
 //    private val userRepository: UserRepository,
-) : ViewModel() {
+) : BaseViewModel<List<BootstrapViewModel.BootstrapState>>(BootstrapState.all) {
     private val mutableEffect = MutableStateFlow<Effect>(Effect.Idle)
     val effect: StateFlow<Effect> = mutableEffect.asStateFlow()
 
-    private val mutableBootstrapState = MutableStateFlow(listOf(BootstrapState.InitializeApp))
-    val loadingState = mutableBootstrapState.asStateFlow()
-
     fun load() {
         viewModelScope.launch {
-            // Initialize authentication system
-            initializeAuth()
-
             mutableEffect.value = when {
                 needsUpdate() -> Effect.NeedsUpdate
                 needsLogin() -> Effect.NeedsLogin
@@ -32,18 +26,15 @@ class BootstrapViewModel(
         }
     }
 
-    private suspend fun initializeAuth() {
-        authInitializer.initialize()
-    }
-
     private suspend fun needsLogin(): Boolean {
-        mutableBootstrapState.value += BootstrapState.CheckingLogin
+        updateStep(BootstrapState.CheckingLogin(true))
+        authInitializer.initialize()
         // Check if user is authenticated
         return !authInitializer.isAuthenticated()
     }
 
     private suspend fun needsAccountConfirmation(): Boolean {
-        mutableBootstrapState.value += BootstrapState.CheckingAccountStatus
+        updateStep(BootstrapState.CheckingAccountStatus(true))
         return false
 //        // Check if user is active - fetches from network and updates local database
 //        val user = userRepository.fetchCurrentUser().getOrElse {
@@ -53,15 +44,36 @@ class BootstrapViewModel(
     }
 
     private fun needsUpdate(): Boolean {
-        mutableBootstrapState.value += BootstrapState.CheckUpdate
+        updateStep(BootstrapState.CheckUpdate(true))
         return false
     }
 
-    enum class BootstrapState {
-        InitializeApp,
-        CheckingLogin,
-        CheckingAccountStatus,
-        CheckUpdate,
+    private fun updateStep(step: BootstrapState) {
+        mutableState.value = state.value.map {
+            if (it == step) {
+                step
+            } else {
+                it
+            }
+        }
+    }
+
+    sealed interface BootstrapState {
+        val isActive: Boolean
+
+        data class InitializeApp(override val isActive: Boolean) : BootstrapState
+        data class CheckingLogin(override val isActive: Boolean) : BootstrapState
+        data class CheckingAccountStatus(override val isActive: Boolean) : BootstrapState
+        data class CheckUpdate(override val isActive: Boolean) : BootstrapState
+
+        companion object {
+            val all = listOf<BootstrapState>(
+                InitializeApp(isActive = false),
+                CheckUpdate(isActive = false),
+                CheckingLogin(isActive = false),
+                CheckingAccountStatus(isActive = false),
+            )
+        }
     }
 
     sealed interface Effect {
