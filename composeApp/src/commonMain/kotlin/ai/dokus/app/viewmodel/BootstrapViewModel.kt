@@ -27,14 +27,14 @@ class BootstrapViewModel(
     }
 
     private suspend fun needsLogin(): Boolean {
-        updateStep(BootstrapState.CheckingLogin(true))
+        updateStep(BootstrapState.CheckingLogin(isActive = true, isCurrent = true))
         authInitializer.initialize()
         // Check if user is authenticated
         return !authInitializer.isAuthenticated()
     }
 
     private suspend fun needsAccountConfirmation(): Boolean {
-        updateStep(BootstrapState.CheckingAccountStatus(true))
+        updateStep(BootstrapState.CheckingAccountStatus(isActive = true, isCurrent = true))
         return false
 //        // Check if user is active - fetches from network and updates local database
 //        val user = userRepository.fetchCurrentUser().getOrElse {
@@ -44,7 +44,7 @@ class BootstrapViewModel(
     }
 
     private fun needsUpdate(): Boolean {
-        updateStep(BootstrapState.CheckUpdate(true))
+        updateStep(BootstrapState.CheckUpdate(isActive = true, isCurrent = true))
         return false
     }
 
@@ -53,25 +53,50 @@ class BootstrapViewModel(
             if (it == step) {
                 step
             } else {
-                it
+                it.copyCurrent(isCurrent = false)
             }
         }
     }
 
     sealed interface BootstrapState {
         val isActive: Boolean
+        val isCurrent: Boolean
 
-        data class InitializeApp(override val isActive: Boolean) : BootstrapState
-        data class CheckingLogin(override val isActive: Boolean) : BootstrapState
-        data class CheckingAccountStatus(override val isActive: Boolean) : BootstrapState
-        data class CheckUpdate(override val isActive: Boolean) : BootstrapState
+        data class InitializeApp(
+            override val isActive: Boolean,
+            override val isCurrent: Boolean
+        ) : BootstrapState
+
+        data class CheckingLogin(
+            override val isActive: Boolean,
+            override val isCurrent: Boolean
+        ) : BootstrapState
+
+        data class CheckingAccountStatus(
+            override val isActive: Boolean,
+            override val isCurrent: Boolean
+        ) : BootstrapState
+
+        data class CheckUpdate(
+            override val isActive: Boolean,
+            override val isCurrent: Boolean
+        ) : BootstrapState
+
+        fun copyCurrent(isCurrent: Boolean): BootstrapState {
+            return when (this) {
+                is InitializeApp -> copy(isCurrent = isCurrent)
+                is CheckingLogin -> copy(isCurrent = isCurrent)
+                is CheckingAccountStatus -> copy(isCurrent = isCurrent)
+                is CheckUpdate -> copy(isCurrent = isCurrent)
+            }
+        }
 
         companion object {
-            val all = listOf<BootstrapState>(
-                InitializeApp(isActive = false),
-                CheckUpdate(isActive = false),
-                CheckingLogin(isActive = false),
-                CheckingAccountStatus(isActive = false),
+            internal val all = listOf<BootstrapState>(
+                InitializeApp(isActive = true, isCurrent = true),
+                CheckUpdate(isActive = false, isCurrent = false),
+                CheckingLogin(isActive = false, isCurrent = false),
+                CheckingAccountStatus(isActive = false, isCurrent = false),
             )
         }
     }
