@@ -10,7 +10,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 
 class DokusApplication : Application() {
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
@@ -23,9 +23,10 @@ class DokusApplication : Application() {
             }
         )
 
-        // Initialize databases and other async resources
         applicationScope.launch {
-            appModules.initializeData()
+            appModules.forEach { module ->
+                module.initializeData()
+            }
         }
     }
 }
