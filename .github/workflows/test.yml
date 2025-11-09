@@ -136,38 +136,6 @@ jobs:
         if: success()
         run: echo "✅ iOS tests passed!"
 
-  # Run all common tests (shared code)
-  common-tests:
-    name: 🔄 Common Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🔧 Setup environment
-        uses: ./.github/actions/job-set-up
-
-      - name: 🧪 Run all common tests
-        run: |
-          echo "Running all platform tests..."
-          ./gradlew allTests --no-daemon --stacktrace
-
-      - name: 📤 Upload aggregated test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: common-test-reports
-          path: |
-            **/build/test-results/**
-            **/build/reports/tests/**
-          retention-days: 7
-
-      - name: ✅ Tests completed
-        if: success()
-        run: echo "✅ Common tests passed!"
-
   # Test summary
   test-summary:
     name: 📊 Test Summary
