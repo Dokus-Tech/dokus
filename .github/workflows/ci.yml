@@ -182,7 +182,6 @@ jobs:
           echo "- iOS: ${{ needs.changes.outputs.ios == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Desktop: ${{ needs.changes.outputs.desktop == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
           echo "- WASM: ${{ needs.changes.outputs.wasm == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Common: ${{ needs.changes.outputs.common == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
 
       - name: ✅ Check overall status
         run: |
