@@ -37,6 +37,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.foundation.appCommon)
             implementation(projects.foundation.domain)
             implementation(projects.foundation.sstorage)
 

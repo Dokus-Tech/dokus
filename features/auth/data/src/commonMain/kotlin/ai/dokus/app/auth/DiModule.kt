@@ -1,5 +1,6 @@
 package ai.dokus.app.auth
 
+import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
@@ -34,6 +35,10 @@ val authNetworkModule = module {
 }
 
 val authDataModule = module {
+    // Database
+    single { AuthDb.create() }
+    single { get<AuthDb>().get() }
+
     single { AuthManagerImpl() } binds arrayOf(AuthManager::class, AuthManagerMutable::class)
 
     // JWT utilities

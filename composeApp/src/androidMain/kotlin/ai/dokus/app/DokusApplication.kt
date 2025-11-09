@@ -2,10 +2,16 @@ package ai.dokus.app
 
 import ai.dokus.app.utils.initKoin
 import android.app.Application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 
 class DokusApplication : Application() {
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate() {
         super.onCreate()
 
@@ -16,5 +22,10 @@ class DokusApplication : Application() {
                 androidLogger()
             }
         )
+
+        // Initialize databases and other async resources
+        applicationScope.launch {
+            appModules.initializeData()
+        }
     }
 }
