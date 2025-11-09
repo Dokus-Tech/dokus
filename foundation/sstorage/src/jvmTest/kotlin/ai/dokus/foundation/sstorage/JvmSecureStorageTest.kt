@@ -14,7 +14,8 @@ import kotlin.test.assertTrue
 class JvmSecureStorageTest {
     companion object {
         // Reuse a single instance to avoid multiple DataStores on the same file
-        val storage: SecureStorage = createSecureStorage(null, Feature.Invoicing)
+        // Use unique feature to avoid conflicts with other test classes
+        val storage: SecureStorage = createSecureStorage(null, Feature.Reporting)
     }
 
     @BeforeTest
