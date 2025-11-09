@@ -18,7 +18,7 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.home_dashboard
 import ai.dokus.app.resources.generated.home_settings
 
-object AppMainModule : AppModule {
+internal object AppMainModule : AppModule {
     // Presentation layer
     override val navigationProvider = AppNavigationProvider
     override val homeNavigationProvider = HomeNavigationProvider
