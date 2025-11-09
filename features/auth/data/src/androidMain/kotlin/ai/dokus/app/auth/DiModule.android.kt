@@ -1,6 +1,5 @@
 package ai.dokus.app.auth
 
-import ai.dokus.app.auth.database.DatabaseDriverFactory
 import ai.dokus.foundation.domain.model.common.Feature
 import ai.dokus.foundation.sstorage.SecureStorage
 import ai.dokus.foundation.sstorage.createSecureStorage
@@ -14,10 +13,5 @@ actual val authPlatformModule: Module = module {
             context = androidContext(),
             feature = Feature.Auth
         )
-    }
-
-    // Database driver factory for Android
-    single<DatabaseDriverFactory> {
-        DatabaseDriverFactory(androidContext())
     }
 }

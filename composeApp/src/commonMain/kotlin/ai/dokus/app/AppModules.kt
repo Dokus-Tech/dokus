@@ -9,8 +9,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module
 
 private val baseAppModules = listOf<AppModule>(
-    appModule,
-    authAppModule
+    AppMainModule,
+    AuthAppModule
 )
 
 private val conditionalModules = emptyList<AppModule>()
@@ -31,3 +31,7 @@ val List<AppModule>.settingsGroups: List<ModuleSettingsGroup>
 
 val List<AppModule>.settingsGroupsCombined: Map<StringResource, List<ModuleSettingsGroup>>
     get() = flatMap { it.settingsGroups }.groupBy { it.title }
+
+suspend fun List<AppModule>.initializeData() {
+    forEach { it.initializeData() }
+}
