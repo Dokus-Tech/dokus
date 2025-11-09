@@ -180,24 +180,9 @@ jobs:
         run: |
           echo "# 🧪 Test Suite Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Status | Duration |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|--------|----------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🤖 Android | ${{ needs.android-tests.result == 'success' && '✅ Passed' || needs.android-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🖥️ Desktop | ${{ needs.desktop-tests.result == 'success' && '✅ Passed' || needs.desktop-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🍎 iOS | ${{ needs.ios-tests.result == 'success' && '✅ Passed' || needs.ios-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔄 Common | ${{ needs.common-tests.result == 'success' && '✅ Passed' || needs.common-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Overall status
-          if [ "${{ needs.android-tests.result }}" == "failure" ] || \
-             [ "${{ needs.desktop-tests.result }}" == "failure" ] || \
-             [ "${{ needs.ios-tests.result }}" == "failure" ]; then
-            echo "## ❌ Test Suite Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "One or more test suites failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
-            exit 1
-          else
-            echo "## ✅ All Tests Passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "All executed test suites completed successfully!" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🤖 Android | ${{ needs.android-tests.result == 'success' && '✅ Passed' || needs.android-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🖥️ Desktop | ${{ needs.desktop-tests.result == 'success' && '✅ Passed' || needs.desktop-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🍎 iOS | ${{ needs.ios-tests.result == 'success' && '✅ Passed' || needs.ios-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔄 Common | ${{ needs.common-tests.result == 'success' && '✅ Passed' || needs.common-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
