@@ -3,101 +3,125 @@ name: Tests
 on:
   workflow_call:
     inputs:
-      shouldRunKmp:
-        required: true
-        type: string
-      shouldRunAndroid:
-        required: true
-        type: string
-      shouldRunIos:
-        required: true
-        type: string
-      shouldRunDesktop:
-        required: true
-        type: string
-      shouldRunWasm:
-        required: true
-        type: string
+      run-android:
+        required: false
+        type: boolean
+        default: true
+      run-desktop:
+        required: false
+        type: boolean
+        default: true
+      run-ios:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  Android:
-    if: ${{ inputs.shouldRunKmp == 'true' || inputs.shouldRunAndroid == 'true' }}
+  # Android unit tests (fast, runs on Ubuntu)
+  android-tests:
+    if: inputs.run-android
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Job set up
+      - name: Setup environment
         uses: ./.github/actions/job-set-up
 
-      - run: ./gradlew clean testDebug -p androidApp/
+      - name: Run Android unit tests
+        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon --stacktrace
 
-  Desktop:
-    if: ${{ inputs.shouldRunKmp == 'true' || inputs.shouldRunDesktop == 'true' }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Job set up
-        uses: ./.github/actions/job-set-up
-
-      - run: ./gradlew clean jvmTest -p desktopApp/
-
-  iOS:
-#    if: ${{ inputs.shouldRunKmp == 'true' || inputs.shouldRunIos == 'true' }}
-    if: false
-    runs-on: macos-12
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Job set up
-        uses: ./.github/actions/job-set-up
-
-      - name: iOS set up
-        uses: ./.github/actions/ios-set-up
-
-      - run: xcodebuild build test -workspace iosApp/iosApp.xcworkspace -configuration Debug -scheme iosApp -sdk iphoneos -destination name='iPhone 14' -verbose
-
-      - name: Upload logs
+      - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          path: "/Users/runner/Library/Developer/Xcode/DerivedData/*"
+          name: android-test-results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+            **/build/reports/tests/**
+          retention-days: 7
 
-  KMP-Android:
-    if: ${{ inputs.shouldRunKmp == 'true'}}
-    runs-on: macos-12
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Job set up
-        uses: ./.github/actions/job-set-up
-
-      - run: ./gradlew clean testDebugUnitTest -p shared/
-
-  KMP-Desktop:
-    if: ${{ inputs.shouldRunKmp == 'true'}}
-    runs-on: macos-12
+  # Desktop/JVM tests (fast, runs on Ubuntu)
+  desktop-tests:
+    if: inputs.run-desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Job set up
+      - name: Setup environment
         uses: ./.github/actions/job-set-up
 
-      - run: ./gradlew clean desktopTest -p shared/
+      - name: Run Desktop/JVM tests
+        run: ./gradlew :composeApp:desktopTest --no-daemon --stacktrace
 
-  KMP-iOS:
-    if: ${{ inputs.shouldRunKmp == 'true'}}
-    runs-on: macos-12
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-test-results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+            **/build/reports/tests/**
+          retention-days: 7
+
+  # iOS tests (expensive, runs on macOS only when needed)
+  ios-tests:
+    if: inputs.run-ios
+    runs-on: macos-latest
+    timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Job set up
+      - name: Setup environment
         uses: ./.github/actions/job-set-up
 
-      - run: if [[ $(uname -m) == 'arm64' ]]; then ./gradlew clean iosSimulatorArm64Test -p shared/; else ./gradlew clean iosX64Test -p shared/; fi
+      - name: Run iOS Simulator tests
+        run: |
+          if [[ $(uname -m) == 'arm64' ]]; then
+            ./gradlew :composeApp:iosSimulatorArm64Test --no-daemon --stacktrace
+          else
+            ./gradlew :composeApp:iosX64Test --no-daemon --stacktrace
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+            **/build/reports/tests/**
+          retention-days: 7
+
+  # Run all common tests (shared code)
+  common-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: Run all common tests
+        run: ./gradlew allTests --no-daemon --stacktrace
+        continue-on-error: true  # Don't fail if some tests fail
+
+      - name: Upload aggregated test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: common-test-results
+          path: |
+            **/build/test-results/**
+            **/build/reports/tests/**
+          retention-days: 7

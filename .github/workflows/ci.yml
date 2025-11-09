@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same workflow and ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # Determine which platforms to test based on changed files
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      android: ${{ steps.filter.outputs.android }}
+      ios: ${{ steps.filter.outputs.ios }}
+      desktop: ${{ steps.filter.outputs.desktop }}
+      wasm: ${{ steps.filter.outputs.wasm }}
+      common: ${{ steps.filter.outputs.common }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            android:
+              - 'composeApp/src/androidMain/**'
+              - 'composeApp/src/commonMain/**'
+              - 'features/**/androidMain/**'
+              - 'foundation/**/androidMain/**'
+              - '*.gradle.kts'
+              - 'gradle/**'
+            ios:
+              - 'composeApp/src/iosMain/**'
+              - 'composeApp/src/commonMain/**'
+              - 'features/**/iosMain/**'
+              - 'foundation/**/iosMain/**'
+              - '*.gradle.kts'
+              - 'gradle/**'
+            desktop:
+              - 'composeApp/src/desktopMain/**'
+              - 'composeApp/src/jvmMain/**'
+              - 'composeApp/src/commonMain/**'
+              - 'features/**/jvmMain/**'
+              - 'foundation/**/jvmMain/**'
+              - '*.gradle.kts'
+              - 'gradle/**'
+            wasm:
+              - 'composeApp/src/wasmJsMain/**'
+              - 'composeApp/src/commonMain/**'
+              - 'features/**/wasmJsMain/**'
+              - 'foundation/**/wasmJsMain/**'
+              - '*.gradle.kts'
+              - 'gradle/**'
+            common:
+              - 'composeApp/src/commonMain/**'
+              - 'features/**/commonMain/**'
+              - 'foundation/**/commonMain/**'
+              - '*.gradle.kts'
+              - 'gradle/**'
+
+  # Run tests for affected platforms
+  test:
+    needs: changes
+    if: |
+      github.event_name == 'push' ||
+      needs.changes.outputs.android == 'true' ||
+      needs.changes.outputs.ios == 'true' ||
+      needs.changes.outputs.desktop == 'true' ||
+      needs.changes.outputs.wasm == 'true' ||
+      needs.changes.outputs.common == 'true'
+    uses: ./.github/workflows/test.yml
+    with:
+      run-android: ${{ github.event_name == 'push' || needs.changes.outputs.android == 'true' || needs.changes.outputs.common == 'true' }}
+      run-desktop: ${{ github.event_name == 'push' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.common == 'true' }}
+      run-ios: ${{ github.event_name == 'push' || needs.changes.outputs.ios == 'true' || needs.changes.outputs.common == 'true' }}
+
+  # Build Android APK
+  build-android:
+    needs: test
+    if: |
+      always() &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
+      (github.event_name == 'push' || needs.changes.outputs.android == 'true' || needs.changes.outputs.common == 'true')
+    uses: ./.github/workflows/build-android.yml
+    with:
+      build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
+    secrets: inherit
+
+  # Check if all required jobs passed
+  ci-success:
+    runs-on: ubuntu-latest
+    needs: [test, build-android]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          echo "Test result: ${{ needs.test.result }}"
+          echo "Build Android result: ${{ needs.build-android.result }}"
+
+          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.build-android.result }}" == "failure" ]; then
+            echo "❌ CI failed"
+            exit 1
+          fi
+
+          echo "✅ CI passed"
