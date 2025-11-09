@@ -128,9 +128,10 @@ jobs:
       needs.changes.outputs.common == 'true'
     uses: ./.github/workflows/test.yml
     with:
-      run-android: ${{ github.event_name == 'push' || needs.changes.outputs.android == 'true' || needs.changes.outputs.common == 'true' }}
-      run-desktop: ${{ github.event_name == 'push' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.common == 'true' }}
-      run-ios: false  # Disabled by default due to cost, enable for releases
+      # Common changes affect ALL platforms
+      run-android: ${{ github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.android == 'true' }}
+      run-desktop: ${{ github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.desktop == 'true' }}
+      run-ios: ${{ needs.changes.outputs.common == 'true' || needs.changes.outputs.ios == 'true' }}  # Enable iOS tests when common changes
 
   # Build Android APK
   build-android:
@@ -139,7 +140,7 @@ jobs:
     if: |
       always() &&
       (needs.test.result == 'success' || needs.test.result == 'skipped') &&
-      (github.event_name == 'push' || needs.changes.outputs.android == 'true' || needs.changes.outputs.common == 'true')
+      (github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.android == 'true')
     uses: ./.github/workflows/build-android.yml
     with:
       build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
