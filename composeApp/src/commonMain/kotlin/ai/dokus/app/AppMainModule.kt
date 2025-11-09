@@ -1,6 +1,9 @@
 package ai.dokus.app
 
+import ai.dokus.app.core.AppDataModuleDi
+import ai.dokus.app.core.AppDomainModuleDi
 import ai.dokus.app.core.AppModule
+import ai.dokus.app.core.AppPresentationModuleDi
 import ai.dokus.app.core.DashboardWidget
 import ai.dokus.app.core.ModuleSettingsGroup
 import ai.dokus.app.navigation.AppNavigationProvider
@@ -14,12 +17,11 @@ import androidx.compose.material.icons.filled.Settings
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.home_dashboard
 import ai.dokus.app.resources.generated.home_settings
-import org.koin.core.module.Module
 
-val appModule = object : AppModule {
+internal object AppMainModule : AppModule {
+    // Presentation layer
     override val navigationProvider = AppNavigationProvider
     override val homeNavigationProvider = HomeNavigationProvider
-    override val diModules: List<Module> = listOf(diModuleApp, diModuleUseCases)
     override val homeItems: List<HomeItem> = listOf(
         HomeItem(
             title = Res.string.home_dashboard,
@@ -37,4 +39,21 @@ val appModule = object : AppModule {
     )
     override val settingsGroups: List<ModuleSettingsGroup> = emptyList()
     override val dashboardWidgets: List<DashboardWidget> = emptyList()
+
+    override val presentationDi: AppPresentationModuleDi = object : AppPresentationModuleDi {
+        override val viewModels = diModuleApp
+        override val presentation = null
+    }
+
+    // Data layer
+    override val dataDi: AppDataModuleDi = object : AppDataModuleDi {
+        override val platform = null
+        override val network = null
+        override val data = null
+    }
+
+    // Domain layer
+    override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
+        override val useCases = diModuleUseCases
+    }
 }

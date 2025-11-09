@@ -39,6 +39,7 @@ kotlin {
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.designSystem)
 
+            implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)
         }
         desktopMain.dependencies {

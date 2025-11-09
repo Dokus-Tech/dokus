@@ -6,7 +6,7 @@ import org.koin.core.module.Module
 
 /**
  * WasmJS-specific implementation of KoinProvided.
- * Initializes Koin within the Compose context.
+ * Initializes Koin within the Compose context and handles async resource initialization.
  */
 @Composable
 actual fun KoinProvided(

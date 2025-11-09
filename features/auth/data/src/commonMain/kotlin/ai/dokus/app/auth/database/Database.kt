@@ -1,15 +1,14 @@
 package ai.dokus.app.auth.database
 
-import app.cash.sqldelight.db.SqlDriver
+import ai.dokus.app.core.database.DatabaseWrapper
+import ai.dokus.foundation.domain.model.common.Feature
 
-class Database private constructor(
-    driver: SqlDriver
-) : AuthDatabase by AuthDatabase.Companion(driver) {
-
+class AuthDb private constructor() : DatabaseWrapper<AuthDatabase> by DatabaseWrapper(
+    feature = Feature.Auth,
+    schema = AuthDatabase.Schema,
+    createDatabase = { driver -> AuthDatabase(driver) }
+) {
     companion object {
-        fun create(driverFactory: DatabaseDriverFactory): Database {
-            val driver = driverFactory.createDriver()
-            return Database(driver)
-        }
+        fun create(): AuthDb = AuthDb()
     }
 }
