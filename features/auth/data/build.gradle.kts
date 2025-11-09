@@ -54,21 +54,15 @@ kotlin {
             implementation(libs.kotlinx.datetime)
         }
         androidMain.dependencies {
-            implementation(libs.sqldelight.android)
             implementation(libs.koin.android)
             implementation(libs.androidx.work.runtime.ktx)
         }
         iosMain.dependencies {
-            implementation(libs.sqldelight.native)
         }
         jvmMain.dependencies {
-            implementation(libs.sqldelight.jvm)
             implementation(libs.kotlinx.coroutines.swing)
         }
         wasmJsMain.dependencies {
-            implementation(libs.sqldelight.wasm)
-            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.1.0"))
-            implementation(npm("sql.js", "1.8.0"))
             implementation(devNpm("copy-webpack-plugin", "9.1.0"))
             implementation("org.jetbrains.kotlinx:kotlinx-browser:0.2")
         }
