@@ -11,7 +11,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class IOSSecureStorageTest {
-    private val storage: SecureStorage = createSecureStorage(null, Feature.Invoicing)
+    // Use unique feature to avoid conflicts with other test classes
+    private val storage: SecureStorage = createSecureStorage(null, Feature.Payment)
 
     @BeforeTest
     fun setUp() = runBlocking {

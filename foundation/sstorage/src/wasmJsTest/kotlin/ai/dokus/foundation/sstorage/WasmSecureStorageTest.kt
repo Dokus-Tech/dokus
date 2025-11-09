@@ -14,7 +14,8 @@ import kotlin.test.assertTrue
 class WasmSecureStorageTest {
     companion object {
         // Reuse a single instance to avoid multiple DataStores on the same file
-        val storage: SecureStorage = createSecureStorage(null, Feature.Invoicing)
+        // Use unique feature to avoid conflicts with other test classes
+        val storage: SecureStorage = createSecureStorage(null, Feature.Expense)
     }
 
     @BeforeTest
@@ -80,13 +81,13 @@ class WasmSecureStorageTest {
     @Test
     fun persistenceAfterRefresh() = runTest {
         // Create new storage instance to test persistence
-        val s1 = createSecureStorage(null, Feature.Invoicing)
+        val s1 = createSecureStorage(null, Feature.Expense)
         s1.set("persist_test", "persistent_value")
         s1.set("persist_int", 123)
         s1.set("persist_bool", true)
 
         // Simulate page refresh by creating new instance
-        val s2 = createSecureStorage(null, Feature.Invoicing)
+        val s2 = createSecureStorage(null, Feature.Expense)
         assertEquals("persistent_value", s2.get<String>("persist_test"))
         assertEquals(123, s2.get<Int>("persist_int"))
         assertEquals(true, s2.get<Boolean>("persist_bool"))
