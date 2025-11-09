@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -34,6 +35,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.cio)
+            implementation(libs.sqldelight.android)
         }
         commonMain.dependencies {
             api(projects.foundation.platform)
@@ -61,16 +63,24 @@ kotlin {
 
             implementation(libs.calf.permissions)
             implementation(libs.calf.filePicker)
+
+            implementation(libs.bundles.sqldelight)
         }
         desktopMain.dependencies {
             implementation(libs.ktor.client.cio)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.sqldelight.jvm)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.native)
         }
         wasmJsMain.dependencies {
+            implementation(libs.sqldelight.wasm)
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.1.0"))
+            implementation(npm("sql.js", "1.8.0"))
+            implementation(devNpm("copy-webpack-plugin", "9.1.0"))
             implementation(libs.ktor.client.wasm)
         }
     }

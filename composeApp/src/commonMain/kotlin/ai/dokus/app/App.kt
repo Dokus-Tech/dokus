@@ -1,6 +1,7 @@
 package ai.dokus.app
 
 import ai.dokus.app.core.navigationProviders
+import ai.dokus.app.local.AppModulesInitializer
 import ai.dokus.app.local.AppModulesProvided
 import ai.dokus.app.local.KoinProvided
 import ai.dokus.foundation.design.local.ScreenSizeProvided
@@ -21,11 +22,13 @@ fun App(
     AppModulesProvided(modules) {
         KoinProvided(diModules) {
             Themed {
-                ScreenSizeProvided {
-                    DualPanelNavigationContainer(
-                        navigationProviders = navigationProviders,
-                        onPrimaryNavHostReady = onNavHostReady
-                    )
+                AppModulesInitializer(modules) {
+                    ScreenSizeProvided {
+                        DualPanelNavigationContainer(
+                            navigationProviders = navigationProviders,
+                            onPrimaryNavHostReady = onNavHostReady
+                        )
+                    }
                 }
             }
         }
