@@ -59,24 +59,27 @@ private fun BootstrapViewModel.Effect.handle(navController: NavController) {
         is BootstrapViewModel.Effect.Idle -> Unit
         is BootstrapViewModel.Effect.NeedsUpdate -> navController.replace(CoreDestination.UpdateRequired)
         is BootstrapViewModel.Effect.NeedsLogin -> navController.replace(AuthDestination.Login)
-        is BootstrapViewModel.Effect.NeedsAccountConfirmation -> navController.replace(AuthDestination.PendingConfirmAccount)
+        is BootstrapViewModel.Effect.NeedsAccountConfirmation -> navController.replace(
+            AuthDestination.PendingConfirmAccount
+        )
+
         is BootstrapViewModel.Effect.Ok -> navController.replace(CoreDestination.Home)
     }
 }
 
 private val BootstrapViewModel.BootstrapState.localized: String
     @Composable get() = when (this) {
-        BootstrapViewModel.BootstrapState.InitializeApp -> stringResource(Res.string.bootstrap_state_initializing)
-        BootstrapViewModel.BootstrapState.CheckingLogin -> stringResource(Res.string.bootstrap_state_authenticating)
-        BootstrapViewModel.BootstrapState.CheckUpdate -> stringResource(Res.string.bootstrap_state_app_version_check)
-        BootstrapViewModel.BootstrapState.CheckingAccountStatus -> stringResource(Res.string.bootstrap_state_checking_account_status)
+        is BootstrapViewModel.BootstrapState.InitializeApp -> stringResource(Res.string.bootstrap_state_initializing)
+        is BootstrapViewModel.BootstrapState.CheckingLogin -> stringResource(Res.string.bootstrap_state_authenticating)
+        is BootstrapViewModel.BootstrapState.CheckUpdate -> stringResource(Res.string.bootstrap_state_app_version_check)
+        is BootstrapViewModel.BootstrapState.CheckingAccountStatus -> stringResource(Res.string.bootstrap_state_checking_account_status)
     }
 
 @Composable
 fun SplashScreen(
     viewModel: BootstrapViewModel = koinViewModel(),
 ) {
-    val loadingStates by viewModel.loadingState.collectAsState()
+    val loadingStates by viewModel.state.collectAsState()
     val navController = LocalNavController.current
 
     // Collect navigation effects and start bootstrap
@@ -112,15 +115,7 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(80.dp))
 
                 // Bootstrap states as vertical list
-                BootstrapStatesList(
-                    allStates = listOf(
-                        BootstrapViewModel.BootstrapState.InitializeApp,
-                        BootstrapViewModel.BootstrapState.CheckingLogin,
-                        BootstrapViewModel.BootstrapState.CheckingAccountStatus,
-                        BootstrapViewModel.BootstrapState.CheckUpdate
-                    ),
-                    completedStates = loadingStates
-                )
+                BootstrapStatesList(loadingStates)
             }
         }
     }
@@ -211,21 +206,17 @@ private fun SpotlightEffect() {
 
 @Composable
 private fun BootstrapStatesList(
-    allStates: List<BootstrapViewModel.BootstrapState>,
-    completedStates: List<BootstrapViewModel.BootstrapState>
+    states: List<BootstrapViewModel.BootstrapState>,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        allStates.forEach { state ->
-            val isActive = completedStates.contains(state)
-            val isCurrentStep = completedStates.lastOrNull() == state
-
+        states.forEach { state ->
             BootstrapStateItem(
                 state = state,
-                isActive = isActive,
-                isCurrentStep = isCurrentStep
+                isActive = state.isActive,
+                isCurrentStep = state.isCurrent
             )
         }
     }
