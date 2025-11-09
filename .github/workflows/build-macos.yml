@@ -1,0 +1,142 @@
+name: Build macOS
+
+on:
+  workflow_call:
+    inputs:
+      build-type:
+        description: 'Build type: debug or release'
+        required: false
+        type: string
+        default: 'debug'
+      create-release:
+        description: 'Create GitHub release (only for main branch)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: 🍎 Build DMG (${{ inputs.build-type }})
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: 📊 Generate version information
+        id: version
+        run: |
+          # Use git commit count as version code
+          VERSION_CODE=$(git rev-list --count HEAD)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/\//-/g')
+          VERSION_NAME="${BRANCH_NAME}-${SHORT_SHA}"
+
+          echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+          echo "📦 Version Code: $VERSION_CODE"
+          echo "📦 Version Name: $VERSION_NAME"
+          echo "📦 Branch: $BRANCH_NAME"
+
+      - name: 🏗️ Build Debug DMG
+        if: inputs.build-type == 'debug'
+        run: |
+          echo "Building Debug DMG..."
+          ./gradlew :composeApp:packageDmg \
+            --no-daemon \
+            --stacktrace \
+            --build-cache \
+            -PversionCode=${{ steps.version.outputs.version-code }} \
+            -PversionName=${{ steps.version.outputs.version-name }}
+
+      - name: 🏗️ Build Release DMG
+        if: inputs.build-type == 'release'
+        run: |
+          echo "Building Release DMG..."
+          ./gradlew :composeApp:packageReleaseDmg \
+            --no-daemon \
+            --stacktrace \
+            --build-cache \
+            -PversionCode=${{ steps.version.outputs.version-code }} \
+            -PversionName=${{ steps.version.outputs.version-name }}
+
+      - name: 🔍 Find build artifacts
+        id: artifacts
+        run: |
+          if [ "${{ inputs.build-type }}" == "release" ]; then
+            DMG_DIR="composeApp/build/compose/binaries/main-release/dmg"
+          else
+            DMG_DIR="composeApp/build/compose/binaries/main/dmg"
+          fi
+
+          # Find DMG
+          DMG_PATH=$(find $DMG_DIR -name "*.dmg" -type f | head -1)
+          if [ -z "$DMG_PATH" ]; then
+            echo "❌ DMG not found in $DMG_DIR"
+            # List what's actually there
+            echo "Contents of composeApp/build/compose/binaries:"
+            ls -R composeApp/build/compose/binaries/ || true
+            exit 1
+          fi
+
+          echo "dmg-path=$DMG_PATH" >> $GITHUB_OUTPUT
+
+          # Show file info
+          echo "✅ Found DMG: $DMG_PATH"
+          ls -lh "$DMG_PATH"
+
+      - name: 🏷️ Rename artifacts
+        id: rename
+        run: |
+          DMG_PATH="${{ steps.artifacts.outputs.dmg-path }}"
+          BUILD_TYPE="${{ inputs.build-type }}"
+          VERSION_NAME="${{ steps.version.outputs.version-name }}"
+
+          # Generate new DMG filename
+          DMG_NAME="dokus-${BUILD_TYPE}-${VERSION_NAME}.dmg"
+          DMG_DIR=$(dirname "$DMG_PATH")
+          NEW_DMG_PATH="${DMG_DIR}/${DMG_NAME}"
+
+          # Rename DMG
+          mv "$DMG_PATH" "$NEW_DMG_PATH"
+          echo "dmg-path=$NEW_DMG_PATH" >> $GITHUB_OUTPUT
+          echo "dmg-name=$DMG_NAME" >> $GITHUB_OUTPUT
+
+          echo "📦 Renamed DMG: $DMG_NAME"
+
+      - name: 📊 DMG Info
+        run: |
+          DMG_PATH="${{ steps.rename.outputs.dmg-path }}"
+          DMG_SIZE=$(ls -lh "$DMG_PATH" | awk '{print $5}')
+
+          echo "# 📦 Build Artifact Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | macOS 🍎 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Type | \`${{ inputs.build-type }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| DMG Name | \`${{ steps.rename.outputs.dmg-name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| DMG Size | $DMG_SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version Code | ${{ steps.version.outputs.version-code }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version Name | ${{ steps.version.outputs.version-name }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.build-type }}-dmg
+          path: ${{ steps.rename.outputs.dmg-path }}
+          retention-days: 30
+          compression-level: 0  # DMGs are already compressed
+
+      - name: ✅ Build completed
+        run: |
+          echo "✅ macOS build completed successfully!"
+          echo "📦 DMG: ${{ steps.rename.outputs.dmg-name }}"
