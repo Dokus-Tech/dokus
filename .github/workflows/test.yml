@@ -19,6 +19,11 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   # Android unit tests (fast, runs on Ubuntu)
   android-tests:
@@ -38,15 +43,6 @@ jobs:
         run: |
           echo "Running Android unit tests..."
           ./gradlew :composeApp:testDebugUnitTest --no-daemon --stacktrace
-
-      - name: 📊 Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            **/build/test-results/**/TEST-*.xml
-          check_name: Android Test Results
-          comment_mode: off
 
       - name: 📤 Upload test reports
         if: always()
@@ -80,15 +76,6 @@ jobs:
         run: |
           echo "Running Desktop/JVM tests..."
           ./gradlew :composeApp:desktopTest --no-daemon --stacktrace
-
-      - name: 📊 Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            **/build/test-results/**/TEST-*.xml
-          check_name: Desktop Test Results
-          comment_mode: off
 
       - name: 📤 Upload test reports
         if: always()
@@ -135,15 +122,6 @@ jobs:
           echo "Running iOS tests for ${{ steps.arch.outputs.target }}..."
           ./gradlew :composeApp:${{ steps.arch.outputs.target }} --no-daemon --stacktrace
 
-      - name: 📊 Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            **/build/test-results/**/TEST-*.xml
-          check_name: iOS Test Results
-          comment_mode: off
-
       - name: 📤 Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -175,16 +153,6 @@ jobs:
         run: |
           echo "Running all platform tests..."
           ./gradlew allTests --no-daemon --stacktrace
-        continue-on-error: true
-
-      - name: 📊 Publish aggregated test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            **/build/test-results/**/TEST-*.xml
-          check_name: Common Test Results
-          comment_mode: off
 
       - name: 📤 Upload aggregated test reports
         if: always()
@@ -212,24 +180,9 @@ jobs:
         run: |
           echo "# 🧪 Test Suite Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Status | Duration |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|--------|----------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🤖 Android | ${{ needs.android-tests.result == 'success' && '✅ Passed' || needs.android-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🖥️ Desktop | ${{ needs.desktop-tests.result == 'success' && '✅ Passed' || needs.desktop-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🍎 iOS | ${{ needs.ios-tests.result == 'success' && '✅ Passed' || needs.ios-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔄 Common | ${{ needs.common-tests.result == 'success' && '✅ Passed' || needs.common-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Overall status
-          if [ "${{ needs.android-tests.result }}" == "failure" ] || \
-             [ "${{ needs.desktop-tests.result }}" == "failure" ] || \
-             [ "${{ needs.ios-tests.result }}" == "failure" ]; then
-            echo "## ❌ Test Suite Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "One or more test suites failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
-            exit 1
-          else
-            echo "## ✅ All Tests Passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "All executed test suites completed successfully!" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🤖 Android | ${{ needs.android-tests.result == 'success' && '✅ Passed' || needs.android-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🖥️ Desktop | ${{ needs.desktop-tests.result == 'success' && '✅ Passed' || needs.desktop-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🍎 iOS | ${{ needs.ios-tests.result == 'success' && '✅ Passed' || needs.ios-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔄 Common | ${{ needs.common-tests.result == 'success' && '✅ Passed' || needs.common-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
