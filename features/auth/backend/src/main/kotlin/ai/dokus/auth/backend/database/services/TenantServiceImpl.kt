@@ -7,6 +7,7 @@ import ai.dokus.auth.backend.database.mappers.TenantMapper.toTenantSettings
 import ai.dokus.auth.backend.database.tables.TenantSettingsTable
 import ai.dokus.auth.backend.database.tables.TenantsTable
 import ai.dokus.foundation.ktor.database.dbQuery
+import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.domain.InvoiceNumber
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber
@@ -16,7 +17,6 @@ import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.ktor.services.TenantService
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimePeriod
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
@@ -49,9 +49,9 @@ class TenantServiceImpl : TenantService {
         val isTrial = plan == TenantPlan.Free
         val tenantStatus = if (isTrial) TenantStatus.Trial else TenantStatus.Active
         val trialEndsAt = if (isTrial) {
-            val now = kotlinx.datetime.Clock.System.now()
+            val nowTime = now()
             val trialPeriod = DateTimePeriod(days = 30)
-            now.plus(trialPeriod, TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
+            nowTime.plus(trialPeriod, TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
         } else null
 
         return dbQuery {

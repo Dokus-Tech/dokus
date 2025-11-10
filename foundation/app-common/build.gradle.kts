@@ -65,6 +65,19 @@ kotlin {
             implementation(libs.calf.filePicker)
 
             implementation(libs.bundles.sqldelight)
+
+            // Ktor client
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.auth)
+            implementation(libs.ktor.client.websockets)
+
+            // KotlinX RPC
+            implementation(libs.kotlinx.rpc.krpc.client)
+            implementation(libs.kotlinx.rpc.krpc.ktor.client)
+            implementation(libs.kotlinx.rpc.krpc.serialization.json)
         }
         desktopMain.dependencies {
             implementation(libs.ktor.client.cio)

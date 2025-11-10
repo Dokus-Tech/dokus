@@ -6,6 +6,7 @@ import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
+import ai.dokus.app.auth.network.MockAccountRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -17,17 +18,17 @@ import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
+import ai.dokus.foundation.network.createAuthenticatedHttpClient
+import ai.dokus.foundation.network.createBaseHttpClient
+import ai.dokus.foundation.network.createRpcClient
+import ai.dokus.foundation.network.or
+import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.http.URLProtocol
-import kotlinx.rpc.RpcClient
-import kotlinx.rpc.krpc.ktor.client.Krpc
-import kotlinx.rpc.krpc.ktor.client.rpc
-import kotlinx.rpc.krpc.ktor.client.rpcConfig
-import kotlinx.rpc.krpc.serialization.json.json
-import kotlinx.rpc.withService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.rpc.krpc.ktor.client.KtorRpcClient
 import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
@@ -44,30 +45,36 @@ internal object Qualifiers {
 expect val authPlatformModule: Module
 
 val authNetworkModule = module {
-    // HTTP client with WebSockets and KotlinX RPC support
-    single<HttpClient>(Qualifiers.httpClientAuth) {
-        HttpClient(CIO) {
-            install(WebSockets)
-            install(Krpc)
-        }
+    // HTTP client without authentication (for login/register)
+    single<HttpClient>(Qualifiers.httpClientNoAuth) {
+        createBaseHttpClient(dokusEndpoint = DokusEndpoint.Auth)
     }
 
-    // RPC client for Auth service
-    single<RpcClient>(named("authClient")) {
-        val httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
-        val endpoint = DokusEndpoint.Auth
-        httpClient.rpc("ws://${endpoint.host}:${endpoint.port}/api") {
-            rpcConfig {
-                serialization {
-                    json()
+    // HTTP client with authentication (for authenticated endpoints)
+    single<HttpClient>(Qualifiers.httpClientAuth) {
+        createAuthenticatedHttpClient(
+            dokusEndpoint = DokusEndpoint.Auth,
+            tokenManager = get<TokenManagerMutable>(),
+            onAuthenticationFailed = {
+                val authManager = get<AuthManagerMutable>()
+                val tokenManager = get<TokenManagerMutable>()
+                CoroutineScope(Dispatchers.Default).launch {
+                    tokenManager.onAuthenticationFailed()
+                    authManager.onAuthenticationFailed()
                 }
             }
-        }
+        )
     }
 
-    // AccountRemoteService proxy via RPC
+    // RPC client (nullable - graceful degradation)
+    factory<KtorRpcClient?>(named(Feature.Auth)) {
+        createRpcClient(DokusEndpoint.Auth)
+    }
+
+    // AccountRemoteService with stub fallback
     single<AccountRemoteService> {
-        get<RpcClient>(named("authClient")).withService()
+        val rpcClient = getOrNull<KtorRpcClient>(named(Feature.Auth))
+        rpcClient?.service<AccountRemoteService>() or MockAccountRemoteService()
     }
 }
 

@@ -5,9 +5,9 @@ package ai.dokus.auth.backend.security
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.model.auth.LoginResponse
+import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
@@ -41,9 +41,9 @@ class JwtGenerator(
         tenantId: TenantId,
         roles: Set<String>
     ): LoginResponse {
-        val now = kotlinx.datetime.Clock.System.now()
-        val accessExpiry = now + 1.hours
-        val refreshExpiry = now + 30.days
+        val nowTime = now()
+        val accessExpiry = nowTime + 1.hours
+        val refreshExpiry = nowTime + 30.days
 
         val accessToken = JWT.create()
             .withIssuer(issuer)
@@ -52,7 +52,7 @@ class JwtGenerator(
             .withClaim("name", fullName)
             .withClaim("tenant_id", tenantId.value.toString())
             .withArrayClaim("groups", roles.toTypedArray())
-            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(now.toEpochMilliseconds())))
+            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
             .withExpiresAt(Date.from(java.time.Instant.ofEpochMilli(accessExpiry.toEpochMilliseconds())))
             .sign(algorithm)
 
@@ -60,7 +60,7 @@ class JwtGenerator(
             .withIssuer(issuer)
             .withSubject(userId.value)
             .withClaim("type", "refresh")
-            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(now.toEpochMilliseconds())))
+            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
             .withExpiresAt(Date.from(java.time.Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))
             .sign(algorithm)
 

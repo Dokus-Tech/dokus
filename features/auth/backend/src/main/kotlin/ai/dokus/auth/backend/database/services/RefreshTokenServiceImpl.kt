@@ -5,7 +5,7 @@ package ai.dokus.auth.backend.database.services
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.ktor.database.dbQuery
-import kotlinx.datetime.Clock
+import ai.dokus.foundation.ktor.database.now
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -83,7 +83,7 @@ class RefreshTokenServiceImpl : RefreshTokenService {
                 throw SecurityException("Refresh token has been revoked")
             }
 
-            val now = kotlinx.datetime.Clock.System.now()
+            val now = now()
             val expiresAtInstant = expiresAt.toInstant(TimeZone.UTC)
 
             if (expiresAtInstant < now) {
@@ -165,7 +165,7 @@ class RefreshTokenServiceImpl : RefreshTokenService {
 
     override suspend fun cleanupExpiredTokens(): Result<Int> = runCatching {
         dbQuery {
-            val now = kotlinx.datetime.Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val now = now().toLocalDateTime(TimeZone.UTC)
 
             // Delete tokens that are either expired OR revoked
             val deleted = RefreshTokensTable.deleteWhere {
@@ -182,7 +182,7 @@ class RefreshTokenServiceImpl : RefreshTokenService {
     override suspend fun getUserActiveTokens(userId: UserId): List<RefreshTokenInfo> = try {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
-            val now = kotlinx.datetime.Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val now = now().toLocalDateTime(TimeZone.UTC)
 
             RefreshTokensTable
                 .selectAll()
