@@ -69,6 +69,9 @@ dependencies {
     // Security
     implementation(libs.java.jwt)
 
+    // Email
+    implementation(libs.javax.mail)
+
     // Logging
     implementation(libs.logback)
 

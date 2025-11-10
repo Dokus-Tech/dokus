@@ -77,13 +77,14 @@ interface UserService {
     suspend fun updateProfile(userId: UserId, firstName: String?, lastName: String?)
 
     /**
-     * Deactivates a user account
+     * Deactivates a user account (soft delete)
      * User can no longer log in but data is preserved
      *
      * @param userId The user's unique identifier
+     * @param reason Optional reason for deactivation (for audit logging)
      * @throws IllegalArgumentException if user not found
      */
-    suspend fun deactivate(userId: UserId)
+    suspend fun deactivate(userId: UserId, reason: String? = null)
 
     /**
      * Reactivates a previously deactivated user account

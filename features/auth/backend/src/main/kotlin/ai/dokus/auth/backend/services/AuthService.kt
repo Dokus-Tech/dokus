@@ -362,4 +362,64 @@ class AuthService(
         logger.debug("Password reset attempt with token")
         return passwordResetService.resetPassword(token, newPassword)
     }
+
+    /**
+     * Deactivates a user account (soft delete).
+     *
+     * This operation:
+     * 1. Marks the user account as inactive (isActive = false)
+     * 2. Revokes all active refresh tokens to terminate all sessions
+     * 3. Logs the deactivation reason for audit purposes
+     *
+     * Security considerations:
+     * - The user cannot log in after deactivation
+     * - All existing sessions are immediately invalidated
+     * - Data is preserved (soft delete, not hard delete)
+     * - Reactivation requires admin intervention
+     *
+     * @param userId The user ID to deactivate
+     * @param reason The reason for deactivation (for audit trail)
+     * @return Result indicating success or failure
+     */
+    suspend fun deactivateAccount(userId: UserId, reason: String): Result<Unit> = try {
+        logger.info("Account deactivation request for user: ${userId.value}, reason: $reason")
+
+        // Verify user exists before attempting deactivation
+        val user = userService.findById(userId)
+            ?: run {
+                logger.warn("Deactivation failed - user not found: ${userId.value}")
+                throw DokusException.InvalidCredentials("User account not found")
+            }
+
+        // Check if account is already inactive
+        if (!user.isActive) {
+            logger.warn("Deactivation attempt for already inactive user: ${userId.value}")
+            throw DokusException.AccountInactive("Account is already deactivated")
+        }
+
+        // Step 1: Deactivate the user account (set isActive = false)
+        userService.deactivate(userId, reason)
+        logger.info("User account marked as inactive: ${userId.value}")
+
+        // Step 2: Revoke all refresh tokens to terminate all active sessions
+        refreshTokenService.revokeAllUserTokens(userId)
+            .onSuccess {
+                logger.info("All refresh tokens revoked for user: ${userId.value}")
+            }
+            .onFailure { error ->
+                // Log but don't fail - account is already deactivated
+                logger.warn("Failed to revoke tokens during deactivation for user: ${userId.value}", error)
+            }
+
+        // Step 3: Log the deactivation for audit trail
+        logger.info("Account deactivation completed successfully for user: ${userId.value}, reason: $reason")
+
+        Result.success(Unit)
+    } catch (e: DokusException) {
+        logger.error("Account deactivation failed: ${e.errorCode} for user: ${userId.value}", e)
+        Result.failure(e)
+    } catch (e: Exception) {
+        logger.error("Account deactivation error for user: ${userId.value}", e)
+        Result.failure(DokusException.InternalError(e.message ?: "Account deactivation failed"))
+    }
 }

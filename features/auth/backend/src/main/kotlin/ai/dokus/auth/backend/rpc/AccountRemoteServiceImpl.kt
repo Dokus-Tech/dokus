@@ -1,7 +1,9 @@
 package ai.dokus.auth.backend.rpc
 
 import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.auth.backend.security.requireAuthenticatedUserId
 import ai.dokus.auth.backend.services.AuthService
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.auth.*
 import org.slf4j.LoggerFactory
 
@@ -17,10 +19,10 @@ import org.slf4j.LoggerFactory
  * - logout: Fully implemented
  * - refreshToken: Fully implemented
  * - verifyEmail: Fully implemented
- * - resendVerificationEmail: Partially implemented (needs auth context)
+ * - resendVerificationEmail: Fully implemented
  * - requestPasswordReset: Fully implemented
  * - resetPassword: Fully implemented
- * - deactivateAccount: Not yet implemented (returns error)
+ * - deactivateAccount: Fully implemented
  */
 class AccountRemoteServiceImpl(
     private val authService: AuthService
@@ -126,16 +128,36 @@ class AccountRemoteServiceImpl(
 
     /**
      * Deactivate current user account.
+     * Requires authentication - extracts userId from JWT token in coroutine context.
      *
-     * Status: Not yet implemented
+     * Security considerations:
+     * - Only the authenticated user can deactivate their own account
+     * - The userId is extracted from the JWT token, not from the request
+     * - All deactivation attempts are logged for audit purposes
+     * - All refresh tokens are revoked to terminate all sessions
      */
     override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
         logger.debug("RPC: deactivateAccount called with reason: ${request.reason}")
 
-        return Result.failure<Unit>(
-            NotImplementedError("Account deactivation functionality not yet implemented")
-        ).also {
-            logger.warn("RPC: deactivateAccount not implemented, reason: ${request.reason}")
+        return try {
+            // Extract userId from JWT authentication context
+            val userId = requireAuthenticatedUserId()
+            logger.debug("Deactivating account for authenticated user: ${userId.value}")
+
+            authService.deactivateAccount(userId, request.reason)
+                .onSuccess {
+                    logger.info("RPC: Account deactivated successfully for user: ${userId.value}")
+                }
+                .onFailure { error ->
+                    logger.error("RPC: Account deactivation failed for user: ${userId.value}", error)
+                }
+        } catch (e: IllegalStateException) {
+            // No authentication context available
+            logger.error("RPC: deactivateAccount called without authentication")
+            Result.failure(DokusException.NotAuthenticated("Authentication required to deactivate account"))
+        } catch (e: Exception) {
+            logger.error("RPC: Unexpected error in deactivateAccount", e)
+            Result.failure(DokusException.InternalError("Failed to deactivate account"))
         }
     }
 
@@ -156,18 +178,30 @@ class AccountRemoteServiceImpl(
 
     /**
      * Resend email verification email.
-     *
-     * TODO: Extract userId from JWT token in request context
+     * Requires authentication - extracts userId from JWT token in coroutine context.
      */
     override suspend fun resendVerificationEmail(): Result<Unit> {
         logger.debug("RPC: resendVerificationEmail called")
 
-        // TODO: Get userId from JWT token in request context
-        // For now, this will fail and needs to be implemented when authentication context is available
-        return Result.failure<Unit>(
-            NotImplementedError("Resend verification email requires authenticated user context")
-        ).also {
-            logger.warn("RPC: resendVerificationEmail not fully implemented - needs user context")
+        return try {
+            // Extract userId from JWT authentication context
+            val userId = requireAuthenticatedUserId()
+            logger.debug("Resending verification email for authenticated user: ${userId.value}")
+
+            authService.resendVerificationEmail(userId)
+                .onSuccess {
+                    logger.info("RPC: Verification email resent successfully for user: ${userId.value}")
+                }
+                .onFailure { error ->
+                    logger.error("RPC: Failed to resend verification email for user: ${userId.value}", error)
+                }
+        } catch (e: IllegalStateException) {
+            // No authentication context available
+            logger.error("RPC: resendVerificationEmail called without authentication")
+            Result.failure(DokusException.NotAuthenticated("Authentication required to resend verification email"))
+        } catch (e: Exception) {
+            logger.error("RPC: Unexpected error in resendVerificationEmail", e)
+            Result.failure(DokusException.InternalError("Failed to resend verification email"))
         }
     }
 }

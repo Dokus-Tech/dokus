@@ -7,7 +7,8 @@ import ai.dokus.auth.backend.database.services.TenantServiceImpl
 import ai.dokus.auth.backend.database.services.UserServiceImpl
 import ai.dokus.auth.backend.database.tables.*
 import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
-import ai.dokus.auth.backend.utils.JwtGenerator
+import ai.dokus.auth.backend.security.JwtGenerator
+import ai.dokus.auth.backend.security.JwtValidator
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.auth.backend.services.*
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
@@ -52,11 +53,32 @@ private val appModule = module {
         )
     }
 
+    // JWT token validation
+    single {
+        val appConfig = get<AppBaseConfig>()
+        JwtValidator(
+            secret = appConfig.jwt.secret,
+            issuer = appConfig.jwt.issuer
+        )
+    }
+
+    // Email service (SMTP or disabled based on configuration)
+    single<EmailService> {
+        val appConfig = get<AppBaseConfig>()
+        val emailConfig = EmailConfig.load(appConfig)
+
+        if (emailConfig.enabled && emailConfig.provider == "smtp") {
+            SmtpEmailService(emailConfig)
+        } else {
+            DisabledEmailService()
+        }
+    }
+
     // Email verification service
-    single { EmailVerificationService() }
+    single { EmailVerificationService(get()) }
 
     // Password reset service
-    single { PasswordResetService(get(), get()) }
+    single { PasswordResetService(get(), get(), get()) }
 
     // Rate limit service - prevents brute force attacks
     single { RateLimitService() }
