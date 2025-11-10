@@ -15,9 +15,11 @@ import org.slf4j.LoggerFactory
  * - login: Fully implemented
  * - register: Fully implemented
  * - logout: Fully implemented
- * - refreshToken: Not yet implemented (returns error)
- * - requestPasswordReset: Not yet implemented (returns error)
- * - resetPassword: Not yet implemented (returns error)
+ * - refreshToken: Fully implemented
+ * - verifyEmail: Fully implemented
+ * - resendVerificationEmail: Partially implemented (needs auth context)
+ * - requestPasswordReset: Fully implemented
+ * - resetPassword: Fully implemented
  * - deactivateAccount: Not yet implemented (returns error)
  */
 class AccountRemoteServiceImpl(
@@ -91,31 +93,35 @@ class AccountRemoteServiceImpl(
     /**
      * Request password reset email.
      *
-     * Status: Not yet implemented
+     * Always returns success to prevent email enumeration.
      */
     override suspend fun requestPasswordReset(email: String): Result<Unit> {
-        logger.debug("RPC: requestPasswordReset called for email: $email")
+        logger.debug("RPC: requestPasswordReset called for email")
 
-        return Result.failure<Unit>(
-            NotImplementedError("Password reset functionality not yet implemented")
-        ).also {
-            logger.warn("RPC: requestPasswordReset not implemented, called for email: $email")
-        }
+        return authService.requestPasswordReset(email)
+            .onSuccess {
+                logger.info("RPC: Password reset email requested successfully")
+            }
+            .onFailure { error ->
+                logger.error("RPC: Password reset request failed", error)
+            }
     }
 
     /**
      * Reset password with token from email.
      *
-     * Status: Not yet implemented
+     * Validates token and updates password.
      */
     override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
         logger.debug("RPC: resetPassword called with token")
 
-        return Result.failure<Unit>(
-            NotImplementedError("Password reset functionality not yet implemented")
-        ).also {
-            logger.warn("RPC: resetPassword not implemented")
-        }
+        return authService.resetPassword(resetToken, request.newPassword)
+            .onSuccess {
+                logger.info("RPC: Password reset successful")
+            }
+            .onFailure { error ->
+                logger.error("RPC: Password reset failed", error)
+            }
     }
 
     /**
@@ -130,6 +136,38 @@ class AccountRemoteServiceImpl(
             NotImplementedError("Account deactivation functionality not yet implemented")
         ).also {
             logger.warn("RPC: deactivateAccount not implemented, reason: ${request.reason}")
+        }
+    }
+
+    /**
+     * Verify email address with token from email.
+     */
+    override suspend fun verifyEmail(token: String): Result<Unit> {
+        logger.debug("RPC: verifyEmail called")
+
+        return authService.verifyEmail(token)
+            .onSuccess {
+                logger.info("RPC: email verification successful")
+            }
+            .onFailure { error ->
+                logger.error("RPC: email verification failed", error)
+            }
+    }
+
+    /**
+     * Resend email verification email.
+     *
+     * TODO: Extract userId from JWT token in request context
+     */
+    override suspend fun resendVerificationEmail(): Result<Unit> {
+        logger.debug("RPC: resendVerificationEmail called")
+
+        // TODO: Get userId from JWT token in request context
+        // For now, this will fail and needs to be implemented when authentication context is available
+        return Result.failure<Unit>(
+            NotImplementedError("Resend verification email requires authenticated user context")
+        ).also {
+            logger.warn("RPC: resendVerificationEmail not fully implemented - needs user context")
         }
     }
 }

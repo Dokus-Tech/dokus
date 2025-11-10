@@ -3,6 +3,7 @@ package ai.dokus.auth.backend
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.config.configureAuthentication
 import ai.dokus.auth.backend.config.configureDependencyInjection
+import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.auth.backend.routes.identityRoutes
 import ai.dokus.auth.backend.routes.passwordlessAuthRoutes
 import ai.dokus.auth.backend.routes.userRoutes
@@ -66,6 +67,11 @@ fun Application.module(appConfig: AppBaseConfig) {
 
     // Install KotlinX RPC plugin
     install(Krpc)
+
+    // Start background jobs
+    val rateLimitCleanupJob = get<RateLimitCleanupJob>()
+    rateLimitCleanupJob.start()
+    logger.info("Started rate limit cleanup job")
 
     // Configure routes
     routing {

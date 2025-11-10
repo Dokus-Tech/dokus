@@ -32,7 +32,10 @@ class AuthService(
     private val userService: UserService,
     private val tenantService: TenantService,
     private val jwtGenerator: JwtGenerator,
-    private val refreshTokenService: RefreshTokenService
+    private val refreshTokenService: RefreshTokenService,
+    private val rateLimitService: RateLimitService,
+    private val emailVerificationService: EmailVerificationService,
+    private val passwordResetService: PasswordResetService
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -46,12 +49,20 @@ class AuthService(
     suspend fun login(request: LoginRequest): Result<LoginResponse> = try {
         logger.debug("Login attempt for email: ${request.email.value}")
 
+        // CHECK RATE LIMIT FIRST - prevent brute force attacks
+        rateLimitService.checkLoginAttempts(request.email.value).getOrElse { error ->
+            logger.warn("Login attempt blocked by rate limiter for email: ${request.email.value}")
+            throw error
+        }
+
         // Verify user credentials
         val user = userService.verifyCredentials(
             email = request.email.value,
             password = request.password.value
         ) ?: run {
             logger.warn("Invalid credentials for email: ${request.email.value}")
+            // RECORD FAILED ATTEMPT - increment counter for this email
+            rateLimitService.recordFailedLogin(request.email.value)
             throw DokusException.InvalidCredentials()
         }
 
@@ -91,6 +102,9 @@ class AuthService(
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
         }
+
+        // RESET ATTEMPTS ON SUCCESS - clear failed login counter
+        rateLimitService.resetLoginAttempts(request.email.value)
 
         logger.info("Successful login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
@@ -170,6 +184,12 @@ class AuthService(
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
         }
+
+        // Send verification email (non-blocking - don't fail registration if email fails)
+        emailVerificationService.sendVerificationEmail(userId, user.email.value)
+            .onFailure { error ->
+                logger.warn("Failed to send verification email during registration: ${error.message}")
+            }
 
         logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value}), tenant: ${tenant.id}")
         Result.success(response)
@@ -291,5 +311,55 @@ class AuthService(
         // Never fail logout - client has already cleared tokens
         logger.warn("Logout error (non-critical, returning success): ${e.message}", e)
         Result.success(Unit)
+    }
+
+    /**
+     * Verifies a user's email address using the verification token.
+     *
+     * @param token Verification token from the email link
+     * @return Result indicating success or failure
+     */
+    suspend fun verifyEmail(token: String): Result<Unit> {
+        logger.debug("Email verification attempt with token")
+        return emailVerificationService.verifyEmail(token)
+    }
+
+    /**
+     * Resends verification email to a user who hasn't verified yet.
+     *
+     * @param userId User ID to resend verification email for
+     * @return Result indicating success or failure
+     */
+    suspend fun resendVerificationEmail(userId: UserId): Result<Unit> {
+        logger.debug("Resend verification email for user: ${userId.value}")
+        return emailVerificationService.resendVerificationEmail(userId)
+    }
+
+    /**
+     * Request a password reset for the given email address.
+     *
+     * Always returns success to prevent email enumeration attacks.
+     * If email exists, a reset token is generated and email is sent.
+     *
+     * @param email The email address to send password reset to
+     * @return Result indicating success (always succeeds)
+     */
+    suspend fun requestPasswordReset(email: String): Result<Unit> {
+        logger.debug("Password reset requested for email")
+        return passwordResetService.requestReset(email)
+    }
+
+    /**
+     * Reset password using a valid token from email.
+     *
+     * Validates token, updates password, and revokes all active sessions.
+     *
+     * @param token The password reset token from email
+     * @param newPassword The new password to set
+     * @return Result indicating success or specific error
+     */
+    suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
+        logger.debug("Password reset attempt with token")
+        return passwordResetService.resetPassword(token, newPassword)
     }
 }
