@@ -10,6 +10,7 @@ import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
 import ai.dokus.auth.backend.utils.JwtGenerator
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.auth.backend.services.*
+import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.foundation.domain.rpc.*
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
@@ -27,7 +28,7 @@ private val appModule = module {
     single {
         DatabaseFactory(get(), "auth-pool").apply {
             runBlocking {
-                init(TenantsTable, TenantSettingsTable, UsersTable, RefreshTokensTable)
+                init(TenantsTable, TenantSettingsTable, UsersTable, RefreshTokensTable, PasswordResetTokensTable)
             }
         }
     }
@@ -51,8 +52,20 @@ private val appModule = module {
         )
     }
 
+    // Email verification service
+    single { EmailVerificationService() }
+
+    // Password reset service
+    single { PasswordResetService(get(), get()) }
+
+    // Rate limit service - prevents brute force attacks
+    single { RateLimitService() }
+
+    // Background cleanup job for rate limiting
+    single { RateLimitCleanupJob(get()) }
+
     // Authentication service
-    single { AuthService(get(), get(), get(), get()) }
+    single { AuthService(get(), get(), get(), get(), get(), get(), get()) }
 
     // RPC API implementations
     single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }

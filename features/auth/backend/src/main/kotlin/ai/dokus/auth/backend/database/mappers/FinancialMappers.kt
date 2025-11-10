@@ -17,6 +17,7 @@ object FinancialMappers {
         role = this[UsersTable.role],
         firstName = this[UsersTable.firstName],
         lastName = this[UsersTable.lastName],
+        emailVerified = this[UsersTable.emailVerified],
         isActive = this[UsersTable.isActive],
         lastLoginAt = this[UsersTable.lastLoginAt],
         createdAt = this[UsersTable.createdAt],

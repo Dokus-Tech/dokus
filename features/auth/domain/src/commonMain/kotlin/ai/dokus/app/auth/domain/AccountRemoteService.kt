@@ -47,4 +47,14 @@ interface AccountRemoteService {
      * Deactivate current user account.
      */
     suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit>
+
+    /**
+     * Verify email address with token from email.
+     */
+    suspend fun verifyEmail(token: String): Result<Unit>
+
+    /**
+     * Resend email verification email.
+     */
+    suspend fun resendVerificationEmail(): Result<Unit>
 }
