@@ -1,11 +1,13 @@
 package ai.dokus.auth.backend.services
 
+import ai.dokus.auth.backend.database.services.RefreshTokenService
 import ai.dokus.auth.backend.security.JwtGenerator
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.UserRole
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
@@ -15,6 +17,7 @@ import ai.dokus.foundation.ktor.services.TenantService
 import ai.dokus.foundation.ktor.services.UserService
 import kotlinx.datetime.Clock
 import org.slf4j.LoggerFactory
+import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -25,7 +28,8 @@ import kotlin.uuid.Uuid
 class AuthService(
     private val userService: UserService,
     private val tenantService: TenantService,
-    private val jwtGenerator: JwtGenerator
+    private val jwtGenerator: JwtGenerator,
+    private val refreshTokenService: RefreshTokenService
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -46,13 +50,13 @@ class AuthService(
             password = request.password.value
         ) ?: run {
             logger.warn("Invalid credentials for email: ${request.email.value}")
-            throw IllegalArgumentException("Invalid credentials")
+            throw DokusException.InvalidCredentials()
         }
 
         // Check if account is active
         if (!user.isActive) {
             logger.warn("Inactive account login attempt for email: ${request.email.value}")
-            throw IllegalArgumentException("Account is inactive")
+            throw DokusException.AccountInactive()
         }
 
         // Record successful login
@@ -76,11 +80,24 @@ class AuthService(
             roles = setOf(user.role.dbValue)
         )
 
+        // Save refresh token to database
+        refreshTokenService.saveRefreshToken(
+            userId = userId,
+            token = response.refreshToken,
+            expiresAt = Clock.System.now() + 30.days
+        ).onFailure { error ->
+            logger.error("Failed to save refresh token for user: ${userId.value}", error)
+            throw DokusException.InternalError("Failed to save refresh token")
+        }
+
         logger.info("Successful login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
+    } catch (e: DokusException) {
+        logger.error("Login failed: ${e.errorCode} for email: ${request.email.value}", e)
+        Result.failure(e)
     } catch (e: Exception) {
         logger.error("Login error for email: ${request.email.value}", e)
-        Result.failure(e)
+        Result.failure(DokusException.InternalError(e.message ?: "Login failed"))
     }
 
     /**
