@@ -25,9 +25,34 @@ fun Application.configureErrorHandling() {
                 // Authentication & Authorization
                 is DokusException.NotAuthenticated -> HttpStatusCode.Unauthorized
                 is DokusException.NotAuthorized -> HttpStatusCode.Forbidden
+                is DokusException.InvalidCredentials -> HttpStatusCode.Unauthorized
+                is DokusException.TokenExpired -> HttpStatusCode.Unauthorized
+                is DokusException.TokenInvalid -> HttpStatusCode.Unauthorized
+                is DokusException.RefreshTokenExpired -> HttpStatusCode.Unauthorized
+                is DokusException.RefreshTokenRevoked -> HttpStatusCode.Unauthorized
+                is DokusException.SessionExpired -> HttpStatusCode.Unauthorized
+                is DokusException.SessionInvalid -> HttpStatusCode.Unauthorized
+
+                // Account Status
+                is DokusException.AccountInactive -> HttpStatusCode.Forbidden
+                is DokusException.AccountLocked -> HttpStatusCode.Forbidden
+                is DokusException.TooManyLoginAttempts -> HttpStatusCode.TooManyRequests
+
+                // Email Verification
+                is DokusException.EmailAlreadyVerified -> HttpStatusCode.Conflict
+                is DokusException.EmailNotVerified -> HttpStatusCode.Forbidden
+                is DokusException.EmailVerificationTokenExpired -> HttpStatusCode.Gone
+                is DokusException.EmailVerificationTokenInvalid -> HttpStatusCode.BadRequest
+
+                // Password Reset
+                is DokusException.PasswordResetTokenExpired -> HttpStatusCode.Gone
+                is DokusException.PasswordResetTokenInvalid -> HttpStatusCode.BadRequest
 
                 // User Management
                 is DokusException.UserAlreadyExists -> HttpStatusCode.Conflict
+
+                // Tenant Management
+                is DokusException.TenantCreationFailed -> HttpStatusCode.InternalServerError
 
                 // Connection & Server Errors
                 is DokusException.ConnectionError -> HttpStatusCode.ServiceUnavailable
@@ -35,30 +60,30 @@ fun Application.configureErrorHandling() {
                 is DokusException.Unknown -> HttpStatusCode.InternalServerError
 
                 // Validation Errors - User Input (400 Bad Request)
-                is DokusException.InvalidEmail -> HttpStatusCode.BadRequest
-                is DokusException.WeakPassword -> HttpStatusCode.BadRequest
-                is DokusException.PasswordDoNotMatch -> HttpStatusCode.BadRequest
-                is DokusException.InvalidFirstName -> HttpStatusCode.BadRequest
-                is DokusException.InvalidLastName -> HttpStatusCode.BadRequest
-                is DokusException.InvalidTaxNumber -> HttpStatusCode.BadRequest
-                is DokusException.InvalidWorkspaceName -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidEmail -> HttpStatusCode.BadRequest
+                is DokusException.Validation.WeakPassword -> HttpStatusCode.BadRequest
+                is DokusException.Validation.PasswordDoNotMatch -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidFirstName -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidLastName -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidTaxNumber -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidWorkspaceName -> HttpStatusCode.BadRequest
 
                 // Financial Validation Errors (400 Bad Request)
-                is DokusException.InvalidVatNumber -> HttpStatusCode.BadRequest
-                is DokusException.InvalidIban -> HttpStatusCode.BadRequest
-                is DokusException.InvalidBic -> HttpStatusCode.BadRequest
-                is DokusException.InvalidPeppolId -> HttpStatusCode.BadRequest
-                is DokusException.InvalidInvoiceNumber -> HttpStatusCode.BadRequest
-                is DokusException.InvalidMoney -> HttpStatusCode.BadRequest
-                is DokusException.InvalidVatRate -> HttpStatusCode.BadRequest
-                is DokusException.InvalidPercentage -> HttpStatusCode.BadRequest
-                is DokusException.InvalidQuantity -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidVatNumber -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidIban -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidBic -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidPeppolId -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidInvoiceNumber -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidMoney -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidVatRate -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidPercentage -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidQuantity -> HttpStatusCode.BadRequest
 
                 // Address Validation Errors (400 Bad Request)
-                is DokusException.InvalidAddress.InvalidStreetName -> HttpStatusCode.BadRequest
-                is DokusException.InvalidAddress.InvalidCity -> HttpStatusCode.BadRequest
-                is DokusException.InvalidAddress.InvalidPostalCode -> HttpStatusCode.BadRequest
-                is DokusException.InvalidAddress.InvalidCountry -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidAddress.InvalidStreetName -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidAddress.InvalidCity -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidAddress.InvalidPostalCode -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidAddress.InvalidCountry -> HttpStatusCode.BadRequest
             }
 
             val errorName = cause::class.simpleName ?: "DokusException"

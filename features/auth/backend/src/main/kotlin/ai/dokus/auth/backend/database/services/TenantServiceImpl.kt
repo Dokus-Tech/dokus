@@ -14,6 +14,11 @@ import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.ktor.services.TenantService
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimePeriod
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
@@ -36,15 +41,27 @@ class TenantServiceImpl : TenantService {
         country: String,
         language: Language,
         vatNumber: VatNumber?
-    ): Tenant = dbQuery {
-        val tenantId = TenantsTable.insertAndGetId {
+    ): Tenant {
+        // For Free plan, start with Trial status and 30-day trial period
+        // Other plans are Active immediately
+        val isTrial = plan == TenantPlan.Free
+        val tenantStatus = if (isTrial) TenantStatus.Trial else TenantStatus.Active
+        val trialEndsAt = if (isTrial) {
+            val now = Clock.System.now()
+            val trialPeriod = DateTimePeriod(days = 30)
+            now.plus(trialPeriod, TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
+        } else null
+
+        return dbQuery {
+            val tenantId = TenantsTable.insertAndGetId {
             it[TenantsTable.name] = name
             it[TenantsTable.email] = email
             it[TenantsTable.plan] = plan
             it[TenantsTable.country] = country
             it[TenantsTable.language] = language
             it[TenantsTable.vatNumber] = vatNumber?.value
-            it[status] = TenantStatus.Active
+            it[status] = tenantStatus
+            it[TenantsTable.trialEndsAt] = trialEndsAt
         }.value
 
         // Create default settings for the tenant
@@ -52,14 +69,15 @@ class TenantServiceImpl : TenantService {
             it[TenantSettingsTable.tenantId] = tenantId
         }
 
-        logger.info("Created new tenant: $tenantId with email: $email")
+            logger.info("Created new tenant: $tenantId with email: $email, plan: $plan, status: $tenantStatus${if (trialEndsAt != null) ", trial ends at: $trialEndsAt" else ""}")
 
-        // Return the created tenant
-        TenantsTable
-            .selectAll()
-            .where { TenantsTable.id eq tenantId }
-            .single()
-            .toTenant()
+            // Return the created tenant
+            TenantsTable
+                .selectAll()
+                .where { TenantsTable.id eq tenantId }
+                .single()
+                .toTenant()
+        }
     }
 
     override suspend fun findById(id: TenantId): Tenant? = dbQuery {

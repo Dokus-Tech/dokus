@@ -35,10 +35,10 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
             onFailure = { error ->
                 logger.e(error) { "Login failed" }
                 val dokusException = when {
-                    error.message?.contains("email") == true -> DokusException.InvalidEmail
-                    error.message?.contains("password") == true -> DokusException.WeakPassword
-                    error.message?.contains("Invalid credentials") == true -> DokusException.NotAuthenticated
-                    else -> DokusException.ConnectionError
+                    error.message?.contains("email") == true -> DokusException.Validation.InvalidEmail
+                    error.message?.contains("password") == true -> DokusException.Validation.WeakPassword
+                    error.message?.contains("Invalid credentials") == true -> DokusException.InvalidCredentials()
+                    else -> DokusException.ConnectionError()
                 }
                 mutableState.value = State.Error(dokusException)
             }

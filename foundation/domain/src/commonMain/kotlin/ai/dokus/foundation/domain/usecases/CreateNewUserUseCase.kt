@@ -21,10 +21,10 @@ class CreateNewUserUseCase(
         email: Email,
         password: Password
     ): Result<Any> {
-        if (!nameValidator(firstName)) return Result.failure(DokusException.InvalidFirstName)
-        if (!nameValidator(lastName)) return Result.failure(DokusException.InvalidLastName)
-        if (!emailValidator(email)) return Result.failure(DokusException.InvalidEmail)
-        if (!passwordValidator(password)) return Result.failure(DokusException.WeakPassword)
+        if (!nameValidator(firstName)) return Result.failure(DokusException.Validation.InvalidFirstName)
+        if (!nameValidator(lastName)) return Result.failure(DokusException.Validation.InvalidLastName)
+        if (!emailValidator(email)) return Result.failure(DokusException.Validation.InvalidEmail)
+        if (!passwordValidator(password)) return Result.failure(DokusException.Validation.WeakPassword)
         return Result.success(Any())
     }
 }
