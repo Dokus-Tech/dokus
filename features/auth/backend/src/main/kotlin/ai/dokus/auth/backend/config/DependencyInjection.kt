@@ -1,11 +1,13 @@
 package ai.dokus.auth.backend.config
 
 import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.auth.backend.database.services.RefreshTokenService
+import ai.dokus.auth.backend.database.services.RefreshTokenServiceImpl
 import ai.dokus.auth.backend.database.services.TenantServiceImpl
 import ai.dokus.auth.backend.database.services.UserServiceImpl
 import ai.dokus.auth.backend.database.tables.*
 import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
-import ai.dokus.auth.backend.security.JwtGenerator
+import ai.dokus.auth.backend.utils.JwtGenerator
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.auth.backend.services.*
 import ai.dokus.foundation.domain.rpc.*
@@ -38,6 +40,7 @@ private val appModule = module {
     // Local database services
     single<TenantService> { TenantServiceImpl() }
     single<UserService> { UserServiceImpl(get()) }
+    single<RefreshTokenService> { RefreshTokenServiceImpl() }
 
     // JWT token generation
     single {
@@ -49,7 +52,7 @@ private val appModule = module {
     }
 
     // Authentication service
-    single { AuthService(get(), get()) }
+    single { AuthService(get(), get(), get()) }
 
     // RPC API implementations
     single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }

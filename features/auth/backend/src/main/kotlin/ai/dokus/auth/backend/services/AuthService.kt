@@ -3,12 +3,15 @@ package ai.dokus.auth.backend.services
 import ai.dokus.auth.backend.security.JwtGenerator
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.ktor.services.TenantService
 import ai.dokus.foundation.ktor.services.UserService
 import kotlinx.datetime.Clock
 import org.slf4j.LoggerFactory
@@ -21,6 +24,7 @@ import kotlin.uuid.Uuid
  */
 class AuthService(
     private val userService: UserService,
+    private val tenantService: TenantService,
     private val jwtGenerator: JwtGenerator
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
@@ -40,44 +44,49 @@ class AuthService(
         val user = userService.verifyCredentials(
             email = request.email.value,
             password = request.password.value
+        ) ?: run {
+            logger.warn("Invalid credentials for email: ${request.email.value}")
+            throw IllegalArgumentException("Invalid credentials")
+        }
+
+        // Check if account is active
+        if (!user.isActive) {
+            logger.warn("Inactive account login attempt for email: ${request.email.value}")
+            throw IllegalArgumentException("Account is inactive")
+        }
+
+        // Record successful login
+        val userId = UserId(user.id.value.toString())
+        val loginTime = Clock.System.now()
+        userService.recordLogin(userId, loginTime)
+
+        // Generate full name for JWT claims
+        val fullName = buildString {
+            user.firstName?.let { append(it) }
+            if (user.firstName != null && user.lastName != null) append(" ")
+            user.lastName?.let { append(it) }
+        }.ifEmpty { user.email.value }
+
+        // Generate JWT tokens
+        val response = jwtGenerator.generateTokens(
+            userId = userId,
+            email = user.email.value,
+            fullName = fullName,
+            tenantId = user.tenantId,
+            roles = setOf(user.role.dbValue)
         )
 
-        if (user == null) {
-            logger.warn("Invalid credentials for email: ${request.email.value}")
-            Result.failure(Exception("Invalid email or password"))
-        } else {
-            // Record successful login
-            val userId = UserId(user.id.value.toString())
-            val loginTime = Clock.System.now()
-            userService.recordLogin(userId, loginTime)
-
-            // Generate full name for JWT claims
-            val fullName = buildString {
-                user.firstName?.let { append(it) }
-                if (user.firstName != null && user.lastName != null) append(" ")
-                user.lastName?.let { append(it) }
-            }.ifEmpty { user.email.value }
-
-            // Generate JWT tokens
-            val response = jwtGenerator.generateTokens(
-                userId = userId,
-                email = user.email.value,
-                fullName = fullName,
-                tenantId = user.tenantId,
-                roles = setOf(user.role.dbValue)
-            )
-
-            logger.info("Successful login for user: ${user.id} (email: ${user.email.value})")
-            Result.success(response)
-        }
+        logger.info("Successful login for user: ${user.id} (email: ${user.email.value})")
+        Result.success(response)
     } catch (e: Exception) {
         logger.error("Login error for email: ${request.email.value}", e)
-        Result.failure(Exception("Login failed: ${e.message}", e))
+        Result.failure(e)
     }
 
     /**
      * Registers a new user account and automatically logs them in.
-     * Creates the user, generates tokens, and returns authentication response.
+     * Creates a new tenant for the user, generates tokens, and returns authentication response.
+     * The first user becomes the tenant owner with a Trial plan.
      *
      * @param request Registration request with email, password, and name information
      * @return Result with LoginResponse containing tokens on success, or error on failure
@@ -86,14 +95,30 @@ class AuthService(
     suspend fun register(request: RegisterRequest): Result<LoginResponse> = try {
         logger.debug("Registration attempt for email: ${request.email.value}")
 
-        // FIXME: Implement proper tenant creation flow
-        // Currently using a temporary default tenant ID
-        // This should be replaced with actual tenant creation logic
-        val temporaryTenantId = TenantId(Uuid.parse("00000000-0000-0000-0000-000000000001"))
+        // Create tenant for the new user
+        // Tenant name defaults to user's full name (can be changed later in settings)
+        val tenantName = buildString {
+            append(request.firstName.value)
+            if (request.firstName.value.isNotEmpty() && request.lastName.value.isNotEmpty()) append(" ")
+            append(request.lastName.value)
+        }.ifEmpty { request.email.value }
 
-        // Register new user with Owner role
+        logger.debug("Creating new tenant: $tenantName for email: ${request.email.value}")
+
+        val tenant = tenantService.createTenant(
+            name = tenantName,
+            email = request.email.value,
+            plan = TenantPlan.Free,
+            country = "BE", // TODO: Get from request or use IP-based detection
+            language = Language.En, // TODO: Get from request or use browser locale
+            vatNumber = null // User can add VAT number later in settings
+        )
+
+        logger.info("Created tenant: ${tenant.id} with trial ending at: ${tenant.trialEndsAt}")
+
+        // Register new user with Owner role for the newly created tenant
         val user = userService.register(
-            tenantId = temporaryTenantId,
+            tenantId = tenant.id,
             email = request.email.value,
             password = request.password.value,
             firstName = request.firstName.value,
@@ -118,15 +143,16 @@ class AuthService(
             roles = setOf(user.role.dbValue)
         )
 
-        logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value})")
+        logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value}), tenant: ${tenant.id}")
         Result.success(response)
     } catch (e: IllegalArgumentException) {
-        // User already exists or validation error
+        // User already exists or validation error - re-throw to preserve error message
+        // The asDokusException extension will map this to appropriate DokusException
         logger.warn("Registration failed for email: ${request.email.value} - ${e.message}")
         Result.failure(e)
     } catch (e: Exception) {
         logger.error("Registration error for email: ${request.email.value}", e)
-        Result.failure(Exception("Registration failed: ${e.message}", e))
+        Result.failure(e)
     }
 
     /**
