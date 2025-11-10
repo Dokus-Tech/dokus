@@ -125,37 +125,30 @@ sealed class DokusException(
             message = "Invalid quantity",
         )
 
+        // Address Validation Errors
         @Serializable
-        @SerialName("DokusException.Validation.InvalidAddress")
-        sealed class InvalidAddress(
-            override val message: String? = "Invalid address",
-        ) : Validation(
-            message = message,
-        ) {
-            @Serializable
-            @SerialName("DokusException.Validation.InvalidAddress.InvalidStreetName")
-            data object InvalidStreetName : InvalidAddress(
-                message = "Invalid street name",
-            )
+        @SerialName("DokusException.Validation.InvalidStreetName")
+        data object InvalidStreetName : Validation(
+            message = "Invalid street name",
+        )
 
-            @Serializable
-            @SerialName("DokusException.Validation.InvalidAddress.InvalidCity")
-            data object InvalidCity : InvalidAddress(
-                message = "Invalid city",
-            )
+        @Serializable
+        @SerialName("DokusException.Validation.InvalidCity")
+        data object InvalidCity : Validation(
+            message = "Invalid city",
+        )
 
-            @Serializable
-            @SerialName("DokusException.Validation.InvalidAddress.InvalidPostalCode")
-            data object InvalidPostalCode : InvalidAddress(
-                message = "Invalid postal code",
-            )
+        @Serializable
+        @SerialName("DokusException.Validation.InvalidPostalCode")
+        data object InvalidPostalCode : Validation(
+            message = "Invalid postal code",
+        )
 
-            @Serializable
-            @SerialName("DokusException.Validation.InvalidAddress.InvalidCountry")
-            data object InvalidCountry : InvalidAddress(
-                message = "Invalid country",
-            )
-        }
+        @Serializable
+        @SerialName("DokusException.Validation.InvalidCountry")
+        data object InvalidCountry : Validation(
+            message = "Invalid country",
+        )
     }
 
     // 401 Unauthorized - Authentication Errors

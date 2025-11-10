@@ -27,12 +27,10 @@ val DokusException.localized: String
         is DokusException.Validation.InvalidVatRate -> "Please enter a valid VAT rate"
         is DokusException.Validation.InvalidPercentage -> "Please enter a valid percentage"
         is DokusException.Validation.InvalidQuantity -> "Please enter a valid quantity"
-        is DokusException.Validation.InvalidAddress -> when (this) {
-            is DokusException.Validation.InvalidAddress.InvalidStreetName -> "Please enter the valid street name"
-            is DokusException.Validation.InvalidAddress.InvalidCity -> "Please enter the valid city"
-            is DokusException.Validation.InvalidAddress.InvalidPostalCode -> "Please enter the valid postal code"
-            is DokusException.Validation.InvalidAddress.InvalidCountry -> "Please enter the valid country"
-        }
+        is DokusException.Validation.InvalidStreetName -> "Please enter the valid street name"
+        is DokusException.Validation.InvalidCity -> "Please enter the valid city"
+        is DokusException.Validation.InvalidPostalCode -> "Please enter the valid postal code"
+        is DokusException.Validation.InvalidCountry -> "Please enter the valid country"
         is DokusException.TokenExpired -> "Your session has expired. Please log in again."
         is DokusException.TokenInvalid -> "Invalid authentication token"
         is DokusException.RefreshTokenExpired -> "Your session has expired. Please log in again."

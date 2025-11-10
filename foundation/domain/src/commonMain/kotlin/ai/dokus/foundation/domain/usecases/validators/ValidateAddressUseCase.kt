@@ -14,9 +14,9 @@ class ValidateAddressUseCase(
 
     @Throws(DokusException::class)
     override fun invoke(value: Address) {
-        if (value.streetName != null && !streetNameValidator(value.streetName)) throw DokusException.InvalidAddress.InvalidStreetName
-        if (value.city != null && !cityValidator(value.city)) throw DokusException.InvalidAddress.InvalidCity
-        if (value.postalCode != null && !postalCodeValidator(value.postalCode)) throw DokusException.InvalidAddress.InvalidPostalCode
-        if (value.country != null && !countryValidator(value.country)) throw DokusException.InvalidAddress.InvalidCity
+        if (value.streetName != null && !streetNameValidator(value.streetName)) throw DokusException.Validation.InvalidStreetName
+        if (value.city != null && !cityValidator(value.city)) throw DokusException.Validation.InvalidCity
+        if (value.postalCode != null && !postalCodeValidator(value.postalCode)) throw DokusException.Validation.InvalidPostalCode
+        if (value.country != null && !countryValidator(value.country)) throw DokusException.Validation.InvalidCity
     }
 }

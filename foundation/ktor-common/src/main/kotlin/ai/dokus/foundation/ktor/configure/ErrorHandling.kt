@@ -80,10 +80,10 @@ fun Application.configureErrorHandling() {
                 is DokusException.Validation.InvalidQuantity -> HttpStatusCode.BadRequest
 
                 // Address Validation Errors (400 Bad Request)
-                is DokusException.Validation.InvalidAddress.InvalidStreetName -> HttpStatusCode.BadRequest
-                is DokusException.Validation.InvalidAddress.InvalidCity -> HttpStatusCode.BadRequest
-                is DokusException.Validation.InvalidAddress.InvalidPostalCode -> HttpStatusCode.BadRequest
-                is DokusException.Validation.InvalidAddress.InvalidCountry -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidStreetName -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidCity -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidPostalCode -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidCountry -> HttpStatusCode.BadRequest
             }
 
             val errorName = cause::class.simpleName ?: "DokusException"
