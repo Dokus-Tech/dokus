@@ -17,7 +17,7 @@ import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.ktor.services.TenantService
 import ai.dokus.foundation.ktor.services.UserService
-import kotlinx.datetime.Clock
+import ai.dokus.foundation.ktor.database.now
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
@@ -63,7 +63,7 @@ class AuthService(
 
         // Record successful login
         val userId = UserId(user.id.value.toString())
-        val loginTime = Clock.System.now()
+        val loginTime = now()
         userService.recordLogin(userId, loginTime)
 
         // Generate full name for JWT claims
@@ -86,7 +86,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = Clock.System.now() + 30.days
+            expiresAt = now() + 30.days
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -165,7 +165,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = Clock.System.now() + 30.days
+            expiresAt = now() + 30.days
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -243,7 +243,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = Clock.System.now() + 30.days
+            expiresAt = now() + 30.days
         ).onFailure { error ->
             logger.error("Failed to save rotated refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
