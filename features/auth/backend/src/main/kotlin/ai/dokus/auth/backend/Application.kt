@@ -1,5 +1,6 @@
 package ai.dokus.auth.backend
 
+import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.config.configureAuthentication
 import ai.dokus.auth.backend.config.configureDependencyInjection
 import ai.dokus.auth.backend.routes.identityRoutes
@@ -81,13 +82,14 @@ fun Application.module(appConfig: AppBaseConfig) {
                 }
             }
 
+            registerService<AccountRemoteService> { get<AccountRemoteService>() }
             registerService<TenantApi> { get<TenantApi>() }
             registerService<ClientApi> { get<ClientApi>() }
             registerService<InvoiceApi> { get<InvoiceApi>() }
             registerService<ExpenseApi> { get<ExpenseApi>() }
         }
 
-        logger.info("Public RPC APIs registered at /api")
+        logger.info("Public RPC APIs registered at /api (AccountRemoteService, TenantApi, ClientApi, InvoiceApi, ExpenseApi)")
     }
 
     // Configure graceful shutdown
