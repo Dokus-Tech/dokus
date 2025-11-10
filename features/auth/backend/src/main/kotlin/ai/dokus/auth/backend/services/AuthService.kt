@@ -160,51 +160,136 @@ class AuthService(
             roles = setOf(user.role.dbValue)
         )
 
+        // Save refresh token to database
+        refreshTokenService.saveRefreshToken(
+            userId = userId,
+            token = response.refreshToken,
+            expiresAt = Clock.System.now() + 30.days
+        ).onFailure { error ->
+            logger.error("Failed to save refresh token for user: ${userId.value}", error)
+            throw DokusException.InternalError("Failed to save refresh token")
+        }
+
         logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value}), tenant: ${tenant.id}")
         Result.success(response)
     } catch (e: IllegalArgumentException) {
-        // User already exists or validation error - re-throw to preserve error message
-        // The asDokusException extension will map this to appropriate DokusException
+        // User already exists - map to proper DokusException
         logger.warn("Registration failed for email: ${request.email.value} - ${e.message}")
+        if (e.message?.contains("already exists") == true) {
+            Result.failure(DokusException.UserAlreadyExists())
+        } else {
+            Result.failure(DokusException.InternalError(e.message ?: "Registration failed"))
+        }
+    } catch (e: DokusException) {
+        logger.error("Registration failed: ${e.errorCode} for email: ${request.email.value}", e)
         Result.failure(e)
     } catch (e: Exception) {
         logger.error("Registration error for email: ${request.email.value}", e)
-        Result.failure(e)
+        Result.failure(DokusException.InternalError(e.message ?: "Registration failed"))
     }
 
     /**
      * Refreshes an expired access token using a valid refresh token.
+     * Validates the refresh token, rotates it, and generates new tokens.
      *
-     * @param request Refresh token request
+     * @param request Refresh token request containing the current refresh token
      * @return Result with new LoginResponse containing fresh tokens
      */
-    suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> {
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> = try {
         logger.debug("Token refresh attempt")
-        // TODO: Implement token refresh logic
-        // - Verify refresh token validity
-        // - Extract user information from refresh token
-        // - Generate new access token (and optionally new refresh token)
-        // - Return new token pair
-        return Result.failure(NotImplementedError("Token refresh not yet implemented"))
+
+        // Validate and rotate token (old token is automatically revoked)
+        val userId = refreshTokenService.validateAndRotate(request.refreshToken)
+            .getOrElse { error ->
+                logger.warn("Token refresh failed: ${error.message}")
+                when (error) {
+                    is SecurityException -> throw DokusException.RefreshTokenRevoked()
+                    is IllegalArgumentException -> throw DokusException.RefreshTokenExpired()
+                    else -> throw DokusException.RefreshTokenExpired()
+                }
+            }
+
+        // Get user details for token generation
+        val user = userService.findById(userId)
+            ?: run {
+                logger.error("User not found for valid refresh token: ${userId.value}")
+                throw DokusException.InvalidCredentials("User account no longer exists")
+            }
+
+        // Check if account is still active
+        if (!user.isActive) {
+            logger.warn("Token refresh attempt for inactive user: ${userId.value}")
+            throw DokusException.AccountInactive()
+        }
+
+        // Generate full name for JWT claims
+        val fullName = buildString {
+            user.firstName?.let { append(it) }
+            if (user.firstName != null && user.lastName != null) append(" ")
+            user.lastName?.let { append(it) }
+        }.ifEmpty { user.email.value }
+
+        // Generate new access and refresh tokens
+        val response = jwtGenerator.generateTokens(
+            userId = userId,
+            email = user.email.value,
+            fullName = fullName,
+            tenantId = user.tenantId,
+            roles = setOf(user.role.dbValue)
+        )
+
+        // Save the new refresh token (rotated)
+        refreshTokenService.saveRefreshToken(
+            userId = userId,
+            token = response.refreshToken,
+            expiresAt = Clock.System.now() + 30.days
+        ).onFailure { error ->
+            logger.error("Failed to save rotated refresh token for user: ${userId.value}", error)
+            throw DokusException.InternalError("Failed to save refresh token")
+        }
+
+        logger.info("Successfully refreshed tokens for user: ${userId.value}")
+        Result.success(response)
+    } catch (e: DokusException) {
+        logger.error("Token refresh failed: ${e.errorCode}", e)
+        Result.failure(e)
+    } catch (e: Exception) {
+        logger.error("Token refresh error", e)
+        Result.failure(DokusException.RefreshTokenExpired())
     }
 
     /**
      * Logs out a user and invalidates their current session.
-     * Currently only logs the event; token revocation is planned for future implementation.
+     * Revokes the refresh token to prevent future token refreshes.
      *
-     * @param request Logout request containing session token
-     * @return Result indicating success or failure
+     * Note: Always returns success even if token revocation fails, as the client
+     * will have cleared tokens locally. This prevents blocking the logout flow.
+     *
+     * @param request Logout request containing session token and optional refresh token
+     * @return Result indicating success (always succeeds)
      */
     suspend fun logout(request: LogoutRequest): Result<Unit> = try {
-        logger.info("Logout request for session token: ${request.sessionToken}")
-        // TODO: Implement token revocation
-        // - Add token to revocation list/blacklist
-        // - Invalidate refresh token if applicable
-        // - Clear any cached session data
-        logger.info("Logout successful (token revocation not yet implemented)")
+        logger.info("Logout request received")
+
+        // Revoke refresh token if provided
+        request.refreshToken?.let { token ->
+            refreshTokenService.revokeToken(token).onFailure { error ->
+                // Log but don't fail - token may already be revoked or expired
+                logger.warn("Failed to revoke refresh token during logout: ${error.message}")
+            }.onSuccess {
+                logger.info("Successfully revoked refresh token during logout")
+            }
+        }
+
+        // TODO: Consider adding access token to blacklist/revocation cache
+        // For now, access tokens are short-lived (1 hour) so they'll expire naturally
+
+        logger.info("Logout successful")
         Result.success(Unit)
     } catch (e: Exception) {
-        logger.error("Logout error", e)
-        Result.failure(Exception("Logout failed: ${e.message}", e))
+        // Never fail logout - client has already cleared tokens
+        logger.warn("Logout error (non-critical, returning success): ${e.message}", e)
+        Result.success(Unit)
     }
 }

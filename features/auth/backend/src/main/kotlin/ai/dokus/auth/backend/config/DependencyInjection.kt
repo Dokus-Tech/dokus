@@ -52,7 +52,7 @@ private val appModule = module {
     }
 
     // Authentication service
-    single { AuthService(get(), get(), get()) }
+    single { AuthService(get(), get(), get(), get()) }
 
     // RPC API implementations
     single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }
