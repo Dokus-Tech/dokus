@@ -71,8 +71,8 @@ val authDataModule = module {
 }
 
 val authDomainModule = module {
-    single { RegisterAndLoginUseCase() }
-    single { LoginUseCase() }
-    single { LogoutUseCase() }
+    single { LoginUseCase(get()) }
+    single { RegisterAndLoginUseCase(get()) }
+    single { LogoutUseCase(get()) }
     single { CheckAccountUseCase() }
 }

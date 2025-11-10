@@ -1,36 +1,66 @@
 package ai.dokus.app.auth.viewmodel
 
+import ai.dokus.app.auth.usecases.RegisterAndLoginUseCase
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.usecases.CreateNewUserUseCase
+import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.Loading),
+internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.Idle),
     KoinComponent {
 
-    private val createNewUserUseCase: CreateNewUserUseCase by inject()
+    private val logger = Logger.forClass<RegisterViewModel>()
+    private val registerAndLoginUseCase: RegisterAndLoginUseCase by inject()
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun createUser(newEmail: Email, newPassword: Password, firstName: Name, lastName: Name) {
-        scope.launch {
-        }
+    fun register(
+        email: Email,
+        password: Password,
+        firstName: Name,
+        lastName: Name
+    ) = scope.launch {
+        logger.d { "Registration attempt started for email: ${email.value.take(3)}***" }
+        mutableState.value = State.Loading
+
+        val result = registerAndLoginUseCase(email, password, firstName, lastName)
+
+        result.fold(
+            onSuccess = {
+                logger.i { "Registration successful, navigating to home" }
+                mutableState.value = State.Idle
+                mutableEffect.emit(Effect.NavigateToHome)
+            },
+            onFailure = { error ->
+                logger.e(error) { "Registration failed" }
+                val dokusException = when {
+                    error.message?.contains("email") == true -> DokusException.InvalidEmail
+                    error.message?.contains("password") == true -> DokusException.WeakPassword
+                    error.message?.contains("First name") == true -> DokusException.InvalidFirstName
+                    error.message?.contains("Last name") == true -> DokusException.InvalidLastName
+                    else -> DokusException.ConnectionError
+                }
+                mutableState.value = State.Error(dokusException)
+            }
+        )
     }
 
     sealed interface State {
+        data object Idle : State
+
         data object Loading : State
 
         data class Error(val exception: DokusException) : State
     }
 
     sealed interface Effect {
-        data object NavigateToRegistrationConfirmation : Effect
+        data object NavigateToHome : Effect
     }
 }
