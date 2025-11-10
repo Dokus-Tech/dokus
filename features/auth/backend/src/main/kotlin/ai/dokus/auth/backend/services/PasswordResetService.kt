@@ -10,6 +10,9 @@ import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.services.UserService
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -32,20 +35,21 @@ import kotlin.time.ExperimentalTime
  * - One-time use tokens
  * - All refresh tokens revoked on successful password reset
  * - Automatic cleanup of expired/used tokens
+ * - Email failures don't prevent token generation (graceful degradation)
  *
  * Flow:
  * 1. User requests reset via [requestReset] with their email
- * 2. System generates secure token, stores it, and sends email (TODO: email service)
+ * 2. System generates secure token, stores it, and sends email
  * 3. User clicks link in email and submits new password via [resetPassword]
  * 4. Password updated, token marked as used, all sessions invalidated
  */
 class PasswordResetService(
     private val userService: UserService,
     private val refreshTokenService: RefreshTokenService,
-    // TODO: Add EmailService when implemented
-    // private val emailService: EmailService
+    private val emailService: EmailService
 ) {
     private val logger = LoggerFactory.getLogger(PasswordResetService::class.java)
+    private val emailScope = CoroutineScope(Dispatchers.IO)
 
     /**
      * Request a password reset for the given email address.
@@ -61,7 +65,9 @@ class PasswordResetService(
             // IMPORTANT: Always return success even if email doesn't exist (security)
             // This prevents email enumeration attacks
 
-            dbQuery {
+            val token = generateSecureToken()
+
+            val userFound = dbQuery {
                 val user = UsersTable
                     .selectAll()
                     .where { UsersTable.email eq email }
@@ -69,7 +75,6 @@ class PasswordResetService(
 
                 if (user != null) {
                     val userId = user[UsersTable.id].value
-                    val token = generateSecureToken()
                     val expiresAt = now() + 1.hours
 
                     // Store reset token
@@ -80,15 +85,26 @@ class PasswordResetService(
                     }
 
                     logger.info("Password reset requested for user: $userId")
-
-                    // TODO: Send email with reset link
-                    // val resetLink = "https://app.dokus.ai/reset-password?token=$token"
-                    // emailService.sendPasswordResetEmail(email, resetLink)
-
                     logger.debug("Password reset token generated: ${token.take(10)}... (expires in 1 hour)")
+                    true
                 } else {
                     // Email doesn't exist, but we still log and return success
                     logger.debug("Password reset requested for non-existent email (returning success for security)")
+                    false
+                }
+            }
+
+            // Send email with reset link outside the transaction (async)
+            // Note: Email failures don't prevent the flow (graceful degradation)
+            if (userFound) {
+                emailScope.launch {
+                    emailService.sendPasswordResetEmail(email, token, expirationHours = 1)
+                        .onSuccess {
+                            logger.debug("Password reset email sent successfully to ${email.take(3)}***")
+                        }
+                        .onFailure { error ->
+                            logger.error("Failed to send password reset email, but token was created", error)
+                        }
                 }
             }
 

@@ -7,6 +7,9 @@ import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -23,12 +26,25 @@ import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Service for managing email verification workflow.
- * Generates secure tokens, handles verification, and supports resending verification emails.
+ *
+ * Features:
+ * - Generates cryptographically secure verification tokens
+ * - Handles email verification with token validation
+ * - Supports resending verification emails
+ * - Graceful degradation (email failures don't block registration)
+ * - 24-hour token expiration
+ *
+ * Flow:
+ * 1. User registers, system generates verification token
+ * 2. Verification email sent (failure logged, doesn't block registration)
+ * 3. User clicks verification link from email
+ * 4. Token validated and email marked as verified
  */
 class EmailVerificationService(
-    // TODO: private val emailService: EmailService
+    private val emailService: EmailService
 ) {
     private val logger = LoggerFactory.getLogger(EmailVerificationService::class.java)
+    private val emailScope = CoroutineScope(Dispatchers.IO)
 
     /**
      * Generates a verification token and updates the user record.
@@ -51,10 +67,19 @@ class EmailVerificationService(
             }
 
             logger.info("Email verification token generated for user: ${userId.value}")
-
-            // TODO: Send email
-            // emailService.sendVerificationEmail(email, token)
             logger.debug("Verification link: /auth/verify-email?token=$token")
+
+            // Send verification email (async, outside transaction)
+            // Note: Email failures don't prevent registration (graceful degradation)
+            emailScope.launch {
+                emailService.sendEmailVerificationEmail(email, token, expirationHours = 24)
+                    .onSuccess {
+                        logger.debug("Email verification sent successfully to ${email.take(3)}***")
+                    }
+                    .onFailure { error ->
+                        logger.error("Failed to send verification email, but token was created", error)
+                    }
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {
