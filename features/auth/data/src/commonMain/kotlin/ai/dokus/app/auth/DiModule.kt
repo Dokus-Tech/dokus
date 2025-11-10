@@ -56,13 +56,7 @@ val authNetworkModule = module {
     single<RpcClient>(named("authClient")) {
         val httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
         val endpoint = DokusEndpoint.Auth
-        httpClient.rpc {
-            url {
-                protocol = URLProtocol.WS
-                host = endpoint.host
-                port = endpoint.port
-                appendPathSegments("api")
-            }
+        httpClient.rpc("ws://${endpoint.host}:${endpoint.port}/api") {
             rpcConfig {
                 serialization {
                     json()
