@@ -25,6 +25,7 @@ dependencies {
     implementation(projects.foundation.ktorCommon)
 
     implementation(libs.kotlinx.serialization)
+    implementation(libs.kotlinx.datetime)
 
     // KotlinX RPC Client & Server
     implementation(libs.kotlinx.rpc.core)

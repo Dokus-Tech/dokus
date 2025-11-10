@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+
 package ai.dokus.auth.backend.database.services
 
 import ai.dokus.auth.backend.database.mappers.TenantMapper.toTenant
@@ -29,8 +31,8 @@ import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalUuidApi::class)
 class TenantServiceImpl : TenantService {
     private val logger = LoggerFactory.getLogger(TenantServiceImpl::class.java)
 
@@ -47,7 +49,7 @@ class TenantServiceImpl : TenantService {
         val isTrial = plan == TenantPlan.Free
         val tenantStatus = if (isTrial) TenantStatus.Trial else TenantStatus.Active
         val trialEndsAt = if (isTrial) {
-            val now = Clock.System.now()
+            val now = kotlinx.datetime.Clock.System.now()
             val trialPeriod = DateTimePeriod(days = 30)
             now.plus(trialPeriod, TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
         } else null

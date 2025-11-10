@@ -1,7 +1,10 @@
+@file:OptIn(ExperimentalTime::class)
+
 package ai.dokus.auth.backend.database.services
 
 import ai.dokus.foundation.domain.UserId
 import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
 
 /**
  * Service for managing JWT refresh tokens with persistence, rotation, and revocation.

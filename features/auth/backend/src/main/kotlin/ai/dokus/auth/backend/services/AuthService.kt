@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+
 package ai.dokus.auth.backend.services
 
 import ai.dokus.auth.backend.database.services.RefreshTokenService
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlin.time.ExperimentalTime
 
 /**
  * Business logic layer for authentication operations.
@@ -40,7 +43,6 @@ class AuthService(
      * @param request Login request containing email, password, and remember me flag
      * @return Result with LoginResponse containing tokens on success, or error on failure
      */
-    @OptIn(ExperimentalUuidApi::class)
     suspend fun login(request: LoginRequest): Result<LoginResponse> = try {
         logger.debug("Login attempt for email: ${request.email.value}")
 
@@ -108,7 +110,6 @@ class AuthService(
      * @param request Registration request with email, password, and name information
      * @return Result with LoginResponse containing tokens on success, or error on failure
      */
-    @OptIn(ExperimentalUuidApi::class)
     suspend fun register(request: RegisterRequest): Result<LoginResponse> = try {
         logger.debug("Registration attempt for email: ${request.email.value}")
 
@@ -195,7 +196,6 @@ class AuthService(
      * @param request Refresh token request containing the current refresh token
      * @return Result with new LoginResponse containing fresh tokens
      */
-    @OptIn(ExperimentalUuidApi::class)
     suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> = try {
         logger.debug("Token refresh attempt")
 
