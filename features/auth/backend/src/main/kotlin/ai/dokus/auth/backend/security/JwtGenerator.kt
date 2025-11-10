@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+
 package ai.dokus.auth.backend.security
 
 import ai.dokus.foundation.domain.TenantId
@@ -8,6 +10,9 @@ import com.auth0.jwt.algorithms.Algorithm
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import java.util.Date
 
 /**
  * JWT token generator for authentication.
@@ -36,7 +41,7 @@ class JwtGenerator(
         tenantId: TenantId,
         roles: Set<String>
     ): LoginResponse {
-        val now = Clock.System.now()
+        val now = kotlinx.datetime.Clock.System.now()
         val accessExpiry = now + 1.hours
         val refreshExpiry = now + 30.days
 
@@ -47,16 +52,16 @@ class JwtGenerator(
             .withClaim("name", fullName)
             .withClaim("tenant_id", tenantId.value.toString())
             .withArrayClaim("groups", roles.toTypedArray())
-            .withIssuedAt(now.toEpochMilliseconds())
-            .withExpiresAt(accessExpiry.toEpochMilliseconds())
+            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(now.toEpochMilliseconds())))
+            .withExpiresAt(Date.from(java.time.Instant.ofEpochMilli(accessExpiry.toEpochMilliseconds())))
             .sign(algorithm)
 
         val refreshToken = JWT.create()
             .withIssuer(issuer)
             .withSubject(userId.value)
             .withClaim("type", "refresh")
-            .withIssuedAt(now.toEpochMilliseconds())
-            .withExpiresAt(refreshExpiry.toEpochMilliseconds())
+            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(now.toEpochMilliseconds())))
+            .withExpiresAt(Date.from(java.time.Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))
             .sign(algorithm)
 
         return LoginResponse(

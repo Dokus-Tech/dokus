@@ -96,7 +96,7 @@ class AccountRemoteServiceImpl(
     override suspend fun requestPasswordReset(email: String): Result<Unit> {
         logger.debug("RPC: requestPasswordReset called for email: $email")
 
-        return Result.failure(
+        return Result.failure<Unit>(
             NotImplementedError("Password reset functionality not yet implemented")
         ).also {
             logger.warn("RPC: requestPasswordReset not implemented, called for email: $email")
@@ -111,7 +111,7 @@ class AccountRemoteServiceImpl(
     override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
         logger.debug("RPC: resetPassword called with token")
 
-        return Result.failure(
+        return Result.failure<Unit>(
             NotImplementedError("Password reset functionality not yet implemented")
         ).also {
             logger.warn("RPC: resetPassword not implemented")
@@ -126,7 +126,7 @@ class AccountRemoteServiceImpl(
     override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
         logger.debug("RPC: deactivateAccount called with reason: ${request.reason}")
 
-        return Result.failure(
+        return Result.failure<Unit>(
             NotImplementedError("Account deactivation functionality not yet implemented")
         ).also {
             logger.warn("RPC: deactivateAccount not implemented, reason: ${request.reason}")
