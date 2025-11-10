@@ -43,4 +43,14 @@ class MockAccountRemoteService : AccountRemoteService {
         // TODO: Replace with actual RPC call
         return Result.failure(NotImplementedError("Backend not connected"))
     }
+
+    override suspend fun verifyEmail(token: String): Result<Unit> {
+        // TODO: Replace with actual RPC call
+        return Result.failure(NotImplementedError("Backend not connected"))
+    }
+
+    override suspend fun resendVerificationEmail(): Result<Unit> {
+        // TODO: Replace with actual RPC call
+        return Result.failure(NotImplementedError("Backend not connected"))
+    }
 }
