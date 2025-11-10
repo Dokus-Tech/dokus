@@ -1,6 +1,8 @@
 package ai.dokus.app.auth
 
 import ai.dokus.app.auth.database.AuthDb
+import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.app.auth.network.MockAccountRemoteService
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
@@ -32,6 +34,9 @@ internal object Qualifiers {
 expect val authPlatformModule: Module
 
 val authNetworkModule = module {
+    // TODO: Replace MockAccountRemoteService with actual RPC client
+    // when backend is ready
+    single<AccountRemoteService> { MockAccountRemoteService() }
 }
 
 val authDataModule = module {
@@ -59,6 +64,8 @@ val authDataModule = module {
     single<AuthRepository> {
         AuthRepository(
             tokenManager = get<TokenManagerMutable>(),
+            authManager = get<AuthManagerMutable>(),
+            accountService = get() // Provided by RPC client configuration
         )
     }
 }

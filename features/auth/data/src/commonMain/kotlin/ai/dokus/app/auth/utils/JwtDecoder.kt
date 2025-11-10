@@ -9,12 +9,14 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Utility class for decoding and validating JWT tokens.
  * Handles Base64 decoding and claim extraction.
  */
-@OptIn(ExperimentalEncodingApi::class)
+@OptIn(ExperimentalEncodingApi::class, ExperimentalTime::class)
 class JwtDecoder {
 
     private val json = Json {
@@ -84,7 +86,7 @@ class JwtDecoder {
         val claims = decode(token) ?: return TokenStatus.INVALID
 
         val exp = claims.exp ?: return TokenStatus.INVALID
-        val currentTime = kotlinx.datetime.Clock.System.now().epochSeconds
+        val currentTime = Clock.System.now().epochSeconds
 
         return when {
             exp < currentTime -> TokenStatus.EXPIRED
@@ -104,7 +106,7 @@ class JwtDecoder {
 
         val claims = decode(token) ?: return true
         val exp = claims.exp ?: return true
-        val currentTime = kotlinx.datetime.Clock.System.now().epochSeconds
+        val currentTime = Clock.System.now().epochSeconds
 
         return exp < currentTime
     }
