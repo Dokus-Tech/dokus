@@ -1,8 +1,11 @@
 package ai.dokus.auth.backend.config
 
+import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.database.services.TenantServiceImpl
 import ai.dokus.auth.backend.database.services.UserServiceImpl
 import ai.dokus.auth.backend.database.tables.*
+import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
+import ai.dokus.auth.backend.security.JwtGenerator
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.auth.backend.services.*
 import ai.dokus.foundation.domain.rpc.*
@@ -36,7 +39,20 @@ private val appModule = module {
     single<TenantService> { TenantServiceImpl() }
     single<UserService> { UserServiceImpl(get()) }
 
+    // JWT token generation
+    single {
+        val appConfig = get<AppBaseConfig>()
+        JwtGenerator(
+            secret = appConfig.jwt.secret,
+            issuer = appConfig.jwt.issuer
+        )
+    }
+
+    // Authentication service
+    single { AuthService(get(), get()) }
+
     // RPC API implementations
+    single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }
     single<TenantApi> { TenantApiImpl(get()) }
     single<ClientApi> { ClientApiImpl(get()) }
     single<InvoiceApi> { InvoiceApiImpl(get()) }
