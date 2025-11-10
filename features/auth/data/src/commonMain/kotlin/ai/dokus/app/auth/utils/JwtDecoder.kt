@@ -84,15 +84,13 @@ class JwtDecoder {
         val claims = decode(token) ?: return TokenStatus.INVALID
 
         val exp = claims.exp ?: return TokenStatus.INVALID
-        throw NotImplementedError("Not implemented")
-        // TODO
-//        val currentTime = Clock.System.now().epochSeconds
-//
-//        return when {
-//            exp < currentTime -> TokenStatus.EXPIRED
-//            exp - currentTime < REFRESH_THRESHOLD_SECONDS -> TokenStatus.REFRESH_NEEDED
-//            else -> TokenStatus.VALID
-//        }
+        val currentTime = kotlinx.datetime.Clock.System.now().epochSeconds
+
+        return when {
+            exp < currentTime -> TokenStatus.EXPIRED
+            exp - currentTime < REFRESH_THRESHOLD_SECONDS -> TokenStatus.REFRESH_NEEDED
+            else -> TokenStatus.VALID
+        }
     }
 
     /**
@@ -106,10 +104,9 @@ class JwtDecoder {
 
         val claims = decode(token) ?: return true
         val exp = claims.exp ?: return true
-        throw NotImplementedError("Not implemented")
-//        val currentTime = Clock.System.now().epochSeconds
-//
-//        return exp < currentTime
+        val currentTime = kotlinx.datetime.Clock.System.now().epochSeconds
+
+        return exp < currentTime
     }
 
     /**
