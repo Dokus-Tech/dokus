@@ -12,8 +12,8 @@ class ValidateNewWorkspaceUseCase(
 
     @Throws(DokusException::class)
     override operator fun invoke(value: CreateCompanyRequest) {
-        if (!nameValidator(value.name)) throw DokusException.InvalidWorkspaceName
-        if (!taxNumberValidator(value.taxId)) throw DokusException.InvalidTaxNumber
+        if (!nameValidator(value.name)) throw DokusException.Validation.InvalidWorkspaceName
+        if (!taxNumberValidator(value.taxId)) throw DokusException.Validation.InvalidTaxNumber
         addressValidator(value.address)
     }
 }
