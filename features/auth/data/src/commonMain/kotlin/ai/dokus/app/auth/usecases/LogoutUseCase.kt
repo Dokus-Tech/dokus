@@ -1,5 +1,8 @@
 package ai.dokus.app.auth.usecases
 
+import ai.dokus.app.auth.repository.AuthRepository
+import ai.dokus.foundation.platform.Logger
+
 /**
  * Logs out the current user.
  *
@@ -7,4 +10,13 @@ package ai.dokus.app.auth.usecases
  * if the network is down. We try to tell the server too, but that's best-effort.
  * The important part is getting them logged out on this device.
  */
-class LogoutUseCase()
+class LogoutUseCase(
+    private val authRepository: AuthRepository
+) {
+    private val logger = Logger.forClass<LogoutUseCase>()
+
+    suspend operator fun invoke() {
+        logger.d { "Executing logout use case" }
+        authRepository.logout()
+    }
+}

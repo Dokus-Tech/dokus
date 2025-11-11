@@ -1,10 +1,12 @@
 package ai.dokus.app.auth
 
 import ai.dokus.app.auth.database.AuthDb
+import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
+import ai.dokus.app.auth.network.MockAccountRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -14,8 +16,19 @@ import ai.dokus.app.auth.usecases.RegisterAndLoginUseCase
 import ai.dokus.app.auth.utils.JwtDecoder
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
+import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
+import ai.dokus.foundation.network.createAuthenticatedHttpClient
+import ai.dokus.foundation.network.createBaseHttpClient
+import ai.dokus.foundation.network.createRpcClient
+import ai.dokus.foundation.network.or
+import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
+import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.rpc.krpc.ktor.client.KtorRpcClient
 import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
@@ -32,6 +45,37 @@ internal object Qualifiers {
 expect val authPlatformModule: Module
 
 val authNetworkModule = module {
+    // HTTP client without authentication (for login/register)
+    single<HttpClient>(Qualifiers.httpClientNoAuth) {
+        createBaseHttpClient(dokusEndpoint = DokusEndpoint.Auth)
+    }
+
+    // HTTP client with authentication (for authenticated endpoints)
+    single<HttpClient>(Qualifiers.httpClientAuth) {
+        createAuthenticatedHttpClient(
+            dokusEndpoint = DokusEndpoint.Auth,
+            tokenManager = get<TokenManagerMutable>(),
+            onAuthenticationFailed = {
+                val authManager = get<AuthManagerMutable>()
+                val tokenManager = get<TokenManagerMutable>()
+                CoroutineScope(Dispatchers.Default).launch {
+                    tokenManager.onAuthenticationFailed()
+                    authManager.onAuthenticationFailed()
+                }
+            }
+        )
+    }
+
+    // RPC client (nullable - graceful degradation)
+    factory<KtorRpcClient?>(named(Feature.Auth)) {
+        createRpcClient(DokusEndpoint.Auth)
+    }
+
+    // AccountRemoteService with stub fallback
+    single<AccountRemoteService> {
+        val rpcClient = getOrNull<KtorRpcClient>(named(Feature.Auth))
+        rpcClient?.service<AccountRemoteService>() or MockAccountRemoteService()
+    }
 }
 
 val authDataModule = module {
@@ -59,13 +103,15 @@ val authDataModule = module {
     single<AuthRepository> {
         AuthRepository(
             tokenManager = get<TokenManagerMutable>(),
+            authManager = get<AuthManagerMutable>(),
+            accountService = get() // Provided by RPC client configuration
         )
     }
 }
 
 val authDomainModule = module {
-    single { RegisterAndLoginUseCase() }
-    single { LoginUseCase() }
-    single { LogoutUseCase() }
+    single { LoginUseCase(get()) }
+    single { RegisterAndLoginUseCase(get()) }
+    single { LogoutUseCase(get()) }
     single { CheckAccountUseCase() }
 }

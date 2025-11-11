@@ -26,6 +26,11 @@ object UsersTable : UUIDTable("users") {
     val firstName = varchar("first_name", 100).nullable()
     val lastName = varchar("last_name", 100).nullable()
 
+    // Email verification
+    val emailVerified = bool("email_verified").default(false)
+    val emailVerificationToken = varchar("email_verification_token", 255).nullable().uniqueIndex()
+    val emailVerificationExpiry = datetime("email_verification_expiry").nullable()
+
     // Status
     val isActive = bool("is_active").default(true)
     val lastLoginAt = datetime("last_login_at").nullable()

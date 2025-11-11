@@ -18,3 +18,4 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 /logs-dev/
 /logs/
+/features/auth/backend/logs/

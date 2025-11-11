@@ -17,7 +17,7 @@ internal class ForgotPasswordViewModel :
         mutableState.value = State.Loading
 
         if (!validateEmailUseCase(emailValue)) {
-            mutableState.value = State.Error(DokusException.InvalidEmail)
+            mutableState.value = State.Error(DokusException.Validation.InvalidEmail)
             return@launch
         }
 //

@@ -34,7 +34,7 @@ value class Password(override val value: String) : ValueClass<String>, Validatab
     override val isValid get() = ValidatePasswordUseCase(this)
 
     override val validOrThrows: Password
-        get() = if (isValid) this else throw DokusException.WeakPassword
+        get() = if (isValid) this else throw DokusException.Validation.WeakPassword
 }
 
 @Serializable
@@ -59,7 +59,7 @@ value class Email(override val value: String) : ValueClass<String>, Validatable<
     override val isValid get() = ValidateEmailUseCase(this)
 
     override val validOrThrows: Email
-        get() = if (isValid) this else throw DokusException.InvalidEmail
+        get() = if (isValid) this else throw DokusException.Validation.InvalidEmail
 }
 
 @Serializable
@@ -73,5 +73,5 @@ value class Name(override val value: String) : ValueClass<String>, Validatable<N
     override val isValid get() = ValidateNameUseCase(this)
 
     override val validOrThrows: Name
-        get() = if (isValid) this else throw DokusException.InvalidFirstName
+        get() = if (isValid) this else throw DokusException.Validation.InvalidFirstName
 }
