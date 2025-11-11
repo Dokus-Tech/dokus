@@ -7,6 +7,7 @@ import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.local.LocalSecondaryNavController
 import ai.dokus.foundation.navigation.local.LocalSecondaryNavigationState
+import ai.dokus.foundation.navigation.local.SecondaryPanelType
 import ai.dokus.foundation.navigation.local.rememberSecondaryNavigationState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -58,11 +59,10 @@ fun DualPanelNavigationContainer(
     val secondaryNavigationState = rememberSecondaryNavigationState()
     val secondaryNavController = rememberNavController()
     val isPanelVisible by secondaryNavigationState.isPanelVisible.collectAsState()
-    val complimentary by secondaryNavigationState.complimentary.collectAsState()
+    val panelType by secondaryNavigationState.panelType.collectAsState()
 
     val targetSecondaryFraction = when {
-        largeScreen && isPanelVisible && !complimentary -> 0.5f
-        largeScreen && isPanelVisible && complimentary -> 0.45f
+        largeScreen && isPanelVisible -> panelType.widthFraction
         else -> 0f // collapse completely when hidden or on small screens
     }
     val animatedSecondaryFraction by animateFloatAsState(
@@ -86,7 +86,12 @@ fun DualPanelNavigationContainer(
             // Measure available width once so we can drive a width-based animation
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val maxWidthDp = this.maxWidth
-                val secondaryWidthDp = maxWidthDp * animatedSecondaryFraction
+                val rawSecondaryWidthDp = maxWidthDp * animatedSecondaryFraction
+                // Apply width clamping based on panel type
+                val secondaryWidthDp = panelType.clampWidthDp(
+                    rawWidthDp = rawSecondaryWidthDp.value,
+                    isShowing = isPanelVisible && largeScreen
+                ).dp
 
                 // Primary + Secondary arranged in a Row; secondary has animated fixed width,
                 // primary fills the remaining space smoothly.
@@ -107,7 +112,7 @@ fun DualPanelNavigationContainer(
                     SecondaryPanel(
                         isPanelVisible = isPanelVisible,
                         largeScreen = largeScreen,
-                        complimentary = complimentary,
+                        panelType = panelType,
                         secondaryNavController = secondaryNavController,
                         navigationProviders = navigationProviders,
                         modifier = Modifier
@@ -124,7 +129,7 @@ fun DualPanelNavigationContainer(
 private fun SecondaryPanel(
     isPanelVisible: Boolean,
     largeScreen: Boolean,
-    complimentary: Boolean,
+    panelType: SecondaryPanelType,
     secondaryNavController: NavHostController,
     navigationProviders: List<NavigationProvider>,
     modifier: Modifier,
@@ -141,8 +146,8 @@ private fun SecondaryPanel(
         label = "secondary_panel_visibility"
     )
 
-    // Elevation only when complimentary panel is enabled
-    val targetElevation = if (complimentary && showPanel) 8.dp else 0.dp
+    // Elevation only when panel type has levitate enabled
+    val targetElevation = if (panelType.levitate && showPanel) 8.dp else 0.dp
     val panelElevation: Dp by animateDpAsState(
         targetValue = targetElevation,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
@@ -160,21 +165,21 @@ private fun SecondaryPanel(
         label = "secondary_panel_levitation_offset"
     )
     val levitationOffsetDp =
-        if (complimentary) (levitationOffsetRaw * visibilityProgress).dp else 0.dp
+        if (panelType.levitate) (levitationOffsetRaw * visibilityProgress).dp else 0.dp
 
     val slidePx = with(LocalDensity.current) { 24.dp.toPx() }
 
     Surface(
         modifier = modifier
-            // Edge-to-edge when not complimentary; otherwise detach from edges
-            .padding(if (complimentary) 12.dp * visibilityProgress else 0.dp)
+            // Edge-to-edge when not levitating; otherwise detach from edges
+            .padding(if (panelType.levitate) 12.dp * visibilityProgress else 0.dp)
             .graphicsLayer {
                 // slight slide-in effect; translation scales with visibility
-                translationX = if (complimentary) (1f - visibilityProgress) * slidePx else 0f
-                alpha = if (complimentary) visibilityProgress else 1f
+                translationX = if (panelType.levitate) (1f - visibilityProgress) * slidePx else 0f
+                alpha = if (panelType.levitate) visibilityProgress else 1f
             }
             .offset(y = levitationOffsetDp),
-        shape = if (complimentary) MaterialTheme.shapes.large else RoundedCornerShape(0.dp),
+        shape = if (panelType.levitate) MaterialTheme.shapes.large else RoundedCornerShape(0.dp),
         tonalElevation = 0.dp,
         shadowElevation = panelElevation
     ) {
