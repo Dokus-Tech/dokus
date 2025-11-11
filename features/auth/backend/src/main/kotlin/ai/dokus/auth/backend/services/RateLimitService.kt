@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package ai.dokus.auth.backend.services
 
 import ai.dokus.foundation.domain.exceptions.DokusException

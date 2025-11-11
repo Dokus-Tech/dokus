@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalUuidApi::class)
 
 package ai.dokus.auth.backend.services
 
@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlin.time.ExperimentalTime
 
 /**
  * Business logic layer for authentication operations.
@@ -97,7 +96,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = now() + 30.days
+            expiresAt = (now() + 30.days)
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -179,7 +178,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = now() + 30.days
+            expiresAt = (now() + 30.days)
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -263,7 +262,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = now() + 30.days
+            expiresAt = (now() + 30.days)
         ).onFailure { error ->
             logger.error("Failed to save rotated refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")

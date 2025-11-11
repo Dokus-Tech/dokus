@@ -3,7 +3,7 @@ package ai.dokus.invoicing.backend.database.mappers
 import ai.dokus.invoicing.backend.database.tables.*
 import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.model.*
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 

@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package ai.dokus.invoicing.backend.database.repository
 
 import ai.dokus.invoicing.backend.database.mappers.InvoiceMapper.toInvoice
@@ -12,20 +14,18 @@ import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
@@ -62,11 +62,11 @@ class InvoiceRepository {
                 it[InvoicesTable.invoiceNumber] = invoiceNumber
                 it[InvoicesTable.issueDate] = issueDate
                 it[InvoicesTable.dueDate] = dueDate
-                it[subtotalAmount] = subtotal
-                it[vatAmount] = vatTotal
-                it[totalAmount] = total
-                it[paidAmount] = BigDecimal.ZERO
-                it[status] = InvoiceStatus.Draft
+                it[InvoicesTable.subtotalAmount] = subtotal
+                it[InvoicesTable.vatAmount] = vatTotal
+                it[InvoicesTable.totalAmount] = total
+                it[InvoicesTable.paidAmount] = BigDecimal.ZERO
+                it[InvoicesTable.status] = InvoiceStatus.Draft
                 it[InvoicesTable.notes] = notes
             }.value.toKotlinUuid()
 
@@ -74,13 +74,13 @@ class InvoiceRepository {
             items.forEachIndexed { index, item ->
                 InvoiceItemsTable.insert {
                     it[InvoiceItemsTable.invoiceId] = id.toJavaUuid()
-                    it[description] = item.description
-                    it[quantity] = BigDecimal(item.quantity.value)
-                    it[unitPrice] = BigDecimal(item.unitPrice.value)
-                    it[vatRate] = BigDecimal(item.vatRate.value)
-                    it[lineTotal] = BigDecimal(item.lineTotal.value)
+                    it[InvoiceItemsTable.description] = item.description
+                    it[InvoiceItemsTable.quantity] = BigDecimal(item.quantity.value)
+                    it[InvoiceItemsTable.unitPrice] = BigDecimal(item.unitPrice.value)
+                    it[InvoiceItemsTable.vatRate] = BigDecimal(item.vatRate.value)
+                    it[InvoiceItemsTable.lineTotal] = BigDecimal(item.lineTotal.value)
                     it[InvoiceItemsTable.vatAmount] = BigDecimal(item.vatAmount.value)
-                    it[sortOrder] = index
+                    it[InvoiceItemsTable.sortOrder] = index
                 }
             }
             id
@@ -119,23 +119,25 @@ class InvoiceRepository {
         offset: Long = 0
     ): List<Invoice> = dbQuery {
         val tenantJavaUuid = tenantId.value.toJavaUuid()
-        var query = InvoicesTable
+        InvoicesTable
             .selectAll()
-            .where { InvoicesTable.tenantId eq tenantJavaUuid }
+            .where {
+                var condition: Op<Boolean> = InvoicesTable.tenantId eq tenantJavaUuid
 
-        status?.let {
-            query = query.andWhere { InvoicesTable.status eq it }
-        }
+                status?.let {
+                    condition = condition and (InvoicesTable.status eq it)
+                }
 
-        fromDate?.let {
-            query = query.andWhere { InvoicesTable.issueDate greaterEq it }
-        }
+                fromDate?.let {
+                    condition = condition and (InvoicesTable.issueDate greaterEq it)
+                }
 
-        toDate?.let {
-            query = query.andWhere { InvoicesTable.issueDate lessEq it }
-        }
+                toDate?.let {
+                    condition = condition and (InvoicesTable.issueDate lessEq it)
+                }
 
-        query
+                condition
+            }
             .orderBy(InvoicesTable.issueDate to SortOrder.DESC)
             .limit(limit)
             .offset(offset)
@@ -162,7 +164,7 @@ class InvoiceRepository {
             }) {
                 it[InvoicesTable.status] = newStatus
                 if (newStatus == InvoiceStatus.Paid) {
-                    it[paidAt] = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                    it[InvoicesTable.paidAt] = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 }
             }
 
@@ -197,9 +199,9 @@ class InvoiceRepository {
                 (InvoicesTable.id eq invoiceJavaUuid) and (InvoicesTable.tenantId eq tenantJavaUuid)
             }) {
                 it[InvoicesTable.paidAmount] = amountDecimal
-                it[status] = newStatus
+                it[InvoicesTable.status] = newStatus
                 if (newStatus == InvoiceStatus.Paid) {
-                    it[paidAt] = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                    it[InvoicesTable.paidAt] = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 }
             }
         }

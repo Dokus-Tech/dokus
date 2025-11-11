@@ -4,12 +4,11 @@ import ai.dokus.foundation.domain.DeviceType
 import ai.dokus.foundation.domain.SessionId
 import ai.dokus.foundation.domain.database.DbEnum
 import kotlinx.serialization.Serializable
+import kotlinx.datetime.Instant
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalTime::class)
 @Serializable
 data class SessionDto(
     val id: SessionId,
@@ -28,9 +27,17 @@ data class SessionDto(
 ) {
     @OptIn(ExperimentalUuidApi::class)
     val idUuid: Uuid? get() = runCatching { Uuid.parse(id.value) }.getOrNull()
+
+    @OptIn(ExperimentalTime::class)
     val createdAtInstant: Instant? get() = createdAt?.let { Instant.fromEpochSeconds(it) }
+
+    @OptIn(ExperimentalTime::class)
     val expiresAtInstant: Instant? get() = expiresAt?.let { Instant.fromEpochSeconds(it) }
+
+    @OptIn(ExperimentalTime::class)
     val lastActivityAtInstant: Instant? get() = lastActivityAt?.let { Instant.fromEpochSeconds(it) }
+
+    @OptIn(ExperimentalTime::class)
     val revokedAtInstant: Instant? get() = revokedAt?.let { Instant.fromEpochSeconds(it) }
 }
 
