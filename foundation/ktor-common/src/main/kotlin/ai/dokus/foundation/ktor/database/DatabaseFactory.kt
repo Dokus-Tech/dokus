@@ -21,7 +21,7 @@ class DatabaseFactory(
     private var dataSource: HikariDataSource? = null
     lateinit var database: Database
 
-    suspend fun <T : Table> init(vararg tables: T): Database {
+    suspend fun init(vararg tables: Table): Database {
         dataSource = createHikariDataSource()
 
         if (appConfig.flyway.enabled) {
@@ -79,7 +79,7 @@ class DatabaseFactory(
         logger.info("Migration completed: ${result.migrationsExecuted} migrations executed")
     }
 
-    private suspend fun <T : Table> createTables(vararg table: T) = withContext(Dispatchers.IO) {
+    private suspend fun createTables(vararg table: Table) = withContext(Dispatchers.IO) {
         transaction {
             SchemaUtils.create(*table)
         }
