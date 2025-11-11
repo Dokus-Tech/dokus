@@ -22,7 +22,7 @@ class AuthInitializer : KoinComponent {
         // 1. Load stored tokens from SecureStorage
         // 2. Validate token expiry
         // 3. Update authentication state
-//        authRepository.initialize()
+        authRepository.initialize()
     }
 
     /**

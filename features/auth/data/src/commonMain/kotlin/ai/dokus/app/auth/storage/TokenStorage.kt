@@ -97,10 +97,9 @@ class TokenStorage(
         saveAccessToken(accessToken)
         saveRefreshToken(refreshToken)
 
-        // TODO
-//        // Calculate absolute expiry time
-//        val currentTime = kotlin.time.Clock.System.now()
-//        val expiryTime = currentTime + expiresIn
-//        saveTokenExpiry(expiryTime)
+        // Calculate absolute expiry time
+        val currentTime = kotlinx.datetime.Clock.System.now().epochSeconds
+        val expiryTime = currentTime + expiresIn
+        saveTokenExpiry(expiryTime)
     }
 }
