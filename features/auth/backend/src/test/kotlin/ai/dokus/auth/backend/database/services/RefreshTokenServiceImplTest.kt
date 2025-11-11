@@ -6,6 +6,7 @@ import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.TenantsTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.database.dbQuery
@@ -408,6 +409,7 @@ class RefreshTokenServiceImplTest {
                 it[id] = testTenantId.toJavaUuid()
                 it[name] = "Test Tenant"
                 it[email] = "test@example.com"
+                it[plan] = TenantPlan.Free
             }
 
             // Create test user
