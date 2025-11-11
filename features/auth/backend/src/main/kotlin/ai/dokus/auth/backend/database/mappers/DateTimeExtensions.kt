@@ -11,7 +11,7 @@ import java.time.LocalDateTime as JavaLocalDateTime
  */
 
 fun KotlinLocalDate.toJavaLocalDate(): JavaLocalDate =
-    JavaLocalDate.of(this.year, this.monthNumber, this.dayOfMonth)
+    JavaLocalDate.of(this.year, this.month.number, this.day)
 
 fun JavaLocalDate.toKotlinLocalDate(): KotlinLocalDate =
     KotlinLocalDate(this.year, this.monthValue, this.dayOfMonth)
@@ -19,8 +19,8 @@ fun JavaLocalDate.toKotlinLocalDate(): KotlinLocalDate =
 fun KotlinLocalDateTime.toJavaLocalDateTime(): JavaLocalDateTime =
     JavaLocalDateTime.of(
         this.year,
-        this.monthNumber,
-        this.dayOfMonth,
+        this.month.number,
+        this.day,
         this.hour,
         this.minute,
         this.second,
