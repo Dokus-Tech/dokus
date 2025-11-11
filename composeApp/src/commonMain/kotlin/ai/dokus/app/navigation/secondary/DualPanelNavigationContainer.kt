@@ -1,6 +1,7 @@
 package ai.dokus.app.navigation.secondary
 
 import ai.dokus.app.navigation.DokusNavHost
+import ai.dokus.foundation.design.local.LocalReduceMotion
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.navigation.NavigationProvider
@@ -34,6 +35,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -55,6 +57,7 @@ fun DualPanelNavigationContainer(
     modifier: Modifier = Modifier
 ) {
     val largeScreen = LocalScreenSize.isLarge
+    val reduceMotion = LocalReduceMotion.current
     val navController = rememberNavController()
     val secondaryNavigationState = rememberSecondaryNavigationState()
     val secondaryNavController = rememberNavController()
@@ -67,7 +70,11 @@ fun DualPanelNavigationContainer(
     }
     val animatedSecondaryFraction by animateFloatAsState(
         targetValue = targetSecondaryFraction,
-        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+        animationSpec = if (reduceMotion) {
+            tween(durationMillis = 0)
+        } else {
+            tween(durationMillis = 320, easing = FastOutSlowInEasing)
+        },
         label = "secondary_panel_width_fraction"
     )
 
@@ -87,11 +94,13 @@ fun DualPanelNavigationContainer(
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val maxWidthDp = this.maxWidth
                 val rawSecondaryWidthDp = maxWidthDp * animatedSecondaryFraction
-                // Apply width clamping based on panel type
-                val secondaryWidthDp = panelType.clampWidthDp(
-                    rawWidthDp = rawSecondaryWidthDp.value,
-                    isShowing = isPanelVisible && largeScreen
-                ).dp
+                // Apply width clamping based on panel type (memoized to avoid recalculation)
+                val secondaryWidthDp = remember(rawSecondaryWidthDp.value, panelType, isPanelVisible, largeScreen) {
+                    panelType.clampWidthDp(
+                        rawWidthDp = rawSecondaryWidthDp.value,
+                        isShowing = isPanelVisible && largeScreen
+                    ).dp
+                }
 
                 // Primary + Secondary arranged in a Row; secondary has animated fixed width,
                 // primary fills the remaining space smoothly.
@@ -135,14 +144,19 @@ private fun SecondaryPanel(
     modifier: Modifier,
 ) {
     val showPanel = isPanelVisible && largeScreen
+    val reduceMotion = LocalReduceMotion.current
 
     // Drive a subtle fade + slide while keeping content in composition
     val visibilityProgress by animateFloatAsState(
         targetValue = if (showPanel) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = if (showPanel) 240 else 200,
-            easing = FastOutSlowInEasing
-        ),
+        animationSpec = if (reduceMotion) {
+            tween(durationMillis = 0)
+        } else {
+            tween(
+                durationMillis = if (showPanel) 240 else 200,
+                easing = FastOutSlowInEasing
+            )
+        },
         label = "secondary_panel_visibility"
     )
 
@@ -150,10 +164,18 @@ private fun SecondaryPanel(
     val targetElevation = if (panelType.levitate && showPanel) 8.dp else 0.dp
     val panelElevation: Dp by animateDpAsState(
         targetValue = targetElevation,
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        animationSpec = if (reduceMotion) {
+            tween(durationMillis = 0)
+        } else {
+            tween(durationMillis = 300, easing = FastOutSlowInEasing)
+        },
         label = "secondary_panel_elevation"
     )
 
+    // Only apply levitation offset when panel is showing, levitate is enabled, and motion is not reduced
+    val shouldLevitate = panelType.levitate && showPanel && !reduceMotion
+
+    // Levitation animation runs continuously for smoothness
     val levitationTransition = rememberInfiniteTransition(label = "secondary_panel_levitation")
     val levitationOffsetRaw by levitationTransition.animateFloat(
         initialValue = -1f,
@@ -164,19 +186,22 @@ private fun SecondaryPanel(
         ),
         label = "secondary_panel_levitation_offset"
     )
-    val levitationOffsetDp =
-        if (panelType.levitate) (levitationOffsetRaw * visibilityProgress).dp else 0.dp
+
+    // Only apply offset when appropriate (controlled by shouldLevitate)
+    val levitationOffsetDp = remember(shouldLevitate, levitationOffsetRaw, visibilityProgress) {
+        if (shouldLevitate) (levitationOffsetRaw * visibilityProgress).dp else 0.dp
+    }
 
     val slidePx = with(LocalDensity.current) { 24.dp.toPx() }
 
     Surface(
         modifier = modifier
             // Edge-to-edge when not levitating; otherwise detach from edges
-            .padding(if (panelType.levitate) 12.dp * visibilityProgress else 0.dp)
+            .padding(if (panelType.levitate && !reduceMotion) 12.dp * visibilityProgress else 0.dp)
             .graphicsLayer {
                 // slight slide-in effect; translation scales with visibility
-                translationX = if (panelType.levitate) (1f - visibilityProgress) * slidePx else 0f
-                alpha = if (panelType.levitate) visibilityProgress else 1f
+                translationX = if (panelType.levitate && !reduceMotion) (1f - visibilityProgress) * slidePx else 0f
+                alpha = if (panelType.levitate && !reduceMotion) visibilityProgress else 1f
             }
             .offset(y = levitationOffsetDp),
         shape = if (panelType.levitate) MaterialTheme.shapes.large else RoundedCornerShape(0.dp),

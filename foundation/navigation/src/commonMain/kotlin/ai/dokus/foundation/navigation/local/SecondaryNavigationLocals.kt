@@ -25,19 +25,18 @@ val LocalSecondaryNavController = staticCompositionLocalOf<NavHostController> { 
  */
 @Composable
 fun rememberSecondaryNavigationState(): SecondaryNavigationState {
-    // Keep state instance stable across recompositions
-    val state = remember { SecondaryNavigationState() }
-
-    // Persist and restore visibility state
+    // Persist visibility state
     var isPanelVisible by rememberSaveable { mutableStateOf(false) }
 
-    // Only restore state once on first composition
-    LaunchedEffect(Unit) {
-        state.setPanelVisibility(isPanelVisible)
+    // Create state instance with restored visibility, stable across recompositions
+    val state = remember(isPanelVisible) {
+        SecondaryNavigationState().apply {
+            setPanelVisibility(isPanelVisible)
+        }
     }
 
-    // Update saved state when visibility changes
-    LaunchedEffect(state.isPanelVisible) {
+    // Collect state changes to update saved state (one-way flow)
+    LaunchedEffect(state) {
         state.isPanelVisible.collect { visible ->
             isPanelVisible = visible
         }
