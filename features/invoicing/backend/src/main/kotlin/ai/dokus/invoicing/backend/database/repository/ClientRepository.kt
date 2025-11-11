@@ -7,7 +7,12 @@ import ai.dokus.foundation.domain.ClientId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
@@ -80,25 +85,27 @@ class ClientRepository {
     ): List<Client> = dbQuery {
         val javaTenantId = tenantId.value.toJavaUuid()
 
-        val query = ClientsTable
+        ClientsTable
             .selectAll()
-            .where { ClientsTable.tenantId eq javaTenantId }
+            .where {
+                var condition: Op<Boolean> = ClientsTable.tenantId eq javaTenantId
 
-        // Apply search filter
-        search?.let { searchTerm ->
-            query.andWhere {
-                (ClientsTable.name like "%$searchTerm%") or
-                (ClientsTable.email like "%$searchTerm%") or
-                (ClientsTable.vatNumber like "%$searchTerm%")
+                // Apply search filter
+                search?.let { searchTerm ->
+                    condition = condition and (
+                        (ClientsTable.name like "%$searchTerm%") or
+                        (ClientsTable.email like "%$searchTerm%") or
+                        (ClientsTable.vatNumber like "%$searchTerm%")
+                    )
+                }
+
+                // Apply active filter
+                isActive?.let { active ->
+                    condition = condition and (ClientsTable.isActive eq active)
+                }
+
+                condition
             }
-        }
-
-        // Apply active filter
-        isActive?.let { active ->
-            query.andWhere { ClientsTable.isActive eq active }
-        }
-
-        query
             .orderBy(ClientsTable.name)
             .limit(limit)
             .offset(offset.toLong())
@@ -190,14 +197,17 @@ class ClientRepository {
     suspend fun countByTenant(tenantId: TenantId, isActive: Boolean? = null): Long = dbQuery {
         val javaTenantId = tenantId.value.toJavaUuid()
 
-        val query = ClientsTable
-            .select(ClientsTable.id.count())
-            .where { ClientsTable.tenantId eq javaTenantId }
+        ClientsTable
+            .selectAll()
+            .where {
+                var condition: Op<Boolean> = ClientsTable.tenantId eq javaTenantId
 
-        isActive?.let { active ->
-            query.andWhere { ClientsTable.isActive eq active }
-        }
+                isActive?.let { active ->
+                    condition = condition and (ClientsTable.isActive eq active)
+                }
 
-        query.single()[ClientsTable.id.count()]
+                condition
+            }
+            .count()
     }
 }

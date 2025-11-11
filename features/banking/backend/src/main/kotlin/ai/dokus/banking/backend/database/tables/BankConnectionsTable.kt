@@ -1,6 +1,6 @@
 package ai.dokus.banking.backend.database.tables
 
-import ai.dokus.foundation.domain.database.dbEnumeration
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.enums.Currency
