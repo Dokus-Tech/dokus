@@ -37,6 +37,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.features.auth.domain)
+
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.domain)
             implementation(projects.foundation.sstorage)
@@ -50,6 +52,7 @@ kotlin {
             implementation(libs.kotlinx.coroutinesCore)
 
             implementation(libs.bundles.rpc.client)
+            implementation(libs.ktor.client.cio)
 
             implementation(libs.kotlinx.datetime)
         }

@@ -44,6 +44,7 @@ include(":foundation:ktor-common")
 include(":features:auth:backend")
 include(":features:auth:presentation")
 include(":features:auth:data")
+include(":features:auth:domain")
 
 include(":features:invoicing:backend")
 include(":features:expense:backend")

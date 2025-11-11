@@ -30,7 +30,8 @@ data class RefreshTokenRequest(
 
 @Serializable
 data class LogoutRequest(
-    val sessionToken: String
+    val sessionToken: String,
+    val refreshToken: String? = null
 )
 
 @Serializable

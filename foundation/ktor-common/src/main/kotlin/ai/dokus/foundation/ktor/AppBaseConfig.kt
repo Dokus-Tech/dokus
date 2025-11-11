@@ -66,7 +66,8 @@ data class DatabaseConfig(
     val url: String,
     val username: String,
     val password: String,
-    val pool: PoolConfig
+    val pool: PoolConfig,
+    val driver: String = "org.postgresql.Driver"
 ) {
     data class PoolConfig(
         val maxSize: Int,
@@ -84,6 +85,7 @@ data class DatabaseConfig(
                 url = config.getString("url"),
                 username = config.getString("username"),
                 password = config.getString("password"),
+                driver = if (config.hasPath("driver")) config.getString("driver") else "org.postgresql.Driver",
                 pool = PoolConfig(
                     maxSize = poolConfig.getInt("maxSize"),
                     minSize = poolConfig.getInt("minSize"),

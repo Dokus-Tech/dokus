@@ -1,8 +1,6 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package ai.dokus.foundation.ktor.database
 
-import kotlin.time.Clock
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

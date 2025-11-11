@@ -92,7 +92,7 @@ value class InvoiceNumber(override val value: String) : ValueClass<String>, Vali
         get() = ValidateInvoiceNumberUseCase(this)
 
     override val validOrThrows: InvoiceNumber
-        get() = if (isValid) this else throw DokusException.InvalidInvoiceNumber
+        get() = if (isValid) this else throw DokusException.Validation.InvalidInvoiceNumber
 }
 
 // ============================================================================
@@ -204,7 +204,7 @@ value class Money(override val value: String) : ValueClass<String>, Validatable<
         get() = ValidateMoneyUseCase(this)
 
     override val validOrThrows: Money
-        get() = if (isValid) this else throw DokusException.InvalidMoney
+        get() = if (isValid) this else throw DokusException.Validation.InvalidMoney
 
     companion object {
         val ZERO = Money("0.00")
@@ -234,7 +234,7 @@ value class VatRate(override val value: String) : ValueClass<String>, Validatabl
         get() = ValidateVatRateUseCase(this)
 
     override val validOrThrows: VatRate
-        get() = if (isValid) this else throw DokusException.InvalidVatRate
+        get() = if (isValid) this else throw DokusException.Validation.InvalidVatRate
 
     companion object {
         val ZERO = VatRate("0.00")
@@ -254,7 +254,7 @@ value class Percentage(override val value: String) : ValueClass<String>, Validat
         get() = ValidatePercentageUseCase(this)
 
     override val validOrThrows: Percentage
-        get() = if (isValid) this else throw DokusException.InvalidPercentage
+        get() = if (isValid) this else throw DokusException.Validation.InvalidPercentage
 
     companion object {
         val ZERO = Percentage("0.00")
@@ -277,7 +277,7 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
         get() = ValidateVatNumberUseCase(this)
 
     override val validOrThrows: VatNumber
-        get() = if (isValid) this else throw DokusException.InvalidVatNumber
+        get() = if (isValid) this else throw DokusException.Validation.InvalidVatNumber
 }
 
 @Serializable
@@ -289,7 +289,7 @@ value class Iban(override val value: String) : ValueClass<String>, Validatable<I
         get() = ValidateIbanUseCase(this)
 
     override val validOrThrows: Iban
-        get() = if (isValid) this else throw DokusException.InvalidIban
+        get() = if (isValid) this else throw DokusException.Validation.InvalidIban
 }
 
 @Serializable
@@ -301,7 +301,7 @@ value class Bic(override val value: String) : ValueClass<String>, Validatable<Bi
         get() = ValidateBicUseCase(this)
 
     override val validOrThrows: Bic
-        get() = if (isValid) this else throw DokusException.InvalidBic
+        get() = if (isValid) this else throw DokusException.Validation.InvalidBic
 }
 
 @Serializable
@@ -323,7 +323,7 @@ value class PeppolId(override val value: String) : ValueClass<String>, Validatab
         get() = ValidatePeppolIdUseCase(this)
 
     override val validOrThrows: PeppolId
-        get() = if (isValid) this else throw DokusException.InvalidPeppolId
+        get() = if (isValid) this else throw DokusException.Validation.InvalidPeppolId
 }
 
 @Serializable
@@ -335,7 +335,7 @@ value class Quantity(override val value: String) : ValueClass<String>, Validatab
         get() = ValidateQuantityUseCase(this)
 
     override val validOrThrows: Quantity
-        get() = if (isValid) this else throw DokusException.InvalidQuantity
+        get() = if (isValid) this else throw DokusException.Validation.InvalidQuantity
 
     companion object {
         val ONE = Quantity("1")

@@ -56,6 +56,7 @@ data class BusinessUser(
     val role: UserRole,
     val firstName: String? = null,
     val lastName: String? = null,
+    val emailVerified: Boolean = false,
     val isActive: Boolean = true,
     val lastLoginAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,

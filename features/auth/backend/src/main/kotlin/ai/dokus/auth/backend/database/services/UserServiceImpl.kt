@@ -124,7 +124,7 @@ class UserServiceImpl(
         logger.info("Updated profile for user $userId")
     }
 
-    override suspend fun deactivate(userId: UserId) = dbQuery {
+    override suspend fun deactivate(userId: UserId, reason: String?) = dbQuery {
         val javaUuid = java.util.UUID.fromString(userId.value)
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[isActive] = false
@@ -134,7 +134,8 @@ class UserServiceImpl(
             throw IllegalArgumentException("User not found: $userId")
         }
 
-        logger.info("Deactivated user $userId")
+        val reasonLog = if (reason != null) " - Reason: $reason" else ""
+        logger.info("Deactivated user $userId$reasonLog")
     }
 
     override suspend fun reactivate(userId: UserId) = dbQuery {
