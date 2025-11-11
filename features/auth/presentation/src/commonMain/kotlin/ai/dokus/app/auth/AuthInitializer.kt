@@ -2,7 +2,6 @@ package ai.dokus.app.auth
 
 import ai.dokus.app.auth.repository.AuthRepository
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.lastOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -28,8 +27,8 @@ class AuthInitializer : KoinComponent {
     /**
      * Checks if the user is currently authenticated.
      */
-    suspend fun isAuthenticated(): Boolean {
-        return authRepository.isAuthenticated.lastOrNull() ?: false
+    fun isAuthenticated(): Boolean {
+        return authRepository.isAuthenticated.value
     }
 
     /**
