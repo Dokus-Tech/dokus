@@ -1,12 +1,10 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package ai.dokus.auth.backend.services
 
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.time.Instant
+import kotlinx.datetime.Instant
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.minutes
 

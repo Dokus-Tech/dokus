@@ -4,12 +4,10 @@ import ai.dokus.foundation.domain.DeviceType
 import ai.dokus.foundation.domain.SessionId
 import ai.dokus.foundation.domain.database.DbEnum
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
+import kotlinx.datetime.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalTime::class)
 @Serializable
 data class SessionDto(
     val id: SessionId,
