@@ -84,10 +84,18 @@ dependencies {
     implementation(libs.flywaydb.flyway.database.postgresql)
 
     // Testing
-//    testImplementation(libs.kotlin.test.junit5)
-//    testImplementation(libs.testcontainers)
-//    testImplementation(libs.testcontainers.postgresql)
-//    testImplementation(libs.mockk)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.platform.launcher)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutinesTest)
+    testImplementation(libs.kotlinx.datetime)
+    testImplementation(libs.exposed.core)
+    testImplementation(libs.exposed.dao)
+    testImplementation(libs.exposed.jdbc)
+    testImplementation(libs.exposed.kotlin.datetime)
+    testImplementation(libs.hikaricp)
+    testImplementation(libs.h2)
+    testImplementation("io.mockk:mockk:1.13.13")
 }
 
 tasks.test {
