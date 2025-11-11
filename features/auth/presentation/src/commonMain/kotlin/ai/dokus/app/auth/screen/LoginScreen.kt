@@ -1,6 +1,7 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.LoginViewModel
+import ai.dokus.app.core.extensions.SetupSecondaryPanel
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
@@ -9,9 +10,11 @@ import ai.dokus.foundation.design.components.fields.PTextFieldPasswordDefaults
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.navigation.destinations.AppDestination
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.navigation.local.SecondaryPanelType
 import ai.dokus.foundation.navigation.navigateTo
 import ai.dokus.foundation.navigation.replace
 import androidx.compose.foundation.clickable
@@ -54,6 +57,8 @@ internal fun LoginScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val navController = LocalNavController.current
+
+    SetupSecondaryPanel(AppDestination.Slogan, SecondaryPanelType.Inline)
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
