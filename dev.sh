@@ -5,20 +5,51 @@
 
 set -e  # Exit on error
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-WHITE='\033[1;37m'
-GRAY='\033[0;90m'
-BOLD='\033[1m'
-DIM='\033[2m'
-NC='\033[0m' # No Color
+# Check for NO_COLOR environment variable
+if [[ -n "${NO_COLOR}" ]]; then
+    USE_COLOR=false
+else
+    USE_COLOR=true
+fi
 
-# Box drawing characters
+# Modern Pastel Color Palette (24-bit RGB)
+if [[ "$USE_COLOR" == true ]]; then
+    SOFT_BLUE='\033[38;2;130;170;255m'
+    SOFT_GREEN='\033[38;2;150;220;180m'
+    SOFT_RED='\033[38;2;255;150;150m'
+    SOFT_YELLOW='\033[38;2;255;220;150m'
+    SOFT_CYAN='\033[38;2;150;220;230m'
+    SOFT_MAGENTA='\033[38;2;220;180;255m'
+    SOFT_ORANGE='\033[38;2;255;200;150m'
+    SOFT_GRAY='\033[38;2;160;160;180m'
+    BRIGHT_WHITE='\033[38;2;255;255;255m'
+    DIM_WHITE='\033[38;2;200;200;210m'
+    GRADIENT_START='\033[38;2;130;170;255m'
+    GRADIENT_MID='\033[38;2;180;140;255m'
+    GRADIENT_END='\033[38;2;220;180;255m'
+    BOLD='\033[1m'
+    DIM='\033[2m'
+    NC='\033[0m'
+else
+    SOFT_BLUE=''
+    SOFT_GREEN=''
+    SOFT_RED=''
+    SOFT_YELLOW=''
+    SOFT_CYAN=''
+    SOFT_MAGENTA=''
+    SOFT_ORANGE=''
+    SOFT_GRAY=''
+    BRIGHT_WHITE=''
+    DIM_WHITE=''
+    GRADIENT_START=''
+    GRADIENT_MID=''
+    GRADIENT_END=''
+    BOLD=''
+    DIM=''
+    NC=''
+fi
+
+# Enhanced Box Drawing Characters
 BOX_TL="╔"
 BOX_TR="╗"
 BOX_BL="╚"
@@ -30,6 +61,29 @@ BOX_VR="╠"
 BOX_HT="╦"
 BOX_HB="╩"
 BOX_CROSS="╬"
+
+# Rounded corners for modern feel
+ROUND_TL="╭"
+ROUND_TR="╮"
+ROUND_BL="╰"
+ROUND_BR="╯"
+ROUND_H="─"
+ROUND_V="│"
+
+# Tree characters
+TREE_BRANCH="├"
+TREE_LAST="└"
+TREE_VERT="│"
+TREE_RIGHT="─"
+
+# Modern Unicode Symbols
+SYMBOL_SUCCESS="◆"
+SYMBOL_ERROR="◇"
+SYMBOL_WARNING="⬡"
+SYMBOL_INFO="●"
+SYMBOL_LOADING="◐"
+SYMBOL_BULLET="▸"
+SYMBOL_SMALL="▪"
 
 # Configuration
 PROJECT_NAME="dokus"
@@ -63,6 +117,12 @@ get_db_config() {
 DB_USER="dev"
 DB_PASSWORD="devpassword"
 
+# Function to capitalize first letter (Bash 3.2 compatible)
+capitalize() {
+    local str=$1
+    echo "$(echo ${str:0:1} | tr '[:lower:]' '[:upper:]')${str:1}"
+}
+
 # Function to print colored output
 print_color() {
     color=$1
@@ -70,64 +130,126 @@ print_color() {
     echo -e "${color}${message}${NC}"
 }
 
-# Function to print a box header
-print_box_header() {
+# Function to print a gradient header
+print_gradient_header() {
     local title=$1
-    local width=${2:-60}
-    local padding=$(( (width - ${#title} - 2) / 2 ))
-    local padding_right=$(( width - ${#title} - 2 - padding ))
+    local width=70
+    local padding=$(( (width - ${#title} - 4) / 2 ))
+    local padding_right=$(( width - ${#title} - 4 - padding ))
 
     echo ""
-    echo -e "${CYAN}${BOX_TL}$(printf '%*s' $width | tr ' ' ${BOX_H})${BOX_TR}${NC}"
-    echo -e "${CYAN}${BOX_V}$(printf '%*s' $padding)${WHITE}${BOLD}${title}${NC}${CYAN}$(printf '%*s' $padding_right)${BOX_V}${NC}"
-    echo -e "${CYAN}${BOX_BL}$(printf '%*s' $width | tr ' ' ${BOX_H})${BOX_BR}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_TL}$(printf '%*s' $width | tr ' ' ${BOX_H})${BOX_TR}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_V}$(printf '%*s' $width | tr ' ' ' ')${BOX_V}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_V}  ${GRADIENT_START}$(printf '%*s' $padding)${BRIGHT_WHITE}${BOLD}${title}${NC}${GRADIENT_END}$(printf '%*s' $padding_right)  ${SOFT_CYAN}${BOX_V}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_V}$(printf '%*s' $width | tr ' ' ' ')${BOX_V}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_BL}$(printf '%*s' $width | tr ' ' ${BOX_H})${BOX_BR}${NC}"
+    echo ""
+}
+
+# Function to print a simple rounded box header
+print_rounded_header() {
+    local title=$1
+    local width=70
+    local padding=$(( (width - ${#title} - 4) / 2 ))
+    local padding_right=$(( width - ${#title} - 4 - padding ))
+
+    echo ""
+    echo -e "${SOFT_CYAN}${ROUND_TL}$(printf '%*s' $width | tr ' ' ${ROUND_H})${ROUND_TR}${NC}"
+    echo -e "${SOFT_CYAN}${ROUND_V}  ${BRIGHT_WHITE}${BOLD}${title}${NC}$(printf '%*s' $(( width - ${#title} - 2 )) )  ${SOFT_CYAN}${ROUND_V}${NC}"
+    echo -e "${SOFT_CYAN}${ROUND_BL}$(printf '%*s' $width | tr ' ' ${ROUND_H})${ROUND_BR}${NC}"
     echo ""
 }
 
 # Function to print a section divider
 print_divider() {
     local char=${1:-─}
-    local width=${2:-60}
-    echo -e "${GRAY}$(printf '%*s' $width | tr ' ' $char)${NC}"
+    local width=${2:-70}
+    echo -e "${SOFT_GRAY}$(printf '%*s' $width | tr ' ' $char)${NC}"
 }
 
-# Function to print a spinner
+# Function to print a decorative separator
+print_separator() {
+    echo -e "${SOFT_GRAY}  ▪ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ▪${NC}"
+}
+
+# Function to print a modern spinner
 spinner() {
     local pid=$1
     local delay=0.1
-    local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    local spinstr='◐◓◑◒'
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
-        printf " [%c]  " "$spinstr"
+        printf " ${SOFT_YELLOW}%c${NC}  " "$spinstr"
         local spinstr=$temp${spinstr%"$temp"}
         sleep $delay
-        printf "\b\b\b\b\b\b"
+        printf "\b\b\b\b\b"
     done
     printf "    \b\b\b\b"
 }
 
-# Function to print status with icon
+# Function to print a progress bar
+print_progress_bar() {
+    local current=$1
+    local total=$2
+    local width=40
+    local percentage=$((current * 100 / total))
+    local filled=$((current * width / total))
+    local empty=$((width - filled))
+
+    printf "\r  ${SOFT_CYAN}["
+    printf "%${filled}s" | tr ' ' '█'
+    printf "%${empty}s" | tr ' ' '░'
+    printf "]${NC} ${BRIGHT_WHITE}%3d%%${NC}" "$percentage"
+}
+
+# Function to print status with modern badges
 print_status() {
     local status=$1
     local message=$2
     case $status in
         success)
-            echo -e "  ${GREEN}✔${NC} ${message}"
+            echo -e "  ${SOFT_GREEN}${SYMBOL_SUCCESS}${NC}  ${message}  ${SOFT_GREEN}${BOLD}[✓ READY]${NC}"
             ;;
         error)
-            echo -e "  ${RED}✖${NC} ${message}"
+            echo -e "  ${SOFT_RED}${SYMBOL_ERROR}${NC}  ${message}  ${SOFT_RED}${BOLD}[✗ ERROR]${NC}"
             ;;
         warning)
-            echo -e "  ${YELLOW}⚠${NC} ${message}"
+            echo -e "  ${SOFT_YELLOW}${SYMBOL_WARNING}${NC}  ${message}  ${SOFT_YELLOW}${BOLD}[⚠ WARNING]${NC}"
             ;;
         info)
-            echo -e "  ${CYAN}ℹ${NC} ${message}"
+            echo -e "  ${SOFT_CYAN}${SYMBOL_INFO}${NC}  ${message}"
             ;;
         loading)
-            echo -e "  ${YELLOW}⟳${NC} ${message}"
+            echo -e "  ${SOFT_YELLOW}${SYMBOL_LOADING}${NC}  ${message}  ${SOFT_YELLOW}${BOLD}[⟳ LOADING]${NC}"
+            ;;
+        building)
+            echo -e "  ${SOFT_ORANGE}▸${NC}  ${DIM_WHITE}${message}${NC}"
             ;;
         *)
             echo -e "  ${message}"
+            ;;
+    esac
+}
+
+# Function to print a simple status
+print_simple_status() {
+    local status=$1
+    local message=$2
+    case $status in
+        success)
+            echo -e "  ${SOFT_GREEN}${SYMBOL_SUCCESS}${NC}  ${message}"
+            ;;
+        error)
+            echo -e "  ${SOFT_RED}${SYMBOL_ERROR}${NC}  ${message}"
+            ;;
+        warning)
+            echo -e "  ${SOFT_YELLOW}${SYMBOL_WARNING}${NC}  ${message}"
+            ;;
+        info)
+            echo -e "  ${SOFT_CYAN}${SYMBOL_INFO}${NC}  ${message}"
+            ;;
+        building)
+            echo -e "  ${SOFT_ORANGE}▸${NC}  ${DIM_WHITE}${message}${NC}"
             ;;
     esac
 }
@@ -138,12 +260,12 @@ check_docker() {
         print_status error "Docker is not running. Please start Docker Desktop first."
         exit 1
     fi
-    print_status success "Docker is running"
+    print_status success "Docker daemon is running"
 }
 
 # Function to check if required tools are installed
 check_requirements() {
-    print_box_header "🔍 System Requirements Check"
+    print_gradient_header "🔍 System Requirements Check"
 
     check_docker
 
@@ -151,222 +273,101 @@ check_requirements() {
         print_status error "docker-compose is not installed"
         exit 1
     fi
-    print_status success "docker-compose is installed"
+    print_status success "docker-compose is available"
 
     if ! command -v gradle &> /dev/null && ! [ -f "./gradlew" ]; then
-        print_status warning "Gradle is not installed, using gradlew"
+        print_status warning "Gradle not found, using gradlew wrapper"
     else
-        print_status success "Gradle is available"
+        print_status success "Gradle build tool detected"
     fi
 
     echo ""
-    print_status success "All requirements met"
+    echo -e "  ${SOFT_GREEN}${SYMBOL_SUCCESS}  ${BOLD}All system requirements met${NC}"
     echo ""
 }
 
 # Function to build the application
 build_app() {
-    print_box_header "🔨 Building Applications"
+    print_gradient_header "🔨 Building Application Services"
 
-    # Build Auth Service JAR
-    print_status loading "Building Auth Service JAR..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :features:auth:backend:shadowJar -x test -q
-    else
-        gradle :features:auth:backend:shadowJar -x test -q
-    fi
+    local services=("auth" "audit" "banking" "invoicing" "expense" "payment" "reporting")
+    local total=${#services[@]}
+    local current=0
 
-    if [ $? -ne 0 ]; then
-        print_status error "Auth Service JAR build failed"
-        exit 1
-    fi
-    print_status success "Auth Service JAR built"
+    echo -e "  ${SOFT_CYAN}${BOLD}Phase 1: Building JAR files${NC}\n"
 
-    # Build Audit Service JAR
-    print_status loading "Building Audit Service JAR..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :features:audit:backend:shadowJar -x test -q
-    else
-        gradle :features:audit:backend:shadowJar -x test -q
-    fi
+    for service in "${services[@]}"; do
+        current=$((current + 1))
+        local service_name="$(capitalize "$service") Service"
 
-    if [ $? -ne 0 ]; then
-        print_status error "Audit Service JAR build failed"
-        exit 1
-    fi
-    print_status success "Audit Service JAR built"
+        print_simple_status building "Building ${service_name} JAR..."
 
-    # Build Banking Service JAR
-    print_status loading "Building Banking Service JAR..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :features:banking:backend:shadowJar -x test -q
-    else
-        gradle :features:banking:backend:shadowJar -x test -q
-    fi
+        if [ -f "./gradlew" ]; then
+            ./gradlew :features:${service}:backend:shadowJar -x test -q > /dev/null 2>&1
+        else
+            gradle :features:${service}:backend:shadowJar -x test -q > /dev/null 2>&1
+        fi
 
-    if [ $? -ne 0 ]; then
-        print_status error "Banking Service JAR build failed"
-        exit 1
-    fi
-    print_status success "Banking Service JAR built"
+        if [ $? -ne 0 ]; then
+            print_status error "${service_name} JAR build failed"
+            exit 1
+        fi
+        print_simple_status success "${service_name} JAR compiled"
+    done
 
-    # Build Invoicing Service JAR
-    print_status loading "Building Invoicing Service JAR..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :features:invoicing:backend:shadowJar -x test -q
-    else
-        gradle :features:invoicing:backend:shadowJar -x test -q
-    fi
-
-    if [ $? -ne 0 ]; then
-        print_status error "Invoicing Service JAR build failed"
-        exit 1
-    fi
-    print_status success "Invoicing Service JAR built"
-
-    # Build Expense Service JAR
-    print_status loading "Building Expense Service JAR..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :features:expense:backend:shadowJar -x test -q
-    else
-        gradle :features:expense:backend:shadowJar -x test -q
-    fi
-
-    if [ $? -ne 0 ]; then
-        print_status error "Expense Service JAR build failed"
-        exit 1
-    fi
-    print_status success "Expense Service JAR built"
-
-    # Build Payment Service JAR
-    print_status loading "Building Payment Service JAR..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :features:payment:backend:shadowJar -x test -q
-    else
-        gradle :features:payment:backend:shadowJar -x test -q
-    fi
-
-    if [ $? -ne 0 ]; then
-        print_status error "Payment Service JAR build failed"
-        exit 1
-    fi
-    print_status success "Payment Service JAR built"
-
-    # Build Reporting Service JAR
-    print_status loading "Building Reporting Service JAR..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :features:reporting:backend:shadowJar -x test -q
-    else
-        gradle :features:reporting:backend:shadowJar -x test -q
-    fi
-
-    if [ $? -ne 0 ]; then
-        print_status error "Reporting Service JAR build failed"
-        exit 1
-    fi
-    print_status success "Reporting Service JAR built"
-
-    print_divider
     echo ""
-    print_status loading "Building Docker images..."
+    print_separator
     echo ""
+    echo -e "  ${SOFT_CYAN}${BOLD}Phase 2: Building Docker images${NC}\n"
 
-    # Auth Service image
-    print_status loading "Building Auth Service image..."
-    docker build -f features/auth/backend/Dockerfile.dev -t invoid-vision/dokus-auth:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Auth Service Docker image build failed"
-        exit 1
-    fi
-    print_status success "Auth Service image built"
+    current=0
+    for service in "${services[@]}"; do
+        current=$((current + 1))
+        local service_name="$(capitalize "$service") Service"
 
-    # Audit Service image
-    print_status loading "Building Audit Service image..."
-    docker build -f features/audit/backend/Dockerfile.dev -t invoid-vision/dokus-audit:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Audit Service Docker image build failed"
-        exit 1
-    fi
-    print_status success "Audit Service image built"
+        print_simple_status building "Building ${service_name} image..."
+        docker build -f features/${service}/backend/Dockerfile.dev -t invoid-vision/dokus-${service}:dev-latest . -q > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            print_status error "${service_name} Docker image build failed"
+            exit 1
+        fi
+        print_simple_status success "${service_name} image ready"
+    done
 
-    # Banking Service image
-    print_status loading "Building Banking Service image..."
-    docker build -f features/banking/backend/Dockerfile.dev -t invoid-vision/dokus-banking:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Banking Service Docker image build failed"
-        exit 1
-    fi
-    print_status success "Banking Service image built"
-
-    # Invoicing Service image
-    print_status loading "Building Invoicing Service image..."
-    docker build -f features/invoicing/backend/Dockerfile.dev -t invoid-vision/dokus-invoicing:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Invoicing Service Docker image build failed"
-        exit 1
-    fi
-    print_status success "Invoicing Service image built"
-
-    # Expense Service image
-    print_status loading "Building Expense Service image..."
-    docker build -f features/expense/backend/Dockerfile.dev -t invoid-vision/dokus-expense:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Expense Service Docker image build failed"
-        exit 1
-    fi
-    print_status success "Expense Service image built"
-
-    # Payment Service image
-    print_status loading "Building Payment Service image..."
-    docker build -f features/payment/backend/Dockerfile.dev -t invoid-vision/dokus-payment:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Payment Service Docker image build failed"
-        exit 1
-    fi
-    print_status success "Payment Service image built"
-
-    # Reporting Service image
-    print_status loading "Building Reporting Service image..."
-    docker build -f features/reporting/backend/Dockerfile.dev -t invoid-vision/dokus-reporting:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Reporting Service Docker image build failed"
-        exit 1
-    fi
-    print_status success "Reporting Service image built"
-
+    echo ""
+    echo -e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}All services built successfully${NC}"
     echo ""
 }
 
 # Function to start services
 start_services() {
-    print_box_header "🚀 Starting Services"
+    print_gradient_header "🚀 Starting Development Environment"
 
     # Create logs directory if it doesn't exist
     mkdir -p logs
 
     # Start services
-    print_status loading "Starting Docker containers..."
+    print_status loading "Initializing Docker containers..."
     docker-compose -f $COMPOSE_FILE up -d > /dev/null 2>&1
 
     if [ $? -eq 0 ]; then
-        print_status success "Containers started"
+        print_status success "All containers started successfully"
 
         # Wait for services to be healthy
         echo ""
-        print_status loading "Waiting for services to become healthy..."
-        echo ""
+        echo -e "  ${SOFT_CYAN}${BOLD}Waiting for services to initialize...${NC}\n"
 
         # Wait for all PostgreSQL databases
         for db_key in $DB_KEYS; do
             IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            printf "  ${CYAN}▸${NC} %-22s" "PostgreSQL ($db_key)"
+            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "PostgreSQL ($db_key)"
             for i in {1..30}; do
                 if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
-                    echo -e "${GREEN}✔ Ready${NC}"
+                    echo -e "${SOFT_GREEN}◆ Ready${NC}"
                     break
                 fi
                 if [ $i -eq 30 ]; then
-                    echo -e "${RED}✖ Timeout${NC}"
+                    echo -e "${SOFT_RED}◇ Timeout${NC}"
                 fi
                 echo -n "."
                 sleep 1
@@ -374,96 +375,44 @@ start_services() {
         done
 
         # Wait for Redis
-        printf "  ${CYAN}▸${NC} Redis               "
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Redis Cache"
         for i in {1..30}; do
             if docker-compose -f $COMPOSE_FILE exec -T redis-dev redis-cli --pass devredispass ping &>/dev/null; then
-                echo -e "${GREEN}✔ Ready${NC}"
+                echo -e "${SOFT_GREEN}◆ Ready${NC}"
                 break
             fi
             echo -n "."
             sleep 1
         done
 
-        # Wait for Auth Service
-        sleep 3  # Give it a moment to start
-        printf "  ${CYAN}▸${NC} Auth Service        "
-        for i in {1..30}; do
-            if curl -f -s http://localhost:7091/metrics > /dev/null 2>&1; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
-        done
+        # Wait for services with proper spacing
+        sleep 3
 
-        # Wait for Audit Service
-        printf "  ${CYAN}▸${NC} Audit Service       "
-        for i in {1..30}; do
-            if curl -f -s http://localhost:7096/health > /dev/null 2>&1; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
-        done
+        local services=(
+            "Auth:7091:/metrics"
+            "Audit:7096:/health"
+            "Banking:7097:/health"
+            "Invoicing:7092:/health"
+            "Expense:7093:/health"
+            "Payment:7094:/health"
+            "Reporting:7095:/health"
+        )
 
-        # Wait for Banking Service
-        printf "  ${CYAN}▸${NC} Banking Service     "
-        for i in {1..30}; do
-            if curl -f -s http://localhost:7097/health > /dev/null 2>&1; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
-        done
-
-        # Wait for Invoicing Service
-        printf "  ${CYAN}▸${NC} Invoicing Service   "
-        for i in {1..30}; do
-            if curl -f -s http://localhost:7092/health > /dev/null 2>&1; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
-        done
-
-        # Wait for Expense Service
-        printf "  ${CYAN}▸${NC} Expense Service     "
-        for i in {1..30}; do
-            if curl -f -s http://localhost:7093/health > /dev/null 2>&1; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
-        done
-
-        # Wait for Payment Service
-        printf "  ${CYAN}▸${NC} Payment Service     "
-        for i in {1..30}; do
-            if curl -f -s http://localhost:7094/health > /dev/null 2>&1; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
-        done
-
-        # Wait for Reporting Service
-        printf "  ${CYAN}▸${NC} Reporting Service   "
-        for i in {1..30}; do
-            if curl -f -s http://localhost:7095/health > /dev/null 2>&1; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
+        for service_info in "${services[@]}"; do
+            IFS=':' read -r service_name port endpoint <<< "$service_info"
+            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "${service_name} Service"
+            for i in {1..30}; do
+                if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
+                    echo -e "${SOFT_GREEN}◆ Ready${NC}"
+                    break
+                fi
+                echo -n "."
+                sleep 1
+            done
         done
 
         echo ""
-        print_status success "All services are running!"
+        echo -e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}All services are operational!${NC}"
         echo ""
         print_services_info
     else
@@ -474,9 +423,10 @@ start_services() {
 
 # Function to stop services
 stop_services() {
-    print_box_header "🛑 Stopping Services"
+    print_gradient_header "🛑 Stopping Services"
     docker-compose -f $COMPOSE_FILE down
-    print_status success "Services stopped"
+    echo ""
+    print_status success "All services stopped"
     echo ""
 }
 
@@ -499,100 +449,74 @@ show_logs() {
 
 # Function to show service status
 show_status() {
-    print_box_header "📊 Service Status"
+    print_gradient_header "📊 Service Status Dashboard"
 
     docker-compose -f $COMPOSE_FILE ps
     echo ""
 
     # Check health endpoints
-    print_divider
-    echo -e "\n  ${CYAN}${BOLD}Health Checks${NC}\n"
+    print_separator
+    echo ""
+    echo -e "  ${SOFT_CYAN}${BOLD}Health Status Monitor${NC}\n"
+
+    # Create a dashboard-style table
+    echo -e "  ${SOFT_GRAY}┌─────────────────────────┬──────────────────┐${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                 ${SOFT_GRAY}│${NC} ${BOLD}Status${NC}           ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
     # Check all PostgreSQL databases
     for db_key in $DB_KEYS; do
         IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-        printf "  ${CYAN}▸${NC} %-22s" "PostgreSQL ($db_key)"
+        printf "  ${SOFT_GRAY}│${NC} PostgreSQL (%-9s) ${SOFT_GRAY}│${NC} " "$db_key"
         if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
-            echo -e "${GREEN}✔ Healthy${NC}"
+            echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
         else
-            echo -e "${RED}✖ Not responding${NC}"
+            echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
         fi
     done
 
     # Redis
-    printf "  ${CYAN}▸${NC} Redis               "
+    printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
     if docker-compose -f $COMPOSE_FILE exec -T redis-dev redis-cli --pass devredispass ping &>/dev/null; then
-        echo -e "${GREEN}✔ Healthy${NC}"
+        echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo -e "${RED}✖ Not responding${NC}"
+        echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    # Auth Service
-    printf "  ${CYAN}▸${NC} Auth Service        "
-    if curl -f -s http://localhost:7091/metrics > /dev/null 2>&1; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
+    echo -e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Audit Service
-    printf "  ${CYAN}▸${NC} Audit Service       "
-    if curl -f -s http://localhost:7096/health > /dev/null 2>&1; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
+    # Services
+    local services=(
+        "Auth Service:7091:/metrics"
+        "Audit Service:7096:/health"
+        "Banking Service:7097:/health"
+        "Invoicing Service:7092:/health"
+        "Expense Service:7093:/health"
+        "Payment Service:7094:/health"
+        "Reporting Service:7095:/health"
+    )
 
-    # Banking Service
-    printf "  ${CYAN}▸${NC} Banking Service     "
-    if curl -f -s http://localhost:7097/health > /dev/null 2>&1; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
+    for service_info in "${services[@]}"; do
+        IFS=':' read -r service_name port endpoint <<< "$service_info"
+        printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
+        if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
+            echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        else
+            echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        fi
+    done
 
-    # Invoicing Service
-    printf "  ${CYAN}▸${NC} Invoicing Service   "
-    if curl -f -s http://localhost:7092/health > /dev/null 2>&1; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
-
-    # Expense Service
-    printf "  ${CYAN}▸${NC} Expense Service     "
-    if curl -f -s http://localhost:7093/health > /dev/null 2>&1; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
-
-    # Payment Service
-    printf "  ${CYAN}▸${NC} Payment Service     "
-    if curl -f -s http://localhost:7094/health > /dev/null 2>&1; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
-
-    # Reporting Service
-    printf "  ${CYAN}▸${NC} Reporting Service   "
-    if curl -f -s http://localhost:7095/health > /dev/null 2>&1; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
-
+    echo -e "  ${SOFT_GRAY}└─────────────────────────┴──────────────────┘${NC}"
     echo ""
 }
 
 # Function to clean everything
 clean_all() {
-    print_box_header "🧹 Clean Everything"
+    print_gradient_header "🧹 Deep Clean"
 
     print_status warning "This will remove all containers, volumes, and data!"
     echo ""
-    printf "  ${BOLD}Are you sure? (y/N):${NC} "
+    printf "  ${BOLD}${SOFT_RED}Are you sure?${NC} ${DIM_WHITE}(y/N):${NC} "
     read -n 1 -r
     echo ""
     echo ""
@@ -601,30 +525,39 @@ clean_all() {
         print_status loading "Removing containers and volumes..."
         docker-compose -f $COMPOSE_FILE down -v
         rm -rf logs/*
-        print_status success "Cleanup complete"
+        echo ""
+        print_status success "Cleanup complete - all data removed"
     else
-        print_status info "Cancelled"
+        print_status info "Operation cancelled"
     fi
     echo ""
 }
 
 # Function to reset database
 reset_db() {
-    print_box_header "🔄 Reset Database"
+    print_gradient_header "🔄 Database Reset"
 
     echo ""
-    echo -e "  ${CYAN}${BOLD}Select database to reset:${NC}\n"
-    echo -e "  ${CYAN}1${NC})  Auth (dokus_auth)"
-    echo -e "  ${CYAN}2${NC})  Invoicing (dokus_invoicing)"
-    echo -e "  ${CYAN}3${NC})  Expense (dokus_expense)"
-    echo -e "  ${CYAN}4${NC})  Payment (dokus_payment)"
-    echo -e "  ${CYAN}5${NC})  Reporting (dokus_reporting)"
-    echo -e "  ${CYAN}6${NC})  Audit (dokus_audit)"
-    echo -e "  ${CYAN}7${NC})  Banking (dokus_banking)"
-    echo -e "  ${CYAN}8${NC})  All databases"
-    echo -e "  ${CYAN}0${NC})  Cancel"
+    echo -e "  ${SOFT_CYAN}${BOLD}Select database to reset:${NC}\n"
+
+    local options=(
+        "① Auth (dokus_auth)"
+        "② Invoicing (dokus_invoicing)"
+        "③ Expense (dokus_expense)"
+        "④ Payment (dokus_payment)"
+        "⑤ Reporting (dokus_reporting)"
+        "⑥ Audit (dokus_audit)"
+        "⑦ Banking (dokus_banking)"
+        "⑧ All databases"
+    )
+
+    for option in "${options[@]}"; do
+        echo -e "  ${SOFT_CYAN}${option}${NC}"
+    done
     echo ""
-    printf "  ${BOLD}Enter choice [0-8]:${NC} "
+    echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
+    echo ""
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-8]:${NC} "
     read choice
     echo ""
 
@@ -637,7 +570,7 @@ reset_db() {
         6) reset_single_db "audit" ;;
         7) reset_single_db "banking" ;;
         8) reset_all_databases ;;
-        0) print_status info "Cancelled"; echo ""; return ;;
+        0) print_status info "Operation cancelled"; echo ""; return ;;
         *) print_status error "Invalid choice"; echo ""; return ;;
     esac
 }
@@ -649,7 +582,7 @@ reset_single_db() {
 
     print_status warning "This will reset the $db_key database ($dbname)!"
     echo ""
-    printf "  ${BOLD}Are you sure? (y/N):${NC} "
+    printf "  ${BOLD}${SOFT_RED}Are you sure?${NC} ${DIM_WHITE}(y/N):${NC} "
     read -n 1 -r
     echo ""
     echo ""
@@ -660,9 +593,10 @@ reset_single_db() {
         docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
         docker volume rm dokus_$container 2>/dev/null || true
         docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
+        echo ""
         print_status success "$db_key database reset complete"
     else
-        print_status info "Cancelled"
+        print_status info "Operation cancelled"
     fi
     echo ""
 }
@@ -671,52 +605,62 @@ reset_single_db() {
 reset_all_databases() {
     print_status warning "This will reset ALL databases!"
     echo ""
-    printf "  ${BOLD}Are you sure? (y/N):${NC} "
+    printf "  ${BOLD}${SOFT_RED}Are you sure?${NC} ${DIM_WHITE}(y/N):${NC} "
     read -n 1 -r
     echo ""
     echo ""
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_status loading "Resetting all databases..."
+        echo ""
 
         for db_key in $DB_KEYS; do
             IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            print_status loading "Resetting $db_key..."
+            print_simple_status building "Resetting $db_key..."
             docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
             docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
             docker volume rm dokus_$container 2>/dev/null || true
         done
 
-        # Start all databases
+        echo ""
         print_status loading "Starting all databases..."
         for db_key in $DB_KEYS; do
             IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
             docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
         done
 
+        echo ""
         print_status success "All databases reset complete"
     else
-        print_status info "Cancelled"
+        print_status info "Operation cancelled"
     fi
     echo ""
 }
 
 # Function to access database
 access_db() {
-    print_box_header "🗄️ Accessing PostgreSQL"
+    print_gradient_header "🗄️  Database CLI Access"
 
     echo ""
-    echo -e "  ${CYAN}${BOLD}Select database to access:${NC}\n"
-    echo -e "  ${CYAN}1${NC})  Auth (dokus_auth) - localhost:5541"
-    echo -e "  ${CYAN}2${NC})  Invoicing (dokus_invoicing) - localhost:5542"
-    echo -e "  ${CYAN}3${NC})  Expense (dokus_expense) - localhost:5543"
-    echo -e "  ${CYAN}4${NC})  Payment (dokus_payment) - localhost:5544"
-    echo -e "  ${CYAN}5${NC})  Reporting (dokus_reporting) - localhost:5545"
-    echo -e "  ${CYAN}6${NC})  Audit (dokus_audit) - localhost:5546"
-    echo -e "  ${CYAN}7${NC})  Banking (dokus_banking) - localhost:5547"
-    echo -e "  ${CYAN}0${NC})  Cancel"
+    echo -e "  ${SOFT_CYAN}${BOLD}Select database to access:${NC}\n"
+
+    local options=(
+        "① Auth (dokus_auth) - localhost:5541"
+        "② Invoicing (dokus_invoicing) - localhost:5542"
+        "③ Expense (dokus_expense) - localhost:5543"
+        "④ Payment (dokus_payment) - localhost:5544"
+        "⑤ Reporting (dokus_reporting) - localhost:5545"
+        "⑥ Audit (dokus_audit) - localhost:5546"
+        "⑦ Banking (dokus_banking) - localhost:5547"
+    )
+
+    for option in "${options[@]}"; do
+        echo -e "  ${SOFT_CYAN}${option}${NC}"
+    done
     echo ""
-    printf "  ${BOLD}Enter choice [0-7]:${NC} "
+    echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
+    echo ""
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-7]:${NC} "
     read choice
     echo ""
 
@@ -728,7 +672,7 @@ access_db() {
         5) access_single_db "reporting" ;;
         6) access_single_db "audit" ;;
         7) access_single_db "banking" ;;
-        0) print_status info "Cancelled"; echo ""; return ;;
+        0) print_status info "Operation cancelled"; echo ""; return ;;
         *) print_status error "Invalid choice"; echo ""; return ;;
     esac
 }
@@ -745,7 +689,7 @@ access_single_db() {
 
 # Function to access Redis
 access_redis() {
-    print_box_header "🗄️ Accessing Redis"
+    print_gradient_header "🗄️  Redis CLI Access"
     docker-compose -f $COMPOSE_FILE exec redis-dev redis-cli -a devredispass
 }
 
@@ -754,28 +698,28 @@ run_tests() {
     service=${1:-all}
 
     if [ "$service" = "all" ]; then
-        print_box_header "🧪 Running All Tests"
+        print_gradient_header "🧪 Running All Test Suites"
         if [ -f "./gradlew" ]; then
             ./gradlew :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test
         else
             gradle :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test
         fi
     elif [ "$service" = "auth" ]; then
-        print_box_header "🧪 Running Auth Service Tests"
+        print_gradient_header "🧪 Running Auth Service Tests"
         if [ -f "./gradlew" ]; then
             ./gradlew :features:auth:backend:test
         else
             gradle :features:auth:backend:test
         fi
     elif [ "$service" = "audit" ]; then
-        print_box_header "🧪 Running Audit Service Tests"
+        print_gradient_header "🧪 Running Audit Service Tests"
         if [ -f "./gradlew" ]; then
             ./gradlew :features:audit:backend:test
         else
             gradle :features:audit:backend:test
         fi
     elif [ "$service" = "banking" ]; then
-        print_box_header "🧪 Running Banking Service Tests"
+        print_gradient_header "🧪 Running Banking Service Tests"
         if [ -f "./gradlew" ]; then
             ./gradlew :features:banking:backend:test
         else
@@ -790,94 +734,78 @@ run_tests() {
 
 # Function to print service information
 print_services_info() {
-    print_divider "─"
+    print_separator
     echo ""
-    echo -e "  ${CYAN}${BOLD}📍 Service Endpoints${NC}\n"
+    echo -e "  ${SOFT_CYAN}${BOLD}📍 Service Endpoints${NC}\n"
 
-    # Auth Service
-    echo -e "  ${MAGENTA}▸ Auth Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7091${NC}"
-    echo -e "    ${GRAY}•${NC} Metrics:    ${WHITE}http://localhost:7091/metrics${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7091/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5007${NC}"
+    # Service table
+    echo -e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Endpoints${NC}                               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+
+    # Services
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7091${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC} • ${SOFT_GRAY}debug: 5007${NC}    ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Invoicing Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7092${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5009${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Expense Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7093${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5010${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7094${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5011${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7095${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5012${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5013${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5014${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
+
     echo ""
+    echo -e "  ${SOFT_CYAN}${BOLD}💾 Database Connections${NC}\n"
 
-    # Invoicing Service
-    echo -e "  ${MAGENTA}▸ Invoicing Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7092${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7092/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5009${NC}"
-    echo ""
-
-    # Expense Service
-    echo -e "  ${MAGENTA}▸ Expense Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7093${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7093/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5010${NC}"
-    echo ""
-
-    # Payment Service
-    echo -e "  ${MAGENTA}▸ Payment Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7094${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7094/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5011${NC}"
-    echo ""
-
-    # Reporting Service
-    echo -e "  ${MAGENTA}▸ Reporting Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7095${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7095/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5012${NC}"
-    echo ""
-
-    # Audit Service
-    echo -e "  ${MAGENTA}▸ Audit Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7096${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7096/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5013${NC}"
-    echo ""
-
-    # Banking Service
-    echo -e "  ${MAGENTA}▸ Banking Service${NC}"
-    echo -e "    ${GRAY}•${NC} API:        ${WHITE}http://localhost:7097${NC}"
-    echo -e "    ${GRAY}•${NC} Health:     ${WHITE}http://localhost:7097/health${NC}"
-    echo -e "    ${GRAY}•${NC} Debug:      ${WHITE}localhost:5014${NC}"
-    echo ""
-
-    # Databases
-    echo -e "  ${MAGENTA}▸ PostgreSQL Databases${NC}"
-    echo -e "    ${GRAY}•${NC} Auth:       ${WHITE}localhost:5541${NC} ${DIM}(user: $DB_USER, db: dokus_auth)${NC}"
-    echo -e "    ${GRAY}•${NC} Invoicing:  ${WHITE}localhost:5542${NC} ${DIM}(user: $DB_USER, db: dokus_invoicing)${NC}"
-    echo -e "    ${GRAY}•${NC} Expense:    ${WHITE}localhost:5543${NC} ${DIM}(user: $DB_USER, db: dokus_expense)${NC}"
-    echo -e "    ${GRAY}•${NC} Payment:    ${WHITE}localhost:5544${NC} ${DIM}(user: $DB_USER, db: dokus_payment)${NC}"
-    echo -e "    ${GRAY}•${NC} Reporting:  ${WHITE}localhost:5545${NC} ${DIM}(user: $DB_USER, db: dokus_reporting)${NC}"
-    echo -e "    ${GRAY}•${NC} Audit:      ${WHITE}localhost:5546${NC} ${DIM}(user: $DB_USER, db: dokus_audit)${NC}"
-    echo -e "    ${GRAY}•${NC} Banking:    ${WHITE}localhost:5547${NC} ${DIM}(user: $DB_USER, db: dokus_banking)${NC}"
-    echo ""
-
-    # Redis
-    echo -e "  ${MAGENTA}▸ Redis${NC}"
-    echo -e "    ${GRAY}•${NC} Redis:      ${WHITE}localhost:6380${NC} ${DIM}(password: devredispass)${NC}"
+    # Database table
+    echo -e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Database${NC}             ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Auth${NC}                 ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5541${NC} • ${SOFT_GRAY}dokus_auth${NC}         ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Invoicing${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5542${NC} • ${SOFT_GRAY}dokus_invoicing${NC}    ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Expense${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5543${NC} • ${SOFT_GRAY}dokus_expense${NC}      ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Payment${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5544${NC} • ${SOFT_GRAY}dokus_payment${NC}      ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Reporting${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5545${NC} • ${SOFT_GRAY}dokus_reporting${NC}    ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Audit${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5546${NC} • ${SOFT_GRAY}dokus_audit${NC}        ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Banking${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5547${NC} • ${SOFT_GRAY}dokus_banking${NC}      ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:6380${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
-        echo -e "    ${GRAY}•${NC} pgAdmin:    ${WHITE}http://localhost:5050${NC} ${DIM}(admin@dokus.ai / admin)${NC}"
+        echo ""
+        echo -e "  ${SOFT_INFO}${SYMBOL_INFO}${NC}  pgAdmin: ${DIM_WHITE}http://localhost:5050${NC} ${SOFT_GRAY}(admin@dokus.ai / admin)${NC}"
     fi
 
     echo ""
-    print_divider "─"
+    echo -e "  ${DIM_WHITE}User: ${SOFT_CYAN}$DB_USER${NC} ${SOFT_GRAY}•${NC} ${DIM_WHITE}Password: ${SOFT_CYAN}$DB_PASSWORD${NC}"
     echo ""
-    echo -e "  ${CYAN}${BOLD}🔧 Quick Commands${NC}\n"
-    echo -e "    ${GRAY}./dev.sh logs${NC}         View all logs"
-    echo -e "    ${GRAY}./dev.sh db${NC}           Access PostgreSQL database"
-    echo -e "    ${GRAY}./dev.sh redis${NC}        Access Redis CLI"
-    echo -e "    ${GRAY}./dev.sh status${NC}       Check service health"
-    echo -e "    ${GRAY}./dev.sh test${NC}         Run all tests"
+    print_separator
+    echo ""
+    echo -e "  ${SOFT_CYAN}${BOLD}🔧 Quick Commands${NC}\n"
+    echo -e "    ${SOFT_GRAY}./dev.sh logs${NC}         ${DIM_WHITE}View all service logs${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh db${NC}           ${DIM_WHITE}Access PostgreSQL database${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh redis${NC}        ${DIM_WHITE}Access Redis CLI${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh status${NC}       ${DIM_WHITE}Check service health${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh test${NC}         ${DIM_WHITE}Run all test suites${NC}"
     echo ""
 }
 
 # Function to start pgAdmin
 start_pgadmin() {
-    print_box_header "🗄️ Starting pgAdmin"
+    print_gradient_header "🗄️  Starting pgAdmin"
     docker-compose -f $COMPOSE_FILE --profile tools up -d pgadmin
     echo ""
     print_status success "pgAdmin started at http://localhost:5050"
@@ -889,8 +817,8 @@ start_pgadmin() {
 watch_mode() {
     service=${1:-all}
 
-    print_color "$BLUE" "👁️  Watch mode - rebuilding on changes..."
-    print_color "$YELLOW" "Press Ctrl+C to stop"
+    print_color "$SOFT_BLUE" "👁️  Watch mode - rebuilding on changes..."
+    print_color "$SOFT_YELLOW" "Press Ctrl+C to stop"
 
     # Initial build and start
     build_app
@@ -900,14 +828,14 @@ watch_mode() {
     if command -v fswatch &> /dev/null; then
         if [ "$service" = "all" ]; then
             fswatch -o $AUTH_SERVICE_DIR/src $AUDIT_SERVICE_DIR/src $BANKING_SERVICE_DIR/src | while read num ; do
-                print_color "$YELLOW" "🔄 Changes detected, rebuilding..."
+                print_color "$SOFT_YELLOW" "🔄 Changes detected, rebuilding..."
                 build_app
                 docker-compose -f $COMPOSE_FILE restart auth-service-dev audit-service-dev banking-service-dev
-                print_color "$GREEN" "✓ Services restarted"
+                print_color "$SOFT_GREEN" "✓ Services restarted"
             done
         elif [ "$service" = "auth" ]; then
             fswatch -o $AUTH_SERVICE_DIR/src | while read num ; do
-                print_color "$YELLOW" "🔄 Auth Service changes detected, rebuilding..."
+                print_color "$SOFT_YELLOW" "🔄 Auth Service changes detected, rebuilding..."
                 if [ -f "./gradlew" ]; then
                     ./gradlew :features:auth:backend:shadowJar -x test
                 else
@@ -915,11 +843,11 @@ watch_mode() {
                 fi
                 docker build -f features/auth/backend/Dockerfile.dev -t invoid-vision/dokus-auth:dev-latest .
                 docker-compose -f $COMPOSE_FILE restart auth-service-dev
-                print_color "$GREEN" "✓ Auth Service restarted"
+                print_color "$SOFT_GREEN" "✓ Auth Service restarted"
             done
         elif [ "$service" = "audit" ]; then
             fswatch -o $AUDIT_SERVICE_DIR/src | while read num ; do
-                print_color "$YELLOW" "🔄 Audit Service changes detected, rebuilding..."
+                print_color "$SOFT_YELLOW" "🔄 Audit Service changes detected, rebuilding..."
                 if [ -f "./gradlew" ]; then
                     ./gradlew :features:audit:backend:shadowJar -x test
                 else
@@ -927,11 +855,11 @@ watch_mode() {
                 fi
                 docker build -f features/audit/backend/Dockerfile.dev -t invoid-vision/dokus-audit:dev-latest .
                 docker-compose -f $COMPOSE_FILE restart audit-service-dev
-                print_color "$GREEN" "✓ Audit Service restarted"
+                print_color "$SOFT_GREEN" "✓ Audit Service restarted"
             done
         elif [ "$service" = "banking" ]; then
             fswatch -o $BANKING_SERVICE_DIR/src | while read num ; do
-                print_color "$YELLOW" "🔄 Banking Service changes detected, rebuilding..."
+                print_color "$SOFT_YELLOW" "🔄 Banking Service changes detected, rebuilding..."
                 if [ -f "./gradlew" ]; then
                     ./gradlew :features:banking:backend:shadowJar -x test
                 else
@@ -939,11 +867,11 @@ watch_mode() {
                 fi
                 docker build -f features/banking/backend/Dockerfile.dev -t invoid-vision/dokus-banking:dev-latest .
                 docker-compose -f $COMPOSE_FILE restart banking-service-dev
-                print_color "$GREEN" "✓ Banking Service restarted"
+                print_color "$SOFT_GREEN" "✓ Banking Service restarted"
             done
         fi
     else
-        print_color "$YELLOW" "⚠️  fswatch not installed. Install it for file watching:"
+        print_color "$SOFT_YELLOW" "⚠️  fswatch not installed. Install it for file watching:"
         echo "  macOS: brew install fswatch"
         echo "  Linux: apt-get install inotify-tools"
     fi
@@ -1009,53 +937,58 @@ main() {
 
 # Function to show help
 show_help() {
-    print_box_header "🚀 Dokus Development Environment Manager"
+    print_gradient_header "🚀 Dokus Development Environment Manager"
 
     echo -e "  ${BOLD}Usage:${NC} ./dev.sh [command] [options]\n"
 
-    print_divider
+    print_separator
     echo ""
-    echo -e "  ${CYAN}${BOLD}Commands:${NC}\n"
+    echo -e "  ${SOFT_CYAN}${BOLD}Commands:${NC}\n"
 
-    echo -e "  ${GREEN}Service Management${NC}"
-    echo -e "    ${WHITE}start${NC}              Build and start all services"
-    echo -e "    ${WHITE}stop${NC}               Stop all services"
-    echo -e "    ${WHITE}restart${NC}            Restart all services"
-    echo -e "    ${WHITE}status${NC}             Show service status and health"
-    echo -e "    ${WHITE}logs${NC} [service]     Show logs (optionally for specific service)"
-    echo ""
-
-    echo -e "  ${MAGENTA}Build & Development${NC}"
-    echo -e "    ${WHITE}build${NC}              Build all services"
-    echo -e "    ${WHITE}test${NC} [service]     Run tests (auth|database|all)"
-    echo -e "    ${WHITE}watch${NC} [service]    Watch mode with auto-rebuild"
+    echo -e "  ${SOFT_GREEN}${BOLD}Service Management${NC}"
+    echo -e "    ${SOFT_CYAN}start${NC}              ${DIM_WHITE}Build and start all services${NC}"
+    echo -e "    ${SOFT_CYAN}stop${NC}               ${DIM_WHITE}Stop all services${NC}"
+    echo -e "    ${SOFT_CYAN}restart${NC}            ${DIM_WHITE}Restart all services${NC}"
+    echo -e "    ${SOFT_CYAN}status${NC}             ${DIM_WHITE}Show service status and health${NC}"
+    echo -e "    ${SOFT_CYAN}logs${NC} [service]     ${DIM_WHITE}Show logs (optionally for specific service)${NC}"
     echo ""
 
-    echo -e "  ${YELLOW}Database & Cache${NC}"
-    echo -e "    ${WHITE}db${NC}                 Access PostgreSQL CLI (interactive menu)"
-    echo -e "    ${WHITE}redis${NC}              Access Redis CLI"
-    echo -e "    ${WHITE}reset-db${NC}           Reset database (interactive menu)"
-    echo -e "    ${WHITE}pgadmin${NC}            Start pgAdmin interface"
+    echo -e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
+    echo -e "    ${SOFT_CYAN}build${NC}              ${DIM_WHITE}Build all services${NC}"
+    echo -e "    ${SOFT_CYAN}test${NC} [service]     ${DIM_WHITE}Run tests (auth|database|all)${NC}"
+    echo -e "    ${SOFT_CYAN}watch${NC} [service]    ${DIM_WHITE}Watch mode with auto-rebuild${NC}"
     echo ""
 
-    echo -e "  ${RED}Maintenance${NC}"
-    echo -e "    ${WHITE}clean${NC}              Remove all containers and volumes"
+    echo -e "  ${SOFT_YELLOW}${BOLD}Database & Cache${NC}"
+    echo -e "    ${SOFT_CYAN}db${NC}                 ${DIM_WHITE}Access PostgreSQL CLI (interactive menu)${NC}"
+    echo -e "    ${SOFT_CYAN}redis${NC}              ${DIM_WHITE}Access Redis CLI${NC}"
+    echo -e "    ${SOFT_CYAN}reset-db${NC}           ${DIM_WHITE}Reset database (interactive menu)${NC}"
+    echo -e "    ${SOFT_CYAN}pgadmin${NC}            ${DIM_WHITE}Start pgAdmin interface${NC}"
     echo ""
 
-    echo -e "  ${GRAY}Other${NC}"
-    echo -e "    ${WHITE}help${NC}               Show this help message"
+    echo -e "  ${SOFT_RED}${BOLD}Maintenance${NC}"
+    echo -e "    ${SOFT_CYAN}clean${NC}              ${DIM_WHITE}Remove all containers and volumes${NC}"
     echo ""
 
-    print_divider
+    echo -e "  ${SOFT_GRAY}${BOLD}Other${NC}"
+    echo -e "    ${SOFT_CYAN}help${NC}               ${DIM_WHITE}Show this help message${NC}"
     echo ""
-    echo -e "  ${CYAN}${BOLD}Examples:${NC}\n"
 
-    echo -e "    ${GRAY}./dev.sh start${NC}                   Start everything"
-    echo -e "    ${GRAY}./dev.sh logs auth-service-dev${NC}   Show auth service logs"
-    echo -e "    ${GRAY}./dev.sh db${NC}                      Access PostgreSQL database (choose from menu)"
-    echo -e "    ${GRAY}./dev.sh test auth${NC}               Run auth service tests"
-    echo -e "    ${GRAY}./dev.sh reset-db${NC}                Reset database (choose from menu)"
-    echo -e "    ${GRAY}./dev.sh watch all${NC}               Watch and auto-rebuild all"
+    print_separator
+    echo ""
+    echo -e "  ${SOFT_CYAN}${BOLD}Examples:${NC}\n"
+
+    echo -e "    ${SOFT_GRAY}./dev.sh start${NC}                   ${DIM_WHITE}Start everything${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh logs auth-service-dev${NC}   ${DIM_WHITE}Show auth service logs${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh db${NC}                      ${DIM_WHITE}Access PostgreSQL database (choose from menu)${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh test auth${NC}               ${DIM_WHITE}Run auth service tests${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh reset-db${NC}                ${DIM_WHITE}Reset database (choose from menu)${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh watch all${NC}               ${DIM_WHITE}Watch and auto-rebuild all${NC}"
+    echo ""
+
+    print_separator
+    echo ""
+    echo -e "  ${SOFT_GRAY}${DIM}Set NO_COLOR=1 to disable colors${NC}"
     echo ""
 }
 
@@ -1063,37 +996,37 @@ show_help() {
 show_menu() {
     clear
     echo ""
-    echo -e "${CYAN}${BOX_TL}$(printf '%.0s═' {1..58})${BOX_TR}${NC}"
-    echo -e "${CYAN}${BOX_V}                                                          ${BOX_V}${NC}"
-    echo -e "${CYAN}${BOX_V}        ${WHITE}${BOLD}🚀 Dokus Development Environment${NC}${CYAN}           ${BOX_V}${NC}"
-    echo -e "${CYAN}${BOX_V}                                                          ${BOX_V}${NC}"
-    echo -e "${CYAN}${BOX_BL}$(printf '%.0s═' {1..58})${BOX_BR}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_TL}$(printf '%.0s═' {1..68})${BOX_TR}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_V}                                                                    ${BOX_V}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_V}           ${GRADIENT_START}${BOLD}🚀 Dokus Development Environment${NC}${SOFT_CYAN}              ${BOX_V}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_V}                                                                    ${BOX_V}${NC}"
+    echo -e "${SOFT_CYAN}${BOX_BL}$(printf '%.0s═' {1..68})${BOX_BR}${NC}"
     echo ""
-    echo -e "  ${CYAN}${BOLD}What would you like to do?${NC}\n"
+    echo -e "  ${SOFT_CYAN}${BOLD}What would you like to do?${NC}\n"
 
-    echo -e "  ${GREEN}Service Management${NC}"
-    echo -e "    ${CYAN}1${NC})  Start services"
-    echo -e "    ${CYAN}2${NC})  Stop services"
-    echo -e "    ${CYAN}3${NC})  Restart services"
-    echo -e "    ${CYAN}4${NC})  Show status"
-    echo ""
-
-    echo -e "  ${MAGENTA}Development Tools${NC}"
-    echo -e "    ${CYAN}5${NC})  View logs"
-    echo -e "    ${CYAN}6${NC})  Access database"
-    echo -e "    ${CYAN}7${NC})  Access Redis"
-    echo -e "    ${CYAN}8${NC})  Run all tests"
+    echo -e "  ${SOFT_GREEN}${BOLD}Service Management${NC}"
+    echo -e "    ${SOFT_CYAN}①${NC}  Start services"
+    echo -e "    ${SOFT_CYAN}②${NC}  Stop services"
+    echo -e "    ${SOFT_CYAN}③${NC}  Restart services"
+    echo -e "    ${SOFT_CYAN}④${NC}  Show status"
     echo ""
 
-    echo -e "  ${YELLOW}Utilities${NC}"
-    echo -e "    ${CYAN}9${NC})  Start pgAdmin"
-    echo -e "    ${CYAN}10${NC}) Clean everything"
+    echo -e "  ${SOFT_MAGENTA}${BOLD}Development Tools${NC}"
+    echo -e "    ${SOFT_CYAN}⑤${NC}  View logs"
+    echo -e "    ${SOFT_CYAN}⑥${NC}  Access database"
+    echo -e "    ${SOFT_CYAN}⑦${NC}  Access Redis"
+    echo -e "    ${SOFT_CYAN}⑧${NC}  Run all tests"
     echo ""
 
-    echo -e "  ${GRAY}0${NC})  Exit"
+    echo -e "  ${SOFT_YELLOW}${BOLD}Utilities${NC}"
+    echo -e "    ${SOFT_CYAN}⑨${NC}  Start pgAdmin"
+    echo -e "    ${SOFT_CYAN}⑩${NC}  Clean everything"
     echo ""
 
-    printf "  ${BOLD}Enter choice [0-10]:${NC} "
+    echo -e "  ${SOFT_GRAY}⓪${NC}  Exit"
+    echo ""
+
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-10]:${NC} "
     read choice
 
     echo ""
@@ -1109,12 +1042,12 @@ show_menu() {
         8) run_tests all ;;
         9) start_pgadmin ;;
         10) clean_all ;;
-        0) echo -e "${CYAN}👋 Goodbye!${NC}" && exit 0 ;;
+        0) echo -e "  ${SOFT_CYAN}👋 Goodbye!${NC}\n" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 2 && show_menu ;;
     esac
 
     echo ""
-    printf "${DIM}Press Enter to continue...${NC}"
+    printf "  ${DIM}Press Enter to continue...${NC}"
     read
     show_menu
 }
