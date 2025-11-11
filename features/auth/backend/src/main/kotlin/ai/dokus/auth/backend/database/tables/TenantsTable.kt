@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.database.tables
 
-import ai.dokus.foundation.domain.database.dbEnumeration
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus

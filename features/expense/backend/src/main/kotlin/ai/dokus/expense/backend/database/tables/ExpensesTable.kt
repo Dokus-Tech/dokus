@@ -1,6 +1,6 @@
 package ai.dokus.expense.backend.database.tables
 
-import ai.dokus.foundation.domain.database.dbEnumeration
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

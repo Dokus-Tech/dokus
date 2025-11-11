@@ -23,6 +23,13 @@ import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.Instant as KotlinxInstant
+
+/**
+ * Converts kotlin.time.Instant to kotlinx.datetime.Instant
+ */
+private fun kotlin.time.Instant.toKotlinxInstant(): KotlinxInstant =
+    KotlinxInstant.fromEpochSeconds(this.epochSeconds, this.nanosecondsOfSecond)
 
 /**
  * Business logic layer for authentication operations.
@@ -74,7 +81,7 @@ class AuthService(
 
         // Record successful login
         val userId = UserId(user.id.value.toString())
-        val loginTime = now()
+        val loginTime = now().toKotlinxInstant()
         userService.recordLogin(userId, loginTime)
 
         // Generate full name for JWT claims
@@ -97,7 +104,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = now() + 30.days
+            expiresAt = (now() + 30.days).toKotlinxInstant()
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -179,7 +186,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = now() + 30.days
+            expiresAt = (now() + 30.days).toKotlinxInstant()
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -263,7 +270,7 @@ class AuthService(
         refreshTokenService.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = now() + 30.days
+            expiresAt = (now() + 30.days).toKotlinxInstant()
         ).onFailure { error ->
             logger.error("Failed to save rotated refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
