@@ -11,14 +11,18 @@ import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -171,7 +175,7 @@ class RefreshTokenServiceImplTest {
     }
 
     @BeforeEach
-    fun clearTokens() = runBlocking {
+    fun clearTokens(): Unit = runBlocking {
         dbQuery {
             RefreshTokensTable.deleteAll()
         }
@@ -301,7 +305,7 @@ class RefreshTokenServiceImplTest {
             RefreshTokensTable.selectAll()
                 .where {
                     (RefreshTokensTable.userId eq testUserId!!.uuid.toJavaUuid()) and
-                    (RefreshTokensTable.isRevoked eq true)
+                            (RefreshTokensTable.isRevoked eq true)
                 }
                 .count()
         }
@@ -366,13 +370,14 @@ class RefreshTokenServiceImplTest {
     }
 
     @Test
-    fun `getUserActiveTokens should return empty list for user with no active tokens`() = runBlocking {
-        val otherUserId = UserId(Uuid.random().toString())
+    fun `getUserActiveTokens should return empty list for user with no active tokens`() =
+        runBlocking {
+            val otherUserId = UserId(Uuid.random().toString())
 
-        val activeTokens = service.getUserActiveTokens(otherUserId)
+            val activeTokens = service.getUserActiveTokens(otherUserId)
 
-        assertTrue(activeTokens.isEmpty(), "Should return empty list for user with no tokens")
-    }
+            assertTrue(activeTokens.isEmpty(), "Should return empty list for user with no tokens")
+        }
 
     @Test
     fun `service should handle concurrent token operations safely`() = runBlocking {
