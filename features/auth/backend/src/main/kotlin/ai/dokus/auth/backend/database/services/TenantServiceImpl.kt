@@ -21,7 +21,7 @@ import kotlinx.datetime.DateTimePeriod
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder
 import org.jetbrains.exposed.v1.core.insert
 import org.jetbrains.exposed.v1.core.insertAndGetId
 import org.jetbrains.exposed.v1.core.selectAll

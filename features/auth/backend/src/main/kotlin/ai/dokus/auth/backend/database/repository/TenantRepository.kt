@@ -13,7 +13,7 @@ import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder
 import org.jetbrains.exposed.v1.core.insert
 import org.jetbrains.exposed.v1.core.insertAndGetId
 import org.jetbrains.exposed.v1.core.selectAll

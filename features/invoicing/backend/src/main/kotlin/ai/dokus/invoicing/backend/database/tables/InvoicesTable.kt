@@ -10,6 +10,13 @@ import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
 import org.jetbrains.exposed.sql.kotlin.datetime.date
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.Table.Dual.decimal
+import org.jetbrains.exposed.v1.core.Table.Dual.default
+import org.jetbrains.exposed.v1.core.Table.Dual.nullable
+import org.jetbrains.exposed.v1.core.Table.Dual.reference
+import org.jetbrains.exposed.v1.core.Table.Dual.uniqueIndex
+import org.jetbrains.exposed.v1.core.Table.Dual.uuid
+import org.jetbrains.exposed.v1.core.Table.Dual.varchar
 import java.math.BigDecimal
 import java.util.UUID as JavaUUID
 

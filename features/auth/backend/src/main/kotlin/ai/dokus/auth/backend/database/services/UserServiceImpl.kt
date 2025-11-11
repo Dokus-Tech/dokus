@@ -15,7 +15,7 @@ import ai.dokus.foundation.ktor.services.UserService
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
