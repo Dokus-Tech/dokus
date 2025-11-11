@@ -1,22 +1,15 @@
 package ai.dokus.invoicing.backend.database.tables
 
-import ai.dokus.foundation.ktor.database.dbEnumeration
+import ai.dokus.foundation.domain.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.PeppolStatus
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.ReferenceOption
-import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
-import org.jetbrains.exposed.sql.kotlin.datetime.date
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.v1.core.Table.Dual.decimal
-import org.jetbrains.exposed.v1.core.Table.Dual.default
-import org.jetbrains.exposed.v1.core.Table.Dual.nullable
-import org.jetbrains.exposed.v1.core.Table.Dual.reference
-import org.jetbrains.exposed.v1.core.Table.Dual.uniqueIndex
-import org.jetbrains.exposed.v1.core.Table.Dual.uuid
-import org.jetbrains.exposed.v1.core.Table.Dual.varchar
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.ReferenceOption
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.date
+import org.jetbrains.exposed.v1.datetime.datetime
 import java.math.BigDecimal
 import java.util.UUID as JavaUUID
 
@@ -55,8 +48,8 @@ object InvoicesTable : UUIDTable("invoices") {
 
     // Additional
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
-    val notes = text("notes").nullable()
-    val termsAndConditions = text("terms_and_conditions").nullable()
+    val notes = varchar("notes", 10000).nullable()
+    val termsAndConditions = varchar("terms_and_conditions", 10000).nullable()
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
