@@ -1,12 +1,12 @@
 package ai.dokus.auth.backend.database.tables
 
-import ai.dokus.foundation.ktor.database.dbEnumeration
+import ai.dokus.foundation.domain.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
  * Root entity representing each customer account (freelancer or company)
