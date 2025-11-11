@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 
 package ai.dokus.auth.backend.database.services
 
@@ -9,17 +9,22 @@ import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.database.dbQuery
+import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 /**
  * Comprehensive tests for RefreshTokenServiceImpl
@@ -36,17 +41,15 @@ class RefreshTokenServiceImplTest {
 
     private lateinit var database: DatabaseFactory
     private lateinit var service: RefreshTokenService
-    private lateinit var testUserId: UserId
+    private var testUserId: UserId? = null
     private val testTenantId = Uuid.random()
 
     @BeforeAll
     fun setup() {
         // Initialize in-memory H2 database for testing
+        val appConfig = createTestAppConfig()
         database = DatabaseFactory(
-            jdbcUrl = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-            driverClassName = "org.h2.Driver",
-            username = "sa",
-            password = "",
+            appConfig = appConfig,
             poolName = "test-pool"
         )
 
@@ -56,6 +59,110 @@ class RefreshTokenServiceImplTest {
         }
 
         service = RefreshTokenServiceImpl()
+    }
+
+    /**
+     * Creates a test configuration for in-memory H2 database
+     */
+    private fun createTestAppConfig(): ai.dokus.foundation.ktor.AppBaseConfig {
+        val config = com.typesafe.config.ConfigFactory.parseString(
+            """
+            ktor {
+                deployment {
+                    port = 8080
+                    host = "0.0.0.0"
+                    environment = "test"
+                }
+            }
+            database {
+                url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL"
+                username = "sa"
+                password = ""
+                pool {
+                    maxSize = 5
+                    minSize = 1
+                    acquisitionTimeout = 30
+                    idleTimeout = 600
+                    maxLifetime = 1800
+                    leakDetectionThreshold = 0
+                }
+            }
+            flyway {
+                enabled = false
+                baselineOnMigrate = true
+                baselineVersion = "1"
+                locations = []
+                schemas = ["public"]
+            }
+            jwt {
+                issuer = "test"
+                audience = "test"
+                realm = "test"
+                secret = "test-secret"
+                algorithm = "HS256"
+            }
+            auth {
+                maxLoginAttempts = 5
+                lockDurationMinutes = 15
+                sessionDurationHours = 24
+                rememberMeDurationDays = 30
+                maxConcurrentSessions = 5
+                password {
+                    expiryDays = 90
+                    minLength = 8
+                    requireUppercase = true
+                    requireLowercase = true
+                    requireDigits = true
+                    requireSpecialChars = false
+                    historySize = 5
+                }
+                rateLimit {
+                    windowSeconds = 300
+                    maxAttempts = 5
+                }
+                enableDeviceFingerprinting = false
+                enableSessionSlidingExpiration = true
+                sessionActivityWindowMinutes = 30
+                logSecurityEvents = true
+                enableDebugMode = false
+            }
+            logging {
+                level = "INFO"
+                consoleJson = false
+            }
+            metrics {
+                enabled = false
+                prometheusPath = "/metrics"
+            }
+            security {
+                cors {
+                    allowedHosts = ["localhost"]
+                }
+            }
+            caching {
+                type = "memory"
+                ttl = 3600
+                maxSize = 1000
+                redis {
+                    host = "localhost"
+                    port = 6379
+                    database = 0
+                    pool {
+                        maxTotal = 10
+                        maxIdle = 5
+                        minIdle = 1
+                        testOnBorrow = true
+                    }
+                    timeout {
+                        connection = 2000
+                        socket = 2000
+                        command = 2000
+                    }
+                }
+            }
+            """.trimIndent()
+        )
+        return ai.dokus.foundation.ktor.AppBaseConfig.fromConfig(config)
     }
 
     @AfterAll
@@ -73,9 +180,9 @@ class RefreshTokenServiceImplTest {
     @Test
     fun `saveRefreshToken should persist token successfully`() = runBlocking {
         val token = "test-refresh-token-${Uuid.random()}"
-        val expiresAt = Clock.System.now() + 30.days
+        val expiresAt = now() + 30.days
 
-        val result = service.saveRefreshToken(testUserId, token, expiresAt)
+        val result = service.saveRefreshToken(testUserId!!, token, expiresAt)
 
         assertTrue(result.isSuccess, "Token should be saved successfully")
 
@@ -91,14 +198,14 @@ class RefreshTokenServiceImplTest {
     @Test
     fun `validateAndRotate should succeed for valid token`() = runBlocking {
         val token = "test-token-${Uuid.random()}"
-        val expiresAt = Clock.System.now() + 30.days
+        val expiresAt = now() + 30.days
 
-        service.saveRefreshToken(testUserId, token, expiresAt)
+        service.saveRefreshToken(testUserId!!, token, expiresAt)
 
         val result = service.validateAndRotate(token)
 
         assertTrue(result.isSuccess, "Valid token should be accepted")
-        assertEquals(testUserId.value, result.getOrNull()?.value, "Should return correct userId")
+        assertEquals(testUserId!!.value, result.getOrNull()?.value, "Should return correct userId")
 
         // Verify old token is revoked
         val isRevoked = dbQuery {
@@ -112,9 +219,9 @@ class RefreshTokenServiceImplTest {
     @Test
     fun `validateAndRotate should fail for expired token`() = runBlocking {
         val token = "expired-token-${Uuid.random()}"
-        val expiresAt = Clock.System.now() - 1.minutes // Already expired
+        val expiresAt = now() - 1.minutes // Already expired
 
-        service.saveRefreshToken(testUserId, token, expiresAt)
+        service.saveRefreshToken(testUserId!!, token, expiresAt)
 
         val result = service.validateAndRotate(token)
 
@@ -128,9 +235,9 @@ class RefreshTokenServiceImplTest {
     @Test
     fun `validateAndRotate should fail for revoked token`() = runBlocking {
         val token = "revoked-token-${Uuid.random()}"
-        val expiresAt = Clock.System.now() + 30.days
+        val expiresAt = now() + 30.days
 
-        service.saveRefreshToken(testUserId, token, expiresAt)
+        service.saveRefreshToken(testUserId!!, token, expiresAt)
         service.revokeToken(token)
 
         val result = service.validateAndRotate(token)
@@ -158,9 +265,9 @@ class RefreshTokenServiceImplTest {
     @Test
     fun `revokeToken should mark token as revoked`() = runBlocking {
         val token = "test-token-${Uuid.random()}"
-        val expiresAt = Clock.System.now() + 30.days
+        val expiresAt = now() + 30.days
 
-        service.saveRefreshToken(testUserId, token, expiresAt)
+        service.saveRefreshToken(testUserId!!, token, expiresAt)
 
         val result = service.revokeToken(token)
 
@@ -177,15 +284,15 @@ class RefreshTokenServiceImplTest {
 
     @Test
     fun `revokeAllUserTokens should revoke all tokens for user`() = runBlocking {
-        val expiresAt = Clock.System.now() + 30.days
+        val expiresAt = now() + 30.days
 
         // Create multiple tokens for the user
         val tokens = (1..3).map { "token-$it-${Uuid.random()}" }
         tokens.forEach { token ->
-            service.saveRefreshToken(testUserId, token, expiresAt)
+            service.saveRefreshToken(testUserId!!, token, expiresAt)
         }
 
-        val result = service.revokeAllUserTokens(testUserId)
+        val result = service.revokeAllUserTokens(testUserId!!)
 
         assertTrue(result.isSuccess, "Bulk revocation should succeed")
 
@@ -193,7 +300,7 @@ class RefreshTokenServiceImplTest {
         val revokedCount = dbQuery {
             RefreshTokensTable.selectAll()
                 .where {
-                    (RefreshTokensTable.userId eq testUserId.uuid.toJavaUuid()) and
+                    (RefreshTokensTable.userId eq testUserId!!.uuid.toJavaUuid()) and
                     (RefreshTokensTable.isRevoked eq true)
                 }
                 .count()
@@ -203,20 +310,20 @@ class RefreshTokenServiceImplTest {
 
     @Test
     fun `cleanupExpiredTokens should remove expired and revoked tokens`() = runBlocking {
-        val now = Clock.System.now()
+        val now = now()
 
         // Create expired token
         val expiredToken = "expired-${Uuid.random()}"
-        service.saveRefreshToken(testUserId, expiredToken, now - 1.minutes)
+        service.saveRefreshToken(testUserId!!, expiredToken, now - 1.minutes)
 
         // Create revoked token
         val revokedToken = "revoked-${Uuid.random()}"
-        service.saveRefreshToken(testUserId, revokedToken, now + 30.days)
+        service.saveRefreshToken(testUserId!!, revokedToken, now + 30.days)
         service.revokeToken(revokedToken)
 
         // Create valid token
         val validToken = "valid-${Uuid.random()}"
-        service.saveRefreshToken(testUserId, validToken, now + 30.days)
+        service.saveRefreshToken(testUserId!!, validToken, now + 30.days)
 
         val result = service.cleanupExpiredTokens()
 
@@ -232,23 +339,23 @@ class RefreshTokenServiceImplTest {
 
     @Test
     fun `getUserActiveTokens should return only active tokens`() = runBlocking {
-        val now = Clock.System.now()
+        val now = now()
         val expiresAt = now + 30.days
 
         // Create active token
         val activeToken = "active-${Uuid.random()}"
-        service.saveRefreshToken(testUserId, activeToken, expiresAt)
+        service.saveRefreshToken(testUserId!!, activeToken, expiresAt)
 
         // Create revoked token
         val revokedToken = "revoked-${Uuid.random()}"
-        service.saveRefreshToken(testUserId, revokedToken, expiresAt)
+        service.saveRefreshToken(testUserId!!, revokedToken, expiresAt)
         service.revokeToken(revokedToken)
 
         // Create expired token
         val expiredToken = "expired-${Uuid.random()}"
-        service.saveRefreshToken(testUserId, expiredToken, now - 1.minutes)
+        service.saveRefreshToken(testUserId!!, expiredToken, now - 1.minutes)
 
-        val activeTokens = service.getUserActiveTokens(testUserId)
+        val activeTokens = service.getUserActiveTokens(testUserId!!)
 
         assertEquals(1, activeTokens.size, "Should return only active token")
         assertFalse(activeTokens[0].isRevoked, "Returned token should not be revoked")
@@ -270,9 +377,9 @@ class RefreshTokenServiceImplTest {
     @Test
     fun `service should handle concurrent token operations safely`() = runBlocking {
         val token = "concurrent-token-${Uuid.random()}"
-        val expiresAt = Clock.System.now() + 30.days
+        val expiresAt = now() + 30.days
 
-        service.saveRefreshToken(testUserId, token, expiresAt)
+        service.saveRefreshToken(testUserId!!, token, expiresAt)
 
         // Attempt concurrent validation and revocation
         val validateResult = service.validateAndRotate(token)
@@ -293,9 +400,8 @@ class RefreshTokenServiceImplTest {
             // Create test tenant first
             TenantsTable.insert {
                 it[id] = testTenantId.toJavaUuid()
-                it[businessName] = "Test Tenant"
-                it[contactEmail] = "test@example.com"
-                it[isActive] = true
+                it[name] = "Test Tenant"
+                it[email] = "test@example.com"
             }
 
             // Create test user
@@ -304,7 +410,7 @@ class RefreshTokenServiceImplTest {
                 it[tenantId] = testTenantId.toJavaUuid()
                 it[email] = "test@example.com"
                 it[passwordHash] = "hashed-password"
-                it[role] = UserRole.OWNER
+                it[role] = UserRole.Owner
                 it[isActive] = true
             }
         }
