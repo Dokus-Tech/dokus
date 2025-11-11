@@ -13,10 +13,10 @@ import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.deleteAll
-import org.jetbrains.exposed.v1.core.insert
-import org.jetbrains.exposed.v1.core.selectAll
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
