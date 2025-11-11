@@ -39,15 +39,26 @@ AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
 
 # Database configuration for multi-database architecture
-declare -A DB_CONFIGS=(
-    ["auth"]="postgres-auth-dev:5541:dokus_auth"
-    ["invoicing"]="postgres-invoicing-dev:5542:dokus_invoicing"
-    ["expense"]="postgres-expense-dev:5543:dokus_expense"
-    ["payment"]="postgres-payment-dev:5544:dokus_payment"
-    ["reporting"]="postgres-reporting-dev:5545:dokus_reporting"
-    ["audit"]="postgres-audit-dev:5546:dokus_audit"
-    ["banking"]="postgres-banking-dev:5547:dokus_banking"
-)
+# Format: container:port:dbname
+# Bash 3.2 compatible (no associative arrays)
+
+DB_KEYS="auth invoicing expense payment reporting audit banking"
+
+# Function to get database config for a given key
+# Returns: container:port:dbname
+get_db_config() {
+    local key=$1
+    case $key in
+        auth)      echo "postgres-auth-dev:5541:dokus_auth" ;;
+        invoicing) echo "postgres-invoicing-dev:5542:dokus_invoicing" ;;
+        expense)   echo "postgres-expense-dev:5543:dokus_expense" ;;
+        payment)   echo "postgres-payment-dev:5544:dokus_payment" ;;
+        reporting) echo "postgres-reporting-dev:5545:dokus_reporting" ;;
+        audit)     echo "postgres-audit-dev:5546:dokus_audit" ;;
+        banking)   echo "postgres-banking-dev:5547:dokus_banking" ;;
+        *) echo "" ;;
+    esac
+}
 
 DB_USER="dev"
 DB_PASSWORD="devpassword"
@@ -346,8 +357,8 @@ start_services() {
         echo ""
 
         # Wait for all PostgreSQL databases
-        for db_key in "${!DB_CONFIGS[@]}"; do
-            IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+        for db_key in $DB_KEYS; do
+            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
             printf "  ${CYAN}▸${NC} %-22s" "PostgreSQL ($db_key)"
             for i in {1..30}; do
                 if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
@@ -498,8 +509,8 @@ show_status() {
     echo -e "\n  ${CYAN}${BOLD}Health Checks${NC}\n"
 
     # Check all PostgreSQL databases
-    for db_key in "${!DB_CONFIGS[@]}"; do
-        IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+    for db_key in $DB_KEYS; do
+        IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
         printf "  ${CYAN}▸${NC} %-22s" "PostgreSQL ($db_key)"
         if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
             echo -e "${GREEN}✔ Healthy${NC}"
@@ -634,7 +645,7 @@ reset_db() {
 # Helper function to reset a single database
 reset_single_db() {
     local db_key=$1
-    IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+    IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
 
     print_status warning "This will reset the $db_key database ($dbname)!"
     echo ""
@@ -668,8 +679,8 @@ reset_all_databases() {
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_status loading "Resetting all databases..."
 
-        for db_key in "${!DB_CONFIGS[@]}"; do
-            IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+        for db_key in $DB_KEYS; do
+            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
             print_status loading "Resetting $db_key..."
             docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
             docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
@@ -678,8 +689,8 @@ reset_all_databases() {
 
         # Start all databases
         print_status loading "Starting all databases..."
-        for db_key in "${!DB_CONFIGS[@]}"; do
-            IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+        for db_key in $DB_KEYS; do
+            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
             docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
         done
 
@@ -725,7 +736,7 @@ access_db() {
 # Helper function to access a single database
 access_single_db() {
     local db_key=$1
-    IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+    IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
 
     print_status info "Connecting to $db_key database ($dbname)..."
     echo ""
