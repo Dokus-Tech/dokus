@@ -2,10 +2,10 @@ package ai.dokus.auth.backend.database.tables
 
 import ai.dokus.foundation.ktor.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.UserRole
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.ReferenceOption
-import org.jetbrains.exposed.sql.kotlin.datetime.CurrentDateTime
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.ReferenceOption
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
  * People who can access a tenant's account

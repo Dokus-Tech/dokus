@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalUuidApi::class)
 
 package ai.dokus.auth.backend.database.services
 
@@ -10,14 +10,28 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.ExperimentalTime
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+
+/**
+ * Helper function to convert kotlinx.datetime.LocalDateTime to kotlinx.datetime.Instant
+ */
+@OptIn(kotlin.time.ExperimentalTime::class)
+private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
+    val kotlinTimeInstant = this.toInstant(TimeZone.UTC)
+    return Instant.fromEpochSeconds(
+        kotlinTimeInstant.epochSeconds,
+        kotlinTimeInstant.nanosecondsOfSecond.toLong()
+    )
+}
 
 /**
  * Implementation of RefreshTokenService with secure token management
@@ -84,9 +98,9 @@ class RefreshTokenServiceImpl : RefreshTokenService {
             }
 
             val now = now()
-            val expiresAtInstant = expiresAt.toInstant(TimeZone.UTC)
+            val expiresAtInstant = expiresAt.toKotlinxInstant()
 
-            if (expiresAtInstant < now) {
+            if (now > expiresAtInstant) {
                 logger.warn(
                     "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${hashToken(oldToken)})"
                 )
@@ -195,8 +209,8 @@ class RefreshTokenServiceImpl : RefreshTokenService {
                 .map { row ->
                     RefreshTokenInfo(
                         tokenId = row[RefreshTokensTable.id].value.toString(),
-                        createdAt = row[RefreshTokensTable.createdAt].toInstant(TimeZone.UTC),
-                        expiresAt = row[RefreshTokensTable.expiresAt].toInstant(TimeZone.UTC),
+                        createdAt = row[RefreshTokensTable.createdAt].toKotlinxInstant(),
+                        expiresAt = row[RefreshTokensTable.expiresAt].toKotlinxInstant(),
                         isRevoked = row[RefreshTokensTable.isRevoked]
                     )
                 }

@@ -6,10 +6,10 @@ import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
 
@@ -21,7 +21,7 @@ class DatabaseFactory(
     private var dataSource: HikariDataSource? = null
     lateinit var database: Database
 
-    suspend fun <T : Table> init(vararg tables: T): Database {
+    suspend fun init(vararg tables: Table): Database {
         dataSource = createHikariDataSource()
 
         if (appConfig.flyway.enabled) {
@@ -79,7 +79,7 @@ class DatabaseFactory(
         logger.info("Migration completed: ${result.migrationsExecuted} migrations executed")
     }
 
-    private suspend fun <T : Table> createTables(vararg table: T) = withContext(Dispatchers.IO) {
+    private suspend fun createTables(vararg table: Table) = withContext(Dispatchers.IO) {
         transaction {
             SchemaUtils.create(*table)
         }

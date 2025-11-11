@@ -21,11 +21,11 @@ import kotlinx.datetime.DateTimePeriod
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
@@ -143,9 +143,7 @@ class TenantServiceImpl : TenantService {
 
         // Increment the counter
         TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
-            with(SqlExpressionBuilder) {
-                it[nextInvoiceNumber] = nextInvoiceNumber + 1
-            }
+            it[nextInvoiceNumber] = nextInvoiceNumber + 1
         }
 
         logger.debug("Generated invoice number for tenant $tenantId: $prefix-${number.toString().padStart(4, '0')}")

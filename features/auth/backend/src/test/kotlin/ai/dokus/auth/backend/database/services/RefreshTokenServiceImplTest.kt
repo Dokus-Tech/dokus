@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalUuidApi::class)
 
 package ai.dokus.auth.backend.database.services
 
@@ -12,10 +12,11 @@ import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -26,7 +27,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
