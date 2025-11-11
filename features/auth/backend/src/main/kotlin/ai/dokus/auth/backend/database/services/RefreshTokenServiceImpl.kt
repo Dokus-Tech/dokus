@@ -12,10 +12,28 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.ExperimentalTime
 import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import kotlinx.datetime.Instant as KotlinxInstant
+
+/**
+ * Converts kotlin.time.Instant to kotlinx.datetime.Instant
+ */
+private fun kotlin.time.Instant.toKotlinxInstant(): KotlinxInstant =
+    KotlinxInstant.fromEpochSeconds(this.epochSeconds, this.nanosecondsOfSecond)
+
+/**
+ * Converts kotlinx.datetime.Instant to kotlin.time.Instant
+ */
+private fun KotlinxInstant.toKotlinTimeInstant(): kotlin.time.Instant =
+    kotlin.time.Instant.fromEpochSeconds(this.epochSeconds, this.nanosecondsOfSecond)
 
 /**
  * Implementation of RefreshTokenService with secure token management
@@ -81,10 +99,10 @@ class RefreshTokenServiceImpl : RefreshTokenService {
                 throw SecurityException("Refresh token has been revoked")
             }
 
-            val now = now()
-            val expiresAtInstant = expiresAt.toInstant(TimeZone.UTC)
+            val now = now().toKotlinxInstant()
+            val expiresAtInstant = expiresAt.toInstant(TimeZone.UTC).toKotlinxInstant()
 
-            if (expiresAtInstant < now) {
+            if (now > expiresAtInstant) {
                 logger.warn(
                     "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${hashToken(oldToken)})"
                 )
@@ -193,8 +211,8 @@ class RefreshTokenServiceImpl : RefreshTokenService {
                 .map { row ->
                     RefreshTokenInfo(
                         tokenId = row[RefreshTokensTable.id].value.toString(),
-                        createdAt = row[RefreshTokensTable.createdAt].toInstant(TimeZone.UTC),
-                        expiresAt = row[RefreshTokensTable.expiresAt].toInstant(TimeZone.UTC),
+                        createdAt = row[RefreshTokensTable.createdAt].toInstant(TimeZone.UTC).toKotlinxInstant(),
+                        expiresAt = row[RefreshTokensTable.expiresAt].toInstant(TimeZone.UTC).toKotlinxInstant(),
                         isRevoked = row[RefreshTokensTable.isRevoked]
                     )
                 }

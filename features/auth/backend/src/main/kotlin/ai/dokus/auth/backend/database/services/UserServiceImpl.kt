@@ -15,6 +15,11 @@ import ai.dokus.foundation.ktor.services.UserService
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -85,15 +90,16 @@ class UserServiceImpl(
 
     override suspend fun listByTenant(tenantId: TenantId, activeOnly: Boolean): List<BusinessUser> = dbQuery {
         val javaUuid = tenantId.value.toJavaUuid()
-        val query = UsersTable.selectAll().where { UsersTable.tenantId eq javaUuid }
 
-        val finalQuery = if (activeOnly) {
-            query.andWhere { UsersTable.isActive eq true }
+        val query = if (activeOnly) {
+            UsersTable.selectAll().where {
+                (UsersTable.tenantId eq javaUuid) and (UsersTable.isActive eq true)
+            }
         } else {
-            query
+            UsersTable.selectAll().where { UsersTable.tenantId eq javaUuid }
         }
 
-        finalQuery.map { it.toBusinessUser() }
+        query.map { it.toBusinessUser() }
     }
 
     override suspend fun updateRole(userId: UserId, newRole: UserRole) = dbQuery {

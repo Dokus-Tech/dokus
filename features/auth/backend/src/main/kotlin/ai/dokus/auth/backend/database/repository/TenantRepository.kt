@@ -13,11 +13,16 @@ import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
-import org.jetbrains.exposed.v1.core.SqlExpressionBuilder
-import org.jetbrains.exposed.v1.core.insert
-import org.jetbrains.exposed.v1.core.insertAndGetId
-import org.jetbrains.exposed.v1.core.selectAll
-import org.jetbrains.exposed.v1.core.update
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
@@ -115,9 +120,7 @@ class TenantRepository {
 
         // Increment the counter
         TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
-            with(SqlExpressionBuilder) {
-                it[nextInvoiceNumber] = nextInvoiceNumber + 1
-            }
+            it[nextInvoiceNumber] = nextInvoiceNumber + 1
         }
 
         InvoiceNumber("$prefix-${number.toString().padStart(4, '0')}")

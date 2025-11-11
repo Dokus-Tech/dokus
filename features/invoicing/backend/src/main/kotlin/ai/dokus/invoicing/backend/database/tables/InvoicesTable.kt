@@ -1,17 +1,16 @@
 package ai.dokus.invoicing.backend.database.tables
 
-import ai.dokus.foundation.domain.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.PeppolStatus
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
 import java.math.BigDecimal
-import java.util.UUID as JavaUUID
 
 /**
  * Core financial documents sent to clients

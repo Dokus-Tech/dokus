@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.database.tables
 
-import ai.dokus.foundation.domain.database.dbEnumeration
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.UserRole
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.core.ReferenceOption
