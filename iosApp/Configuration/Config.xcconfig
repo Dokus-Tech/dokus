@@ -1,3 +1,6 @@
 TEAM_ID=
 BUNDLE_ID=ai.dokus.app
 APP_NAME=Dokus
+
+// Link SQLite library for SQLDelight native iOS driver
+OTHER_LDFLAGS = $(inherited) -lsqlite3
