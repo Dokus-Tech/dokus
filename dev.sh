@@ -37,7 +37,18 @@ COMPOSE_FILE="docker-compose.dev.yml"
 AUTH_SERVICE_DIR="features/auth/backend"
 AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
-DB_NAME="dokus"
+
+# Database configuration for multi-database architecture
+declare -A DB_CONFIGS=(
+    ["auth"]="postgres-auth-dev:5541:dokus_auth"
+    ["invoicing"]="postgres-invoicing-dev:5542:dokus_invoicing"
+    ["expense"]="postgres-expense-dev:5543:dokus_expense"
+    ["payment"]="postgres-payment-dev:5544:dokus_payment"
+    ["reporting"]="postgres-reporting-dev:5545:dokus_reporting"
+    ["audit"]="postgres-audit-dev:5546:dokus_audit"
+    ["banking"]="postgres-banking-dev:5547:dokus_banking"
+)
+
 DB_USER="dev"
 DB_PASSWORD="devpassword"
 
@@ -334,15 +345,21 @@ start_services() {
         print_status loading "Waiting for services to become healthy..."
         echo ""
 
-        # Wait for PostgreSQL
-        printf "  ${CYAN}▸${NC} PostgreSQL          "
-        for i in {1..30}; do
-            if docker-compose -f $COMPOSE_FILE exec -T postgres-dev pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
-                echo -e "${GREEN}✔ Ready${NC}"
-                break
-            fi
-            echo -n "."
-            sleep 1
+        # Wait for all PostgreSQL databases
+        for db_key in "${!DB_CONFIGS[@]}"; do
+            IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+            printf "  ${CYAN}▸${NC} %-22s" "PostgreSQL ($db_key)"
+            for i in {1..30}; do
+                if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
+                    echo -e "${GREEN}✔ Ready${NC}"
+                    break
+                fi
+                if [ $i -eq 30 ]; then
+                    echo -e "${RED}✖ Timeout${NC}"
+                fi
+                echo -n "."
+                sleep 1
+            done
         done
 
         # Wait for Redis
@@ -480,13 +497,16 @@ show_status() {
     print_divider
     echo -e "\n  ${CYAN}${BOLD}Health Checks${NC}\n"
 
-    # PostgreSQL
-    printf "  ${CYAN}▸${NC} PostgreSQL          "
-    if docker-compose -f $COMPOSE_FILE exec -T postgres-dev pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
-        echo -e "${GREEN}✔ Healthy${NC}"
-    else
-        echo -e "${RED}✖ Not responding${NC}"
-    fi
+    # Check all PostgreSQL databases
+    for db_key in "${!DB_CONFIGS[@]}"; do
+        IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+        printf "  ${CYAN}▸${NC} %-22s" "PostgreSQL ($db_key)"
+        if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
+            echo -e "${GREEN}✔ Healthy${NC}"
+        else
+            echo -e "${RED}✖ Not responding${NC}"
+        fi
+    done
 
     # Redis
     printf "  ${CYAN}▸${NC} Redis               "
@@ -580,8 +600,43 @@ clean_all() {
 # Function to reset database
 reset_db() {
     print_box_header "🔄 Reset Database"
-    print_status warning "This will reset the database!"
 
+    echo ""
+    echo -e "  ${CYAN}${BOLD}Select database to reset:${NC}\n"
+    echo -e "  ${CYAN}1${NC})  Auth (dokus_auth)"
+    echo -e "  ${CYAN}2${NC})  Invoicing (dokus_invoicing)"
+    echo -e "  ${CYAN}3${NC})  Expense (dokus_expense)"
+    echo -e "  ${CYAN}4${NC})  Payment (dokus_payment)"
+    echo -e "  ${CYAN}5${NC})  Reporting (dokus_reporting)"
+    echo -e "  ${CYAN}6${NC})  Audit (dokus_audit)"
+    echo -e "  ${CYAN}7${NC})  Banking (dokus_banking)"
+    echo -e "  ${CYAN}8${NC})  All databases"
+    echo -e "  ${CYAN}0${NC})  Cancel"
+    echo ""
+    printf "  ${BOLD}Enter choice [0-8]:${NC} "
+    read choice
+    echo ""
+
+    case $choice in
+        1) reset_single_db "auth" ;;
+        2) reset_single_db "invoicing" ;;
+        3) reset_single_db "expense" ;;
+        4) reset_single_db "payment" ;;
+        5) reset_single_db "reporting" ;;
+        6) reset_single_db "audit" ;;
+        7) reset_single_db "banking" ;;
+        8) reset_all_databases ;;
+        0) print_status info "Cancelled"; echo ""; return ;;
+        *) print_status error "Invalid choice"; echo ""; return ;;
+    esac
+}
+
+# Helper function to reset a single database
+reset_single_db() {
+    local db_key=$1
+    IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+
+    print_status warning "This will reset the $db_key database ($dbname)!"
     echo ""
     printf "  ${BOLD}Are you sure? (y/N):${NC} "
     read -n 1 -r
@@ -589,12 +644,46 @@ reset_db() {
     echo ""
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_status loading "Resetting database..."
-        docker-compose -f $COMPOSE_FILE stop postgres-dev > /dev/null 2>&1
-        docker-compose -f $COMPOSE_FILE rm -f postgres-dev > /dev/null 2>&1
-        docker volume rm dokus_postgres-dev 2>/dev/null || true
-        docker-compose -f $COMPOSE_FILE up -d postgres-dev > /dev/null 2>&1
-        print_status success "Database reset complete"
+        print_status loading "Resetting $db_key database..."
+        docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
+        docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
+        docker volume rm dokus_$container 2>/dev/null || true
+        docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
+        print_status success "$db_key database reset complete"
+    else
+        print_status info "Cancelled"
+    fi
+    echo ""
+}
+
+# Helper function to reset all databases
+reset_all_databases() {
+    print_status warning "This will reset ALL databases!"
+    echo ""
+    printf "  ${BOLD}Are you sure? (y/N):${NC} "
+    read -n 1 -r
+    echo ""
+    echo ""
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        print_status loading "Resetting all databases..."
+
+        for db_key in "${!DB_CONFIGS[@]}"; do
+            IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+            print_status loading "Resetting $db_key..."
+            docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
+            docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
+            docker volume rm dokus_$container 2>/dev/null || true
+        done
+
+        # Start all databases
+        print_status loading "Starting all databases..."
+        for db_key in "${!DB_CONFIGS[@]}"; do
+            IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+            docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
+        done
+
+        print_status success "All databases reset complete"
     else
         print_status info "Cancelled"
     fi
@@ -604,7 +693,43 @@ reset_db() {
 # Function to access database
 access_db() {
     print_box_header "🗄️ Accessing PostgreSQL"
-    docker-compose -f $COMPOSE_FILE exec postgres-dev psql -U $DB_USER -d $DB_NAME
+
+    echo ""
+    echo -e "  ${CYAN}${BOLD}Select database to access:${NC}\n"
+    echo -e "  ${CYAN}1${NC})  Auth (dokus_auth) - localhost:5541"
+    echo -e "  ${CYAN}2${NC})  Invoicing (dokus_invoicing) - localhost:5542"
+    echo -e "  ${CYAN}3${NC})  Expense (dokus_expense) - localhost:5543"
+    echo -e "  ${CYAN}4${NC})  Payment (dokus_payment) - localhost:5544"
+    echo -e "  ${CYAN}5${NC})  Reporting (dokus_reporting) - localhost:5545"
+    echo -e "  ${CYAN}6${NC})  Audit (dokus_audit) - localhost:5546"
+    echo -e "  ${CYAN}7${NC})  Banking (dokus_banking) - localhost:5547"
+    echo -e "  ${CYAN}0${NC})  Cancel"
+    echo ""
+    printf "  ${BOLD}Enter choice [0-7]:${NC} "
+    read choice
+    echo ""
+
+    case $choice in
+        1) access_single_db "auth" ;;
+        2) access_single_db "invoicing" ;;
+        3) access_single_db "expense" ;;
+        4) access_single_db "payment" ;;
+        5) access_single_db "reporting" ;;
+        6) access_single_db "audit" ;;
+        7) access_single_db "banking" ;;
+        0) print_status info "Cancelled"; echo ""; return ;;
+        *) print_status error "Invalid choice"; echo ""; return ;;
+    esac
+}
+
+# Helper function to access a single database
+access_single_db() {
+    local db_key=$1
+    IFS=':' read -r container port dbname <<< "${DB_CONFIGS[$db_key]}"
+
+    print_status info "Connecting to $db_key database ($dbname)..."
+    echo ""
+    docker-compose -f $COMPOSE_FILE exec $container psql -U $DB_USER -d $dbname
 }
 
 # Function to access Redis
@@ -709,8 +834,18 @@ print_services_info() {
     echo ""
 
     # Databases
-    echo -e "  ${MAGENTA}▸ Infrastructure${NC}"
-    echo -e "    ${GRAY}•${NC} PostgreSQL: ${WHITE}localhost:5543${NC} ${DIM}(user: $DB_USER, db: $DB_NAME)${NC}"
+    echo -e "  ${MAGENTA}▸ PostgreSQL Databases${NC}"
+    echo -e "    ${GRAY}•${NC} Auth:       ${WHITE}localhost:5541${NC} ${DIM}(user: $DB_USER, db: dokus_auth)${NC}"
+    echo -e "    ${GRAY}•${NC} Invoicing:  ${WHITE}localhost:5542${NC} ${DIM}(user: $DB_USER, db: dokus_invoicing)${NC}"
+    echo -e "    ${GRAY}•${NC} Expense:    ${WHITE}localhost:5543${NC} ${DIM}(user: $DB_USER, db: dokus_expense)${NC}"
+    echo -e "    ${GRAY}•${NC} Payment:    ${WHITE}localhost:5544${NC} ${DIM}(user: $DB_USER, db: dokus_payment)${NC}"
+    echo -e "    ${GRAY}•${NC} Reporting:  ${WHITE}localhost:5545${NC} ${DIM}(user: $DB_USER, db: dokus_reporting)${NC}"
+    echo -e "    ${GRAY}•${NC} Audit:      ${WHITE}localhost:5546${NC} ${DIM}(user: $DB_USER, db: dokus_audit)${NC}"
+    echo -e "    ${GRAY}•${NC} Banking:    ${WHITE}localhost:5547${NC} ${DIM}(user: $DB_USER, db: dokus_banking)${NC}"
+    echo ""
+
+    # Redis
+    echo -e "  ${MAGENTA}▸ Redis${NC}"
     echo -e "    ${GRAY}•${NC} Redis:      ${WHITE}localhost:6380${NC} ${DIM}(password: devredispass)${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
@@ -886,9 +1021,9 @@ show_help() {
     echo ""
 
     echo -e "  ${YELLOW}Database & Cache${NC}"
-    echo -e "    ${WHITE}db${NC}                 Access PostgreSQL CLI"
+    echo -e "    ${WHITE}db${NC}                 Access PostgreSQL CLI (interactive menu)"
     echo -e "    ${WHITE}redis${NC}              Access Redis CLI"
-    echo -e "    ${WHITE}reset-db${NC}           Reset database"
+    echo -e "    ${WHITE}reset-db${NC}           Reset database (interactive menu)"
     echo -e "    ${WHITE}pgadmin${NC}            Start pgAdmin interface"
     echo ""
 
@@ -906,9 +1041,9 @@ show_help() {
 
     echo -e "    ${GRAY}./dev.sh start${NC}                   Start everything"
     echo -e "    ${GRAY}./dev.sh logs auth-service-dev${NC}   Show auth service logs"
-    echo -e "    ${GRAY}./dev.sh db${NC}                      Access PostgreSQL database"
+    echo -e "    ${GRAY}./dev.sh db${NC}                      Access PostgreSQL database (choose from menu)"
     echo -e "    ${GRAY}./dev.sh test auth${NC}               Run auth service tests"
-    echo -e "    ${GRAY}./dev.sh reset-db${NC}                Reset database"
+    echo -e "    ${GRAY}./dev.sh reset-db${NC}                Reset database (choose from menu)"
     echo -e "    ${GRAY}./dev.sh watch all${NC}               Watch and auto-rebuild all"
     echo ""
 }
