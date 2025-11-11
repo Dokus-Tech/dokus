@@ -271,8 +271,8 @@ class ReportingApiImpl(
         expenses: List<ai.dokus.foundation.domain.model.Expense>
     ): List<MonthlyCashFlow> {
         // Group payments and expenses by month
-        val paymentsByMonth = payments.groupBy { "${it.paymentDate.year}-${it.paymentDate.month.number.toString().padStart(2, '0')}" }
-        val expensesByMonth = expenses.groupBy { "${it.date.year}-${it.date.month.number.toString().padStart(2, '0')}" }
+        val paymentsByMonth = payments.groupBy { "${it.paymentDate.year}-${it.paymentDate.monthNumber.toString().padStart(2, '0')}" }
+        val expensesByMonth = expenses.groupBy { "${it.date.year}-${it.date.monthNumber.toString().padStart(2, '0')}" }
 
         // Get all unique months
         val allMonths = (paymentsByMonth.keys + expensesByMonth.keys).distinct().sorted()
