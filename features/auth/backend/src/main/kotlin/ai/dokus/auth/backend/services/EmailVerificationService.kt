@@ -14,9 +14,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.selectAll
+import org.jetbrains.exposed.v1.core.update
 import org.slf4j.LoggerFactory
 import java.security.SecureRandom
 import java.util.Base64
