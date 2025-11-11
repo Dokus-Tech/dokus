@@ -18,11 +18,14 @@ class SecondaryNavigationState {
     /**
      * Shows the secondary panel with the specified type.
      *
+     * Thread-safe: Updates panel type before visibility to ensure consistent state.
+     *
      * @param panelType The type of panel to display (Inline, Complimentary, or Info)
      */
     fun showPanel(panelType: SecondaryPanelType = SecondaryPanelType.Complimentary) {
-        _isPanelVisible.value = true
+        // Update panel type first to ensure it's set before visibility triggers observers
         _panelType.value = panelType
+        _isPanelVisible.value = true
     }
 
     /**
