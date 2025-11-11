@@ -21,9 +21,16 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        // Link SQLite for all iOS binaries (including tests)
+        iosTarget.binaries.all {
+            linkerOpts("-lsqlite3")
+        }
+    }
 
     jvm("desktop")
 

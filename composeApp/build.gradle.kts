@@ -32,6 +32,12 @@ kotlin {
             isStatic = true
             binaryOption("bundleId", "ai.dokus.app")
             binaryOption("bundleVersion", "1")
+
+            linkerOpts("-lsqlite3")
+        }
+
+        iosTarget.binaries.all {
+            linkerOpts("-lsqlite3")
         }
     }
 
