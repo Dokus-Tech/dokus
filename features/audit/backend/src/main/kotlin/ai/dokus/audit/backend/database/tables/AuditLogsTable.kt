@@ -1,12 +1,11 @@
 package ai.dokus.audit.backend.database.tables
 
-import ai.dokus.foundation.domain.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
-import java.util.UUID as JavaUUID
 
 /**
  * Audit logs for compliance and security tracking

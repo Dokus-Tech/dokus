@@ -4,6 +4,7 @@ import ai.dokus.foundation.domain.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
