@@ -93,14 +93,14 @@ fun DualPanelNavigationContainer(
             // Measure available width once so we can drive a width-based animation
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val maxWidthDp = this.maxWidth
+                // Base width driven by fraction animation
                 val rawSecondaryWidthDp = maxWidthDp * animatedSecondaryFraction
-                // Apply width clamping based on panel type (memoized to avoid recalculation)
-                val secondaryWidthDp = remember(rawSecondaryWidthDp.value, panelType, isPanelVisible, largeScreen) {
-                    panelType.clampWidthDp(
-                        rawWidthDp = rawSecondaryWidthDp.value,
-                        isShowing = isPanelVisible && largeScreen
-                    ).dp
-                }
+
+                // Delegate clamping rules to the panel type; preserve 0dp when hidden
+                val isShowingPanel = largeScreen && isPanelVisible
+                val secondaryWidthDp = panelType
+                    .clampWidthDp(rawSecondaryWidthDp.value, isShowingPanel)
+                    .dp
 
                 // Primary + Secondary arranged in a Row; secondary has animated fixed width,
                 // primary fills the remaining space smoothly.
