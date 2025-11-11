@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.minutes
 

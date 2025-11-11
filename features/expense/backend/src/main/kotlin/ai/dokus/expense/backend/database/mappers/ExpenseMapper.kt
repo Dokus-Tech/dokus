@@ -3,7 +3,7 @@ package ai.dokus.expense.backend.database.mappers
 import ai.dokus.expense.backend.database.tables.ExpensesTable
 import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.model.Expense
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
