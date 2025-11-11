@@ -48,8 +48,9 @@ import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun RegisterScreen() {
-    val viewModel = koinViewModel<RegisterViewModel>()
+internal fun RegisterScreen(
+    viewModel: RegisterViewModel = koinViewModel()
+) {
     val navController = LocalNavController.current
     val focusManager = LocalFocusManager.current
 

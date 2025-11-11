@@ -49,9 +49,9 @@ import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun LoginScreen() {
-    val viewModel = koinViewModel<LoginViewModel>()
-
+internal fun LoginScreen(
+    viewModel: LoginViewModel = koinViewModel(),
+) {
     val focusManager = LocalFocusManager.current
     val navController = LocalNavController.current
 
