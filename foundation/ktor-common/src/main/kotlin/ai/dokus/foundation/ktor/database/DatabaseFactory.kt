@@ -43,7 +43,7 @@ class DatabaseFactory(
             jdbcUrl = dbConfig.url
             username = dbConfig.username
             password = dbConfig.password
-            driverClassName = "org.postgresql.Driver"
+            driverClassName = dbConfig.driver
 
             maximumPoolSize = poolConfig.maxSize
             minimumIdle = poolConfig.minSize
