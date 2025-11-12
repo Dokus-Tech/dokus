@@ -1,6 +1,6 @@
 <resources>
     <!-- General -->
-    <string name="app_name">Dokus</string>
+    <string name="app_name">D[#]kus</string>
     <string name="app_slogan">Where sovereignty meets intelligence.</string>
     <string name="brand_motto">Intelligence. Autonomy. Silence.</string>
     <string name="copyright">©2025 Dokus</string>
@@ -31,6 +31,10 @@
 
     <!-- Dashboard - Feature -->
     <string name="feature_auth">Authentication</string>
+
+    <!-- Slogan Screen -->
+    <string name="slogan_line_2">Crafted for those who build tomorrow.</string>
+    <string name="slogan_line_3">Trusted by those who own today.</string>
 
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>
