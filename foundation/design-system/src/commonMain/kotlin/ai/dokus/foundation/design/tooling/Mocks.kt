@@ -22,6 +22,5 @@ val mockUserId = UserId("preview-user-id")
 
 val homeItemMocks = listOf(
     HomeItem(Res.string.home_dashboard, Icons.Default.Dashboard, HomeDestination.Dashboard),
-    HomeItem(Res.string.home_users, Icons.Default.AccountTree, HomeDestination.Users),
     HomeItem(Res.string.home_settings, Icons.Default.Settings, HomeDestination.Settings)
 )
