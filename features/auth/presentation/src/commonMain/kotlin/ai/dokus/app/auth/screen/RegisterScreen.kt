@@ -91,6 +91,7 @@ internal fun RegisterScreen(
             RegisterPage.Profile -> {
                 scope.launch { pagerState.animateScrollToPage(1) }
             }
+
             RegisterPage.Credentials -> {
                 viewModel.register(
                     fields.email,
@@ -118,6 +119,7 @@ internal fun RegisterScreen(
                 RegisterPage.Profile -> {
                     { navController.navigateUp() }
                 }
+
                 RegisterPage.Credentials -> {
                     { scope.launch { pagerState.animateScrollToPage(0) } }
                 }
@@ -137,7 +139,7 @@ internal fun RegisterScreen(
             ) {
                 SectionTitle(
                     text = title,
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.limitWidthCenteredContent(),
                     onBackPress = onBack,
                 )
