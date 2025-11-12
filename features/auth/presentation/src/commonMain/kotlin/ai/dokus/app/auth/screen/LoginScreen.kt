@@ -17,6 +17,8 @@ import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
 import ai.dokus.foundation.design.components.fields.PTextFieldPassword
 import ai.dokus.foundation.design.components.fields.PTextFieldPasswordDefaults
+import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
+import ai.dokus.foundation.design.constrains.withContentPadding
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
@@ -107,140 +109,145 @@ internal fun LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp),
+                    .withContentPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // App Title
-                Text(
-                    text = stringResource(Res.string.app_name),
-                    style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(Res.string.auth_login_subtitle),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-
-                Spacer(modifier = Modifier.height(48.dp))
-
-                // Email Field
-                PTextFieldEmail(
-                    fieldName = stringResource(Res.string.auth_email_label),
-                    value = email,
-                    keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(
-                        imeAction = ImeAction.Next
-                    ),
-                    error = fieldsError.takeIf { it is DokusException.Validation.InvalidEmail },
-                    onAction = { focusManager.moveFocus(FocusDirection.Next) },
-                    modifier = Modifier.fillMaxWidth()
-                ) { email = it }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password Field
-                PTextFieldPassword(
-                    fieldName = stringResource(Res.string.auth_password_label),
-                    value = password,
-                    keyboardOptions = PTextFieldPasswordDefaults.keyboardOptions.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    error = fieldsError.takeIf {
-                        it is DokusException.Validation.WeakPassword || it is DokusException.InvalidCredentials
-                    },
-                    onAction = {
-                        focusManager.clearFocus()
-                        if (canLogin && !isLoading) {
-                            viewModel.login(email, password)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { password = it }
-
-                // Forgot Password Link
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterStart
+                Column(
+                    modifier = Modifier.limitWidthCenteredContent(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TextButton(onClick = { navController.navigateTo(AuthDestination.ForgotPassword) }) {
+                    // App Title
+                    Text(
+                        text = stringResource(Res.string.app_name),
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = stringResource(Res.string.auth_login_subtitle),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+
+                    Spacer(modifier = Modifier.height(48.dp))
+
+                    // Email Field
+                    PTextFieldEmail(
+                        fieldName = stringResource(Res.string.auth_email_label),
+                        value = email,
+                        keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(
+                            imeAction = ImeAction.Next
+                        ),
+                        error = fieldsError.takeIf { it is DokusException.Validation.InvalidEmail },
+                        onAction = { focusManager.moveFocus(FocusDirection.Next) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { email = it }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Password Field
+                    PTextFieldPassword(
+                        fieldName = stringResource(Res.string.auth_password_label),
+                        value = password,
+                        keyboardOptions = PTextFieldPasswordDefaults.keyboardOptions.copy(
+                            imeAction = ImeAction.Done
+                        ),
+                        error = fieldsError.takeIf {
+                            it is DokusException.Validation.WeakPassword || it is DokusException.InvalidCredentials
+                        },
+                        onAction = {
+                            focusManager.clearFocus()
+                            if (canLogin && !isLoading) {
+                                viewModel.login(email, password)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { password = it }
+
+                    // Forgot Password Link
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        TextButton(onClick = { navController.navigateTo(AuthDestination.ForgotPassword) }) {
+                            Text(
+                                text = stringResource(Res.string.auth_forgot_password),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Login Button
+                    PPrimaryButton(
+                        text = stringResource(Res.string.auth_sign_in_button),
+                        enabled = canLogin && !isLoading,
+                        onClick = {
+                            focusManager.clearFocus()
+                            viewModel.login(email, password)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // "or" divider
+                    Text(
+                        text = "or",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Connect to Server Button
+                    POutlinedButton(
+                        text = "Connect to server",
+                        onClick = {
+                            // TODO: Implement server connection dialog
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Sign Up Link
+                    TextButton(
+                        onClick = { navController.navigateTo(AuthDestination.Register) }
+                    ) {
                         Text(
-                            text = stringResource(Res.string.auth_forgot_password),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.primary,
+                            text = buildAnnotatedString {
+                                withStyle(
+                                    SpanStyle(
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                ) {
+                                    append(stringResource(Res.string.auth_no_account_prefix))
+                                }
+                                withStyle(
+                                    SpanStyle(
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    append(stringResource(Res.string.auth_sign_up_link))
+                                }
+                            },
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Login Button
-                PPrimaryButton(
-                    text = stringResource(Res.string.auth_sign_in_button),
-                    enabled = canLogin && !isLoading,
-                    onClick = {
-                        focusManager.clearFocus()
-                        viewModel.login(email, password)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // "or" divider
-                Text(
-                    text = "or",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Connect to Server Button
-                POutlinedButton(
-                    text = "Connect to server",
-                    onClick = {
-                        // TODO: Implement server connection dialog
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Sign Up Link
-                TextButton(
-                    onClick = { navController.navigateTo(AuthDestination.Register) }
-                ) {
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(
-                                SpanStyle(
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Normal,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            ) {
-                                append(stringResource(Res.string.auth_no_account_prefix))
-                            }
-                            withStyle(
-                                SpanStyle(
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                append(stringResource(Res.string.auth_sign_up_link))
-                            }
-                        },
-                        style = MaterialTheme.typography.bodyMedium
-                    )
                 }
             }
         }
