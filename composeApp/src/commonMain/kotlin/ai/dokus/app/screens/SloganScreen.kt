@@ -4,6 +4,8 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_slogan
 import ai.dokus.app.resources.generated.brand_motto
 import ai.dokus.app.resources.generated.copyright
+import ai.dokus.app.resources.generated.slogan_line_2
+import ai.dokus.app.resources.generated.slogan_line_3
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.tooling.PreviewParameters
@@ -140,7 +142,7 @@ fun SloganScreen() {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Crafted for those who build tomorrow.",
+                    text = stringResource(Res.string.slogan_line_2),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Normal,
                         letterSpacing = 0.5.sp
@@ -153,7 +155,7 @@ fun SloganScreen() {
                 )
 
                 Text(
-                    text = "Trusted by those who own today.",
+                    text = stringResource(Res.string.slogan_line_3),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Normal,
                         letterSpacing = 0.5.sp

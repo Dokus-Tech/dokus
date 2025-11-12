@@ -2,6 +2,15 @@ package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.LoginViewModel
 import ai.dokus.app.core.extensions.SetupSecondaryPanel
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.app_name
+import ai.dokus.app.resources.generated.auth_email_label
+import ai.dokus.app.resources.generated.auth_forgot_password
+import ai.dokus.app.resources.generated.auth_login_subtitle
+import ai.dokus.app.resources.generated.auth_no_account_prefix
+import ai.dokus.app.resources.generated.auth_password_label
+import ai.dokus.app.resources.generated.auth_sign_in_button
+import ai.dokus.app.resources.generated.auth_sign_up_link
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
@@ -49,6 +58,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -102,7 +112,7 @@ internal fun LoginScreen(
             ) {
                 // App Title
                 Text(
-                    text = "D[#]kus",
+                    text = stringResource(Res.string.app_name),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -111,7 +121,7 @@ internal fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Sign in to your account",
+                    text = stringResource(Res.string.auth_login_subtitle),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -120,7 +130,7 @@ internal fun LoginScreen(
 
                 // Email Field
                 PTextFieldEmail(
-                    fieldName = "Email",
+                    fieldName = stringResource(Res.string.auth_email_label),
                     value = email,
                     keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(
                         imeAction = ImeAction.Next
@@ -134,7 +144,7 @@ internal fun LoginScreen(
 
                 // Password Field
                 PTextFieldPassword(
-                    fieldName = "Password",
+                    fieldName = stringResource(Res.string.auth_password_label),
                     value = password,
                     keyboardOptions = PTextFieldPasswordDefaults.keyboardOptions.copy(
                         imeAction = ImeAction.Done
@@ -158,7 +168,7 @@ internal fun LoginScreen(
                 ) {
                     TextButton(onClick = { navController.navigateTo(AuthDestination.ForgotPassword) }) {
                         Text(
-                            text = "Forgot password?",
+                            text = stringResource(Res.string.auth_forgot_password),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary,
@@ -171,7 +181,7 @@ internal fun LoginScreen(
 
                 // Login Button
                 PPrimaryButton(
-                    text = "Sign In",
+                    text = stringResource(Res.string.auth_sign_in_button),
                     enabled = canLogin && !isLoading,
                     onClick = {
                         focusManager.clearFocus()
@@ -195,7 +205,7 @@ internal fun LoginScreen(
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
                             ) {
-                                append("Don't have an account? ")
+                                append(stringResource(Res.string.auth_no_account_prefix))
                             }
                             withStyle(
                                 SpanStyle(
@@ -204,7 +214,7 @@ internal fun LoginScreen(
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             ) {
-                                append("Sign up")
+                                append(stringResource(Res.string.auth_sign_up_link))
                             }
                         },
                         style = MaterialTheme.typography.bodyMedium
