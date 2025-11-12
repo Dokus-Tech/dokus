@@ -1,26 +1,18 @@
 package ai.dokus.app.auth.screen
 
+import ai.dokus.app.auth.components.RegisterActionButton
+import ai.dokus.app.auth.components.RegisterCredentialsFields
+import ai.dokus.app.auth.components.RegisterProfileFields
+import ai.dokus.app.auth.model.RegisterFormFields
+import ai.dokus.app.auth.model.RegisterPage
 import ai.dokus.app.auth.viewmodel.RegisterViewModel
 import ai.dokus.app.core.extensions.SetupSecondaryPanel
 import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_email_label
-import ai.dokus.app.resources.generated.auth_first_name_label
 import ai.dokus.app.resources.generated.auth_has_account_prefix
-import ai.dokus.app.resources.generated.auth_last_name_label
 import ai.dokus.app.resources.generated.auth_login_link
-import ai.dokus.app.resources.generated.auth_password_label
-import ai.dokus.app.resources.generated.auth_register_button
-import ai.dokus.app.resources.generated.auth_register_title
-import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.fields.PTextFieldEmail
-import ai.dokus.foundation.design.components.fields.PTextFieldName
-import ai.dokus.foundation.design.components.fields.PTextFieldPassword
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AppDestination
 import ai.dokus.foundation.navigation.destinations.AuthDestination
@@ -39,9 +31,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -51,14 +44,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+
+private val fieldsContentMinHeight = 280.dp
 
 @Composable
 internal fun RegisterScreen(
@@ -66,6 +62,8 @@ internal fun RegisterScreen(
 ) {
     val navController = LocalNavController.current
     val focusManager = LocalFocusManager.current
+    val mutableInteractionSource = remember { MutableInteractionSource() }
+    val scope = rememberCoroutineScope()
 
     SetupSecondaryPanel(AppDestination.Slogan, SecondaryPanelType.Inline)
 
@@ -84,17 +82,26 @@ internal fun RegisterScreen(
     val fieldsError: DokusException? =
         (state.value as? RegisterViewModel.State.Error)?.exception
 
-    var firstName by remember { mutableStateOf(Name("")) }
-    var lastName by remember { mutableStateOf(Name("")) }
-    var email by remember { mutableStateOf(Email("")) }
-    var password by remember { mutableStateOf(Password("")) }
-    val mutableInteractionSource = remember { MutableInteractionSource() }
-
+    var fields by remember(viewModel) { mutableStateOf(RegisterFormFields()) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
     val isLoading = state.value is RegisterViewModel.State.Loading
-    val isFormValid = firstName.value.isNotBlank() &&
-            lastName.value.isNotBlank() &&
-            email.value.isNotBlank() &&
-            password.value.isNotBlank()
+
+    val onContinueClick = { page: RegisterPage ->
+        when (page) {
+            RegisterPage.Profile -> {
+                scope.launch { pagerState.animateScrollToPage(1) }
+            }
+
+            RegisterPage.Credentials -> {
+                viewModel.register(
+                    fields.email,
+                    fields.password,
+                    fields.firstName,
+                    fields.lastName
+                )
+            }
+        }
+    }
 
     Scaffold { contentPadding ->
         Box(
@@ -107,6 +114,21 @@ internal fun RegisterScreen(
                     focusManager.clearFocus()
                 }
         ) {
+            val currentPage = RegisterPage.fromIndex(pagerState.currentPage)
+            val onBack: () -> Unit = when (currentPage) {
+                RegisterPage.Profile -> {
+                    { navController.navigateUp() }
+                }
+
+                RegisterPage.Credentials -> {
+                    { scope.launch { pagerState.animateScrollToPage(0) } }
+                }
+            }
+            val title = when (currentPage) {
+                RegisterPage.Profile -> "Create your profile"
+                RegisterPage.Credentials -> "Set up credentials"
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -116,76 +138,54 @@ internal fun RegisterScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SectionTitle(
-                    text = stringResource(Res.string.auth_register_title),
-                    horizontalArrangement = Arrangement.Center,
+                    text = title,
+                    horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.limitWidthCenteredContent(),
+                    onBackPress = onBack,
                 )
-
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Column(
-                    modifier = Modifier.limitWidthCenteredContent().fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = fieldsContentMinHeight)
+                        .limitWidthCenteredContent(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    PTextFieldName(
-                        fieldName = stringResource(Res.string.auth_first_name_label),
-                        value = firstName,
-                        onValueChange = { firstName = it },
-                        error = if (fieldsError is DokusException.Validation.InvalidFirstName) fieldsError else null,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    PTextFieldName(
-                        fieldName = stringResource(Res.string.auth_last_name_label),
-                        value = lastName,
-                        onValueChange = { lastName = it },
-                        error = if (fieldsError is DokusException.Validation.InvalidLastName) fieldsError else null,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    PTextFieldEmail(
-                        fieldName = stringResource(Res.string.auth_email_label),
-                        value = email,
-                        onValueChange = { email = it },
-                        error = if (fieldsError is DokusException.Validation.InvalidEmail) fieldsError else null,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    PTextFieldPassword(
-                        fieldName = stringResource(Res.string.auth_password_label),
-                        value = password,
-                        onValueChange = { password = it },
-                        error = if (fieldsError is DokusException.Validation.WeakPassword) fieldsError else null,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        onAction = {
-                            if (isFormValid && !isLoading) {
-                                viewModel.register(email, password, firstName, lastName)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    HorizontalPager(
+                        state = pagerState,
+                        userScrollEnabled = false,
+                        modifier = Modifier.limitWidthCenteredContent()
+                    ) { page ->
+                        if (page == 0) {
+                            RegisterProfileFields(
+                                focusManager = focusManager,
+                                error = fieldsError,
+                                fields = fields,
+                                onFieldsUpdate = { fields = it },
+                                onSubmit = { onContinueClick(RegisterPage.Profile) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            RegisterCredentialsFields(
+                                focusManager = focusManager,
+                                error = fieldsError,
+                                fields = fields,
+                                onFieldsUpdate = { fields = it },
+                                onRegisterClick = { onContinueClick(RegisterPage.Credentials) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.limitWidthCenteredContent()
-                    )
-                } else {
-                    PPrimaryButton(
-                        text = stringResource(Res.string.auth_register_button),
-                        enabled = isFormValid,
-                        onClick = {
-                            viewModel.register(email, password, firstName, lastName)
-                        },
-                        modifier = Modifier.limitWidthCenteredContent().fillMaxWidth()
-                    )
-                }
-
+                RegisterActionButton(
+                    page = RegisterPage.fromIndex(pagerState.currentPage),
+                    fields = fields,
+                    onContinueClick = { onContinueClick(RegisterPage.fromIndex(pagerState.currentPage)) },
+                    modifier = Modifier.limitWidthCenteredContent().fillMaxWidth(),
+                    isLoading = isLoading,
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
