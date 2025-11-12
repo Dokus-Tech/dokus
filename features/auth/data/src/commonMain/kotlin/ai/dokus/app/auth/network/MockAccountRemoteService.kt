@@ -9,48 +9,39 @@ import ai.dokus.foundation.domain.model.auth.*
  */
 class MockAccountRemoteService : AccountRemoteService {
 
-    override suspend fun login(request: LoginRequest): Result<LoginResponse> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun login(request: LoginRequest): LoginResponse {
+        throw NotImplementedError("Backend not connected")
     }
 
-    override suspend fun register(request: RegisterRequest): Result<LoginResponse> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun register(request: RegisterRequest): LoginResponse {
+        throw NotImplementedError("Backend not connected")
     }
 
-    override suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun refreshToken(request: RefreshTokenRequest): LoginResponse {
+        throw NotImplementedError("Backend not connected")
     }
 
-    override suspend fun logout(request: LogoutRequest): Result<Unit> {
-        // TODO: Replace with actual RPC call
-        return Result.success(Unit)
+    override suspend fun logout(request: LogoutRequest) {
+        // Logout succeeds silently even without backend
     }
 
-    override suspend fun requestPasswordReset(email: String): Result<Unit> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun requestPasswordReset(email: String) {
+        throw NotImplementedError("Backend not connected")
     }
 
-    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest) {
+        throw NotImplementedError("Backend not connected")
     }
 
-    override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun deactivateAccount(request: DeactivateUserRequest) {
+        throw NotImplementedError("Backend not connected")
     }
 
-    override suspend fun verifyEmail(token: String): Result<Unit> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun verifyEmail(token: String) {
+        throw NotImplementedError("Backend not connected")
     }
 
-    override suspend fun resendVerificationEmail(): Result<Unit> {
-        // TODO: Replace with actual RPC call
-        return Result.failure(NotImplementedError("Backend not connected"))
+    override suspend fun resendVerificationEmail() {
+        throw NotImplementedError("Backend not connected")
     }
 }
