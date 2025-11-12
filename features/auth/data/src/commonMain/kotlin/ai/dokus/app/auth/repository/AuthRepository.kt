@@ -4,6 +4,7 @@ import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.foundation.domain.model.auth.*
+import ai.dokus.foundation.domain.model.common.toResult
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 
@@ -42,7 +43,7 @@ class AuthRepository(
         logger.d { "Login attempt for email: ${request.email.value.take(3)}***" }
 
         return try {
-            val result = accountService.login(request)
+            val result = accountService.login(request).toResult()
 
             result.fold(
                 onSuccess = { response ->
@@ -69,7 +70,7 @@ class AuthRepository(
         logger.d { "Registration attempt for email: ${request.email.value.take(3)}***" }
 
         return try {
-            val result = accountService.register(request)
+            val result = accountService.register(request).toResult()
 
             result.fold(
                 onSuccess = { response ->
@@ -116,7 +117,7 @@ class AuthRepository(
         logger.d { "Password reset requested for: ${email.take(3)}***" }
 
         return try {
-            accountService.requestPasswordReset(email)
+            accountService.requestPasswordReset(email).toResult()
         } catch (e: Exception) {
             logger.e(e) { "Password reset request failed" }
             Result.failure(e)
@@ -131,7 +132,7 @@ class AuthRepository(
 
         return try {
             val request = ResetPasswordRequest(newPassword = newPassword)
-            accountService.resetPassword(resetToken, request)
+            accountService.resetPassword(resetToken, request).toResult()
         } catch (e: Exception) {
             logger.e(e) { "Password reset failed" }
             Result.failure(e)
@@ -146,7 +147,7 @@ class AuthRepository(
 
         return try {
             val request = DeactivateUserRequest(reason = reason ?: "User requested")
-            accountService.deactivateAccount(request)
+            accountService.deactivateAccount(request).toResult()
         } catch (e: Exception) {
             logger.e(e) { "Account deactivation failed" }
             Result.failure(e)
@@ -161,7 +162,7 @@ class AuthRepository(
 
         return try {
             val request = RefreshTokenRequest(refreshToken = refreshToken)
-            val result = accountService.refreshToken(request)
+            val result = accountService.refreshToken(request).toResult()
 
             result.getOrNull().also {
                 if (it != null) {
