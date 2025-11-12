@@ -102,7 +102,7 @@ internal fun LoginScreen(
             ) {
                 // App Title
                 Text(
-                    text = "Dokus",
+                    text = "D[#]kus",
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
