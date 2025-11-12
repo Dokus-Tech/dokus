@@ -12,6 +12,7 @@ import ai.dokus.app.resources.generated.auth_password_label
 import ai.dokus.app.resources.generated.auth_sign_in_button
 import ai.dokus.app.resources.generated.auth_sign_up_link
 import ai.dokus.foundation.design.components.PPrimaryButton
+import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
 import ai.dokus.foundation.design.components.fields.PTextFieldPassword
@@ -186,6 +187,27 @@ internal fun LoginScreen(
                     onClick = {
                         focusManager.clearFocus()
                         viewModel.login(email, password)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // "or" divider
+                Text(
+                    text = "or",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Connect to Server Button
+                POutlinedButton(
+                    text = "Connect to server",
+                    onClick = {
+                        // TODO: Implement server connection dialog
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
