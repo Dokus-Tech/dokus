@@ -6,13 +6,12 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_name
 import ai.dokus.app.resources.generated.auth_email_label
 import ai.dokus.app.resources.generated.auth_forgot_password
-import ai.dokus.app.resources.generated.auth_login_subtitle
 import ai.dokus.app.resources.generated.auth_no_account_prefix
 import ai.dokus.app.resources.generated.auth_password_label
 import ai.dokus.app.resources.generated.auth_sign_in_button
 import ai.dokus.app.resources.generated.auth_sign_up_link
-import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.POutlinedButton
+import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
 import ai.dokus.foundation.design.components.fields.PTextFieldPassword
@@ -123,14 +122,6 @@ internal fun LoginScreen(
                         style = MaterialTheme.typography.displayLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = stringResource(Res.string.auth_login_subtitle),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
 
                     Spacer(modifier = Modifier.height(48.dp))
