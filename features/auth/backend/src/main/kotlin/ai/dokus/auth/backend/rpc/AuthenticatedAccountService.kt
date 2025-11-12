@@ -4,6 +4,7 @@ import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.security.AuthContext
 import ai.dokus.auth.backend.security.AuthenticationInfo
 import ai.dokus.foundation.domain.model.auth.*
+import ai.dokus.foundation.domain.model.common.RpcResult
 import kotlinx.coroutines.withContext
 
 /**
@@ -15,43 +16,43 @@ class AuthenticatedAccountService(
     private val authInfoProvider: suspend () -> AuthenticationInfo?
 ) : AccountRemoteService {
 
-    override suspend fun login(request: LoginRequest): Result<LoginResponse> {
+    override suspend fun login(request: LoginRequest): RpcResult<LoginResponse> {
         return delegate.login(request)
     }
 
-    override suspend fun register(request: RegisterRequest): Result<LoginResponse> {
+    override suspend fun register(request: RegisterRequest): RpcResult<LoginResponse> {
         return delegate.register(request)
     }
 
-    override suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> {
+    override suspend fun refreshToken(request: RefreshTokenRequest): RpcResult<LoginResponse> {
         return delegate.refreshToken(request)
     }
 
-    override suspend fun logout(request: LogoutRequest): Result<Unit> {
+    override suspend fun logout(request: LogoutRequest): RpcResult<Unit> {
         return withAuthContextIfAvailable {
             delegate.logout(request)
         }
     }
 
-    override suspend fun requestPasswordReset(email: String): Result<Unit> {
+    override suspend fun requestPasswordReset(email: String): RpcResult<Unit> {
         return delegate.requestPasswordReset(email)
     }
 
-    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
+    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): RpcResult<Unit> {
         return delegate.resetPassword(resetToken, request)
     }
 
-    override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
+    override suspend fun deactivateAccount(request: DeactivateUserRequest): RpcResult<Unit> {
         return withAuthContextIfAvailable {
             delegate.deactivateAccount(request)
         }
     }
 
-    override suspend fun verifyEmail(token: String): Result<Unit> {
+    override suspend fun verifyEmail(token: String): RpcResult<Unit> {
         return delegate.verifyEmail(token)
     }
 
-    override suspend fun resendVerificationEmail(): Result<Unit> {
+    override suspend fun resendVerificationEmail(): RpcResult<Unit> {
         return withAuthContextIfAvailable {
             delegate.resendVerificationEmail()
         }
