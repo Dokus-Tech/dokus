@@ -1,9 +1,9 @@
 package ai.dokus.app.screens
 
 import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.app_name
+import ai.dokus.app.resources.generated.app_slogan
+import ai.dokus.app.resources.generated.brand_motto
 import ai.dokus.app.resources.generated.copyright
-import ai.dokus.app.resources.generated.develop_by
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.tooling.PreviewParameters
@@ -43,7 +43,6 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 @Composable
 fun SloganScreen() {
     // Animation states for text elements
-    val titleAlpha = remember { Animatable(0f) }
     val sloganLine1Alpha = remember { Animatable(0f) }
     val sloganLine1OffsetY = remember { Animatable(30f) }
     val sloganLine2Alpha = remember { Animatable(0f) }
@@ -53,16 +52,8 @@ fun SloganScreen() {
     val creditsAlpha = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        // Stage 1: Title (0-0.8s)
-        launch {
-            titleAlpha.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(800, easing = FastOutSlowInEasing)
-            )
-        }
-
-        // Stage 2: Slogan lines (1.0-3.0s)
-        delay(1000)
+        // Stage 1: Slogan lines (0.5-2.5s)
+        delay(500)
         launch {
             sloganLine1Alpha.animateTo(
                 targetValue = 1f,
@@ -104,7 +95,7 @@ fun SloganScreen() {
             )
         }
 
-        // Stage 3: Credits (3.5s)
+        // Stage 2: Credits (2.7s)
         delay(700)
         creditsAlpha.animateTo(
             targetValue = 1f,
@@ -127,20 +118,6 @@ fun SloganScreen() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // App name
-            Text(
-                text = stringResource(Res.string.app_name),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                style = TextStyle(
-                    fontSize = 72.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 12.sp
-                ),
-                modifier = Modifier.alpha(titleAlpha.value)
-            )
-
-            Spacer(modifier = Modifier.height(60.dp))
-
             // Marketing slogans with staggered entrance
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -148,7 +125,7 @@ fun SloganScreen() {
                 modifier = Modifier.padding(horizontal = 40.dp)
             ) {
                 Text(
-                    text = "Where sovereignty meets intelligence.",
+                    text = stringResource(Res.string.app_slogan),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 1.sp
@@ -187,45 +164,6 @@ fun SloganScreen() {
                         .alpha(sloganLine3Alpha.value)
                         .offset(y = sloganLine3OffsetY.value.dp)
                 )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Separator
-                Text(
-                    text = "─────────",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        letterSpacing = 4.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    modifier = Modifier.alpha(creditsAlpha.value)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Location and establishment
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = "Belgium",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            letterSpacing = 2.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        modifier = Modifier.alpha(creditsAlpha.value)
-                    )
-
-                    Text(
-                        text = "Est. 2025",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            letterSpacing = 1.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        modifier = Modifier.alpha(creditsAlpha.value)
-                    )
-                }
             }
         }
 
@@ -242,7 +180,7 @@ fun SloganScreen() {
                 modifier = Modifier.alpha(creditsAlpha.value)
             ) {
                 Text(
-                    text = stringResource(Res.string.develop_by),
+                    text = stringResource(Res.string.brand_motto),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 1.sp
