@@ -33,7 +33,10 @@ import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.ktor.ext.get
+import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import kotlinx.coroutines.runBlocking
+import ai.dokus.foundation.ktor.database.DatabaseFactory
 
 private val logger = LoggerFactory.getLogger("Application")
 
@@ -133,6 +136,16 @@ fun Application.module(appConfig: AppBaseConfig) {
 
     // Configure application
     configureDependencyInjection(appConfig)
+
+    // Initialize database
+    logger.info("Initializing database connection...")
+    runBlocking {
+        val dbFactory by inject<DatabaseFactory>()
+        // Database initialization happens in the DatabaseFactory constructor via Koin
+        // This line triggers the lazy initialization
+        logger.info("Database initialized successfully: ${dbFactory.database}")
+    }
+
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
@@ -166,6 +179,12 @@ fun Application.module(appConfig: AppBaseConfig) {
     // Configure graceful shutdown
     monitor.subscribe(ApplicationStopping) {
         logger.info("Application stopping, cleaning up resources...")
+        runBlocking {
+            // Close database connections
+            val dbFactory by inject<DatabaseFactory>()
+            dbFactory.close()
+            logger.info("Database connections closed")
+        }
         logger.info("Cleanup complete")
     }
 
