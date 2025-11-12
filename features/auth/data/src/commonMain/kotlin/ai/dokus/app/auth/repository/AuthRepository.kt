@@ -4,13 +4,16 @@ import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.foundation.domain.model.auth.*
-import ai.dokus.foundation.domain.model.common.toResult
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Repository for authentication operations.
  * Coordinates between TokenManager, AuthManager, and AccountRemoteService.
+ *
+ * Error Handling:
+ * - RPC methods throw exceptions on failure
+ * - Repository catches exceptions and wraps them in Result<T> for internal use
  */
 class AuthRepository(
     private val tokenManager: TokenManagerMutable,
@@ -39,55 +42,29 @@ class AuthRepository(
     /**
      * Login with email and password.
      */
-    suspend fun login(request: LoginRequest): Result<Unit> {
+    suspend fun login(request: LoginRequest): Result<Unit> = runCatching {
         logger.d { "Login attempt for email: ${request.email.value.take(3)}***" }
 
-        return try {
-            val result = accountService.login(request).toResult()
-
-            result.fold(
-                onSuccess = { response ->
-                    logger.i { "Login successful" }
-                    tokenManager.saveTokens(response)
-                    authManager.onLoginSuccess()
-                    Result.success(Unit)
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Login failed" }
-                    Result.failure(error)
-                }
-            )
-        } catch (e: Exception) {
-            logger.e(e) { "Login error" }
-            Result.failure(e)
-        }
+        val response = accountService.login(request)
+        logger.i { "Login successful" }
+        tokenManager.saveTokens(response)
+        authManager.onLoginSuccess()
+    }.onFailure { error ->
+        logger.e(error) { "Login failed" }
     }
 
     /**
      * Register a new user account.
      */
-    suspend fun register(request: RegisterRequest): Result<Unit> {
+    suspend fun register(request: RegisterRequest): Result<Unit> = runCatching {
         logger.d { "Registration attempt for email: ${request.email.value.take(3)}***" }
 
-        return try {
-            val result = accountService.register(request).toResult()
-
-            result.fold(
-                onSuccess = { response ->
-                    logger.i { "Registration successful, auto-logging in" }
-                    tokenManager.saveTokens(response)
-                    authManager.onLoginSuccess()
-                    Result.success(Unit)
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Registration failed" }
-                    Result.failure(error)
-                }
-            )
-        } catch (e: Exception) {
-            logger.e(e) { "Registration error" }
-            Result.failure(e)
-        }
+        val response = accountService.register(request)
+        logger.i { "Registration successful, auto-logging in" }
+        tokenManager.saveTokens(response)
+        authManager.onLoginSuccess()
+    }.onFailure { error ->
+        logger.e(error) { "Registration failed" }
     }
 
     /**
@@ -113,45 +90,33 @@ class AuthRepository(
     /**
      * Request password reset email.
      */
-    suspend fun requestPasswordReset(email: String): Result<Unit> {
+    suspend fun requestPasswordReset(email: String): Result<Unit> = runCatching {
         logger.d { "Password reset requested for: ${email.take(3)}***" }
-
-        return try {
-            accountService.requestPasswordReset(email).toResult()
-        } catch (e: Exception) {
-            logger.e(e) { "Password reset request failed" }
-            Result.failure(e)
-        }
+        accountService.requestPasswordReset(email)
+    }.onFailure { error ->
+        logger.e(error) { "Password reset request failed" }
     }
 
     /**
      * Reset password with token.
      */
-    suspend fun resetPassword(resetToken: String, newPassword: String): Result<Unit> {
+    suspend fun resetPassword(resetToken: String, newPassword: String): Result<Unit> = runCatching {
         logger.d { "Resetting password with token" }
-
-        return try {
-            val request = ResetPasswordRequest(newPassword = newPassword)
-            accountService.resetPassword(resetToken, request).toResult()
-        } catch (e: Exception) {
-            logger.e(e) { "Password reset failed" }
-            Result.failure(e)
-        }
+        val request = ResetPasswordRequest(newPassword = newPassword)
+        accountService.resetPassword(resetToken, request)
+    }.onFailure { error ->
+        logger.e(error) { "Password reset failed" }
     }
 
     /**
      * Deactivate current user account.
      */
-    suspend fun deactivateAccount(reason: String? = null): Result<Unit> {
+    suspend fun deactivateAccount(reason: String? = null): Result<Unit> = runCatching {
         logger.d { "Deactivating account" }
-
-        return try {
-            val request = DeactivateUserRequest(reason = reason ?: "User requested")
-            accountService.deactivateAccount(request).toResult()
-        } catch (e: Exception) {
-            logger.e(e) { "Account deactivation failed" }
-            Result.failure(e)
-        }
+        val request = DeactivateUserRequest(reason = reason ?: "User requested")
+        accountService.deactivateAccount(request)
+    }.onFailure { error ->
+        logger.e(error) { "Account deactivation failed" }
     }
 
     /**
@@ -162,14 +127,8 @@ class AuthRepository(
 
         return try {
             val request = RefreshTokenRequest(refreshToken = refreshToken)
-            val result = accountService.refreshToken(request).toResult()
-
-            result.getOrNull().also {
-                if (it != null) {
-                    logger.i { "Token refreshed successfully" }
-                } else {
-                    logger.w { "Token refresh failed" }
-                }
+            accountService.refreshToken(request).also {
+                logger.i { "Token refreshed successfully" }
             }
         } catch (e: Exception) {
             logger.e(e) { "Token refresh error" }
