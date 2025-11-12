@@ -12,7 +12,7 @@ class SecondaryNavigationState {
     private val _isPanelVisible = MutableStateFlow(false)
     val isPanelVisible: StateFlow<Boolean> = _isPanelVisible.asStateFlow()
 
-    private val _panelType = MutableStateFlow(SecondaryPanelType.Complimentary)
+    private val _panelType = MutableStateFlow(SecondaryPanelType.Inline)
     val panelType: StateFlow<SecondaryPanelType> = _panelType.asStateFlow()
 
     /**
@@ -22,7 +22,7 @@ class SecondaryNavigationState {
      *
      * @param panelType The type of panel to display (Inline, Complimentary, or Info)
      */
-    fun showPanel(panelType: SecondaryPanelType = SecondaryPanelType.Complimentary) {
+    fun showPanel(panelType: SecondaryPanelType) {
         // Update panel type first to ensure it's set before visibility triggers observers
         _panelType.value = panelType
         _isPanelVisible.value = true

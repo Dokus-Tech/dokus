@@ -16,11 +16,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun NewPasswordScreen() {
-    val viewModel = remember { NewPasswordViewModel() }
-
+internal fun NewPasswordScreen(
+    viewModel: NewPasswordViewModel = koinViewModel()
+) {
     val data = viewModel.state.collectAsState()
     val fieldsError: DokusException? =
         (data.value as? NewPasswordViewModel.State.Error)?.exception

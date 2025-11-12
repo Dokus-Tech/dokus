@@ -29,7 +29,6 @@ class BootstrapViewModel(
     private suspend fun needsLogin(): Boolean {
         updateStep(BootstrapState.CheckingLogin(isActive = true, isCurrent = true))
         authInitializer.initialize()
-        // Check if user is authenticated
         return !authInitializer.isAuthenticated()
     }
 

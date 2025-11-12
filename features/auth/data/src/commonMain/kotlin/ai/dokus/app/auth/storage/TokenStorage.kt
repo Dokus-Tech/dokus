@@ -2,6 +2,7 @@ package ai.dokus.app.auth.storage
 
 import ai.dokus.foundation.sstorage.SecureStorage
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
@@ -97,10 +98,9 @@ class TokenStorage(
         saveAccessToken(accessToken)
         saveRefreshToken(refreshToken)
 
-        // TODO
-//        // Calculate absolute expiry time
-//        val currentTime = kotlin.time.Clock.System.now()
-//        val expiryTime = currentTime + expiresIn
-//        saveTokenExpiry(expiryTime)
+        // Calculate absolute expiry time
+        val currentTime = Clock.System.now().epochSeconds
+        val expiryTime = currentTime + expiresIn
+        saveTokenExpiry(expiryTime)
     }
 }
