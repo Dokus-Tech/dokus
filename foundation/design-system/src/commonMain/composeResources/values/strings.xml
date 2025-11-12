@@ -1,8 +1,8 @@
 <resources>
     <!-- General -->
-    <string name="app_name">Dokus</string>
-    <string name="app_slogan">Dokus slogan</string>
-    <string name="develop_by">Developed by Company owner to Company owners</string>
+    <string name="app_name">D[#]kus</string>
+    <string name="app_slogan">Where sovereignty meets intelligence.</string>
+    <string name="brand_motto">Intelligence. Autonomy. Silence.</string>
     <string name="copyright">©2025 Dokus</string>
     <string name="back">Back</string>
     <string name="approve">Approve</string>
@@ -16,7 +16,6 @@
 
     <!-- Home -->
     <string name="home_dashboard">Dashboard</string>
-    <string name="home_users">Users</string>
     <string name="home_settings">Settings</string>
 
     <!-- Device Types -->
@@ -33,9 +32,9 @@
     <!-- Dashboard - Feature -->
     <string name="feature_auth">Authentication</string>
 
-    <!-- Users -->
-    <string name="users_selected">Selected users</string>
-    <string name="users_not_selected">No users selected</string>
+    <!-- Slogan Screen -->
+    <string name="slogan_line_2">Crafted for those who build tomorrow.</string>
+    <string name="slogan_line_3">Trusted by those who own today.</string>
 
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>

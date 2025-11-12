@@ -2,6 +2,15 @@ package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.RegisterViewModel
 import ai.dokus.app.core.extensions.SetupSecondaryPanel
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_email_label
+import ai.dokus.app.resources.generated.auth_first_name_label
+import ai.dokus.app.resources.generated.auth_has_account_prefix
+import ai.dokus.app.resources.generated.auth_last_name_label
+import ai.dokus.app.resources.generated.auth_login_link
+import ai.dokus.app.resources.generated.auth_password_label
+import ai.dokus.app.resources.generated.auth_register_button
+import ai.dokus.app.resources.generated.auth_register_title
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldName
@@ -48,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -106,7 +116,7 @@ internal fun RegisterScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SectionTitle(
-                    text = "Create Account",
+                    text = stringResource(Res.string.auth_register_title),
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.limitWidthCenteredContent(),
                 )
@@ -118,7 +128,7 @@ internal fun RegisterScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     PTextFieldName(
-                        fieldName = "First Name",
+                        fieldName = stringResource(Res.string.auth_first_name_label),
                         value = firstName,
                         onValueChange = { firstName = it },
                         error = if (fieldsError is DokusException.Validation.InvalidFirstName) fieldsError else null,
@@ -127,7 +137,7 @@ internal fun RegisterScreen(
                     )
 
                     PTextFieldName(
-                        fieldName = "Last Name",
+                        fieldName = stringResource(Res.string.auth_last_name_label),
                         value = lastName,
                         onValueChange = { lastName = it },
                         error = if (fieldsError is DokusException.Validation.InvalidLastName) fieldsError else null,
@@ -136,7 +146,7 @@ internal fun RegisterScreen(
                     )
 
                     PTextFieldEmail(
-                        fieldName = "Email",
+                        fieldName = stringResource(Res.string.auth_email_label),
                         value = email,
                         onValueChange = { email = it },
                         error = if (fieldsError is DokusException.Validation.InvalidEmail) fieldsError else null,
@@ -145,7 +155,7 @@ internal fun RegisterScreen(
                     )
 
                     PTextFieldPassword(
-                        fieldName = "Password",
+                        fieldName = stringResource(Res.string.auth_password_label),
                         value = password,
                         onValueChange = { password = it },
                         error = if (fieldsError is DokusException.Validation.WeakPassword) fieldsError else null,
@@ -167,7 +177,7 @@ internal fun RegisterScreen(
                     )
                 } else {
                     PPrimaryButton(
-                        text = "Register",
+                        text = stringResource(Res.string.auth_register_button),
                         enabled = isFormValid,
                         onClick = {
                             viewModel.register(email, password, firstName, lastName)
@@ -183,12 +193,12 @@ internal fun RegisterScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Already have an account? ",
+                        text = stringResource(Res.string.auth_has_account_prefix),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Login",
+                        text = stringResource(Res.string.auth_login_link),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {

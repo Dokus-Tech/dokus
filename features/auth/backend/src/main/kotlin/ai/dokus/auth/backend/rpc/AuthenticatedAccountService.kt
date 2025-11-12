@@ -15,44 +15,44 @@ class AuthenticatedAccountService(
     private val authInfoProvider: suspend () -> AuthenticationInfo?
 ) : AccountRemoteService {
 
-    override suspend fun login(request: LoginRequest): Result<LoginResponse> {
+    override suspend fun login(request: LoginRequest): LoginResponse {
         return delegate.login(request)
     }
 
-    override suspend fun register(request: RegisterRequest): Result<LoginResponse> {
+    override suspend fun register(request: RegisterRequest): LoginResponse {
         return delegate.register(request)
     }
 
-    override suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> {
+    override suspend fun refreshToken(request: RefreshTokenRequest): LoginResponse {
         return delegate.refreshToken(request)
     }
 
-    override suspend fun logout(request: LogoutRequest): Result<Unit> {
-        return withAuthContextIfAvailable {
+    override suspend fun logout(request: LogoutRequest) {
+        withAuthContextIfAvailable {
             delegate.logout(request)
         }
     }
 
-    override suspend fun requestPasswordReset(email: String): Result<Unit> {
-        return delegate.requestPasswordReset(email)
+    override suspend fun requestPasswordReset(email: String) {
+        delegate.requestPasswordReset(email)
     }
 
-    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
-        return delegate.resetPassword(resetToken, request)
+    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest) {
+        delegate.resetPassword(resetToken, request)
     }
 
-    override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
-        return withAuthContextIfAvailable {
+    override suspend fun deactivateAccount(request: DeactivateUserRequest) {
+        withAuthContextIfAvailable {
             delegate.deactivateAccount(request)
         }
     }
 
-    override suspend fun verifyEmail(token: String): Result<Unit> {
-        return delegate.verifyEmail(token)
+    override suspend fun verifyEmail(token: String) {
+        delegate.verifyEmail(token)
     }
 
-    override suspend fun resendVerificationEmail(): Result<Unit> {
-        return withAuthContextIfAvailable {
+    override suspend fun resendVerificationEmail() {
+        withAuthContextIfAvailable {
             delegate.resendVerificationEmail()
         }
     }

@@ -1,0 +1,18 @@
+<resources>
+    <!-- Login Screen -->
+    <string name="auth_login_subtitle">Melden Sie sich bei Ihrem Konto an</string>
+    <string name="auth_email_label">E-Mail</string>
+    <string name="auth_password_label">Passwort</string>
+    <string name="auth_forgot_password">Passwort vergessen?</string>
+    <string name="auth_sign_in_button">Anmelden</string>
+    <string name="auth_no_account_prefix">Noch kein Konto? </string>
+    <string name="auth_sign_up_link">Registrieren</string>
+
+    <!-- Register Screen -->
+    <string name="auth_register_title">Konto erstellen</string>
+    <string name="auth_first_name_label">Vorname</string>
+    <string name="auth_last_name_label">Nachname</string>
+    <string name="auth_register_button">Registrieren</string>
+    <string name="auth_has_account_prefix">Bereits ein Konto? </string>
+    <string name="auth_login_link">Anmelden</string>
+</resources>

@@ -1,0 +1,42 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">D[#]kus</string>
+    <string name="app_slogan">Où la souveraineté rencontre l\'intelligence.</string>
+    <string name="brand_motto">Intelligence. Autonomie. Silence.</string>
+    <string name="copyright">©2025 Dokus</string>
+    <string name="back">Retour</string>
+    <string name="approve">Approuver</string>
+    <string name="reject">Rejeter</string>
+
+    <!-- Core - Splash -->
+    <string name="bootstrap_state_initializing">Initialisation de l\'application...</string>
+    <string name="bootstrap_state_authenticating">Vérification de l\'authentification...</string>
+    <string name="bootstrap_state_app_version_check">Vérification de la version de l\'application...</string>
+    <string name="bootstrap_state_checking_account_status">Vérification du statut du compte...</string>
+
+    <!-- Home -->
+    <string name="home_dashboard">Tableau de bord</string>
+    <string name="home_settings">Paramètres</string>
+
+    <!-- Device Types -->
+    <string name="device_type_ios">iOS</string>
+    <string name="device_type_android">Android</string>
+    <string name="device_type_web">Web</string>
+    <string name="device_type_desktop">Ordinateur</string>
+    <string name="device_type_tablet">Tablette</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Construction de quelque chose de fiable</string>
+    <string name="under_development_subtitle">Cette fonctionnalité est en cours de développement.\nConçu pour répondre à vos besoins.</string>
+
+    <!-- Dashboard - Feature -->
+    <string name="feature_auth">Authentification</string>
+
+    <!-- Slogan Screen -->
+    <string name="slogan_line_2">Conçu pour ceux qui construisent demain.</string>
+    <string name="slogan_line_3">Approuvé par ceux qui possèdent aujourd\'hui.</string>
+
+    <!-- Keyboard Modifiers -->
+    <string name="key_cmd">CMD</string>
+    <string name="key_ctrl">CTRL</string>
+</resources>
