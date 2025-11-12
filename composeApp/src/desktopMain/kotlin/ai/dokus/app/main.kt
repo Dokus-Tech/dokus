@@ -12,7 +12,7 @@ fun main() = application {
         title = "D[#]kus",
         state = rememberWindowState(
             size = DpSize(
-                width = Constrains.largeScreenWidth,
+                width = Constrains.largeScreenDefaultWidth,
                 height = Constrains.largeScreenHeight
             )
         )

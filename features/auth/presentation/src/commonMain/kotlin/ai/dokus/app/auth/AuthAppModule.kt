@@ -2,6 +2,7 @@ package ai.dokus.app.auth
 
 import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.di.authPresentationModule
+import ai.dokus.app.auth.navigation.AuthNavigationProvider
 import ai.dokus.app.core.AppDataModuleDi
 import ai.dokus.app.core.AppDomainModuleDi
 import ai.dokus.app.core.AppModule
@@ -15,14 +16,14 @@ import org.koin.core.component.inject
 
 object AuthAppModule : AppModule, KoinComponent {
     // Presentation layer
-    override val navigationProvider: NavigationProvider? = null
+    override val navigationProvider: NavigationProvider? = AuthNavigationProvider
     override val homeNavigationProvider: NavigationProvider? = null
     override val homeItems: List<HomeItem> = emptyList()
     override val settingsGroups: List<ModuleSettingsGroup> = emptyList()
     override val dashboardWidgets: List<DashboardWidget> = emptyList()
 
     override val presentationDi: AppPresentationModuleDi = object : AppPresentationModuleDi {
-        override val viewModels = null
+        override val viewModels = authPresentationModule
         override val presentation = authPresentationModule
     }
 
