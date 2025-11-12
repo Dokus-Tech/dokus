@@ -65,7 +65,7 @@ fun Application.module(appConfig: AppBaseConfig) {
         healthRoutes()
 
         // Register RPC service
-        rpc("/api/rpc") {
+        rpc("/rpc") {
             rpcConfig {
                 serialization {
                     json()

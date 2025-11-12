@@ -67,7 +67,7 @@ fun Application.module(appConfig: AppBaseConfig) {
         invoiceRoutes()
 
         // Register RPC APIs
-        rpc("/api") {
+        rpc("/rpc") {
             rpcConfig {
                 serialization {
                     json()

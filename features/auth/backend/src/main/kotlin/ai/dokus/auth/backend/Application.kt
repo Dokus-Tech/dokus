@@ -8,10 +8,12 @@ import ai.dokus.auth.backend.routes.identityRoutes
 import ai.dokus.auth.backend.routes.passwordlessAuthRoutes
 import ai.dokus.auth.backend.routes.userRoutes
 import ai.dokus.auth.backend.rpc.AuthenticatedAccountService
-import ai.dokus.auth.backend.security.AuthContextElement
 import ai.dokus.auth.backend.security.JwtValidator
 import ai.dokus.auth.backend.security.RequestAuthHolder
-import ai.dokus.foundation.domain.rpc.*
+import ai.dokus.foundation.domain.rpc.ClientApi
+import ai.dokus.foundation.domain.rpc.ExpenseApi
+import ai.dokus.foundation.domain.rpc.InvoiceApi
+import ai.dokus.foundation.domain.rpc.TenantApi
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
@@ -27,7 +29,6 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.request.header
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.withContext
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
@@ -77,7 +78,7 @@ private val RpcAuthPlugin = createApplicationPlugin(name = "RpcAuthPlugin") {
  */
 private fun Route.configureAuthenticatedRpc() {
     // Register RPC services
-    rpc("/api") {
+    rpc("/rpc") {
         rpcConfig {
             serialization {
                 json()
