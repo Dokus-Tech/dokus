@@ -4,14 +4,24 @@ import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.security.requireAuthenticatedUserId
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.auth.*
+import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
+import ai.dokus.foundation.domain.model.auth.LoginRequest
+import ai.dokus.foundation.domain.model.auth.LoginResponse
+import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
+import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
 import org.slf4j.LoggerFactory
 
 /**
  * RPC implementation of AccountRemoteService.
  *
  * This service acts as the backend RPC endpoint that clients call.
- * It delegates business logic to AuthService and wraps responses in Result.
+ * It delegates business logic to AuthService.
+ *
+ * Error Handling:
+ * - Returns plain types on success
+ * - Throws exceptions on failure (automatically serialized by RPC framework)
  *
  * Implementation status:
  * - login: Fully implemented
@@ -34,62 +44,50 @@ class AccountRemoteServiceImpl(
      * Authenticate user with email and password.
      * Returns JWT tokens on success.
      */
-    override suspend fun login(request: LoginRequest): Result<LoginResponse> {
+    override suspend fun login(request: LoginRequest): LoginResponse {
         logger.debug("RPC: login called for email: ${request.email.value}")
 
         return authService.login(request)
-            .onSuccess { response ->
-                logger.info("RPC: login successful for email: ${request.email.value}")
-            }
-            .onFailure { error ->
-                logger.error("RPC: login failed for email: ${request.email.value}", error)
-            }
+            .onSuccess { logger.info("RPC: login successful for email: ${request.email.value}") }
+            .onFailure { error -> logger.error("RPC: login failed for email: ${request.email.value}", error) }
+            .getOrThrow()
     }
 
     /**
      * Register a new user account.
      * Automatically logs in and returns tokens.
      */
-    override suspend fun register(request: RegisterRequest): Result<LoginResponse> {
+    override suspend fun register(request: RegisterRequest): LoginResponse {
         logger.debug("RPC: register called for email: ${request.email.value}")
 
         return authService.register(request)
-            .onSuccess { response ->
-                logger.info("RPC: registration successful for email: ${request.email.value}")
-            }
-            .onFailure { error ->
-                logger.error("RPC: registration failed for email: ${request.email.value}", error)
-            }
+            .onSuccess { logger.info("RPC: registration successful for email: ${request.email.value}") }
+            .onFailure { error -> logger.error("RPC: registration failed for email: ${request.email.value}", error) }
+            .getOrThrow()
     }
 
     /**
      * Refresh an expired access token using refresh token.
      * Returns new token pair.
-     *
-     * Status: Not yet implemented
      */
-    override suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> {
+    override suspend fun refreshToken(request: RefreshTokenRequest): LoginResponse {
         logger.debug("RPC: refreshToken called")
 
         return authService.refreshToken(request)
-            .onFailure { error ->
-                logger.error("RPC: refreshToken failed", error)
-            }
+            .onFailure { error -> logger.error("RPC: refreshToken failed", error) }
+            .getOrThrow()
     }
 
     /**
      * Logout user and revoke current session.
      */
-    override suspend fun logout(request: LogoutRequest): Result<Unit> {
+    override suspend fun logout(request: LogoutRequest) {
         logger.debug("RPC: logout called")
 
-        return authService.logout(request)
-            .onSuccess {
-                logger.info("RPC: logout successful")
-            }
-            .onFailure { error ->
-                logger.error("RPC: logout failed", error)
-            }
+        authService.logout(request)
+            .onSuccess { logger.info("RPC: logout successful") }
+            .onFailure { error -> logger.error("RPC: logout failed", error) }
+            .getOrThrow()
     }
 
     /**
@@ -97,16 +95,13 @@ class AccountRemoteServiceImpl(
      *
      * Always returns success to prevent email enumeration.
      */
-    override suspend fun requestPasswordReset(email: String): Result<Unit> {
+    override suspend fun requestPasswordReset(email: String) {
         logger.debug("RPC: requestPasswordReset called for email")
 
-        return authService.requestPasswordReset(email)
-            .onSuccess {
-                logger.info("RPC: Password reset email requested successfully")
-            }
-            .onFailure { error ->
-                logger.error("RPC: Password reset request failed", error)
-            }
+        authService.requestPasswordReset(email)
+            .onSuccess { logger.info("RPC: Password reset email requested successfully") }
+            .onFailure { error -> logger.error("RPC: Password reset request failed", error) }
+            .getOrThrow()
     }
 
     /**
@@ -114,16 +109,13 @@ class AccountRemoteServiceImpl(
      *
      * Validates token and updates password.
      */
-    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
+    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest) {
         logger.debug("RPC: resetPassword called with token")
 
-        return authService.resetPassword(resetToken, request.newPassword)
-            .onSuccess {
-                logger.info("RPC: Password reset successful")
-            }
-            .onFailure { error ->
-                logger.error("RPC: Password reset failed", error)
-            }
+        authService.resetPassword(resetToken, request.newPassword)
+            .onSuccess { logger.info("RPC: Password reset successful") }
+            .onFailure { error -> logger.error("RPC: Password reset failed", error) }
+            .getOrThrow()
     }
 
     /**
@@ -136,72 +128,63 @@ class AccountRemoteServiceImpl(
      * - All deactivation attempts are logged for audit purposes
      * - All refresh tokens are revoked to terminate all sessions
      */
-    override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
+    override suspend fun deactivateAccount(request: DeactivateUserRequest) {
         logger.debug("RPC: deactivateAccount called with reason: ${request.reason}")
 
-        return try {
+        try {
             // Extract userId from JWT authentication context
             val userId = requireAuthenticatedUserId()
             logger.debug("Deactivating account for authenticated user: ${userId.value}")
 
             authService.deactivateAccount(userId, request.reason)
-                .onSuccess {
-                    logger.info("RPC: Account deactivated successfully for user: ${userId.value}")
-                }
-                .onFailure { error ->
-                    logger.error("RPC: Account deactivation failed for user: ${userId.value}", error)
-                }
+                .onSuccess { logger.info("RPC: Account deactivated successfully for user: ${userId.value}") }
+                .onFailure { error -> logger.error("RPC: Account deactivation failed for user: ${userId.value}", error) }
+                .getOrThrow()
         } catch (e: IllegalStateException) {
             // No authentication context available
             logger.error("RPC: deactivateAccount called without authentication")
-            Result.failure(DokusException.NotAuthenticated("Authentication required to deactivate account"))
+            throw DokusException.NotAuthenticated("Authentication required to deactivate account")
         } catch (e: Exception) {
             logger.error("RPC: Unexpected error in deactivateAccount", e)
-            Result.failure(DokusException.InternalError("Failed to deactivate account"))
+            throw e
         }
     }
 
     /**
      * Verify email address with token from email.
      */
-    override suspend fun verifyEmail(token: String): Result<Unit> {
+    override suspend fun verifyEmail(token: String) {
         logger.debug("RPC: verifyEmail called")
 
-        return authService.verifyEmail(token)
-            .onSuccess {
-                logger.info("RPC: email verification successful")
-            }
-            .onFailure { error ->
-                logger.error("RPC: email verification failed", error)
-            }
+        authService.verifyEmail(token)
+            .onSuccess { logger.info("RPC: email verification successful") }
+            .onFailure { error -> logger.error("RPC: email verification failed", error) }
+            .getOrThrow()
     }
 
     /**
      * Resend email verification email.
      * Requires authentication - extracts userId from JWT token in coroutine context.
      */
-    override suspend fun resendVerificationEmail(): Result<Unit> {
+    override suspend fun resendVerificationEmail() {
         logger.debug("RPC: resendVerificationEmail called")
 
-        return try {
+        try {
             // Extract userId from JWT authentication context
             val userId = requireAuthenticatedUserId()
             logger.debug("Resending verification email for authenticated user: ${userId.value}")
 
             authService.resendVerificationEmail(userId)
-                .onSuccess {
-                    logger.info("RPC: Verification email resent successfully for user: ${userId.value}")
-                }
-                .onFailure { error ->
-                    logger.error("RPC: Failed to resend verification email for user: ${userId.value}", error)
-                }
+                .onSuccess { logger.info("RPC: Verification email resent successfully for user: ${userId.value}") }
+                .onFailure { error -> logger.error("RPC: Failed to resend verification email for user: ${userId.value}", error) }
+                .getOrThrow()
         } catch (e: IllegalStateException) {
             // No authentication context available
             logger.error("RPC: resendVerificationEmail called without authentication")
-            Result.failure(DokusException.NotAuthenticated("Authentication required to resend verification email"))
+            throw DokusException.NotAuthenticated("Authentication required to resend verification email")
         } catch (e: Exception) {
             logger.error("RPC: Unexpected error in resendVerificationEmail", e)
-            Result.failure(DokusException.InternalError("Failed to resend verification email"))
+            throw e
         }
     }
 }

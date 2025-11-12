@@ -8,10 +8,12 @@ import ai.dokus.auth.backend.routes.identityRoutes
 import ai.dokus.auth.backend.routes.passwordlessAuthRoutes
 import ai.dokus.auth.backend.routes.userRoutes
 import ai.dokus.auth.backend.rpc.AuthenticatedAccountService
-import ai.dokus.auth.backend.security.AuthContextElement
 import ai.dokus.auth.backend.security.JwtValidator
 import ai.dokus.auth.backend.security.RequestAuthHolder
-import ai.dokus.foundation.domain.rpc.*
+import ai.dokus.foundation.domain.rpc.ClientApi
+import ai.dokus.foundation.domain.rpc.ExpenseApi
+import ai.dokus.foundation.domain.rpc.InvoiceApi
+import ai.dokus.foundation.domain.rpc.TenantApi
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
@@ -27,12 +29,14 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.request.header
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.withContext
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.ktor.ext.get
+import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import kotlinx.coroutines.runBlocking
+import ai.dokus.foundation.ktor.database.DatabaseFactory
 
 private val logger = LoggerFactory.getLogger("Application")
 
@@ -77,7 +81,7 @@ private val RpcAuthPlugin = createApplicationPlugin(name = "RpcAuthPlugin") {
  */
 private fun Route.configureAuthenticatedRpc() {
     // Register RPC services
-    rpc("/api") {
+    rpc("/rpc") {
         rpcConfig {
             serialization {
                 json()
@@ -132,6 +136,16 @@ fun Application.module(appConfig: AppBaseConfig) {
 
     // Configure application
     configureDependencyInjection(appConfig)
+
+    // Initialize database
+    logger.info("Initializing database connection...")
+    runBlocking {
+        val dbFactory by inject<DatabaseFactory>()
+        // Database initialization happens in the DatabaseFactory constructor via Koin
+        // This line triggers the lazy initialization
+        logger.info("Database initialized successfully: ${dbFactory.database}")
+    }
+
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
@@ -165,6 +179,12 @@ fun Application.module(appConfig: AppBaseConfig) {
     // Configure graceful shutdown
     monitor.subscribe(ApplicationStopping) {
         logger.info("Application stopping, cleaning up resources...")
+        runBlocking {
+            // Close database connections
+            val dbFactory by inject<DatabaseFactory>()
+            dbFactory.close()
+            logger.info("Database connections closed")
+        }
         logger.info("Cleanup complete")
     }
 
