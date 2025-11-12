@@ -33,7 +33,7 @@ val rpcClientModule = module {
                 protocol = URLProtocol.WS
                 host = endpoint.internalHost
                 port = endpoint.internalPort
-                path("/api/rpc")
+                path("/rpc")
             }
             rpcConfig {
                 serialization {
@@ -52,7 +52,7 @@ val rpcClientModule = module {
                 protocol = URLProtocol.WS
                 host = endpoint.internalHost
                 port = endpoint.internalPort
-                path("/api/rpc")
+                path("/rpc")
             }
             rpcConfig {
                 serialization {
@@ -71,7 +71,7 @@ val rpcClientModule = module {
                 protocol = URLProtocol.WS
                 host = endpoint.internalHost
                 port = endpoint.internalPort
-                path("/api/rpc")
+                path("/rpc")
             }
             rpcConfig {
                 serialization {
