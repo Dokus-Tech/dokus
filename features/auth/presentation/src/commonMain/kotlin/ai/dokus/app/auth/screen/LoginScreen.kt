@@ -2,6 +2,7 @@ package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.LoginViewModel
 import ai.dokus.app.core.extensions.SetupSecondaryPanel
+import ai.dokus.app.core.extensions.rememberIsValid
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_name
 import ai.dokus.app.resources.generated.auth_email_label
@@ -91,7 +92,9 @@ internal fun LoginScreen(
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
     val isLoading = state is LoginViewModel.State.Loading
-    val canLogin = email.value.isNotBlank() && password.value.isNotBlank()
+    val emailIsValid = email.rememberIsValid()
+    val passwordIsValid = password.rememberIsValid()
+    val canLogin = emailIsValid && passwordIsValid
 
     Scaffold { contentPadding ->
         Box(
