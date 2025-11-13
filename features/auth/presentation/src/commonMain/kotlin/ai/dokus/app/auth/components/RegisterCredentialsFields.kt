@@ -51,7 +51,7 @@ internal fun RegisterCredentialsFields(
             fieldName = stringResource(Res.string.auth_password_label),
             value = fields.password,
             error = error.takeIf { it is DokusException.Validation.WeakPassword },
-            keyboardOptions = PTextFieldPasswordDefaults.keyboardOptions.copy(imeAction = ImeAction.Done),
+            keyboardOptions = PTextFieldPasswordDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
             onAction = {
                 focusManager.clearFocus()
                 onRegisterClick()
