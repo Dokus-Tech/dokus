@@ -155,9 +155,7 @@ internal fun LoginScreen(
                         },
                         onAction = {
                             focusManager.clearFocus()
-                            if (canLogin && !isLoading) {
-                                viewModel.login(email, password)
-                            }
+                            viewModel.login(email, password)
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) { password = it }
