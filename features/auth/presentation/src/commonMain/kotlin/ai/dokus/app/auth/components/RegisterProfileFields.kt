@@ -40,6 +40,7 @@ internal fun RegisterProfileFields(
             value = fields.firstName,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             error = error.takeIf { it is DokusException.Validation.InvalidFirstName },
+            onAction = { focusManager.moveFocus(FocusDirection.Next) },
             onValueChange = { onFieldsUpdate(fields.copy(firstName = it)) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -47,8 +48,9 @@ internal fun RegisterProfileFields(
         PTextFieldName(
             fieldName = stringResource(Res.string.auth_last_name_label),
             value = fields.lastName,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             error = error.takeIf { it is DokusException.Validation.InvalidLastName },
+            onAction = { onSubmit() },
             onValueChange = { onFieldsUpdate(fields.copy(lastName = it)) },
             modifier = Modifier.fillMaxWidth()
         )

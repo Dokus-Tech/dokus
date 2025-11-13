@@ -1,5 +1,6 @@
 package ai.dokus.app.auth.model
 
+import ai.dokus.app.core.extensions.rememberIsValid
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password
@@ -19,16 +20,16 @@ internal data class RegisterFormFields(
 
     val namesAreValid: Boolean
         @Composable get() {
-            val firstNameIsValid = firstName.value.isNotBlank() && firstName.value.length >= 2
-            val lastNameIsValid = lastName.value.isNotBlank() && lastName.value.length >= 2
+            val firstNameIsValid = firstName.rememberIsValid()
+            val lastNameIsValid = lastName.rememberIsValid()
             val isValid by derivedStateOf { firstNameIsValid && lastNameIsValid }
             return isValid
         }
 
     val credentialsAreValid: Boolean
         @Composable get() {
-            val emailIsValid = email.value.isNotBlank() && email.value.contains("@")
-            val passwordIsValid = password.value.isNotBlank() && password.value.length >= 8
+            val emailIsValid = email.rememberIsValid()
+            val passwordIsValid = password.rememberIsValid()
             val isValid by derivedStateOf { emailIsValid && passwordIsValid }
             return isValid
         }
