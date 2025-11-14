@@ -159,6 +159,29 @@ services:
       timeout: 5s
       retries: 10
 
+  # RabbitMQ Message Broker
+  rabbitmq-dev:
+    image: rabbitmq:3.13-management-alpine
+    container_name: dokus-rabbitmq-dev
+    environment:
+      RABBITMQ_DEFAULT_USER: dokus
+      RABBITMQ_DEFAULT_PASS: devrabbitpass
+      RABBITMQ_DEFAULT_VHOST: /dokus
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq-data-dev:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - dokus-dev-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   # Auth Service
   auth-service-dev:
     image: invoid-vision/dokus-auth:dev-${BUILD_NUMBER:-latest}
@@ -174,6 +197,11 @@ services:
       REDIS_HOST: redis-dev
       REDIS_PORT: 6379
       REDIS_PASSWORD: devredispass
+      RABBITMQ_HOST: rabbitmq-dev
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: dokus
+      RABBITMQ_PASSWORD: devrabbitpass
+      RABBITMQ_VHOST: /dokus
       GEOIP_DATABASE_PATH: resources/GeoLite2-City.mmdb
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
@@ -184,6 +212,8 @@ services:
       postgres-auth-dev:
         condition: service_healthy
       redis-dev:
+        condition: service_healthy
+      rabbitmq-dev:
         condition: service_healthy
     networks:
       - dokus-dev-network
@@ -318,12 +348,19 @@ services:
       DB_URL: jdbc:postgresql://postgres-audit-dev:5432/dokus_audit
       DB_USERNAME: dev
       DB_PASSWORD: devpassword
+      RABBITMQ_HOST: rabbitmq-dev
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: dokus
+      RABBITMQ_PASSWORD: devrabbitpass
+      RABBITMQ_VHOST: /dokus
       LOG_LEVEL: DEBUG
     ports:
       - "7096:7096"
       - "5013:5013"
     depends_on:
       postgres-audit-dev:
+        condition: service_healthy
+      rabbitmq-dev:
         condition: service_healthy
     networks:
       - dokus-dev-network
@@ -393,4 +430,5 @@ volumes:
   postgres-audit-dev:
   postgres-banking-dev:
   redis-data-dev:
+  rabbitmq-data-dev:
   pgadmin-data:

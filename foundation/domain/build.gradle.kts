@@ -82,6 +82,13 @@ buildkonfig {
         buildConfigField(STRING, "bankingHost", "10.13.4.103")
         buildConfigField(INT, "bankingPort", "6097")
 
+        // RabbitMQ Configuration - Production
+        buildConfigField(STRING, "rabbitmqHost", "rabbitmq-prod")
+        buildConfigField(INT, "rabbitmqPort", "5672")
+        buildConfigField(STRING, "rabbitmqUsername", "dokus")
+        buildConfigField(STRING, "rabbitmqPassword", "prodrabbitpass")
+        buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
+
         // Internal endpoints (for inter-service communication in Docker) - Production
         buildConfigField(STRING, "authInternalHost", "auth-service-prod")
         buildConfigField(INT, "authInternalPort", "6091")
@@ -118,6 +125,13 @@ buildkonfig {
         buildConfigField(STRING, "bankingHost", "10.13.4.103")
         buildConfigField(INT, "bankingPort", "7097")
 
+        // RabbitMQ Configuration - Development
+        buildConfigField(STRING, "rabbitmqHost", "rabbitmq-dev")
+        buildConfigField(INT, "rabbitmqPort", "5672")
+        buildConfigField(STRING, "rabbitmqUsername", "dokus")
+        buildConfigField(STRING, "rabbitmqPassword", "devrabbitpass")
+        buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
+
         // Internal endpoints (for inter-service communication in Docker) - Development
         buildConfigField(STRING, "authInternalHost", "auth-service-dev")
         buildConfigField(INT, "authInternalPort", "7091")
@@ -152,6 +166,13 @@ buildkonfig {
         buildConfigField(INT, "auditPort", "7096")
         buildConfigField(STRING, "bankingHost", "0.0.0.0")
         buildConfigField(INT, "bankingPort", "7097")
+
+        // RabbitMQ Configuration - Local
+        buildConfigField(STRING, "rabbitmqHost", "localhost")
+        buildConfigField(INT, "rabbitmqPort", "5672")
+        buildConfigField(STRING, "rabbitmqUsername", "dokus")
+        buildConfigField(STRING, "rabbitmqPassword", "devrabbitpass")
+        buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
 
         // Internal endpoints (for inter-service communication in Docker)
         buildConfigField(STRING, "authInternalHost", "auth-service-dev")
