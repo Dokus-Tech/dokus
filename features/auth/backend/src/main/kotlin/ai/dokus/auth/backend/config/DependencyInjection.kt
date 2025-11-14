@@ -18,6 +18,8 @@ import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.services.TenantService
 import ai.dokus.foundation.ktor.services.UserService
+import ai.dokus.foundation.messaging.integration.RabbitMqConfigLoader
+import ai.dokus.foundation.messaging.integration.messagingModule
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
@@ -102,7 +104,16 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
         single<AppBaseConfig> { appConfig }
     }
 
+    // Load RabbitMQ configuration
+    val rabbitmqConfig = RabbitMqConfigLoader.load("auth-service")
+
     install(Koin) {
-        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Auth), rpcClientModule)
+        modules(
+            coreModule,
+            appModule,
+            redisModule(appConfig, RedisNamespace.Auth),
+            messagingModule(rabbitmqConfig, "auth"),
+            rpcClientModule
+        )
     }
 }
