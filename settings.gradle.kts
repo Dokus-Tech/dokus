@@ -40,6 +40,7 @@ include(":foundation:app-common")
 include(":foundation:platform")
 include(":foundation:navigation")
 include(":foundation:ktor-common")
+include(":foundation:messaging")
 
 include(":features:auth:backend")
 include(":features:auth:presentation")
