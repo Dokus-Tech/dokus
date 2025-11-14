@@ -14,11 +14,12 @@ import ai.dokus.auth.backend.services.*
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.foundation.domain.rpc.*
 import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.domain.config.DokusRabbitMq
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.services.TenantService
 import ai.dokus.foundation.ktor.services.UserService
-import ai.dokus.foundation.messaging.integration.RabbitMqConfigLoader
+import ai.dokus.foundation.messaging.integration.createDefaultRabbitMqConfig
 import ai.dokus.foundation.messaging.integration.messagingModule
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -105,7 +106,15 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     }
 
     // Load RabbitMQ configuration
-    val rabbitmqConfig = RabbitMqConfigLoader.load("auth-service")
+    val rabbitMq = DokusRabbitMq.current
+    val rabbitmqConfig = createDefaultRabbitMqConfig(
+        host = rabbitMq.host,
+        port = rabbitMq.port,
+        username = rabbitMq.username,
+        password = rabbitMq.password,
+        virtualHost = rabbitMq.virtualHost,
+        serviceName = "auth-service"
+    )
 
     install(Koin) {
         modules(
