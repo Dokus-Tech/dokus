@@ -87,7 +87,7 @@ SYMBOL_SMALL="▪"
 
 # Configuration
 PROJECT_NAME="dokus"
-COMPOSE_FILE="docker-compose.dev.yml"
+COMPOSE_FILE="docker-compose.local.yml"
 AUTH_SERVICE_DIR="features/auth/backend"
 AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
