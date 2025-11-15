@@ -65,14 +65,28 @@ Built for the AI era - where your financial software should be as smart as your 
 
 **Deploy a fully functional Dokus server in under 5 minutes:**
 
+#### Download Latest Release
+
 ```bash
-# Download the deployment package
-git clone https://github.com/Dokus-Tech/dokus.git
-cd dokus/deployment
+# Download and extract the quick deploy package
+curl -L https://github.com/Dokus-Tech/dokus/releases/latest/download/dokus-quick-deploy.zip -o dokus.zip
+unzip dokus.zip -d dokus
+cd dokus
 
 # Run the installation script for your platform:
+chmod +x dokus.sh
 ./dokus.sh      # macOS / Linux
-dokus.bat       # Windows
+```
+
+**Windows:** Download `dokus-quick-deploy.zip` from [releases](https://github.com/Dokus-Tech/dokus/releases/latest), extract, and run `dokus.bat`
+
+#### Or Clone from Repository
+
+```bash
+git clone https://github.com/Dokus-Tech/dokus.git
+cd dokus/deployment
+chmod +x dokus.sh
+./dokus.sh      # macOS / Linux
 ```
 
 The script will:
