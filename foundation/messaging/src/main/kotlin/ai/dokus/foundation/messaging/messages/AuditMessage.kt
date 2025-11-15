@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
 /**
  * Audit message for publishing audit events to RabbitMQ.
  */
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 @Serializable
 data class AuditMessage(
     override val messageId: MessageId,
@@ -29,13 +29,13 @@ data class AuditMessage(
         /**
          * Creates an audit message from event data.
          */
-        @OptIn(ExperimentalTime::class)
+        @OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
         fun from(
             event: AuditEventData,
             sourceService: String = "dokus"
         ): AuditMessage {
             return AuditMessage(
-                messageId = MessageId(UUID.randomUUID().toString()),
+                messageId = MessageId(Uuid.random().toString()),
                 timestamp = Clock.System.now(),
                 sourceService = sourceService,
                 event = event
@@ -55,13 +55,11 @@ data class AuditMessage(
 /**
  * Audit event data containing all information about the event.
  */
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 @Serializable
 data class AuditEventData(
-    @Serializable(with = UUIDSerializer::class)
-    val tenantId: UUID,
-    @Serializable(with = UUIDSerializer::class)
-    val userId: UUID?,
+    val tenantId: Uuid,
+    val userId: Uuid?,
     val action: AuditAction,
     val entityType: EntityType,
     val entityId: String,
@@ -71,18 +69,3 @@ data class AuditEventData(
     val userAgent: String? = null,
     val performedAt: Instant = Clock.System.now()
 )
-
-/**
- * Custom serializer for UUID to support kotlinx.serialization.
- */
-object UUIDSerializer : KSerializer<UUID> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: UUID) {
-        encoder.encodeString(value.toString())
-    }
-
-    override fun deserialize(decoder: Decoder): UUID {
-        return UUID.fromString(decoder.decodeString())
-    }
-}
