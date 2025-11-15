@@ -103,6 +103,7 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.sqldelight.jvm)  // Required for packaged DMG
         }
     }
 }
@@ -155,6 +156,8 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Pkg, TargetFormat.Msi, TargetFormat.Deb)
+
+            modules("java.sql")  // Required for SQLDelight/JDBC
 
             packageName = "Dokus"
             packageVersion = "1.0.0"
