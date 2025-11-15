@@ -5,14 +5,17 @@ import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.messaging.core.Message
 import ai.dokus.foundation.messaging.core.MessageId
 import ai.dokus.foundation.messaging.core.RoutingKey
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
-import java.util.UUID
 
 /**
  * Audit message for publishing audit events to RabbitMQ.
  */
+@OptIn(ExperimentalTime::class)
 @Serializable
 data class AuditMessage(
     override val messageId: MessageId,
@@ -26,6 +29,7 @@ data class AuditMessage(
         /**
          * Creates an audit message from event data.
          */
+        @OptIn(ExperimentalTime::class)
         fun from(
             event: AuditEventData,
             sourceService: String = "dokus"
@@ -51,6 +55,7 @@ data class AuditMessage(
 /**
  * Audit event data containing all information about the event.
  */
+@OptIn(ExperimentalTime::class)
 @Serializable
 data class AuditEventData(
     @Serializable(with = UUIDSerializer::class)
@@ -70,13 +75,6 @@ data class AuditEventData(
 /**
  * Custom serializer for UUID to support kotlinx.serialization.
  */
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-
 object UUIDSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
 
