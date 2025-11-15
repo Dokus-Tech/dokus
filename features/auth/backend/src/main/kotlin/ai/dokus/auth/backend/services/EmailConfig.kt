@@ -78,8 +78,8 @@ data class EmailConfig(
         fun load(baseConfig: ai.dokus.foundation.ktor.AppBaseConfig): EmailConfig {
             // Use environment variables or fallback to defaults
             val environment = System.getenv("ENVIRONMENT") ?: "local"
-            val configName = "application-$environment.conf"
-            val config = com.typesafe.config.ConfigFactory.load(configName)
+            val configBaseName = "application-$environment"
+            val config = com.typesafe.config.ConfigFactory.load(configBaseName)
             return fromConfig(config.getConfig("email"))
         }
     }
