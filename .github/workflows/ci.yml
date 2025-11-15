@@ -270,6 +270,13 @@ jobs:
           name: release-dmg
           path: ./artifacts
 
+      - name: 📥 Download Backend Deployment Package
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-package
+          path: ./artifacts
+        continue-on-error: true
+
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -289,11 +296,36 @@ jobs:
 
             ## 📦 Downloads
 
+            ### 🖥️ Desktop & Mobile Apps
             - **Android APK**: See assets below
             - **macOS DMG**: See assets below
             - **Release Bundle (AAB)**: Available in [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-            ## 📱 Installation
+            ### 🐳 Backend Server
+            - **Quick Deploy Package**: `dokus-quick-deploy.zip` - One-click deployment for any platform
+
+            ## 🚀 Quick Start
+
+            ### Deploy Backend Server
+
+            **Linux / macOS:**
+            ```bash
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version-tag }}/dokus-quick-deploy.zip -o dokus.zip
+            unzip dokus.zip -d dokus && cd dokus
+            chmod +x dokus.sh && ./dokus.sh
+            ```
+
+            **Windows:**
+            1. Download `dokus-quick-deploy.zip` from assets
+            2. Extract and run `dokus.bat`
+
+            **What's included:**
+            - ✅ All 7 backend services (auth, invoicing, expense, payment, reporting, audit, banking)
+            - ✅ Interactive setup with auto-generated passwords
+            - ✅ Multi-architecture support (AMD64 + ARM64)
+            - ✅ PostgreSQL, Redis, RabbitMQ
+
+            ## 📱 Mobile & Desktop Installation
 
             ### Android
             1. Download the APK from assets
@@ -314,6 +346,7 @@ jobs:
           files: |
             ./artifacts/*.apk
             ./artifacts/*.dmg
+            ./artifacts/*.zip
           draft: false
           prerelease: true
           generate_release_notes: true
