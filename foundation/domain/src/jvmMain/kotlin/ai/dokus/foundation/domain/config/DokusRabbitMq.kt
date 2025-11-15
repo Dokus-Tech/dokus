@@ -37,8 +37,8 @@ data class DokusRabbitMq(
             get() = DokusRabbitMq(
                 host = getEnvOrBuildKonfig("RABBITMQ_HOST", BuildKonfig.rabbitmqHost),
                 port = getEnvOrBuildKonfigInt("RABBITMQ_PORT", BuildKonfig.rabbitmqPort),
-                username = getEnvOrBuildKonfig("RABBITMQ_USERNAME", BuildKonfig.rabbitmqUsername),
-                password = getEnvOrBuildKonfig("RABBITMQ_PASSWORD", BuildKonfig.rabbitmqPassword),
+                username = System.getenv("RABBITMQ_USERNAME") ?: "dokus",
+                password = System.getenv("RABBITMQ_PASSWORD") ?: "dokus",
                 virtualHost = getEnvOrBuildKonfig("RABBITMQ_VHOST", BuildKonfig.rabbitmqVirtualHost)
             )
 

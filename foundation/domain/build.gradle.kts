@@ -82,11 +82,9 @@ buildkonfig {
         buildConfigField(STRING, "bankingHost", "94.111.226.82")
         buildConfigField(INT, "bankingPort", "6097")
 
-        // RabbitMQ Configuration - Cloud
+        // RabbitMQ Configuration - Cloud (credentials from env vars at runtime)
         buildConfigField(STRING, "rabbitmqHost", "rabbitmq")
         buildConfigField(INT, "rabbitmqPort", "5672")
-        buildConfigField(STRING, "rabbitmqUsername", "dokus")
-        buildConfigField(STRING, "rabbitmqPassword", "cloudrabbitpass")
         buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
 
         // Internal endpoints (for inter-service communication in Docker) - Cloud
@@ -124,11 +122,9 @@ buildkonfig {
         buildConfigField(STRING, "bankingHost", "0.0.0.0")
         buildConfigField(INT, "bankingPort", "7097")
 
-        // RabbitMQ Configuration - Local
+        // RabbitMQ Configuration - Local (credentials from env vars at runtime)
         buildConfigField(STRING, "rabbitmqHost", "localhost")
         buildConfigField(INT, "rabbitmqPort", "5672")
-        buildConfigField(STRING, "rabbitmqUsername", "dokus")
-        buildConfigField(STRING, "rabbitmqPassword", "localrabbitpass")
         buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
 
         // Internal endpoints (for inter-service communication in Docker)
