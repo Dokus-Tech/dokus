@@ -67,19 +67,19 @@ buildkonfig {
         buildConfigField(STRING, "env", "prod")
 
         // External endpoints (for clients outside Docker) - Production
-        buildConfigField(STRING, "authHost", "10.13.4.103")
+        buildConfigField(STRING, "authHost", "94.111.226.82")
         buildConfigField(INT, "authPort", "6091")
-        buildConfigField(STRING, "invoicingHost", "10.13.4.103")
+        buildConfigField(STRING, "invoicingHost", "94.111.226.82")
         buildConfigField(INT, "invoicingPort", "6092")
-        buildConfigField(STRING, "expenseHost", "10.13.4.103")
+        buildConfigField(STRING, "expenseHost", "94.111.226.82")
         buildConfigField(INT, "expensePort", "6093")
-        buildConfigField(STRING, "paymentHost", "10.13.4.103")
+        buildConfigField(STRING, "paymentHost", "94.111.226.82")
         buildConfigField(INT, "paymentPort", "6094")
-        buildConfigField(STRING, "reportingHost", "10.13.4.103")
+        buildConfigField(STRING, "reportingHost", "94.111.226.82")
         buildConfigField(INT, "reportingPort", "6095")
-        buildConfigField(STRING, "auditHost", "10.13.4.103")
+        buildConfigField(STRING, "auditHost", "94.111.226.82")
         buildConfigField(INT, "auditPort", "6096")
-        buildConfigField(STRING, "bankingHost", "10.13.4.103")
+        buildConfigField(STRING, "bankingHost", "94.111.226.82")
         buildConfigField(INT, "bankingPort", "6097")
 
         // RabbitMQ Configuration - Production
