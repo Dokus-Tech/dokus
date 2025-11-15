@@ -1,16 +1,17 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Dektop[dev]" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="DesktopHotReload[prod]" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/composeApp" />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="-DmainClass=ai.dokus.app.MainKt --quiet -Pbuildkonfig.flavor=dev" />
+      <option name="scriptParameters" value="-DmainClass=ai.dokus.app.MainKt -Pbuildkonfig.flavor=prod" />
       <option name="taskDescriptions">
         <list />
       </option>
       <option name="taskNames">
         <list>
-          <option value="desktopRun" />
+          <option value="hotRunDesktop" />
+          <option value="--auto" />
         </list>
       </option>
       <option name="vmOptions" />
