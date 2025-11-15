@@ -1,32 +1,84 @@
 @echo off
-REM Dokus Server Installation and Startup Script
-REM Supports: Windows 10/11
-REM Usage: dokus.bat
+REM Dokus Cloud Management Script (Windows)
+REM Usage: dokus.bat [command]
 
 setlocal enabledelayedexpansion
 
-REM Banner
-echo.
-echo ============================================
-echo.
-echo              DOKUS SERVER
-echo     Financial Management Platform
-echo.
-echo ============================================
-echo.
+cd /d "%~dp0"
 
+REM Check if command provided
+if "%1"=="" goto SHOW_MENU
+if "%1"=="setup" goto INITIAL_SETUP
+if "%1"=="start" goto START_SERVICES
+if "%1"=="stop" goto STOP_SERVICES
+if "%1"=="restart" goto RESTART_SERVICES
+if "%1"=="status" goto SHOW_STATUS
+if "%1"=="logs" goto SHOW_LOGS
+if "%1"=="db" goto ACCESS_DB
+goto SHOW_MENU
+
+:SHOW_MENU
+cls
+echo.
+echo ====================================================================
+echo.
+echo                  Dokus Cloud Management
+echo.
+echo ====================================================================
+echo.
+echo   What would you like to do?
+echo.
+echo   Service Management
+echo     1  Initial Setup (first time only)
+echo     2  Start services
+echo     3  Stop services
+echo     4  Restart services
+echo     5  Show status
+echo.
+echo   Development Tools
+echo     6  View logs
+echo     7  Access database
+echo.
+echo     0  Exit
+echo.
+set /p choice="   Enter choice [0-7]: "
+
+if "%choice%"=="1" goto INITIAL_SETUP
+if "%choice%"=="2" goto START_SERVICES
+if "%choice%"=="3" goto STOP_SERVICES
+if "%choice%"=="4" goto RESTART_SERVICES
+if "%choice%"=="5" goto SHOW_STATUS
+if "%choice%"=="6" goto SHOW_LOGS
+if "%choice%"=="7" goto ACCESS_DB
+if "%choice%"=="0" (
+    echo.
+    echo   Goodbye!
+    echo.
+    exit /b 0
+)
+
+echo.
+echo   [!] Invalid choice
+timeout /t 2 /nobreak >nul
+goto SHOW_MENU
+
+:INITIAL_SETUP
+cls
+echo.
+echo ====================================================================
+echo   Initial Dokus Cloud Setup
+echo ====================================================================
+echo.
 echo [*] Detected: Windows
 echo.
 
-REM Check if Docker is installed
+REM Check Docker
 echo [1/6] Checking Docker installation...
-
 where docker >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
     echo [!] Docker is not installed
     echo.
     set /p INSTALL_DOCKER="Would you like to install Docker Desktop? (y/n): "
-
     if /i "!INSTALL_DOCKER!"=="y" (
         echo [*] Opening Docker Desktop download page...
         start https://www.docker.com/products/docker-desktop/
@@ -39,15 +91,12 @@ if %ERRORLEVEL% NEQ 0 (
         exit /b 0
     ) else (
         echo [X] Docker is required to run Dokus
-        echo Please install Docker Desktop from: https://docker.com
         pause
         exit /b 1
     )
-) else (
-    echo [+] Docker is installed
 )
+echo [+] Docker is installed
 
-REM Check if Docker is running
 docker info >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
     echo [X] Docker is not running
@@ -57,16 +106,11 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo [+] Docker is running
 
-REM Check if Docker Compose is available
 docker compose version >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    docker-compose version >nul 2>nul
-    if %ERRORLEVEL% NEQ 0 (
-        echo [X] Docker Compose not found
-        echo Please install Docker Desktop which includes Docker Compose
-        pause
-        exit /b 1
-    )
+    echo [X] Docker Compose not found
+    pause
+    exit /b 1
 )
 echo [+] Docker Compose is installed
 echo.
@@ -74,158 +118,7 @@ echo.
 REM Check for .env file
 echo [2/6] Configuring environment...
 
-if not exist ".env" (
-    echo [!] .env file not found - let's create one!
-    echo.
-    echo You can press Enter to accept the defaults ^(recommended for quick start^)
-    echo or enter custom values for production deployments.
-    echo.
-
-    REM Generate random passwords using PowerShell
-    for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..24 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "DB_PASS=%%i"
-    for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..24 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "REDIS_PASS=%%i"
-    for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..24 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "RABBITMQ_PASS=%%i"
-    for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "JWT_SECRET=%%i"
-
-    REM Fallback if PowerShell failed
-    if "!DB_PASS!"=="" set "DB_PASS=changeme-db-%RANDOM%%RANDOM%%RANDOM%"
-    if "!REDIS_PASS!"=="" set "REDIS_PASS=changeme-redis-%RANDOM%%RANDOM%%RANDOM%"
-    if "!RABBITMQ_PASS!"=="" set "RABBITMQ_PASS=changeme-rabbitmq-%RANDOM%%RANDOM%%RANDOM%"
-    if "!JWT_SECRET!"=="" set "JWT_SECRET=changeme-jwt-%RANDOM%%RANDOM%%RANDOM%%RANDOM%%RANDOM%"
-
-    echo ============================================
-    echo   Configuration
-    echo ============================================
-    echo.
-
-    REM Database username
-    echo Database username:
-    echo Default: dokus
-    set /p "INPUT_DB_USERNAME=Value (press Enter for default): "
-    if "!INPUT_DB_USERNAME!"=="" (
-        set "DB_USERNAME=dokus"
-    ) else (
-        set "DB_USERNAME=!INPUT_DB_USERNAME!"
-    )
-
-    REM Database password
-    echo.
-    echo Database password:
-    echo Default: ^<auto-generated secure password^>
-    set /p "INPUT_DB_PASSWORD=Value (press Enter for default): "
-    if "!INPUT_DB_PASSWORD!"=="" (
-        set "DB_PASSWORD=!DB_PASS!"
-    ) else (
-        set "DB_PASSWORD=!INPUT_DB_PASSWORD!"
-    )
-
-    REM Redis password
-    echo.
-    echo Redis password:
-    echo Default: ^<auto-generated secure password^>
-    set /p "INPUT_REDIS_PASSWORD=Value (press Enter for default): "
-    if "!INPUT_REDIS_PASSWORD!"=="" (
-        set "REDIS_PASSWORD=!REDIS_PASS!"
-    ) else (
-        set "REDIS_PASSWORD=!INPUT_REDIS_PASSWORD!"
-    )
-
-    REM RabbitMQ username
-    echo.
-    echo RabbitMQ username:
-    echo Default: dokus
-    set /p "INPUT_RABBITMQ_USERNAME=Value (press Enter for default): "
-    if "!INPUT_RABBITMQ_USERNAME!"=="" (
-        set "RABBITMQ_USERNAME=dokus"
-    ) else (
-        set "RABBITMQ_USERNAME=!INPUT_RABBITMQ_USERNAME!"
-    )
-
-    REM RabbitMQ password
-    echo.
-    echo RabbitMQ password:
-    echo Default: ^<auto-generated secure password^>
-    set /p "INPUT_RABBITMQ_PASSWORD=Value (press Enter for default): "
-    if "!INPUT_RABBITMQ_PASSWORD!"=="" (
-        set "RABBITMQ_PASSWORD=!RABBITMQ_PASS!"
-    ) else (
-        set "RABBITMQ_PASSWORD=!INPUT_RABBITMQ_PASSWORD!"
-    )
-
-    REM JWT Secret
-    echo.
-    echo JWT secret (64+ chars):
-    echo Default: ^<auto-generated secure password^>
-    set /p "INPUT_JWT_SECRET=Value (press Enter for default): "
-    if "!INPUT_JWT_SECRET!"=="" (
-        set "JWT_SECRET_FINAL=!JWT_SECRET!"
-    ) else (
-        set "JWT_SECRET_FINAL=!INPUT_JWT_SECRET!"
-    )
-
-    REM JWT Issuer
-    echo.
-    echo JWT issuer:
-    echo Default: https://dokus.local
-    set /p "INPUT_JWT_ISSUER=Value (press Enter for default): "
-    if "!INPUT_JWT_ISSUER!"=="" (
-        set "JWT_ISSUER=https://dokus.local"
-    ) else (
-        set "JWT_ISSUER=!INPUT_JWT_ISSUER!"
-    )
-
-    REM JWT Audience
-    echo.
-    echo JWT audience:
-    echo Default: dokus-api
-    set /p "INPUT_JWT_AUDIENCE=Value (press Enter for default): "
-    if "!INPUT_JWT_AUDIENCE!"=="" (
-        set "JWT_AUDIENCE=dokus-api"
-    ) else (
-        set "JWT_AUDIENCE=!INPUT_JWT_AUDIENCE!"
-    )
-
-    REM Log Level
-    echo.
-    echo Log level:
-    echo Default: INFO
-    set /p "INPUT_LOG_LEVEL=Value (press Enter for default): "
-    if "!INPUT_LOG_LEVEL!"=="" (
-        set "LOG_LEVEL=INFO"
-    ) else (
-        set "LOG_LEVEL=!INPUT_LOG_LEVEL!"
-    )
-
-    REM Create .env file
-    (
-        echo # Dokus Environment Configuration
-        echo # Generated on %date% %time%
-        echo.
-        echo # Database Configuration
-        echo DB_USERNAME=!DB_USERNAME!
-        echo DB_PASSWORD=!DB_PASSWORD!
-        echo.
-        echo # Redis Configuration
-        echo REDIS_PASSWORD=!REDIS_PASSWORD!
-        echo.
-        echo # RabbitMQ Configuration
-        echo RABBITMQ_USERNAME=!RABBITMQ_USERNAME!
-        echo RABBITMQ_PASSWORD=!RABBITMQ_PASSWORD!
-        echo.
-        echo # JWT Configuration ^(Auth Service^)
-        echo JWT_SECRET=!JWT_SECRET_FINAL!
-        echo JWT_ISSUER=!JWT_ISSUER!
-        echo JWT_AUDIENCE=!JWT_AUDIENCE!
-        echo.
-        echo # Logging
-        echo LOG_LEVEL=!LOG_LEVEL!
-    ) > .env
-
-    echo.
-    echo [+] Configuration saved to .env
-    echo [!] Keep this file secure - it contains sensitive passwords
-
-) else (
+if exist ".env" (
     echo [+] .env file exists
     echo.
     set /p RECONFIGURE="Would you like to reconfigure? (y/n): "
@@ -233,41 +126,148 @@ if not exist ".env" (
         echo [!] Backing up existing .env to .env.backup
         copy .env .env.backup >nul
         del .env
-        call %0
-        exit /b 0
+    ) else (
+        goto SKIP_ENV_CONFIG
     )
 )
+
+echo [!] .env file not found - let's create one!
 echo.
 
-REM Configure Docker for insecure registry
+REM Generate passwords
+for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..24 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "DB_PASS=%%i"
+for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..24 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "REDIS_PASS=%%i"
+for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..24 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "RABBITMQ_PASS=%%i"
+for /f "delims=" %%i in ('powershell -Command "[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 })) -replace '[^a-zA-Z0-9]', '' | Select-Object -First 1" 2^>nul') do set "JWT_SECRET=%%i"
+
+if "!DB_PASS!"=="" set "DB_PASS=changeme-db-%RANDOM%%RANDOM%%RANDOM%"
+if "!REDIS_PASS!"=="" set "REDIS_PASS=changeme-redis-%RANDOM%%RANDOM%%RANDOM%"
+if "!RABBITMQ_PASS!"=="" set "RABBITMQ_PASS=changeme-rabbitmq-%RANDOM%%RANDOM%%RANDOM%"
+if "!JWT_SECRET!"=="" set "JWT_SECRET=changeme-jwt-%RANDOM%%RANDOM%%RANDOM%%RANDOM%%RANDOM%"
+
+echo ====================================================================
+echo   Configuration
+echo ====================================================================
+echo.
+
+echo Database username:
+echo Default: dokus
+set /p "INPUT_DB_USERNAME=Value (press Enter for default): "
+if "!INPUT_DB_USERNAME!"=="" (
+    set "DB_USERNAME=dokus"
+) else (
+    set "DB_USERNAME=!INPUT_DB_USERNAME!"
+)
+
+echo.
+echo Database password:
+echo Default: ^<auto-generated^>
+set /p "INPUT_DB_PASSWORD=Value (press Enter for default): "
+if "!INPUT_DB_PASSWORD!"=="" (
+    set "DB_PASSWORD=!DB_PASS!"
+) else (
+    set "DB_PASSWORD=!INPUT_DB_PASSWORD!"
+)
+
+echo.
+echo Redis password:
+echo Default: ^<auto-generated^>
+set /p "INPUT_REDIS_PASSWORD=Value (press Enter for default): "
+if "!INPUT_REDIS_PASSWORD!"=="" (
+    set "REDIS_PASSWORD=!REDIS_PASS!"
+) else (
+    set "REDIS_PASSWORD=!INPUT_REDIS_PASSWORD!"
+)
+
+echo.
+echo RabbitMQ username:
+echo Default: dokus
+set /p "INPUT_RABBITMQ_USERNAME=Value (press Enter for default): "
+if "!INPUT_RABBITMQ_USERNAME!"=="" (
+    set "RABBITMQ_USERNAME=dokus"
+) else (
+    set "RABBITMQ_USERNAME=!INPUT_RABBITMQ_USERNAME!"
+)
+
+echo.
+echo RabbitMQ password:
+echo Default: ^<auto-generated^>
+set /p "INPUT_RABBITMQ_PASSWORD=Value (press Enter for default): "
+if "!INPUT_RABBITMQ_PASSWORD!"=="" (
+    set "RABBITMQ_PASSWORD=!RABBITMQ_PASS!"
+) else (
+    set "RABBITMQ_PASSWORD=!INPUT_RABBITMQ_PASSWORD!"
+)
+
+echo.
+echo JWT secret:
+echo Default: ^<auto-generated^>
+set /p "INPUT_JWT_SECRET=Value (press Enter for default): "
+if "!INPUT_JWT_SECRET!"=="" (
+    set "JWT_SECRET_FINAL=!JWT_SECRET!"
+) else (
+    set "JWT_SECRET_FINAL=!INPUT_JWT_SECRET!"
+)
+
+REM Create .env file
+(
+    echo # Dokus Cloud Environment Configuration
+    echo # Generated on %date% %time%
+    echo.
+    echo # DATABASE
+    echo DB_USERNAME=!DB_USERNAME!
+    echo DB_PASSWORD=!DB_PASSWORD!
+    echo.
+    echo # REDIS
+    echo REDIS_HOST=redis
+    echo REDIS_PORT=6379
+    echo REDIS_PASSWORD=!REDIS_PASSWORD!
+    echo.
+    echo # RABBITMQ
+    echo RABBITMQ_USERNAME=!RABBITMQ_USERNAME!
+    echo RABBITMQ_PASSWORD=!RABBITMQ_PASSWORD!
+    echo.
+    echo # JWT
+    echo JWT_SECRET=!JWT_SECRET_FINAL!
+    echo JWT_ISSUER=https://dokus.tech
+    echo JWT_AUDIENCE=dokus-api
+    echo.
+    echo # CACHE
+    echo CACHE_TYPE=redis
+    echo.
+    echo # SECURITY
+    echo CORS_ALLOWED_HOSTS=https://dokus.tech,https://www.dokus.tech,http://localhost:6090
+    echo.
+    echo # LOGGING
+    echo LOG_LEVEL=INFO
+) > .env
+
+echo.
+echo [+] Configuration saved to .env
+echo.
+
+:SKIP_ENV_CONFIG
 echo [3/6] Configuring Docker registry...
 echo.
 echo [!] Please configure insecure registry in Docker Desktop:
 echo   1. Open Docker Desktop
 echo   2. Go to Settings -^> Docker Engine
-echo   3. Add the following to the JSON config:
-echo      "insecure-registries": ["94.111.226.82:5000"]
+echo   3. Add: "insecure-registries": ["94.111.226.82:5000"]
 echo   4. Click 'Apply ^& Restart'
 echo.
 pause
 
-REM Pull latest images
 echo [4/6] Pulling latest Docker images...
-echo This may take a few minutes...
-
 docker compose pull
 if %ERRORLEVEL% NEQ 0 (
     echo [X] Failed to pull images
-    echo Check your internet connection and Docker registry configuration
     pause
     exit /b 1
 )
-echo [+] Images pulled successfully
+echo [+] Images pulled
 echo.
 
-REM Start services
 echo [5/6] Starting Dokus services...
-
 docker compose up -d
 if %ERRORLEVEL% NEQ 0 (
     echo [X] Failed to start services
@@ -277,58 +277,144 @@ if %ERRORLEVEL% NEQ 0 (
 echo [+] Services started
 echo.
 
-REM Wait for services to be healthy
 echo [6/6] Waiting for services to be ready...
-echo This may take up to 2 minutes...
-
 timeout /t 10 /nobreak >nul
 
-set MAX_RETRIES=30
-set RETRY_COUNT=0
-
-:CHECK_HEALTH
-docker compose ps | findstr /C:"healthy" >nul
-if %ERRORLEVEL% EQU 0 (
-    echo [+] Services are starting up...
-)
-
-set /a RETRY_COUNT+=1
-if %RETRY_COUNT% GEQ %MAX_RETRIES% (
-    echo [!] Some services may still be starting
-    echo Run 'docker compose ps' to check service status
-    goto AFTER_HEALTH
-)
-
-timeout /t 5 /nobreak >nul
-goto CHECK_HEALTH
-
-:AFTER_HEALTH
 echo.
-
-REM Configure auto-start
-echo Configure Auto-Start
-set /p AUTO_START="Would you like Dokus to start automatically with Docker Desktop? (y/n): "
-
-if /i "!AUTO_START!"=="y" (
-    REM For Windows, we rely on Docker Desktop's restart policy
-    echo.
-    echo [+] Auto-start is configured via Docker's restart policy
-    echo Dokus will start automatically when Docker Desktop starts
-    echo.
-    echo To make Docker Desktop start on boot:
-    echo   1. Open Docker Desktop Settings
-    echo   2. Go to General
-    echo   3. Enable "Start Docker Desktop when you log in"
-) else (
-    echo Skipping auto-start configuration
-)
-
-REM Display status
-echo.
-echo ============================================
+echo ====================================================================
 echo [+] Dokus Server is running!
-echo ============================================
+echo ====================================================================
 echo.
+call :PRINT_SERVICE_INFO
+echo.
+pause
+goto SHOW_MENU
+
+:START_SERVICES
+cls
+echo.
+echo ====================================================================
+echo   Starting Dokus Cloud Services
+echo ====================================================================
+echo.
+
+if not exist ".env" (
+    echo [!] .env file not found!
+    echo Please run Initial Setup first (Option 1)
+    pause
+    goto SHOW_MENU
+)
+
+echo [*] Pulling latest images...
+docker compose pull -q
+
+echo [*] Starting services...
+docker compose up -d
+
+if %ERRORLEVEL% EQU 0 (
+    echo [+] Services started successfully
+    echo.
+    echo [*] Waiting for services to be ready...
+    timeout /t 10 /nobreak >nul
+    echo.
+    call :PRINT_SERVICE_INFO
+) else (
+    echo [X] Failed to start services
+)
+echo.
+pause
+goto SHOW_MENU
+
+:STOP_SERVICES
+cls
+echo.
+echo ====================================================================
+echo   Stopping Services
+echo ====================================================================
+echo.
+docker compose down
+echo [+] All services stopped
+echo.
+pause
+goto SHOW_MENU
+
+:RESTART_SERVICES
+cls
+echo.
+echo ====================================================================
+echo   Restarting Services
+echo ====================================================================
+echo.
+echo [*] Stopping services...
+docker compose down
+echo.
+echo [*] Starting services...
+docker compose up -d
+echo [+] Services restarted
+echo.
+pause
+goto SHOW_MENU
+
+:SHOW_STATUS
+cls
+echo.
+echo ====================================================================
+echo   Service Status Dashboard
+echo ====================================================================
+echo.
+docker compose ps
+echo.
+pause
+goto SHOW_MENU
+
+:SHOW_LOGS
+cls
+echo.
+echo ====================================================================
+echo   Service Logs
+echo ====================================================================
+echo.
+echo Press Ctrl+C to exit logs
+echo.
+timeout /t 2 /nobreak >nul
+docker compose logs -f
+goto SHOW_MENU
+
+:ACCESS_DB
+cls
+echo.
+echo ====================================================================
+echo   Database CLI Access
+echo ====================================================================
+echo.
+echo   Select database to access:
+echo.
+echo   1  Auth (dokus_auth) - localhost:5441
+echo   2  Invoicing (dokus_invoicing) - localhost:5442
+echo   3  Expense (dokus_expense) - localhost:5443
+echo   4  Payment (dokus_payment) - localhost:5444
+echo   5  Reporting (dokus_reporting) - localhost:5445
+echo   6  Audit (dokus_audit) - localhost:5446
+echo   7  Banking (dokus_banking) - localhost:5447
+echo.
+echo   0  Cancel
+echo.
+set /p db_choice="   Enter choice [0-7]: "
+
+if "%db_choice%"=="1" docker compose exec postgres-auth psql -U dokus -d dokus_auth
+if "%db_choice%"=="2" docker compose exec postgres-invoicing psql -U dokus -d dokus_invoicing
+if "%db_choice%"=="3" docker compose exec postgres-expense psql -U dokus -d dokus_expense
+if "%db_choice%"=="4" docker compose exec postgres-payment psql -U dokus -d dokus_payment
+if "%db_choice%"=="5" docker compose exec postgres-reporting psql -U dokus -d dokus_reporting
+if "%db_choice%"=="6" docker compose exec postgres-audit psql -U dokus -d dokus_audit
+if "%db_choice%"=="7" docker compose exec postgres-banking psql -U dokus -d dokus_banking
+if "%db_choice%"=="0" goto SHOW_MENU
+
+echo.
+pause
+goto SHOW_MENU
+
+:PRINT_SERVICE_INFO
 echo Services available at:
 echo   Auth Service:      http://localhost:6091
 echo   Invoicing Service: http://localhost:6092
@@ -340,11 +426,12 @@ echo   Banking Service:   http://localhost:6097
 echo.
 echo   RabbitMQ UI:       http://localhost:15672
 echo.
-echo Useful commands:
-echo   View logs:    docker compose logs -f
-echo   Stop:         docker compose stop
-echo   Restart:      docker compose restart
-echo   Update:       docker compose pull ^&^& docker compose up -d
-echo   Uninstall:    docker compose down -v
-echo.
-pause
+echo Database Connections:
+echo   Auth:      localhost:5441 - dokus_auth
+echo   Invoicing: localhost:5442 - dokus_invoicing
+echo   Expense:   localhost:5443 - dokus_expense
+echo   Payment:   localhost:5444 - dokus_payment
+echo   Reporting: localhost:5445 - dokus_reporting
+echo   Audit:     localhost:5446 - dokus_audit
+echo   Banking:   localhost:5447 - dokus_banking
+goto :EOF

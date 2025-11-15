@@ -64,9 +64,9 @@ android {
 buildkonfig {
     packageName = "ai.dokus.foundation.domain.config"
     defaultConfigs {
-        buildConfigField(STRING, "env", "prod")
+        buildConfigField(STRING, "env", "cloud")
 
-        // External endpoints (for clients outside Docker) - Production
+        // External endpoints (for clients outside Docker) - Cloud
         buildConfigField(STRING, "authHost", "94.111.226.82")
         buildConfigField(INT, "authPort", "6091")
         buildConfigField(STRING, "invoicingHost", "94.111.226.82")
@@ -82,71 +82,26 @@ buildkonfig {
         buildConfigField(STRING, "bankingHost", "94.111.226.82")
         buildConfigField(INT, "bankingPort", "6097")
 
-        // RabbitMQ Configuration - Production
-        buildConfigField(STRING, "rabbitmqHost", "rabbitmq-prod")
+        // RabbitMQ Configuration - Cloud (credentials from env vars at runtime)
+        buildConfigField(STRING, "rabbitmqHost", "rabbitmq")
         buildConfigField(INT, "rabbitmqPort", "5672")
-        buildConfigField(STRING, "rabbitmqUsername", "dokus")
-        buildConfigField(STRING, "rabbitmqPassword", "prodrabbitpass")
         buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
 
-        // Internal endpoints (for inter-service communication in Docker) - Production
-        buildConfigField(STRING, "authInternalHost", "auth-service-prod")
+        // Internal endpoints (for inter-service communication in Docker) - Cloud
+        buildConfigField(STRING, "authInternalHost", "auth-service")
         buildConfigField(INT, "authInternalPort", "6091")
-        buildConfigField(STRING, "invoicingInternalHost", "invoicing-service-prod")
+        buildConfigField(STRING, "invoicingInternalHost", "invoicing-service")
         buildConfigField(INT, "invoicingInternalPort", "6092")
-        buildConfigField(STRING, "expenseInternalHost", "expense-service-prod")
+        buildConfigField(STRING, "expenseInternalHost", "expense-service")
         buildConfigField(INT, "expenseInternalPort", "6093")
-        buildConfigField(STRING, "paymentInternalHost", "payment-service-prod")
+        buildConfigField(STRING, "paymentInternalHost", "payment-service")
         buildConfigField(INT, "paymentInternalPort", "6094")
-        buildConfigField(STRING, "reportingInternalHost", "reporting-service-prod")
+        buildConfigField(STRING, "reportingInternalHost", "reporting-service")
         buildConfigField(INT, "reportingInternalPort", "6095")
-        buildConfigField(STRING, "auditInternalHost", "audit-service-prod")
+        buildConfigField(STRING, "auditInternalHost", "audit-service")
         buildConfigField(INT, "auditInternalPort", "6096")
-        buildConfigField(STRING, "bankingInternalHost", "banking-service-prod")
+        buildConfigField(STRING, "bankingInternalHost", "banking-service")
         buildConfigField(INT, "bankingInternalPort", "6097")
-    }
-    defaultConfigs("prod") {}
-    defaultConfigs("dev") {
-        buildConfigField(STRING, "env", "dev")
-
-        // External endpoints (for clients outside Docker) - Development
-        buildConfigField(STRING, "authHost", "10.13.4.103")
-        buildConfigField(INT, "authPort", "7091")
-        buildConfigField(STRING, "invoicingHost", "10.13.4.103")
-        buildConfigField(INT, "invoicingPort", "7092")
-        buildConfigField(STRING, "expenseHost", "10.13.4.103")
-        buildConfigField(INT, "expensePort", "7093")
-        buildConfigField(STRING, "paymentHost", "10.13.4.103")
-        buildConfigField(INT, "paymentPort", "7094")
-        buildConfigField(STRING, "reportingHost", "10.13.4.103")
-        buildConfigField(INT, "reportingPort", "7095")
-        buildConfigField(STRING, "auditHost", "10.13.4.103")
-        buildConfigField(INT, "auditPort", "7096")
-        buildConfigField(STRING, "bankingHost", "10.13.4.103")
-        buildConfigField(INT, "bankingPort", "7097")
-
-        // RabbitMQ Configuration - Development
-        buildConfigField(STRING, "rabbitmqHost", "rabbitmq-dev")
-        buildConfigField(INT, "rabbitmqPort", "5672")
-        buildConfigField(STRING, "rabbitmqUsername", "dokus")
-        buildConfigField(STRING, "rabbitmqPassword", "devrabbitpass")
-        buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
-
-        // Internal endpoints (for inter-service communication in Docker) - Development
-        buildConfigField(STRING, "authInternalHost", "auth-service-dev")
-        buildConfigField(INT, "authInternalPort", "7091")
-        buildConfigField(STRING, "invoicingInternalHost", "invoicing-service-dev")
-        buildConfigField(INT, "invoicingInternalPort", "7092")
-        buildConfigField(STRING, "expenseInternalHost", "expense-service-dev")
-        buildConfigField(INT, "expenseInternalPort", "7093")
-        buildConfigField(STRING, "paymentInternalHost", "payment-service-dev")
-        buildConfigField(INT, "paymentInternalPort", "7094")
-        buildConfigField(STRING, "reportingInternalHost", "reporting-service-dev")
-        buildConfigField(INT, "reportingInternalPort", "7095")
-        buildConfigField(STRING, "auditInternalHost", "audit-service-dev")
-        buildConfigField(INT, "auditInternalPort", "7096")
-        buildConfigField(STRING, "bankingInternalHost", "banking-service-dev")
-        buildConfigField(INT, "bankingInternalPort", "7097")
     }
     defaultConfigs("local") {
         buildConfigField(STRING, "env", "local")
@@ -167,27 +122,25 @@ buildkonfig {
         buildConfigField(STRING, "bankingHost", "0.0.0.0")
         buildConfigField(INT, "bankingPort", "7097")
 
-        // RabbitMQ Configuration - Local
+        // RabbitMQ Configuration - Local (credentials from env vars at runtime)
         buildConfigField(STRING, "rabbitmqHost", "localhost")
         buildConfigField(INT, "rabbitmqPort", "5672")
-        buildConfigField(STRING, "rabbitmqUsername", "dokus")
-        buildConfigField(STRING, "rabbitmqPassword", "devrabbitpass")
         buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
 
         // Internal endpoints (for inter-service communication in Docker)
-        buildConfigField(STRING, "authInternalHost", "auth-service-dev")
+        buildConfigField(STRING, "authInternalHost", "auth-service-local")
         buildConfigField(INT, "authInternalPort", "7091")
-        buildConfigField(STRING, "invoicingInternalHost", "invoicing-service-dev")
+        buildConfigField(STRING, "invoicingInternalHost", "invoicing-service-local")
         buildConfigField(INT, "invoicingInternalPort", "7092")
-        buildConfigField(STRING, "expenseInternalHost", "expense-service-dev")
+        buildConfigField(STRING, "expenseInternalHost", "expense-service-local")
         buildConfigField(INT, "expenseInternalPort", "7093")
-        buildConfigField(STRING, "paymentInternalHost", "payment-service-dev")
+        buildConfigField(STRING, "paymentInternalHost", "payment-service-local")
         buildConfigField(INT, "paymentInternalPort", "7094")
-        buildConfigField(STRING, "reportingInternalHost", "reporting-service-dev")
+        buildConfigField(STRING, "reportingInternalHost", "reporting-service-local")
         buildConfigField(INT, "reportingInternalPort", "7095")
-        buildConfigField(STRING, "auditInternalHost", "audit-service-dev")
+        buildConfigField(STRING, "auditInternalHost", "audit-service-local")
         buildConfigField(INT, "auditInternalPort", "7096")
-        buildConfigField(STRING, "bankingInternalHost", "banking-service-dev")
+        buildConfigField(STRING, "bankingInternalHost", "banking-service-local")
         buildConfigField(INT, "bankingInternalPort", "7097")
     }
     targetConfigs("local") {
