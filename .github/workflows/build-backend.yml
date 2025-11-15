@@ -66,6 +66,17 @@ jobs:
             exit 0
           fi
 
+          # On main branch, always build all services for releases
+          if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
+            echo "Main branch push detected - building all services for release"
+            SERVICES="auth,audit,banking,expense,invoicing,payment,reporting"
+            JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
+            echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "Building all services: $SERVICES"
+            exit 0
+          fi
+
           # Detect changes for push/PR
           CHANGED_SERVICES=""
 
@@ -289,7 +300,7 @@ jobs:
   # Create deployment package artifact for main release
   create-deployment-package:
     name: 📦 Create Deployment Package
-    needs: [detect-changes, build-jars, build-docker]
+    needs: [ detect-changes, build-jars, build-docker ]
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
