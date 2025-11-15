@@ -236,7 +236,7 @@ REM Create .env file
     echo CACHE_TYPE=redis
     echo.
     echo # SECURITY
-    echo CORS_ALLOWED_HOSTS=https://dokus.tech,https://www.dokus.tech,http://localhost:6090
+    echo CORS_ALLOWED_HOSTS=["dokus.tech:443","www.dokus.tech:443","localhost:6090"]
     echo.
     echo # LOGGING
     echo LOG_LEVEL=INFO
