@@ -19,3 +19,4 @@ captures
 /logs-dev/
 /logs/
 /features/auth/backend/logs/
+/logs-local/

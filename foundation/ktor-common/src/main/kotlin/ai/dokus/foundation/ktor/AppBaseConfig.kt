@@ -13,7 +13,8 @@ data class AppBaseConfig(
     val metrics: MetricsConfig,
     val security: SecurityConfig,
     val caching: CachingConfig,
-    internal val config: Config,
+    val rabbitmq: RabbitMQConfig,
+    val config: Config,
 ) {
     companion object Companion {
         fun fromConfig(config: Config): AppBaseConfig {
@@ -27,14 +28,15 @@ data class AppBaseConfig(
                 metrics = MetricsConfig.fromConfig(config.getConfig("metrics")),
                 security = SecurityConfig.fromConfig(config.getConfig("security")),
                 caching = CachingConfig.fromConfig(config.getConfig("caching")),
+                rabbitmq = RabbitMQConfig.fromConfig(config.getConfig("rabbitmq")),
                 config = config,
             )
         }
 
         fun load(): AppBaseConfig {
-            val environment = System.getenv("ENVIRONMENT") ?: "dev"
-            val configName = "application-$environment.conf"
-            return fromConfig(ConfigFactory.load(configName))
+            val environment = System.getenv("ENVIRONMENT") ?: "local"
+            val configBaseName = "application-$environment"
+            return fromConfig(ConfigFactory.load(configBaseName))
         }
     }
 }
@@ -310,6 +312,26 @@ data class CachingConfig(
                         command = timeoutConfig.getLong("command")
                     )
                 )
+            )
+        }
+    }
+}
+
+data class RabbitMQConfig(
+    val host: String,
+    val port: Int,
+    val username: String,
+    val password: String,
+    val virtualHost: String
+) {
+    companion object {
+        fun fromConfig(config: Config): RabbitMQConfig {
+            return RabbitMQConfig(
+                host = config.getString("host"),
+                port = config.getInt("port"),
+                username = config.getString("username"),
+                password = config.getString("password"),
+                virtualHost = config.getString("virtualHost")
             )
         }
     }

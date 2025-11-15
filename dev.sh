@@ -87,7 +87,7 @@ SYMBOL_SMALL="▪"
 
 # Configuration
 PROJECT_NAME="dokus"
-COMPOSE_FILE="docker-compose.dev.yml"
+COMPOSE_FILE="docker-compose.local.yml"
 AUTH_SERVICE_DIR="features/auth/backend"
 AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
@@ -99,17 +99,17 @@ BANKING_SERVICE_DIR="features/banking/backend"
 DB_KEYS="auth invoicing expense payment reporting audit banking"
 
 # Function to get database config for a given key
-# Returns: container:port:dbname
+# Returns: service:port:dbname (service name for docker-compose exec)
 get_db_config() {
     local key=$1
     case $key in
-        auth)      echo "postgres-auth-dev:5541:dokus_auth" ;;
-        invoicing) echo "postgres-invoicing-dev:5542:dokus_invoicing" ;;
-        expense)   echo "postgres-expense-dev:5543:dokus_expense" ;;
-        payment)   echo "postgres-payment-dev:5544:dokus_payment" ;;
-        reporting) echo "postgres-reporting-dev:5545:dokus_reporting" ;;
-        audit)     echo "postgres-audit-dev:5546:dokus_audit" ;;
-        banking)   echo "postgres-banking-dev:5547:dokus_banking" ;;
+        auth)      echo "postgres-auth-local:5541:dokus_auth" ;;
+        invoicing) echo "postgres-invoicing-local:5542:dokus_invoicing" ;;
+        expense)   echo "postgres-expense-local:5543:dokus_expense" ;;
+        payment)   echo "postgres-payment-local:5544:dokus_payment" ;;
+        reporting) echo "postgres-reporting-local:5545:dokus_reporting" ;;
+        audit)     echo "postgres-audit-local:5546:dokus_audit" ;;
+        banking)   echo "postgres-banking-local:5547:dokus_banking" ;;
         *) echo "" ;;
     esac
 }
@@ -377,7 +377,7 @@ start_services() {
         # Wait for Redis
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Redis Cache"
         for i in {1..30}; do
-            if docker-compose -f $COMPOSE_FILE exec -T redis-dev redis-cli --pass devredispass ping &>/dev/null; then
+            if docker-compose -f $COMPOSE_FILE exec -T redis-local redis-cli --pass devredispass ping &>/dev/null; then
                 echo -e "${SOFT_GREEN}◆ Ready${NC}"
                 break
             fi
@@ -488,7 +488,7 @@ show_status() {
 
     # Redis
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
-    if docker-compose -f $COMPOSE_FILE exec -T redis-dev redis-cli --pass devredispass ping &>/dev/null; then
+    if docker-compose -f $COMPOSE_FILE exec -T redis-local redis-cli --pass devredispass ping &>/dev/null; then
         echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -709,7 +709,7 @@ access_single_db() {
 # Function to access Redis
 access_redis() {
     print_gradient_header "🗄️  Redis CLI Access"
-    docker-compose -f $COMPOSE_FILE exec redis-dev redis-cli -a devredispass
+    docker-compose -f $COMPOSE_FILE exec redis-local redis-cli -a devredispass
 }
 
 # Function to run tests
@@ -851,7 +851,7 @@ watch_mode() {
             fswatch -o $AUTH_SERVICE_DIR/src $AUDIT_SERVICE_DIR/src $BANKING_SERVICE_DIR/src | while read num ; do
                 print_color "$SOFT_YELLOW" "🔄 Changes detected, rebuilding..."
                 build_app
-                docker-compose -f $COMPOSE_FILE restart auth-service-dev audit-service-dev banking-service-dev
+                docker-compose -f $COMPOSE_FILE restart dokus-auth-local dokus-audit-local dokus-banking-local
                 print_color "$SOFT_GREEN" "✓ Services restarted"
             done
         elif [ "$service" = "auth" ]; then
@@ -863,7 +863,7 @@ watch_mode() {
                     gradle :features:auth:backend:shadowJar -x test
                 fi
                 docker build -f features/auth/backend/Dockerfile.dev -t invoid-vision/dokus-auth:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart auth-service-dev
+                docker-compose -f $COMPOSE_FILE restart dokus-auth-local
                 print_color "$SOFT_GREEN" "✓ Auth Service restarted"
             done
         elif [ "$service" = "audit" ]; then
@@ -875,7 +875,7 @@ watch_mode() {
                     gradle :features:audit:backend:shadowJar -x test
                 fi
                 docker build -f features/audit/backend/Dockerfile.dev -t invoid-vision/dokus-audit:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart audit-service-dev
+                docker-compose -f $COMPOSE_FILE restart dokus-audit-local
                 print_color "$SOFT_GREEN" "✓ Audit Service restarted"
             done
         elif [ "$service" = "banking" ]; then
@@ -887,7 +887,7 @@ watch_mode() {
                     gradle :features:banking:backend:shadowJar -x test
                 fi
                 docker build -f features/banking/backend/Dockerfile.dev -t invoid-vision/dokus-banking:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart banking-service-dev
+                docker-compose -f $COMPOSE_FILE restart dokus-banking-local
                 print_color "$SOFT_GREEN" "✓ Banking Service restarted"
             done
         fi
@@ -1000,7 +1000,7 @@ show_help() {
     echo -e "  ${SOFT_CYAN}${BOLD}Examples:${NC}\n"
 
     echo -e "    ${SOFT_GRAY}./dev.sh start${NC}                   ${DIM_WHITE}Start everything${NC}"
-    echo -e "    ${SOFT_GRAY}./dev.sh logs auth-service-dev${NC}   ${DIM_WHITE}Show auth service logs${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh logs dokus-auth-local${NC}    ${DIM_WHITE}Show auth service logs${NC}"
     echo -e "    ${SOFT_GRAY}./dev.sh db${NC}                      ${DIM_WHITE}Access PostgreSQL database (choose from menu)${NC}"
     echo -e "    ${SOFT_GRAY}./dev.sh test auth${NC}               ${DIM_WHITE}Run auth service tests${NC}"
     echo -e "    ${SOFT_GRAY}./dev.sh reset-db${NC}                ${DIM_WHITE}Reset database (choose from menu)${NC}"
