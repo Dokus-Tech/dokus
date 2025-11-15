@@ -1,0 +1,104 @@
+{
+  "rabbit_version": "3.13.0",
+  "rabbitmq_version": "3.13.0",
+  "users": [
+    {
+      "name": "dokus",
+      "password_hash": "zQFj0IU+m1+57+U2rq3xbHMS/vbgxACekD5qqn/ZREzn5i/U",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/dokus"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "dokus",
+      "vhost": "/dokus",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "cluster_name",
+      "value": "dokus-cluster"
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "/dokus",
+      "name": "audit-ha-policy",
+      "pattern": "audit.*",
+      "apply-to": "queues",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority": 0
+    }
+  ],
+  "queues": [
+    {
+      "name": "audit.events.queue",
+      "vhost": "/dokus",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "dokus.dlx",
+        "x-dead-letter-routing-key": "dead"
+      }
+    },
+    {
+      "name": "dokus.dlq",
+      "vhost": "/dokus",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "dokus.events",
+      "vhost": "/dokus",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "dokus.dlx",
+      "vhost": "/dokus",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "dokus.events",
+      "vhost": "/dokus",
+      "destination": "audit.events.queue",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "dokus.dlx",
+      "vhost": "/dokus",
+      "destination": "dokus.dlq",
+      "destination_type": "queue",
+      "routing_key": "dead",
+      "arguments": {}
+    }
+  ]
+}
