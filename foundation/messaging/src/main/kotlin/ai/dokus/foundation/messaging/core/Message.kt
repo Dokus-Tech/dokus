@@ -1,11 +1,13 @@
 package ai.dokus.foundation.messaging.core
 
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**
  * Base interface for all messages that can be published to the message bus.
  */
+@OptIn(ExperimentalTime::class)
 interface Message {
     val messageId: MessageId
     val timestamp: Instant

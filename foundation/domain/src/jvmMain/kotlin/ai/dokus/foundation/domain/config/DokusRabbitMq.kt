@@ -1,5 +1,7 @@
 package ai.dokus.foundation.domain.config
 
+import ai.dokus.foundation.domain.config.BuildKonfig
+
 /**
  * RabbitMQ connection configuration using BuildKonfig with environment variable overrides.
  * Provides build-time configuration for RabbitMQ endpoints across all environments,
@@ -33,11 +35,11 @@ data class DokusRabbitMq(
          */
         val current: DokusRabbitMq
             get() = DokusRabbitMq(
-                host = getEnvOrBuildKonfig("RABBITMQ_HOST", BuildConfig.rabbitmqHost),
-                port = getEnvOrBuildKonfigInt("RABBITMQ_PORT", BuildConfig.rabbitmqPort),
-                username = getEnvOrBuildKonfig("RABBITMQ_USERNAME", BuildConfig.rabbitmqUsername),
-                password = getEnvOrBuildKonfig("RABBITMQ_PASSWORD", BuildConfig.rabbitmqPassword),
-                virtualHost = getEnvOrBuildKonfig("RABBITMQ_VHOST", BuildConfig.rabbitmqVirtualHost)
+                host = getEnvOrBuildKonfig("RABBITMQ_HOST", BuildKonfig.rabbitmqHost),
+                port = getEnvOrBuildKonfigInt("RABBITMQ_PORT", BuildKonfig.rabbitmqPort),
+                username = getEnvOrBuildKonfig("RABBITMQ_USERNAME", BuildKonfig.rabbitmqUsername),
+                password = getEnvOrBuildKonfig("RABBITMQ_PASSWORD", BuildKonfig.rabbitmqPassword),
+                virtualHost = getEnvOrBuildKonfig("RABBITMQ_VHOST", BuildKonfig.rabbitmqVirtualHost)
             )
 
         /**
