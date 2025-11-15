@@ -9,8 +9,8 @@ services:
     container_name: dokus-postgres-auth
     environment:
       POSTGRES_DB: dokus_auth
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5441:5432"
     volumes:
@@ -18,7 +18,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_auth"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_auth"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,8 +30,8 @@ services:
     container_name: dokus-postgres-invoicing
     environment:
       POSTGRES_DB: dokus_invoicing
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5442:5432"
     volumes:
@@ -39,7 +39,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_invoicing"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_invoicing"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,8 +51,8 @@ services:
     container_name: dokus-postgres-expense
     environment:
       POSTGRES_DB: dokus_expense
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5443:5432"
     volumes:
@@ -60,7 +60,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_expense"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_expense"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -72,8 +72,8 @@ services:
     container_name: dokus-postgres-payment
     environment:
       POSTGRES_DB: dokus_payment
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5444:5432"
     volumes:
@@ -81,7 +81,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_payment"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_payment"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -93,8 +93,8 @@ services:
     container_name: dokus-postgres-reporting
     environment:
       POSTGRES_DB: dokus_reporting
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5445:5432"
     volumes:
@@ -102,7 +102,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_reporting"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_reporting"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -114,8 +114,8 @@ services:
     container_name: dokus-postgres-audit
     environment:
       POSTGRES_DB: dokus_audit
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5446:5432"
     volumes:
@@ -123,7 +123,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_audit"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_audit"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -135,8 +135,8 @@ services:
     container_name: dokus-postgres-banking
     environment:
       POSTGRES_DB: dokus_banking
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5447:5432"
     volumes:
@@ -144,7 +144,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_banking"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_banking"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -158,7 +158,7 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?Redis password required}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     networks:
       - dokus-network
     healthcheck:
@@ -173,8 +173,8 @@ services:
     image: rabbitmq:3.13-management-alpine
     container_name: dokus-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-dokus}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RabbitMQ password required}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /dokus
     ports:
       - "5672:5672"    # AMQP
@@ -198,54 +198,54 @@ services:
       PORT: 6091
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-auth:5432/dokus_auth
-      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET:?JWT secret required}
-      JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching (CRITICAL!)
-      CACHE_TYPE: ${CACHE_TYPE:-redis}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_TYPE: ${CACHE_TYPE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: /dokus
       # Security
-      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS:-http://localhost:8081}
-      MONITORING_API_KEY: ${MONITORING_API_KEY:-default-monitoring-key}
-      ADMIN_API_KEY: ${ADMIN_API_KEY:-default-admin-key}
-      INTEGRATION_API_KEY: ${INTEGRATION_API_KEY:-default-integration-key}
-      REQUEST_SIGNING_ENABLED: ${REQUEST_SIGNING_ENABLED:-true}
-      REQUEST_SIGNING_SECRET: ${REQUEST_SIGNING_SECRET:-change-this-secret}
-      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
-      # Email (optional)
-      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
-      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
-      SMTP_HOST: ${SMTP_HOST:-smtp.example.com}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USERNAME: ${SMTP_USERNAME:-noreply@dokus.ai}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_ENABLE_TLS: ${SMTP_ENABLE_TLS:-true}
-      SMTP_ENABLE_AUTH: ${SMTP_ENABLE_AUTH:-true}
-      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@dokus.ai}
-      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Dokus}
-      EMAIL_REPLY_TO_ADDRESS: ${EMAIL_REPLY_TO_ADDRESS:-support@dokus.ai}
-      EMAIL_REPLY_TO_NAME: ${EMAIL_REPLY_TO_NAME:-Dokus Support}
-      EMAIL_BASE_URL: ${EMAIL_BASE_URL:-https://dokus.ai}
-      EMAIL_SUPPORT_ADDRESS: ${EMAIL_SUPPORT_ADDRESS:-support@dokus.ai}
-      # Monitoring
-      METRICS_ENABLED: ${METRICS_ENABLED:-true}
-      METRICS_PORT: ${METRICS_PORT:-7090}
-      TRACING_ENABLED: ${TRACING_ENABLED:-false}
-      JAEGER_ENDPOINT: ${JAEGER_ENDPOINT:-}
+      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS}
+      MONITORING_API_KEY: ${MONITORING_API_KEY}
+      ADMIN_API_KEY: ${ADMIN_API_KEY}
+      INTEGRATION_API_KEY: ${INTEGRATION_API_KEY}
+      REQUEST_SIGNING_ENABLED: ${REQUEST_SIGNING_ENABLED}
+      REQUEST_SIGNING_SECRET: ${REQUEST_SIGNING_SECRET}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE}
+      # Email (optional - all set via .env)
+      EMAIL_ENABLED: ${EMAIL_ENABLED}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_ENABLE_TLS: ${SMTP_ENABLE_TLS}
+      SMTP_ENABLE_AUTH: ${SMTP_ENABLE_AUTH}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
+      EMAIL_REPLY_TO_ADDRESS: ${EMAIL_REPLY_TO_ADDRESS}
+      EMAIL_REPLY_TO_NAME: ${EMAIL_REPLY_TO_NAME}
+      EMAIL_BASE_URL: ${EMAIL_BASE_URL}
+      EMAIL_SUPPORT_ADDRESS: ${EMAIL_SUPPORT_ADDRESS}
+      # Monitoring (optional - all set via .env)
+      METRICS_ENABLED: ${METRICS_ENABLED}
+      METRICS_PORT: ${METRICS_PORT}
+      TRACING_ENABLED: ${TRACING_ENABLED}
+      JAEGER_ENDPOINT: ${JAEGER_ENDPOINT}
       # GeoIP
-      GEOIP_ENABLED: ${GEOIP_ENABLED:-true}
+      GEOIP_ENABLED: ${GEOIP_ENABLED}
       # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_LEVEL: ${LOG_LEVEL}
     ports:
       - "6091:6091"
     depends_on:
@@ -273,7 +273,7 @@ services:
       PORT: 6092
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-invoicing:5432/dokus_invoicing
-      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
@@ -305,7 +305,7 @@ services:
       PORT: 6093
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-expense:5432/dokus_expense
-      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
@@ -337,7 +337,7 @@ services:
       PORT: 6094
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-payment:5432/dokus_payment
-      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
@@ -369,7 +369,7 @@ services:
       PORT: 6095
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-reporting:5432/dokus_reporting
-      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
@@ -401,7 +401,7 @@ services:
       PORT: 6096
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-audit:5432/dokus_audit
-      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
@@ -411,7 +411,7 @@ services:
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: /dokus
       # Logging
@@ -441,7 +441,7 @@ services:
       PORT: 6097
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-banking:5432/dokus_banking
-      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
