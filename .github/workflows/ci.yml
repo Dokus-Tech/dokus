@@ -166,23 +166,48 @@ jobs:
       build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
       create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
 
-  # Build backend deployment package
-  build-backend:
-    name: 🏗️ Build Backend Package
+  # Create deployment package for releases
+  create-deployment-package:
+    name: 📦 Create Deployment Package
     needs: [ test ]
     if: |
       always() &&
       (needs.test.result == 'success' || needs.test.result == 'skipped') &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push'
-    uses: ./.github/workflows/build-backend.yml
-    secrets: inherit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Create deployment package
+        run: |
+          # Create deployment archive
+          cd deployment
+          zip -r ../dokus-quick-deploy.zip . -x "*.git*" -x ".env" -x ".env.backup"
+          cd ..
+
+          # Show contents
+          echo "📦 Package contents:"
+          unzip -l dokus-quick-deploy.zip
+
+          # Get file size
+          SIZE=$(du -h dokus-quick-deploy.zip | cut -f1)
+          echo "📊 Package size: $SIZE"
+
+      - name: 📤 Upload deployment package
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-package
+          path: dokus-quick-deploy.zip
+          retention-days: 90
 
   # Summary and status reporting
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [ validation, changes, lint, test, build-android, build-macos, build-backend ]
+    needs: [ validation, changes, lint, test, build-android, build-macos, create-deployment-package ]
     if: always()
 
     steps:
@@ -199,7 +224,7 @@ jobs:
           echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build Android | ${{ needs.build-android.result == 'success' && '✅ Passed' || needs.build-android.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build macOS | ${{ needs.build-macos.result == 'success' && '✅ Passed' || needs.build-macos.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Backend | ${{ needs.build-backend.result == 'success' && '✅ Passed' || needs.build-backend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployment Package | ${{ needs.create-deployment-package.result == 'success' && '✅ Passed' || needs.create-deployment-package.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Platform changes detected
@@ -216,7 +241,7 @@ jobs:
              [ "${{ needs.test.result }}" == "failure" ] || \
              [ "${{ needs.build-android.result }}" == "failure" ] || \
              [ "${{ needs.build-macos.result }}" == "failure" ] || \
-             [ "${{ needs.build-backend.result }}" == "failure" ]; then
+             [ "${{ needs.create-deployment-package.result }}" == "failure" ]; then
             echo "❌ CI Pipeline Failed"
             exit 1
           fi
@@ -225,13 +250,13 @@ jobs:
   # Automatic release on main branch
   release:
     name: 🚀 Create Release
-    needs: [ build-android, build-macos, build-backend ]
+    needs: [ build-android, build-macos, create-deployment-package ]
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
       needs.build-android.result == 'success' &&
       needs.build-macos.result == 'success' &&
-      needs.build-backend.result == 'success'
+      needs.create-deployment-package.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
