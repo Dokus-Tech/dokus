@@ -1,0 +1,410 @@
+# Dokus Production Docker Compose
+# Pulls pre-built images from registry
+# Run with: docker-compose up -d
+
+services:
+  # PostgreSQL Database for Auth Service
+  postgres-auth:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-auth
+    environment:
+      POSTGRES_DB: dokus_auth
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports:
+      - "5441:5432"
+    volumes:
+      - postgres-auth:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL Database for Invoicing Service
+  postgres-invoicing:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-invoicing
+    environment:
+      POSTGRES_DB: dokus_invoicing
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres-invoicing:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_invoicing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL Database for Expense Service
+  postgres-expense:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-expense
+    environment:
+      POSTGRES_DB: dokus_expense
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports:
+      - "5443:5432"
+    volumes:
+      - postgres-expense:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_expense"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL Database for Payment Service
+  postgres-payment:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-payment
+    environment:
+      POSTGRES_DB: dokus_payment
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports:
+      - "5444:5432"
+    volumes:
+      - postgres-payment:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_payment"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL Database for Reporting Service
+  postgres-reporting:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-reporting
+    environment:
+      POSTGRES_DB: dokus_reporting
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports:
+      - "5445:5432"
+    volumes:
+      - postgres-reporting:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_reporting"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL Database for Audit Service
+  postgres-audit:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-audit
+    environment:
+      POSTGRES_DB: dokus_audit
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports:
+      - "5446:5432"
+    volumes:
+      - postgres-audit:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_audit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL Database for Banking Service
+  postgres-banking:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-banking
+    environment:
+      POSTGRES_DB: dokus_banking
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports:
+      - "5447:5432"
+    volumes:
+      - postgres-banking:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus_banking"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Shared Redis
+  redis:
+    image: redis:8-alpine
+    container_name: dokus-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?Redis password required}
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: dokus-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-dokus}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RabbitMQ password required}
+      RABBITMQ_DEFAULT_VHOST: /dokus
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    image: 94.111.226.82:5000/dokus-auth:latest
+    container_name: dokus-auth
+    environment:
+      PORT: 6091
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-auth:5432/dokus_auth
+      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?JWT secret required}
+      JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: /dokus
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6091:6091"
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6091/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Invoicing Service
+  invoicing-service:
+    image: 94.111.226.82:5000/dokus-invoicing:latest
+    container_name: dokus-invoicing
+    environment:
+      PORT: 6092
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-invoicing:5432/dokus_invoicing
+      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6092:6092"
+    depends_on:
+      postgres-invoicing:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6092/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Expense Service
+  expense-service:
+    image: 94.111.226.82:5000/dokus-expense:latest
+    container_name: dokus-expense
+    environment:
+      PORT: 6093
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-expense:5432/dokus_expense
+      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6093:6093"
+    depends_on:
+      postgres-expense:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6093/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Payment Service
+  payment-service:
+    image: 94.111.226.82:5000/dokus-payment:latest
+    container_name: dokus-payment
+    environment:
+      PORT: 6094
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-payment:5432/dokus_payment
+      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6094:6094"
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6094/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Reporting Service
+  reporting-service:
+    image: 94.111.226.82:5000/dokus-reporting:latest
+    container_name: dokus-reporting
+    environment:
+      PORT: 6095
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-reporting:5432/dokus_reporting
+      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6095:6095"
+    depends_on:
+      postgres-reporting:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6095/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Audit Service
+  audit-service:
+    image: 94.111.226.82:5000/dokus-audit:latest
+    container_name: dokus-audit
+    environment:
+      PORT: 6096
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-audit:5432/dokus_audit
+      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: /dokus
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6096:6096"
+    depends_on:
+      postgres-audit:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Banking Service
+  banking-service:
+    image: 94.111.226.82:5000/dokus-banking:latest
+    container_name: dokus-banking
+    environment:
+      PORT: 6097
+      ENVIRONMENT: prod
+      DB_URL: jdbc:postgresql://postgres-banking:5432/dokus_banking
+      DB_USERNAME: ${DB_USERNAME:-dokus}
+      DB_PASSWORD: ${DB_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "6097:6097"
+    depends_on:
+      postgres-banking:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+networks:
+  dokus-network:
+    driver: bridge
+
+volumes:
+  postgres-auth:
+  postgres-invoicing:
+  postgres-expense:
+  postgres-payment:
+  postgres-reporting:
+  postgres-audit:
+  postgres-banking:
+  redis-data:
+  rabbitmq-data:
