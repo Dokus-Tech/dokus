@@ -13,6 +13,7 @@ data class AppBaseConfig(
     val metrics: MetricsConfig,
     val security: SecurityConfig,
     val caching: CachingConfig,
+    val rabbitmq: RabbitMQConfig,
     val config: Config,
 ) {
     companion object Companion {
@@ -27,6 +28,7 @@ data class AppBaseConfig(
                 metrics = MetricsConfig.fromConfig(config.getConfig("metrics")),
                 security = SecurityConfig.fromConfig(config.getConfig("security")),
                 caching = CachingConfig.fromConfig(config.getConfig("caching")),
+                rabbitmq = RabbitMQConfig.fromConfig(config.getConfig("rabbitmq")),
                 config = config,
             )
         }
@@ -310,6 +312,26 @@ data class CachingConfig(
                         command = timeoutConfig.getLong("command")
                     )
                 )
+            )
+        }
+    }
+}
+
+data class RabbitMQConfig(
+    val host: String,
+    val port: Int,
+    val username: String,
+    val password: String,
+    val virtualHost: String
+) {
+    companion object {
+        fun fromConfig(config: Config): RabbitMQConfig {
+            return RabbitMQConfig(
+                host = config.getString("host"),
+                port = config.getInt("port"),
+                username = config.getString("username"),
+                password = config.getString("password"),
+                virtualHost = config.getString("virtualHost")
             )
         }
     }
