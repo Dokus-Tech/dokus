@@ -512,7 +512,6 @@ initial_setup() {
 
     # Auto-generated values
     CACHE_TYPE="redis"
-    CORS_ALLOWED_HOSTS="https://dokus.tech,https://www.dokus.tech,http://localhost:6090"
     MONITORING_API_KEY="$MONITORING_KEY"
     ADMIN_API_KEY="$ADMIN_KEY"
     INTEGRATION_API_KEY="$INTEGRATION_KEY"
@@ -586,11 +585,8 @@ JWT_AUDIENCE=$JWT_AUDIENCE
 CACHE_TYPE=$CACHE_TYPE
 
 # ============================================================================
-# SECURITY & CORS
+# SECURITY & API KEYS
 # ============================================================================
-# Update CORS_ALLOWED_HOSTS if deploying to a different domain
-CORS_ALLOWED_HOSTS=$CORS_ALLOWED_HOSTS
-
 # API Keys (auto-generated - rotate these regularly)
 MONITORING_API_KEY=$MONITORING_API_KEY
 ADMIN_API_KEY=$ADMIN_API_KEY
