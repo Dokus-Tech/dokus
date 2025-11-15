@@ -107,11 +107,15 @@ The project follows a feature-based modular architecture:
 
 ## Environment Configuration
 
-The project uses **BuildKonfig** to generate compile-time configuration for different environments. Configuration is set in `/foundation/platform/build.gradle.kts`.
+The project has been simplified to support **two environments**:
+- **Cloud** (production/cloud deployment)
+- **Local** (local development)
 
-### Available Environments
+### Frontend Configuration (BuildKonfig)
 
-**Production (default):**
+The client uses **BuildKonfig** to generate compile-time configuration for different environments. Configuration is set in `/foundation/platform/build.gradle.kts`.
+
+**Cloud/Production (default):**
 ```bash
 ./gradlew build
 # API_HOST: api.dokus.ai
@@ -141,6 +145,52 @@ The project uses **BuildKonfig** to generate compile-time configuration for diff
 # Or combine with debug logging:
 ./gradlew build -PENV=local -PDEBUG=true
 ```
+
+### Backend Configuration (HOCON)
+
+The backend services use **HOCON** (Typesafe Config) with a two-tier configuration:
+
+**1. Base Configuration (`application.conf`):**
+- Default values suitable for local development
+- Memory caching (default)
+- All values can be overridden via environment variables
+
+**2. Cloud Configuration (`application-cloud.conf`):**
+- Extends base configuration
+- Production-optimized settings
+- Redis caching (requires `CACHE_TYPE=redis`)
+- Requires environment variables for sensitive data
+
+**Configuration Files:**
+- `/features/{service}/backend/src/main/resources/application.conf` - Base defaults
+- `/features/auth/backend/src/main/resources/application-cloud.conf` - Cloud/production overrides
+- `/deployment/.env.example` - Environment variable template
+- `/deployment/docker-compose.yml` - Docker orchestration
+
+### Backend Deployment
+
+**Cloud/Production:**
+```bash
+cd deployment
+cp .env.example .env
+# Edit .env with production values
+./dokus.sh
+```
+
+**Local Development:**
+```bash
+./dev.sh start
+```
+
+**CRITICAL Environment Variables (Cloud):**
+- `CACHE_TYPE=redis` - Cache implementation (redis or memory)
+- `DB_PASSWORD` - Database password
+- `REDIS_PASSWORD` - Redis password
+- `JWT_SECRET` - JWT signing secret (64+ characters)
+- `CORS_ALLOWED_HOSTS` - Allowed CORS origins
+- See `/deployment/.env.example` for complete list
+
+For detailed configuration guide, see `/deployment/CONFIGURATION_GUIDE.md`.
 
 ### Accessing Configuration
 
