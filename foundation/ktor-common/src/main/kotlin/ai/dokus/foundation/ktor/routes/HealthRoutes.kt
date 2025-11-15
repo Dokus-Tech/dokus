@@ -76,7 +76,7 @@ fun Routing.healthRoutes() {
             application = ApplicationInfo(
                 name = "dokus-service",
                 version = "1.0.0",
-                environment = System.getenv("ENVIRONMENT") ?: "development"
+                environment = System.getenv("ENVIRONMENT") ?: "local"
             ),
             jvm = JvmInfo(
                 version = System.getProperty("java.version"),

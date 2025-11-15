@@ -150,19 +150,24 @@ prompt_with_default() {
 if [ ! -f .env ]; then
     echo -e "${YELLOW}⚠ .env file not found - let's create one!${NC}"
     echo ""
-    echo "You can press Enter to accept the defaults (recommended for quick start)"
-    echo "or enter custom values for production deployments."
+    echo -e "${BLUE}This wizard will configure your Dokus cloud deployment.${NC}"
+    echo -e "${BLUE}Only critical values need your input - everything else is auto-generated.${NC}"
+    echo ""
 
     # Generate secure defaults
     DB_PASS=$(generate_password)
     REDIS_PASS=$(generate_password)
     RABBITMQ_PASS=$(generate_password)
     JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64 2>/dev/null || LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 64)
+    MONITORING_KEY=$(generate_password)
+    ADMIN_KEY=$(generate_password)
+    INTEGRATION_KEY=$(generate_password)
+    REQUEST_SIGNING_SECRET=$(generate_password)
 
     # Prompt for configuration
     echo ""
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${GREEN}  Configuration${NC}"
+    echo -e "${GREEN}  Critical Configuration${NC}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
     # Database
@@ -170,6 +175,8 @@ if [ ! -f .env ]; then
     DB_PASSWORD=$(prompt_with_default "Database password:" "$DB_PASS" "DB_PASSWORD" "true")
 
     # Redis
+    REDIS_HOST="redis"
+    REDIS_PORT="6379"
     REDIS_PASSWORD=$(prompt_with_default "Redis password:" "$REDIS_PASS" "REDIS_PASSWORD" "true")
 
     # RabbitMQ
@@ -178,40 +185,161 @@ if [ ! -f .env ]; then
 
     # JWT
     JWT_SECRET_VAL=$(prompt_with_default "JWT secret (64+ chars):" "$JWT_SECRET" "JWT_SECRET" "true")
-    JWT_ISSUER=$(prompt_with_default "JWT issuer:" "https://dokus.local" "JWT_ISSUER")
-    JWT_AUDIENCE=$(prompt_with_default "JWT audience:" "dokus-api" "JWT_AUDIENCE")
+    JWT_ISSUER="https://dokus.tech"
+    JWT_AUDIENCE="dokus-api"
 
-    # Log level
-    LOG_LEVEL=$(prompt_with_default "Log level:" "INFO" "LOG_LEVEL")
+    # Auto-generated values
+    CACHE_TYPE="redis"
+    CORS_ALLOWED_HOSTS="https://dokus.tech,https://www.dokus.tech,http://localhost:6090"
+    MONITORING_API_KEY="$MONITORING_KEY"
+    ADMIN_API_KEY="$ADMIN_KEY"
+    INTEGRATION_API_KEY="$INTEGRATION_KEY"
+    REQUEST_SIGNING_ENABLED="true"
+    REQUEST_SIGNING_SECRET="$REQUEST_SIGNING_SECRET"
+    RATE_LIMIT_PER_MINUTE="60"
+    LOG_LEVEL="INFO"
+
+    # Optional email configuration (disabled by default)
+    EMAIL_ENABLED="false"
+    EMAIL_PROVIDER="smtp"
+    SMTP_HOST="smtp.example.com"
+    SMTP_PORT="587"
+    SMTP_USERNAME="noreply@dokus.tech"
+    SMTP_PASSWORD=""
+    SMTP_ENABLE_TLS="true"
+    SMTP_ENABLE_AUTH="true"
+    EMAIL_FROM_ADDRESS="noreply@dokus.tech"
+    EMAIL_FROM_NAME="Dokus"
+    EMAIL_REPLY_TO_ADDRESS="support@dokus.tech"
+    EMAIL_REPLY_TO_NAME="Dokus Support"
+    EMAIL_BASE_URL="https://dokus.tech"
+    EMAIL_SUPPORT_ADDRESS="support@dokus.tech"
+
+    # Optional monitoring (enabled with defaults)
+    METRICS_ENABLED="true"
+    METRICS_PORT="7090"
+    TRACING_ENABLED="false"
+    JAEGER_ENDPOINT=""
+
+    # GeoIP (enabled by default)
+    GEOIP_ENABLED="true"
 
     # Create .env file
     cat > .env << EOF
-# Dokus Environment Configuration
+# Dokus Cloud Environment Configuration
 # Generated on $(date)
+#
+# IMPORTANT: This file contains sensitive credentials - keep it secure!
+# You can modify optional settings below after deployment.
 
-# Database Configuration
+# ============================================================================
+# DATABASE CONFIGURATION
+# ============================================================================
 DB_USERNAME=$DB_USERNAME
 DB_PASSWORD=$DB_PASSWORD
 
-# Redis Configuration
+# ============================================================================
+# REDIS CACHE CONFIGURATION
+# ============================================================================
+REDIS_HOST=$REDIS_HOST
+REDIS_PORT=$REDIS_PORT
 REDIS_PASSWORD=$REDIS_PASSWORD
 
-# RabbitMQ Configuration
+# ============================================================================
+# RABBITMQ MESSAGE BROKER
+# ============================================================================
 RABBITMQ_USERNAME=$RABBITMQ_USERNAME
 RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
 
-# JWT Configuration (Auth Service)
+# ============================================================================
+# JWT AUTHENTICATION
+# ============================================================================
 JWT_SECRET=$JWT_SECRET_VAL
 JWT_ISSUER=$JWT_ISSUER
 JWT_AUDIENCE=$JWT_AUDIENCE
 
-# Logging
+# ============================================================================
+# CACHING (CRITICAL!)
+# ============================================================================
+CACHE_TYPE=$CACHE_TYPE
+
+# ============================================================================
+# SECURITY & CORS
+# ============================================================================
+# Update CORS_ALLOWED_HOSTS if deploying to a different domain
+CORS_ALLOWED_HOSTS=$CORS_ALLOWED_HOSTS
+
+# API Keys (auto-generated - rotate these regularly)
+MONITORING_API_KEY=$MONITORING_API_KEY
+ADMIN_API_KEY=$ADMIN_API_KEY
+INTEGRATION_API_KEY=$INTEGRATION_API_KEY
+
+# Request Signing
+REQUEST_SIGNING_ENABLED=$REQUEST_SIGNING_ENABLED
+REQUEST_SIGNING_SECRET=$REQUEST_SIGNING_SECRET
+
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=$RATE_LIMIT_PER_MINUTE
+
+# ============================================================================
+# EMAIL CONFIGURATION (Optional - currently disabled)
+# ============================================================================
+# To enable email notifications:
+# 1. Set EMAIL_ENABLED=true
+# 2. Configure your SMTP server details below
+# 3. Restart services: docker compose restart
+EMAIL_ENABLED=$EMAIL_ENABLED
+EMAIL_PROVIDER=$EMAIL_PROVIDER
+SMTP_HOST=$SMTP_HOST
+SMTP_PORT=$SMTP_PORT
+SMTP_USERNAME=$SMTP_USERNAME
+SMTP_PASSWORD=$SMTP_PASSWORD
+SMTP_ENABLE_TLS=$SMTP_ENABLE_TLS
+SMTP_ENABLE_AUTH=$SMTP_ENABLE_AUTH
+EMAIL_FROM_ADDRESS=$EMAIL_FROM_ADDRESS
+EMAIL_FROM_NAME=$EMAIL_FROM_NAME
+EMAIL_REPLY_TO_ADDRESS=$EMAIL_REPLY_TO_ADDRESS
+EMAIL_REPLY_TO_NAME=$EMAIL_REPLY_TO_NAME
+EMAIL_BASE_URL=$EMAIL_BASE_URL
+EMAIL_SUPPORT_ADDRESS=$EMAIL_SUPPORT_ADDRESS
+
+# ============================================================================
+# MONITORING & OBSERVABILITY (Optional)
+# ============================================================================
+METRICS_ENABLED=$METRICS_ENABLED
+METRICS_PORT=$METRICS_PORT
+TRACING_ENABLED=$TRACING_ENABLED
+JAEGER_ENDPOINT=$JAEGER_ENDPOINT
+
+# ============================================================================
+# GEOLOCATION
+# ============================================================================
+GEOIP_ENABLED=$GEOIP_ENABLED
+
+# ============================================================================
+# LOGGING
+# ============================================================================
 LOG_LEVEL=$LOG_LEVEL
 EOF
 
     echo ""
     echo -e "${GREEN}✓ Configuration saved to .env${NC}"
-    echo -e "${YELLOW}⚠ Keep this file secure - it contains sensitive passwords${NC}"
+    echo ""
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}  Optional Configuration${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}The following optional features are available:${NC}"
+    echo ""
+    echo -e "  ${GREEN}✓${NC} Metrics & monitoring (enabled on port $METRICS_PORT)"
+    echo -e "  ${YELLOW}⚠${NC} Email notifications (disabled - edit .env to enable)"
+    echo -e "  ${YELLOW}⚠${NC} Distributed tracing (disabled - edit .env to enable)"
+    echo ""
+    echo -e "${BLUE}To modify any optional settings:${NC}"
+    echo -e "  1. Edit the .env file: ${YELLOW}nano .env${NC}"
+    echo -e "  2. Update desired values"
+    echo -e "  3. Restart services: ${YELLOW}docker compose restart${NC}"
+    echo ""
+    echo -e "${RED}⚠ SECURITY: Keep your .env file secure - it contains sensitive credentials!${NC}"
 
 else
     echo -e "${GREEN}✓ .env file exists${NC}"
