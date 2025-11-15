@@ -196,21 +196,55 @@ services:
     container_name: dokus-auth
     environment:
       PORT: 6091
-      ENVIRONMENT: prod
+      ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-auth:5432/dokus_auth
       DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?JWT secret required}
       JWT_ISSUER: ${JWT_ISSUER:-https://dokus.ai}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      # Caching (CRITICAL!)
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: /dokus
+      # Security
+      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS:-http://localhost:8081}
+      MONITORING_API_KEY: ${MONITORING_API_KEY:-default-monitoring-key}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-default-admin-key}
+      INTEGRATION_API_KEY: ${INTEGRATION_API_KEY:-default-integration-key}
+      REQUEST_SIGNING_ENABLED: ${REQUEST_SIGNING_ENABLED:-true}
+      REQUEST_SIGNING_SECRET: ${REQUEST_SIGNING_SECRET:-change-this-secret}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
+      # Email (optional)
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-smtp.example.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-noreply@dokus.ai}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_ENABLE_TLS: ${SMTP_ENABLE_TLS:-true}
+      SMTP_ENABLE_AUTH: ${SMTP_ENABLE_AUTH:-true}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@dokus.ai}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Dokus}
+      EMAIL_REPLY_TO_ADDRESS: ${EMAIL_REPLY_TO_ADDRESS:-support@dokus.ai}
+      EMAIL_REPLY_TO_NAME: ${EMAIL_REPLY_TO_NAME:-Dokus Support}
+      EMAIL_BASE_URL: ${EMAIL_BASE_URL:-https://dokus.ai}
+      EMAIL_SUPPORT_ADDRESS: ${EMAIL_SUPPORT_ADDRESS:-support@dokus.ai}
+      # Monitoring
+      METRICS_ENABLED: ${METRICS_ENABLED:-true}
+      METRICS_PORT: ${METRICS_PORT:-7090}
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+      JAEGER_ENDPOINT: ${JAEGER_ENDPOINT:-}
+      # GeoIP
+      GEOIP_ENABLED: ${GEOIP_ENABLED:-true}
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6091:6091"
@@ -237,10 +271,16 @@ services:
     container_name: dokus-invoicing
     environment:
       PORT: 6092
-      ENVIRONMENT: prod
+      ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-invoicing:5432/dokus_invoicing
       DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6092:6092"
@@ -263,10 +303,16 @@ services:
     container_name: dokus-expense
     environment:
       PORT: 6093
-      ENVIRONMENT: prod
+      ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-expense:5432/dokus_expense
       DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6093:6093"
@@ -289,10 +335,16 @@ services:
     container_name: dokus-payment
     environment:
       PORT: 6094
-      ENVIRONMENT: prod
+      ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-payment:5432/dokus_payment
       DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6094:6094"
@@ -315,10 +367,16 @@ services:
     container_name: dokus-reporting
     environment:
       PORT: 6095
-      ENVIRONMENT: prod
+      ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-reporting:5432/dokus_reporting
       DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6095:6095"
@@ -341,15 +399,22 @@ services:
     container_name: dokus-audit
     environment:
       PORT: 6096
-      ENVIRONMENT: prod
+      ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-audit:5432/dokus_audit
       DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: /dokus
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6096:6096"
@@ -374,10 +439,16 @@ services:
     container_name: dokus-banking
     environment:
       PORT: 6097
-      ENVIRONMENT: prod
+      ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-banking:5432/dokus_banking
       DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6097:6097"
