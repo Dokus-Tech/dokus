@@ -13,7 +13,7 @@ data class AppBaseConfig(
     val metrics: MetricsConfig,
     val security: SecurityConfig,
     val caching: CachingConfig,
-    internal val config: Config,
+    val config: Config,
 ) {
     companion object Companion {
         fun fromConfig(config: Config): AppBaseConfig {
