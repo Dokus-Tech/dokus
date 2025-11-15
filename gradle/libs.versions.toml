@@ -57,6 +57,8 @@ micrometerCore = "1.15.5"
 micrometerRegistryPrometheus = "1.15.5"
 commonsPool2 = "2.12.1"
 javaMail = "1.6.2"
+amqpClient = "5.20.0"
+resilience4j = "2.1.0"
 
 datastore = "1.1.7"
 datastoreCoreJvm = "1.1.7"
@@ -144,6 +146,11 @@ exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datet
 
 javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javaMail" }
 
+amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqpClient" }
+resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
+resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
+resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }
+
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
 androidx-datastore-core-jvm = { module = "androidx.datastore:datastore-core-jvm", version.ref = "datastoreCoreJvm" }
 androidx-datastore-core-okio = { module = "androidx.datastore:datastore-core-okio", version.ref = "datastore" }
@@ -209,6 +216,7 @@ rpc-client = ["kotlinx-rpc-krpc-client", "kotlinx-rpc-krpc-ktor-client", "kotlin
 rpc-server = ["kotlinx-rpc-krpc-server", "kotlinx-rpc-krpc-ktor-server", "kotlinx-rpc-krpc-serialization-json"]
 #krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
 koin-compose = ["koin-core", "koin-compose", "koin-viewmodel", "koin-navigation"]
+messaging-queue = ["resilience4j-kotlin", "resilience4j-circuitbreaker", "resilience4j-retry", "amqp-client"]
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
