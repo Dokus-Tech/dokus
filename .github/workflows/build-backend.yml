@@ -199,6 +199,11 @@ jobs:
           echo "📦 Image: ${IMAGE_NAME}"
           echo "🏷️  Tags: ${TAGS}"
 
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -214,6 +219,7 @@ jobs:
         with:
           context: .
           file: features/${{ matrix.service }}/backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
@@ -224,6 +230,7 @@ jobs:
             org.opencontainers.image.version=${{ steps.meta.outputs.branch }}-${{ steps.meta.outputs.short-sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
 
       - name: 📊 Image details
         run: |
@@ -278,3 +285,40 @@ jobs:
             exit 1
           fi
           echo "✅ Deployment Successful"
+
+  # Create deployment package artifact for main release
+  create-deployment-package:
+    name: 📦 Create Deployment Package
+    needs: [detect-changes, build-jars, build-docker]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.build-jars.result == 'success' &&
+      needs.build-docker.result == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Create deployment package
+        run: |
+          # Create deployment archive
+          cd deployment
+          zip -r ../dokus-quick-deploy.zip . -x "*.git*" -x ".env" -x ".env.backup"
+          cd ..
+
+          # Show contents
+          echo "📦 Package contents:"
+          unzip -l dokus-quick-deploy.zip
+
+          # Get file size
+          SIZE=$(du -h dokus-quick-deploy.zip | cut -f1)
+          echo "📊 Package size: $SIZE"
+
+      - name: 📤 Upload deployment package
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-package
+          path: dokus-quick-deploy.zip
+          retention-days: 90
