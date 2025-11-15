@@ -204,6 +204,21 @@ Images are pulled from: `94.111.226.82:5000`
 
 This is an open HTTP registry. The installation script configures Docker to allow insecure connections.
 
+**Multi-Architecture Images:**
+
+All Dokus services are built for multiple architectures:
+- **AMD64** (Intel/AMD) - Standard x86_64 processors
+- **ARM64** (ARM) - ARM-based processors
+
+Docker automatically detects your architecture and pulls the correct image. This means:
+- ✅ Works on Raspberry Pi 4/5 (ARM64)
+- ✅ Works on AWS Graviton instances (ARM64)
+- ✅ Works on Oracle Ampere instances (ARM64)
+- ✅ Works on standard servers (AMD64)
+- ✅ Works on Apple Silicon Macs via Rosetta (ARM64)
+
+**No special configuration needed** - the deployment script works the same on all platforms!
+
 ## 🔄 Auto-Start Configuration
 
 The installation script can configure Dokus to start automatically:
@@ -259,15 +274,29 @@ sudo usermod -aG docker $USER
 
 ## 📦 System Requirements
 
+**Supported Architectures:**
+- ✅ **AMD64** (x86_64) - Intel/AMD processors
+- ✅ **ARM64** (aarch64) - ARM processors (Raspberry Pi 4+, AWS Graviton, Oracle Ampere)
+
 **Minimum:**
 - 4 GB RAM
 - 10 GB disk space
 - 2 CPU cores
+- Docker 20.10+ (for multi-arch support)
 
 **Recommended:**
 - 8 GB RAM
 - 20 GB disk space
 - 4 CPU cores
+- 1 Gbps network connection
+
+**Tested Platforms:**
+- Ubuntu 20.04+ / Debian 11+ (AMD64/ARM64)
+- macOS 11+ (Intel/Apple Silicon)
+- Windows 10/11 (AMD64)
+- Raspberry Pi OS 64-bit (Raspberry Pi 4/5)
+- AWS Graviton instances
+- Oracle Cloud Ampere instances
 
 ## 📚 Additional Resources
 
