@@ -59,15 +59,40 @@ Built for the AI era - where your financial software should be as smart as your 
 
 ---
 
-## 🚀 Quick Start (Coming December 2025)
+## 🚀 Quick Start
+
+### Option 1: One-Click Deployment (Recommended)
+
+**Deploy a fully functional Dokus server in under 5 minutes:**
+
+```bash
+# Download the deployment package
+git clone https://github.com/Dokus-Tech/dokus.git
+cd dokus/deployment
+
+# Run the installation script for your platform:
+./dokus.sh      # macOS / Linux
+dokus.bat       # Windows
+```
+
+The script will:
+- ✅ Install Docker if needed
+- ✅ Configure all services
+- ✅ Pull latest images from our registry
+- ✅ Start all backend services
+- ✅ Optionally configure auto-start on boot
+
+**That's it!** Your Dokus server is running. See [deployment/README.md](deployment/README.md) for details.
+
+### Option 2: Development Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/Dokus-Tech/dokus.git
 cd dokus
 
-# Backend deployment (60 seconds)
-docker-compose up -d
+# Run development environment
+./dev.sh
 
 # Run the app on your platform:
 ./gradlew :composeApp:run              # Desktop (Windows/macOS/Linux)
@@ -76,7 +101,7 @@ docker-compose up -d
 # iOS: Open in Xcode and run
 ```
 
-**One codebase, all platforms. Full deployment guide coming with December release**
+**One codebase, all platforms.**
 
 ---
 
