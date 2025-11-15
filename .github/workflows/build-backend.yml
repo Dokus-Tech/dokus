@@ -58,10 +58,11 @@ jobs:
             if [ "$SERVICES" == "all" ]; then
               SERVICES="auth,audit,banking,expense,invoicing,payment,reporting"
             fi
-            # Convert to JSON array
-            JSON_SERVICES=$(echo "$SERVICES" | jq -R 'split(",") | map(select(length > 0))')
+            # Convert to JSON array (compact, single line)
+            JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
             echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
             echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "Changed services: $SERVICES"
             exit 0
           fi
 
@@ -92,8 +93,8 @@ jobs:
             echo "services=[]" >> $GITHUB_OUTPUT
             echo "No backend services changed"
           else
-            # Convert to JSON array
-            JSON_SERVICES=$(echo "$CHANGED_SERVICES" | jq -R 'split(",") | map(select(length > 0))')
+            # Convert to JSON array (compact, single line)
+            JSON_SERVICES=$(echo "$CHANGED_SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
             echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
             echo "has-changes=true" >> $GITHUB_OUTPUT
             echo "Changed services: $CHANGED_SERVICES"
