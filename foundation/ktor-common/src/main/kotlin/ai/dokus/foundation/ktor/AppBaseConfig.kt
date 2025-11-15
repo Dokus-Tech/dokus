@@ -32,9 +32,9 @@ data class AppBaseConfig(
         }
 
         fun load(): AppBaseConfig {
-            val environment = System.getenv("ENVIRONMENT") ?: "dev"
-            val configName = "application-$environment.conf"
-            return fromConfig(ConfigFactory.load(configName))
+            val environment = System.getenv("ENVIRONMENT") ?: "local"
+            val configBaseName = "application-$environment"
+            return fromConfig(ConfigFactory.load(configBaseName))
         }
     }
 }
