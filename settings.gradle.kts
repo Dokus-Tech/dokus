@@ -49,6 +49,7 @@ include(":features:auth:domain")
 
 include(":features:invoicing:backend")
 include(":features:expense:backend")
+include(":features:cashflow:backend")
 include(":features:payment:backend")
 include(":features:reporting:backend")
 include(":features:audit:backend")
