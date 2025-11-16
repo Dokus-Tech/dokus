@@ -11,6 +11,7 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.*
 import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.domain.rpc.CashflowOverview
+import ai.dokus.foundation.ktor.auth.requireAuthenticatedTenantId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.datetime.LocalDate
@@ -41,15 +42,10 @@ class CashflowApiImpl(
 
     override suspend fun getInvoice(id: InvoiceId): Result<Invoice> {
         logger.info("getInvoice called for id: $id")
-        // TODO: Extract tenantId from authenticated context (JWT/session)
-        // For now, this method has a security flaw - we need tenant context
-        return Result.failure(NotImplementedError(
-            "getInvoice requires tenant context from authentication. " +
-            "Add JWT authentication middleware to extract tenantId from request context."
-        ))
-        // Future implementation:
-        // val tenantId = getCurrentTenantId() // from JWT/session
-        // return invoiceRepository.getInvoice(id, tenantId).map { it ?: throw NotFoundException("Invoice not found") }
+        val tenantId = requireAuthenticatedTenantId()
+        return invoiceRepository.getInvoice(id, tenantId).mapCatching { invoice ->
+            invoice ?: throw IllegalArgumentException("Invoice not found or access denied")
+        }
     }
 
     override suspend fun listInvoices(
@@ -71,14 +67,8 @@ class CashflowApiImpl(
 
     override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus): Result<Unit> {
         logger.info("updateInvoiceStatus called for invoice: $invoiceId, status: $status")
-        // TODO: Extract tenantId from authenticated context
-        return Result.failure(NotImplementedError(
-            "updateInvoiceStatus requires tenant context from authentication. " +
-            "Add JWT authentication middleware to extract tenantId from request context."
-        ))
-        // Future implementation:
-        // val tenantId = getCurrentTenantId()
-        // return invoiceRepository.updateInvoiceStatus(invoiceId, tenantId, status).map { }
+        val tenantId = requireAuthenticatedTenantId()
+        return invoiceRepository.updateInvoiceStatus(invoiceId, tenantId, status).map { }
     }
 
     override suspend fun updateInvoice(invoiceId: InvoiceId, request: CreateInvoiceRequest): Result<Invoice> {
@@ -88,14 +78,8 @@ class CashflowApiImpl(
 
     override suspend fun deleteInvoice(invoiceId: InvoiceId): Result<Unit> {
         logger.info("deleteInvoice called for invoice: $invoiceId")
-        // TODO: Extract tenantId from authenticated context
-        return Result.failure(NotImplementedError(
-            "deleteInvoice requires tenant context from authentication. " +
-            "Add JWT authentication middleware to extract tenantId from request context."
-        ))
-        // Future implementation:
-        // val tenantId = getCurrentTenantId()
-        // return invoiceRepository.deleteInvoice(invoiceId, tenantId).map { }
+        val tenantId = requireAuthenticatedTenantId()
+        return invoiceRepository.deleteInvoice(invoiceId, tenantId).map { }
     }
 
     override suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit> {
@@ -149,14 +133,10 @@ class CashflowApiImpl(
 
     override suspend fun getExpense(id: ExpenseId): Result<Expense> {
         logger.info("getExpense called for id: $id")
-        // TODO: Extract tenantId from authenticated context
-        return Result.failure(NotImplementedError(
-            "getExpense requires tenant context from authentication. " +
-            "Add JWT authentication middleware to extract tenantId from request context."
-        ))
-        // Future implementation:
-        // val tenantId = getCurrentTenantId()
-        // return expenseRepository.getExpense(id, tenantId).map { it ?: throw NotFoundException("Expense not found") }
+        val tenantId = requireAuthenticatedTenantId()
+        return expenseRepository.getExpense(id, tenantId).mapCatching { expense ->
+            expense ?: throw IllegalArgumentException("Expense not found or access denied")
+        }
     }
 
     override suspend fun listExpenses(
@@ -178,14 +158,8 @@ class CashflowApiImpl(
 
     override suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit> {
         logger.info("deleteExpense called for expense: $expenseId")
-        // TODO: Extract tenantId from authenticated context
-        return Result.failure(NotImplementedError(
-            "deleteExpense requires tenant context from authentication. " +
-            "Add JWT authentication middleware to extract tenantId from request context."
-        ))
-        // Future implementation:
-        // val tenantId = getCurrentTenantId()
-        // return expenseRepository.deleteExpense(expenseId, tenantId).map { }
+        val tenantId = requireAuthenticatedTenantId()
+        return expenseRepository.deleteExpense(expenseId, tenantId).map { }
     }
 
     override suspend fun categorizeExpense(merchant: String, description: String?): Result<ExpenseCategory> {
@@ -213,36 +187,30 @@ class CashflowApiImpl(
         logger.info("uploadInvoiceDocument called for invoice: $invoiceId, file: $filename (${fileContent.size} bytes)")
 
         return runCatching {
-            // TODO: Extract tenantId from authenticated context
-            throw NotImplementedError(
-                "uploadInvoiceDocument requires tenant context from authentication. " +
-                "Add JWT authentication middleware to extract tenantId from request context."
-            )
+            val tenantId = requireAuthenticatedTenantId()
 
-            // Future implementation:
-            // val tenantId = getCurrentTenantId()
-            // val invoice = invoiceRepository.getInvoice(invoiceId, tenantId).getOrThrow()
-            //     ?: throw IllegalArgumentException("Invoice not found or access denied")
-            //
-            // val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
-            // if (validationError != null) {
-            //     throw IllegalArgumentException(validationError)
-            // }
-            //
-            // val storageKey = documentStorageService.storeFileLocally(
-            //     tenantId, "invoice", invoiceId.toString(), filename, fileContent
-            // ).getOrThrow()
-            //
-            // attachmentRepository.uploadAttachment(
-            //     tenantId = tenantId,
-            //     entityType = EntityType.Invoice,
-            //     entityId = invoiceId.toString(),
-            //     filename = filename,
-            //     mimeType = contentType,
-            //     sizeBytes = fileContent.size.toLong(),
-            //     s3Key = storageKey,
-            //     s3Bucket = "local"
-            // ).getOrThrow()
+            val invoice = invoiceRepository.getInvoice(invoiceId, tenantId).getOrThrow()
+                ?: throw IllegalArgumentException("Invoice not found or access denied")
+
+            val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
+            if (validationError != null) {
+                throw IllegalArgumentException(validationError)
+            }
+
+            val storageKey = documentStorageService.storeFileLocally(
+                tenantId, "invoice", invoiceId.toString(), filename, fileContent
+            ).getOrThrow()
+
+            attachmentRepository.uploadAttachment(
+                tenantId = tenantId,
+                entityType = EntityType.Invoice,
+                entityId = invoiceId.toString(),
+                filename = filename,
+                mimeType = contentType,
+                sizeBytes = fileContent.size.toLong(),
+                s3Key = storageKey,
+                s3Bucket = "local"
+            ).getOrThrow()
         }
     }
 
@@ -255,36 +223,30 @@ class CashflowApiImpl(
         logger.info("uploadExpenseReceipt called for expense: $expenseId, file: $filename (${fileContent.size} bytes)")
 
         return runCatching {
-            // TODO: Extract tenantId from authenticated context
-            throw NotImplementedError(
-                "uploadExpenseReceipt requires tenant context from authentication. " +
-                "Add JWT authentication middleware to extract tenantId from request context."
-            )
+            val tenantId = requireAuthenticatedTenantId()
 
-            // Future implementation:
-            // val tenantId = getCurrentTenantId()
-            // val expense = expenseRepository.getExpense(expenseId, tenantId).getOrThrow()
-            //     ?: throw IllegalArgumentException("Expense not found or access denied")
-            //
-            // val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
-            // if (validationError != null) {
-            //     throw IllegalArgumentException(validationError)
-            // }
-            //
-            // val storageKey = documentStorageService.storeFileLocally(
-            //     tenantId, "expense", expenseId.toString(), filename, fileContent
-            // ).getOrThrow()
-            //
-            // attachmentRepository.uploadAttachment(
-            //     tenantId = tenantId,
-            //     entityType = EntityType.Expense,
-            //     entityId = expenseId.toString(),
-            //     filename = filename,
-            //     mimeType = contentType,
-            //     sizeBytes = fileContent.size.toLong(),
-            //     s3Key = storageKey,
-            //     s3Bucket = "local"
-            // ).getOrThrow()
+            val expense = expenseRepository.getExpense(expenseId, tenantId).getOrThrow()
+                ?: throw IllegalArgumentException("Expense not found or access denied")
+
+            val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
+            if (validationError != null) {
+                throw IllegalArgumentException(validationError)
+            }
+
+            val storageKey = documentStorageService.storeFileLocally(
+                tenantId, "expense", expenseId.toString(), filename, fileContent
+            ).getOrThrow()
+
+            attachmentRepository.uploadAttachment(
+                tenantId = tenantId,
+                entityType = EntityType.Expense,
+                entityId = expenseId.toString(),
+                filename = filename,
+                mimeType = contentType,
+                sizeBytes = fileContent.size.toLong(),
+                s3Key = storageKey,
+                s3Bucket = "local"
+            ).getOrThrow()
         }
     }
 
@@ -292,22 +254,16 @@ class CashflowApiImpl(
         logger.info("getInvoiceAttachments called for invoice: $invoiceId")
 
         return runCatching {
-            // TODO: Extract tenantId from authenticated context
-            throw NotImplementedError(
-                "getInvoiceAttachments requires tenant context from authentication. " +
-                "Add JWT authentication middleware to extract tenantId from request context."
-            )
+            val tenantId = requireAuthenticatedTenantId()
 
-            // Future implementation:
-            // val tenantId = getCurrentTenantId()
-            // val invoice = invoiceRepository.getInvoice(invoiceId, tenantId).getOrThrow()
-            //     ?: throw IllegalArgumentException("Invoice not found or access denied")
-            //
-            // attachmentRepository.getAttachments(
-            //     tenantId = tenantId,
-            //     entityType = EntityType.Invoice,
-            //     entityId = invoiceId.toString()
-            // ).getOrThrow()
+            val invoice = invoiceRepository.getInvoice(invoiceId, tenantId).getOrThrow()
+                ?: throw IllegalArgumentException("Invoice not found or access denied")
+
+            attachmentRepository.getAttachments(
+                tenantId = tenantId,
+                entityType = EntityType.Invoice,
+                entityId = invoiceId.toString()
+            ).getOrThrow()
         }
     }
 
@@ -315,22 +271,16 @@ class CashflowApiImpl(
         logger.info("getExpenseAttachments called for expense: $expenseId")
 
         return runCatching {
-            // TODO: Extract tenantId from authenticated context
-            throw NotImplementedError(
-                "getExpenseAttachments requires tenant context from authentication. " +
-                "Add JWT authentication middleware to extract tenantId from request context."
-            )
+            val tenantId = requireAuthenticatedTenantId()
 
-            // Future implementation:
-            // val tenantId = getCurrentTenantId()
-            // val expense = expenseRepository.getExpense(expenseId, tenantId).getOrThrow()
-            //     ?: throw IllegalArgumentException("Expense not found or access denied")
-            //
-            // attachmentRepository.getAttachments(
-            //     tenantId = tenantId,
-            //     entityType = EntityType.Expense,
-            //     entityId = expenseId.toString()
-            // ).getOrThrow()
+            val expense = expenseRepository.getExpense(expenseId, tenantId).getOrThrow()
+                ?: throw IllegalArgumentException("Expense not found or access denied")
+
+            attachmentRepository.getAttachments(
+                tenantId = tenantId,
+                entityType = EntityType.Expense,
+                entityId = expenseId.toString()
+            ).getOrThrow()
         }
     }
 
@@ -338,21 +288,13 @@ class CashflowApiImpl(
         logger.info("getAttachmentDownloadUrl called for attachment: $attachmentId")
 
         return runCatching {
-            // TODO: Fetch attachment to get tenantId and verify ownership
-            throw NotImplementedError(
-                "Attachment lookup not yet implemented. " +
-                "Need to verify tenant ownership before generating download URL."
-            )
+            val tenantId = requireAuthenticatedTenantId()
 
-            // Future implementation:
-            // First verify the attachment exists and get its details
-            // This requires knowing the tenantId from the authenticated user context
-            // val tenantId = getCurrentTenantId() // from JWT/session
-            // val attachment = attachmentRepository.getAttachment(attachmentId, tenantId).getOrThrow()
-            //     ?: throw IllegalArgumentException("Attachment not found or access denied")
-            //
-            // // Generate download URL
-            // documentStorageService.generateDownloadUrl(attachment.s3Key)
+            val attachment = attachmentRepository.getAttachment(attachmentId, tenantId).getOrThrow()
+                ?: throw IllegalArgumentException("Attachment not found or access denied")
+
+            // Generate download URL
+            documentStorageService.generateDownloadUrl(attachment.s3Key)
         }
     }
 
@@ -360,24 +302,17 @@ class CashflowApiImpl(
         logger.info("deleteAttachment called for attachment: $attachmentId")
 
         return runCatching {
-            // TODO: Verify tenant ownership before deletion
-            throw NotImplementedError(
-                "Attachment deletion requires tenant context. " +
-                "Need to verify tenant ownership before allowing deletion."
-            )
+            val tenantId = requireAuthenticatedTenantId()
 
-            // Future implementation:
-            // val tenantId = getCurrentTenantId() // from JWT/session
-            //
-            // // First get the attachment to know the storage key
-            // val attachment = attachmentRepository.getAttachment(attachmentId, tenantId).getOrThrow()
-            //     ?: throw IllegalArgumentException("Attachment not found or access denied")
-            //
-            // // Delete from storage
-            // documentStorageService.deleteFileLocally(attachment.s3Key).getOrThrow()
-            //
-            // // Delete from database
-            // attachmentRepository.deleteAttachment(attachmentId, tenantId).getOrThrow()
+            // First get the attachment to know the storage key
+            val attachment = attachmentRepository.getAttachment(attachmentId, tenantId).getOrThrow()
+                ?: throw IllegalArgumentException("Attachment not found or access denied")
+
+            // Delete from storage
+            documentStorageService.deleteFileLocally(attachment.s3Key).getOrThrow()
+
+            // Delete from database
+            attachmentRepository.deleteAttachment(attachmentId, tenantId).getOrThrow()
         }
     }
 

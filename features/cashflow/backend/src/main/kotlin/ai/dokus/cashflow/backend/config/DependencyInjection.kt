@@ -11,7 +11,6 @@ import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -19,18 +18,26 @@ import org.koin.ktor.plugin.Koin
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     install(Koin) {
         modules(
-            databaseModule(appConfig),
+            coreModule(appConfig),
+            databaseModule,
             serviceModule,
-            rpcModule
+            rpcModule,
+            rpcClientModule
         )
     }
 }
 
 /**
+ * Core module - provides base configuration
+ */
+fun coreModule(appConfig: AppBaseConfig) = module {
+    single { appConfig }
+}
+
+/**
  * Database module - provides database factory and connection
  */
-fun databaseModule(appConfig: AppBaseConfig) = module {
-    single { appConfig }
+val databaseModule = module {
     single {
         DatabaseFactory(get(), "cashflow-pool").apply {
             runBlocking {
@@ -69,12 +76,12 @@ val serviceModule = module {
  * RPC module - KotlinX RPC service implementations
  */
 val rpcModule = module {
-    single {
+    single<CashflowApiImpl> {
         CashflowApiImpl(
             attachmentRepository = get(),
             documentStorageService = get(),
             invoiceRepository = get(),
             expenseRepository = get()
         )
-    } bind CashflowApi::class
+    }
 }
