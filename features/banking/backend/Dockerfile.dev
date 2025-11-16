@@ -26,7 +26,7 @@ EXPOSE 7097 5014
 
 # Health check for dev
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:7097/metrics || exit 1
+  CMD curl -f http://localhost:7096/metrics || exit 1
 
 # Run the application with dev-specific JVM options
 # The config file will be selected based on ENVIRONMENT variable

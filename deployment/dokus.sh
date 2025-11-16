@@ -185,12 +185,11 @@ show_status() {
     # Services
     local services=(
         "Auth Service:6091:/metrics"
-        "Invoicing Service:6092:/health"
-        "Expense Service:6093:/health"
-        "Payment Service:6094:/health"
-        "Reporting Service:6095:/health"
-        "Audit Service:6096:/health"
-        "Banking Service:6097:/health"
+        "Cashflow Service:6092:/health"
+        "Payment Service:6093:/health"
+        "Reporting Service:6094:/health"
+        "Audit Service:6095:/health"
+        "Banking Service:6096:/health"
     )
 
     for service_info in "${services[@]}"; do
@@ -219,12 +218,11 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6091${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC}                    ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Invoicing Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6092${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Expense Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6093${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6094${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6095${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6096${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6097${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6092${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6093${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6093${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6094${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6095${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
