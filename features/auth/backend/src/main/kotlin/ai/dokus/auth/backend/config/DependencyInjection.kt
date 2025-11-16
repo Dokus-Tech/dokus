@@ -96,8 +96,6 @@ private val appModule = module {
     single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }
     single<TenantApi> { TenantApiImpl(get()) }
     single<ClientApi> { ClientApiImpl(get()) }
-    single<InvoiceApi> { InvoiceApiImpl(get()) }
-    single<ExpenseApi> { ExpenseApiImpl(get()) }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
