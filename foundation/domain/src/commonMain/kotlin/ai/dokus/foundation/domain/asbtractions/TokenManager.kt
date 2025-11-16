@@ -1,5 +1,6 @@
 package ai.dokus.foundation.domain.asbtractions
 
+import ai.dokus.foundation.domain.model.auth.JwtClaims
 import kotlinx.coroutines.flow.StateFlow
 
 interface TokenManager {
@@ -7,4 +8,5 @@ interface TokenManager {
     suspend fun getValidAccessToken(): String?
     suspend fun refreshToken(): String?
     suspend fun onAuthenticationFailed()
+    suspend fun getCurrentClaims(): JwtClaims?
 }
