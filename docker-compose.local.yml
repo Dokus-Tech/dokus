@@ -22,6 +22,26 @@ services:
       timeout: 5s
       retries: 10
 
+  # PostgreSQL Database for Cashflow Service (Invoice + Expense merged)
+  postgres-cashflow-local:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-cashflow-local
+    environment:
+      POSTGRES_DB: dokus_cashflow
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: localpassword
+    ports:
+      - "5542:5432"
+    volumes:
+      - postgres-cashflow-local:/var/lib/postgresql/data
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_cashflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # PostgreSQL Database for Payment Service
   postgres-payment-local:
     image: postgres:17-alpine
@@ -31,7 +51,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5544:5432"
+      - "5543:5432"
     volumes:
       - postgres-payment-local:/var/lib/postgresql/data
     networks:
@@ -51,7 +71,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5545:5432"
+      - "5544:5432"
     volumes:
       - postgres-reporting-local:/var/lib/postgresql/data
     networks:
@@ -71,7 +91,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5546:5432"
+      - "5545:5432"
     volumes:
       - postgres-audit-local:/var/lib/postgresql/data
     networks:
@@ -91,33 +111,13 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5547:5432"
+      - "5546:5432"
     volumes:
       - postgres-banking-local:/var/lib/postgresql/data
     networks:
       - dokus-local-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dev -d dokus_banking"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Cashflow Service (Invoice + Expense merged)
-  postgres-cashflow-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-cashflow-local
-    environment:
-      POSTGRES_DB: dokus_cashflow
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "5548:5432"
-    volumes:
-      - postgres-cashflow-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_cashflow"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -211,22 +211,22 @@ services:
     image: invoid-vision/dokus-payment:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-payment-local
     environment:
-      PORT: 7094
+      PORT: 7093
       ENVIRONMENT: local
       DB_URL: jdbc:postgresql://postgres-payment-local:5432/dokus_payment
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       LOG_LEVEL: DEBUG
     ports:
-      - "7094:7094"
-      - "5011:5011"
+      - "7093:7093"
+      - "5009:5009"
     depends_on:
       postgres-payment-local:
         condition: service_healthy
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7094/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7093/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -239,22 +239,22 @@ services:
     image: invoid-vision/dokus-reporting:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-reporting-local
     environment:
-      PORT: 7095
+      PORT: 7094
       ENVIRONMENT: local
       DB_URL: jdbc:postgresql://postgres-reporting-local:5432/dokus_reporting
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       LOG_LEVEL: DEBUG
     ports:
-      - "7095:7095"
-      - "5012:5012"
+      - "7094:7094"
+      - "5010:5010"
     depends_on:
       postgres-reporting-local:
         condition: service_healthy
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7095/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7094/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -267,7 +267,7 @@ services:
     image: invoid-vision/dokus-audit:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-audit-local
     environment:
-      PORT: 7096
+      PORT: 7095
       ENVIRONMENT: local
       DB_URL: jdbc:postgresql://postgres-audit-local:5432/dokus_audit
       DB_USERNAME: dev
@@ -279,8 +279,8 @@ services:
       RABBITMQ_VHOST: /dokus
       LOG_LEVEL: DEBUG
     ports:
-      - "7096:7096"
-      - "5013:5013"
+      - "7095:7095"
+      - "5011:5011"
     depends_on:
       postgres-audit-local:
         condition: service_healthy
@@ -289,7 +289,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7096/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7095/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -302,22 +302,22 @@ services:
     image: invoid-vision/dokus-banking:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-banking-local
     environment:
-      PORT: 7097
+      PORT: 7096
       ENVIRONMENT: local
       DB_URL: jdbc:postgresql://postgres-banking-local:5432/dokus_banking
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       LOG_LEVEL: DEBUG
     ports:
-      - "7097:7097"
-      - "5014:5014"
+      - "7096:7096"
+      - "5012:5012"
     depends_on:
       postgres-banking-local:
         condition: service_healthy
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7097/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7096/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -330,13 +330,13 @@ services:
     image: invoid-vision/dokus-cashflow:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-cashflow-local
     environment:
-      PORT: 7098
+      PORT: 7092
       ENVIRONMENT: local
       DB_URL: jdbc:postgresql://postgres-cashflow-local:5432/dokus_cashflow
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7098
+      JWT_ISSUER: http://localhost:7092
       JWT_AUDIENCE: dokus-api-local
       REDIS_HOST: redis-local
       REDIS_PORT: 6379
@@ -350,8 +350,8 @@ services:
       LOCAL_STORAGE_PATH: /app/storage/documents
       LOG_LEVEL: DEBUG
     ports:
-      - "7098:7098"
-      - "5015:5005"
+      - "7092:7092"
+      - "5008:5005"
     depends_on:
       postgres-cashflow-local:
         condition: service_healthy
@@ -362,7 +362,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7098/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7092/health"]
       interval: 30s
       timeout: 10s
       retries: 3

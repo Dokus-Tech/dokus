@@ -104,11 +104,11 @@ get_db_config() {
     local key=$1
     case $key in
         auth)      echo "postgres-auth-local:5541:dokus_auth" ;;
-        payment)   echo "postgres-payment-local:5544:dokus_payment" ;;
-        reporting) echo "postgres-reporting-local:5545:dokus_reporting" ;;
-        audit)     echo "postgres-audit-local:5546:dokus_audit" ;;
-        banking)   echo "postgres-banking-local:5547:dokus_banking" ;;
-        cashflow)  echo "postgres-cashflow-local:5548:dokus_cashflow" ;;
+        cashflow)  echo "postgres-cashflow-local:5542:dokus_cashflow" ;;
+        payment)   echo "postgres-payment-local:5543:dokus_payment" ;;
+        reporting) echo "postgres-reporting-local:5544:dokus_reporting" ;;
+        audit)     echo "postgres-audit-local:5545:dokus_audit" ;;
+        banking)   echo "postgres-banking-local:5546:dokus_banking" ;;
         *) echo "" ;;
     esac
 }

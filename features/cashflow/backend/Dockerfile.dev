@@ -21,12 +21,12 @@ RUN mkdir -p /app/logs /app/storage/documents && chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
-# Expose service port (7098) and debug port (5005)
-EXPOSE 7098 5005
+# Expose service port (7092) and debug port (5005)
+EXPOSE 7092 5005
 
 # Health check for dev
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:7098/health || exit 1
+  CMD curl -f http://localhost:7092/health || exit 1
 
 # Run the application with dev-specific JVM options
 # The config file will be selected based on ENVIRONMENT variable
