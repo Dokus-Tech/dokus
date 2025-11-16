@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       services:
-        description: 'Services to build (comma-separated: auth,audit,banking,expense,invoicing,payment,reporting or "all")'
+        description: 'Services to build (comma-separated: auth,audit,banking,cashflow,payment,reporting or "all")'
         required: false
         default: 'all'
 
@@ -56,7 +56,7 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             SERVICES="${{ github.event.inputs.services }}"
             if [ "$SERVICES" == "all" ]; then
-              SERVICES="auth,audit,banking,expense,invoicing,payment,reporting"
+              SERVICES="auth,audit,banking,cashflow,payment,reporting"
             fi
             # Convert to JSON array (compact, single line)
             JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
@@ -69,7 +69,7 @@ jobs:
           # On main branch, always build all services for releases
           if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
             echo "Main branch push detected - building all services for release"
-            SERVICES="auth,audit,banking,expense,invoicing,payment,reporting"
+            SERVICES="auth,audit,banking,cashflow,payment,reporting"
             JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
             echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
             echo "has-changes=true" >> $GITHUB_OUTPUT
@@ -88,7 +88,7 @@ jobs:
           fi
 
           # Check each service for changes
-          for service in auth audit banking expense invoicing payment reporting; do
+          for service in auth audit banking cashflow payment reporting; do
             if echo "$CHANGED_FILES" | grep -q "features/${service}/backend/" || \
                echo "$CHANGED_FILES" | grep -q "foundation/"; then
               if [ -z "$CHANGED_SERVICES" ]; then
@@ -139,8 +139,7 @@ jobs:
           ./gradlew :features:auth:backend:shadowJar \
                     :features:audit:backend:shadowJar \
                     :features:banking:backend:shadowJar \
-                    :features:expense:backend:shadowJar \
-                    :features:invoicing:backend:shadowJar \
+                    :features:cashflow:backend:shadowJar \
                     :features:payment:backend:shadowJar \
                     :features:reporting:backend:shadowJar \
                     -x test
