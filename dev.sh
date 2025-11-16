@@ -96,7 +96,7 @@ BANKING_SERVICE_DIR="features/banking/backend"
 # Format: container:port:dbname
 # Bash 3.2 compatible (no associative arrays)
 
-DB_KEYS="auth invoicing expense payment reporting audit banking"
+DB_KEYS="auth invoicing expense payment reporting audit banking cashflow"
 
 # Function to get database config for a given key
 # Returns: service:port:dbname (service name for docker-compose exec)
@@ -110,6 +110,7 @@ get_db_config() {
         reporting) echo "postgres-reporting-local:5545:dokus_reporting" ;;
         audit)     echo "postgres-audit-local:5546:dokus_audit" ;;
         banking)   echo "postgres-banking-local:5547:dokus_banking" ;;
+        cashflow)  echo "postgres-cashflow-local:5548:dokus_cashflow" ;;
         *) echo "" ;;
     esac
 }
@@ -290,7 +291,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "invoicing" "expense" "payment" "reporting")
+    local services=("auth" "audit" "banking" "invoicing" "expense" "payment" "reporting" "cashflow")
     local total=${#services[@]}
     local current=0
 
