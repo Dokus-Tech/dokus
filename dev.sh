@@ -387,7 +387,7 @@ start_services() {
         # Wait for RabbitMQ
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "RabbitMQ Broker"
         for i in {1..30}; do
-            if curl -f -s -u dokus:devrabbitpass http://localhost:15672/api/health/checks/alarms &>/dev/null; then
+            if curl -f -s -u dokus:devrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
                 echo -e "${SOFT_GREEN}◆ Ready${NC}"
                 break
             fi
@@ -495,7 +495,7 @@ show_status() {
 
     # RabbitMQ
     printf "  ${SOFT_GRAY}│${NC} RabbitMQ Broker         ${SOFT_GRAY}│${NC} "
-    if curl -f -s -u dokus:devrabbitpass http://localhost:15672/api/health/checks/alarms &>/dev/null; then
+    if curl -f -s -u dokus:devrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
         echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -797,7 +797,7 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:6380${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:15672${NC} • ${SOFT_GRAY}pass: devrabbitpass${NC} ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:25673${NC} • ${SOFT_GRAY}pass: devrabbitpass${NC} ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
