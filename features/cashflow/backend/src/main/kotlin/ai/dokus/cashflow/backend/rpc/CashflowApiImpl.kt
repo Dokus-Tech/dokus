@@ -1,6 +1,11 @@
 package ai.dokus.cashflow.backend.rpc
 
+import ai.dokus.cashflow.backend.repository.AttachmentRepository
+import ai.dokus.cashflow.backend.repository.ExpenseRepository
+import ai.dokus.cashflow.backend.repository.InvoiceRepository
+import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.*
@@ -16,7 +21,12 @@ import org.slf4j.LoggerFactory
  *
  * This is a stub implementation for MVP - will be enhanced with actual business logic.
  */
-class CashflowApiImpl : CashflowApi {
+class CashflowApiImpl(
+    private val attachmentRepository: AttachmentRepository,
+    private val documentStorageService: DocumentStorageService,
+    private val invoiceRepository: InvoiceRepository,
+    private val expenseRepository: ExpenseRepository
+) : CashflowApi {
 
     private val logger = LoggerFactory.getLogger(CashflowApiImpl::class.java)
 
@@ -26,14 +36,20 @@ class CashflowApiImpl : CashflowApi {
 
     override suspend fun createInvoice(request: CreateInvoiceRequest): Result<Invoice> {
         logger.info("createInvoice called for tenant: ${request.tenantId}")
-        // TODO: Implement invoice creation logic
-        return Result.failure(NotImplementedError("Invoice creation not yet implemented"))
+        return invoiceRepository.createInvoice(request)
     }
 
     override suspend fun getInvoice(id: InvoiceId): Result<Invoice> {
         logger.info("getInvoice called for id: $id")
-        // TODO: Implement invoice retrieval
-        return Result.failure(NotImplementedError("Invoice retrieval not yet implemented"))
+        // TODO: Extract tenantId from authenticated context (JWT/session)
+        // For now, this method has a security flaw - we need tenant context
+        return Result.failure(NotImplementedError(
+            "getInvoice requires tenant context from authentication. " +
+            "Add JWT authentication middleware to extract tenantId from request context."
+        ))
+        // Future implementation:
+        // val tenantId = getCurrentTenantId() // from JWT/session
+        // return invoiceRepository.getInvoice(id, tenantId).map { it ?: throw NotFoundException("Invoice not found") }
     }
 
     override suspend fun listInvoices(
@@ -45,32 +61,41 @@ class CashflowApiImpl : CashflowApi {
         offset: Int
     ): Result<List<Invoice>> {
         logger.info("listInvoices called for tenant: $tenantId")
-        // TODO: Implement invoice listing
-        return Result.success(emptyList())
+        return invoiceRepository.listInvoices(tenantId, status, fromDate, toDate, limit, offset)
     }
 
     override suspend fun listOverdueInvoices(tenantId: TenantId): Result<List<Invoice>> {
         logger.info("listOverdueInvoices called for tenant: $tenantId")
-        // TODO: Implement overdue invoice listing
-        return Result.success(emptyList())
+        return invoiceRepository.listOverdueInvoices(tenantId)
     }
 
     override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus): Result<Unit> {
         logger.info("updateInvoiceStatus called for invoice: $invoiceId, status: $status")
-        // TODO: Implement status update
-        return Result.failure(NotImplementedError("Invoice status update not yet implemented"))
+        // TODO: Extract tenantId from authenticated context
+        return Result.failure(NotImplementedError(
+            "updateInvoiceStatus requires tenant context from authentication. " +
+            "Add JWT authentication middleware to extract tenantId from request context."
+        ))
+        // Future implementation:
+        // val tenantId = getCurrentTenantId()
+        // return invoiceRepository.updateInvoiceStatus(invoiceId, tenantId, status).map { }
     }
 
     override suspend fun updateInvoice(invoiceId: InvoiceId, request: CreateInvoiceRequest): Result<Invoice> {
         logger.info("updateInvoice called for invoice: $invoiceId")
-        // TODO: Implement invoice update
-        return Result.failure(NotImplementedError("Invoice update not yet implemented"))
+        return invoiceRepository.updateInvoice(invoiceId, request.tenantId, request)
     }
 
     override suspend fun deleteInvoice(invoiceId: InvoiceId): Result<Unit> {
         logger.info("deleteInvoice called for invoice: $invoiceId")
-        // TODO: Implement soft delete
-        return Result.failure(NotImplementedError("Invoice deletion not yet implemented"))
+        // TODO: Extract tenantId from authenticated context
+        return Result.failure(NotImplementedError(
+            "deleteInvoice requires tenant context from authentication. " +
+            "Add JWT authentication middleware to extract tenantId from request context."
+        ))
+        // Future implementation:
+        // val tenantId = getCurrentTenantId()
+        // return invoiceRepository.deleteInvoice(invoiceId, tenantId).map { }
     }
 
     override suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit> {
@@ -119,14 +144,19 @@ class CashflowApiImpl : CashflowApi {
 
     override suspend fun createExpense(request: CreateExpenseRequest): Result<Expense> {
         logger.info("createExpense called for tenant: ${request.tenantId}")
-        // TODO: Implement expense creation
-        return Result.failure(NotImplementedError("Expense creation not yet implemented"))
+        return expenseRepository.createExpense(request)
     }
 
     override suspend fun getExpense(id: ExpenseId): Result<Expense> {
         logger.info("getExpense called for id: $id")
-        // TODO: Implement expense retrieval
-        return Result.failure(NotImplementedError("Expense retrieval not yet implemented"))
+        // TODO: Extract tenantId from authenticated context
+        return Result.failure(NotImplementedError(
+            "getExpense requires tenant context from authentication. " +
+            "Add JWT authentication middleware to extract tenantId from request context."
+        ))
+        // Future implementation:
+        // val tenantId = getCurrentTenantId()
+        // return expenseRepository.getExpense(id, tenantId).map { it ?: throw NotFoundException("Expense not found") }
     }
 
     override suspend fun listExpenses(
@@ -138,20 +168,24 @@ class CashflowApiImpl : CashflowApi {
         offset: Int
     ): Result<List<Expense>> {
         logger.info("listExpenses called for tenant: $tenantId")
-        // TODO: Implement expense listing
-        return Result.success(emptyList())
+        return expenseRepository.listExpenses(tenantId, category, fromDate, toDate, limit, offset)
     }
 
     override suspend fun updateExpense(expenseId: ExpenseId, request: CreateExpenseRequest): Result<Expense> {
         logger.info("updateExpense called for expense: $expenseId")
-        // TODO: Implement expense update
-        return Result.failure(NotImplementedError("Expense update not yet implemented"))
+        return expenseRepository.updateExpense(expenseId, request.tenantId, request)
     }
 
     override suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit> {
         logger.info("deleteExpense called for expense: $expenseId")
-        // TODO: Implement expense deletion
-        return Result.failure(NotImplementedError("Expense deletion not yet implemented"))
+        // TODO: Extract tenantId from authenticated context
+        return Result.failure(NotImplementedError(
+            "deleteExpense requires tenant context from authentication. " +
+            "Add JWT authentication middleware to extract tenantId from request context."
+        ))
+        // Future implementation:
+        // val tenantId = getCurrentTenantId()
+        // return expenseRepository.deleteExpense(expenseId, tenantId).map { }
     }
 
     override suspend fun categorizeExpense(merchant: String, description: String?): Result<ExpenseCategory> {
@@ -177,8 +211,39 @@ class CashflowApiImpl : CashflowApi {
         contentType: String
     ): Result<AttachmentId> {
         logger.info("uploadInvoiceDocument called for invoice: $invoiceId, file: $filename (${fileContent.size} bytes)")
-        // TODO: Implement document upload
-        return Result.failure(NotImplementedError("Document upload not yet implemented"))
+
+        return runCatching {
+            // TODO: Extract tenantId from authenticated context
+            throw NotImplementedError(
+                "uploadInvoiceDocument requires tenant context from authentication. " +
+                "Add JWT authentication middleware to extract tenantId from request context."
+            )
+
+            // Future implementation:
+            // val tenantId = getCurrentTenantId()
+            // val invoice = invoiceRepository.getInvoice(invoiceId, tenantId).getOrThrow()
+            //     ?: throw IllegalArgumentException("Invoice not found or access denied")
+            //
+            // val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
+            // if (validationError != null) {
+            //     throw IllegalArgumentException(validationError)
+            // }
+            //
+            // val storageKey = documentStorageService.storeFileLocally(
+            //     tenantId, "invoice", invoiceId.toString(), filename, fileContent
+            // ).getOrThrow()
+            //
+            // attachmentRepository.uploadAttachment(
+            //     tenantId = tenantId,
+            //     entityType = EntityType.Invoice,
+            //     entityId = invoiceId.toString(),
+            //     filename = filename,
+            //     mimeType = contentType,
+            //     sizeBytes = fileContent.size.toLong(),
+            //     s3Key = storageKey,
+            //     s3Bucket = "local"
+            // ).getOrThrow()
+        }
     }
 
     override suspend fun uploadExpenseReceipt(
@@ -188,32 +253,132 @@ class CashflowApiImpl : CashflowApi {
         contentType: String
     ): Result<AttachmentId> {
         logger.info("uploadExpenseReceipt called for expense: $expenseId, file: $filename (${fileContent.size} bytes)")
-        // TODO: Implement receipt upload
-        return Result.failure(NotImplementedError("Receipt upload not yet implemented"))
+
+        return runCatching {
+            // TODO: Extract tenantId from authenticated context
+            throw NotImplementedError(
+                "uploadExpenseReceipt requires tenant context from authentication. " +
+                "Add JWT authentication middleware to extract tenantId from request context."
+            )
+
+            // Future implementation:
+            // val tenantId = getCurrentTenantId()
+            // val expense = expenseRepository.getExpense(expenseId, tenantId).getOrThrow()
+            //     ?: throw IllegalArgumentException("Expense not found or access denied")
+            //
+            // val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
+            // if (validationError != null) {
+            //     throw IllegalArgumentException(validationError)
+            // }
+            //
+            // val storageKey = documentStorageService.storeFileLocally(
+            //     tenantId, "expense", expenseId.toString(), filename, fileContent
+            // ).getOrThrow()
+            //
+            // attachmentRepository.uploadAttachment(
+            //     tenantId = tenantId,
+            //     entityType = EntityType.Expense,
+            //     entityId = expenseId.toString(),
+            //     filename = filename,
+            //     mimeType = contentType,
+            //     sizeBytes = fileContent.size.toLong(),
+            //     s3Key = storageKey,
+            //     s3Bucket = "local"
+            // ).getOrThrow()
+        }
     }
 
     override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<Attachment>> {
         logger.info("getInvoiceAttachments called for invoice: $invoiceId")
-        // TODO: Implement attachment retrieval
-        return Result.success(emptyList())
+
+        return runCatching {
+            // TODO: Extract tenantId from authenticated context
+            throw NotImplementedError(
+                "getInvoiceAttachments requires tenant context from authentication. " +
+                "Add JWT authentication middleware to extract tenantId from request context."
+            )
+
+            // Future implementation:
+            // val tenantId = getCurrentTenantId()
+            // val invoice = invoiceRepository.getInvoice(invoiceId, tenantId).getOrThrow()
+            //     ?: throw IllegalArgumentException("Invoice not found or access denied")
+            //
+            // attachmentRepository.getAttachments(
+            //     tenantId = tenantId,
+            //     entityType = EntityType.Invoice,
+            //     entityId = invoiceId.toString()
+            // ).getOrThrow()
+        }
     }
 
     override suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<Attachment>> {
         logger.info("getExpenseAttachments called for expense: $expenseId")
-        // TODO: Implement attachment retrieval
-        return Result.success(emptyList())
+
+        return runCatching {
+            // TODO: Extract tenantId from authenticated context
+            throw NotImplementedError(
+                "getExpenseAttachments requires tenant context from authentication. " +
+                "Add JWT authentication middleware to extract tenantId from request context."
+            )
+
+            // Future implementation:
+            // val tenantId = getCurrentTenantId()
+            // val expense = expenseRepository.getExpense(expenseId, tenantId).getOrThrow()
+            //     ?: throw IllegalArgumentException("Expense not found or access denied")
+            //
+            // attachmentRepository.getAttachments(
+            //     tenantId = tenantId,
+            //     entityType = EntityType.Expense,
+            //     entityId = expenseId.toString()
+            // ).getOrThrow()
+        }
     }
 
     override suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): Result<String> {
         logger.info("getAttachmentDownloadUrl called for attachment: $attachmentId")
-        // TODO: Implement presigned URL generation
-        return Result.failure(NotImplementedError("Download URL generation not yet implemented"))
+
+        return runCatching {
+            // TODO: Fetch attachment to get tenantId and verify ownership
+            throw NotImplementedError(
+                "Attachment lookup not yet implemented. " +
+                "Need to verify tenant ownership before generating download URL."
+            )
+
+            // Future implementation:
+            // First verify the attachment exists and get its details
+            // This requires knowing the tenantId from the authenticated user context
+            // val tenantId = getCurrentTenantId() // from JWT/session
+            // val attachment = attachmentRepository.getAttachment(attachmentId, tenantId).getOrThrow()
+            //     ?: throw IllegalArgumentException("Attachment not found or access denied")
+            //
+            // // Generate download URL
+            // documentStorageService.generateDownloadUrl(attachment.s3Key)
+        }
     }
 
     override suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit> {
         logger.info("deleteAttachment called for attachment: $attachmentId")
-        // TODO: Implement attachment deletion
-        return Result.failure(NotImplementedError("Attachment deletion not yet implemented"))
+
+        return runCatching {
+            // TODO: Verify tenant ownership before deletion
+            throw NotImplementedError(
+                "Attachment deletion requires tenant context. " +
+                "Need to verify tenant ownership before allowing deletion."
+            )
+
+            // Future implementation:
+            // val tenantId = getCurrentTenantId() // from JWT/session
+            //
+            // // First get the attachment to know the storage key
+            // val attachment = attachmentRepository.getAttachment(attachmentId, tenantId).getOrThrow()
+            //     ?: throw IllegalArgumentException("Attachment not found or access denied")
+            //
+            // // Delete from storage
+            // documentStorageService.deleteFileLocally(attachment.s3Key).getOrThrow()
+            //
+            // // Delete from database
+            // attachmentRepository.deleteAttachment(attachmentId, tenantId).getOrThrow()
+        }
     }
 
     // ============================================================================
