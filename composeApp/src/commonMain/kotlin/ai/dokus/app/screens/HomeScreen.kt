@@ -1,5 +1,6 @@
 package ai.dokus.app.screens
 
+import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.extensions.SetupSecondaryPanel
 import ai.dokus.app.core.local.LocalAppModules
 import ai.dokus.app.homeItems
@@ -41,7 +42,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreen(
-    appModules: List<ai.dokus.app.core.AppModule> = LocalAppModules.current,
+    appModules: List<AppModule> = LocalAppModules.current,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     SetupSecondaryPanel(null)
