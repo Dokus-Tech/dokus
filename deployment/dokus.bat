@@ -386,25 +386,23 @@ echo ====================================================================
 echo.
 echo   Select database to access:
 echo.
-echo   1  Auth (dokus_auth) - localhost:5441
-echo   2  Invoicing (dokus_invoicing) - localhost:5442
-echo   3  Expense (dokus_expense) - localhost:5443
-echo   4  Payment (dokus_payment) - localhost:5444
-echo   5  Reporting (dokus_reporting) - localhost:5445
-echo   6  Audit (dokus_audit) - localhost:5446
-echo   7  Banking (dokus_banking) - localhost:5447
+echo   1  Auth (dokus_auth) - localhost:15441
+echo   2  Cashflow (dokus_cashflow) - localhost:15442
+echo   3  Payment (dokus_payment) - localhost:15443
+echo   4  Reporting (dokus_reporting) - localhost:15444
+echo   5  Audit (dokus_audit) - localhost:15445
+echo   6  Banking (dokus_banking) - localhost:15446
 echo.
 echo   0  Cancel
 echo.
-set /p db_choice="   Enter choice [0-7]: "
+set /p db_choice="   Enter choice [0-6]: "
 
 if "%db_choice%"=="1" docker compose exec postgres-auth psql -U dokus -d dokus_auth
-if "%db_choice%"=="2" docker compose exec postgres-invoicing psql -U dokus -d dokus_invoicing
-if "%db_choice%"=="3" docker compose exec postgres-expense psql -U dokus -d dokus_expense
-if "%db_choice%"=="4" docker compose exec postgres-payment psql -U dokus -d dokus_payment
-if "%db_choice%"=="5" docker compose exec postgres-reporting psql -U dokus -d dokus_reporting
-if "%db_choice%"=="6" docker compose exec postgres-audit psql -U dokus -d dokus_audit
-if "%db_choice%"=="7" docker compose exec postgres-banking psql -U dokus -d dokus_banking
+if "%db_choice%"=="2" docker compose exec postgres-cashflow psql -U dokus -d dokus_cashflow
+if "%db_choice%"=="3" docker compose exec postgres-payment psql -U dokus -d dokus_payment
+if "%db_choice%"=="4" docker compose exec postgres-reporting psql -U dokus -d dokus_reporting
+if "%db_choice%"=="5" docker compose exec postgres-audit psql -U dokus -d dokus_audit
+if "%db_choice%"=="6" docker compose exec postgres-banking psql -U dokus -d dokus_banking
 if "%db_choice%"=="0" goto SHOW_MENU
 
 echo.
@@ -414,21 +412,19 @@ goto SHOW_MENU
 :PRINT_SERVICE_INFO
 echo Services available at:
 echo   Auth Service:      http://localhost:6091
-echo   Invoicing Service: http://localhost:6092
-echo   Expense Service:   http://localhost:6093
-echo   Payment Service:   http://localhost:6094
-echo   Reporting Service: http://localhost:6095
-echo   Audit Service:     http://localhost:6096
-echo   Banking Service:   http://localhost:6097
+echo   Cashflow Service:  http://localhost:6092
+echo   Payment Service:   http://localhost:6093
+echo   Reporting Service: http://localhost:6094
+echo   Audit Service:     http://localhost:6095
+echo   Banking Service:   http://localhost:6096
 echo.
-echo   RabbitMQ UI:       http://localhost:15672
+echo   RabbitMQ UI:       http://localhost:25673
 echo.
 echo Database Connections:
-echo   Auth:      localhost:5441 - dokus_auth
-echo   Invoicing: localhost:5442 - dokus_invoicing
-echo   Expense:   localhost:5443 - dokus_expense
-echo   Payment:   localhost:5444 - dokus_payment
-echo   Reporting: localhost:5445 - dokus_reporting
-echo   Audit:     localhost:5446 - dokus_audit
-echo   Banking:   localhost:5447 - dokus_banking
+echo   Auth:      localhost:15441 - dokus_auth
+echo   Cashflow:  localhost:15442 - dokus_cashflow
+echo   Payment:   localhost:15443 - dokus_payment
+echo   Reporting: localhost:15444 - dokus_reporting
+echo   Audit:     localhost:15445 - dokus_audit
+echo   Banking:   localhost:15446 - dokus_banking
 goto :EOF

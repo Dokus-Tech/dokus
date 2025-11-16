@@ -13,18 +13,11 @@ sealed class DokusEndpoint(
         internalPort = BuildKonfig.authInternalPort
     )
 
-    data object Invoicing : DokusEndpoint(
-        host = BuildKonfig.invoicingHost,
-        port = BuildKonfig.invoicingPort,
-        internalHost = BuildKonfig.invoicingInternalHost,
-        internalPort = BuildKonfig.invoicingInternalPort
-    )
-
-    data object Expense : DokusEndpoint(
-        host = BuildKonfig.expenseHost,
-        port = BuildKonfig.expensePort,
-        internalHost = BuildKonfig.expenseInternalHost,
-        internalPort = BuildKonfig.expenseInternalPort
+    data object Cashflow : DokusEndpoint(
+        host = BuildKonfig.cashflowHost,
+        port = BuildKonfig.cashflowPort,
+        internalHost = BuildKonfig.cashflowInternalHost,
+        internalPort = BuildKonfig.cashflowInternalPort
     )
 
     data object Payment : DokusEndpoint(
