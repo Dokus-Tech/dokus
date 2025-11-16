@@ -12,7 +12,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5441:5432"
+      - "15441:5432"
     volumes:
       - postgres-auth:/var/lib/postgresql/data
     networks:
@@ -33,7 +33,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5442:5432"
+      - "15442:5432"
     volumes:
       - postgres-cashflow:/var/lib/postgresql/data
     networks:
@@ -54,7 +54,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5443:5432"
+      - "15443:5432"
     volumes:
       - postgres-payment:/var/lib/postgresql/data
     networks:
@@ -75,7 +75,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5444:5432"
+      - "15444:5432"
     volumes:
       - postgres-reporting:/var/lib/postgresql/data
     networks:
@@ -96,7 +96,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5445:5432"
+      - "15445:5432"
     volumes:
       - postgres-audit:/var/lib/postgresql/data
     networks:
@@ -117,7 +117,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5446:5432"
+      - "15446:5432"
     volumes:
       - postgres-banking:/var/lib/postgresql/data
     networks:
@@ -134,7 +134,7 @@ services:
     image: redis:8-alpine
     container_name: dokus-redis
     ports:
-      - "6379:6379"
+      - "16379:6379"
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
@@ -156,8 +156,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /dokus
     ports:
-      - "5672:5672"    # AMQP
-      - "15672:15672"  # Management UI
+      - "25672:5672"    # AMQP
+      - "25673:15672"  # Management UI
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
