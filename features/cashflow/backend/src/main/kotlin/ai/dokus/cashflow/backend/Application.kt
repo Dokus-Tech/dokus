@@ -1,8 +1,12 @@
 package ai.dokus.cashflow.backend
 
 import ai.dokus.cashflow.backend.config.configureDependencyInjection
+import ai.dokus.cashflow.backend.rpc.AuthenticatedCashflowService
+import ai.dokus.cashflow.backend.rpc.CashflowApiImpl
+import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.auth.createRpcAuthPlugin
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
@@ -69,6 +73,10 @@ fun Application.module(appConfig: AppBaseConfig) {
     // Install KotlinX RPC plugin
     install(Krpc)
 
+    // Install RPC authentication plugin
+    val authValidationService = get<AuthValidationRemoteService>()
+    install(createRpcAuthPlugin(authValidationService, "Cashflow"))
+
     // Configure routes
     routing {
         healthRoutes()
@@ -81,8 +89,12 @@ fun Application.module(appConfig: AppBaseConfig) {
                 }
             }
 
-            // Register CashflowApi service
-            registerService<CashflowApi> { get<CashflowApi>() }
+            // Register CashflowApi service with authentication wrapper
+            registerService<CashflowApi> {
+                AuthenticatedCashflowService(
+                    delegate = get<CashflowApiImpl>()
+                )
+            }
         }
     }
 

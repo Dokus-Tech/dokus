@@ -7,6 +7,7 @@ import ai.dokus.auth.backend.database.services.TenantServiceImpl
 import ai.dokus.auth.backend.database.services.UserServiceImpl
 import ai.dokus.auth.backend.database.tables.*
 import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
+import ai.dokus.auth.backend.rpc.AuthValidationRemoteServiceImpl
 import ai.dokus.auth.backend.security.JwtGenerator
 import ai.dokus.auth.backend.security.JwtValidator
 import ai.dokus.foundation.ktor.database.DatabaseFactory
@@ -94,6 +95,7 @@ private val appModule = module {
 
     // RPC API implementations
     single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }
+    single<AuthValidationRemoteService> { AuthValidationRemoteServiceImpl(get(), get()) }
     single<TenantApi> { TenantApiImpl(get()) }
     single<ClientApi> { ClientApiImpl(get()) }
 }

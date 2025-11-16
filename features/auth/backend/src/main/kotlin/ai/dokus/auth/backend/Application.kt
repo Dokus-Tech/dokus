@@ -10,6 +10,7 @@ import ai.dokus.auth.backend.routes.userRoutes
 import ai.dokus.auth.backend.rpc.AuthenticatedAccountService
 import ai.dokus.auth.backend.security.JwtValidator
 import ai.dokus.auth.backend.security.RequestAuthHolder
+import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.domain.rpc.ClientApi
 import ai.dokus.foundation.domain.rpc.TenantApi
@@ -94,6 +95,9 @@ private fun Route.configureAuthenticatedRpc() {
                 authInfoProvider = { RequestAuthHolder.get() }
             )
         }
+
+        // Authentication validation service for other microservices
+        registerService<AuthValidationRemoteService> { get<AuthValidationRemoteService>() }
 
         registerService<TenantApi> { get<TenantApi>() }
         registerService<ClientApi> { get<ClientApi>() }

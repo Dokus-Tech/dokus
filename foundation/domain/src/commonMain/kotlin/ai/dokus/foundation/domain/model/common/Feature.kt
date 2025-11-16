@@ -12,6 +12,12 @@ enum class Feature(
         poolName = "dokus-auth",
         frontendDbName = "dokus_auth"
     ),
+    Cashflow(
+        serviceName = "cashflow",
+        fullPackageName = "ai.dokus.cashflow",
+        poolName = "dokus-cashflow",
+        frontendDbName = "dokus_cashflow"
+    ),
     Expense(
         serviceName = "expense",
         fullPackageName = "ai.dokus.expense",
