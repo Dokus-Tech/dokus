@@ -10,9 +10,8 @@ import ai.dokus.auth.backend.routes.userRoutes
 import ai.dokus.auth.backend.rpc.AuthenticatedAccountService
 import ai.dokus.auth.backend.security.JwtValidator
 import ai.dokus.auth.backend.security.RequestAuthHolder
+import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.domain.rpc.ClientApi
-import ai.dokus.foundation.domain.rpc.ExpenseApi
-import ai.dokus.foundation.domain.rpc.InvoiceApi
 import ai.dokus.foundation.domain.rpc.TenantApi
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
@@ -98,8 +97,7 @@ private fun Route.configureAuthenticatedRpc() {
 
         registerService<TenantApi> { get<TenantApi>() }
         registerService<ClientApi> { get<ClientApi>() }
-        registerService<InvoiceApi> { get<InvoiceApi>() }
-        registerService<ExpenseApi> { get<ExpenseApi>() }
+        registerService<CashflowApi> { get<CashflowApi>() }
     }
 
     logger.info("Public RPC APIs registered at /api with JWT authentication")
