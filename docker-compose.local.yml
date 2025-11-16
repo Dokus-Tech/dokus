@@ -22,46 +22,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # PostgreSQL Database for Invoicing Service
-  postgres-invoicing-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-invoicing-local
-    environment:
-      POSTGRES_DB: dokus_invoicing
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "5542:5432"
-    volumes:
-      - postgres-invoicing-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_invoicing"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Expense Service
-  postgres-expense-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-expense-local
-    environment:
-      POSTGRES_DB: dokus_expense
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "5543:5432"
-    volumes:
-      - postgres-expense-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_expense"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   # PostgreSQL Database for Payment Service
   postgres-payment-local:
     image: postgres:17-alpine
@@ -239,62 +199,6 @@ services:
       - dokus-local-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7091/metrics"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-
-  # Invoicing Service
-  invoicing-service-local:
-    image: invoid-vision/dokus-invoicing:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-invoicing-local
-    environment:
-      PORT: 7092
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-invoicing-local:5432/dokus_invoicing
-      DB_USERNAME: dev
-      DB_PASSWORD: localpassword
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7092:7092"
-      - "5009:5009"
-    depends_on:
-      postgres-invoicing-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7092/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-
-  # Expense Service
-  expense-service-local:
-    image: invoid-vision/dokus-expense:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-expense-local
-    environment:
-      PORT: 7093
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-expense-local:5432/dokus_expense
-      DB_USERNAME: dev
-      DB_PASSWORD: localpassword
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7093:7093"
-      - "5010:5010"
-    depends_on:
-      postgres-expense-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7093/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -489,8 +393,6 @@ networks:
 
 volumes:
   postgres-auth-local:
-  postgres-invoicing-local:
-  postgres-expense-local:
   postgres-payment-local:
   postgres-reporting-local:
   postgres-audit-local:
