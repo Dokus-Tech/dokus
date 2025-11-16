@@ -24,10 +24,10 @@ val rpcClientModule = module {
         }
     }
 
-    // RPC client for Invoicing Service (uses internal host for inter-service communication)
-    single<RpcClient>(named("invoicingClient")) {
+    // RPC client for Cashflow Service (uses internal host for inter-service communication)
+    single<RpcClient>(named("cashflowClient")) {
         val httpClient = get<HttpClient>()
-        val endpoint = DokusEndpoint.Invoicing
+        val endpoint = DokusEndpoint.Cashflow
         httpClient.rpc {
             url {
                 protocol = URLProtocol.WS
@@ -44,7 +44,6 @@ val rpcClientModule = module {
     }
 
     // Service proxies for other backends
-    single<ClientService> { get<RpcClient>(named("invoicingClient")).withService() }
-    single<InvoiceService> { get<RpcClient>(named("invoicingClient")).withService() }
-    // TODO: Add RPC clients for expense, payment services when needed
+    single<ClientService> { get<RpcClient>(named("cashflowClient")).withService() }
+    // TODO: Add RPC clients for payment, reporting services when needed
 }

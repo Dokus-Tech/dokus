@@ -22,11 +22,11 @@ RUN mkdir -p /app/logs && chown -R appuser:appuser /app
 USER appuser
 
 # Expose service port
-EXPOSE 6097
+EXPOSE 6096
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:6097/health || exit 1
+  CMD curl -f http://localhost:6096/health || exit 1
 
 # Run the application
 ENTRYPOINT ["java", \

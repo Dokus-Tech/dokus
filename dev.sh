@@ -96,20 +96,19 @@ BANKING_SERVICE_DIR="features/banking/backend"
 # Format: container:port:dbname
 # Bash 3.2 compatible (no associative arrays)
 
-DB_KEYS="auth invoicing expense payment reporting audit banking"
+DB_KEYS="auth payment reporting audit banking cashflow"
 
 # Function to get database config for a given key
 # Returns: service:port:dbname (service name for docker-compose exec)
 get_db_config() {
     local key=$1
     case $key in
-        auth)      echo "postgres-auth-local:5541:dokus_auth" ;;
-        invoicing) echo "postgres-invoicing-local:5542:dokus_invoicing" ;;
-        expense)   echo "postgres-expense-local:5543:dokus_expense" ;;
-        payment)   echo "postgres-payment-local:5544:dokus_payment" ;;
-        reporting) echo "postgres-reporting-local:5545:dokus_reporting" ;;
-        audit)     echo "postgres-audit-local:5546:dokus_audit" ;;
-        banking)   echo "postgres-banking-local:5547:dokus_banking" ;;
+        auth)      echo "postgres-auth-local:15541:dokus_auth" ;;
+        cashflow)  echo "postgres-cashflow-local:15542:dokus_cashflow" ;;
+        payment)   echo "postgres-payment-local:15543:dokus_payment" ;;
+        reporting) echo "postgres-reporting-local:15544:dokus_reporting" ;;
+        audit)     echo "postgres-audit-local:15545:dokus_audit" ;;
+        banking)   echo "postgres-banking-local:15546:dokus_banking" ;;
         *) echo "" ;;
     esac
 }
@@ -290,7 +289,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "invoicing" "expense" "payment" "reporting")
+    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow")
     local total=${#services[@]}
     local current=0
 
@@ -388,7 +387,7 @@ start_services() {
         # Wait for RabbitMQ
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "RabbitMQ Broker"
         for i in {1..30}; do
-            if curl -f -s -u dokus:devrabbitpass http://localhost:15672/api/health/checks/alarms &>/dev/null; then
+            if curl -f -s -u dokus:devrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
                 echo -e "${SOFT_GREEN}◆ Ready${NC}"
                 break
             fi
@@ -496,7 +495,7 @@ show_status() {
 
     # RabbitMQ
     printf "  ${SOFT_GRAY}│${NC} RabbitMQ Broker         ${SOFT_GRAY}│${NC} "
-    if curl -f -s -u dokus:devrabbitpass http://localhost:15672/api/health/checks/alarms &>/dev/null; then
+    if curl -f -s -u dokus:devrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
         echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -507,12 +506,11 @@ show_status() {
     # Services
     local services=(
         "Auth Service:7091:/metrics"
-        "Audit Service:7096:/health"
-        "Banking Service:7097:/health"
-        "Invoicing Service:7092:/health"
-        "Expense Service:7093:/health"
-        "Payment Service:7094:/health"
-        "Reporting Service:7095:/health"
+        "Cashflow Service:7092:/health"
+        "Payment Service:7093:/health"
+        "Reporting Service:7094:/health"
+        "Audit Service:7095:/health"
+        "Banking Service:7096:/health"
     )
 
     for service_info in "${services[@]}"; do
@@ -764,25 +762,22 @@ print_services_info() {
 
     # Services
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7091${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC} • ${SOFT_GRAY}debug: 5007${NC}    ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC} • ${SOFT_GRAY}debug: 15007${NC}   ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Invoicing Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7092${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5009${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7092${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15008${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Expense Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7093${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5010${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7093${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15009${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7094${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5011${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7094${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15010${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7095${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5012${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7095${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15011${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5013${NC}                ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 5014${NC}                ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
@@ -802,7 +797,7 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:6380${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:15672${NC} • ${SOFT_GRAY}pass: devrabbitpass${NC} ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:25673${NC} • ${SOFT_GRAY}pass: devrabbitpass${NC} ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then

@@ -24,29 +24,10 @@ val rpcClientModule = module {
         }
     }
 
-    // RPC client for Invoicing Service
-    single<RpcClient>(named("invoicingClient")) {
+    // RPC client for Cashflow Service
+    single<RpcClient>(named("cashflowClient")) {
         val httpClient = get<HttpClient>()
-        val endpoint = DokusEndpoint.Invoicing
-        httpClient.rpc {
-            url {
-                protocol = URLProtocol.WS
-                host = endpoint.internalHost
-                port = endpoint.internalPort
-                path("/api/rpc")
-            }
-            rpcConfig {
-                serialization {
-                    json()
-                }
-            }
-        }
-    }
-
-    // RPC client for Expense Service
-    single<RpcClient>(named("expenseClient")) {
-        val httpClient = get<HttpClient>()
-        val endpoint = DokusEndpoint.Expense
+        val endpoint = DokusEndpoint.Cashflow
         httpClient.rpc {
             url {
                 protocol = URLProtocol.WS
@@ -82,8 +63,8 @@ val rpcClientModule = module {
     }
 
     // Service proxies using named RPC clients
-    single<InvoiceService> { get<RpcClient>(named("invoicingClient")).withService() }
-    single<ExpenseService> { get<RpcClient>(named("expenseClient")).withService() }
+    single<InvoiceService> { get<RpcClient>(named("cashflowClient")).withService() }
+    single<ExpenseService> { get<RpcClient>(named("cashflowClient")).withService() }
     single<PaymentService> { get<RpcClient>(named("paymentClient")).withService() }
-    single<ClientService> { get<RpcClient>(named("invoicingClient")).withService() }
+    single<ClientService> { get<RpcClient>(named("cashflowClient")).withService() }
 }
