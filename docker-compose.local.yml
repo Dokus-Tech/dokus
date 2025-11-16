@@ -187,7 +187,7 @@ services:
       LOG_PATH: /app/logs
     ports:
       - "7091:7091"
-      - "5007:5005"
+      - "15007:5005"
     depends_on:
       postgres-auth-local:
         condition: service_healthy
@@ -219,7 +219,7 @@ services:
       LOG_LEVEL: DEBUG
     ports:
       - "7093:7093"
-      - "5009:5009"
+      - "15009:5009"
     depends_on:
       postgres-payment-local:
         condition: service_healthy
@@ -247,7 +247,7 @@ services:
       LOG_LEVEL: DEBUG
     ports:
       - "7094:7094"
-      - "5010:5010"
+      - "15010:5010"
     depends_on:
       postgres-reporting-local:
         condition: service_healthy
@@ -280,7 +280,7 @@ services:
       LOG_LEVEL: DEBUG
     ports:
       - "7095:7095"
-      - "5011:5011"
+      - "15011:5011"
     depends_on:
       postgres-audit-local:
         condition: service_healthy
@@ -310,7 +310,7 @@ services:
       LOG_LEVEL: DEBUG
     ports:
       - "7096:7096"
-      - "5012:5012"
+      - "15012:5012"
     depends_on:
       postgres-banking-local:
         condition: service_healthy
@@ -351,7 +351,7 @@ services:
       LOG_LEVEL: DEBUG
     ports:
       - "7092:7092"
-      - "5008:5005"
+      - "15008:5005"
     depends_on:
       postgres-cashflow-local:
         condition: service_healthy
