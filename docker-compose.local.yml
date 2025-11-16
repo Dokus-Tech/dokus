@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5541:5432"
+      - "15541:5432"
     volumes:
       - postgres-auth-local:/var/lib/postgresql/data
     networks:
@@ -31,7 +31,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5542:5432"
+      - "15542:5432"
     volumes:
       - postgres-cashflow-local:/var/lib/postgresql/data
     networks:
@@ -51,7 +51,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5543:5432"
+      - "15543:5432"
     volumes:
       - postgres-payment-local:/var/lib/postgresql/data
     networks:
@@ -71,7 +71,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5544:5432"
+      - "15544:5432"
     volumes:
       - postgres-reporting-local:/var/lib/postgresql/data
     networks:
@@ -91,7 +91,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5545:5432"
+      - "15545:5432"
     volumes:
       - postgres-audit-local:/var/lib/postgresql/data
     networks:
@@ -111,7 +111,7 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: localpassword
     ports:
-      - "5546:5432"
+      - "15546:5432"
     volumes:
       - postgres-banking-local:/var/lib/postgresql/data
     networks:
@@ -127,7 +127,7 @@ services:
     image: redis:8-alpine
     container_name: dokus-redis-local
     ports:
-      - "6380:6379"
+      - "16379:6379"
     volumes:
       - redis-data-local:/data
     command: redis-server --appendonly yes --requirepass localredispass
@@ -148,8 +148,8 @@ services:
       RABBITMQ_DEFAULT_PASS: localrabbitpass
       RABBITMQ_DEFAULT_VHOST: /dokus
     ports:
-      - "5672:5672"    # AMQP
-      - "15672:15672"  # Management UI
+      - "25672:5672"    # AMQP
+      - "25673:15672"  # Management UI
     volumes:
       - rabbitmq-data-local:/var/lib/rabbitmq
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
