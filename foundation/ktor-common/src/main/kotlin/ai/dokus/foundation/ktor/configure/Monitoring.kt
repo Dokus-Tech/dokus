@@ -1,6 +1,7 @@
 package ai.dokus.foundation.ktor.configure
 
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
@@ -27,7 +28,7 @@ fun Application.configureMonitoring() {
         format { call ->
             val status = call.response.status()
             val httpMethod = call.request.httpMethod.value
-            val userAgent = call.request.headers["User-Agent"]
+            val userAgent = call.request.headers[HttpHeaders.UserAgent]
             "Status: $status, Method: $httpMethod, Path: ${call.request.path()}, User-Agent: $userAgent"
         }
     }

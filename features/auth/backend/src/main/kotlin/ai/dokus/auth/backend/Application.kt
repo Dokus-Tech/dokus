@@ -1,6 +1,5 @@
 package ai.dokus.auth.backend
 
-import ai.dokus.auth.backend.config.configureAuthentication
 import ai.dokus.auth.backend.config.configureDependencyInjection
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.foundation.ktor.AppBaseConfig
@@ -18,6 +17,7 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
+import io.ktor.util.AttributeKey
 import kotlinx.coroutines.runBlocking
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import org.koin.ktor.ext.get
@@ -70,7 +70,6 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
-    configureAuthentication(appConfig)
     configureMonitoring()
 
     // Install KotlinX RPC plugin
@@ -78,7 +77,7 @@ fun Application.module(appConfig: AppBaseConfig) {
 
     // Install RPC authentication plugin
     val jwtValidator = get<JwtValidator>()
-    attributes.put(io.ktor.util.AttributeKey("JwtValidator"), jwtValidator)
+    attributes.put(AttributeKey("JwtValidator"), jwtValidator)
     install(RpcAuthPlugin)
 
     // Start background jobs

@@ -35,8 +35,7 @@ fun Application.withCors(corsConfig: SecurityConfig.Cors) {
         allowHeader(HttpHeaders.Authorization)
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.AccessControlAllowOrigin)
-        allowHeader("X-Request-ID")
-        allowHeader("X-API-Key")
+        allowHeader(HttpHeaders.XRequestId)
 
         allowCredentials = true
         maxAgeInSeconds = 3600
