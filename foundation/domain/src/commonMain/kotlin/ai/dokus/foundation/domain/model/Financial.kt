@@ -275,7 +275,6 @@ data class Attachment(
 
 @Serializable
 data class CreateInvoiceRequest(
-    val tenantId: TenantId,
     val clientId: ClientId,
     val items: List<InvoiceItem>,
     val issueDate: LocalDate? = null,
@@ -301,7 +300,6 @@ data class RecordPaymentRequest(
 
 @Serializable
 data class CreateExpenseRequest(
-    val tenantId: TenantId,
     val date: LocalDate,
     val merchant: String,
     val amount: Money,

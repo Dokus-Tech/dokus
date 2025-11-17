@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.VatNumber
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
 import ai.dokus.foundation.ktor.services.ClientService
+import ai.dokus.foundation.ktor.auth.requireAuthenticatedTenantId
 import kotlinx.coroutines.flow.Flow
 
 class ClientApiImpl(
@@ -16,7 +17,6 @@ class ClientApiImpl(
 ) : ClientApi {
 
     override suspend fun createClient(
-        tenantId: TenantId,
         name: String,
         email: String?,
         phone: String?,
@@ -32,13 +32,15 @@ class ClientApiImpl(
         peppolEnabled: Boolean,
         tags: String?,
         notes: String?
-    ): Result<Client> = runCatching {
+    ): Client {
+        val tenantId = requireAuthenticatedTenantId()
+
         // Convert String vatNumber to VatNumber value class if provided
         val vatNumberValue = vatNumber?.let { VatNumber(it) }
 
         // Note: ClientService doesn't support all the new Peppol fields yet
         // For now, we'll use the available fields and TODO: update ClientService
-        clientService.create(
+        return clientService.create(
             tenantId = tenantId,
             name = name,
             email = email,
@@ -54,7 +56,9 @@ class ClientApiImpl(
         )
     }
 
-    override suspend fun getClient(id: ClientId, tenantId: TenantId): Result<Client> = runCatching {
+    override suspend fun getClient(id: ClientId): Client {
+        val tenantId = requireAuthenticatedTenantId()
+
         val client = clientService.findById(id)
             ?: throw IllegalArgumentException("Client not found: $id")
 
@@ -63,17 +67,18 @@ class ClientApiImpl(
             throw IllegalArgumentException("Client does not belong to tenant: $tenantId")
         }
 
-        client
+        return client
     }
 
     override suspend fun listClients(
-        tenantId: TenantId,
         search: String?,
         isActive: Boolean?,
         limit: Int,
         offset: Int
-    ): Result<List<Client>> = runCatching {
-        if (search != null) {
+    ): List<Client> {
+        val tenantId = requireAuthenticatedTenantId()
+
+        return if (search != null) {
             // Use search method if search query provided
             clientService.search(tenantId, search, isActive ?: true)
         } else {
@@ -86,7 +91,6 @@ class ClientApiImpl(
 
     override suspend fun updateClient(
         id: ClientId,
-        tenantId: TenantId,
         name: String?,
         email: String?,
         phone: String?,
@@ -102,7 +106,9 @@ class ClientApiImpl(
         tags: String?,
         notes: String?,
         isActive: Boolean?
-    ): Result<Client> = runCatching {
+    ): Client {
+        val tenantId = requireAuthenticatedTenantId()
+
         // Verify client exists and belongs to tenant
         val existingClient = clientService.findById(id)
             ?: throw IllegalArgumentException("Client not found: $id")
@@ -132,11 +138,13 @@ class ClientApiImpl(
         )
 
         // Return updated client
-        clientService.findById(id)
+        return clientService.findById(id)
             ?: throw IllegalStateException("Client disappeared after update: $id")
     }
 
-    override suspend fun deleteClient(id: ClientId, tenantId: TenantId): Result<Unit> = runCatching {
+    override suspend fun deleteClient(id: ClientId) {
+        val tenantId = requireAuthenticatedTenantId()
+
         // Verify client exists and belongs to tenant
         val client = clientService.findById(id)
             ?: throw IllegalArgumentException("Client not found: $id")
@@ -148,21 +156,25 @@ class ClientApiImpl(
         clientService.delete(id)
     }
 
-    override suspend fun findClientByPeppolId(peppolId: String, tenantId: TenantId): Result<Client?> = runCatching {
+    override suspend fun findClientByPeppolId(peppolId: String): Client? {
+        val tenantId = requireAuthenticatedTenantId()
+
         // ClientService doesn't provide findByPeppolId directly
         // Search through all clients and filter by peppolId
         val allClients = clientService.listByTenant(tenantId)
 
-        allClients.firstOrNull { it.peppolId == peppolId }
+        return allClients.firstOrNull { it.peppolId == peppolId }
     }
 
-    override suspend fun getClientStats(tenantId: TenantId): Result<ClientStats> = runCatching {
+    override suspend fun getClientStats(): ClientStats {
+        val tenantId = requireAuthenticatedTenantId()
+
         val allClients = clientService.listByTenant(tenantId, activeOnly = false)
         val activeClients = allClients.filter { it.isActive }
         val inactiveClients = allClients.filter { !it.isActive }
         val peppolEnabledClients = allClients.filter { it.peppolEnabled }
 
-        ClientStats(
+        return ClientStats(
             totalClients = allClients.size.toLong(),
             activeClients = activeClients.size.toLong(),
             inactiveClients = inactiveClients.size.toLong(),
