@@ -1,14 +1,18 @@
 package ai.dokus.app.cashflow.screens
 
+import ai.dokus.app.cashflow.components.CashflowCard
 import ai.dokus.app.cashflow.components.InvoiceCard
+import ai.dokus.app.cashflow.components.toCashflowItems
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -80,22 +84,46 @@ internal fun CashflowScreen(
                 is CashflowViewModel.State.Success -> {
                     if (selectedTabIndex == 0) {
                         // Invoices tab
-                        if (currentState.invoices.isEmpty()) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "No invoices yet",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
+                            // Add the Cashflow Card at the top
+                            item {
+                                // Convert invoices to CashflowItemData with "Need confirmation" status
+                                val cashflowItems = currentState.invoices.toCashflowItems(
+                                    limit = 4,
+                                    customStatusText = "Need confirmation"
                                 )
+
+                                if (cashflowItems.isNotEmpty()) {
+                                    CashflowCard(
+                                        items = cashflowItems,
+                                        onPreviousClick = { /* TODO: Handle previous page */ },
+                                        onNextClick = { /* TODO: Handle next page */ },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
                             }
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp)
-                            ) {
+
+                            // Show all invoices below the card
+                            if (currentState.invoices.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth()
+                                            .padding(vertical = 32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "No invoices yet",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            } else {
                                 items(currentState.invoices) { invoice ->
                                     InvoiceCard(
                                         invoice = invoice,
