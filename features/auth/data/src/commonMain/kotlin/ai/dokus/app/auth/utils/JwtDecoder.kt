@@ -53,6 +53,7 @@ class JwtDecoder {
 
             JwtClaims(
                 userId = jsonObject["sub"]?.jsonPrimitive?.content ?: return null,
+                tenantId = jsonObject["tenant_id"]?.jsonPrimitive?.content ?: return null,
                 matricule = jsonObject["preferred_username"]?.jsonPrimitive?.content,
                 email = jsonObject["email"]?.jsonPrimitive?.content ?: return null,
                 fullName = jsonObject["name"]?.jsonPrimitive?.content ?: "",

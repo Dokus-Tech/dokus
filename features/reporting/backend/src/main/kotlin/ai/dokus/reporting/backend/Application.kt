@@ -1,28 +1,16 @@
 package ai.dokus.reporting.backend
 
-import ai.dokus.foundation.domain.rpc.ReportingApi
 import ai.dokus.reporting.backend.config.configureDependencyInjection
-import ai.dokus.reporting.backend.routes.reportRoutes
+import ai.dokus.reporting.backend.plugins.*
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
-import ai.dokus.foundation.ktor.routes.healthRoutes
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStopping
-import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.server.routing.routing
-import kotlinx.rpc.krpc.ktor.server.Krpc
-import kotlinx.rpc.krpc.ktor.server.rpc
-import kotlinx.rpc.krpc.serialization.json.json
-import org.koin.ktor.ext.get
-import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
-import kotlinx.coroutines.runBlocking
-import ai.dokus.foundation.ktor.database.DatabaseFactory
 
 private val logger = LoggerFactory.getLogger("Application")
 
@@ -51,52 +39,24 @@ fun Application.module(appConfig: AppBaseConfig) {
     logger.info("Starting Dokus Reporting Service...")
     logger.info("Environment: ${appConfig.ktor.deployment.environment}")
 
-    // Configure application
+    // Core configuration
     configureDependencyInjection(appConfig)
+    configureDatabase()
 
-    // Initialize database
-    logger.info("Initializing database connection...")
-    runBlocking {
-        val dbFactory by inject<DatabaseFactory>()
-        logger.info("Database initialized successfully: ${dbFactory.database}")
-    }
-
+    // Ktor plugins
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
     configureMonitoring()
 
-    // Install KotlinX RPC plugin
-    install(Krpc)
+    // RPC configuration
+    configureRpc()
 
-    // Configure routes
-    routing {
-        healthRoutes()
-        reportRoutes()
+    // Application features
+    configureRouting()
 
-        // Register RPC APIs
-        rpc("/rpc") {
-            rpcConfig {
-                serialization {
-                    json()
-                }
-            }
-
-            registerService<ReportingApi> { get<ReportingApi>() }
-        }
-
-        logger.info("RPC APIs registered at /api")
-    }
-
-    monitor.subscribe(ApplicationStopping) {
-        logger.info("Application stopping, cleaning up resources...")
-        runBlocking {
-            val dbFactory by inject<DatabaseFactory>()
-            dbFactory.close()
-            logger.info("Database connections closed")
-        }
-        logger.info("Cleanup complete")
-    }
+    // Lifecycle management
+    configureGracefulDatabaseShutdown()
 
     logger.info("Dokus Reporting Service started successfully")
 }

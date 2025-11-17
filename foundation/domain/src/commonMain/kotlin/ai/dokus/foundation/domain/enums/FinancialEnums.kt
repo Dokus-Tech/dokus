@@ -38,7 +38,20 @@ enum class UserRole(override val dbValue: String) : DbEnum {
     Owner("OWNER"),
     Admin("ADMIN"),
     Accountant("ACCOUNTANT"),
-    Viewer("VIEWER")
+    Viewer("VIEWER");
+
+    companion object {
+        val all = listOf(Owner, Admin, Accountant, Viewer)
+    }
+}
+
+@Serializable
+enum class UserStatus(override val dbValue: String) : DbEnum {
+    Active("ACTIVE"),
+    PendingVerification("PENDING_VERIFICATION"),
+    Suspended("SUSPENDED"),
+    Locked("LOCKED"),
+    Deleted("DELETED")
 }
 
 // ============================================================================

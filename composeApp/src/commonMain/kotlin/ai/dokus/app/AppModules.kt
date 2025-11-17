@@ -1,6 +1,7 @@
 package ai.dokus.app
 
 import ai.dokus.app.auth.AuthAppModule
+import ai.dokus.app.cashflow.CashflowAppModule
 import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.ModuleSettingsGroup
 import ai.dokus.app.core.diModules
@@ -11,7 +12,8 @@ import org.koin.core.module.Module
 
 private val baseAppModules = listOf<AppModule>(
     AppMainModule,
-    AuthAppModule
+    AuthAppModule,
+    CashflowAppModule
 )
 
 private val conditionalModules = emptyList<AppModule>()

@@ -48,6 +48,8 @@ include(":features:auth:data")
 include(":features:auth:domain")
 
 include(":features:cashflow:backend")
+include(":features:cashflow:data")
+include(":features:cashflow:presentation")
 include(":features:payment:backend")
 include(":features:reporting:backend")
 include(":features:audit:backend")

@@ -1,11 +1,12 @@
 package ai.dokus.auth.backend.config
 
 import ai.dokus.foundation.domain.config.DokusEndpoint
-import ai.dokus.foundation.ktor.services.*
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.http.*
+import ai.dokus.foundation.ktor.services.ClientService
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.http.URLProtocol
+import io.ktor.http.path
 import kotlinx.rpc.RpcClient
 import kotlinx.rpc.krpc.ktor.client.Krpc
 import kotlinx.rpc.krpc.ktor.client.rpc
@@ -45,5 +46,4 @@ val rpcClientModule = module {
 
     // Service proxies for other backends
     single<ClientService> { get<RpcClient>(named("cashflowClient")).withService() }
-    // TODO: Add RPC clients for payment, reporting services when needed
 }
