@@ -6,8 +6,8 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.*
 import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.domain.rpc.CashflowOverview
-import ai.dokus.foundation.ktor.auth.AuthContext
-import ai.dokus.foundation.ktor.auth.RequestAuthHolder
+import ai.dokus.foundation.ktor.security.AuthContext
+import ai.dokus.foundation.ktor.security.RequestAuthHolder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate

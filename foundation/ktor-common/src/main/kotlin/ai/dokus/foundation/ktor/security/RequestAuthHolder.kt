@@ -1,5 +1,6 @@
 package ai.dokus.foundation.ktor.security
 
+import ai.dokus.foundation.domain.model.AuthenticationInfo
 import kotlinx.coroutines.ThreadContextElement
 import kotlin.coroutines.CoroutineContext
 

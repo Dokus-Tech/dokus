@@ -2,8 +2,9 @@ package ai.dokus.foundation.ktor.auth
 
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
-import io.ktor.server.application.*
-import io.ktor.server.request.*
+import ai.dokus.foundation.ktor.security.RequestAuthHolder
+import io.ktor.server.application.createApplicationPlugin
+import io.ktor.server.request.header
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -51,7 +52,11 @@ fun createRpcAuthPlugin(
                     roles = setOf(userDto.role.dbValue)
                 )
 
-                logger.debug("Setting auth context for user: ${authInfo.userId.value}, tenant: ${authInfo.tenantId.value}")
+                logger.debug(
+                    "Setting auth context for user: {}, tenant: {}",
+                    authInfo.userId.value,
+                    authInfo.tenantId.value
+                )
                 RequestAuthHolder.set(authInfo)
             }
         } catch (e: Exception) {

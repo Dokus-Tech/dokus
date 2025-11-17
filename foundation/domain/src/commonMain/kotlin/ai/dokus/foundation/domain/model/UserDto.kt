@@ -1,9 +1,9 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.*
-import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.UserStatus
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -25,7 +25,7 @@ sealed class UserDto {
      */
     @Serializable
     data class Full(
-        val id: BusinessUserId,
+        val id: UserId,
         val tenantId: TenantId,
         val email: Email,
         val firstName: String?,
@@ -48,7 +48,7 @@ sealed class UserDto {
      */
     @Serializable
     data class Summary(
-        val id: BusinessUserId,
+        val id: UserId,
         val email: Email,
         val fullName: String,
         val role: UserRole
@@ -60,7 +60,7 @@ sealed class UserDto {
      */
     @Serializable
     data class Public(
-        val id: BusinessUserId,
+        val id: UserId,
         val fullName: String,
         val email: Email
     )
@@ -74,7 +74,7 @@ sealed class UserDto {
         fun fromJwtPrincipal(principal: JwtPrincipal): Full {
             val now = Clock.System.now()
             return Full(
-                id = BusinessUserId.parse(principal.userId),
+                id = UserId(principal.userId),
                 tenantId = TenantId.parse(principal.tenantId),
                 email = Email(principal.email),
                 firstName = principal.firstName,

@@ -1,7 +1,9 @@
 package ai.dokus.auth.backend.database.mappers
 
 import ai.dokus.auth.backend.database.tables.UsersTable
-import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.model.BusinessUser
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
@@ -11,7 +13,7 @@ import kotlin.uuid.toKotlinUuid
 object FinancialMappers {
 
     fun ResultRow.toBusinessUser(): BusinessUser = BusinessUser(
-        id = BusinessUserId(this[UsersTable.id].value.toKotlinUuid()),
+        id = UserId(this[UsersTable.id].value.toString()),
         tenantId = TenantId(this[UsersTable.tenantId].value.toKotlinUuid()),
         email = Email(this[UsersTable.email]),
         role = this[UsersTable.role],
