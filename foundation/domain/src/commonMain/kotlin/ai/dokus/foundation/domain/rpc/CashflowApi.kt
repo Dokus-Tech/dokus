@@ -42,7 +42,6 @@ interface CashflowApi {
      * @param toDate End date filter
      */
     suspend fun listInvoices(
-        tenantId: TenantId,
         status: InvoiceStatus? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
@@ -53,7 +52,7 @@ interface CashflowApi {
     /**
      * List all overdue invoices for a tenant
      */
-    suspend fun listOverdueInvoices(tenantId: TenantId): List<Invoice>
+    suspend fun listOverdueInvoices(): List<Invoice>
 
     /**
      * Update invoice status
@@ -120,7 +119,6 @@ interface CashflowApi {
      * List expenses with optional filtering
      */
     suspend fun listExpenses(
-        tenantId: TenantId,
         category: ExpenseCategory? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
@@ -214,7 +212,6 @@ interface CashflowApi {
      * Get cashflow overview for a date range
      */
     suspend fun getCashflowOverview(
-        tenantId: TenantId,
         fromDate: LocalDate,
         toDate: LocalDate
     ): CashflowOverview
