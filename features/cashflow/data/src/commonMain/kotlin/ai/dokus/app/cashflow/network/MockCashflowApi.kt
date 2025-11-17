@@ -13,22 +13,22 @@ import kotlinx.datetime.LocalDate
 /**
  * Mock implementation of CashflowApi for offline/fallback scenarios.
  *
- * This implementation returns NotImplementedError for all operations,
+ * This implementation throws NotImplementedError for all operations,
  * serving as a graceful degradation when the backend service is unavailable.
  */
 class MockCashflowApi : CashflowApi {
 
-    private val notImplemented: Result<Nothing> = Result.failure(
-        NotImplementedError("Cashflow service is currently unavailable. Please check your connection.")
-    )
+    private fun notImplemented(): Nothing {
+        throw NotImplementedError("Cashflow service is currently unavailable. Please check your connection.")
+    }
 
     // ============================================================================
     // INVOICE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createInvoice(request: CreateInvoiceRequest): Result<Invoice> = notImplemented
+    override suspend fun createInvoice(request: CreateInvoiceRequest): Invoice = notImplemented()
 
-    override suspend fun getInvoice(id: InvoiceId): Result<Invoice> = notImplemented
+    override suspend fun getInvoice(id: InvoiceId): Invoice = notImplemented()
 
     override suspend fun listInvoices(
         tenantId: TenantId,
@@ -37,30 +37,30 @@ class MockCashflowApi : CashflowApi {
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<List<Invoice>> = notImplemented
+    ): List<Invoice> = notImplemented()
 
-    override suspend fun listOverdueInvoices(tenantId: TenantId): Result<List<Invoice>> = notImplemented
+    override suspend fun listOverdueInvoices(tenantId: TenantId): List<Invoice> = notImplemented()
 
-    override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus): Result<Unit> = notImplemented
+    override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus) = notImplemented()
 
     override suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): Result<Invoice> = notImplemented
+    ): Invoice = notImplemented()
 
-    override suspend fun deleteInvoice(invoiceId: InvoiceId): Result<Unit> = notImplemented
+    override suspend fun deleteInvoice(invoiceId: InvoiceId) = notImplemented()
 
-    override suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit> = notImplemented
+    override suspend fun recordPayment(request: RecordPaymentRequest) = notImplemented()
 
     override suspend fun sendInvoiceEmail(
         invoiceId: InvoiceId,
         recipientEmail: String?,
         message: String?
-    ): Result<Unit> = notImplemented
+    ) = notImplemented()
 
-    override suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit> = notImplemented
+    override suspend fun markInvoiceAsSent(invoiceId: InvoiceId) = notImplemented()
 
-    override suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): Result<InvoiceTotals> = notImplemented
+    override suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): InvoiceTotals = notImplemented()
 
     override fun watchInvoices(tenantId: TenantId): Flow<Invoice> = emptyFlow()
 
@@ -68,9 +68,9 @@ class MockCashflowApi : CashflowApi {
     // EXPENSE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createExpense(request: CreateExpenseRequest): Result<Expense> = notImplemented
+    override suspend fun createExpense(request: CreateExpenseRequest): Expense = notImplemented()
 
-    override suspend fun getExpense(id: ExpenseId): Result<Expense> = notImplemented
+    override suspend fun getExpense(id: ExpenseId): Expense = notImplemented()
 
     override suspend fun listExpenses(
         tenantId: TenantId,
@@ -79,16 +79,16 @@ class MockCashflowApi : CashflowApi {
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<List<Expense>> = notImplemented
+    ): List<Expense> = notImplemented()
 
     override suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): Result<Expense> = notImplemented
+    ): Expense = notImplemented()
 
-    override suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit> = notImplemented
+    override suspend fun deleteExpense(expenseId: ExpenseId) = notImplemented()
 
-    override suspend fun categorizeExpense(merchant: String, description: String?): Result<ExpenseCategory> = notImplemented
+    override suspend fun categorizeExpense(merchant: String, description: String?): ExpenseCategory = notImplemented()
 
     override fun watchExpenses(tenantId: TenantId): Flow<Expense> = emptyFlow()
 
@@ -101,22 +101,22 @@ class MockCashflowApi : CashflowApi {
         fileContent: ByteArray,
         filename: String,
         contentType: String
-    ): Result<AttachmentId> = notImplemented
+    ): AttachmentId = notImplemented()
 
     override suspend fun uploadExpenseReceipt(
         expenseId: ExpenseId,
         fileContent: ByteArray,
         filename: String,
         contentType: String
-    ): Result<AttachmentId> = notImplemented
+    ): AttachmentId = notImplemented()
 
-    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<Attachment>> = notImplemented
+    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<Attachment> = notImplemented()
 
-    override suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<Attachment>> = notImplemented
+    override suspend fun getExpenseAttachments(expenseId: ExpenseId): List<Attachment> = notImplemented()
 
-    override suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): Result<String> = notImplemented
+    override suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): String = notImplemented()
 
-    override suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit> = notImplemented
+    override suspend fun deleteAttachment(attachmentId: AttachmentId) = notImplemented()
 
     // ============================================================================
     // STATISTICS & OVERVIEW
@@ -126,5 +126,5 @@ class MockCashflowApi : CashflowApi {
         tenantId: TenantId,
         fromDate: LocalDate,
         toDate: LocalDate
-    ): Result<CashflowOverview> = notImplemented
+    ): CashflowOverview = notImplemented()
 }

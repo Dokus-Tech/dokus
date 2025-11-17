@@ -20,13 +20,13 @@ class AuthenticatedCashflowService(
     private val delegate: CashflowApi
 ) : CashflowApi {
 
-    override suspend fun createInvoice(request: CreateInvoiceRequest): Result<Invoice> {
+    override suspend fun createInvoice(request: CreateInvoiceRequest): Invoice {
         return withAuthContext {
             delegate.createInvoice(request)
         }
     }
 
-    override suspend fun getInvoice(id: InvoiceId): Result<Invoice> {
+    override suspend fun getInvoice(id: InvoiceId): Invoice {
         return withAuthContext {
             delegate.getInvoice(id)
         }
@@ -39,38 +39,38 @@ class AuthenticatedCashflowService(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<List<Invoice>> {
+    ): List<Invoice> {
         return withAuthContext {
             delegate.listInvoices(tenantId, status, fromDate, toDate, limit, offset)
         }
     }
 
-    override suspend fun listOverdueInvoices(tenantId: TenantId): Result<List<Invoice>> {
+    override suspend fun listOverdueInvoices(tenantId: TenantId): List<Invoice> {
         return withAuthContext {
             delegate.listOverdueInvoices(tenantId)
         }
     }
 
-    override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus): Result<Unit> {
-        return withAuthContext {
+    override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus) {
+        withAuthContext {
             delegate.updateInvoiceStatus(invoiceId, status)
         }
     }
 
-    override suspend fun updateInvoice(invoiceId: InvoiceId, request: CreateInvoiceRequest): Result<Invoice> {
+    override suspend fun updateInvoice(invoiceId: InvoiceId, request: CreateInvoiceRequest): Invoice {
         return withAuthContext {
             delegate.updateInvoice(invoiceId, request)
         }
     }
 
-    override suspend fun deleteInvoice(invoiceId: InvoiceId): Result<Unit> {
-        return withAuthContext {
+    override suspend fun deleteInvoice(invoiceId: InvoiceId) {
+        withAuthContext {
             delegate.deleteInvoice(invoiceId)
         }
     }
 
-    override suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit> {
-        return withAuthContext {
+    override suspend fun recordPayment(request: RecordPaymentRequest) {
+        withAuthContext {
             delegate.recordPayment(request)
         }
     }
@@ -79,19 +79,19 @@ class AuthenticatedCashflowService(
         invoiceId: InvoiceId,
         recipientEmail: String?,
         message: String?
-    ): Result<Unit> {
-        return withAuthContext {
+    ) {
+        withAuthContext {
             delegate.sendInvoiceEmail(invoiceId, recipientEmail, message)
         }
     }
 
-    override suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit> {
-        return withAuthContext {
+    override suspend fun markInvoiceAsSent(invoiceId: InvoiceId) {
+        withAuthContext {
             delegate.markInvoiceAsSent(invoiceId)
         }
     }
 
-    override suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): Result<InvoiceTotals> {
+    override suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): InvoiceTotals {
         return withAuthContext {
             delegate.calculateInvoiceTotals(items)
         }
@@ -105,13 +105,13 @@ class AuthenticatedCashflowService(
     // EXPENSE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createExpense(request: CreateExpenseRequest): Result<Expense> {
+    override suspend fun createExpense(request: CreateExpenseRequest): Expense {
         return withAuthContext {
             delegate.createExpense(request)
         }
     }
 
-    override suspend fun getExpense(id: ExpenseId): Result<Expense> {
+    override suspend fun getExpense(id: ExpenseId): Expense {
         return withAuthContext {
             delegate.getExpense(id)
         }
@@ -124,25 +124,25 @@ class AuthenticatedCashflowService(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<List<Expense>> {
+    ): List<Expense> {
         return withAuthContext {
             delegate.listExpenses(tenantId, category, fromDate, toDate, limit, offset)
         }
     }
 
-    override suspend fun updateExpense(expenseId: ExpenseId, request: CreateExpenseRequest): Result<Expense> {
+    override suspend fun updateExpense(expenseId: ExpenseId, request: CreateExpenseRequest): Expense {
         return withAuthContext {
             delegate.updateExpense(expenseId, request)
         }
     }
 
-    override suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit> {
-        return withAuthContext {
+    override suspend fun deleteExpense(expenseId: ExpenseId) {
+        withAuthContext {
             delegate.deleteExpense(expenseId)
         }
     }
 
-    override suspend fun categorizeExpense(merchant: String, description: String?): Result<ExpenseCategory> {
+    override suspend fun categorizeExpense(merchant: String, description: String?): ExpenseCategory {
         return withAuthContext {
             delegate.categorizeExpense(merchant, description)
         }
@@ -161,7 +161,7 @@ class AuthenticatedCashflowService(
         fileContent: ByteArray,
         filename: String,
         contentType: String
-    ): Result<AttachmentId> {
+    ): AttachmentId {
         return withAuthContext {
             delegate.uploadInvoiceDocument(invoiceId, fileContent, filename, contentType)
         }
@@ -172,32 +172,32 @@ class AuthenticatedCashflowService(
         fileContent: ByteArray,
         filename: String,
         contentType: String
-    ): Result<AttachmentId> {
+    ): AttachmentId {
         return withAuthContext {
             delegate.uploadExpenseReceipt(expenseId, fileContent, filename, contentType)
         }
     }
 
-    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<Attachment>> {
+    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<Attachment> {
         return withAuthContext {
             delegate.getInvoiceAttachments(invoiceId)
         }
     }
 
-    override suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<Attachment>> {
+    override suspend fun getExpenseAttachments(expenseId: ExpenseId): List<Attachment> {
         return withAuthContext {
             delegate.getExpenseAttachments(expenseId)
         }
     }
 
-    override suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): Result<String> {
+    override suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): String {
         return withAuthContext {
             delegate.getAttachmentDownloadUrl(attachmentId)
         }
     }
 
-    override suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit> {
-        return withAuthContext {
+    override suspend fun deleteAttachment(attachmentId: AttachmentId) {
+        withAuthContext {
             delegate.deleteAttachment(attachmentId)
         }
     }
@@ -210,7 +210,7 @@ class AuthenticatedCashflowService(
         tenantId: TenantId,
         fromDate: LocalDate,
         toDate: LocalDate
-    ): Result<CashflowOverview> {
+    ): CashflowOverview {
         return withAuthContext {
             delegate.getCashflowOverview(tenantId, fromDate, toDate)
         }
