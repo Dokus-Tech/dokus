@@ -27,28 +27,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ai.dokus.foundation.domain.model.FinancialDocument
+import ai.dokus.foundation.domain.model.FinancialDocumentStatus
 
 /**
- * A card component displaying a cash flow list with invoice items and navigation controls.
+ * A card component displaying a cash flow list with financial document items and navigation controls.
  *
- * @param items List of invoice items to display
+ * @param documents List of financial documents to display
  * @param onPreviousClick Callback when the previous arrow button is clicked
  * @param onNextClick Callback when the next arrow button is clicked
  * @param modifier Optional modifier for the card
  */
 @Composable
 fun CashflowCard(
-    items: List<CashflowItemData>,
+    documents: List<FinancialDocument>,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -74,15 +76,12 @@ fun CashflowCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Invoice items list
-            items.forEachIndexed { index, item ->
-                CashflowItem(
-                    invoiceNumber = item.invoiceNumber,
-                    statusText = item.statusText
-                )
+            // Document items list
+            documents.forEachIndexed { index, document ->
+                CashflowDocumentItem(document = document)
 
                 // Add divider between items (not after the last item)
-                if (index < items.size - 1) {
+                if (index < documents.size - 1) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Spacer(
                         modifier = Modifier
@@ -148,16 +147,14 @@ fun CashflowCard(
 }
 
 /**
- * A single cash flow item row displaying an invoice number and status badge.
+ * A single cash flow document item row displaying document number and status badge.
  *
- * @param invoiceNumber The invoice number to display
- * @param statusText The status text to display in the badge
+ * @param document The financial document to display
  * @param modifier Optional modifier for the row
  */
 @Composable
-private fun CashflowItem(
-    invoiceNumber: String,
-    statusText: String,
+private fun CashflowDocumentItem(
+    document: FinancialDocument,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -167,39 +164,68 @@ private fun CashflowItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Invoice number
-        Text(
-            text = invoiceNumber,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 24.sp
-            ),
-            color = Color.Black
-        )
+        // Document number with optional icon
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Document type icon (optional)
+            Text(
+                text = document.typeIcon(),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            // Document number
+            Text(
+                text = document.documentNumber,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 24.sp
+                ),
+                color = Color.Black
+            )
+        }
 
         // Status badge
-        StatusBadge(text = statusText)
+        StatusBadge(status = document.status)
     }
 }
 
 /**
- * A badge component for displaying status text with colored background.
+ * A badge component for displaying document status with colored background.
  *
- * @param text The status text to display
+ * @param status The document status to display
  * @param modifier Optional modifier for the badge
  */
 @Composable
 private fun StatusBadge(
-    text: String,
+    status: FinancialDocumentStatus,
     modifier: Modifier = Modifier
 ) {
-    // Red light background with red text for "Need confirmation" status
-    val backgroundColor = Color(0xFFFFE5E5) // Red Light (#FFE5E5)
-    val textColor = Color(0xFFFF3131) // Red (#FF3131)
+    // Determine colors based on status
+    val (backgroundColor, textColor, statusText) = when (status) {
+        FinancialDocumentStatus.PendingApproval ->
+            Triple(Color(0xFFFFE5E5), Color(0xFFFF3131), "Need confirmation")
+
+        FinancialDocumentStatus.Approved ->
+            Triple(Color(0xFFDCFCE7), Color(0xFF22C55E), "Approved")
+
+        FinancialDocumentStatus.Rejected ->
+            Triple(Color(0xFFFFE5E5), Color(0xFFFF3131), "Rejected")
+
+        FinancialDocumentStatus.Draft ->
+            Triple(Color(0xFFF3F4F6), Color(0xFF6B7280), "Draft")
+
+        FinancialDocumentStatus.Completed ->
+            Triple(Color(0xFFDCFCE7), Color(0xFF22C55E), "Completed")
+
+        FinancialDocumentStatus.Cancelled ->
+            Triple(Color(0xFFF3F4F6), Color(0xFF6B7280), "Cancelled")
+    }
 
     Text(
-        text = text,
+        text = statusText,
         style = MaterialTheme.typography.labelSmall.copy(
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
@@ -216,12 +242,9 @@ private fun StatusBadge(
 }
 
 /**
- * Data class representing a single cash flow item.
- *
- * @property invoiceNumber The invoice number/identifier
- * @property statusText The status text to display in the badge
+ * Extension function to get the document icon/emoji representation.
  */
-data class CashflowItemData(
-    val invoiceNumber: String,
-    val statusText: String
-)
+private fun FinancialDocument.typeIcon(): String = when (this) {
+    is FinancialDocument.InvoiceDocument -> "📄"
+    is FinancialDocument.ExpenseDocument -> "🧾"
+}

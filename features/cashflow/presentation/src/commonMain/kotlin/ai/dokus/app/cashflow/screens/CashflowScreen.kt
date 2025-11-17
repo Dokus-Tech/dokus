@@ -2,8 +2,10 @@ package ai.dokus.app.cashflow.screens
 
 import ai.dokus.app.cashflow.components.CashflowCard
 import ai.dokus.app.cashflow.components.InvoiceCard
-import ai.dokus.app.cashflow.components.toCashflowItems
+import ai.dokus.app.cashflow.components.combineFinancialDocuments
+import ai.dokus.app.cashflow.components.needingConfirmation
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
+import ai.dokus.foundation.domain.model.FinancialDocumentStatus
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Box
@@ -90,15 +92,18 @@ internal fun CashflowScreen(
                         ) {
                             // Add the Cashflow Card at the top
                             item {
-                                // Convert invoices to CashflowItemData with "Need confirmation" status
-                                val cashflowItems = currentState.invoices.toCashflowItems(
-                                    limit = 4,
-                                    customStatusText = "Need confirmation"
-                                )
+                                // Combine invoices and expenses into financial documents
+                                // Show only items needing confirmation
+                                val pendingInvoices = currentState.invoices.needingConfirmation()
+                                val financialDocuments = combineFinancialDocuments(
+                                    invoices = pendingInvoices,
+                                    expenses = currentState.expenses,
+                                    limit = 4
+                                ).filter { it.status == FinancialDocumentStatus.PendingApproval }
 
-                                if (cashflowItems.isNotEmpty()) {
+                                if (financialDocuments.isNotEmpty()) {
                                     CashflowCard(
-                                        items = cashflowItems,
+                                        documents = financialDocuments,
                                         onPreviousClick = { /* TODO: Handle previous page */ },
                                         onNextClick = { /* TODO: Handle next page */ },
                                         modifier = Modifier.fillMaxWidth()
