@@ -25,10 +25,10 @@ class ExpenseRepository {
      * Create a new expense
      * CRITICAL: MUST include tenant_id for multi-tenancy security
      */
-    suspend fun createExpense(request: CreateExpenseRequest): Result<Expense> = runCatching {
+    suspend fun createExpense(tenantId: TenantId, request: CreateExpenseRequest): Result<Expense> = runCatching {
         dbQuery {
             val expenseId = ExpensesTable.insertAndGetId {
-                it[tenantId] = UUID.fromString(request.tenantId.toString())
+                it[ExpensesTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[date] = request.date
                 it[merchant] = request.merchant
                 it[amount] = java.math.BigDecimal(request.amount.value)
@@ -48,7 +48,7 @@ class ExpenseRepository {
             // Manually fetch and return the created expense
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq expenseId.value) and
-                (ExpensesTable.tenantId eq UUID.fromString(request.tenantId.toString()))
+                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
                 Expense(
                     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),

@@ -27,7 +27,7 @@ class InvoiceRepository {
      * Create a new invoice with its items
      * CRITICAL: MUST include tenant_id for multi-tenancy security
      */
-    suspend fun createInvoice(request: CreateInvoiceRequest): Result<Invoice> = runCatching {
+    suspend fun createInvoice(tenantId: TenantId, request: CreateInvoiceRequest): Result<Invoice> = runCatching {
         dbQuery {
             // Generate invoice number
             // TODO: Implement proper invoice number generation (fetch from tenant settings)
@@ -35,7 +35,7 @@ class InvoiceRepository {
 
             // Insert invoice
             val invoiceId = InvoicesTable.insertAndGetId {
-                it[tenantId] = UUID.fromString(request.tenantId.toString())
+                it[InvoicesTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[clientId] = UUID.fromString(request.clientId.toString())
                 it[InvoicesTable.invoiceNumber] = invoiceNumber
                 val today = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
@@ -66,7 +66,7 @@ class InvoiceRepository {
             // Manually fetch and return the complete invoice
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq invoiceId.value) and
-                (InvoicesTable.tenantId eq UUID.fromString(request.tenantId.toString()))
+                (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single()
 
             val items = InvoiceItemsTable.selectAll().where {

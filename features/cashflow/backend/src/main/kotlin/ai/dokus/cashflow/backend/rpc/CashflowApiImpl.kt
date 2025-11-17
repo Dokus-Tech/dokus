@@ -36,8 +36,9 @@ class CashflowApiImpl(
     // ============================================================================
 
     override suspend fun createInvoice(request: CreateInvoiceRequest): Invoice {
-        logger.info("createInvoice called for tenant: ${request.tenantId}")
-        return invoiceRepository.createInvoice(request)
+        val tenantId = requireAuthenticatedTenantId()
+        logger.info("createInvoice called for tenant: $tenantId")
+        return invoiceRepository.createInvoice(tenantId, request)
             .onSuccess { logger.info("Invoice created with id: ${it.id}") }
             .onFailure { logger.error("Failed to create invoice", it) }
             .getOrThrow()
@@ -87,8 +88,9 @@ class CashflowApiImpl(
     }
 
     override suspend fun updateInvoice(invoiceId: InvoiceId, request: CreateInvoiceRequest): Invoice {
+        val tenantId = requireAuthenticatedTenantId()
         logger.info("updateInvoice called for invoice: $invoiceId")
-        return invoiceRepository.updateInvoice(invoiceId, request.tenantId, request)
+        return invoiceRepository.updateInvoice(invoiceId, tenantId, request)
             .onSuccess { logger.info("Invoice updated: $invoiceId") }
             .onFailure { logger.error("Failed to update invoice: $invoiceId", it) }
             .getOrThrow()
@@ -146,8 +148,9 @@ class CashflowApiImpl(
     // ============================================================================
 
     override suspend fun createExpense(request: CreateExpenseRequest): Expense {
-        logger.info("createExpense called for tenant: ${request.tenantId}")
-        return expenseRepository.createExpense(request)
+        val tenantId = requireAuthenticatedTenantId()
+        logger.info("createExpense called for tenant: $tenantId")
+        return expenseRepository.createExpense(tenantId, request)
             .onSuccess { logger.info("Expense created with id: ${it.id}") }
             .onFailure { logger.error("Failed to create expense", it) }
             .getOrThrow()
@@ -179,8 +182,9 @@ class CashflowApiImpl(
     }
 
     override suspend fun updateExpense(expenseId: ExpenseId, request: CreateExpenseRequest): Expense {
+        val tenantId = requireAuthenticatedTenantId()
         logger.info("updateExpense called for expense: $expenseId")
-        return expenseRepository.updateExpense(expenseId, request.tenantId, request)
+        return expenseRepository.updateExpense(expenseId, tenantId, request)
             .onSuccess { logger.info("Expense updated: $expenseId") }
             .onFailure { logger.error("Failed to update expense: $expenseId", it) }
             .getOrThrow()
