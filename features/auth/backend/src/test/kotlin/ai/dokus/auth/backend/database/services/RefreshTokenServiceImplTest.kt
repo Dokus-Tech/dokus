@@ -8,6 +8,7 @@ import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.UserRole
+import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
@@ -69,7 +70,7 @@ class RefreshTokenServiceImplTest {
     /**
      * Creates a test configuration for in-memory H2 database
      */
-    private fun createTestAppConfig(): ai.dokus.foundation.ktor.AppBaseConfig {
+    private fun createTestAppConfig(): AppBaseConfig {
         val config = com.typesafe.config.ConfigFactory.parseString(
             """
             ktor {
@@ -166,9 +167,16 @@ class RefreshTokenServiceImplTest {
                     }
                 }
             }
+            rabbitmq {
+                host = "localhost"
+                port = 5672
+                username = "guest"
+                password = "guest"
+                virtualHost = "/"
+            }
             """.trimIndent()
         )
-        return ai.dokus.foundation.ktor.AppBaseConfig.fromConfig(config)
+        return AppBaseConfig.fromConfig(config)
     }
 
     @AfterAll
