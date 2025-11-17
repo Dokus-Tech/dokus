@@ -3,7 +3,6 @@
 package ai.dokus.auth.backend.services
 
 import ai.dokus.auth.backend.database.services.RefreshTokenService
-import ai.dokus.foundation.domain.BusinessUserId
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.BusinessUser
@@ -84,7 +83,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should successfully deactivate active user`() = runBlocking {
         // Given: An active user exists
-        val businessUserId = BusinessUserId(testUserId.uuid)
+        val businessUserId = testUserId
         val activeUser = mockk<BusinessUser> {
             every { isActive } returns true
             every { id } returns businessUserId
@@ -139,7 +138,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should fail when user already inactive`() = runBlocking {
         // Given: User exists but is already inactive
-        val businessUserId = BusinessUserId(testUserId.uuid)
+        val businessUserId = testUserId
         val inactiveUser = mockk<BusinessUser> {
             every { isActive } returns false
             every { id } returns businessUserId
@@ -170,7 +169,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should succeed even if token revocation fails`() = runBlocking {
         // Given: User exists and is active
-        val businessUserId = BusinessUserId(testUserId.uuid)
+        val businessUserId = testUserId
         val activeUser = mockk<BusinessUser> {
             every { isActive } returns true
             every { id } returns businessUserId
@@ -197,7 +196,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should propagate reason to user service`() = runBlocking {
         // Given: User exists and is active
-        val businessUserId = BusinessUserId(testUserId.uuid)
+        val businessUserId = testUserId
         val activeUser = mockk<BusinessUser> {
             every { isActive } returns true
             every { id } returns businessUserId
@@ -223,7 +222,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should handle database errors gracefully`() = runBlocking {
         // Given: User exists and is active
-        val businessUserId = BusinessUserId(testUserId.uuid)
+        val businessUserId = testUserId
         val activeUser = mockk<BusinessUser> {
             every { isActive } returns true
             every { id } returns businessUserId
@@ -253,7 +252,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should revoke all tokens after successful deactivation`() = runBlocking {
         // Given: User exists and is active
-        val businessUserId = BusinessUserId(testUserId.uuid)
+        val businessUserId = testUserId
         val activeUser = mockk<BusinessUser> {
             every { isActive } returns true
             every { id } returns businessUserId
@@ -279,7 +278,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should work with empty reason string`() = runBlocking {
         // Given: User exists and is active
-        val businessUserId = BusinessUserId(testUserId.uuid)
+        val businessUserId = testUserId
         val activeUser = mockk<BusinessUser> {
             every { isActive } returns true
             every { id } returns businessUserId
