@@ -7,8 +7,9 @@ import ai.dokus.auth.backend.database.services.TenantServiceImpl
 import ai.dokus.auth.backend.database.services.UserServiceImpl
 import ai.dokus.auth.backend.database.tables.*
 import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
-import ai.dokus.auth.backend.security.JwtGenerator
-import ai.dokus.auth.backend.security.JwtValidator
+import ai.dokus.auth.backend.rpc.AuthValidationRemoteServiceImpl
+import ai.dokus.foundation.ktor.security.JwtGenerator
+import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.auth.backend.services.*
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
@@ -94,6 +95,7 @@ private val appModule = module {
 
     // RPC API implementations
     single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }
+    single<AuthValidationRemoteService> { AuthValidationRemoteServiceImpl(get(), get()) }
     single<TenantApi> { TenantApiImpl(get()) }
     single<ClientApi> { ClientApiImpl(get()) }
 }

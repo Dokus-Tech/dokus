@@ -1,8 +1,15 @@
 package ai.dokus.reporting.backend.services
 
-import ai.dokus.foundation.domain.rpc.*
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.rpc.CashFlowReport
+import ai.dokus.foundation.domain.rpc.DateRange
+import ai.dokus.foundation.domain.rpc.ExpenseAnalytics
+import ai.dokus.foundation.domain.rpc.FinancialSummary
+import ai.dokus.foundation.domain.rpc.InvoiceAnalytics
+import ai.dokus.foundation.domain.rpc.MonthlyCashFlow
+import ai.dokus.foundation.domain.rpc.ReportingApi
+import ai.dokus.foundation.domain.rpc.VatReport
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.ExpenseService
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
@@ -17,10 +24,10 @@ class ReportingApiImpl(
 ) : ReportingApi {
 
     override suspend fun getFinancialSummary(
-        tenantId: TenantId,
         startDate: LocalDate?,
         endDate: LocalDate?
-    ): Result<FinancialSummary> = runCatching {
+    ): FinancialSummary {
+        val tenantId = requireAuthenticatedTenantId()
         val invoices = invoiceService.listByTenant(
             tenantId = tenantId,
             status = null,
@@ -62,7 +69,7 @@ class ReportingApiImpl(
                 }.toString()
         )
 
-        FinancialSummary(
+        return FinancialSummary(
             tenantId = tenantId.value.toString(),
             period = DateRange(startDate, endDate),
             totalRevenue = totalRevenue,
@@ -78,10 +85,10 @@ class ReportingApiImpl(
     }
 
     override suspend fun getInvoiceAnalytics(
-        tenantId: TenantId,
         startDate: LocalDate?,
         endDate: LocalDate?
-    ): Result<InvoiceAnalytics> = runCatching {
+    ): InvoiceAnalytics {
+        val tenantId = requireAuthenticatedTenantId()
         val invoices = invoiceService.listByTenant(
             tenantId = tenantId,
             status = null,
@@ -120,7 +127,7 @@ class ReportingApiImpl(
             Money.ZERO
         }
 
-        InvoiceAnalytics(
+        return InvoiceAnalytics(
             totalInvoices = invoices.size,
             totalAmount = totalAmount,
             paidAmount = paidAmount,
@@ -132,10 +139,10 @@ class ReportingApiImpl(
     }
 
     override suspend fun getExpenseAnalytics(
-        tenantId: TenantId,
         startDate: LocalDate?,
         endDate: LocalDate?
-    ): Result<ExpenseAnalytics> = runCatching {
+    ): ExpenseAnalytics {
+        val tenantId = requireAuthenticatedTenantId()
         val expenses = expenseService.listByTenant(
             tenantId = tenantId,
             category = null,
@@ -169,7 +176,7 @@ class ReportingApiImpl(
                 .toString()
         )
 
-        ExpenseAnalytics(
+        return ExpenseAnalytics(
             totalExpenses = expenses.size,
             totalAmount = totalAmount,
             categoryBreakdown = categoryBreakdown,
@@ -179,10 +186,10 @@ class ReportingApiImpl(
     }
 
     override suspend fun getCashFlow(
-        tenantId: TenantId,
         startDate: LocalDate?,
         endDate: LocalDate?
-    ): Result<CashFlowReport> = runCatching {
+    ): CashFlowReport {
+        val tenantId = requireAuthenticatedTenantId()
         val payments = paymentService.listByTenant(
             tenantId = tenantId,
             fromDate = startDate,
@@ -212,7 +219,7 @@ class ReportingApiImpl(
         // Group by month and calculate monthly cash flow
         val monthlyData = buildMonthlyData(payments, expenses)
 
-        CashFlowReport(
+        return CashFlowReport(
             period = DateRange(startDate, endDate),
             totalInflow = totalInflow,
             totalOutflow = totalOutflow,
@@ -224,10 +231,10 @@ class ReportingApiImpl(
     }
 
     override suspend fun getVatReport(
-        tenantId: TenantId,
         startDate: LocalDate?,
         endDate: LocalDate?
-    ): Result<VatReport> = runCatching {
+    ): VatReport {
+        val tenantId = requireAuthenticatedTenantId()
         val invoices = invoiceService.listByTenant(
             tenantId = tenantId,
             status = null,
@@ -254,7 +261,7 @@ class ReportingApiImpl(
             expenses.sumOf { java.math.BigDecimal(it.vatAmount?.value ?: "0") }.toString()
         )
 
-        VatReport(
+        return VatReport(
             period = DateRange(startDate, endDate),
             vatCollected = vatCollected,
             vatPaid = vatPaid,

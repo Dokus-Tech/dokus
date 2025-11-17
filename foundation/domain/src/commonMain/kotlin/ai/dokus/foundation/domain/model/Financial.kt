@@ -1,7 +1,43 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.*
-import ai.dokus.foundation.domain.enums.*
+import ai.dokus.foundation.domain.AttachmentId
+import ai.dokus.foundation.domain.AuditLogId
+import ai.dokus.foundation.domain.BankConnectionId
+import ai.dokus.foundation.domain.BankTransactionId
+import ai.dokus.foundation.domain.Bic
+import ai.dokus.foundation.domain.BusinessUserId
+import ai.dokus.foundation.domain.ClientId
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.ExpenseId
+import ai.dokus.foundation.domain.Iban
+import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.InvoiceItemId
+import ai.dokus.foundation.domain.InvoiceNumber
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.PaymentId
+import ai.dokus.foundation.domain.PeppolId
+import ai.dokus.foundation.domain.Percentage
+import ai.dokus.foundation.domain.Quantity
+import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.TransactionId
+import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.VatNumber
+import ai.dokus.foundation.domain.VatRate
+import ai.dokus.foundation.domain.VatReturnId
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.BankAccountType
+import ai.dokus.foundation.domain.enums.BankProvider
+import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.domain.enums.EntityType
+import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.PaymentMethod
+import ai.dokus.foundation.domain.enums.PeppolStatus
+import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.TenantStatus
+import ai.dokus.foundation.domain.enums.UserRole
+import ai.dokus.foundation.domain.enums.VatReturnStatus
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -50,7 +86,7 @@ data class TenantSettings(
 
 @Serializable
 data class BusinessUser(
-    val id: BusinessUserId,
+    val id: UserId,
     val tenantId: TenantId,
     val email: Email,
     val role: UserRole,
@@ -275,7 +311,6 @@ data class Attachment(
 
 @Serializable
 data class CreateInvoiceRequest(
-    val tenantId: TenantId,
     val clientId: ClientId,
     val items: List<InvoiceItem>,
     val issueDate: LocalDate? = null,
@@ -301,7 +336,6 @@ data class RecordPaymentRequest(
 
 @Serializable
 data class CreateExpenseRequest(
-    val tenantId: TenantId,
     val date: LocalDate,
     val merchant: String,
     val amount: Money,

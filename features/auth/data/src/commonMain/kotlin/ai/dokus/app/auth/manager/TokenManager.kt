@@ -130,7 +130,7 @@ class TokenManagerImpl(
     /**
      * Gets the current user's JWT claims.
      */
-    suspend fun getCurrentClaims(): JwtClaims? {
+    override suspend fun getCurrentClaims(): JwtClaims? {
         val token = tokenStorage.getAccessToken() ?: return null
         return jwtDecoder.decode(token)
     }

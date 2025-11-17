@@ -28,12 +28,12 @@ interface CashflowApi {
     /**
      * Create a new invoice with optional document attachments
      */
-    suspend fun createInvoice(request: CreateInvoiceRequest): Result<Invoice>
+    suspend fun createInvoice(request: CreateInvoiceRequest): Invoice
 
     /**
      * Get a single invoice by ID with all related documents
      */
-    suspend fun getInvoice(id: InvoiceId): Result<Invoice>
+    suspend fun getInvoice(id: InvoiceId): Invoice
 
     /**
      * List invoices with optional filtering
@@ -42,23 +42,22 @@ interface CashflowApi {
      * @param toDate End date filter
      */
     suspend fun listInvoices(
-        tenantId: TenantId,
         status: InvoiceStatus? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<Invoice>>
+    ): List<Invoice>
 
     /**
      * List all overdue invoices for a tenant
      */
-    suspend fun listOverdueInvoices(tenantId: TenantId): Result<List<Invoice>>
+    suspend fun listOverdueInvoices(): List<Invoice>
 
     /**
      * Update invoice status
      */
-    suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus): Result<Unit>
+    suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus)
 
     /**
      * Update an existing invoice
@@ -66,17 +65,17 @@ interface CashflowApi {
     suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): Result<Invoice>
+    ): Invoice
 
     /**
      * Delete an invoice (soft delete)
      */
-    suspend fun deleteInvoice(invoiceId: InvoiceId): Result<Unit>
+    suspend fun deleteInvoice(invoiceId: InvoiceId)
 
     /**
      * Record a payment for an invoice
      */
-    suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit>
+    suspend fun recordPayment(request: RecordPaymentRequest)
 
     /**
      * Send invoice via email
@@ -85,17 +84,17 @@ interface CashflowApi {
         invoiceId: InvoiceId,
         recipientEmail: String? = null,
         message: String? = null
-    ): Result<Unit>
+    )
 
     /**
      * Mark invoice as sent
      */
-    suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit>
+    suspend fun markInvoiceAsSent(invoiceId: InvoiceId)
 
     /**
      * Calculate invoice totals from line items
      */
-    suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): Result<InvoiceTotals>
+    suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): InvoiceTotals
 
     /**
      * Watch for real-time invoice updates
@@ -109,24 +108,23 @@ interface CashflowApi {
     /**
      * Create a new expense
      */
-    suspend fun createExpense(request: CreateExpenseRequest): Result<Expense>
+    suspend fun createExpense(request: CreateExpenseRequest): Expense
 
     /**
      * Get a single expense by ID
      */
-    suspend fun getExpense(id: ExpenseId): Result<Expense>
+    suspend fun getExpense(id: ExpenseId): Expense
 
     /**
      * List expenses with optional filtering
      */
     suspend fun listExpenses(
-        tenantId: TenantId,
         category: ExpenseCategory? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<Expense>>
+    ): List<Expense>
 
     /**
      * Update an existing expense
@@ -134,17 +132,17 @@ interface CashflowApi {
     suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): Result<Expense>
+    ): Expense
 
     /**
      * Delete an expense
      */
-    suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit>
+    suspend fun deleteExpense(expenseId: ExpenseId)
 
     /**
      * Automatically categorize an expense based on merchant and description
      */
-    suspend fun categorizeExpense(merchant: String, description: String? = null): Result<ExpenseCategory>
+    suspend fun categorizeExpense(merchant: String, description: String? = null): ExpenseCategory
 
     /**
      * Watch for real-time expense updates
@@ -168,7 +166,7 @@ interface CashflowApi {
         fileContent: ByteArray,
         filename: String,
         contentType: String
-    ): Result<AttachmentId>
+    ): AttachmentId
 
     /**
      * Upload a receipt for an expense
@@ -183,28 +181,28 @@ interface CashflowApi {
         fileContent: ByteArray,
         filename: String,
         contentType: String
-    ): Result<AttachmentId>
+    ): AttachmentId
 
     /**
      * Get all attachments for an invoice
      */
-    suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<Attachment>>
+    suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<Attachment>
 
     /**
      * Get all attachments for an expense
      */
-    suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<Attachment>>
+    suspend fun getExpenseAttachments(expenseId: ExpenseId): List<Attachment>
 
     /**
      * Get a download URL for a specific attachment
      * Returns a presigned URL valid for a limited time
      */
-    suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): Result<String>
+    suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): String
 
     /**
      * Delete an attachment
      */
-    suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit>
+    suspend fun deleteAttachment(attachmentId: AttachmentId)
 
     // ============================================================================
     // STATISTICS & OVERVIEW
@@ -214,10 +212,9 @@ interface CashflowApi {
      * Get cashflow overview for a date range
      */
     suspend fun getCashflowOverview(
-        tenantId: TenantId,
         fromDate: LocalDate,
         toDate: LocalDate
-    ): Result<CashflowOverview>
+    ): CashflowOverview
 }
 
 /**

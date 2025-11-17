@@ -38,6 +38,9 @@ fun HttpClientConfig<*>.withDokusEndpoint(endpoint: DokusEndpoint) {
 fun HttpClientConfig<*>.withResponseValidation(onUnauthorized: suspend () -> Unit = {}) {
     HttpResponseValidator {
         validateResponse { response: HttpResponse ->
+            // Skip validation for WebSocket upgrade responses (101 Switching Protocols)
+            if (response.status == HttpStatusCode.SwitchingProtocols) return@validateResponse
+
             if (response.status.isSuccess()) return@validateResponse
             runCatching { response.body<DokusException>() }.fold(
                 onSuccess = { throw it },

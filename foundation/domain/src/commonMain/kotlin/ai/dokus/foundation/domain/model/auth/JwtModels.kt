@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class JwtClaims(
     val userId: String,
+    val tenantId: String,
     val matricule: String? = null,
     val email: String,
     val fullName: String,

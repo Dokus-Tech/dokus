@@ -21,35 +21,33 @@ interface PaymentApi {
      * Record a new payment against an invoice
      * Automatically updates invoice status (PartiallyPaid, Paid)
      */
-    suspend fun recordPayment(request: RecordPaymentRequest): Result<Payment>
+    suspend fun recordPayment(request: RecordPaymentRequest): Payment
 
     /**
      * Get a payment by ID
      * Enforces tenant isolation
      */
-    suspend fun getPayment(id: PaymentId, tenantId: TenantId): Result<Payment>
+    suspend fun getPayment(id: PaymentId): Payment
 
     /**
      * List all payments for a tenant
      * Supports date range and payment method filtering
      */
     suspend fun listPayments(
-        tenantId: TenantId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         paymentMethod: PaymentMethod? = null,
         limit: Int = 100,
         offset: Int = 0
-    ): Result<List<Payment>>
+    ): List<Payment>
 
     /**
      * Get all payments for a specific invoice
      * Used to display payment history
      */
     suspend fun getPaymentsByInvoice(
-        invoiceId: InvoiceId,
-        tenantId: TenantId
-    ): Result<List<Payment>>
+        invoiceId: InvoiceId
+    ): List<Payment>
 
     /**
      * Update an existing payment
@@ -57,38 +55,35 @@ interface PaymentApi {
      */
     suspend fun updatePayment(
         id: PaymentId,
-        tenantId: TenantId,
         amount: Money? = null,
         paymentDate: LocalDate? = null,
         paymentMethod: PaymentMethod? = null,
         transactionId: TransactionId? = null,
         notes: String? = null
-    ): Result<Payment>
+    ): Payment
 
     /**
      * Delete a payment
      * Will recalculate invoice payment status
      */
-    suspend fun deletePayment(id: PaymentId, tenantId: TenantId): Result<Unit>
+    suspend fun deletePayment(id: PaymentId)
 
     /**
      * Find payment by transaction ID
      * Used for webhook reconciliation from payment providers (Stripe, Mollie)
      */
     suspend fun findByTransactionId(
-        transactionId: TransactionId,
-        tenantId: TenantId
-    ): Result<Payment?>
+        transactionId: TransactionId
+    ): Payment?
 
     /**
      * Get payment statistics for dashboard
      * Returns total revenue, payment counts, etc.
      */
     suspend fun getPaymentStats(
-        tenantId: TenantId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null
-    ): Result<PaymentStats>
+    ): PaymentStats
 
     /**
      * Watch for payment changes in real-time

@@ -19,13 +19,13 @@ interface TenantApi {
         country: String = "BE",
         language: Language = Language.En,
         vatNumber: VatNumber? = null
-    ): Result<Tenant>
+    ): Tenant
 
-    suspend fun getTenant(id: TenantId): Result<Tenant>
+    suspend fun getTenant(id: TenantId): Tenant
 
-    suspend fun getTenantSettings(tenantId: TenantId): Result<TenantSettings>
+    suspend fun getTenantSettings(): TenantSettings
 
-    suspend fun updateTenantSettings(settings: TenantSettings): Result<Unit>
+    suspend fun updateTenantSettings(settings: TenantSettings)
 
-    suspend fun getNextInvoiceNumber(tenantId: TenantId): Result<InvoiceNumber>
+    suspend fun getNextInvoiceNumber(): InvoiceNumber
 }

@@ -1,7 +1,7 @@
 package ai.dokus.auth.backend.rpc
 
 import ai.dokus.app.auth.domain.AccountRemoteService
-import ai.dokus.auth.backend.security.requireAuthenticatedUserId
+import ai.dokus.foundation.ktor.security.requireAuthenticatedUserId
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest

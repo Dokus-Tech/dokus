@@ -7,6 +7,7 @@ import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.coroutines.flow.Flow
@@ -17,13 +18,13 @@ class PaymentApiImpl(
     private val invoiceService: InvoiceService
 ) : PaymentApi {
 
-    override suspend fun recordPayment(request: RecordPaymentRequest): Result<Payment> = runCatching {
+    override suspend fun recordPayment(request: RecordPaymentRequest): Payment {
         // Get invoice to extract tenantId for proper tenant isolation
         val invoice = invoiceService.findById(request.invoiceId)
             ?: throw IllegalArgumentException("Invoice not found: ${request.invoiceId}")
 
         // Record payment with all details from the request
-        paymentService.recordPayment(
+        return paymentService.recordPayment(
             tenantId = invoice.tenantId,
             invoiceId = request.invoiceId,
             amount = request.amount,
@@ -34,7 +35,8 @@ class PaymentApiImpl(
         )
     }
 
-    override suspend fun getPayment(id: PaymentId, tenantId: TenantId): Result<Payment> = runCatching {
+    override suspend fun getPayment(id: PaymentId): Payment {
+        val tenantId = requireAuthenticatedTenantId()
         val payment = paymentService.findById(id)
             ?: throw IllegalArgumentException("Payment not found: $id")
 
@@ -43,18 +45,18 @@ class PaymentApiImpl(
             throw IllegalArgumentException("Payment does not belong to tenant: $tenantId")
         }
 
-        payment
+        return payment
     }
 
     override suspend fun listPayments(
-        tenantId: TenantId,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         paymentMethod: PaymentMethod?,
         limit: Int,
         offset: Int
-    ): Result<List<Payment>> = runCatching {
-        paymentService.listByTenant(
+    ): List<Payment> {
+        val tenantId = requireAuthenticatedTenantId()
+        return paymentService.listByTenant(
             tenantId = tenantId,
             fromDate = fromDate,
             toDate = toDate,
@@ -64,10 +66,8 @@ class PaymentApiImpl(
         )
     }
 
-    override suspend fun getPaymentsByInvoice(
-        invoiceId: InvoiceId,
-        tenantId: TenantId
-    ): Result<List<Payment>> = runCatching {
+    override suspend fun getPaymentsByInvoice(invoiceId: InvoiceId): List<Payment> {
+        val tenantId = requireAuthenticatedTenantId()
         val payments = paymentService.listByInvoice(invoiceId)
 
         // Verify tenant isolation
@@ -77,18 +77,18 @@ class PaymentApiImpl(
             }
         }
 
-        payments
+        return payments
     }
 
     override suspend fun updatePayment(
         id: PaymentId,
-        tenantId: TenantId,
         amount: Money?,
         paymentDate: LocalDate?,
         paymentMethod: PaymentMethod?,
         transactionId: TransactionId?,
         notes: String?
-    ): Result<Payment> = runCatching {
+    ): Payment {
+        val tenantId = requireAuthenticatedTenantId()
         // Verify payment exists and belongs to tenant
         val existingPayment = paymentService.findById(id)
             ?: throw IllegalArgumentException("Payment not found: $id")
@@ -107,11 +107,12 @@ class PaymentApiImpl(
         // to maintain audit trail integrity. Delete and recreate if needed.
 
         // Return updated payment
-        paymentService.findById(id)
+        return paymentService.findById(id)
             ?: throw IllegalStateException("Payment disappeared after update: $id")
     }
 
-    override suspend fun deletePayment(id: PaymentId, tenantId: TenantId): Result<Unit> = runCatching {
+    override suspend fun deletePayment(id: PaymentId) {
+        val tenantId = requireAuthenticatedTenantId()
         // Verify payment exists and belongs to tenant
         val payment = paymentService.findById(id)
             ?: throw IllegalArgumentException("Payment not found: $id")
@@ -123,10 +124,8 @@ class PaymentApiImpl(
         paymentService.delete(id)
     }
 
-    override suspend fun findByTransactionId(
-        transactionId: TransactionId,
-        tenantId: TenantId
-    ): Result<Payment?> = runCatching {
+    override suspend fun findByTransactionId(transactionId: TransactionId): Payment? {
+        val tenantId = requireAuthenticatedTenantId()
         // PaymentService doesn't provide findByTransactionId directly
         // Search through payments by listing all tenant payments and filtering
         val allPayments = paymentService.listByTenant(
@@ -138,14 +137,14 @@ class PaymentApiImpl(
             offset = null
         )
 
-        allPayments.firstOrNull { it.transactionId?.value == transactionId.value }
+        return allPayments.firstOrNull { it.transactionId?.value == transactionId.value }
     }
 
     override suspend fun getPaymentStats(
-        tenantId: TenantId,
         fromDate: LocalDate?,
         toDate: LocalDate?
-    ): Result<PaymentStats> = runCatching {
+    ): PaymentStats {
+        val tenantId = requireAuthenticatedTenantId()
         val payments = paymentService.listByTenant(
             tenantId = tenantId,
             fromDate = fromDate,
@@ -171,7 +170,7 @@ class PaymentApiImpl(
             .groupBy { it.paymentMethod.name }
             .mapValues { it.value.size.toLong() }
 
-        PaymentStats(
+        return PaymentStats(
             totalPayments = totalPayments,
             totalRevenue = totalRevenue,
             averagePaymentAmount = averagePaymentAmount,
