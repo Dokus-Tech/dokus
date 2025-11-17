@@ -31,7 +31,6 @@ class MockCashflowApi : CashflowApi {
     override suspend fun getInvoice(id: InvoiceId): Invoice = notImplemented()
 
     override suspend fun listInvoices(
-        tenantId: TenantId,
         status: InvoiceStatus?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
@@ -39,7 +38,7 @@ class MockCashflowApi : CashflowApi {
         offset: Int
     ): List<Invoice> = notImplemented()
 
-    override suspend fun listOverdueInvoices(tenantId: TenantId): List<Invoice> = notImplemented()
+    override suspend fun listOverdueInvoices(): List<Invoice> = notImplemented()
 
     override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus) = notImplemented()
 
@@ -73,7 +72,6 @@ class MockCashflowApi : CashflowApi {
     override suspend fun getExpense(id: ExpenseId): Expense = notImplemented()
 
     override suspend fun listExpenses(
-        tenantId: TenantId,
         category: ExpenseCategory?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
@@ -123,7 +121,6 @@ class MockCashflowApi : CashflowApi {
     // ============================================================================
 
     override suspend fun getCashflowOverview(
-        tenantId: TenantId,
         fromDate: LocalDate,
         toDate: LocalDate
     ): CashflowOverview = notImplemented()

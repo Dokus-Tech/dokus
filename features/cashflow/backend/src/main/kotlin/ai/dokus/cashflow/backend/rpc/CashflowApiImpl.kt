@@ -54,22 +54,23 @@ class CashflowApiImpl(
     }
 
     override suspend fun listInvoices(
-        tenantId: TenantId,
         status: InvoiceStatus?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         limit: Int,
         offset: Int
     ): List<Invoice> {
-        logger.info("listInvoices called for tenant: $tenantId")
+        logger.info("listInvoices called")
+        val tenantId = requireAuthenticatedTenantId()
         return invoiceRepository.listInvoices(tenantId, status, fromDate, toDate, limit, offset)
             .onSuccess { logger.info("Listed ${it.size} invoices for tenant: $tenantId") }
             .onFailure { logger.error("Failed to list invoices for tenant: $tenantId", it) }
             .getOrThrow()
     }
 
-    override suspend fun listOverdueInvoices(tenantId: TenantId): List<Invoice> {
-        logger.info("listOverdueInvoices called for tenant: $tenantId")
+    override suspend fun listOverdueInvoices(): List<Invoice> {
+        logger.info("listOverdueInvoices called")
+        val tenantId = requireAuthenticatedTenantId()
         return invoiceRepository.listOverdueInvoices(tenantId)
             .onSuccess { logger.info("Found ${it.size} overdue invoices for tenant: $tenantId") }
             .onFailure { logger.error("Failed to list overdue invoices for tenant: $tenantId", it) }
@@ -163,14 +164,14 @@ class CashflowApiImpl(
     }
 
     override suspend fun listExpenses(
-        tenantId: TenantId,
         category: ExpenseCategory?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         limit: Int,
         offset: Int
     ): List<Expense> {
-        logger.info("listExpenses called for tenant: $tenantId")
+        logger.info("listExpenses called")
+        val tenantId = requireAuthenticatedTenantId()
         return expenseRepository.listExpenses(tenantId, category, fromDate, toDate, limit, offset)
             .onSuccess { logger.info("Listed ${it.size} expenses for tenant: $tenantId") }
             .onFailure { logger.error("Failed to list expenses for tenant: $tenantId", it) }
@@ -377,11 +378,11 @@ class CashflowApiImpl(
     // ============================================================================
 
     override suspend fun getCashflowOverview(
-        tenantId: TenantId,
         fromDate: LocalDate,
         toDate: LocalDate
     ): CashflowOverview {
-        logger.info("getCashflowOverview called for tenant: $tenantId")
+        logger.info("getCashflowOverview called")
+        val tenantId = requireAuthenticatedTenantId()
         // TODO: Implement overview calculation
         return CashflowOverview(
             totalIncome = Money.ZERO,

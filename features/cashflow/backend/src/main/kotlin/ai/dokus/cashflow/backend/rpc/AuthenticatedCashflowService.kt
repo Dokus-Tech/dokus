@@ -33,7 +33,6 @@ class AuthenticatedCashflowService(
     }
 
     override suspend fun listInvoices(
-        tenantId: TenantId,
         status: InvoiceStatus?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
@@ -41,13 +40,13 @@ class AuthenticatedCashflowService(
         offset: Int
     ): List<Invoice> {
         return withAuthContext {
-            delegate.listInvoices(tenantId, status, fromDate, toDate, limit, offset)
+            delegate.listInvoices(status, fromDate, toDate, limit, offset)
         }
     }
 
-    override suspend fun listOverdueInvoices(tenantId: TenantId): List<Invoice> {
+    override suspend fun listOverdueInvoices(): List<Invoice> {
         return withAuthContext {
-            delegate.listOverdueInvoices(tenantId)
+            delegate.listOverdueInvoices()
         }
     }
 
@@ -118,7 +117,6 @@ class AuthenticatedCashflowService(
     }
 
     override suspend fun listExpenses(
-        tenantId: TenantId,
         category: ExpenseCategory?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
@@ -126,7 +124,7 @@ class AuthenticatedCashflowService(
         offset: Int
     ): List<Expense> {
         return withAuthContext {
-            delegate.listExpenses(tenantId, category, fromDate, toDate, limit, offset)
+            delegate.listExpenses(category, fromDate, toDate, limit, offset)
         }
     }
 
@@ -207,12 +205,11 @@ class AuthenticatedCashflowService(
     // ============================================================================
 
     override suspend fun getCashflowOverview(
-        tenantId: TenantId,
         fromDate: LocalDate,
         toDate: LocalDate
     ): CashflowOverview {
         return withAuthContext {
-            delegate.getCashflowOverview(tenantId, fromDate, toDate)
+            delegate.getCashflowOverview(fromDate, toDate)
         }
     }
 

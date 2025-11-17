@@ -1,7 +1,6 @@
 package ai.dokus.foundation.domain.rpc
 
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
 import kotlinx.serialization.Serializable
@@ -14,50 +13,45 @@ interface ReportingApi {
      * Aggregates invoice, expense, and payment data
      */
     suspend fun getFinancialSummary(
-        tenantId: TenantId,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
-    ): Result<FinancialSummary>
+    ): FinancialSummary
 
     /**
      * Get invoice analytics for dashboard
      * Shows invoice trends, status breakdown, etc.
      */
     suspend fun getInvoiceAnalytics(
-        tenantId: TenantId,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
-    ): Result<InvoiceAnalytics>
+    ): InvoiceAnalytics
 
     /**
      * Get expense analytics
      * Shows spending by category, trends, etc.
      */
     suspend fun getExpenseAnalytics(
-        tenantId: TenantId,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
-    ): Result<ExpenseAnalytics>
+    ): ExpenseAnalytics
 
     /**
      * Get cash flow report
      * Shows money in vs money out over time
      */
     suspend fun getCashFlow(
-        tenantId: TenantId,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
-    ): Result<CashFlowReport>
+    ): CashFlowReport
 
     /**
      * Get VAT report for tax filing
      * Calculates VAT collected and VAT paid
      */
     suspend fun getVatReport(
-        tenantId: TenantId,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
-    ): Result<VatReport>
+    ): VatReport
 }
 
 @Serializable
