@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ktor.middleware
 
-import ai.dokus.foundation.ktor.auth.RequestAuthHolder
 import ai.dokus.foundation.ktor.security.JwtValidator
+import ai.dokus.foundation.ktor.security.RequestAuthHolder
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.request.header
 import io.ktor.util.AttributeKey
