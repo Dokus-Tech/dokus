@@ -46,40 +46,23 @@ internal class CashflowViewModel : BaseViewModel<CashflowViewModel.State>(State.
 
             val tenantId = TenantId(Uuid.parse(tenantIdString))
 
-            // Load invoices and expenses in parallel
-            val invoicesResult = cashflowApi.listInvoices(
+            // Load invoices and expenses from RPC (will throw on error)
+            val invoices = cashflowApi.listInvoices(
                 tenantId = tenantId,
                 limit = 50,
                 offset = 0
             )
 
-            val expensesResult = cashflowApi.listExpenses(
+            val expenses = cashflowApi.listExpenses(
                 tenantId = tenantId,
                 limit = 50,
                 offset = 0
             )
 
-            // Handle results
-            invoicesResult.fold(
-                onSuccess = { invoices ->
-                    expensesResult.fold(
-                        onSuccess = { expenses ->
-                            logger.i { "Loaded ${invoices.size} invoices and ${expenses.size} expenses" }
-                            mutableState.value = State.Success(
-                                invoices = invoices,
-                                expenses = expenses
-                            )
-                        },
-                        onFailure = { error ->
-                            logger.e(error) { "Failed to load expenses" }
-                            handleError(error)
-                        }
-                    )
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load invoices" }
-                    handleError(error)
-                }
+            logger.i { "Loaded ${invoices.size} invoices and ${expenses.size} expenses" }
+            mutableState.value = State.Success(
+                invoices = invoices,
+                expenses = expenses
             )
         } catch (e: Exception) {
             logger.e(e) { "Failed to load cashflow data" }
