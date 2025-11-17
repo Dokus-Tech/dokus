@@ -1,28 +1,15 @@
 package ai.dokus.cashflow.backend
 
 import ai.dokus.cashflow.backend.config.configureDependencyInjection
-import ai.dokus.cashflow.backend.rpc.AuthenticatedCashflowService
-import ai.dokus.cashflow.backend.rpc.CashflowApiImpl
-import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
-import ai.dokus.foundation.domain.rpc.CashflowApi
+import ai.dokus.cashflow.backend.plugins.*
 import ai.dokus.foundation.ktor.AppBaseConfig
-import ai.dokus.foundation.ktor.auth.createRpcAuthPlugin
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
-import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.routes.healthRoutes
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.server.routing.routing
-import kotlinx.coroutines.runBlocking
-import kotlinx.rpc.krpc.ktor.server.Krpc
-import kotlinx.rpc.krpc.ktor.server.rpc
-import kotlinx.rpc.krpc.serialization.json.json
-import org.koin.ktor.ext.get
-import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("CashflowApplication")
@@ -50,66 +37,28 @@ fun main() {
 }
 
 fun Application.module(appConfig: AppBaseConfig) {
-    // Log application startup
     logger.info("Starting Dokus Cashflow Service...")
     logger.info("Environment: ${appConfig.ktor.deployment.environment}")
     logger.info("Port: ${appConfig.ktor.deployment.port}")
 
-    // Configure application
+    // Core configuration
     configureDependencyInjection(appConfig)
+    configureDatabase()
 
-    // Initialize database
-    logger.info("Initializing database connection...")
-    runBlocking {
-        val dbFactory by inject<DatabaseFactory>()
-        logger.info("Database initialized successfully: ${dbFactory.database}")
-    }
-
+    // Ktor plugins
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
     configureMonitoring()
 
-    // Install KotlinX RPC plugin
-    install(Krpc)
+    // RPC configuration
+    configureRpc()
 
-    // Install RPC authentication plugin
-    val authValidationService = get<AuthValidationRemoteService>()
-    install(createRpcAuthPlugin(authValidationService, "Cashflow"))
+    // Application features
+    configureRouting()
 
-    // Configure routes
-    routing {
-        healthRoutes()
-
-        // Register RPC API
-        rpc("/rpc") {
-            rpcConfig {
-                serialization {
-                    json()
-                }
-            }
-
-            // Register CashflowApi service with authentication wrapper
-            registerService<CashflowApi> {
-                AuthenticatedCashflowService(
-                    delegate = get<CashflowApiImpl>()
-                )
-            }
-        }
-    }
-
-    // Configure graceful shutdown
-    monitor.subscribe(ApplicationStopping) {
-        logger.info("Application stopping, cleaning up resources...")
-        runBlocking {
-            val dbFactory by inject<DatabaseFactory>()
-            dbFactory.close()
-            logger.info("Database connections closed")
-        }
-        logger.info("Cleanup complete")
-    }
+    // Lifecycle management
+    configureGracefulDatabaseShutdown()
 
     logger.info("Dokus Cashflow Service started successfully on port ${appConfig.ktor.deployment.port}")
-    logger.info("RPC API available at /rpc")
-    logger.info("Health check available at /health")
 }
