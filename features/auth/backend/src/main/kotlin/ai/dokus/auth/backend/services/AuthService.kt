@@ -3,8 +3,6 @@
 package ai.dokus.auth.backend.services
 
 import ai.dokus.auth.backend.database.services.RefreshTokenService
-import ai.dokus.auth.backend.security.JwtGenerator
-import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
@@ -15,13 +13,13 @@ import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.ktor.database.now
+import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.services.TenantService
 import ai.dokus.foundation.ktor.services.UserService
-import ai.dokus.foundation.ktor.database.now
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 /**
  * Business logic layer for authentication operations.

@@ -1,6 +1,5 @@
 package ai.dokus.auth.backend.services
 
-import ai.dokus.foundation.domain.rpc.TenantApi
 import ai.dokus.foundation.domain.InvoiceNumber
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber
@@ -8,7 +7,8 @@ import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.ktor.auth.requireAuthenticatedTenantId
+import ai.dokus.foundation.domain.rpc.TenantApi
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.TenantService
 
 class TenantApiImpl(

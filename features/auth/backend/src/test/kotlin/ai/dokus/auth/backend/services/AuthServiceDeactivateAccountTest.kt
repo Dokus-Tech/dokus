@@ -7,6 +7,7 @@ import ai.dokus.foundation.domain.BusinessUserId
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.BusinessUser
+import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.services.TenantService
 import ai.dokus.foundation.ktor.services.UserService
 import io.mockk.Runs
@@ -44,7 +45,7 @@ class AuthServiceDeactivateAccountTest {
     private lateinit var authService: AuthService
     private lateinit var userService: UserService
     private lateinit var tenantService: TenantService
-    private lateinit var jwtGenerator: ai.dokus.auth.backend.security.JwtGenerator
+    private lateinit var jwtGenerator: JwtGenerator
     private lateinit var refreshTokenService: RefreshTokenService
     private lateinit var rateLimitService: RateLimitService
     private lateinit var emailVerificationService: EmailVerificationService

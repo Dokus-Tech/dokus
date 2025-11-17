@@ -4,14 +4,25 @@ import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
-import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.AttachmentId
+import ai.dokus.foundation.domain.ExpenseId
+import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.*
+import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.CreateExpenseRequest
+import ai.dokus.foundation.domain.model.CreateInvoiceRequest
+import ai.dokus.foundation.domain.model.Expense
+import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.domain.rpc.CashflowOverview
-import ai.dokus.foundation.ktor.auth.requireAuthenticatedTenantId
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.datetime.LocalDate
@@ -87,7 +98,10 @@ class CashflowApiImpl(
             .getOrThrow()
     }
 
-    override suspend fun updateInvoice(invoiceId: InvoiceId, request: CreateInvoiceRequest): Invoice {
+    override suspend fun updateInvoice(
+        invoiceId: InvoiceId,
+        request: CreateInvoiceRequest
+    ): Invoice {
         val tenantId = requireAuthenticatedTenantId()
         logger.info("updateInvoice called for invoice: $invoiceId")
         return invoiceRepository.updateInvoice(invoiceId, tenantId, request)
@@ -181,7 +195,10 @@ class CashflowApiImpl(
             .getOrThrow()
     }
 
-    override suspend fun updateExpense(expenseId: ExpenseId, request: CreateExpenseRequest): Expense {
+    override suspend fun updateExpense(
+        expenseId: ExpenseId,
+        request: CreateExpenseRequest
+    ): Expense {
         val tenantId = requireAuthenticatedTenantId()
         logger.info("updateExpense called for expense: $expenseId")
         return expenseRepository.updateExpense(expenseId, tenantId, request)
@@ -199,7 +216,10 @@ class CashflowApiImpl(
             .getOrThrow()
     }
 
-    override suspend fun categorizeExpense(merchant: String, description: String?): ExpenseCategory {
+    override suspend fun categorizeExpense(
+        merchant: String,
+        description: String?
+    ): ExpenseCategory {
         logger.info("categorizeExpense called for merchant: $merchant")
         // TODO: Implement auto-categorization
         return ExpenseCategory.Other
@@ -230,7 +250,8 @@ class CashflowApiImpl(
             .getOrThrow()
             ?: throw IllegalArgumentException("Invoice not found or access denied")
 
-        val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
+        val validationError =
+            documentStorageService.validateFile(fileContent, filename, contentType)
         if (validationError != null) {
             logger.error("File validation failed for invoice $invoiceId: $validationError")
             throw IllegalArgumentException(validationError)
@@ -272,7 +293,8 @@ class CashflowApiImpl(
             .getOrThrow()
             ?: throw IllegalArgumentException("Expense not found or access denied")
 
-        val validationError = documentStorageService.validateFile(fileContent, filename, contentType)
+        val validationError =
+            documentStorageService.validateFile(fileContent, filename, contentType)
         if (validationError != null) {
             logger.error("File validation failed for expense $expenseId: $validationError")
             throw IllegalArgumentException(validationError)
@@ -373,7 +395,12 @@ class CashflowApiImpl(
         // Delete from database
         attachmentRepository.deleteAttachment(attachmentId, tenantId)
             .onSuccess { logger.info("Attachment deleted: $attachmentId") }
-            .onFailure { logger.error("Failed to delete attachment from database: $attachmentId", it) }
+            .onFailure {
+                logger.error(
+                    "Failed to delete attachment from database: $attachmentId",
+                    it
+                )
+            }
             .getOrThrow()
     }
 

@@ -2,11 +2,8 @@
 
 package ai.dokus.auth.backend.rpc
 
-import ai.dokus.auth.backend.security.JwtValidator
-import ai.dokus.foundation.domain.UserId
-import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.UserStatus
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.UserDto
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService

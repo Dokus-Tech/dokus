@@ -1,7 +1,7 @@
-package ai.dokus.foundation.ktor.auth
+package ai.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.domain.BusinessUserId
 import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import kotlinx.coroutines.currentCoroutineContext
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -20,25 +20,13 @@ class AuthContext(
 /**
  * Extension function to get the current authenticated user's ID from the coroutine context.
  *
- * @return BusinessUserId of the authenticated user
+ * @return UserId of the authenticated user
  * @throws IllegalStateException if no authentication context is available
  */
-suspend fun requireAuthenticatedUserId(): BusinessUserId {
+suspend fun requireAuthenticatedUserId(): UserId {
     val authContext = currentCoroutineContext()[AuthContext]
         ?: throw IllegalStateException("Authentication required but no auth context found")
     return authContext.authInfo.userId
-}
-
-/**
- * Extension function to get the current authenticated tenant's ID from the coroutine context.
- *
- * @return TenantId of the authenticated user's tenant
- * @throws IllegalStateException if no authentication context is available
- */
-suspend fun requireAuthenticatedTenantId(): TenantId {
-    val authContext = currentCoroutineContext()[AuthContext]
-        ?: throw IllegalStateException("Authentication required but no auth context found")
-    return authContext.authInfo.tenantId
 }
 
 /**
@@ -60,4 +48,10 @@ suspend fun requireAuthenticationInfo(): AuthenticationInfo {
  */
 suspend fun getAuthenticationInfo(): AuthenticationInfo? {
     return currentCoroutineContext()[AuthContext]?.authInfo
+}
+
+suspend fun requireAuthenticatedTenantId(): TenantId {
+    val authContext = currentCoroutineContext()[AuthContext]
+        ?: throw IllegalStateException("Authentication required but no auth context found")
+    return authContext.authInfo.tenantId
 }

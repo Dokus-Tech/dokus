@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 
-package ai.dokus.auth.backend.security
+package ai.dokus.foundation.ktor.security
 
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.UserId
@@ -8,18 +8,19 @@ import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import java.time.Instant
+import java.util.Date
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
-import java.util.Date
 
 /**
  * JWT token generator for authentication.
  * Generates access and refresh tokens with appropriate claims and expiration times.
  */
 class JwtGenerator(
-    private val secret: String,
+    secret: String,
     private val issuer: String = "dokus-auth"
 ) {
     private val algorithm = Algorithm.HMAC256(secret)
@@ -52,16 +53,16 @@ class JwtGenerator(
             .withClaim("name", fullName)
             .withClaim("tenant_id", tenantId.value.toString())
             .withArrayClaim("groups", roles.toTypedArray())
-            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
-            .withExpiresAt(Date.from(java.time.Instant.ofEpochMilli(accessExpiry.toEpochMilliseconds())))
+            .withIssuedAt(Date.from(Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
+            .withExpiresAt(Date.from(Instant.ofEpochMilli(accessExpiry.toEpochMilliseconds())))
             .sign(algorithm)
 
         val refreshToken = JWT.create()
             .withIssuer(issuer)
             .withSubject(userId.value)
             .withClaim("type", "refresh")
-            .withIssuedAt(Date.from(java.time.Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
-            .withExpiresAt(Date.from(java.time.Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))
+            .withIssuedAt(Date.from(Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
+            .withExpiresAt(Date.from(Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))
             .sign(algorithm)
 
         return LoginResponse(

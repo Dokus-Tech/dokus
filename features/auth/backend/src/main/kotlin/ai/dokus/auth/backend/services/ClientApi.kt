@@ -1,15 +1,15 @@
 package ai.dokus.auth.backend.services
 
-import ai.dokus.foundation.domain.rpc.ClientApi
-import ai.dokus.foundation.domain.rpc.ClientEvent
-import ai.dokus.foundation.domain.rpc.ClientStats
 import ai.dokus.foundation.domain.ClientId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
+import ai.dokus.foundation.domain.rpc.ClientApi
+import ai.dokus.foundation.domain.rpc.ClientEvent
+import ai.dokus.foundation.domain.rpc.ClientStats
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.ClientService
-import ai.dokus.foundation.ktor.auth.requireAuthenticatedTenantId
 import kotlinx.coroutines.flow.Flow
 
 class ClientApiImpl(

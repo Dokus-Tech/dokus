@@ -1,12 +1,18 @@
 package ai.dokus.reporting.backend.services
 
-import ai.dokus.foundation.domain.rpc.*
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.rpc.CashFlowReport
+import ai.dokus.foundation.domain.rpc.DateRange
+import ai.dokus.foundation.domain.rpc.ExpenseAnalytics
+import ai.dokus.foundation.domain.rpc.FinancialSummary
+import ai.dokus.foundation.domain.rpc.InvoiceAnalytics
+import ai.dokus.foundation.domain.rpc.MonthlyCashFlow
+import ai.dokus.foundation.domain.rpc.ReportingApi
+import ai.dokus.foundation.domain.rpc.VatReport
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.ExpenseService
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
-import ai.dokus.foundation.ktor.auth.requireAuthenticatedTenantId
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 

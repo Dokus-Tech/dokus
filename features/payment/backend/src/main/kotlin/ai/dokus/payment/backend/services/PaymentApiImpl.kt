@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
-import ai.dokus.foundation.ktor.auth.requireAuthenticatedTenantId
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.coroutines.flow.Flow

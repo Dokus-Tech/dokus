@@ -1,9 +1,15 @@
 package ai.dokus.auth.backend.rpc
 
 import ai.dokus.app.auth.domain.AccountRemoteService
-import ai.dokus.auth.backend.security.AuthContext
-import ai.dokus.auth.backend.security.AuthenticationInfo
-import ai.dokus.foundation.domain.model.auth.*
+import ai.dokus.foundation.domain.model.AuthenticationInfo
+import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
+import ai.dokus.foundation.domain.model.auth.LoginRequest
+import ai.dokus.foundation.domain.model.auth.LoginResponse
+import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
+import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import ai.dokus.foundation.ktor.security.AuthContext
 import kotlinx.coroutines.withContext
 
 /**
