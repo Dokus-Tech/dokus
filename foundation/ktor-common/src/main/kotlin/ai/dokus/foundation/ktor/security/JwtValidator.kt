@@ -1,9 +1,10 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package ai.dokus.auth.backend.security
+package ai.dokus.foundation.ktor.security
 
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.model.AuthenticationInfo
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
@@ -81,20 +82,3 @@ class JwtValidator(
         return extractAuthInfo(jwt)
     }
 }
-
-/**
- * Authenticated user information extracted from JWT.
- *
- * @property userId The user's unique identifier
- * @property email The user's email address
- * @property name The user's full name
- * @property tenantId The tenant/organization identifier
- * @property roles Set of roles assigned to the user
- */
-data class AuthenticationInfo(
-    val userId: UserId,
-    val email: String,
-    val name: String,
-    val tenantId: TenantId,
-    val roles: Set<String>
-)

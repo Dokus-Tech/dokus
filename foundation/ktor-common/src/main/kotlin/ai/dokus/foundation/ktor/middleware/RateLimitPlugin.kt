@@ -1,4 +1,4 @@
-package ai.dokus.auth.backend.middleware
+package ai.dokus.foundation.ktor.middleware
 
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.createRouteScopedPlugin

@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.BusinessUserId
 import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.UserId
 import kotlinx.serialization.Serializable
 
 /**
@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class AuthenticationInfo(
-    val userId: BusinessUserId,
+    val userId: UserId,
     val email: String,
     val name: String,
     val tenantId: TenantId,

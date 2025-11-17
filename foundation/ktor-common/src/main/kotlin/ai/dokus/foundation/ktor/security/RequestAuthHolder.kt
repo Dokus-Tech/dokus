@@ -1,4 +1,4 @@
-package ai.dokus.auth.backend.security
+package ai.dokus.foundation.ktor.security
 
 import kotlinx.coroutines.ThreadContextElement
 import kotlin.coroutines.CoroutineContext
