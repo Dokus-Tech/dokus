@@ -89,12 +89,11 @@ private fun mapInvoiceStatus(invoiceStatus: InvoiceStatus): FinancialDocumentSta
 }
 
 /**
- * Filters documents that need confirmation or approval.
+ * Filters financial documents that need confirmation or approval.
  *
  * @return List of documents with PendingApproval status
  */
-@JvmName("financialDocumentsNeedingConfirmation")
-fun List<FinancialDocument>.needingConfirmation(): List<FinancialDocument> {
+fun List<FinancialDocument>.financialDocumentsNeedingConfirmation(): List<FinancialDocument> {
     return this.filter { it.status == FinancialDocumentStatus.PendingApproval }
 }
 
@@ -103,7 +102,6 @@ fun List<FinancialDocument>.needingConfirmation(): List<FinancialDocument> {
  *
  * @return List of invoices with Sent or Overdue status
  */
-@JvmName("invoicesNeedingConfirmation")
 fun List<Invoice>.needingConfirmation(): List<Invoice> {
     return this.filter { it.status == InvoiceStatus.Sent || it.status == InvoiceStatus.Overdue }
 }
@@ -115,8 +113,7 @@ fun List<Invoice>.needingConfirmation(): List<Invoice> {
  * @param status Optional override status for all items
  * @return List of FinancialDocument.InvoiceDocument
  */
-@JvmName("invoicesToFinancialDocuments")
-fun List<Invoice>.toFinancialDocuments(
+fun List<Invoice>.invoicesToFinancialDocuments(
     limit: Int = 4,
     status: FinancialDocumentStatus? = null
 ): List<FinancialDocument.InvoiceDocument> {
@@ -130,8 +127,7 @@ fun List<Invoice>.toFinancialDocuments(
  * @param status Optional override status for all items
  * @return List of FinancialDocument.ExpenseDocument
  */
-@JvmName("expensesToFinancialDocuments")
-fun List<Expense>.toFinancialDocuments(
+fun List<Expense>.expensesToFinancialDocuments(
     limit: Int = 4,
     status: FinancialDocumentStatus = FinancialDocumentStatus.PendingApproval
 ): List<FinancialDocument.ExpenseDocument> {
