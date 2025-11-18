@@ -2,11 +2,12 @@
 
 package ai.dokus.auth.backend.rpc
 
-import ai.dokus.foundation.ktor.security.JwtValidator
+import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.UserDto
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
+import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.services.UserService
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
@@ -100,6 +101,35 @@ class AuthValidationRemoteServiceImpl(
         )
 
         // Step 5: Return complete user DTO with tenant context
+        return UserDto.Full(
+            id = user.id,
+            tenantId = user.tenantId,
+            email = user.email,
+            firstName = user.firstName,
+            lastName = user.lastName,
+            role = user.role,
+            emailVerified = user.emailVerified,
+            isActive = user.isActive,
+            lastLoginAt = user.lastLoginAt,
+            createdAt = user.createdAt,
+            updatedAt = user.updatedAt
+        )
+    }
+
+    /**
+     * Get user by ID.
+     * Used by withUser() to fetch full user details after local JWT validation.
+     *
+     * @param userId The user ID to fetch
+     * @return Full user data
+     * @throws DokusException.NotFound if user doesn't exist
+     */
+    override suspend fun getUserById(userId: UserId): UserDto.Full {
+        logger.debug("Fetching user by ID: ${userId.value}")
+
+        val user = userService.findById(userId)
+            ?: throw DokusException.NotAuthenticated("User not found: ${userId.value}")
+
         return UserDto.Full(
             id = user.id,
             tenantId = user.tenantId,

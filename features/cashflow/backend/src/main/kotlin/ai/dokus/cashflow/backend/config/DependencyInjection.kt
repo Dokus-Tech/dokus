@@ -9,6 +9,7 @@ import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.ktor.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
+import ai.dokus.foundation.ktor.security.JwtValidator
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.bind
@@ -28,10 +29,18 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
 }
 
 /**
- * Core module - provides base configuration
+ * Core module - provides base configuration and security
  */
 fun coreModule(appConfig: AppBaseConfig) = module {
     single { appConfig }
+
+    // JWT validator for local token validation
+    single {
+        JwtValidator(
+            secret = appConfig.jwt.secret,
+            issuer = appConfig.jwt.issuer
+        )
+    }
 }
 
 /**
