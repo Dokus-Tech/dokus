@@ -23,10 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import ai.dokus.foundation.domain.model.FinancialDocument
 import ai.dokus.foundation.domain.model.FinancialDocumentStatus
 
@@ -58,7 +55,7 @@ fun CashflowCard(
                 .fillMaxWidth()
                 .border(
                     width = 1.dp,
-                    color = Color(0xFFE0E0E0),
+                    color = MaterialTheme.colorScheme.outlineVariant,
                     shape = RoundedCornerShape(12.dp)
                 )
                 .padding(24.dp)
@@ -66,12 +63,8 @@ fun CashflowCard(
             // Title
             Text(
                 text = "Cash flow",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 28.sp
-                ),
-                color = Color.Black
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -87,7 +80,7 @@ fun CashflowCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(Color(0xFFE0E0E0))
+                            .background(MaterialTheme.colorScheme.outlineVariant)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
@@ -105,19 +98,18 @@ fun CashflowCard(
                     onClick = onPreviousClick,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = Color.Black
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     ),
                     modifier = Modifier
                         .border(
                             width = 1.dp,
-                            color = Color(0xFFE0E0E0),
+                            color = MaterialTheme.colorScheme.outlineVariant,
                             shape = RoundedCornerShape(8.dp)
                         )
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Previous",
-                        tint = Color.Black
+                        contentDescription = "Previous"
                     )
                 }
 
@@ -126,19 +118,18 @@ fun CashflowCard(
                     onClick = onNextClick,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = Color.Black
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     ),
                     modifier = Modifier
                         .border(
                             width = 1.dp,
-                            color = Color(0xFFE0E0E0),
+                            color = MaterialTheme.colorScheme.outlineVariant,
                             shape = RoundedCornerShape(8.dp)
                         )
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Next",
-                        tint = Color.Black
+                        contentDescription = "Next"
                     )
                 }
             }
@@ -178,12 +169,8 @@ private fun CashflowDocumentItem(
             // Document number
             Text(
                 text = document.documentNumber,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    lineHeight = 24.sp
-                ),
-                color = Color.Black
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -203,34 +190,54 @@ private fun StatusBadge(
     status: FinancialDocumentStatus,
     modifier: Modifier = Modifier
 ) {
-    // Determine colors based on status
+    // Determine colors and text based on status using Material Theme
     val (backgroundColor, textColor, statusText) = when (status) {
         FinancialDocumentStatus.PendingApproval ->
-            Triple(Color(0xFFFFE5E5), Color(0xFFFF3131), "Need confirmation")
+            Triple(
+                MaterialTheme.colorScheme.errorContainer,
+                MaterialTheme.colorScheme.onErrorContainer,
+                "Need confirmation"
+            )
 
         FinancialDocumentStatus.Approved ->
-            Triple(Color(0xFFDCFCE7), Color(0xFF22C55E), "Approved")
+            Triple(
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.onPrimaryContainer,
+                "Approved"
+            )
 
         FinancialDocumentStatus.Rejected ->
-            Triple(Color(0xFFFFE5E5), Color(0xFFFF3131), "Rejected")
+            Triple(
+                MaterialTheme.colorScheme.errorContainer,
+                MaterialTheme.colorScheme.onErrorContainer,
+                "Rejected"
+            )
 
         FinancialDocumentStatus.Draft ->
-            Triple(Color(0xFFF3F4F6), Color(0xFF6B7280), "Draft")
+            Triple(
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                "Draft"
+            )
 
         FinancialDocumentStatus.Completed ->
-            Triple(Color(0xFFDCFCE7), Color(0xFF22C55E), "Completed")
+            Triple(
+                MaterialTheme.colorScheme.tertiaryContainer,
+                MaterialTheme.colorScheme.onTertiaryContainer,
+                "Completed"
+            )
 
         FinancialDocumentStatus.Cancelled ->
-            Triple(Color(0xFFF3F4F6), Color(0xFF6B7280), "Cancelled")
+            Triple(
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                "Cancelled"
+            )
     }
 
     Text(
         text = statusText,
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            lineHeight = 16.sp
-        ),
+        style = MaterialTheme.typography.labelSmall,
         color = textColor,
         modifier = modifier
             .background(
