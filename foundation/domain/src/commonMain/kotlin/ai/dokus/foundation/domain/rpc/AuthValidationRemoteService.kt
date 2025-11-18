@@ -1,5 +1,6 @@
 package ai.dokus.foundation.domain.rpc
 
+import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.enums.UserStatus
 import ai.dokus.foundation.domain.model.UserDto
@@ -53,6 +54,16 @@ interface AuthValidationRemoteService {
         requestContext: Context,
         allowedUserRoles: List<UserRole> = UserRole.all,
     ): UserDto.Full
+
+    /**
+     * Get user by ID.
+     * Used by withUser() to fetch full user details after local JWT validation.
+     *
+     * @param userId The user ID to fetch
+     * @return Full user data
+     * @throws NotFound if user doesn't exist
+     */
+    suspend fun getUserById(userId: UserId): UserDto.Full
 
     /**
      * Context information about the request
