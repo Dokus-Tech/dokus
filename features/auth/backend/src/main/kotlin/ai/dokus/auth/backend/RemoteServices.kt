@@ -2,6 +2,7 @@ package ai.dokus.auth.backend
 
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.rpc.AuthenticatedAccountService
+import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.domain.rpc.ClientApi
 import ai.dokus.foundation.domain.rpc.TenantApi
@@ -37,7 +38,10 @@ fun Route.withRemoteServices() {
         registerService<TenantApi> { get<TenantApi>() }
         registerService<ClientApi> { get<ClientApi>() }
         registerService<CashflowApi> { get<CashflowApi>() }
+
+        // Auth validation service for inter-service communication
+        registerService<AuthValidationRemoteService> { get<AuthValidationRemoteService>() }
     }
 
-    logger.info("Public RPC APIs registered at /api with JWT authentication")
+    logger.info("RPC APIs registered at /rpc")
 }
