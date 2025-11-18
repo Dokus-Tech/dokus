@@ -101,7 +101,7 @@ private fun formatDate(date: LocalDate): String {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     )
-    return "${months[date.monthNumber - 1]} ${date.dayOfMonth}, ${date.year}"
+    return "${months[date.month.ordinal]} ${date.dayOfMonth}, ${date.year}"
 }
 
 /**
