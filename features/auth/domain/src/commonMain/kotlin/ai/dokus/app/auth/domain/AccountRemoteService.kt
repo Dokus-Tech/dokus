@@ -1,6 +1,12 @@
 package ai.dokus.app.auth.domain
 
-import ai.dokus.foundation.domain.model.auth.*
+import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
+import ai.dokus.foundation.domain.model.auth.LoginRequest
+import ai.dokus.foundation.domain.model.auth.LoginResponse
+import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
+import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
 import kotlinx.rpc.annotations.Rpc
 
 /**
