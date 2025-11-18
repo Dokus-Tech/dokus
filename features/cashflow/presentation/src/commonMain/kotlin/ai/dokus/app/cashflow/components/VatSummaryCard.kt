@@ -47,7 +47,7 @@ fun VatSummaryCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -56,7 +56,7 @@ fun VatSummaryCard(
                 .fillMaxWidth()
                 .border(
                     width = 1.dp,
-                    color = Color(0xFFE0E0E0),
+                    color = MaterialTheme.colorScheme.outlineVariant,
                     shape = RoundedCornerShape(12.dp)
                 )
                 .padding(horizontal = 24.dp, vertical = 12.dp),
@@ -103,30 +103,22 @@ private fun VatAmountColumn(
         // Label with sublabel in gray
         Text(
             text = buildAnnotatedString {
-                withStyle(style = SpanStyle(color = Color.Black)) {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
                     append(label)
                 }
                 append(" ")
-                withStyle(style = SpanStyle(color = Color(0xFF9A9A9A))) {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
                     append(sublabel)
                 }
             },
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 16.sp
-            )
+            style = MaterialTheme.typography.labelSmall
         )
 
         // Amount
         Text(
             text = formatAmount(amount),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 24.sp
-            ),
-            color = Color.Black
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -147,23 +139,15 @@ private fun AmountColumn(
         // Label
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 16.sp
-            ),
-            color = Color.Black
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         // Amount
         Text(
             text = formatAmount(amount),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 24.sp
-            ),
-            color = Color.Black
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
