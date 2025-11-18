@@ -246,7 +246,7 @@ private fun FinancialDocumentTableRow(
                     modifier = Modifier
                         .size(6.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFEF5350)) // Red alert indicator
+                        .background(MaterialTheme.colorScheme.error) // Red alert indicator
                 )
             }
 
@@ -268,13 +268,13 @@ private fun FinancialDocumentTableRow(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFE3F2FD)), // Light blue background
+                    .background(MaterialTheme.colorScheme.secondaryContainer), // Light background
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = null,
-                    tint = Color(0xFF2196F3), // Blue icon
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer, // Icon color
                     modifier = Modifier.size(20.dp)
                 )
             }

@@ -7,7 +7,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -20,7 +19,7 @@ enum class CashflowType {
 
 /**
  * Badge component for cashflow transaction types (CASH-IN/CASH-OUT).
- * Uses Material Theme colors with custom styling for green (cash-in) and orange (cash-out).
+ * Uses Material Theme colors for consistent theming.
  *
  * @param type The cashflow transaction type
  * @param modifier Optional modifier for the badge
@@ -30,17 +29,17 @@ fun CashflowTypeBadge(
     type: CashflowType,
     modifier: Modifier = Modifier
 ) {
-    // Define colors based on type
+    // Use Material Theme colors based on type
     val (backgroundColor, textColor, text) = when (type) {
         CashflowType.CashIn -> Triple(
-            Color(0xFFDBF1DB), // Light green background
-            Color(0xFF4CAF50), // Green text
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
             "CASH-IN"
         )
 
         CashflowType.CashOut -> Triple(
-            Color(0xFFFFF4E5), // Light orange background
-            Color(0xFFFF8431), // Orange text
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
             "CASH-OUT"
         )
     }
