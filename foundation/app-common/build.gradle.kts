@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
