@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.plugins
 
-import ai.dokus.foundation.ktor.middleware.RpcAuthPlugin
+import ai.dokus.foundation.ktor.auth.ServiceAuthPlugin
 import ai.dokus.foundation.ktor.security.JwtValidator
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -24,7 +24,7 @@ fun Application.configureRpc() {
     // Install RPC authentication plugin
     val jwtValidator = get<JwtValidator>()
     attributes.put(AttributeKey("JwtValidator"), jwtValidator)
-    install(RpcAuthPlugin)
+    install(ServiceAuthPlugin)
 
     logger.info("KotlinX RPC configured with authentication")
 }
