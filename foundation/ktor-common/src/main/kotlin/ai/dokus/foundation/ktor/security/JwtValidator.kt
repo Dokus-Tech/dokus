@@ -19,13 +19,13 @@ import kotlin.uuid.Uuid
  * Validates JWT tokens and extracts user claims.
  */
 class JwtValidator(
-    private val secret: String,
-    private val issuer: String = "dokus-auth"
+    val secret: String,
+    val issuer: String = "dokus-auth"
 ) {
     private val logger = LoggerFactory.getLogger(JwtValidator::class.java)
     private val algorithm = Algorithm.HMAC256(secret)
 
-    private val verifier: JWTVerifier = JWT.require(algorithm)
+    val verifier: JWTVerifier = JWT.require(algorithm)
         .withIssuer(issuer)
         .build()
 
