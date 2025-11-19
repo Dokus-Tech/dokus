@@ -1,6 +1,6 @@
 package ai.dokus.payment.backend.services
 
-import ai.dokus.foundation.domain.rpc.PaymentApi
+import ai.dokus.foundation.domain.rpc.PaymentRemoteService
 import ai.dokus.foundation.domain.rpc.PaymentEvent
 import ai.dokus.foundation.domain.rpc.PaymentStats
 import ai.dokus.foundation.domain.*
@@ -13,10 +13,10 @@ import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 
-class PaymentApiImpl(
+class PaymentRemoteServiceImpl(
     private val paymentService: PaymentService,
     private val invoiceService: InvoiceService
-) : PaymentApi {
+) : PaymentRemoteService {
 
     override suspend fun recordPayment(request: RecordPaymentRequest): Payment {
         // Get invoice to extract tenantId for proper tenant isolation

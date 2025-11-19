@@ -4,8 +4,6 @@ package ai.dokus.foundation.ktor.auth
 
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.foundation.ktor.security.RequestAuthHolder
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.request.header
 import io.ktor.util.AttributeKey
@@ -44,7 +42,6 @@ val ServiceAuthPlugin = createApplicationPlugin(name = "ServiceAuthPlugin") {
                 if (authInfo != null) {
                     // Store in both call attributes and RequestAuthHolder
                     call.attributes.put(AuthInfoAttributeKey, authInfo)
-                    RequestAuthHolder.set(authInfo)
                     logger.debug(
                         "Auth validated locally for user: {}, tenant: {}",
                         authInfo.userId.value,
@@ -59,24 +56,5 @@ val ServiceAuthPlugin = createApplicationPlugin(name = "ServiceAuthPlugin") {
         }
     }
 
-    onCallRespond { _, _ ->
-        // Clear auth context after request
-        RequestAuthHolder.clear()
-    }
-}
-
-/**
- * Extension to get auth info from call attributes.
- */
-fun ApplicationCall.getAuthInfo(): AuthenticationInfo? {
-    return attributes.getOrNull(AuthInfoAttributeKey)
-}
-
-/**
- * Extension to require auth info from call attributes.
- * @throws IllegalStateException if not authenticated
- */
-fun ApplicationCall.requireAuthInfo(): AuthenticationInfo {
-    return attributes.getOrNull(AuthInfoAttributeKey)
-        ?: throw IllegalStateException("Authentication required but no auth context found")
+    onCallRespond { _, _ -> }
 }

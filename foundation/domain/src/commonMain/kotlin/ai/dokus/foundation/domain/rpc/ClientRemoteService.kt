@@ -4,10 +4,10 @@ import ai.dokus.foundation.domain.ClientId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
+import ai.dokus.foundation.domain.model.ClientEvent
+import ai.dokus.foundation.domain.model.ClientStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.annotations.Rpc
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 @Rpc
 interface ClientRemoteService {
@@ -97,33 +97,4 @@ interface ClientRemoteService {
      * Emits events when clients are created, updated, or deleted
      */
     fun watchClients(tenantId: TenantId): Flow<ClientEvent>
-}
-
-/**
- * Client statistics for dashboard
- */
-@Serializable
-data class ClientStats(
-    val totalClients: Long,
-    val activeClients: Long,
-    val inactiveClients: Long,
-    val peppolEnabledClients: Long
-)
-
-/**
- * Real-time client events for reactive UI updates
- */
-@Serializable
-sealed class ClientEvent {
-    @Serializable
-    @SerialName("ClientEvent.ClientCreated")
-    data class ClientCreated(val client: Client) : ClientEvent()
-
-    @Serializable
-    @SerialName("ClientEvent.ClientUpdated")
-    data class ClientUpdated(val client: Client) : ClientEvent()
-
-    @Serializable
-    @SerialName("ClientEvent.ClientDeleted")
-    data class ClientDeleted(val clientId: ClientId) : ClientEvent()
 }
