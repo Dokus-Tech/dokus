@@ -7,15 +7,15 @@ import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.TransactionId
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentEvent
+import ai.dokus.foundation.domain.model.PaymentStats
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 @Rpc
-interface PaymentApi {
+interface PaymentRemoteService {
 
     /**
      * Record a new payment against an invoice
@@ -90,33 +90,4 @@ interface PaymentApi {
      * Emits events when payments are recorded, updated, or deleted
      */
     fun watchPayments(tenantId: TenantId): Flow<PaymentEvent>
-}
-
-/**
- * Payment statistics for dashboard
- */
-@Serializable
-data class PaymentStats(
-    val totalPayments: Long,
-    val totalRevenue: Money,
-    val averagePaymentAmount: Money,
-    val paymentsByMethod: Map<String, Long>
-)
-
-/**
- * Real-time payment events for reactive UI updates
- */
-@Serializable
-sealed class PaymentEvent {
-    @Serializable
-    @SerialName("PaymentEvent.PaymentRecorded")
-    data class PaymentRecorded(val payment: Payment) : PaymentEvent()
-
-    @Serializable
-    @SerialName("PaymentEvent.PaymentUpdated")
-    data class PaymentUpdated(val payment: Payment) : PaymentEvent()
-
-    @Serializable
-    @SerialName("PaymentEvent.PaymentDeleted")
-    data class PaymentDeleted(val paymentId: PaymentId) : PaymentEvent()
 }

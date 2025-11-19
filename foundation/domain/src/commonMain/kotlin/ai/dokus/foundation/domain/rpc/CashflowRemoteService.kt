@@ -3,11 +3,11 @@ package ai.dokus.foundation.domain.rpc
 import ai.dokus.foundation.domain.AttachmentId
 import ai.dokus.foundation.domain.ExpenseId
 import ai.dokus.foundation.domain.InvoiceId
-import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Expense
@@ -227,17 +227,3 @@ interface CashflowRemoteService {
         toDate: LocalDate
     ): CashflowOverview
 }
-
-/**
- * Cashflow overview data
- */
-@kotlinx.serialization.Serializable
-data class CashflowOverview(
-    val totalIncome: Money,
-    val totalExpenses: Money,
-    val netCashflow: Money,
-    val pendingInvoices: Money,
-    val overdueInvoices: Money,
-    val invoiceCount: Int,
-    val expenseCount: Int
-)

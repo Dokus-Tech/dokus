@@ -1,11 +1,11 @@
 package ai.dokus.payment.backend.config
 
-import ai.dokus.foundation.domain.rpc.PaymentApi
+import ai.dokus.foundation.domain.rpc.PaymentRemoteService
 import ai.dokus.foundation.ktor.services.PaymentService
 import ai.dokus.payment.backend.database.services.PaymentServiceImpl
 import ai.dokus.payment.backend.database.tables.*
 import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.payment.backend.services.PaymentApiImpl
+import ai.dokus.payment.backend.services.PaymentRemoteServiceImpl
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -28,8 +28,8 @@ private val appModule = module {
     single<PaymentService> { PaymentServiceImpl(get()) }
 
     // API implementations
-    single<PaymentApi> {
-        PaymentApiImpl(
+    single<PaymentRemoteService> {
+        PaymentRemoteServiceImpl(
             paymentService = get(),
             invoiceService = get()
         )

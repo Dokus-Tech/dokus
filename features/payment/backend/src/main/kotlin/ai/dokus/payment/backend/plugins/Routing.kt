@@ -1,6 +1,6 @@
 package ai.dokus.payment.backend.plugins
 
-import ai.dokus.foundation.domain.rpc.PaymentApi
+import ai.dokus.foundation.domain.rpc.PaymentRemoteService
 import ai.dokus.foundation.ktor.routes.healthRoutes
 import ai.dokus.payment.backend.routes.paymentRoutes
 import io.ktor.server.application.Application
@@ -30,7 +30,7 @@ fun Application.configureRouting() {
                 }
             }
 
-            registerService<PaymentApi> { get<PaymentApi>() }
+            registerService<PaymentRemoteService> { get<PaymentRemoteService>() }
         }
     }
 

@@ -1,9 +1,12 @@
 package ai.dokus.foundation.domain.rpc
 
-import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.model.CashFlowReport
+import ai.dokus.foundation.domain.model.ExpenseAnalytics
+import ai.dokus.foundation.domain.model.FinancialSummary
+import ai.dokus.foundation.domain.model.InvoiceAnalytics
+import ai.dokus.foundation.domain.model.VatReport
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
-import kotlinx.serialization.Serializable
 
 @Rpc
 interface ReportingApi {
@@ -53,69 +56,3 @@ interface ReportingApi {
         endDate: LocalDate? = null
     ): VatReport
 }
-
-@Serializable
-data class FinancialSummary(
-    val tenantId: String,
-    val period: DateRange,
-    val totalRevenue: Money,
-    val totalExpenses: Money,
-    val netProfit: Money,
-    val invoiceCount: Int,
-    val expenseCount: Int,
-    val paymentCount: Int,
-    val outstandingAmount: Money
-)
-
-@Serializable
-data class InvoiceAnalytics(
-    val totalInvoices: Int,
-    val totalAmount: Money,
-    val paidAmount: Money,
-    val outstandingAmount: Money,
-    val overdueAmount: Money,
-    val statusBreakdown: Map<String, Int>,
-    val averageInvoiceValue: Money
-)
-
-@Serializable
-data class ExpenseAnalytics(
-    val totalExpenses: Int,
-    val totalAmount: Money,
-    val categoryBreakdown: Map<String, Money>,
-    val averageExpenseValue: Money,
-    val deductibleAmount: Money
-)
-
-@Serializable
-data class CashFlowReport(
-    val period: DateRange,
-    val totalInflow: Money,
-    val totalOutflow: Money,
-    val netCashFlow: Money,
-    val monthlyData: List<MonthlyCashFlow>
-)
-
-@Serializable
-data class MonthlyCashFlow(
-    val month: String,
-    val inflow: Money,
-    val outflow: Money,
-    val net: Money
-)
-
-@Serializable
-data class VatReport(
-    val period: DateRange,
-    val vatCollected: Money,
-    val vatPaid: Money,
-    val vatOwed: Money,
-    val salesCount: Int,
-    val purchaseCount: Int
-)
-
-@Serializable
-data class DateRange(
-    val start: LocalDate?,
-    val end: LocalDate?
-)
