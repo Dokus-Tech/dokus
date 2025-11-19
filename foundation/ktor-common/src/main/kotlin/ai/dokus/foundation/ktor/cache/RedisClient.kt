@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ktor.cache
 
-import ai.dokus.foundation.ktor.CachingConfig
+import ai.dokus.foundation.ktor.config.CachingConfig
 import java.time.Duration
 
 /**

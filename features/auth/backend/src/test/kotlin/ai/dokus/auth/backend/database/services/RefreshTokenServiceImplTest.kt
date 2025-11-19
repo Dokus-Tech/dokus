@@ -8,7 +8,7 @@ import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now

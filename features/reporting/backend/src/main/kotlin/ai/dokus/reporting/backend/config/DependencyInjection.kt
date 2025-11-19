@@ -4,7 +4,7 @@ import ai.dokus.foundation.domain.rpc.ReportingApi
 import ai.dokus.reporting.backend.services.ReportingApiImpl
 import ai.dokus.reporting.backend.database.tables.*
 import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import io.ktor.server.application.*

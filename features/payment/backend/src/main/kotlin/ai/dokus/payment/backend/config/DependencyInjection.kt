@@ -6,7 +6,7 @@ import ai.dokus.payment.backend.database.services.PaymentServiceImpl
 import ai.dokus.payment.backend.database.tables.*
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.payment.backend.services.PaymentApiImpl
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import io.ktor.server.application.*

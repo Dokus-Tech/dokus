@@ -2,7 +2,7 @@ package ai.dokus.reporting.backend
 
 import ai.dokus.reporting.backend.config.configureDependencyInjection
 import ai.dokus.reporting.backend.plugins.*
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
