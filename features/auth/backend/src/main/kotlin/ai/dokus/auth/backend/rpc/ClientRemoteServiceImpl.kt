@@ -1,20 +1,24 @@
-package ai.dokus.auth.backend.services
+package ai.dokus.auth.backend.rpc
 
 import ai.dokus.foundation.domain.ClientId
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
-import ai.dokus.foundation.domain.rpc.ClientApi
 import ai.dokus.foundation.domain.rpc.ClientEvent
+import ai.dokus.foundation.domain.rpc.ClientRemoteService
 import ai.dokus.foundation.domain.rpc.ClientStats
+import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.ClientService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
-class ClientApiImpl(
-    private val clientService: ClientService
-) : ClientApi {
+class ClientRemoteServiceImpl(
+    private val clientService: ClientService,
+    private val authInfoProvider: AuthInfoProvider,
+) : ClientRemoteService {
 
     override suspend fun createClient(
         name: String,
@@ -33,27 +37,29 @@ class ClientApiImpl(
         tags: String?,
         notes: String?
     ): Client {
-        val tenantId = requireAuthenticatedTenantId()
+        return authInfoProvider.withAuthInfo {
+            val tenantId = requireAuthenticatedTenantId()
 
-        // Convert String vatNumber to VatNumber value class if provided
-        val vatNumberValue = vatNumber?.let { VatNumber(it) }
+            // Convert String vatNumber to VatNumber value class if provided
+            val vatNumberValue = vatNumber?.let { VatNumber(it) }
 
-        // Note: ClientService doesn't support all the new Peppol fields yet
-        // For now, we'll use the available fields and TODO: update ClientService
-        return clientService.create(
-            tenantId = tenantId,
-            name = name,
-            email = email,
-            vatNumber = vatNumberValue,
-            addressLine1 = addressLine1,
-            addressLine2 = null, // Not in new API
-            city = city,
-            postalCode = postalCode,
-            country = country,
-            contactPerson = null, // Not in new API
-            phone = phone,
-            notes = notes
-        )
+            // Note: ClientService doesn't support all the new Peppol fields yet
+            // For now, we'll use the available fields and TODO: update ClientService
+            return@withAuthInfo clientService.create(
+                tenantId = tenantId,
+                name = name,
+                email = email,
+                vatNumber = vatNumberValue,
+                addressLine1 = addressLine1,
+                addressLine2 = null, // Not in new API
+                city = city,
+                postalCode = postalCode,
+                country = country,
+                contactPerson = null, // Not in new API
+                phone = phone,
+                notes = notes
+            )
+        }
     }
 
     override suspend fun getClient(id: ClientId): Client {
@@ -184,12 +190,12 @@ class ClientApiImpl(
 
     override fun watchClients(tenantId: TenantId): Flow<ClientEvent> {
         // Implement polling-based watching since ClientService doesn't provide streaming
-        return kotlinx.coroutines.flow.flow {
+        return flow {
             var lastSeenClients = emptyMap<ClientId, Client>()
 
             while (true) {
                 // Poll for client changes every 5 seconds
-                kotlinx.coroutines.delay(5000)
+                delay(5000)
 
                 try {
                     val currentClients = clientService.listByTenant(tenantId, activeOnly = false)
@@ -202,6 +208,7 @@ class ClientApiImpl(
                                 // New client
                                 emit(ClientEvent.ClientCreated(client))
                             }
+
                             previous != client -> {
                                 // Updated client (comparing entire object)
                                 emit(ClientEvent.ClientUpdated(client))

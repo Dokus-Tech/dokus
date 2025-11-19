@@ -1,15 +1,18 @@
 package ai.dokus.cashflow.backend.config
 
-import ai.dokus.cashflow.backend.database.tables.*
+import ai.dokus.cashflow.backend.database.tables.AttachmentsTable
+import ai.dokus.cashflow.backend.database.tables.ExpensesTable
+import ai.dokus.cashflow.backend.database.tables.InvoiceItemsTable
+import ai.dokus.cashflow.backend.database.tables.InvoicesTable
 import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
-import ai.dokus.cashflow.backend.rpc.CashflowApiImpl
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -20,7 +23,6 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             coreModule(appConfig),
             databaseModule,
             serviceModule,
-            rpcModule,
             rpcClientModule
         )
     }
@@ -73,22 +75,6 @@ val serviceModule = module {
         DocumentStorageService(
             storageBasePath = "./storage/documents",
             maxFileSizeMb = 10
-        )
-    }
-
-    // TODO: Add InvoiceService, ExpenseService when implemented
-}
-
-/**
- * RPC module - KotlinX RPC service implementations
- */
-val rpcModule = module {
-    single<CashflowApiImpl> {
-        CashflowApiImpl(
-            attachmentRepository = get(),
-            documentStorageService = get(),
-            invoiceRepository = get(),
-            expenseRepository = get()
         )
     }
 }

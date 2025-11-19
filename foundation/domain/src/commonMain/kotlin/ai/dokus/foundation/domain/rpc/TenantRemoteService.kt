@@ -10,7 +10,7 @@ import ai.dokus.foundation.domain.model.TenantSettings
 import kotlinx.rpc.annotations.Rpc
 
 @Rpc
-interface TenantApi {
+interface TenantRemoteService {
 
     suspend fun createTenant(
         name: String,

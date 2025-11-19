@@ -5,7 +5,7 @@ import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.foundation.domain.rpc.CashflowApi
+import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.or
 import ai.dokus.foundation.network.service
@@ -40,8 +40,8 @@ val cashflowNetworkModule = module {
 
     // CashflowApi service with stub fallback
     // If RPC client is unavailable (offline/network error), falls back to MockCashflowApi
-    single<CashflowApi> {
+    single<CashflowRemoteService> {
         val rpcClient = getOrNull<KtorRpcClient>(named(Feature.Cashflow))
-        rpcClient?.service<CashflowApi>() or MockCashflowApi()
+        rpcClient?.service<CashflowRemoteService>() or MockCashflowApi()
     }
 }

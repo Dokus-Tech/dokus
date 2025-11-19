@@ -1,5 +1,6 @@
-package ai.dokus.auth.backend.services
+package ai.dokus.auth.backend.rpc
 
+import ai.dokus.auth.backend.database.repository.TenantRepository
 import ai.dokus.foundation.domain.InvoiceNumber
 import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber
@@ -7,13 +8,14 @@ import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.domain.rpc.TenantApi
+import ai.dokus.foundation.domain.rpc.TenantRemoteService
+import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
-import ai.dokus.foundation.ktor.services.TenantService
 
-class TenantApiImpl(
-    private val tenantService: TenantService
-) : TenantApi {
+class TenantRemoteServiceImpl(
+    private val tenantService: TenantRepository,
+    private val authInfoProvider: AuthInfoProvider,
+) : TenantRemoteService {
 
     override suspend fun createTenant(
         name: String,
@@ -23,7 +25,9 @@ class TenantApiImpl(
         language: Language,
         vatNumber: VatNumber?
     ): Tenant {
-        return tenantService.createTenant(name, email, plan, country, language, vatNumber)
+        val createdTenant = tenantService.create(name, email, plan, country, language, vatNumber)
+        return tenantService.findById(id = createdTenant)
+            ?: throw IllegalArgumentException("Tenant not found: $createdTenant")
     }
 
     override suspend fun getTenant(id: TenantId): Tenant {
@@ -31,8 +35,10 @@ class TenantApiImpl(
     }
 
     override suspend fun getTenantSettings(): TenantSettings {
-        val tenantId = requireAuthenticatedTenantId()
-        return tenantService.getSettings(tenantId)
+        return authInfoProvider.withAuthInfo {
+            val tenantId = requireAuthenticatedTenantId()
+            return@withAuthInfo tenantService.getSettings(tenantId)
+        }
     }
 
     override suspend fun updateTenantSettings(settings: TenantSettings) {
@@ -40,7 +46,9 @@ class TenantApiImpl(
     }
 
     override suspend fun getNextInvoiceNumber(): InvoiceNumber {
-        val tenantId = requireAuthenticatedTenantId()
-        return tenantService.getNextInvoiceNumber(tenantId)
+        return authInfoProvider.withAuthInfo {
+            val tenantId = requireAuthenticatedTenantId()
+            return@withAuthInfo tenantService.getNextInvoiceNumber(tenantId)
+        }
     }
 }

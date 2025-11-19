@@ -4,7 +4,7 @@ import ai.dokus.foundation.domain.*
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.*
-import ai.dokus.foundation.domain.rpc.CashflowApi
+import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.domain.rpc.CashflowOverview
 import ai.dokus.foundation.ktor.security.AuthContext
 import ai.dokus.foundation.ktor.security.RequestAuthHolder
@@ -17,8 +17,8 @@ import kotlinx.datetime.LocalDate
  * This allows authenticated methods to access user information via coroutine context.
  */
 class AuthenticatedCashflowService(
-    private val delegate: CashflowApi
-) : CashflowApi {
+    private val delegate: CashflowRemoteService
+) : CashflowRemoteService {
 
     override suspend fun createInvoice(request: CreateInvoiceRequest): Invoice {
         return withAuthContext {

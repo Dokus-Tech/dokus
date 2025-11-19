@@ -20,8 +20,9 @@ import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
-import ai.dokus.foundation.domain.rpc.CashflowApi
 import ai.dokus.foundation.domain.rpc.CashflowOverview
+import ai.dokus.foundation.domain.rpc.CashflowRemoteService
+import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -33,14 +34,15 @@ import org.slf4j.LoggerFactory
  *
  * This is a stub implementation for MVP - will be enhanced with actual business logic.
  */
-class CashflowApiImpl(
+class CashflowRemoteServiceImpl(
+    private val authInfoProvider: AuthInfoProvider,
     private val attachmentRepository: AttachmentRepository,
     private val documentStorageService: DocumentStorageService,
     private val invoiceRepository: InvoiceRepository,
     private val expenseRepository: ExpenseRepository
-) : CashflowApi {
+) : CashflowRemoteService {
 
-    private val logger = LoggerFactory.getLogger(CashflowApiImpl::class.java)
+    private val logger = LoggerFactory.getLogger(CashflowRemoteServiceImpl::class.java)
 
     // ============================================================================
     // INVOICE MANAGEMENT

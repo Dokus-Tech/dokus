@@ -10,7 +10,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Rpc
-interface ClientApi {
+interface ClientRemoteService {
 
     /**
      * Create a new client
