@@ -1,9 +1,20 @@
 package ai.dokus.foundation.domain.rpc
 
-import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.AttachmentId
+import ai.dokus.foundation.domain.ExpenseId
+import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.*
+import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.CreateExpenseRequest
+import ai.dokus.foundation.domain.model.CreateInvoiceRequest
+import ai.dokus.foundation.domain.model.Expense
+import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
@@ -19,7 +30,7 @@ import kotlinx.rpc.annotations.Rpc
  * - Real-time updates via Flow
  */
 @Rpc
-interface CashflowApi {
+interface CashflowRemoteService {
 
     // ============================================================================
     // INVOICE MANAGEMENT

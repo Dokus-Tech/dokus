@@ -64,7 +64,7 @@ class RefreshTokenServiceImplTest {
             testUserId = createTestUser()
         }
 
-        service = RefreshTokenServiceImpl()
+        service = RefreshTokenRepository()
     }
 
     /**

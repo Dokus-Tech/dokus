@@ -1,25 +1,33 @@
 package ai.dokus.auth.backend.config
 
-import ai.dokus.app.auth.domain.AccountRemoteService
-import ai.dokus.auth.backend.database.services.RefreshTokenService
-import ai.dokus.auth.backend.database.services.RefreshTokenServiceImpl
-import ai.dokus.auth.backend.database.services.TenantServiceImpl
-import ai.dokus.auth.backend.database.services.UserServiceImpl
-import ai.dokus.auth.backend.database.tables.*
-import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
-import ai.dokus.auth.backend.rpc.AuthValidationRemoteServiceImpl
-import ai.dokus.foundation.ktor.security.JwtGenerator
-import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.auth.backend.services.*
+import ai.dokus.auth.backend.database.repository.TenantRepository
+import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.auth.backend.database.services.RefreshTokenRepository
+import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
+import ai.dokus.auth.backend.database.tables.RefreshTokensTable
+import ai.dokus.auth.backend.database.tables.TenantSettingsTable
+import ai.dokus.auth.backend.database.tables.TenantsTable
+import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
-import ai.dokus.foundation.domain.rpc.*
-import ai.dokus.foundation.ktor.config.AppBaseConfig
+import ai.dokus.auth.backend.rpc.AuthValidationRemoteServiceImpl
+import ai.dokus.auth.backend.services.AuthService
+import ai.dokus.auth.backend.services.DisabledEmailService
+import ai.dokus.auth.backend.services.EmailConfig
+import ai.dokus.auth.backend.services.EmailService
+import ai.dokus.auth.backend.services.EmailVerificationService
+import ai.dokus.auth.backend.services.PasswordResetService
+import ai.dokus.auth.backend.services.RateLimitService
+import ai.dokus.auth.backend.services.SmtpEmailService
+import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.ktor.DokusRabbitMq
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
-import ai.dokus.foundation.ktor.services.TenantService
-import ai.dokus.foundation.ktor.services.UserService
+import ai.dokus.foundation.ktor.config.AppBaseConfig
+import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
+import ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j
+import ai.dokus.foundation.ktor.database.DatabaseFactory
+import ai.dokus.foundation.ktor.security.JwtGenerator
+import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.messaging.integration.createDefaultRabbitMqConfig
 import ai.dokus.foundation.messaging.integration.messagingModule
 import io.ktor.server.application.Application
@@ -33,20 +41,24 @@ private val appModule = module {
     single {
         DatabaseFactory(get(), "auth-pool").apply {
             runBlocking {
-                init(TenantsTable, TenantSettingsTable, UsersTable, RefreshTokensTable, PasswordResetTokensTable)
+                init(
+                    TenantsTable,
+                    TenantSettingsTable,
+                    UsersTable,
+                    RefreshTokensTable,
+                    PasswordResetTokensTable
+                )
             }
         }
     }
 
     // Password crypto service
-    single<ai.dokus.foundation.ktor.crypto.PasswordCryptoService> {
-        ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j()
-    }
+    single<PasswordCryptoService> { PasswordCryptoService4j() }
 
     // Local database services
-    single<TenantService> { TenantServiceImpl() }
-    single<UserService> { UserServiceImpl(get()) }
-    single<RefreshTokenService> { RefreshTokenServiceImpl() }
+    single<TenantRepository> { TenantRepository() }
+    single<UserRepository> { UserRepository(get()) }
+    single<RefreshTokenRepository> { RefreshTokenRepository() }
 
     // JWT token generation
     single {
@@ -94,10 +106,7 @@ private val appModule = module {
     single { AuthService(get(), get(), get(), get(), get(), get(), get()) }
 
     // RPC API implementations
-    single<AccountRemoteService> { AccountRemoteServiceImpl(get()) }
     single<AuthValidationRemoteService> { AuthValidationRemoteServiceImpl(get(), get()) }
-    single<TenantApi> { TenantApiImpl(get()) }
-    single<ClientApi> { ClientApiImpl(get()) }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {

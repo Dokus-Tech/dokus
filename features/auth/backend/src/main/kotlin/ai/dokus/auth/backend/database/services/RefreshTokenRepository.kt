@@ -10,12 +10,16 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
-import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
@@ -49,10 +53,10 @@ private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
  * - Uses kotlinx.datetime for timestamp handling
  * - Provides comprehensive error handling and logging
  */
-class RefreshTokenServiceImpl : RefreshTokenService {
-    private val logger = LoggerFactory.getLogger(RefreshTokenServiceImpl::class.java)
+class RefreshTokenRepository {
+    private val logger = LoggerFactory.getLogger(RefreshTokenRepository::class.java)
 
-    override suspend fun saveRefreshToken(
+    suspend fun saveRefreshToken(
         userId: UserId,
         token: String,
         expiresAt: Instant
@@ -68,14 +72,17 @@ class RefreshTokenServiceImpl : RefreshTokenService {
             }
 
             logger.debug(
-                "Saved refresh token for user: ${userId.value}, token hash: ${hashToken(token)}, expires: $expiresAt"
+                "Saved refresh token for user: {}, token hash: {}, expires: {}",
+                userId.value,
+                hashToken(token),
+                expiresAt
             )
         }
     }.onFailure { error ->
         logger.error("Failed to save refresh token for user: ${userId.value}", error)
     }
 
-    override suspend fun validateAndRotate(oldToken: String): Result<UserId> = runCatching {
+    suspend fun validateAndRotate(oldToken: String): Result<UserId> = runCatching {
         dbQuery {
             // Find the token
             val tokenRow = RefreshTokensTable
@@ -137,7 +144,7 @@ class RefreshTokenServiceImpl : RefreshTokenService {
         }
     }
 
-    override suspend fun revokeToken(token: String): Result<Unit> = runCatching {
+    suspend fun revokeToken(token: String): Result<Unit> = runCatching {
         dbQuery {
             val updated = RefreshTokensTable.update(
                 { RefreshTokensTable.token eq token }
@@ -158,7 +165,7 @@ class RefreshTokenServiceImpl : RefreshTokenService {
         }
     }
 
-    override suspend fun revokeAllUserTokens(userId: UserId): Result<Unit> = runCatching {
+    suspend fun revokeAllUserTokens(userId: UserId): Result<Unit> = runCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
 
@@ -177,7 +184,7 @@ class RefreshTokenServiceImpl : RefreshTokenService {
         logger.error("Failed to revoke all tokens for user: ${userId.value}", error)
     }
 
-    override suspend fun cleanupExpiredTokens(): Result<Int> = runCatching {
+    suspend fun cleanupExpiredTokens(): Result<Int> = runCatching {
         dbQuery {
             val now = now().toLocalDateTime(TimeZone.UTC)
 
@@ -193,7 +200,7 @@ class RefreshTokenServiceImpl : RefreshTokenService {
         logger.error("Failed to cleanup expired tokens", error)
     }
 
-    override suspend fun getUserActiveTokens(userId: UserId): List<RefreshTokenInfo> = try {
+    suspend fun getUserActiveTokens(userId: UserId): List<RefreshTokenInfo> = try {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
             val now = now().toLocalDateTime(TimeZone.UTC)

@@ -1,12 +1,17 @@
 package ai.dokus.auth.backend
 
 import ai.dokus.app.auth.domain.AccountRemoteService
-import ai.dokus.auth.backend.rpc.AuthenticatedAccountService
+import ai.dokus.auth.backend.database.repository.TenantRepository
+import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
+import ai.dokus.auth.backend.rpc.ClientRemoteServiceImpl
+import ai.dokus.auth.backend.rpc.TenantRemoteServiceImpl
+import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
-import ai.dokus.foundation.domain.rpc.CashflowApi
-import ai.dokus.foundation.domain.rpc.ClientApi
-import ai.dokus.foundation.domain.rpc.TenantApi
-import ai.dokus.foundation.ktor.security.RequestAuthHolder
+import ai.dokus.foundation.domain.rpc.CashflowRemoteService
+import ai.dokus.foundation.domain.rpc.ClientRemoteService
+import ai.dokus.foundation.domain.rpc.TenantRemoteService
+import ai.dokus.foundation.ktor.security.AuthInfoProvider
+import ai.dokus.foundation.ktor.services.ClientService
 import io.ktor.server.routing.Route
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
@@ -29,15 +34,25 @@ fun Route.withRemoteServices() {
 
         // Wrap AccountRemoteService with authentication context injection
         registerService<AccountRemoteService> {
-            AuthenticatedAccountService(
-                delegate = get<AccountRemoteService>(),
-                authInfoProvider = { RequestAuthHolder.get() }
+            AccountRemoteServiceImpl(
+                authService = get<AuthService>(),
+                authInfoProvider = AuthInfoProvider(call)
             )
         }
 
-        registerService<TenantApi> { get<TenantApi>() }
-        registerService<ClientApi> { get<ClientApi>() }
-        registerService<CashflowApi> { get<CashflowApi>() }
+        registerService<TenantRemoteService> {
+            TenantRemoteServiceImpl(
+                tenantService = get<TenantRepository>(),
+                authInfoProvider = AuthInfoProvider(call)
+            )
+        }
+        registerService<ClientRemoteService> {
+            ClientRemoteServiceImpl(
+                clientService = get<ClientService>(),
+                authInfoProvider = AuthInfoProvider(call)
+            )
+        }
+        registerService<CashflowRemoteService> { get<CashflowRemoteService>() }
 
         // Auth validation service for inter-service communication
         registerService<AuthValidationRemoteService> { get<AuthValidationRemoteService>() }
