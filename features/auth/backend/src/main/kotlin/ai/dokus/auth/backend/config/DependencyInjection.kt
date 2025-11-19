@@ -1,8 +1,9 @@
 package ai.dokus.auth.backend.config
 
+import ai.dokus.auth.backend.database.repository.PasswordResetTokenRepository
+import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
 import ai.dokus.auth.backend.database.repository.TenantRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.auth.backend.database.services.RefreshTokenRepository
 import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.TenantSettingsTable
@@ -55,10 +56,11 @@ private val appModule = module {
     // Password crypto service
     single<PasswordCryptoService> { PasswordCryptoService4j() }
 
-    // Local database services
+    // Repositories (data access layer)
     single<TenantRepository> { TenantRepository() }
     single<UserRepository> { UserRepository(get()) }
     single<RefreshTokenRepository> { RefreshTokenRepository() }
+    single<PasswordResetTokenRepository> { PasswordResetTokenRepository() }
 
     // JWT token generation
     single {
@@ -91,10 +93,17 @@ private val appModule = module {
     }
 
     // Email verification service
-    single { EmailVerificationService(get()) }
+    single { EmailVerificationService(get<UserRepository>(), get<EmailService>()) }
 
     // Password reset service
-    single { PasswordResetService(get(), get(), get()) }
+    single {
+        PasswordResetService(
+            get<UserRepository>(),
+            get<PasswordResetTokenRepository>(),
+            get<RefreshTokenRepository>(),
+            get<EmailService>()
+        )
+    }
 
     // Rate limit service - prevents brute force attacks
     single { RateLimitService() }

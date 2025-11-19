@@ -2,7 +2,7 @@
 
 package ai.dokus.auth.backend.services
 
-import ai.dokus.auth.backend.database.services.RefreshTokenService
+import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.BusinessUser
@@ -45,7 +45,7 @@ class AuthServiceDeactivateAccountTest {
     private lateinit var userService: UserService
     private lateinit var tenantService: TenantService
     private lateinit var jwtGenerator: JwtGenerator
-    private lateinit var refreshTokenService: RefreshTokenService
+    private lateinit var refreshTokenRepository: RefreshTokenRepository
     private lateinit var rateLimitService: RateLimitService
     private lateinit var emailVerificationService: EmailVerificationService
     private lateinit var passwordResetService: PasswordResetService
@@ -59,7 +59,7 @@ class AuthServiceDeactivateAccountTest {
         userService = mockk(relaxed = true)
         tenantService = mockk(relaxed = true)
         jwtGenerator = mockk(relaxed = true)
-        refreshTokenService = mockk(relaxed = true)
+        refreshTokenRepository = mockk(relaxed = true)
         rateLimitService = mockk(relaxed = true)
         emailVerificationService = mockk(relaxed = true)
         passwordResetService = mockk(relaxed = true)
@@ -68,7 +68,7 @@ class AuthServiceDeactivateAccountTest {
             userService = userService,
             tenantService = tenantService,
             jwtGenerator = jwtGenerator,
-            refreshTokenService = refreshTokenService,
+            refreshTokenRepository = refreshTokenRepository,
             rateLimitService = rateLimitService,
             emailVerificationService = emailVerificationService,
             passwordResetService = passwordResetService
@@ -90,7 +90,7 @@ class AuthServiceDeactivateAccountTest {
         }
         coEvery { userService.findById(testUserId) } returns activeUser
         coEvery { userService.deactivate(testUserId, any()) } just Runs
-        coEvery { refreshTokenService.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
+        coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         // When: Deactivate account is called
         val result = authService.deactivateAccount(testUserId, testReason)
@@ -105,7 +105,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: All refresh tokens were revoked
         coVerify(exactly = 1) {
-            refreshTokenService.revokeAllUserTokens(testUserId)
+            refreshTokenRepository.revokeAllUserTokens(testUserId)
         }
     }
 
@@ -131,7 +131,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Token revocation was never attempted
         coVerify(exactly = 0) {
-            refreshTokenService.revokeAllUserTokens(any())
+            refreshTokenRepository.revokeAllUserTokens(any())
         }
     }
 
@@ -162,7 +162,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Token revocation was never attempted
         coVerify(exactly = 0) {
-            refreshTokenService.revokeAllUserTokens(any())
+            refreshTokenRepository.revokeAllUserTokens(any())
         }
     }
 
@@ -178,7 +178,7 @@ class AuthServiceDeactivateAccountTest {
         coEvery { userService.deactivate(testUserId, any()) } just Runs
 
         // Token revocation fails
-        coEvery { refreshTokenService.revokeAllUserTokens(testUserId) } returns
+        coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns
             Result.failure(RuntimeException("Token revocation failed"))
 
         // When: Deactivate account is called
@@ -203,7 +203,7 @@ class AuthServiceDeactivateAccountTest {
         }
         coEvery { userService.findById(testUserId) } returns activeUser
         coEvery { userService.deactivate(testUserId, any()) } just Runs
-        coEvery { refreshTokenService.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
+        coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         val customReason = "GDPR data deletion request"
 
@@ -245,7 +245,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Token revocation was never attempted (deactivation failed first)
         coVerify(exactly = 0) {
-            refreshTokenService.revokeAllUserTokens(any())
+            refreshTokenRepository.revokeAllUserTokens(any())
         }
     }
 
@@ -259,7 +259,7 @@ class AuthServiceDeactivateAccountTest {
         }
         coEvery { userService.findById(testUserId) } returns activeUser
         coEvery { userService.deactivate(testUserId, any()) } just Runs
-        coEvery { refreshTokenService.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
+        coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         // When: Deactivate account is called
         val result = authService.deactivateAccount(testUserId, testReason)
@@ -271,7 +271,7 @@ class AuthServiceDeactivateAccountTest {
         coVerifyOrder {
             userService.findById(testUserId)
             userService.deactivate(testUserId, testReason)
-            refreshTokenService.revokeAllUserTokens(testUserId)
+            refreshTokenRepository.revokeAllUserTokens(testUserId)
         }
     }
 
@@ -285,7 +285,7 @@ class AuthServiceDeactivateAccountTest {
         }
         coEvery { userService.findById(testUserId) } returns activeUser
         coEvery { userService.deactivate(testUserId, any()) } just Runs
-        coEvery { refreshTokenService.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
+        coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         // When: Deactivate account is called with empty reason
         val result = authService.deactivateAccount(testUserId, "")

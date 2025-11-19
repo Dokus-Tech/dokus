@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package ai.dokus.auth.backend.database.services
+package ai.dokus.auth.backend.database.repository
 
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.TenantsTable
@@ -33,7 +33,7 @@ import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 
 /**
- * Comprehensive tests for RefreshTokenServiceImpl
+ * Comprehensive tests for RefreshTokenRepository
  *
  * Tests cover:
  * - Token persistence and retrieval
@@ -43,10 +43,10 @@ import kotlin.uuid.toJavaUuid
  * - Security edge cases
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RefreshTokenServiceImplTest {
+class RefreshTokenRepositoryTest {
 
     private lateinit var database: DatabaseFactory
-    private lateinit var service: RefreshTokenService
+    private lateinit var service: RefreshTokenRepository
     private var testUserId: UserId? = null
     private val testTenantId = Uuid.random()
 
