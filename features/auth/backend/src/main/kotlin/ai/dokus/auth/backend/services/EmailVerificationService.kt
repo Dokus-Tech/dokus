@@ -2,41 +2,18 @@
 
 package ai.dokus.auth.backend.services
 
-import ai.dokus.auth.backend.database.tables.UsersTable
+import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.foundation.domain.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
-import org.jetbrains.exposed.v1.jdbc.update
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.slf4j.LoggerFactory
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.time.Duration.Companion.hours
 import kotlin.uuid.ExperimentalUuidApi
-
-/**
- * Helper function to convert kotlinx.datetime.LocalDateTime to kotlinx.datetime.Instant
- */
-@OptIn(kotlin.time.ExperimentalTime::class)
-private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
-    val kotlinTimeInstant = this.toInstant(TimeZone.UTC)
-    return Instant.fromEpochSeconds(
-        kotlinTimeInstant.epochSeconds,
-        kotlinTimeInstant.nanosecondsOfSecond.toLong()
-    )
-}
 
 /**
  * Service for managing email verification workflow.
@@ -55,6 +32,7 @@ private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
  * 4. Token validated and email marked as verified
  */
 class EmailVerificationService(
+    private val userRepository: UserRepository,
     private val emailService: EmailService
 ) {
     private val logger = LoggerFactory.getLogger(EmailVerificationService::class.java)
@@ -72,13 +50,7 @@ class EmailVerificationService(
             val token = generateSecureToken()
             val expiry = now() + 24.hours
 
-            dbQuery {
-                val userUuid = java.util.UUID.fromString(userId.value)
-                UsersTable.update({ UsersTable.id eq userUuid }) {
-                    it[emailVerificationToken] = token
-                    it[emailVerificationExpiry] = expiry.toLocalDateTime(TimeZone.UTC)
-                }
-            }
+            userRepository.setEmailVerificationToken(userId, token, expiry)
 
             logger.info("Email verification token generated for user: ${userId.value}")
             logger.debug("Verification link: /auth/verify-email?token=$token")
@@ -110,36 +82,18 @@ class EmailVerificationService(
      */
     suspend fun verifyEmail(token: String): Result<Unit> {
         return try {
-            dbQuery {
-                val user = UsersTable
-                    .selectAll()
-                    .where {
-                        (UsersTable.emailVerificationToken eq token) and
-                        (UsersTable.emailVerified eq false)
-                    }
-                    .singleOrNull()
-                    ?: throw DokusException.EmailVerificationTokenInvalid()
+            val userInfo = userRepository.findByVerificationToken(token)
+                ?: return Result.failure(DokusException.EmailVerificationTokenInvalid())
 
-                val userId = user[UsersTable.id].value
-                val expiry = user[UsersTable.emailVerificationExpiry]
-                    ?: throw DokusException.EmailVerificationTokenInvalid()
-
-                // Check expiration
-                val expiryInstant = expiry.toKotlinxInstant()
-                if (expiryInstant < now()) {
-                    throw DokusException.EmailVerificationTokenExpired()
-                }
-
-                // Mark as verified
-                UsersTable.update({ UsersTable.id eq userId }) {
-                    it[emailVerified] = true
-                    it[emailVerificationToken] = null
-                    it[emailVerificationExpiry] = null
-                }
-
-                logger.info("Email verified for user: $userId")
+            // Check expiration
+            if (userInfo.expiresAt < now()) {
+                return Result.failure(DokusException.EmailVerificationTokenExpired())
             }
 
+            // Mark as verified
+            userRepository.markEmailVerified(userInfo.userId)
+
+            logger.info("Email verified for user: ${userInfo.userId.value}")
             Result.success(Unit)
         } catch (e: DokusException) {
             logger.warn("Email verification failed: ${e.errorCode}")
@@ -158,22 +112,14 @@ class EmailVerificationService(
      */
     suspend fun resendVerificationEmail(userId: UserId): Result<Unit> {
         return try {
-            val user = dbQuery {
-                val userUuid = java.util.UUID.fromString(userId.value)
-                UsersTable
-                    .selectAll()
-                    .where { UsersTable.id eq userUuid }
-                    .singleOrNull()
-            } ?: return Result.failure(
-                DokusException.InternalError("User not found")
-            )
+            val user = userRepository.findById(userId)
+                ?: return Result.failure(DokusException.InternalError("User not found"))
 
-            if (user[UsersTable.emailVerified]) {
-                throw DokusException.EmailAlreadyVerified()
+            if (userRepository.isEmailVerified(userId)) {
+                return Result.failure(DokusException.EmailAlreadyVerified())
             }
 
-            val email = user[UsersTable.email]
-            sendVerificationEmail(userId, email)
+            sendVerificationEmail(userId, user.email.value)
         } catch (e: DokusException) {
             Result.failure(e)
         } catch (e: Exception) {

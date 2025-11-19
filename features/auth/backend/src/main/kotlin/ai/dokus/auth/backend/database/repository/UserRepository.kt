@@ -11,6 +11,7 @@ import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -21,6 +22,18 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+
+/**
+ * Helper function to convert kotlinx.datetime.LocalDateTime to kotlinx.datetime.Instant
+ */
+@OptIn(kotlin.time.ExperimentalTime::class)
+private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
+    val kotlinTimeInstant = this.toInstant(TimeZone.UTC)
+    return Instant.fromEpochSeconds(
+        kotlinTimeInstant.epochSeconds,
+        kotlinTimeInstant.nanosecondsOfSecond.toLong()
+    )
+}
 
 @OptIn(ExperimentalUuidApi::class)
 class UserRepository(
@@ -227,4 +240,102 @@ class UserRepository(
 
             user.toBusinessUser()
         }
+
+    // Email verification methods
+
+    /**
+     * Set email verification token for a user.
+     *
+     * @param userId The user ID to set verification token for
+     * @param token The cryptographically secure verification token
+     * @param expiry When the verification token expires
+     */
+    suspend fun setEmailVerificationToken(
+        userId: UserId,
+        token: String,
+        expiry: Instant
+    ) = dbQuery {
+        val javaUuid = UUID.fromString(userId.value)
+        val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
+            it[emailVerificationToken] = token
+            it[emailVerificationExpiry] = expiry.toLocalDateTime(TimeZone.UTC)
+        }
+
+        if (updated == 0) {
+            throw IllegalArgumentException("User not found: $userId")
+        }
+
+        logger.debug("Set email verification token for user $userId")
+    }
+
+    /**
+     * Find a user by their email verification token.
+     *
+     * @param token The verification token to search for
+     * @return User info if found and not yet verified, null otherwise
+     */
+    suspend fun findByVerificationToken(token: String): EmailVerificationUserInfo? = dbQuery {
+        UsersTable
+            .selectAll()
+            .where {
+                (UsersTable.emailVerificationToken eq token) and
+                (UsersTable.emailVerified eq false)
+            }
+            .singleOrNull()
+            ?.let { row ->
+                val expiry = row[UsersTable.emailVerificationExpiry]
+                    ?: return@let null
+
+                EmailVerificationUserInfo(
+                    userId = UserId(row[UsersTable.id].value.toString()),
+                    email = row[UsersTable.email],
+                    expiresAt = expiry.toKotlinxInstant()
+                )
+            }
+    }
+
+    /**
+     * Mark a user's email as verified and clear the verification token.
+     *
+     * @param userId The user ID to mark as verified
+     */
+    suspend fun markEmailVerified(userId: UserId) = dbQuery {
+        val javaUuid = UUID.fromString(userId.value)
+        val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
+            it[emailVerified] = true
+            it[emailVerificationToken] = null
+            it[emailVerificationExpiry] = null
+        }
+
+        if (updated == 0) {
+            throw IllegalArgumentException("User not found: $userId")
+        }
+
+        logger.info("Marked email as verified for user $userId")
+    }
+
+    /**
+     * Check if a user's email is already verified.
+     *
+     * @param userId The user ID to check
+     * @return true if email is verified, false otherwise
+     */
+    suspend fun isEmailVerified(userId: UserId): Boolean = dbQuery {
+        val javaUuid = UUID.fromString(userId.value)
+        UsersTable
+            .selectAll()
+            .where { UsersTable.id eq javaUuid }
+            .singleOrNull()
+            ?.get(UsersTable.emailVerified)
+            ?: false
+    }
 }
+
+/**
+ * Information about a user for email verification purposes
+ */
+data class EmailVerificationUserInfo(
+    val userId: UserId,
+    val email: String,
+    val expiresAt: Instant
+)
