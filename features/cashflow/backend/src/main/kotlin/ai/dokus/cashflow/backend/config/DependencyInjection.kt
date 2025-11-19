@@ -6,13 +6,11 @@ import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
 import ai.dokus.cashflow.backend.rpc.CashflowApiImpl
 import ai.dokus.cashflow.backend.service.DocumentStorageService
-import ai.dokus.foundation.domain.rpc.CashflowApi
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
-import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 

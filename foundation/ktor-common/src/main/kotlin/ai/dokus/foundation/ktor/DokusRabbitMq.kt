@@ -1,5 +1,7 @@
 package ai.dokus.foundation.ktor
 
+import ai.dokus.foundation.ktor.config.RabbitMQConfig
+
 /**
  * RabbitMQ connection configuration using typed config from AppBaseConfig.
  * Configuration flows from environment variables → HOCON config → Kotlin config objects.

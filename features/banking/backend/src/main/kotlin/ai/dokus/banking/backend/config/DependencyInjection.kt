@@ -3,7 +3,7 @@ package ai.dokus.banking.backend.config
 import ai.dokus.banking.backend.database.services.BankServiceImpl
 import ai.dokus.banking.backend.database.tables.*
 import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.services.BankService

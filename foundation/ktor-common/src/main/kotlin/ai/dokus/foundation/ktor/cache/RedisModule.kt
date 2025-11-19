@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ktor.cache
 
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import org.koin.dsl.module
 
 fun redisModule(appConfig: AppBaseConfig, redistNamespace: RedisNamespace) = module {

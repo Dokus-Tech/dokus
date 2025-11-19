@@ -27,9 +27,7 @@ class AuthContext(
  * @throws IllegalStateException if no authentication context is available
  */
 suspend fun requireAuthenticatedUserId(): UserId {
-    val authContext = currentCoroutineContext()[AuthContext]
-        ?: throw IllegalStateException("Authentication required but no auth context found")
-    return authContext.authInfo.userId
+    return requireAuthenticationInfo().userId
 }
 
 /**
@@ -54,9 +52,7 @@ suspend fun getAuthenticationInfo(): AuthenticationInfo? {
 }
 
 suspend fun requireAuthenticatedTenantId(): TenantId {
-    val authContext = currentCoroutineContext()[AuthContext]
-        ?: throw IllegalStateException("Authentication required but no auth context found")
-    return authContext.authInfo.tenantId
+    return requireAuthenticationInfo().tenantId
 }
 
 /**

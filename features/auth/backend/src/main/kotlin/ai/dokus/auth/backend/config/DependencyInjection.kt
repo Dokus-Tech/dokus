@@ -14,7 +14,7 @@ import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.auth.backend.services.*
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.foundation.domain.rpc.*
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.DokusRabbitMq
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
