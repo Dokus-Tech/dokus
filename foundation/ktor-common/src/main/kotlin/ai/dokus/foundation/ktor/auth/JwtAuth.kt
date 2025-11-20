@@ -13,15 +13,9 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
-import io.ktor.util.AttributeKey
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
-/**
- * Attribute key for storing authentication info in call attributes.
- */
-val AuthInfoAttributeKey = AttributeKey<AuthenticationInfo>("AuthInfo")
 
 private val logger = LoggerFactory.getLogger("ServiceAuthConfig")
 
