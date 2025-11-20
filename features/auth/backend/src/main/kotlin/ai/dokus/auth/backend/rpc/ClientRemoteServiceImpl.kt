@@ -5,9 +5,9 @@ import ai.dokus.foundation.domain.TenantId
 import ai.dokus.foundation.domain.VatNumber
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
-import ai.dokus.foundation.domain.rpc.ClientEvent
+import ai.dokus.foundation.domain.model.ClientEvent
+import ai.dokus.foundation.domain.model.ClientStats
 import ai.dokus.foundation.domain.rpc.ClientRemoteService
-import ai.dokus.foundation.domain.rpc.ClientStats
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.ClientService

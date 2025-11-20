@@ -1,12 +1,16 @@
 package ai.dokus.payment.backend.services
 
-import ai.dokus.foundation.domain.rpc.PaymentRemoteService
-import ai.dokus.foundation.domain.rpc.PaymentEvent
-import ai.dokus.foundation.domain.rpc.PaymentStats
-import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.PaymentId
+import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.TransactionId
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentEvent
+import ai.dokus.foundation.domain.model.PaymentStats
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
+import ai.dokus.foundation.domain.rpc.PaymentRemoteService
 import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
