@@ -1,20 +1,26 @@
 package ai.dokus.foundation.ktor.middleware
 
+import ai.dokus.foundation.ktor.utils.extractClientIpAddress
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.createRouteScopedPlugin
-import io.ktor.server.request.header
 
 val RateLimitPlugin = createRouteScopedPlugin(
     name = "RateLimitPlugin",
     createConfiguration = ::RateLimitConfiguration
 ) {
+    // TODO: Implement rate limiting logic using Redis or in-memory store
+    // This plugin will:
+    // 1. Check if the client has exceeded rate limits (by IP address or user ID)
+    // 2. Return 429 Too Many Requests if rate limit exceeded
+    // 3. Use a sliding window or token bucket algorithm
 }
 
 class RateLimitConfiguration
 
-private fun extractClientIpAddress(call: ApplicationCall): String {
-    return call.request.header("X-Forwarded-For")
-        ?.split(",")?.firstOrNull()?.trim()
-        ?: call.request.header("X-Real-IP")
-        ?: call.request.local.remoteHost
+/**
+ * Gets the rate limit key for this request (currently IP address).
+ * Can be extended to use user ID for authenticated requests.
+ */
+fun ApplicationCall.getRateLimitKey(): String {
+    return extractClientIpAddress()
 }
