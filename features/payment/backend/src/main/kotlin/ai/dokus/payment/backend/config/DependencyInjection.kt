@@ -9,6 +9,7 @@ import ai.dokus.payment.backend.services.PaymentRemoteServiceImpl
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
+import ai.dokus.foundation.ktor.security.JwtValidator
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
@@ -39,6 +40,14 @@ private val appModule = module {
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     val coreModule = module {
         single<AppBaseConfig> { appConfig }
+
+        // JWT validator for local token validation
+        single {
+            JwtValidator(
+                secret = appConfig.jwt.secret,
+                issuer = appConfig.jwt.issuer
+            )
+        }
     }
 
     install(Koin) {
