@@ -4,11 +4,11 @@ import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
-import ai.dokus.foundation.domain.AttachmentId
-import ai.dokus.foundation.domain.ExpenseId
-import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus

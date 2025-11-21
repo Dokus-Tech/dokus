@@ -3,8 +3,8 @@ package ai.dokus.auth.backend.database.repository
 import ai.dokus.auth.backend.database.mappers.FinancialMappers.toBusinessUser
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.BusinessUser
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService

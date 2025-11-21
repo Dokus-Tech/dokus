@@ -1,9 +1,9 @@
 package ai.dokus.foundation.ktor.services
 
-import ai.dokus.foundation.domain.ClientId
-import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice

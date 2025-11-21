@@ -5,9 +5,9 @@ import ai.dokus.auth.backend.database.mappers.TenantMapper.toTenantSettings
 import ai.dokus.auth.backend.database.tables.TenantSettingsTable
 import ai.dokus.auth.backend.database.tables.TenantsTable
 import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.domain.InvoiceNumber
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.VatNumber
+import ai.dokus.foundation.domain.ids.InvoiceNumber
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus

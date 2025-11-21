@@ -3,7 +3,7 @@
 package ai.dokus.auth.backend.database.repository
 
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.datetime.Instant

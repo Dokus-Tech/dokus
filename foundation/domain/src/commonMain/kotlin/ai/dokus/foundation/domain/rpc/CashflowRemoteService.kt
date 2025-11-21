@@ -1,9 +1,9 @@
 package ai.dokus.foundation.domain.rpc
 
-import ai.dokus.foundation.domain.AttachmentId
-import ai.dokus.foundation.domain.ExpenseId
-import ai.dokus.foundation.domain.InvoiceId
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.Attachment

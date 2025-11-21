@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ktor.services
 
-import ai.dokus.foundation.domain.AttachmentId
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.Attachment
 import ai.dokus.foundation.domain.model.UploadInfo

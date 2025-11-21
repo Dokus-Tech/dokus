@@ -1,7 +1,11 @@
 package ai.dokus.auth.backend.database.mappers
 
 import ai.dokus.auth.backend.database.tables.*
-import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.VatRate
+import ai.dokus.foundation.domain.ids.Bic
+import ai.dokus.foundation.domain.ids.Iban
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.*
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi

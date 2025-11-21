@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.model.auth
 
 import ai.dokus.foundation.domain.DeviceType
-import ai.dokus.foundation.domain.SessionId
+import ai.dokus.foundation.domain.ids.SessionId
 import ai.dokus.foundation.domain.database.DbEnum
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Instant

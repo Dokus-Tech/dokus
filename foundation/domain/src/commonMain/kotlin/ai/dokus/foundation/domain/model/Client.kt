@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.ClientId
+import ai.dokus.foundation.domain.ids.ClientId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

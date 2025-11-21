@@ -1,8 +1,8 @@
 package ai.dokus.foundation.domain.model.auth
 
-import ai.dokus.foundation.domain.OrganizationId
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
 import ai.dokus.foundation.domain.enums.UserRole

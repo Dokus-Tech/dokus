@@ -2,11 +2,11 @@
 
 package ai.dokus.banking.backend.database.services
 
-import ai.dokus.foundation.domain.BankConnectionId
-import ai.dokus.foundation.domain.BankTransactionId
-import ai.dokus.foundation.domain.ExpenseId
-import ai.dokus.foundation.domain.InvoiceId
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.BankConnectionId
+import ai.dokus.foundation.domain.ids.BankTransactionId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.model.BankConnection
 import ai.dokus.foundation.domain.model.BankTransaction

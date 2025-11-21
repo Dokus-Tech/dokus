@@ -1,8 +1,8 @@
 package ai.dokus.auth.backend.rpc
 
-import ai.dokus.foundation.domain.ClientId
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.VatNumber
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
 import ai.dokus.foundation.domain.model.ClientEvent

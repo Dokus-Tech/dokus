@@ -1,7 +1,7 @@
 package ai.dokus.cashflow.backend.service
 
-import ai.dokus.foundation.domain.AttachmentId
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.TenantId
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
