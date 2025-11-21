@@ -38,10 +38,11 @@ enum class UserRole(override val dbValue: String) : DbEnum {
     Owner("OWNER"),
     Admin("ADMIN"),
     Accountant("ACCOUNTANT"),
+    Editor("EDITOR"),
     Viewer("VIEWER");
 
     companion object {
-        val all = listOf(Owner, Admin, Accountant, Viewer)
+        val all = listOf(Owner, Admin, Accountant, Editor, Viewer)
     }
 }
 
@@ -52,6 +53,39 @@ enum class UserStatus(override val dbValue: String) : DbEnum {
     Suspended("SUSPENDED"),
     Locked("LOCKED"),
     Deleted("DELETED")
+}
+
+@Serializable
+enum class Permission(override val dbValue: String) : DbEnum {
+    // Invoices
+    InvoicesRead("INVOICES_READ"),
+    InvoicesCreate("INVOICES_CREATE"),
+    InvoicesEdit("INVOICES_EDIT"),
+    InvoicesDelete("INVOICES_DELETE"),
+    InvoicesSend("INVOICES_SEND"),
+
+    // Clients
+    ClientsRead("CLIENTS_READ"),
+    ClientsManage("CLIENTS_MANAGE"),
+
+    // Settings
+    SettingsRead("SETTINGS_READ"),
+    SettingsManage("SETTINGS_MANAGE"),
+
+    // Users & permissions
+    UsersRead("USERS_READ"),
+    UsersManage("USERS_MANAGE"),
+
+    // Financial data
+    ReportsView("REPORTS_VIEW"),
+    ExportsCreate("EXPORTS_CREATE")
+}
+
+@Serializable
+enum class SubscriptionTier(override val dbValue: String) : DbEnum {
+    SelfHosted("SELF_HOSTED"),
+    CloudBasic("CLOUD_BASIC"),
+    CloudPro("CLOUD_PRO")
 }
 
 // ============================================================================

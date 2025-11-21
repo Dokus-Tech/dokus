@@ -34,6 +34,18 @@ value class TenantId(val value: Uuid) {
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
+value class OrganizationId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): OrganizationId = OrganizationId(Uuid.random())
+        fun parse(value: String): OrganizationId = OrganizationId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
 value class BusinessUserId(val value: Uuid) {
     override fun toString(): String = value.toString()
 
