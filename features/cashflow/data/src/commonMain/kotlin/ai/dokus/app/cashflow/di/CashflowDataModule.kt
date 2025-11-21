@@ -1,13 +1,11 @@
 package ai.dokus.app.cashflow.di
 
-import ai.dokus.app.cashflow.network.MockCashflowApi
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.foundation.domain.rpc.CashflowApi
+import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.network.createAuthenticatedRpcClient
-import ai.dokus.foundation.network.or
 import ai.dokus.foundation.network.service
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +23,7 @@ import org.koin.dsl.module
 val cashflowNetworkModule = module {
     // Authenticated RPC client for Cashflow service
     // Uses createAuthenticatedRpcClient to automatically include JWT tokens
-    factory<KtorRpcClient?>(named(Feature.Cashflow)) {
+    factory<KtorRpcClient>(named(Feature.Cashflow)) {
         createAuthenticatedRpcClient(
             endpoint = DokusEndpoint.Cashflow,
             tokenManager = get<TokenManager>(),
@@ -40,8 +38,8 @@ val cashflowNetworkModule = module {
 
     // CashflowApi service with stub fallback
     // If RPC client is unavailable (offline/network error), falls back to MockCashflowApi
-    single<CashflowApi> {
-        val rpcClient = getOrNull<KtorRpcClient>(named(Feature.Cashflow))
-        rpcClient?.service<CashflowApi>() or MockCashflowApi()
+    single<CashflowRemoteService> {
+        val rpcClient = get<KtorRpcClient>(named(Feature.Cashflow))
+        rpcClient.service<CashflowRemoteService>()
     }
 }

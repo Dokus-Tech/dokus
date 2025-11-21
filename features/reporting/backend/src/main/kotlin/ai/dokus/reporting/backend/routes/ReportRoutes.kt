@@ -1,6 +1,6 @@
 package ai.dokus.reporting.backend.routes
 
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.TenantId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import ai.dokus.foundation.ktor.services.*

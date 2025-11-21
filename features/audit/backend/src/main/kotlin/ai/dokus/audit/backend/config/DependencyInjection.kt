@@ -3,9 +3,10 @@ package ai.dokus.audit.backend.config
 import ai.dokus.audit.backend.database.services.AuditServiceImpl
 import ai.dokus.audit.backend.database.tables.*
 import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
+import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.services.AuditService
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -30,6 +31,14 @@ private val appModule = module {
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     val coreModule = module {
         single<AppBaseConfig> { appConfig }
+
+        // JWT validator for local token validation
+        single {
+            JwtValidator(
+                secret = appConfig.jwt.secret,
+                issuer = appConfig.jwt.issuer
+            )
+        }
     }
 
     install(Koin) {

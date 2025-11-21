@@ -1,8 +1,8 @@
 package ai.dokus.foundation.ktor.services
 
-import ai.dokus.foundation.domain.AuditLogId
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.AuditLogId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.AuditLog

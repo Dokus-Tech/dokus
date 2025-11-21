@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ktor.configure
 
-import ai.dokus.foundation.ktor.SecurityConfig
+import ai.dokus.foundation.ktor.config.SecurityConfig
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application

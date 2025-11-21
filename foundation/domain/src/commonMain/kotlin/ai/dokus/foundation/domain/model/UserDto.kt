@@ -1,8 +1,8 @@
 package ai.dokus.foundation.domain.model
 
 import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

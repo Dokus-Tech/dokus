@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.model.common
 
-import ai.dokus.foundation.domain.SessionId
+import ai.dokus.foundation.domain.ids.SessionId
 import ai.dokus.foundation.domain.model.common.DeepLink.Companion.APP_SCHEME
 import ai.dokus.foundation.domain.model.common.DeepLink.Companion.HTTPS_SCHEME
 import kotlinx.serialization.Serializable

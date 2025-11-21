@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.UserRole
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock

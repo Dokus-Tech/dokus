@@ -1,11 +1,13 @@
 package ai.dokus.banking.backend.config
 
 import ai.dokus.banking.backend.database.services.BankServiceImpl
-import ai.dokus.banking.backend.database.tables.*
-import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.AppBaseConfig
+import ai.dokus.banking.backend.database.tables.BankConnectionsTable
+import ai.dokus.banking.backend.database.tables.BankTransactionsTable
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
+import ai.dokus.foundation.ktor.config.AppBaseConfig
+import ai.dokus.foundation.ktor.database.DatabaseFactory
+import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.services.BankService
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -30,6 +32,14 @@ private val appModule = module {
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     val coreModule = module {
         single<AppBaseConfig> { appConfig }
+
+        // JWT validator for local token validation
+        single {
+            JwtValidator(
+                secret = appConfig.jwt.secret,
+                issuer = appConfig.jwt.issuer
+            )
+        }
     }
 
     install(Koin) {

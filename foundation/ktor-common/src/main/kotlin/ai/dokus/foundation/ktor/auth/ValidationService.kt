@@ -4,6 +4,7 @@ import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.enums.UserStatus
 import ai.dokus.foundation.domain.model.UserDto
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
+import ai.dokus.foundation.ktor.utils.extractClientIpAddress
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -11,10 +12,12 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 /**
- * WithUser - Main authentication extension function
+ * WithUser - Main authentication extension function for HTTP routes.
  *
  * This function validates the JWT token by calling the Auth service via RPC
  * and executes the block with the authenticated user context.
+ *
+ * Note: This is for HTTP routes only. RPC services should use AuthInfoProvider instead.
  *
  * Example usage:
  * ```kotlin
@@ -33,7 +36,7 @@ import io.ktor.server.routing.*
  * @param block Lambda to execute with authenticated user
  * @return Result of the block execution
  */
-suspend inline fun <reified T> RoutingContext.withUser(
+internal suspend inline fun <reified T> RoutingContext.withUser(
     validationService: AuthValidationRemoteService,
     sourceModule: String = "Unknown",
     allowedUserRoles: List<UserRole> = UserRole.all,
@@ -98,14 +101,14 @@ suspend inline fun <reified T> RoutingContext.withUser(
 }
 
 /**
- * Extract JWT token from Authorization header
+ * Extract JWT token from Authorization header.
  *
  * Expects header format: "Authorization: Bearer <token>"
  *
  * @return JWT token without "Bearer " prefix
  * @throws IllegalArgumentException if Authorization header is missing or malformed
  */
-fun ApplicationCall.extractJwtToken(): String {
+internal fun ApplicationCall.extractJwtToken(): String {
     val authHeader = request.headers["Authorization"]
         ?: throw IllegalArgumentException("Missing Authorization header")
 
@@ -122,36 +125,10 @@ fun ApplicationCall.extractJwtToken(): String {
 }
 
 /**
- * Extract client IP address from request
- *
- * Checks headers in this priority:
- * 1. X-Forwarded-For (first IP in list)
- * 2. X-Real-IP
- * 3. Direct connection IP
- *
- * @return Client IP address
+ * Extract JWT token or return null if missing.
+ * Useful for endpoints that support both authenticated and anonymous access.
  */
-fun ApplicationCall.extractClientIpAddress(): String {
-    // Check X-Forwarded-For header (may contain multiple IPs)
-    request.headers["X-Forwarded-For"]?.let { forwardedFor ->
-        return forwardedFor.split(",").firstOrNull()?.trim() ?: ""
-    }
-
-    // Check X-Real-IP header
-    request.headers["X-Real-IP"]?.let { realIp ->
-        return realIp.trim()
-    }
-
-    // Fall back to direct connection IP
-    return request.local.remoteHost
-}
-
-/**
- * Optional: Extract JWT token or return null if missing
- *
- * Useful for endpoints that support both authenticated and anonymous access
- */
-fun ApplicationCall.extractJwtTokenOrNull(): String? {
+internal fun ApplicationCall.extractJwtTokenOrNull(): String? {
     return try {
         extractJwtToken()
     } catch (e: IllegalArgumentException) {
@@ -160,8 +137,8 @@ fun ApplicationCall.extractJwtTokenOrNull(): String? {
 }
 
 /**
- * Check if request has JWT token
+ * Check if request has JWT token.
  */
-fun ApplicationCall.hasJwtToken(): Boolean {
+internal fun ApplicationCall.hasJwtToken(): Boolean {
     return extractJwtTokenOrNull() != null
 }

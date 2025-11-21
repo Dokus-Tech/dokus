@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.VatNumber
+import ai.dokus.foundation.domain.ids.VatNumber
 
 /**
  * Validates VAT numbers with Belgian-specific validation

@@ -2,8 +2,8 @@ package ai.dokus.auth.backend.database.mappers
 
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.BusinessUser
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi

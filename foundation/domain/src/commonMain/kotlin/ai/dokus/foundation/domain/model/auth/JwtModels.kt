@@ -1,29 +1,52 @@
 package ai.dokus.foundation.domain.model.auth
 
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.enums.Permission
+import ai.dokus.foundation.domain.enums.SubscriptionTier
+import ai.dokus.foundation.domain.enums.UserRole
 import kotlinx.serialization.Serializable
 
 /**
  * JWT Claims data class shared between backend and frontend.
  * Maps to the JWT token payload structure.
+ *
+ * This JWT represents access to ONE SPECIFIC TENANT and ONE SPECIFIC ORGANIZATION within that tenant.
  */
 @Serializable
 data class JwtClaims(
-    val userId: String,
-    val tenantId: String,
-    val matricule: String? = null,
+    // User identity
+    val userId: UserId,
     val email: String,
-    val fullName: String,
-    val roles: Set<String> = emptySet(),
-    val permissions: Set<String> = emptySet(),
-    val unitCode: String? = null,
-    val department: String? = null,
-    val clearanceLevel: String = "INTERNAL_USE",
-    val sessionId: String? = null,
-    val deviceFingerprint: String? = null,
+
+    // Tenant context - THIS JWT IS FOR ONE SPECIFIC TENANT
+    val tenantId: TenantId,
+    val organizationId: OrganizationId, // Company/business entity within tenant
+    val organizationName: String, // For UI display
+
+    // Permissions for THIS organization only
+    val role: UserRole, // Role in THIS organization
+    val permissions: Set<Permission>, // What user can do in THIS org
+
+    // Belgian context
+    val matricule: String? = null, // This organization's business number
+    val locale: String = "nl-BE", // Full locale code (e.g., "nl-BE", "fr-BE", "en-US")
+
+    // Subscription tier of THIS organization
+    val subscriptionTier: SubscriptionTier,
+    val featureFlags: Set<String> = emptySet(),
+
+    // Accountant context (if applicable)
+    val isAccountantAccess: Boolean = false, // True if accessing client's org
+    val accountantOrganizationId: OrganizationId? = null, // Accountant's own org ID
+
     // Standard JWT claims
-    val iat: Long? = null, // issued at
-    val exp: Long? = null, // expires at
-    val jti: String? = null // JWT ID
+    val iat: Long,
+    val exp: Long,
+    val jti: String,
+    val iss: String = "dokus",
+    val aud: String = "dokus-api"
 )
 
 /**

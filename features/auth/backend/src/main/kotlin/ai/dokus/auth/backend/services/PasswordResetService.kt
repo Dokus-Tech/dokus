@@ -1,42 +1,18 @@
 package ai.dokus.auth.backend.services
 
-import ai.dokus.auth.backend.database.services.RefreshTokenService
-import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
-import ai.dokus.auth.backend.database.tables.UsersTable
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.auth.backend.database.repository.PasswordResetTokenRepository
+import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
+import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
-import ai.dokus.foundation.ktor.services.UserService
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
-import org.jetbrains.exposed.v1.jdbc.update
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.time.Duration.Companion.hours
-
-/**
- * Helper function to convert kotlinx.datetime.LocalDateTime to kotlinx.datetime.Instant
- */
-@OptIn(kotlin.time.ExperimentalTime::class)
-private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
-    val kotlinTimeInstant = this.toInstant(TimeZone.UTC)
-    return Instant.fromEpochSeconds(
-        kotlinTimeInstant.epochSeconds,
-        kotlinTimeInstant.nanosecondsOfSecond.toLong()
-    )
-}
 
 /**
  * Service for handling password reset flows with email tokens.
@@ -57,8 +33,9 @@ private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
  * 4. Password updated, token marked as used, all sessions invalidated
  */
 class PasswordResetService(
-    private val userService: UserService,
-    private val refreshTokenService: RefreshTokenService,
+    private val userRepository: UserRepository,
+    private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    private val refreshTokenRepository: RefreshTokenRepository,
     private val emailService: EmailService
 ) {
     private val logger = LoggerFactory.getLogger(PasswordResetService::class.java)
@@ -80,36 +57,25 @@ class PasswordResetService(
 
             val token = generateSecureToken()
 
-            val userFound = dbQuery {
-                val user = UsersTable
-                    .selectAll()
-                    .where { UsersTable.email eq email }
-                    .singleOrNull()
+            // Check if user exists
+            val user = userRepository.findByEmail(email)
 
-                if (user != null) {
-                    val userId = user[UsersTable.id].value
-                    val expiresAt = now() + 1.hours
+            if (user != null) {
+                val userId = UserId(user.id.value.toString())
+                val expiresAt = now() + 1.hours
 
-                    // Store reset token
-                    PasswordResetTokensTable.insert {
-                        it[PasswordResetTokensTable.userId] = userId
-                        it[PasswordResetTokensTable.token] = token
-                        it[PasswordResetTokensTable.expiresAt] = expiresAt.toLocalDateTime(TimeZone.UTC)
+                // Store reset token via repository
+                passwordResetTokenRepository.createToken(userId, token, expiresAt)
+                    .onFailure { error ->
+                        logger.error("Failed to create password reset token", error)
+                        throw error
                     }
 
-                    logger.info("Password reset requested for user: $userId")
-                    logger.debug("Password reset token generated: ${token.take(10)}... (expires in 1 hour)")
-                    true
-                } else {
-                    // Email doesn't exist, but we still log and return success
-                    logger.debug("Password reset requested for non-existent email (returning success for security)")
-                    false
-                }
-            }
+                logger.info("Password reset requested for user: ${userId.value}")
+                logger.debug("Password reset token generated: ${token.take(10)}... (expires in 1 hour)")
 
-            // Send email with reset link outside the transaction (async)
-            // Note: Email failures don't prevent the flow (graceful degradation)
-            if (userFound) {
+                // Send email with reset link outside the transaction (async)
+                // Note: Email failures don't prevent the flow (graceful degradation)
                 emailScope.launch {
                     emailService.sendPasswordResetEmail(email, token, expirationHours = 1)
                         .onSuccess {
@@ -119,6 +85,9 @@ class PasswordResetService(
                             logger.error("Failed to send password reset email, but token was created", error)
                         }
                 }
+            } else {
+                // Email doesn't exist, but we still log and return success
+                logger.debug("Password reset requested for non-existent email (returning success for security)")
             }
 
             Result.success(Unit)
@@ -139,42 +108,34 @@ class PasswordResetService(
      */
     suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
         return try {
-            val userId = dbQuery {
-                // Find token
-                val resetRow = PasswordResetTokensTable
-                    .selectAll()
-                    .where {
-                        (PasswordResetTokensTable.token eq token) and
-                        (PasswordResetTokensTable.isUsed eq false)
-                    }
-                    .singleOrNull()
-                    ?: throw DokusException.PasswordResetTokenInvalid()
+            // Find and validate token
+            val tokenInfo = passwordResetTokenRepository.findByToken(token)
+                ?: return Result.failure(DokusException.PasswordResetTokenInvalid())
 
-                val tokenId = resetRow[PasswordResetTokensTable.id].value
-                val userId = resetRow[PasswordResetTokensTable.userId].value.toString()
-                val expiresAt = resetRow[PasswordResetTokensTable.expiresAt]
-
-                // Check expiration
-                val expiresAtInstant = expiresAt.toKotlinxInstant()
-                if (expiresAtInstant < now()) {
-                    throw DokusException.PasswordResetTokenExpired()
-                }
-
-                // Mark token as used
-                PasswordResetTokensTable.update({ PasswordResetTokensTable.id eq tokenId }) {
-                    it[isUsed] = true
-                }
-
-                userId
+            // Check if already used
+            if (tokenInfo.isUsed) {
+                return Result.failure(DokusException.PasswordResetTokenInvalid())
             }
 
-            // Update password (suspend function, must be called outside dbQuery)
-            userService.updatePassword(UserId(userId), newPassword)
+            // Check expiration
+            if (tokenInfo.expiresAt < now()) {
+                return Result.failure(DokusException.PasswordResetTokenExpired())
+            }
+
+            // Mark token as used
+            passwordResetTokenRepository.markAsUsed(tokenInfo.tokenId)
+                .onFailure { error ->
+                    logger.error("Failed to mark password reset token as used", error)
+                    throw error
+                }
+
+            // Update password via repository
+            userRepository.updatePassword(tokenInfo.userId, newPassword)
 
             // Revoke all refresh tokens (force re-login everywhere)
-            refreshTokenService.revokeAllUserTokens(UserId(userId))
+            refreshTokenRepository.revokeAllUserTokens(tokenInfo.userId)
 
-            logger.info("Password reset successful for user: $userId (all sessions revoked)")
+            logger.info("Password reset successful for user: ${tokenInfo.userId.value} (all sessions revoked)")
             Result.success(Unit)
         } catch (e: DokusException) {
             logger.warn("Password reset failed: ${e.errorCode}")
@@ -193,19 +154,7 @@ class PasswordResetService(
      * @return Result containing count of deleted tokens
      */
     suspend fun cleanupExpiredTokens(): Result<Int> {
-        return try {
-            val count = dbQuery {
-                val currentTime = now().toLocalDateTime(TimeZone.UTC)
-                PasswordResetTokensTable.deleteWhere {
-                    (expiresAt less currentTime) or (isUsed eq true)
-                }
-            }
-            logger.info("Cleaned up $count expired/used password reset tokens")
-            Result.success(count)
-        } catch (e: Exception) {
-            logger.error("Token cleanup failed", e)
-            Result.failure(e)
-        }
+        return passwordResetTokenRepository.cleanupExpiredTokens()
     }
 
     /**

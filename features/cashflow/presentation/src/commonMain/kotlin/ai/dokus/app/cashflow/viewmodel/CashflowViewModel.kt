@@ -4,7 +4,7 @@ import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.Expense
 import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.foundation.domain.rpc.CashflowApi
+import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -13,7 +13,7 @@ import org.koin.core.component.inject
 internal class CashflowViewModel : BaseViewModel<CashflowViewModel.State>(State.Loading), KoinComponent {
 
     private val logger = Logger.forClass<CashflowViewModel>()
-    private val cashflowApi: CashflowApi by inject()
+    private val cashflowRemoteService: CashflowRemoteService by inject()
 
     sealed interface State {
         data object Loading : State
@@ -34,12 +34,12 @@ internal class CashflowViewModel : BaseViewModel<CashflowViewModel.State>(State.
 
         try {
             // Load invoices and expenses from RPC (will throw on error)
-            val invoices = cashflowApi.listInvoices(
+            val invoices = cashflowRemoteService.listInvoices(
                 limit = 50,
                 offset = 0
             )
 
-            val expenses = cashflowApi.listExpenses(
+            val expenses = cashflowRemoteService.listExpenses(
                 limit = 50,
                 offset = 0
             )
