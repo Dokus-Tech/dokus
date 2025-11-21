@@ -6,7 +6,7 @@ import ai.dokus.app.resources.generated.home_settings
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.navigation.destinations.HomeDestination
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard

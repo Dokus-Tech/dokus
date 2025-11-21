@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.InvoiceNumber
+import ai.dokus.foundation.domain.ids.InvoiceNumber
 
 /**
  * Validates invoice numbers

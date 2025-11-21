@@ -1,8 +1,8 @@
 package ai.dokus.foundation.ktor.services
 
-import ai.dokus.foundation.domain.ExpenseId
+import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod

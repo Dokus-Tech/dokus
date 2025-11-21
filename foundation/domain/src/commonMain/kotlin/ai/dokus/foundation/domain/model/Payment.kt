@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.model
 
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.PaymentId
+import ai.dokus.foundation.domain.ids.PaymentId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

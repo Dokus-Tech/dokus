@@ -1,8 +1,8 @@
 package ai.dokus.foundation.domain.rpc
 
-import ai.dokus.foundation.domain.InvoiceNumber
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.VatNumber
+import ai.dokus.foundation.domain.ids.InvoiceNumber
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.model.Tenant

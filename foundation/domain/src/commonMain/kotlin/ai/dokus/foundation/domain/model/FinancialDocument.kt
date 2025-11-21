@@ -1,11 +1,11 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.ClientId
-import ai.dokus.foundation.domain.ExpenseId
-import ai.dokus.foundation.domain.InvoiceId
-import ai.dokus.foundation.domain.InvoiceNumber
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import kotlinx.datetime.LocalDate

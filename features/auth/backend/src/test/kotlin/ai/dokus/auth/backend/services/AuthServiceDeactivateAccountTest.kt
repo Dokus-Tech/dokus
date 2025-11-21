@@ -3,7 +3,7 @@
 package ai.dokus.auth.backend.services
 
 import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.BusinessUser
 import ai.dokus.foundation.ktor.security.JwtGenerator

@@ -2,8 +2,8 @@
 
 package ai.dokus.foundation.ktor.auth
 
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.ktor.security.JwtValidator
 import com.auth0.jwt.JWT

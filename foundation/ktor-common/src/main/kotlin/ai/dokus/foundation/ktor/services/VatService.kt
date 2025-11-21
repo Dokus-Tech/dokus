@@ -1,8 +1,8 @@
 package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.VatReturnId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.VatReturnId
 import ai.dokus.foundation.domain.enums.VatReturnStatus
 import ai.dokus.foundation.domain.model.QuarterInfo
 import ai.dokus.foundation.domain.model.VatCalculation

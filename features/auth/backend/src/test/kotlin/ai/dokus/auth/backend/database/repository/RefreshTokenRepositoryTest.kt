@@ -5,7 +5,7 @@ package ai.dokus.auth.backend.database.repository
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.TenantsTable
 import ai.dokus.auth.backend.database.tables.UsersTable
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.ktor.config.AppBaseConfig

@@ -6,8 +6,6 @@ import ai.dokus.foundation.domain.usecases.validators.ValidateNameUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 interface ValueClass<T> {
     val value: T
@@ -20,35 +18,12 @@ interface Validatable<ValueClassType> where ValueClassType : ValueClass<*> {
 
 @Serializable
 @JvmInline
-value class UserId(val value: String) {
-    override fun toString(): String = value
-
-    @OptIn(ExperimentalUuidApi::class)
-    val uuid: Uuid get() = Uuid.parse(value)
-}
-
-@Serializable
-@JvmInline
 value class Password(override val value: String) : ValueClass<String>, Validatable<Password> {
     override fun toString(): String = value
     override val isValid get() = ValidatePasswordUseCase(this)
 
     override val validOrThrows: Password
         get() = if (isValid) this else throw DokusException.Validation.WeakPassword
-}
-
-@Serializable
-@JvmInline
-value class SessionId(val value: String) {
-    override fun toString(): String = value
-
-    @OptIn(ExperimentalUuidApi::class)
-    val uuid: Uuid get() = Uuid.parse(value)
-
-    companion object {
-        @OptIn(ExperimentalUuidApi::class)
-        fun generate(): SessionId = SessionId(Uuid.random().toString())
-    }
 }
 
 @Serializable
