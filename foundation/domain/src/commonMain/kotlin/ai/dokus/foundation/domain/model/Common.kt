@@ -73,12 +73,6 @@ data class User(
 }
 
 @Serializable
-data class LoginRequest(
-    val email: Email,
-    val password: Password
-)
-
-@Serializable
 data class CreateCompanyRequest(
     val name: String,
     val address: Address,

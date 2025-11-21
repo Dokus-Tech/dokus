@@ -1,5 +1,11 @@
 package ai.dokus.app.auth.utils
 
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.enums.Permission
+import ai.dokus.foundation.domain.enums.SubscriptionTier
+import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.TokenStatus
 import kotlinx.serialization.json.Json
@@ -11,12 +17,14 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Utility class for decoding and validating JWT tokens.
  * Handles Base64 decoding and claim extraction.
  */
-@OptIn(ExperimentalEncodingApi::class, ExperimentalTime::class)
+@OptIn(ExperimentalEncodingApi::class, ExperimentalTime::class, ExperimentalUuidApi::class)
 class JwtDecoder {
 
     private val json = Json {
@@ -51,23 +59,74 @@ class JwtDecoder {
             // Parse as JsonObject first to handle claim names
             val jsonObject = json.decodeFromString<JsonObject>(decodedPayload)
 
+            // Parse required fields
+            val userIdStr = jsonObject["sub"]?.jsonPrimitive?.content ?: return null
+            val emailStr = jsonObject["email"]?.jsonPrimitive?.content ?: return null
+            val tenantIdStr = jsonObject["tenant_id"]?.jsonPrimitive?.content ?: return null
+            val organizationIdStr = jsonObject["organization_id"]?.jsonPrimitive?.content ?: return null
+            val organizationName = jsonObject["organization_name"]?.jsonPrimitive?.content ?: return null
+
+            val roleStr = jsonObject["role"]?.jsonPrimitive?.content ?: return null
+            val role = try {
+                UserRole.valueOf(roleStr)
+            } catch (e: Exception) {
+                return null
+            }
+
+            val permissionsArray = jsonObject["permissions"]?.jsonArray ?: return null
+            val permissions = permissionsArray.mapNotNull {
+                try {
+                    Permission.valueOf(it.jsonPrimitive.content)
+                } catch (e: Exception) {
+                    null
+                }
+            }.toSet()
+
+            val subscriptionTierStr = jsonObject["subscription_tier"]?.jsonPrimitive?.content ?: return null
+            val subscriptionTier = try {
+                SubscriptionTier.valueOf(subscriptionTierStr)
+            } catch (e: Exception) {
+                return null
+            }
+
+            val iat = jsonObject["iat"]?.jsonPrimitive?.longOrNull ?: return null
+            val exp = jsonObject["exp"]?.jsonPrimitive?.longOrNull ?: return null
+            val jti = jsonObject["jti"]?.jsonPrimitive?.content ?: return null
+
+            // Parse optional fields
+            val matricule = jsonObject["matricule"]?.jsonPrimitive?.content
+            val locale = jsonObject["locale"]?.jsonPrimitive?.content ?: "nl-BE"
+            val featureFlags = jsonObject["feature_flags"]?.jsonArray?.mapNotNull {
+                it.jsonPrimitive.content
+            }?.toSet() ?: emptySet()
+
+            val isAccountantAccess = jsonObject["is_accountant_access"]?.jsonPrimitive?.content?.toBoolean() ?: false
+            val accountantOrganizationId = jsonObject["accountant_organization_id"]?.jsonPrimitive?.content?.let {
+                OrganizationId(Uuid.parse(it))
+            }
+
+            val iss = jsonObject["iss"]?.jsonPrimitive?.content ?: "dokus"
+            val aud = jsonObject["aud"]?.jsonPrimitive?.content ?: "dokus-api"
+
             JwtClaims(
-                userId = jsonObject["sub"]?.jsonPrimitive?.content ?: return null,
-                tenantId = jsonObject["tenant_id"]?.jsonPrimitive?.content ?: return null,
-                matricule = jsonObject["preferred_username"]?.jsonPrimitive?.content,
-                email = jsonObject["email"]?.jsonPrimitive?.content ?: return null,
-                fullName = jsonObject["name"]?.jsonPrimitive?.content ?: "",
-                roles = jsonObject["groups"]?.jsonArray?.mapNotNull { it.jsonPrimitive.content }?.toSet() ?: emptySet(),
-                permissions = jsonObject["permissions"]?.jsonArray?.mapNotNull { it.jsonPrimitive.content }?.toSet()
-                    ?: emptySet(),
-                unitCode = jsonObject["unit"]?.jsonPrimitive?.content,
-                department = jsonObject["department"]?.jsonPrimitive?.content,
-                clearanceLevel = jsonObject["clearance"]?.jsonPrimitive?.content ?: "INTERNAL_USE",
-                sessionId = jsonObject["session_id"]?.jsonPrimitive?.content,
-                deviceFingerprint = jsonObject["device_fingerprint"]?.jsonPrimitive?.content,
-                iat = jsonObject["iat"]?.jsonPrimitive?.longOrNull,
-                exp = jsonObject["exp"]?.jsonPrimitive?.longOrNull,
-                jti = jsonObject["jti"]?.jsonPrimitive?.content
+                userId = UserId(userIdStr),
+                email = emailStr,
+                tenantId = TenantId(Uuid.parse(tenantIdStr)),
+                organizationId = OrganizationId(Uuid.parse(organizationIdStr)),
+                organizationName = organizationName,
+                role = role,
+                permissions = permissions,
+                matricule = matricule,
+                locale = locale,
+                subscriptionTier = subscriptionTier,
+                featureFlags = featureFlags,
+                isAccountantAccess = isAccountantAccess,
+                accountantOrganizationId = accountantOrganizationId,
+                iat = iat,
+                exp = exp,
+                jti = jti,
+                iss = iss,
+                aud = aud
             )
         } catch (e: Exception) {
             println(e)
@@ -86,12 +145,11 @@ class JwtDecoder {
 
         val claims = decode(token) ?: return TokenStatus.INVALID
 
-        val exp = claims.exp ?: return TokenStatus.INVALID
         val currentTime = Clock.System.now().epochSeconds
 
         return when {
-            exp < currentTime -> TokenStatus.EXPIRED
-            exp - currentTime < REFRESH_THRESHOLD_SECONDS -> TokenStatus.REFRESH_NEEDED
+            claims.exp < currentTime -> TokenStatus.EXPIRED
+            claims.exp - currentTime < REFRESH_THRESHOLD_SECONDS -> TokenStatus.REFRESH_NEEDED
             else -> TokenStatus.VALID
         }
     }
@@ -106,10 +164,9 @@ class JwtDecoder {
         if (token.isNullOrBlank()) return true
 
         val claims = decode(token) ?: return true
-        val exp = claims.exp ?: return true
         val currentTime = Clock.System.now().epochSeconds
 
-        return exp < currentTime
+        return claims.exp < currentTime
     }
 
     /**
@@ -141,4 +198,3 @@ class JwtDecoder {
         private const val REFRESH_THRESHOLD_SECONDS = 5 * 60
     }
 }
-

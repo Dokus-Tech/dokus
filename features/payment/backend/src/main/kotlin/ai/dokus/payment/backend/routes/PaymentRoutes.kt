@@ -1,7 +1,7 @@
 package ai.dokus.payment.backend.routes
 
-import ai.dokus.foundation.domain.TenantId
-import ai.dokus.foundation.domain.PaymentId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.PaymentId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import ai.dokus.foundation.ktor.services.PaymentService

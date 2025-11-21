@@ -67,7 +67,7 @@ fun createAuthenticatedRpcClient(
     tokenManager: TokenManager,
     onAuthenticationFailed: suspend () -> Unit = {},
     waitForServices: Boolean = true
-): KtorRpcClient? {
+): KtorRpcClient {
     return runCatching {
         createDokusHttpClient {
             withJsonContentNegotiation()
@@ -117,7 +117,7 @@ fun createAuthenticatedRpcClient(
                 }
             }
         }
-    }.getOrNull()
+    }.getOrThrow()
 }
 
 /**
@@ -125,8 +125,8 @@ fun createAuthenticatedRpcClient(
  *
  * @return Service instance or null if retrieval fails
  */
-inline fun <@Rpc reified T : Any> KtorRpcClient.service(): T? {
-    return runCatching { withService<T>() }.getOrNull()
+inline fun <@Rpc reified T : Any> KtorRpcClient.service(): T {
+    return runCatching { withService<T>() }.getOrThrow()
 }
 
 /**

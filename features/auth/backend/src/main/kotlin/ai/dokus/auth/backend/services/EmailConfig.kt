@@ -1,5 +1,6 @@
 package ai.dokus.auth.backend.services
 
+import ai.dokus.foundation.ktor.config.AppBaseConfig
 import com.typesafe.config.Config
 
 /**
@@ -75,7 +76,7 @@ data class EmailConfig(
             )
         }
 
-        fun load(baseConfig: ai.dokus.foundation.ktor.AppBaseConfig): EmailConfig {
+        fun load(baseConfig: AppBaseConfig): EmailConfig {
             // Reuse already loaded config from baseConfig
             return fromConfig(baseConfig.config.getConfig("email"))
         }

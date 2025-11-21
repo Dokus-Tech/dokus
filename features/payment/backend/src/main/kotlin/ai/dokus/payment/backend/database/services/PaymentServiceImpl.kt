@@ -2,10 +2,10 @@
 
 package ai.dokus.payment.backend.database.services
 
-import ai.dokus.foundation.domain.InvoiceId
+import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.PaymentId
-import ai.dokus.foundation.domain.TenantId
+import ai.dokus.foundation.domain.ids.PaymentId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.Payment
 import ai.dokus.foundation.ktor.services.PaymentService

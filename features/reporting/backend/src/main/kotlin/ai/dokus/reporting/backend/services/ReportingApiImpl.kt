@@ -1,14 +1,14 @@
 package ai.dokus.reporting.backend.services
 
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.rpc.CashFlowReport
-import ai.dokus.foundation.domain.rpc.DateRange
-import ai.dokus.foundation.domain.rpc.ExpenseAnalytics
-import ai.dokus.foundation.domain.rpc.FinancialSummary
-import ai.dokus.foundation.domain.rpc.InvoiceAnalytics
-import ai.dokus.foundation.domain.rpc.MonthlyCashFlow
+import ai.dokus.foundation.domain.model.CashFlowReport
+import ai.dokus.foundation.domain.model.DateRange
+import ai.dokus.foundation.domain.model.ExpenseAnalytics
+import ai.dokus.foundation.domain.model.FinancialSummary
+import ai.dokus.foundation.domain.model.InvoiceAnalytics
+import ai.dokus.foundation.domain.model.MonthlyCashFlow
+import ai.dokus.foundation.domain.model.VatReport
 import ai.dokus.foundation.domain.rpc.ReportingApi
-import ai.dokus.foundation.domain.rpc.VatReport
 import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.ExpenseService
 import ai.dokus.foundation.ktor.services.InvoiceService
@@ -278,7 +278,9 @@ class ReportingApiImpl(
         expenses: List<ai.dokus.foundation.domain.model.Expense>
     ): List<MonthlyCashFlow> {
         // Group payments and expenses by month
+        @Suppress("DEPRECATION")
         val paymentsByMonth = payments.groupBy { "${it.paymentDate.year}-${it.paymentDate.monthNumber.toString().padStart(2, '0')}" }
+        @Suppress("DEPRECATION")
         val expensesByMonth = expenses.groupBy { "${it.date.year}-${it.date.monthNumber.toString().padStart(2, '0')}" }
 
         // Get all unique months

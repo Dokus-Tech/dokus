@@ -1,7 +1,7 @@
 package ai.dokus.cashflow.backend.plugins
 
-import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
-import ai.dokus.foundation.ktor.auth.createRpcAuthPlugin
+import ai.dokus.foundation.ktor.auth.configureJwtAuth
+import ai.dokus.foundation.ktor.security.JwtValidator
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.rpc.krpc.ktor.server.Krpc
@@ -12,6 +12,7 @@ private val logger = LoggerFactory.getLogger("Rpc")
 
 /**
  * Configures KotlinX RPC with authentication support.
+ * Installs the KRPC plugin and JWT authentication using Ktor's built-in JWT plugin.
  */
 fun Application.configureRpc() {
     logger.info("Installing KotlinX RPC plugin...")
@@ -19,9 +20,9 @@ fun Application.configureRpc() {
     // Install KotlinX RPC plugin
     install(Krpc)
 
-    // Install RPC authentication plugin
-    val authValidationService = get<AuthValidationRemoteService>()
-    install(createRpcAuthPlugin(authValidationService, "Cashflow"))
+    // Configure JWT authentication using Ktor's standard JWT plugin
+    val jwtValidator = get<JwtValidator>()
+    configureJwtAuth(jwtValidator)
 
-    logger.info("KotlinX RPC configured with authentication")
+    logger.info("KotlinX RPC configured with JWT authentication")
 }

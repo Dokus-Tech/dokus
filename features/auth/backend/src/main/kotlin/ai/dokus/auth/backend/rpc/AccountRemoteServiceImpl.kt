@@ -1,7 +1,6 @@
 package ai.dokus.auth.backend.rpc
 
 import ai.dokus.app.auth.domain.AccountRemoteService
-import ai.dokus.foundation.ktor.security.requireAuthenticatedUserId
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
@@ -11,6 +10,8 @@ import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import ai.dokus.foundation.ktor.security.AuthInfoProvider
+import ai.dokus.foundation.ktor.security.requireAuthenticatedUserId
 import org.slf4j.LoggerFactory
 
 /**
@@ -35,7 +36,8 @@ import org.slf4j.LoggerFactory
  * - deactivateAccount: Fully implemented
  */
 class AccountRemoteServiceImpl(
-    private val authService: AuthService
+    private val authService: AuthService,
+    private val authInfoProvider: AuthInfoProvider
 ) : AccountRemoteService {
 
     private val logger = LoggerFactory.getLogger(AccountRemoteServiceImpl::class.java)
@@ -49,7 +51,12 @@ class AccountRemoteServiceImpl(
 
         return authService.login(request)
             .onSuccess { logger.info("RPC: login successful for email: ${request.email.value}") }
-            .onFailure { error -> logger.error("RPC: login failed for email: ${request.email.value}", error) }
+            .onFailure { error ->
+                logger.error(
+                    "RPC: login failed for email: ${request.email.value}",
+                    error
+                )
+            }
             .getOrThrow()
     }
 
@@ -62,7 +69,12 @@ class AccountRemoteServiceImpl(
 
         return authService.register(request)
             .onSuccess { logger.info("RPC: registration successful for email: ${request.email.value}") }
-            .onFailure { error -> logger.error("RPC: registration failed for email: ${request.email.value}", error) }
+            .onFailure { error ->
+                logger.error(
+                    "RPC: registration failed for email: ${request.email.value}",
+                    error
+                )
+            }
             .getOrThrow()
     }
 
@@ -82,12 +94,14 @@ class AccountRemoteServiceImpl(
      * Logout user and revoke current session.
      */
     override suspend fun logout(request: LogoutRequest) {
-        logger.debug("RPC: logout called")
+        return authInfoProvider.withAuthInfo {
+            logger.debug("RPC: logout called")
 
-        authService.logout(request)
-            .onSuccess { logger.info("RPC: logout successful") }
-            .onFailure { error -> logger.error("RPC: logout failed", error) }
-            .getOrThrow()
+            authService.logout(request)
+                .onSuccess { logger.info("RPC: logout successful") }
+                .onFailure { error -> logger.error("RPC: logout failed", error) }
+                .getOrThrow()
+        }
     }
 
     /**
@@ -138,7 +152,12 @@ class AccountRemoteServiceImpl(
 
             authService.deactivateAccount(userId, request.reason)
                 .onSuccess { logger.info("RPC: Account deactivated successfully for user: ${userId.value}") }
-                .onFailure { error -> logger.error("RPC: Account deactivation failed for user: ${userId.value}", error) }
+                .onFailure { error ->
+                    logger.error(
+                        "RPC: Account deactivation failed for user: ${userId.value}",
+                        error
+                    )
+                }
                 .getOrThrow()
         } catch (e: IllegalStateException) {
             // No authentication context available
@@ -176,7 +195,12 @@ class AccountRemoteServiceImpl(
 
             authService.resendVerificationEmail(userId)
                 .onSuccess { logger.info("RPC: Verification email resent successfully for user: ${userId.value}") }
-                .onFailure { error -> logger.error("RPC: Failed to resend verification email for user: ${userId.value}", error) }
+                .onFailure { error ->
+                    logger.error(
+                        "RPC: Failed to resend verification email for user: ${userId.value}",
+                        error
+                    )
+                }
                 .getOrThrow()
         } catch (e: IllegalStateException) {
             // No authentication context available

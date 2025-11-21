@@ -336,7 +336,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7092
+      JWT_ISSUER: http://localhost:7091
       JWT_AUDIENCE: dokus-api-local
       REDIS_HOST: redis-local
       REDIS_PORT: 6379

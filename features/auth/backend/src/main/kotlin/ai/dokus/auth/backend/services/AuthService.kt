@@ -2,8 +2,8 @@
 
 package ai.dokus.auth.backend.services
 
-import ai.dokus.auth.backend.database.services.RefreshTokenService
-import ai.dokus.foundation.domain.UserId
+import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.UserRole
@@ -29,7 +29,7 @@ class AuthService(
     private val userService: UserService,
     private val tenantService: TenantService,
     private val jwtGenerator: JwtGenerator,
-    private val refreshTokenService: RefreshTokenService,
+    private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitService,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService
@@ -91,7 +91,7 @@ class AuthService(
         )
 
         // Save refresh token to database
-        refreshTokenService.saveRefreshToken(
+        refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
             expiresAt = (now() + 30.days)
@@ -173,7 +173,7 @@ class AuthService(
         )
 
         // Save refresh token to database
-        refreshTokenService.saveRefreshToken(
+        refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
             expiresAt = (now() + 30.days)
@@ -217,7 +217,7 @@ class AuthService(
         logger.debug("Token refresh attempt")
 
         // Validate and rotate token (old token is automatically revoked)
-        val userId = refreshTokenService.validateAndRotate(request.refreshToken)
+        val userId = refreshTokenRepository.validateAndRotate(request.refreshToken)
             .getOrElse { error ->
                 logger.warn("Token refresh failed: ${error.message}")
                 when (error) {
@@ -257,7 +257,7 @@ class AuthService(
         )
 
         // Save the new refresh token (rotated)
-        refreshTokenService.saveRefreshToken(
+        refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
             expiresAt = (now() + 30.days)
@@ -291,7 +291,7 @@ class AuthService(
 
         // Revoke refresh token if provided
         request.refreshToken?.let { token ->
-            refreshTokenService.revokeToken(token).onFailure { error ->
+            refreshTokenRepository.revokeToken(token).onFailure { error ->
                 // Log but don't fail - token may already be revoked or expired
                 logger.warn("Failed to revoke refresh token during logout: ${error.message}")
             }.onSuccess {
@@ -399,7 +399,7 @@ class AuthService(
         logger.info("User account marked as inactive: ${userId.value}")
 
         // Step 2: Revoke all refresh tokens to terminate all active sessions
-        refreshTokenService.revokeAllUserTokens(userId)
+        refreshTokenRepository.revokeAllUserTokens(userId)
             .onSuccess {
                 logger.info("All refresh tokens revoked for user: ${userId.value}")
             }
