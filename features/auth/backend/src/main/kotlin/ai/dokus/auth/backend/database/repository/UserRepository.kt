@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.database.repository
 
-import ai.dokus.auth.backend.database.mappers.FinancialMappers.toBusinessUser
+import ai.dokus.auth.backend.database.mappers.FinancialMappers.toUser
 import ai.dokus.auth.backend.database.mappers.FinancialMappers.toOrganizationMembership
 import ai.dokus.auth.backend.database.mappers.FinancialMappers.toUserInOrganization
 import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
@@ -9,7 +9,7 @@ import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.BusinessUser
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.OrganizationMembership
 import ai.dokus.foundation.domain.model.UserInOrganization
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
@@ -59,7 +59,7 @@ class UserRepository(
         firstName: String?,
         lastName: String?,
         role: UserRole
-    ): BusinessUser = dbQuery {
+    ): User = dbQuery {
         // Check if email already exists
         val existing = UsersTable
             .selectAll()
@@ -95,24 +95,24 @@ class UserRepository(
             .selectAll()
             .where { UsersTable.id eq userId }
             .single()
-            .toBusinessUser()
+            .toUser()
     }
 
-    suspend fun findById(id: UserId): BusinessUser? = dbQuery {
+    suspend fun findById(id: UserId): User? = dbQuery {
         val javaUuid = id.value.toJavaUuid()
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }
             .singleOrNull()
-            ?.toBusinessUser()
+            ?.toUser()
     }
 
-    suspend fun findByEmail(email: String): BusinessUser? = dbQuery {
+    suspend fun findByEmail(email: String): User? = dbQuery {
         UsersTable
             .selectAll()
             .where { UsersTable.email eq email }
             .singleOrNull()
-            ?.toBusinessUser()
+            ?.toUser()
     }
 
     /**
@@ -290,7 +290,7 @@ class UserRepository(
         logger.debug("Recorded login for user {} at {}", userId, loginTime)
     }
 
-    suspend fun verifyCredentials(email: String, password: String): BusinessUser? =
+    suspend fun verifyCredentials(email: String, password: String): User? =
         dbQuery {
             val user = UsersTable
                 .selectAll()
@@ -311,7 +311,7 @@ class UserRepository(
                 return@dbQuery null
             }
 
-            user.toBusinessUser()
+            user.toUser()
         }
 
     // Email verification methods

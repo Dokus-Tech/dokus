@@ -10,15 +10,28 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceItemId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
 import ai.dokus.foundation.domain.model.InvoiceItem
 import ai.dokus.foundation.ktor.database.dbQuery
-import kotlinx.datetime.*
-import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.jdbc.*
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
 
 /**
@@ -35,7 +48,10 @@ class InvoiceRepository {
      * Create a new invoice with its items
      * CRITICAL: MUST include tenant_id for multi-tenancy security
      */
-    suspend fun createInvoice(organizationId: OrganizationId, request: CreateInvoiceRequest): Result<Invoice> = runCatching {
+    suspend fun createInvoice(
+        organizationId: OrganizationId,
+        request: CreateInvoiceRequest
+    ): Result<Invoice> = runCatching {
         dbQuery {
             // Generate invoice number
             // TODO: Implement proper invoice number generation (fetch from tenant settings)
@@ -46,12 +62,17 @@ class InvoiceRepository {
                 it[InvoicesTable.organizationId] = UUID.fromString(organizationId.toString())
                 it[clientId] = UUID.fromString(request.clientId.toString())
                 it[InvoicesTable.invoiceNumber] = invoiceNumber
-                val today = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
+                val today = kotlinx.datetime.Clock.System.now()
+                    .toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
                 it[issueDate] = request.issueDate ?: today
                 it[dueDate] = request.dueDate ?: today.plus(kotlinx.datetime.DatePeriod(days = 30))
-                it[subtotalAmount] = request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) }
-                it[vatAmount] = request.items.sumOf { item -> java.math.BigDecimal(item.vatAmount.value) }
-                it[totalAmount] = request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) + java.math.BigDecimal(item.vatAmount.value) }
+                it[subtotalAmount] =
+                    request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) }
+                it[vatAmount] =
+                    request.items.sumOf { item -> java.math.BigDecimal(item.vatAmount.value) }
+                it[totalAmount] = request.items.sumOf { item ->
+                    java.math.BigDecimal(item.lineTotal.value) + java.math.BigDecimal(item.vatAmount.value)
+                }
                 it[paidAmount] = java.math.BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
                 it[notes] = request.notes
@@ -74,25 +95,25 @@ class InvoiceRepository {
             // Manually fetch and return the complete invoice
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq invoiceId.value) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.single()
 
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq invoiceId.value
             }.orderBy(InvoiceItemsTable.sortOrder)
-            .map { itemRow ->
-                InvoiceItem(
-                    id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
-                    invoiceId = InvoiceId.parse(invoiceId.value.toString()),
-                    description = itemRow[InvoiceItemsTable.description],
-                    quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
-                    unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
-                    vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
-                    lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
-                    vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
-                    sortOrder = itemRow[InvoiceItemsTable.sortOrder]
-                )
-            }
+                .map { itemRow ->
+                    InvoiceItem(
+                        id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
+                        invoiceId = InvoiceId.parse(invoiceId.value.toString()),
+                        description = itemRow[InvoiceItemsTable.description],
+                        quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
+                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
+                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
+                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
+                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        sortOrder = itemRow[InvoiceItemsTable.sortOrder]
+                    )
+                }
 
             Invoice(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
@@ -134,26 +155,26 @@ class InvoiceRepository {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.singleOrNull() ?: return@dbQuery null
 
             // Fetch invoice items
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
-            .map { itemRow ->
-                InvoiceItem(
-                    id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
-                    invoiceId = invoiceId,
-                    description = itemRow[InvoiceItemsTable.description],
-                    quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
-                    unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
-                    vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
-                    lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
-                    vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
-                    sortOrder = itemRow[InvoiceItemsTable.sortOrder]
-                )
-            }
+                .map { itemRow ->
+                    InvoiceItem(
+                        id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
+                        invoiceId = invoiceId,
+                        description = itemRow[InvoiceItemsTable.description],
+                        quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
+                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
+                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
+                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
+                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        sortOrder = itemRow[InvoiceItemsTable.sortOrder]
+                    )
+                }
 
             // Map to domain model
             Invoice(
@@ -253,45 +274,50 @@ class InvoiceRepository {
      * List overdue invoices for a tenant
      * CRITICAL: MUST filter by tenant_id
      */
-    suspend fun listOverdueInvoices(organizationId: OrganizationId): Result<List<Invoice>> = runCatching {
-        dbQuery {
-            val today = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
+    suspend fun listOverdueInvoices(organizationId: OrganizationId): Result<List<Invoice>> =
+        runCatching {
+            dbQuery {
+                val today = kotlinx.datetime.Clock.System.now()
+                    .toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
 
-            InvoicesTable.selectAll().where {
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString())) and
-                (InvoicesTable.dueDate less today) and
-                (InvoicesTable.status inList listOf(InvoiceStatus.Sent, InvoiceStatus.Draft))
-            }.orderBy(InvoicesTable.dueDate)
-            .map { row ->
-                Invoice(
-                    id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
-                    organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
-                    clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
-                    invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
-                    issueDate = row[InvoicesTable.issueDate],
-                    dueDate = row[InvoicesTable.dueDate],
-                    subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
-                    vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
-                    totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
-                    paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
-                    status = row[InvoicesTable.status],
-                    currency = row[InvoicesTable.currency],
-                    notes = row[InvoicesTable.notes],
-                    termsAndConditions = row[InvoicesTable.termsAndConditions],
-                    items = emptyList(),
-                    peppolId = row[InvoicesTable.peppolId]?.let { PeppolId(it) },
-                    peppolSentAt = row[InvoicesTable.peppolSentAt],
-                    peppolStatus = row[InvoicesTable.peppolStatus],
-                    paymentLink = row[InvoicesTable.paymentLink],
-                    paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
-                    paidAt = row[InvoicesTable.paidAt],
-                    paymentMethod = row[InvoicesTable.paymentMethod],
-                    createdAt = row[InvoicesTable.createdAt],
-                    updatedAt = row[InvoicesTable.updatedAt]
-                )
+                InvoicesTable.selectAll().where {
+                    (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString())) and
+                            (InvoicesTable.dueDate less today) and
+                            (InvoicesTable.status inList listOf(
+                                InvoiceStatus.Sent,
+                                InvoiceStatus.Draft
+                            ))
+                }.orderBy(InvoicesTable.dueDate)
+                    .map { row ->
+                        Invoice(
+                            id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
+                            organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
+                            clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
+                            invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
+                            issueDate = row[InvoicesTable.issueDate],
+                            dueDate = row[InvoicesTable.dueDate],
+                            subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
+                            vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
+                            totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
+                            paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                            status = row[InvoicesTable.status],
+                            currency = row[InvoicesTable.currency],
+                            notes = row[InvoicesTable.notes],
+                            termsAndConditions = row[InvoicesTable.termsAndConditions],
+                            items = emptyList(),
+                            peppolId = row[InvoicesTable.peppolId]?.let { PeppolId(it) },
+                            peppolSentAt = row[InvoicesTable.peppolSentAt],
+                            peppolStatus = row[InvoicesTable.peppolStatus],
+                            paymentLink = row[InvoicesTable.paymentLink],
+                            paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
+                            paidAt = row[InvoicesTable.paidAt],
+                            paymentMethod = row[InvoicesTable.paymentMethod],
+                            createdAt = row[InvoicesTable.createdAt],
+                            updatedAt = row[InvoicesTable.updatedAt]
+                        )
+                    }
             }
         }
-    }
 
     /**
      * Update invoice status
@@ -305,7 +331,7 @@ class InvoiceRepository {
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }) {
                 it[InvoicesTable.status] = status
             }
@@ -326,7 +352,7 @@ class InvoiceRepository {
             // Verify invoice exists and belongs to tenant
             val exists = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -336,12 +362,16 @@ class InvoiceRepository {
             // Update invoice
             InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }) {
                 it[clientId] = UUID.fromString(request.clientId.toString())
-                it[subtotalAmount] = request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) }
-                it[vatAmount] = request.items.sumOf { item -> java.math.BigDecimal(item.vatAmount.value) }
-                it[totalAmount] = request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) + java.math.BigDecimal(item.vatAmount.value) }
+                it[subtotalAmount] =
+                    request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) }
+                it[vatAmount] =
+                    request.items.sumOf { item -> java.math.BigDecimal(item.vatAmount.value) }
+                it[totalAmount] = request.items.sumOf { item ->
+                    java.math.BigDecimal(item.lineTotal.value) + java.math.BigDecimal(item.vatAmount.value)
+                }
                 request.issueDate?.let { date -> it[issueDate] = date }
                 request.dueDate?.let { date -> it[dueDate] = date }
                 it[notes] = request.notes
@@ -369,25 +399,25 @@ class InvoiceRepository {
             // Manually fetch and return the updated invoice
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.single()
 
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
-            .map { itemRow ->
-                InvoiceItem(
-                    id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
-                    invoiceId = invoiceId,
-                    description = itemRow[InvoiceItemsTable.description],
-                    quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
-                    unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
-                    vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
-                    lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
-                    vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
-                    sortOrder = itemRow[InvoiceItemsTable.sortOrder]
-                )
-            }
+                .map { itemRow ->
+                    InvoiceItem(
+                        id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
+                        invoiceId = invoiceId,
+                        description = itemRow[InvoiceItemsTable.description],
+                        quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
+                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
+                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
+                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
+                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        sortOrder = itemRow[InvoiceItemsTable.sortOrder]
+                    )
+                }
 
             Invoice(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
@@ -438,7 +468,7 @@ class InvoiceRepository {
             // Delete invoice
             val deletedRows = InvoicesTable.deleteWhere {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }
 
             deletedRows > 0
@@ -456,7 +486,7 @@ class InvoiceRepository {
         dbQuery {
             InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.count() > 0
         }
     }

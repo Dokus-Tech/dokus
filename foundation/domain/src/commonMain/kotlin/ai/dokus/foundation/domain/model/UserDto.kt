@@ -1,15 +1,11 @@
 package ai.dokus.foundation.domain.model
 
 import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.enums.UserRole
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 /**
  * User Data Transfer Object
@@ -75,27 +71,4 @@ sealed class UserDto {
         val fullName: String,
         val email: Email
     )
-
-    companion object {
-        /**
-         * Create Full DTO from JwtPrincipal
-         * Useful for reconstructing user context from JWT claims
-         */
-        @OptIn(ExperimentalTime::class)
-        fun fromJwtPrincipal(principal: JwtPrincipal): Full {
-            val now = Clock.System.now()
-            return Full(
-                id = UserId(principal.userId),
-                email = Email(principal.email),
-                firstName = principal.firstName,
-                lastName = principal.lastName,
-                emailVerified = true,
-                isActive = true,
-                lastLoginAt = null,
-                createdAt = now.toLocalDateTime(TimeZone.UTC),
-                updatedAt = now.toLocalDateTime(TimeZone.UTC),
-                memberships = emptyList() // JwtPrincipal doesn't have membership info
-            )
-        }
-    }
 }
