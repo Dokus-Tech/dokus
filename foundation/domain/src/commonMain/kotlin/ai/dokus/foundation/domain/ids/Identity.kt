@@ -21,6 +21,8 @@ value class TenantId(val value: Uuid) {
 @Serializable
 @JvmInline
 value class OrganizationId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
     override fun toString(): String = value.toString()
 
     companion object {
@@ -33,6 +35,8 @@ value class OrganizationId(val value: Uuid) {
 @Serializable
 @JvmInline
 value class BusinessUserId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
     override fun toString(): String = value.toString()
 
     companion object {

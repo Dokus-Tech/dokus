@@ -1,11 +1,12 @@
 package ai.dokus.app.auth.utils
 
-import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
 import ai.dokus.foundation.domain.enums.UserRole
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.model.TaxNumber
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.TokenStatus
 import kotlinx.serialization.json.Json
@@ -62,18 +63,19 @@ class JwtDecoder {
             // Parse required fields
             val userIdStr = jsonObject["sub"]?.jsonPrimitive?.content ?: return null
             val emailStr = jsonObject["email"]?.jsonPrimitive?.content ?: return null
-            val tenantIdStr = jsonObject["tenant_id"]?.jsonPrimitive?.content ?: return null
-            val organizationIdStr = jsonObject["organization_id"]?.jsonPrimitive?.content ?: return null
-            val organizationName = jsonObject["organization_name"]?.jsonPrimitive?.content ?: return null
+            val organizationIdStr = jsonObject["organization_id"]?.jsonPrimitive?.content
+            val organizationTaxNumber = jsonObject["organization_tax_number"]?.jsonPrimitive?.content
+            val organizationName = jsonObject["organization_name"]?.jsonPrimitive?.content
 
-            val roleStr = jsonObject["role"]?.jsonPrimitive?.content ?: return null
+            val roleStr = jsonObject["role"]?.jsonPrimitive?.content
             val role = try {
-                UserRole.valueOf(roleStr)
+                if(roleStr.isNullOrEmpty()) null
+                else UserRole.valueOf(roleStr)
             } catch (e: Exception) {
                 return null
             }
 
-            val permissionsArray = jsonObject["permissions"]?.jsonArray ?: return null
+            val permissionsArray = jsonObject["permissions"]?.jsonArray
             val permissions = permissionsArray.mapNotNull {
                 try {
                     Permission.valueOf(it.jsonPrimitive.content)
@@ -94,7 +96,6 @@ class JwtDecoder {
             val jti = jsonObject["jti"]?.jsonPrimitive?.content ?: return null
 
             // Parse optional fields
-            val matricule = jsonObject["matricule"]?.jsonPrimitive?.content
             val locale = jsonObject["locale"]?.jsonPrimitive?.content ?: "nl-BE"
             val featureFlags = jsonObject["feature_flags"]?.jsonArray?.mapNotNull {
                 it.jsonPrimitive.content
@@ -111,13 +112,12 @@ class JwtDecoder {
             JwtClaims(
                 userId = UserId(userIdStr),
                 email = emailStr,
-                tenantId = TenantId(Uuid.parse(tenantIdStr)),
-                organizationId = OrganizationId(Uuid.parse(organizationIdStr)),
+                organizationId = organizationIdStr?.let { OrganizationId(it) },
+                organizationTaxNumber = organizationTaxNumber?.let { TaxNumber(it) },
                 organizationName = organizationName,
                 role = role,
                 permissions = permissions,
-                matricule = matricule,
-                locale = locale,
+                locale = Language.valueOf(locale),
                 subscriptionTier = subscriptionTier,
                 featureFlags = featureFlags,
                 isAccountantAccess = isAccountantAccess,

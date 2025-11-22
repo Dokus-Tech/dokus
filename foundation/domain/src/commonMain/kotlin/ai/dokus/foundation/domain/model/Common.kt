@@ -190,6 +190,7 @@ data class LlmConfig(
     val modelKwargs: Map<String, String>? = null
 )
 
+@Serializable
 @JvmInline
 value class TaxNumber(private val value: String) {
     companion object {
