@@ -86,7 +86,11 @@ enum class SubscriptionTier(override val dbValue: String) : DbEnum {
     SelfHosted("SELF_HOSTED"),
     CloudFree("CLOUD_FREE"),
     CloudBasic("CLOUD_BASIC"),
-    CloudPro("CLOUD_PRO")
+    CloudPro("CLOUD_PRO");
+
+    companion object {
+        val default = CloudFree
+    }
 }
 
 // ============================================================================

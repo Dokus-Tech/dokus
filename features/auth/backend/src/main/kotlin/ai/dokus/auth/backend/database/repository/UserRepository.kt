@@ -81,7 +81,7 @@ class UserRepository(
     }
 
     suspend fun findById(id: UserId): BusinessUser? = dbQuery {
-        val javaUuid = UUID.fromString(id.value)
+        val javaUuid = id.value.toJavaUuid()
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }
@@ -113,7 +113,7 @@ class UserRepository(
         }
 
     suspend fun updateRole(userId: UserId, newRole: UserRole) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[role] = newRole
         }
@@ -127,7 +127,7 @@ class UserRepository(
 
     suspend fun updateProfile(userId: UserId, firstName: String?, lastName: String?) =
         dbQuery {
-            val javaUuid = UUID.fromString(userId.value)
+            val javaUuid = userId.value.toJavaUuid()
             val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
                 if (firstName != null) it[UsersTable.firstName] = firstName
                 if (lastName != null) it[UsersTable.lastName] = lastName
@@ -141,7 +141,7 @@ class UserRepository(
         }
 
     suspend fun deactivate(userId: UserId, reason: String?) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[isActive] = false
         }
@@ -155,7 +155,7 @@ class UserRepository(
     }
 
     suspend fun reactivate(userId: UserId) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[isActive] = true
         }
@@ -168,7 +168,7 @@ class UserRepository(
     }
 
     suspend fun updatePassword(userId: UserId, newPassword: String) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val passwordHash = passwordCrypto.hashPassword(Password(newPassword))
 
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
@@ -183,7 +183,7 @@ class UserRepository(
     }
 
     suspend fun recordLogin(userId: UserId, loginTime: Instant) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[lastLoginAt] = loginTime.toLocalDateTime(TimeZone.UTC)
         }
@@ -192,7 +192,7 @@ class UserRepository(
     }
 
     suspend fun setupMfa(userId: UserId, mfaSecret: String) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[UsersTable.mfaSecret] = mfaSecret
         }
@@ -205,7 +205,7 @@ class UserRepository(
     }
 
     suspend fun removeMfa(userId: UserId) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[mfaSecret] = null
         }
@@ -255,7 +255,7 @@ class UserRepository(
         token: String,
         expiry: Instant
     ) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[emailVerificationToken] = token
             it[emailVerificationExpiry] = expiry.toLocalDateTime(TimeZone.UTC)
@@ -300,7 +300,7 @@ class UserRepository(
      * @param userId The user ID to mark as verified
      */
     suspend fun markEmailVerified(userId: UserId) = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
             it[emailVerified] = true
             it[emailVerificationToken] = null
@@ -321,7 +321,7 @@ class UserRepository(
      * @return true if email is verified, false otherwise
      */
     suspend fun isEmailVerified(userId: UserId): Boolean = dbQuery {
-        val javaUuid = UUID.fromString(userId.value)
+        val javaUuid = userId.value.toJavaUuid()
         UsersTable
             .selectAll()
             .where { UsersTable.id eq javaUuid }
