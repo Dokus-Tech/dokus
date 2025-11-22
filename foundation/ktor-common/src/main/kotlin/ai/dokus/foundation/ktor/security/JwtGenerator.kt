@@ -9,9 +9,10 @@ import ai.dokus.foundation.domain.model.auth.OrganizationScope
 import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Instant
-import java.util.Date
+import java.util.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -56,14 +57,16 @@ class JwtGenerator(
     }
 
     private fun createAccessToken(claims: JwtClaims): String {
-        val organizationsJson = json.encodeToString(claims.organizations.map { org ->
-            mapOf(
-                JwtClaims.CLAIM_ORGANIZATION_ID to org.organizationId.value.toString(),
-                JwtClaims.CLAIM_PERMISSIONS to org.permissions.map { it.name },
-                JwtClaims.CLAIM_SUBSCRIPTION_TIER to org.subscriptionTier.name,
-                JwtClaims.CLAIM_ROLE to org.role?.name
+        val organizationsDto = claims.organizations.map { org ->
+            OrganizationClaimDto(
+                organizationId = org.organizationId.value.toString(),
+                permissions = org.permissions.map { it.name },
+                subscriptionTier = org.subscriptionTier.name,
+                role = org.role?.name
             )
-        })
+        }
+
+        val organizationsJson = json.encodeToString(organizationsDto)
 
         return JWT.create()
             .withIssuer(claims.iss)
@@ -89,4 +92,12 @@ class JwtGenerator(
             .withExpiresAt(Date.from(Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))
             .sign(algorithm)
     }
+
+    @Serializable
+    private data class OrganizationClaimDto(
+        val organizationId: String,
+        val permissions: List<String>,
+        val subscriptionTier: String,
+        val role: String? = null
+    )
 }
