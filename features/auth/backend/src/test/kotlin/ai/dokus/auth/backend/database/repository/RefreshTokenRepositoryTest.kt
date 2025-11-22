@@ -4,6 +4,7 @@ package ai.dokus.auth.backend.database.repository
 
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.OrganizationPlan
@@ -423,9 +424,15 @@ class RefreshTokenRepositoryTest {
             // Create test user
             UsersTable.insert {
                 it[id] = userId.toJavaUuid()
-                it[organizationId] = testOrganizationId.toJavaUuid()
                 it[email] = "test@example.com"
                 it[passwordHash] = "hashed-password"
+                it[isActive] = true
+            }
+
+            // Create membership linking user to organization
+            OrganizationMembersTable.insert {
+                it[OrganizationMembersTable.userId] = userId.toJavaUuid()
+                it[organizationId] = testOrganizationId.toJavaUuid()
                 it[role] = UserRole.Owner
                 it[isActive] = true
             }

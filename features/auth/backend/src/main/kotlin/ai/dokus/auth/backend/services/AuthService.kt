@@ -112,7 +112,7 @@ class AuthService(
 
         logger.debug("Creating new tenant: $tenantName for email: ${request.email.value}")
 
-        val tenant = organizationRepository.createTenant(
+        val organizationId = organizationRepository.create(
             name = tenantName,
             email = request.email.value,
             plan = OrganizationPlan.Free,
@@ -121,10 +121,10 @@ class AuthService(
             vatNumber = null
         )
 
-        logger.info("Created tenant: ${tenant.id} with trial ending at: ${tenant.trialEndsAt}")
+        logger.info("Created tenant: $organizationId")
 
         val user = userRepository.register(
-            organizationId = tenant.id,
+            organizationId = organizationId,
             email = request.email.value,
             password = request.password.value,
             firstName = request.firstName.value,
@@ -136,7 +136,7 @@ class AuthService(
 
         // For registration, user is owner of the new organization
         val organizationScope = createOrganizationScope(
-            organizationId = OrganizationId(tenant.id.value),
+            organizationId = organizationId,
             role = UserRole.Owner
         )
 
@@ -162,7 +162,7 @@ class AuthService(
                 logger.warn("Failed to send verification email during registration: ${error.message}")
             }
 
-        logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value}), tenant: ${tenant.id}")
+        logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value}), tenant: $organizationId")
         Result.success(response)
     } catch (e: IllegalArgumentException) {
         logger.warn("Registration failed for email: ${request.email.value} - ${e.message}")
