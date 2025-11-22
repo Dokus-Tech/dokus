@@ -4,7 +4,7 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.model.Client
+import ai.dokus.foundation.domain.model.ClientDto
 import ai.dokus.foundation.domain.model.ClientEvent
 import ai.dokus.foundation.domain.model.ClientStats
 import ai.dokus.foundation.domain.rpc.ClientRemoteService
@@ -36,7 +36,7 @@ class ClientRemoteServiceImpl(
         peppolEnabled: Boolean,
         tags: String?,
         notes: String?
-    ): Client {
+    ): ClientDto {
         return authInfoProvider.withAuthInfo {
             val organizationId = requireAuthenticatedOrganizationId()
 
@@ -62,7 +62,7 @@ class ClientRemoteServiceImpl(
         }
     }
 
-    override suspend fun getClient(id: ClientId): Client {
+    override suspend fun getClient(id: ClientId): ClientDto {
         val organizationId = requireAuthenticatedOrganizationId()
 
         val client = clientService.findById(id)
@@ -81,7 +81,7 @@ class ClientRemoteServiceImpl(
         isActive: Boolean?,
         limit: Int,
         offset: Int
-    ): List<Client> {
+    ): List<ClientDto> {
         val organizationId = requireAuthenticatedOrganizationId()
 
         return if (search != null) {
@@ -112,7 +112,7 @@ class ClientRemoteServiceImpl(
         tags: String?,
         notes: String?,
         isActive: Boolean?
-    ): Client {
+    ): ClientDto {
         val organizationId = requireAuthenticatedOrganizationId()
 
         // Verify client exists and belongs to tenant
@@ -162,7 +162,7 @@ class ClientRemoteServiceImpl(
         clientService.delete(id)
     }
 
-    override suspend fun findClientByPeppolId(peppolId: String): Client? {
+    override suspend fun findClientByPeppolId(peppolId: String): ClientDto? {
         val organizationId = requireAuthenticatedOrganizationId()
 
         // ClientService doesn't provide findByPeppolId directly
@@ -191,7 +191,7 @@ class ClientRemoteServiceImpl(
     override fun watchClients(organizationId: OrganizationId): Flow<ClientEvent> {
         // Implement polling-based watching since ClientService doesn't provide streaming
         return flow {
-            var lastSeenClients = emptyMap<ClientId, Client>()
+            var lastSeenClients = emptyMap<ClientId, ClientDto>()
 
             while (true) {
                 // Poll for client changes every 5 seconds

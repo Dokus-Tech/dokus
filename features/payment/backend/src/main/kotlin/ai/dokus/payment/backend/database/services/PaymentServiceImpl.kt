@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentDto
 import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
@@ -25,15 +25,15 @@ class PaymentServiceImpl(
         paymentMethod: PaymentMethod,
         transactionId: String?,
         notes: String?
-    ): Payment {
+    ): PaymentDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun findById(id: PaymentId): Payment? {
+    override suspend fun findById(id: PaymentId): PaymentDto? {
         TODO("Not yet implemented")
     }
 
-    override suspend fun listByInvoice(invoiceId: InvoiceId): List<Payment> {
+    override suspend fun listByInvoice(invoiceId: InvoiceId): List<PaymentDto> {
         TODO("Not yet implemented")
     }
 
@@ -44,7 +44,7 @@ class PaymentServiceImpl(
         paymentMethod: PaymentMethod?,
         limit: Int?,
         offset: Int?
-    ): List<Payment> {
+    ): List<PaymentDto> {
         TODO("Not yet implemented")
     }
 

@@ -96,7 +96,7 @@ interface InvoiceService {
         toDate: LocalDate? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<Invoice>
+    ): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Lists invoices for a specific client
@@ -105,7 +105,7 @@ interface InvoiceService {
      * @param status Filter by status (optional)
      * @return List of invoices
      */
-    suspend fun listByClient(clientId: ClientId, status: InvoiceStatus? = null): List<Invoice>
+    suspend fun listByClient(clientId: ClientId, status: InvoiceStatus? = null): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Lists overdue invoices for a tenant
@@ -113,7 +113,7 @@ interface InvoiceService {
      * @param organizationId The tenant's unique identifier
      * @return List of overdue invoices
      */
-    suspend fun listOverdue(organizationId: OrganizationId): List<Invoice>
+    suspend fun listOverdue(organizationId: OrganizationId): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Updates the status of an invoice

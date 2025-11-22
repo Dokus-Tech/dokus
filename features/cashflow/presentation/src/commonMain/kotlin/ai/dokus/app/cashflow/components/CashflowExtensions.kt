@@ -1,100 +1,26 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.Expense
-import ai.dokus.foundation.domain.model.FinancialDocument
-import ai.dokus.foundation.domain.model.FinancialDocumentStatus
-import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 
 /**
- * Extension functions for converting domain models to FinancialDocument types.
+ * Extension functions for working with FinancialDocumentDto types in the cashflow presentation layer.
  */
-
-/**
- * Converts an Invoice to FinancialDocument.InvoiceDocument.
- *
- * @param status Optional override status. If null, will map from invoice status.
- * @return FinancialDocument.InvoiceDocument representation
- */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-fun Invoice.toFinancialDocument(
-    status: FinancialDocumentStatus? = null
-): FinancialDocument.InvoiceDocument {
-    return FinancialDocument.InvoiceDocument(
-        documentId = id.value.toString(),
-        organizationId = organizationId,
-        documentNumber = invoiceNumber.toString(),
-        date = issueDate,
-        amount = totalAmount,
-        currency = currency,
-        status = status ?: mapInvoiceStatus(this.status),
-        description = notes,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-        invoiceId = id,
-        clientId = clientId,
-        invoiceNumber = invoiceNumber,
-        dueDate = dueDate,
-        subtotalAmount = subtotalAmount,
-        vatAmount = vatAmount,
-        paidAmount = paidAmount,
-        items = items
-    )
-}
-
-/**
- * Converts an Expense to FinancialDocument.ExpenseDocument.
- *
- * @param status Optional override status. Defaults to PendingApproval for uploaded expenses.
- * @return FinancialDocument.ExpenseDocument representation
- */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-fun Expense.toFinancialDocument(
-    status: FinancialDocumentStatus = FinancialDocumentStatus.PendingApproval
-): FinancialDocument.ExpenseDocument {
-    return FinancialDocument.ExpenseDocument(
-        documentId = id.value.toString(),
-        organizationId = organizationId,
-        documentNumber = "EXP-${id.value}",
-        date = date,
-        amount = amount,
-        currency = Currency.Eur, // Default to EUR, adjust as needed
-        status = status,
-        description = description,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-        expenseId = id,
-        merchant = merchant,
-        category = category,
-        receiptUrl = receiptUrl,
-        vatAmount = vatAmount,
-        isDeductible = isDeductible
-    )
-}
-
-/**
- * Maps InvoiceStatus to FinancialDocumentStatus.
- */
-private fun mapInvoiceStatus(invoiceStatus: InvoiceStatus): FinancialDocumentStatus {
-    return when (invoiceStatus) {
-        InvoiceStatus.Draft -> FinancialDocumentStatus.Draft
-        InvoiceStatus.Sent, InvoiceStatus.Viewed -> FinancialDocumentStatus.PendingApproval
-        InvoiceStatus.Paid -> FinancialDocumentStatus.Completed
-        InvoiceStatus.Overdue -> FinancialDocumentStatus.PendingApproval
-        InvoiceStatus.Cancelled -> FinancialDocumentStatus.Cancelled
-        InvoiceStatus.Refunded -> FinancialDocumentStatus.Completed
-        InvoiceStatus.PartiallyPaid -> FinancialDocumentStatus.Approved
-    }
-}
 
 /**
  * Filters financial documents that need confirmation or approval.
+ * For invoices: Sent or Overdue status
+ * For expenses: Currently none (could be extended for approval workflows)
  *
- * @return List of documents with PendingApproval status
+ * @return List of documents requiring user attention
  */
-fun List<FinancialDocument>.financialDocumentsNeedingConfirmation(): List<FinancialDocument> {
-    return this.filter { it.status == FinancialDocumentStatus.PendingApproval }
+fun List<FinancialDocumentDto>.needingConfirmation(): List<FinancialDocumentDto> {
+    return this.filter { doc ->
+        when (doc) {
+            is FinancialDocumentDto.InvoiceDto -> doc.status == InvoiceStatus.Sent || doc.status == InvoiceStatus.Overdue
+            is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a confirmation workflow by default
+        }
+    }
 }
 
 /**
@@ -102,54 +28,26 @@ fun List<FinancialDocument>.financialDocumentsNeedingConfirmation(): List<Financ
  *
  * @return List of invoices with Sent or Overdue status
  */
-fun List<Invoice>.needingConfirmation(): List<Invoice> {
+fun List<FinancialDocumentDto.InvoiceDto>.invoicesNeedingConfirmation(): List<FinancialDocumentDto.InvoiceDto> {
     return this.filter { it.status == InvoiceStatus.Sent || it.status == InvoiceStatus.Overdue }
 }
 
 /**
- * Converts a list of invoices to FinancialDocument list.
- *
- * @param limit Maximum number of items to convert. Default is 4 (matches Figma design)
- * @param status Optional override status for all items
- * @return List of FinancialDocument.InvoiceDocument
- */
-fun List<Invoice>.invoicesToFinancialDocuments(
-    limit: Int = 4,
-    status: FinancialDocumentStatus? = null
-): List<FinancialDocument.InvoiceDocument> {
-    return this.take(limit).map { it.toFinancialDocument(status) }
-}
-
-/**
- * Converts a list of expenses to FinancialDocument list.
- *
- * @param limit Maximum number of items to convert. Default is 4
- * @param status Optional override status for all items
- * @return List of FinancialDocument.ExpenseDocument
- */
-fun List<Expense>.expensesToFinancialDocuments(
-    limit: Int = 4,
-    status: FinancialDocumentStatus = FinancialDocumentStatus.PendingApproval
-): List<FinancialDocument.ExpenseDocument> {
-    return this.take(limit).map { it.toFinancialDocument(status) }
-}
-
-/**
- * Combines invoices and expenses into a unified FinancialDocument list, sorted by date.
+ * Combines invoices and expenses into a unified FinancialDocumentDto list, sorted by date.
  *
  * @param invoices List of invoices to include
  * @param expenses List of expenses to include
  * @param limit Maximum number of items to return
- * @return Combined and sorted list of FinancialDocuments
+ * @return Combined and sorted list of FinancialDocumentDto
  */
 fun combineFinancialDocuments(
-    invoices: List<Invoice>,
-    expenses: List<Expense>,
+    invoices: List<FinancialDocumentDto.InvoiceDto>,
+    expenses: List<FinancialDocumentDto.ExpenseDto>,
     limit: Int = 4
-): List<FinancialDocument> {
-    val allDocs = mutableListOf<FinancialDocument>()
-    allDocs.addAll(invoices.map { it.toFinancialDocument() })
-    allDocs.addAll(expenses.map { it.toFinancialDocument() })
+): List<FinancialDocumentDto> {
+    val allDocs = mutableListOf<FinancialDocumentDto>()
+    allDocs.addAll(invoices)
+    allDocs.addAll(expenses)
 
     return allDocs
         .sortedByDescending { it.date }
@@ -157,17 +55,46 @@ fun combineFinancialDocuments(
 }
 
 /**
- * Gets a human-readable status text based on the financial document status.
+ * Gets a human-readable status text for an invoice status.
  *
  * @return Status text suitable for display
  */
-fun FinancialDocumentStatus.toDisplayText(): String {
+fun InvoiceStatus.toDisplayText(): String {
     return when (this) {
-        FinancialDocumentStatus.PendingApproval -> "Need confirmation"
-        FinancialDocumentStatus.Approved -> "Approved"
-        FinancialDocumentStatus.Rejected -> "Rejected"
-        FinancialDocumentStatus.Draft -> "Draft"
-        FinancialDocumentStatus.Completed -> "Completed"
-        FinancialDocumentStatus.Cancelled -> "Cancelled"
+        InvoiceStatus.Draft -> "Draft"
+        InvoiceStatus.Sent -> "Sent"
+        InvoiceStatus.Viewed -> "Viewed"
+        InvoiceStatus.PartiallyPaid -> "Partially Paid"
+        InvoiceStatus.Paid -> "Paid"
+        InvoiceStatus.Overdue -> "Overdue"
+        InvoiceStatus.Cancelled -> "Cancelled"
+        InvoiceStatus.Refunded -> "Refunded"
     }
+}
+
+/**
+ * Checks if an invoice requires user attention (confirmation/payment).
+ *
+ * @return True if the invoice needs attention
+ */
+fun FinancialDocumentDto.InvoiceDto.needsAttention(): Boolean {
+    return status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
+}
+
+/**
+ * Checks if an invoice is in a completed state (paid or refunded).
+ *
+ * @return True if the invoice is completed
+ */
+fun FinancialDocumentDto.InvoiceDto.isCompleted(): Boolean {
+    return status == InvoiceStatus.Paid || status == InvoiceStatus.Refunded
+}
+
+/**
+ * Checks if an invoice can be edited (only draft invoices).
+ *
+ * @return True if the invoice can be edited
+ */
+fun FinancialDocumentDto.InvoiceDto.canEdit(): Boolean {
+    return status == InvoiceStatus.Draft
 }

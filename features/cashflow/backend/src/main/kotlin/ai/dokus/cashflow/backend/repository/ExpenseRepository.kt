@@ -8,7 +8,7 @@ import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.model.Expense
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.*
@@ -29,7 +29,7 @@ class ExpenseRepository {
      * Create a new expense
      * CRITICAL: MUST include tenant_id for multi-tenancy security
      */
-    suspend fun createExpense(organizationId: OrganizationId, request: CreateExpenseRequest): Result<Expense> = runCatching {
+    suspend fun createExpense(organizationId: OrganizationId, request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto> = runCatching {
         dbQuery {
             val expenseId = ExpensesTable.insertAndGetId {
                 it[ExpensesTable.organizationId] = UUID.fromString(organizationId.toString())
@@ -54,7 +54,7 @@ class ExpenseRepository {
                 (ExpensesTable.id eq expenseId.value) and
                 (ExpensesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.single().let { row ->
-                Expense(
+                FinancialDocumentDto.ExpenseDto(
                     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
                     organizationId = OrganizationId.parse(row[ExpensesTable.organizationId].toString()),
                     date = row[ExpensesTable.date],
@@ -85,13 +85,13 @@ class ExpenseRepository {
     suspend fun getExpense(
         expenseId: ExpenseId,
         organizationId: OrganizationId
-    ): Result<Expense?> = runCatching {
+    ): Result<FinancialDocumentDto.ExpenseDto?> = runCatching {
         dbQuery {
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                 (ExpensesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.singleOrNull()?.let { row ->
-                Expense(
+                FinancialDocumentDto.ExpenseDto(
                     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
                     organizationId = OrganizationId.parse(row[ExpensesTable.organizationId].toString()),
                     date = row[ExpensesTable.date],
@@ -126,7 +126,7 @@ class ExpenseRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<Expense>> = runCatching {
+    ): Result<List<FinancialDocumentDto.ExpenseDto>> = runCatching {
         dbQuery {
             var query = ExpensesTable.selectAll().where {
                 ExpensesTable.organizationId eq UUID.fromString(organizationId.toString())
@@ -147,7 +147,7 @@ class ExpenseRepository {
             query.orderBy(ExpensesTable.date to SortOrder.DESC)
                 .limit(limit)
                 .map { row ->
-                    Expense(
+                    FinancialDocumentDto.ExpenseDto(
                         id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
                         organizationId = OrganizationId.parse(row[ExpensesTable.organizationId].toString()),
                         date = row[ExpensesTable.date],
@@ -179,7 +179,7 @@ class ExpenseRepository {
         expenseId: ExpenseId,
         organizationId: OrganizationId,
         request: CreateExpenseRequest
-    ): Result<Expense> = runCatching {
+    ): Result<FinancialDocumentDto.ExpenseDto> = runCatching {
         dbQuery {
             // Verify expense exists and belongs to tenant
             val exists = ExpensesTable.selectAll().where {
@@ -217,7 +217,7 @@ class ExpenseRepository {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                 (ExpensesTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.single().let { row ->
-                Expense(
+                FinancialDocumentDto.ExpenseDto(
                     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
                     organizationId = OrganizationId.parse(row[ExpensesTable.organizationId].toString()),
                     date = row[ExpensesTable.date],

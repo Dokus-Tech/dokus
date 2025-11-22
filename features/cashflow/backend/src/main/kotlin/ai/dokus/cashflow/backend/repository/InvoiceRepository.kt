@@ -13,8 +13,8 @@ import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
@@ -51,7 +51,7 @@ class InvoiceRepository {
     suspend fun createInvoice(
         organizationId: OrganizationId,
         request: CreateInvoiceRequest
-    ): Result<Invoice> = runCatching {
+    ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
         dbQuery {
             // Generate invoice number
             // TODO: Implement proper invoice number generation (fetch from tenant settings)
@@ -83,7 +83,7 @@ class InvoiceRepository {
                 InvoiceItemsTable.insert {
                     it[InvoiceItemsTable.invoiceId] = invoiceId.value
                     it[description] = item.description
-                    it[quantity] = java.math.BigDecimal(item.quantity.value)
+                    it[quantity] = java.math.BigDecimal(item.quantity)
                     it[unitPrice] = java.math.BigDecimal(item.unitPrice.value)
                     it[vatRate] = java.math.BigDecimal(item.vatRate.value)
                     it[lineTotal] = java.math.BigDecimal(item.lineTotal.value)
@@ -102,11 +102,11 @@ class InvoiceRepository {
                 InvoiceItemsTable.invoiceId eq invoiceId.value
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItem(
-                        id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
+                    InvoiceItemDto(
+                        id = itemRow[InvoiceItemsTable.id].value.toString(),
                         invoiceId = InvoiceId.parse(invoiceId.value.toString()),
                         description = itemRow[InvoiceItemsTable.description],
-                        quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
+                        quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
                         unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
                         vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
                         lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
@@ -115,7 +115,7 @@ class InvoiceRepository {
                     )
                 }
 
-            Invoice(
+            FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
                 clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
@@ -151,7 +151,7 @@ class InvoiceRepository {
     suspend fun getInvoice(
         invoiceId: InvoiceId,
         organizationId: OrganizationId
-    ): Result<Invoice?> = runCatching {
+    ): Result<FinancialDocumentDto.InvoiceDto?> = runCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -163,11 +163,11 @@ class InvoiceRepository {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItem(
-                        id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
+                    InvoiceItemDto(
+                        id = itemRow[InvoiceItemsTable.id].value.toString(),
                         invoiceId = invoiceId,
                         description = itemRow[InvoiceItemsTable.description],
-                        quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
+                        quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
                         unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
                         vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
                         lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
@@ -177,7 +177,7 @@ class InvoiceRepository {
                 }
 
             // Map to domain model
-            Invoice(
+            FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
                 clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
@@ -217,7 +217,7 @@ class InvoiceRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<Invoice>> = runCatching {
+    ): Result<List<FinancialDocumentDto.InvoiceDto>> = runCatching {
         dbQuery {
             var query = InvoicesTable.selectAll().where {
                 InvoicesTable.organizationId eq UUID.fromString(organizationId.toString())
@@ -240,7 +240,7 @@ class InvoiceRepository {
                 .map { row ->
                     // For list view, we don't fetch items to improve performance
                     // Items will be loaded when getting individual invoice
-                    Invoice(
+                    FinancialDocumentDto.InvoiceDto(
                         id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                         organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
                         clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
@@ -274,7 +274,7 @@ class InvoiceRepository {
      * List overdue invoices for a tenant
      * CRITICAL: MUST filter by tenant_id
      */
-    suspend fun listOverdueInvoices(organizationId: OrganizationId): Result<List<Invoice>> =
+    suspend fun listOverdueInvoices(organizationId: OrganizationId): Result<List<FinancialDocumentDto.InvoiceDto>> =
         runCatching {
             dbQuery {
                 val today = kotlinx.datetime.Clock.System.now()
@@ -289,7 +289,7 @@ class InvoiceRepository {
                             ))
                 }.orderBy(InvoicesTable.dueDate)
                     .map { row ->
-                        Invoice(
+                        FinancialDocumentDto.InvoiceDto(
                             id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                             organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
                             clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
@@ -347,7 +347,7 @@ class InvoiceRepository {
         invoiceId: InvoiceId,
         organizationId: OrganizationId,
         request: CreateInvoiceRequest
-    ): Result<Invoice> = runCatching {
+    ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
         dbQuery {
             // Verify invoice exists and belongs to tenant
             val exists = InvoicesTable.selectAll().where {
@@ -387,7 +387,7 @@ class InvoiceRepository {
                 InvoiceItemsTable.insert {
                     it[InvoiceItemsTable.invoiceId] = UUID.fromString(invoiceId.toString())
                     it[description] = item.description
-                    it[quantity] = java.math.BigDecimal(item.quantity.value)
+                    it[quantity] = java.math.BigDecimal(item.quantity)
                     it[unitPrice] = java.math.BigDecimal(item.unitPrice.value)
                     it[vatRate] = java.math.BigDecimal(item.vatRate.value)
                     it[lineTotal] = java.math.BigDecimal(item.lineTotal.value)
@@ -406,11 +406,11 @@ class InvoiceRepository {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItem(
-                        id = InvoiceItemId.parse(itemRow[InvoiceItemsTable.id].value.toString()),
+                    InvoiceItemDto(
+                        id = itemRow[InvoiceItemsTable.id].value.toString(),
                         invoiceId = invoiceId,
                         description = itemRow[InvoiceItemsTable.description],
-                        quantity = Quantity(itemRow[InvoiceItemsTable.quantity].toString()),
+                        quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
                         unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
                         vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
                         lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
@@ -419,7 +419,7 @@ class InvoiceRepository {
                     )
                 }
 
-            Invoice(
+            FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
                 clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),

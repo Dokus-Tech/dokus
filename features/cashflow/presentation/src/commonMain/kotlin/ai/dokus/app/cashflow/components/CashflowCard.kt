@@ -1,5 +1,7 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,9 +25,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import ai.dokus.foundation.domain.model.FinancialDocument
-import ai.dokus.foundation.domain.model.FinancialDocumentStatus
 
 /**
  * A card component displaying a cash flow list with financial document items and navigation controls.
@@ -37,7 +38,7 @@ import ai.dokus.foundation.domain.model.FinancialDocumentStatus
  */
 @Composable
 fun CashflowCard(
-    documents: List<FinancialDocument>,
+    documents: List<FinancialDocumentDto>,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -143,11 +144,17 @@ fun CashflowCard(
  * @param document The financial document to display
  * @param modifier Optional modifier for the row
  */
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
 private fun CashflowDocumentItem(
-    document: FinancialDocument,
+    document: FinancialDocumentDto,
     modifier: Modifier = Modifier
 ) {
+    val documentNumber = when (document) {
+        is FinancialDocumentDto.InvoiceDto -> document.invoiceNumber.toString()
+        is FinancialDocumentDto.ExpenseDto -> "EXP-${document.id.value}"
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -168,71 +175,36 @@ private fun CashflowDocumentItem(
 
             // Document number
             Text(
-                text = document.documentNumber,
+                text = documentNumber,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
 
         // Status badge
-        StatusBadge(status = document.status)
+        DocumentStatusBadge(document = document)
     }
 }
 
 /**
  * A badge component for displaying document status with colored background.
  *
- * @param status The document status to display
+ * @param document The financial document to display status for
  * @param modifier Optional modifier for the badge
  */
 @Composable
-private fun StatusBadge(
-    status: FinancialDocumentStatus,
+private fun DocumentStatusBadge(
+    document: FinancialDocumentDto,
     modifier: Modifier = Modifier
 ) {
-    // Determine colors and text based on status using Material Theme
-    val (backgroundColor, textColor, statusText) = when (status) {
-        FinancialDocumentStatus.PendingApproval ->
-            Triple(
-                MaterialTheme.colorScheme.errorContainer,
-                MaterialTheme.colorScheme.onErrorContainer,
-                "Need confirmation"
-            )
-
-        FinancialDocumentStatus.Approved ->
-            Triple(
-                MaterialTheme.colorScheme.primaryContainer,
-                MaterialTheme.colorScheme.onPrimaryContainer,
-                "Approved"
-            )
-
-        FinancialDocumentStatus.Rejected ->
-            Triple(
-                MaterialTheme.colorScheme.errorContainer,
-                MaterialTheme.colorScheme.onErrorContainer,
-                "Rejected"
-            )
-
-        FinancialDocumentStatus.Draft ->
-            Triple(
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                "Draft"
-            )
-
-        FinancialDocumentStatus.Completed ->
-            Triple(
-                MaterialTheme.colorScheme.tertiaryContainer,
-                MaterialTheme.colorScheme.onTertiaryContainer,
-                "Completed"
-            )
-
-        FinancialDocumentStatus.Cancelled ->
-            Triple(
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                "Cancelled"
-            )
+    // Determine colors and text based on document type and status
+    val (backgroundColor, textColor, statusText) = when (document) {
+        is FinancialDocumentDto.InvoiceDto -> getInvoiceStatusStyle(document.status)
+        is FinancialDocumentDto.ExpenseDto -> Triple(
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            "Expense"
+        )
     }
 
     Text(
@@ -248,10 +220,51 @@ private fun StatusBadge(
     )
 }
 
+@Composable
+private fun getInvoiceStatusStyle(status: InvoiceStatus): Triple<Color, Color, String> {
+    return when (status) {
+        InvoiceStatus.Draft -> Triple(
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            "Draft"
+        )
+        InvoiceStatus.Sent, InvoiceStatus.Overdue -> Triple(
+            MaterialTheme.colorScheme.errorContainer,
+            MaterialTheme.colorScheme.onErrorContainer,
+            if (status == InvoiceStatus.Overdue) "Overdue" else "Need confirmation"
+        )
+        InvoiceStatus.Viewed -> Triple(
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
+            "Viewed"
+        )
+        InvoiceStatus.PartiallyPaid -> Triple(
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
+            "Partially Paid"
+        )
+        InvoiceStatus.Paid -> Triple(
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
+            "Paid"
+        )
+        InvoiceStatus.Cancelled -> Triple(
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            "Cancelled"
+        )
+        InvoiceStatus.Refunded -> Triple(
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
+            "Refunded"
+        )
+    }
+}
+
 /**
  * Extension function to get the document icon/emoji representation.
  */
-private fun FinancialDocument.typeIcon(): String = when (this) {
-    is FinancialDocument.InvoiceDocument -> "📄"
-    is FinancialDocument.ExpenseDocument -> "🧾"
+private fun FinancialDocumentDto.typeIcon(): String = when (this) {
+    is FinancialDocumentDto.InvoiceDto -> "Invoice"
+    is FinancialDocumentDto.ExpenseDto -> "Expense"
 }

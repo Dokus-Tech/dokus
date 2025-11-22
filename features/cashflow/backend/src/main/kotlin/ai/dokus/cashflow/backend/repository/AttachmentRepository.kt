@@ -4,7 +4,7 @@ import ai.dokus.cashflow.backend.database.tables.AttachmentsTable
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.ktor.database.dbQuery
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.*
@@ -58,14 +58,14 @@ class AttachmentRepository {
         organizationId: OrganizationId,
         entityType: EntityType,
         entityId: String
-    ): Result<List<Attachment>> = runCatching {
+    ): Result<List<AttachmentDto>> = runCatching {
         dbQuery {
             AttachmentsTable.selectAll().where {
                 (AttachmentsTable.organizationId eq UUID.fromString(organizationId.toString())) and
                 (AttachmentsTable.entityType eq entityType) and
                 (AttachmentsTable.entityId eq entityId)
             }.map { row ->
-                Attachment(
+                AttachmentDto(
                     id = AttachmentId.parse(row[AttachmentsTable.id].value.toString()),
                     organizationId = OrganizationId.parse(row[AttachmentsTable.organizationId].toString()),
                     entityType = row[AttachmentsTable.entityType],
@@ -88,13 +88,13 @@ class AttachmentRepository {
     suspend fun getAttachment(
         attachmentId: AttachmentId,
         organizationId: OrganizationId
-    ): Result<Attachment?> = runCatching {
+    ): Result<AttachmentDto?> = runCatching {
         dbQuery {
             AttachmentsTable.selectAll().where {
                 (AttachmentsTable.id eq UUID.fromString(attachmentId.toString())) and
                 (AttachmentsTable.organizationId eq UUID.fromString(organizationId.toString()))
             }.singleOrNull()?.let { row ->
-                Attachment(
+                AttachmentDto(
                     id = AttachmentId.parse(row[AttachmentsTable.id].value.toString()),
                     organizationId = OrganizationId.parse(row[AttachmentsTable.organizationId].toString()),
                     entityType = row[AttachmentsTable.entityType],

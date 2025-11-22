@@ -8,8 +8,8 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.BankProvider
-import ai.dokus.foundation.domain.model.BankConnection
-import ai.dokus.foundation.domain.model.BankTransaction
+import ai.dokus.foundation.domain.model.BankConnectionDto
+import ai.dokus.foundation.domain.model.BankTransactionDto
 import ai.dokus.foundation.ktor.services.BankService
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -24,7 +24,7 @@ class BankServiceImpl : BankService {
         accountId: String,
         accountName: String?,
         accessToken: String
-    ): BankConnection {
+    ): BankConnectionDto {
         TODO("Not yet implemented")
     }
 
@@ -48,11 +48,11 @@ class BankServiceImpl : BankService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun listConnections(organizationId: OrganizationId, activeOnly: Boolean): List<BankConnection> {
+    override suspend fun listConnections(organizationId: OrganizationId, activeOnly: Boolean): List<BankConnectionDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun findConnectionById(id: BankConnectionId): BankConnection? {
+    override suspend fun findConnectionById(id: BankConnectionId): BankConnectionDto? {
         TODO("Not yet implemented")
     }
 
@@ -64,15 +64,15 @@ class BankServiceImpl : BankService {
         reconciled: Boolean?,
         limit: Int?,
         offset: Int?
-    ): List<BankTransaction> {
+    ): List<BankTransactionDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun findTransactionById(id: BankTransactionId): BankTransaction? {
+    override suspend fun findTransactionById(id: BankTransactionId): BankTransactionDto? {
         TODO("Not yet implemented")
     }
 
-    override suspend fun listUnreconciled(organizationId: OrganizationId): List<BankTransaction> {
+    override suspend fun listUnreconciled(organizationId: OrganizationId): List<BankTransactionDto> {
         TODO("Not yet implemented")
     }
 
