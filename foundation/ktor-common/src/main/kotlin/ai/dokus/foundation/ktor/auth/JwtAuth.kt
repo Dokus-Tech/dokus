@@ -2,21 +2,16 @@
 
 package ai.dokus.foundation.ktor.auth
 
-import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.ktor.security.JwtValidator
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.jwt.jwt
-import io.ktor.util.AttributeKey
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.util.*
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private val logger = LoggerFactory.getLogger("ServiceAuthConfig")
 
@@ -68,9 +63,9 @@ fun Application.configureJwtAuth(
                     val authInfo = jwtValidator.extractAuthInfo(credential.payload)
                     if (authInfo != null) {
                         logger.debug(
-                            "JWT validated for user: {}, tenant: {}",
+                            "JWT validated for user: {}, organization: {}",
                             authInfo.userId.value,
-                            authInfo.organizationId.value
+                            authInfo.organizationId?.value
                         )
                         AuthenticationInfoPrincipal(authInfo)
                     } else {
@@ -98,4 +93,4 @@ fun Application.configureJwtAuth(
  */
 data class AuthenticationInfoPrincipal(
     val authInfo: AuthenticationInfo
-) : io.ktor.server.auth.Principal
+) : Principal
