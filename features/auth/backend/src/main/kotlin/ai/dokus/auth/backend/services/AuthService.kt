@@ -19,16 +19,16 @@ import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.security.JwtGenerator
-import ai.dokus.foundation.ktor.services.OrganizationService
-import ai.dokus.foundation.ktor.services.UserService
+import ai.dokus.auth.backend.database.repository.OrganizationRepository
+import ai.dokus.auth.backend.database.repository.UserRepository
 import org.slf4j.LoggerFactory
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 
 class AuthService(
-    private val userService: UserService,
-    private val organizationService: OrganizationService,
+    private val userRepository: UserRepository,
+    private val organizationRepository: OrganizationRepository,
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitService,
@@ -45,7 +45,7 @@ class AuthService(
             throw error
         }
 
-        val user = userService.verifyCredentials(
+        val user = userRepository.verifyCredentials(
             email = request.email.value,
             password = request.password.value
         ) ?: run {
@@ -61,10 +61,10 @@ class AuthService(
 
         val userId = user.id
         val loginTime = now()
-        userService.recordLogin(userId, loginTime)
+        userRepository.recordLogin(userId, loginTime)
 
         // Get all user's organizations and create scopes for each
-        val memberships = userService.getUserOrganizations(userId)
+        val memberships = userRepository.getUserOrganizations(userId)
         val organizationScopes = memberships.map { membership ->
             createOrganizationScope(
                 organizationId = membership.organizationId,
@@ -112,7 +112,7 @@ class AuthService(
 
         logger.debug("Creating new tenant: $tenantName for email: ${request.email.value}")
 
-        val tenant = organizationService.createTenant(
+        val tenant = organizationRepository.createTenant(
             name = tenantName,
             email = request.email.value,
             plan = OrganizationPlan.Free,
@@ -123,7 +123,7 @@ class AuthService(
 
         logger.info("Created tenant: ${tenant.id} with trial ending at: ${tenant.trialEndsAt}")
 
-        val user = userService.register(
+        val user = userRepository.register(
             organizationId = tenant.id,
             email = request.email.value,
             password = request.password.value,
@@ -192,7 +192,7 @@ class AuthService(
                 }
             }
 
-        val user = userService.findById(userId)
+        val user = userRepository.findById(userId)
             ?: run {
                 logger.error("User not found for valid refresh token: ${userId.value}")
                 throw DokusException.InvalidCredentials("User account no longer exists")
@@ -204,7 +204,7 @@ class AuthService(
         }
 
         // Get all user's organizations and create scopes for each
-        val memberships = userService.getUserOrganizations(userId)
+        val memberships = userRepository.getUserOrganizations(userId)
         val organizationScopes = memberships.map { membership ->
             createOrganizationScope(
                 organizationId = membership.organizationId,
@@ -280,7 +280,7 @@ class AuthService(
     suspend fun deactivateAccount(userId: UserId, reason: String): Result<Unit> = try {
         logger.info("Account deactivation request for user: ${userId.value}, reason: $reason")
 
-        val user = userService.findById(userId)
+        val user = userRepository.findById(userId)
             ?: run {
                 logger.warn("Deactivation failed - user not found: ${userId.value}")
                 throw DokusException.InvalidCredentials("User account not found")
@@ -291,7 +291,7 @@ class AuthService(
             throw DokusException.AccountInactive("Account is already deactivated")
         }
 
-        userService.deactivate(userId, reason)
+        userRepository.deactivate(userId, reason)
         logger.info("User account marked as inactive: ${userId.value}")
 
         refreshTokenRepository.revokeAllUserTokens(userId)
