@@ -8,19 +8,9 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class TenantId(val value: Uuid) {
-    override fun toString(): String = value.toString()
-
-    companion object {
-        fun generate(): TenantId = TenantId(Uuid.random())
-        fun parse(value: String): TenantId = TenantId(Uuid.parse(value))
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-@Serializable
-@JvmInline
 value class OrganizationId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
     override fun toString(): String = value.toString()
 
     companion object {
@@ -33,6 +23,8 @@ value class OrganizationId(val value: Uuid) {
 @Serializable
 @JvmInline
 value class BusinessUserId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
     override fun toString(): String = value.toString()
 
     companion object {
@@ -41,22 +33,28 @@ value class BusinessUserId(val value: Uuid) {
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class UserId(val value: String) {
-    override fun toString(): String = value
+value class UserId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
+    override fun toString(): String = value.toString()
 
     @OptIn(ExperimentalUuidApi::class)
-    val uuid: Uuid get() = Uuid.parse(value)
+    val uuid: Uuid get() = value
 }
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class SessionId(val value: String) {
-    override fun toString(): String = value
+value class SessionId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
+    override fun toString(): String = value.toString()
 
     @OptIn(ExperimentalUuidApi::class)
-    val uuid: Uuid get() = Uuid.parse(value)
+    val uuid: Uuid get() = value
 
     companion object {
         @OptIn(ExperimentalUuidApi::class)

@@ -1,7 +1,6 @@
 package ai.dokus.foundation.ktor.auth
 
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.UserStatus
 import ai.dokus.foundation.domain.model.UserDto
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.ktor.utils.extractClientIpAddress
@@ -23,8 +22,8 @@ import io.ktor.server.routing.*
  * ```kotlin
  * post("/invoices") {
  *     withUser(validationService) { user ->
- *         // user.tenantId is available for multi-tenant queries
- *         val invoice = invoiceRepository.createInvoice(request, user.tenantId)
+ *         // user.organizationId is available for multi-tenant queries
+ *         val invoice = invoiceRepository.createInvoice(request, user.organizationId)
  *         call.respond(HttpStatusCode.Created, invoice)
  *     }
  * }

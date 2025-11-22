@@ -4,12 +4,15 @@ import ai.dokus.app.cashflow.components.FinancialDocumentTable
 import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.components.combineFinancialDocuments
-import ai.dokus.app.cashflow.components.financialDocumentsNeedingConfirmation
+import ai.dokus.app.cashflow.components.needingConfirmation
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
+import ai.dokus.foundation.design.components.CashflowType
+import ai.dokus.foundation.design.components.CashflowTypeBadge
 import ai.dokus.foundation.design.components.common.Breakpoints
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.FinancialDocument
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +28,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -140,11 +146,11 @@ private fun ErrorContent(
  */
 @Composable
 private fun SuccessContent(
-    invoices: List<ai.dokus.foundation.domain.model.Invoice>,
-    expenses: List<ai.dokus.foundation.domain.model.Expense>,
+    invoices: List<FinancialDocumentDto.InvoiceDto>,
+    expenses: List<FinancialDocumentDto.ExpenseDto>,
     contentPadding: PaddingValues,
-    onDocumentClick: (FinancialDocument) -> Unit,
-    onMoreClick: (FinancialDocument) -> Unit
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    onMoreClick: (FinancialDocumentDto) -> Unit
 ) {
     // Convert domain models to FinancialDocuments
     val allDocuments = combineFinancialDocuments(
@@ -189,20 +195,20 @@ private fun SuccessContent(
  * TODO: Replace with actual calculations based on business logic.
  */
 private fun calculateVatSummary(
-    invoices: List<ai.dokus.foundation.domain.model.Invoice>,
-    expenses: List<ai.dokus.foundation.domain.model.Expense>
+    invoices: List<FinancialDocumentDto.InvoiceDto>,
+    expenses: List<FinancialDocumentDto.ExpenseDto>
 ): VatSummaryData {
     // Calculate total VAT from invoices
     val totalVat = invoices.sumOf { it.vatAmount.value.toDoubleOrNull() ?: 0.0 }
-    
+
     // Calculate net amount (total - vat)
     val totalInvoices = invoices.sumOf { it.totalAmount.value.toDoubleOrNull() ?: 0.0 }
     val totalExpenses = expenses.sumOf { it.amount.value.toDoubleOrNull() ?: 0.0 }
     val netAmount = totalInvoices - totalExpenses
-    
+
     // Predicted net amount (simplified prediction)
     val predictedNet = netAmount * 1.1 // 10% growth prediction
-    
+
     return VatSummaryData(
         vatAmount = ai.dokus.foundation.domain.Money(totalVat.toString()),
         netAmount = ai.dokus.foundation.domain.Money(netAmount.toString()),
@@ -218,10 +224,10 @@ private fun calculateVatSummary(
  */
 @Composable
 private fun DesktopLayout(
-    documents: List<FinancialDocument>,
+    documents: List<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
-    onDocumentClick: (FinancialDocument) -> Unit,
-    onMoreClick: (FinancialDocument) -> Unit
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    onMoreClick: (FinancialDocumentDto) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -246,7 +252,7 @@ private fun DesktopLayout(
             }
 
             // Documents needing confirmation section
-            val pendingDocuments = documents.financialDocumentsNeedingConfirmation()
+            val pendingDocuments = documents.needingConfirmation()
             if (pendingDocuments.isNotEmpty()) {
                 item {
                     Column(
@@ -257,7 +263,7 @@ private fun DesktopLayout(
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        
+
                         FinancialDocumentTable(
                             documents = pendingDocuments,
                             onDocumentClick = onDocumentClick,
@@ -332,10 +338,10 @@ private fun DesktopLayout(
  */
 @Composable
 private fun MobileLayout(
-    documents: List<FinancialDocument>,
+    documents: List<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
-    onDocumentClick: (FinancialDocument) -> Unit,
-    onMoreClick: (FinancialDocument) -> Unit
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    onMoreClick: (FinancialDocumentDto) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -364,7 +370,7 @@ private fun MobileLayout(
         }
 
         // Documents needing confirmation section
-        val pendingDocuments = documents.financialDocumentsNeedingConfirmation()
+        val pendingDocuments = documents.needingConfirmation()
         if (pendingDocuments.isNotEmpty()) {
             item {
                 Column(
@@ -375,7 +381,7 @@ private fun MobileLayout(
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    
+
                     // On mobile, show a more compact list view
                     MobileDocumentList(
                         documents = pendingDocuments,
@@ -431,8 +437,8 @@ private fun MobileLayout(
  */
 @Composable
 private fun MobileDocumentList(
-    documents: List<FinancialDocument>,
-    onDocumentClick: (FinancialDocument) -> Unit
+    documents: List<FinancialDocumentDto>,
+    onDocumentClick: (FinancialDocumentDto) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -449,15 +455,16 @@ private fun MobileDocumentList(
 /**
  * Compact card for mobile showing a single document.
  */
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
 private fun MobileDocumentCard(
-    document: FinancialDocument,
+    document: FinancialDocumentDto,
     onClick: () -> Unit
 ) {
-    androidx.compose.material3.Card(
+    Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = androidx.compose.material3.CardDefaults.cardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
@@ -478,20 +485,28 @@ private fun MobileDocumentCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Alert indicator if needed
-                    if (document.status == ai.dokus.foundation.domain.model.FinancialDocumentStatus.PendingApproval) {
+                    val needsAlert = when (document) {
+                        is FinancialDocumentDto.InvoiceDto -> document.status == InvoiceStatus.Sent || document.status == InvoiceStatus.Overdue
+                        is FinancialDocumentDto.ExpenseDto -> false
+                    }
+                    if (needsAlert) {
                         Box(
                             modifier = Modifier
                                 .width(6.dp)
                                 .height(6.dp)
                                 .background(
                                     color = MaterialTheme.colorScheme.error,
-                                    shape = androidx.compose.foundation.shape.CircleShape
+                                    shape = CircleShape
                                 )
                         )
                     }
-                    
+
+                    val documentNumber = when (document) {
+                        is FinancialDocumentDto.InvoiceDto -> document.invoiceNumber.toString()
+                        is FinancialDocumentDto.ExpenseDto -> "EXP-${document.id.value}"
+                    }
                     Text(
-                        text = document.documentNumber,
+                        text = documentNumber,
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -499,8 +514,8 @@ private fun MobileDocumentCard(
 
                 // Contact/merchant name
                 val contactName = when (document) {
-                    is FinancialDocument.InvoiceDocument -> "Name Surname" // TODO: Get from client
-                    is FinancialDocument.ExpenseDocument -> document.merchant
+                    is FinancialDocumentDto.InvoiceDto -> "Name Surname" // TODO: Get from client
+                    is FinancialDocumentDto.ExpenseDto -> document.merchant
                 }
                 Text(
                     text = contactName,
@@ -526,10 +541,10 @@ private fun MobileDocumentCard(
             }
 
             // Right side: Type badge
-            ai.dokus.foundation.design.components.CashflowTypeBadge(
+            CashflowTypeBadge(
                 type = when (document) {
-                    is FinancialDocument.InvoiceDocument -> ai.dokus.foundation.design.components.CashflowType.CashIn
-                    is FinancialDocument.ExpenseDocument -> ai.dokus.foundation.design.components.CashflowType.CashOut
+                    is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
+                    is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
                 }
             )
         }

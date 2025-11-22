@@ -82,8 +82,7 @@ val rpcClientModule = module {
     }
 
     // Service proxies using named RPC clients
-    single<TenantService> { get<RpcClient>(named("authClient")).withService() }
-    single<UserService> { get<RpcClient>(named("authClient")).withService() }
+    single<OrganizationService> { get<RpcClient>(named("authClient")).withService() }
     single<InvoiceService> { get<RpcClient>(named("cashflowClient")).withService() }
     single<ClientService> { get<RpcClient>(named("cashflowClient")).withService() }
     single<AuditService> { get<RpcClient>(named("auditClient")).withService() }

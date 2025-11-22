@@ -3,10 +3,10 @@ package ai.dokus.foundation.domain.rpc
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentDto
 import ai.dokus.foundation.domain.model.PaymentEvent
 import ai.dokus.foundation.domain.model.PaymentStats
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
@@ -21,13 +21,13 @@ interface PaymentRemoteService {
      * Record a new payment against an invoice
      * Automatically updates invoice status (PartiallyPaid, Paid)
      */
-    suspend fun recordPayment(request: RecordPaymentRequest): Payment
+    suspend fun recordPayment(request: RecordPaymentRequest): PaymentDto
 
     /**
      * Get a payment by ID
      * Enforces tenant isolation
      */
-    suspend fun getPayment(id: PaymentId): Payment
+    suspend fun getPayment(id: PaymentId): PaymentDto
 
     /**
      * List all payments for a tenant
@@ -39,7 +39,7 @@ interface PaymentRemoteService {
         paymentMethod: PaymentMethod? = null,
         limit: Int = 100,
         offset: Int = 0
-    ): List<Payment>
+    ): List<PaymentDto>
 
     /**
      * Get all payments for a specific invoice
@@ -47,7 +47,7 @@ interface PaymentRemoteService {
      */
     suspend fun getPaymentsByInvoice(
         invoiceId: InvoiceId
-    ): List<Payment>
+    ): List<PaymentDto>
 
     /**
      * Update an existing payment
@@ -60,7 +60,7 @@ interface PaymentRemoteService {
         paymentMethod: PaymentMethod? = null,
         transactionId: TransactionId? = null,
         notes: String? = null
-    ): Payment
+    ): PaymentDto
 
     /**
      * Delete a payment
@@ -74,7 +74,7 @@ interface PaymentRemoteService {
      */
     suspend fun findByTransactionId(
         transactionId: TransactionId
-    ): Payment?
+    ): PaymentDto?
 
     /**
      * Get payment statistics for dashboard
@@ -89,5 +89,5 @@ interface PaymentRemoteService {
      * Watch for payment changes in real-time
      * Emits events when payments are recorded, updated, or deleted
      */
-    fun watchPayments(tenantId: TenantId): Flow<PaymentEvent>
+    fun watchPayments(organizationId: OrganizationId): Flow<PaymentEvent>
 }

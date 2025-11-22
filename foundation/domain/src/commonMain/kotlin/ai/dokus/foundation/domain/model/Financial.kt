@@ -1,29 +1,9 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.AuditLogId
-import ai.dokus.foundation.domain.ids.BankConnectionId
-import ai.dokus.foundation.domain.ids.BankTransactionId
-import ai.dokus.foundation.domain.ids.Bic
-import ai.dokus.foundation.domain.ids.BusinessUserId
-import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.Iban
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.InvoiceItemId
-import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.Quantity
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.TransactionId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.ids.VatReturnId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
@@ -32,12 +12,27 @@ import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.enums.VatReturnStatus
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.AuditLogId
+import ai.dokus.foundation.domain.ids.BankConnectionId
+import ai.dokus.foundation.domain.ids.BankTransactionId
+import ai.dokus.foundation.domain.ids.Bic
+import ai.dokus.foundation.domain.ids.BusinessUserId
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.Iban
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.PaymentId
+import ai.dokus.foundation.domain.ids.TransactionId
+import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.ids.VatReturnId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -47,11 +42,11 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 @Serializable
-data class Tenant(
-    val id: TenantId,
+data class Organization(
+    val id: OrganizationId,
     val name: String,
     val email: String,
-    val plan: TenantPlan,
+    val plan: OrganizationPlan,
     val status: TenantStatus,
     val country: String,
     val language: Language,
@@ -63,8 +58,8 @@ data class Tenant(
 )
 
 @Serializable
-data class TenantSettings(
-    val tenantId: TenantId,
+data class OrganizationSettings(
+    val organizationId: OrganizationId,
     val invoicePrefix: String = "INV",
     val nextInvoiceNumber: Int = 1,
     val defaultPaymentTerms: Int = 30,
@@ -84,12 +79,14 @@ data class TenantSettings(
     val updatedAt: LocalDateTime
 )
 
+/**
+ * User identity - does not include organization info.
+ * Users can belong to multiple organizations via OrganizationMembership.
+ */
 @Serializable
-data class BusinessUser(
+data class User(
     val id: UserId,
-    val tenantId: TenantId,
     val email: Email,
-    val role: UserRole,
     val firstName: String? = null,
     val lastName: String? = null,
     val emailVerified: Boolean = false,
@@ -99,14 +96,38 @@ data class BusinessUser(
     val updatedAt: LocalDateTime
 )
 
+/**
+ * Represents a user's membership in an organization with their role.
+ */
+@Serializable
+data class OrganizationMembership(
+    val userId: UserId,
+    val organizationId: OrganizationId,
+    val role: UserRole,
+    val isActive: Boolean = true,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
+)
+
+/**
+ * User with specific organization context - used when working within an organization.
+ */
+@Serializable
+data class UserInOrganization(
+    val user: User,
+    val organizationId: OrganizationId,
+    val role: UserRole,
+    val membershipActive: Boolean = true
+)
+
 // ============================================================================
-// INVOICING
+// CLIENTS
 // ============================================================================
 
 @Serializable
-data class Client(
+data class ClientDto(
     val id: ClientId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val name: String,
     val email: Email? = null,
     val vatNumber: VatNumber? = null,
@@ -129,81 +150,17 @@ data class Client(
     val updatedAt: LocalDateTime
 )
 
-@Serializable
-data class Invoice(
-    val id: InvoiceId,
-    val tenantId: TenantId,
-    val clientId: ClientId,
-    val invoiceNumber: InvoiceNumber,
-    val issueDate: LocalDate,
-    val dueDate: LocalDate,
-    val subtotalAmount: Money,
-    val vatAmount: Money,
-    val totalAmount: Money,
-    val paidAmount: Money = Money.ZERO,
-    val status: InvoiceStatus,
-    val currency: Currency = Currency.Eur,
-    val notes: String? = null,
-    val termsAndConditions: String? = null,
-    val items: List<InvoiceItem> = emptyList(),
-    val peppolId: PeppolId? = null,
-    val peppolSentAt: LocalDateTime? = null,
-    val peppolStatus: PeppolStatus? = null,
-    val paymentLink: String? = null,
-    val paymentLinkExpiresAt: LocalDateTime? = null,
-    val paidAt: LocalDateTime? = null,
-    val paymentMethod: PaymentMethod? = null,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
-
-@Serializable
-data class InvoiceItem(
-    val id: InvoiceItemId? = null,
-    val invoiceId: InvoiceId? = null,
-    val description: String,
-    val quantity: Quantity,
-    val unitPrice: Money,
-    val vatRate: VatRate,
-    val lineTotal: Money,
-    val vatAmount: Money,
-    val sortOrder: Int = 0
-)
-
-// ============================================================================
-// EXPENSES
-// ============================================================================
-
-@Serializable
-data class Expense(
-    val id: ExpenseId,
-    val tenantId: TenantId,
-    val date: LocalDate,
-    val merchant: String,
-    val amount: Money,
-    val vatAmount: Money? = null,
-    val vatRate: VatRate? = null,
-    val category: ExpenseCategory,
-    val description: String? = null,
-    val receiptUrl: String? = null,
-    val receiptFilename: String? = null,
-    val isDeductible: Boolean = true,
-    val deductiblePercentage: Percentage = Percentage.FULL,
-    val paymentMethod: PaymentMethod? = null,
-    val isRecurring: Boolean = false,
-    val notes: String? = null,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
+// NOTE: Invoice and Expense classes have been consolidated into FinancialDocumentDto
+// Use InvoiceDto and ExpenseDto from FinancialDocument.kt
 
 // ============================================================================
 // PAYMENTS
 // ============================================================================
 
 @Serializable
-data class Payment(
+data class PaymentDto(
     val id: PaymentId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val invoiceId: InvoiceId,
     val amount: Money,
     val paymentDate: LocalDate,
@@ -218,9 +175,9 @@ data class Payment(
 // ============================================================================
 
 @Serializable
-data class BankConnection(
+data class BankConnectionDto(
     val id: BankConnectionId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val provider: BankProvider,
     val institutionId: String,
     val institutionName: String,
@@ -235,10 +192,10 @@ data class BankConnection(
 )
 
 @Serializable
-data class BankTransaction(
+data class BankTransactionDto(
     val id: BankTransactionId,
     val bankConnectionId: BankConnectionId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val externalId: String,
     val date: LocalDate,
     val amount: Money,
@@ -257,9 +214,9 @@ data class BankTransaction(
 // ============================================================================
 
 @Serializable
-data class VatReturn(
+data class VatReturnDto(
     val id: VatReturnId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val quarter: Int,
     val year: Int,
     val salesVat: Money,
@@ -277,9 +234,9 @@ data class VatReturn(
 // ============================================================================
 
 @Serializable
-data class AuditLog(
+data class AuditLogDto(
     val id: AuditLogId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val userId: BusinessUserId? = null,
     val action: AuditAction,
     val entityType: EntityType,
@@ -292,9 +249,9 @@ data class AuditLog(
 )
 
 @Serializable
-data class Attachment(
+data class AttachmentDto(
     val id: AttachmentId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val entityType: EntityType,
     val entityId: String, // Generic entity ID as string since it could be any entity
     val filename: String,
@@ -312,7 +269,7 @@ data class Attachment(
 @Serializable
 data class CreateInvoiceRequest(
     val clientId: ClientId,
-    val items: List<InvoiceItem>,
+    val items: List<InvoiceItemDto>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
     val notes: String? = null

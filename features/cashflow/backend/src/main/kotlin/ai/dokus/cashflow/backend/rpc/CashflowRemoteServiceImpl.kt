@@ -4,26 +4,25 @@ import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
-import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.model.AttachmentDto
+import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.Expense
-import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
-import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
-import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
+import ai.dokus.foundation.ktor.security.requireAuthenticatedOrganizationId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.datetime.LocalDate
@@ -48,20 +47,20 @@ class CashflowRemoteServiceImpl(
     // INVOICE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createInvoice(request: CreateInvoiceRequest): Invoice =
+    override suspend fun createInvoice(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto =
         authInfoProvider.withAuthInfo {
-            val tenantId = requireAuthenticatedTenantId()
-            logger.info("createInvoice called for tenant: $tenantId")
-            invoiceRepository.createInvoice(tenantId, request)
+            val organizationId = requireAuthenticatedOrganizationId()
+            logger.info("createInvoice called for tenant: $organizationId")
+            invoiceRepository.createInvoice(organizationId, request)
             .onSuccess { logger.info("Invoice created with id: ${it.id}") }
             .onFailure { logger.error("Failed to create invoice", it) }
             .getOrThrow()
     }
 
-    override suspend fun getInvoice(id: InvoiceId): Invoice = authInfoProvider.withAuthInfo {
+    override suspend fun getInvoice(id: InvoiceId): FinancialDocumentDto.InvoiceDto = authInfoProvider.withAuthInfo {
         logger.info("getInvoice called for id: $id")
-        val tenantId = requireAuthenticatedTenantId()
-        invoiceRepository.getInvoice(id, tenantId)
+        val organizationId = requireAuthenticatedOrganizationId()
+        invoiceRepository.getInvoice(id, organizationId)
             .onSuccess { logger.info("Invoice retrieved: $id") }
             .onFailure { logger.error("Failed to get invoice: $id", it) }
             .getOrThrow()
@@ -74,29 +73,29 @@ class CashflowRemoteServiceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): List<Invoice> = authInfoProvider.withAuthInfo {
+    ): List<FinancialDocumentDto.InvoiceDto> = authInfoProvider.withAuthInfo {
         logger.info("listInvoices called")
-        val tenantId = requireAuthenticatedTenantId()
-        invoiceRepository.listInvoices(tenantId, status, fromDate, toDate, limit, offset)
-            .onSuccess { logger.info("Listed ${it.size} invoices for tenant: $tenantId") }
-            .onFailure { logger.error("Failed to list invoices for tenant: $tenantId", it) }
+        val organizationId = requireAuthenticatedOrganizationId()
+        invoiceRepository.listInvoices(organizationId, status, fromDate, toDate, limit, offset)
+            .onSuccess { logger.info("Listed ${it.size} invoices for tenant: $organizationId") }
+            .onFailure { logger.error("Failed to list invoices for tenant: $organizationId", it) }
             .getOrThrow()
     }
 
-    override suspend fun listOverdueInvoices(): List<Invoice> = authInfoProvider.withAuthInfo {
+    override suspend fun listOverdueInvoices(): List<FinancialDocumentDto.InvoiceDto> = authInfoProvider.withAuthInfo {
         logger.info("listOverdueInvoices called")
-        val tenantId = requireAuthenticatedTenantId()
-        invoiceRepository.listOverdueInvoices(tenantId)
-            .onSuccess { logger.info("Found ${it.size} overdue invoices for tenant: $tenantId") }
-            .onFailure { logger.error("Failed to list overdue invoices for tenant: $tenantId", it) }
+        val organizationId = requireAuthenticatedOrganizationId()
+        invoiceRepository.listOverdueInvoices(organizationId)
+            .onSuccess { logger.info("Found ${it.size} overdue invoices for tenant: $organizationId") }
+            .onFailure { logger.error("Failed to list overdue invoices for tenant: $organizationId", it) }
             .getOrThrow()
     }
 
     override suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus) {
         authInfoProvider.withAuthInfo {
             logger.info("updateInvoiceStatus called for invoice: $invoiceId, status: $status")
-            val tenantId = requireAuthenticatedTenantId()
-            invoiceRepository.updateInvoiceStatus(invoiceId, tenantId, status)
+            val organizationId = requireAuthenticatedOrganizationId()
+            invoiceRepository.updateInvoiceStatus(invoiceId, organizationId, status)
                 .onSuccess { logger.info("Invoice status updated: $invoiceId -> $status") }
                 .onFailure { logger.error("Failed to update invoice status: $invoiceId", it) }
                 .getOrThrow()
@@ -106,10 +105,10 @@ class CashflowRemoteServiceImpl(
     override suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): Invoice = authInfoProvider.withAuthInfo {
-        val tenantId = requireAuthenticatedTenantId()
+    ): FinancialDocumentDto.InvoiceDto = authInfoProvider.withAuthInfo {
+        val organizationId = requireAuthenticatedOrganizationId()
         logger.info("updateInvoice called for invoice: $invoiceId")
-        invoiceRepository.updateInvoice(invoiceId, tenantId, request)
+        invoiceRepository.updateInvoice(invoiceId, organizationId, request)
             .onSuccess { logger.info("Invoice updated: $invoiceId") }
             .onFailure { logger.error("Failed to update invoice: $invoiceId", it) }
             .getOrThrow()
@@ -118,8 +117,8 @@ class CashflowRemoteServiceImpl(
     override suspend fun deleteInvoice(invoiceId: InvoiceId) {
         authInfoProvider.withAuthInfo {
             logger.info("deleteInvoice called for invoice: $invoiceId")
-            val tenantId = requireAuthenticatedTenantId()
-            invoiceRepository.deleteInvoice(invoiceId, tenantId)
+            val organizationId = requireAuthenticatedOrganizationId()
+            invoiceRepository.deleteInvoice(invoiceId, organizationId)
                 .onSuccess { logger.info("Invoice deleted: $invoiceId") }
                 .onFailure { logger.error("Failed to delete invoice: $invoiceId", it) }
                 .getOrThrow()
@@ -148,7 +147,7 @@ class CashflowRemoteServiceImpl(
         throw NotImplementedError("Mark as sent not yet implemented")
     }
 
-    override suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): InvoiceTotals {
+    override suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): InvoiceTotals {
         logger.info("calculateInvoiceTotals called with ${items.size} items")
         // TODO: Implement totals calculation
         return InvoiceTotals(
@@ -158,8 +157,8 @@ class CashflowRemoteServiceImpl(
         )
     }
 
-    override fun watchInvoices(tenantId: TenantId): Flow<Invoice> {
-        logger.info("watchInvoices called for tenant: $tenantId")
+    override fun watchInvoices(organizationId: OrganizationId): Flow<FinancialDocumentDto.InvoiceDto> {
+        logger.info("watchInvoices called for tenant: $organizationId")
         // TODO: Implement real-time updates
         return emptyFlow()
     }
@@ -168,20 +167,20 @@ class CashflowRemoteServiceImpl(
     // EXPENSE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createExpense(request: CreateExpenseRequest): Expense =
+    override suspend fun createExpense(request: CreateExpenseRequest): FinancialDocumentDto.ExpenseDto =
         authInfoProvider.withAuthInfo {
-            val tenantId = requireAuthenticatedTenantId()
-            logger.info("createExpense called for tenant: $tenantId")
-            expenseRepository.createExpense(tenantId, request)
+            val organizationId = requireAuthenticatedOrganizationId()
+            logger.info("createExpense called for tenant: $organizationId")
+            expenseRepository.createExpense(organizationId, request)
             .onSuccess { logger.info("Expense created with id: ${it.id}") }
             .onFailure { logger.error("Failed to create expense", it) }
             .getOrThrow()
     }
 
-    override suspend fun getExpense(id: ExpenseId): Expense = authInfoProvider.withAuthInfo {
+    override suspend fun getExpense(id: ExpenseId): FinancialDocumentDto.ExpenseDto = authInfoProvider.withAuthInfo {
         logger.info("getExpense called for id: $id")
-        val tenantId = requireAuthenticatedTenantId()
-        expenseRepository.getExpense(id, tenantId)
+        val organizationId = requireAuthenticatedOrganizationId()
+        expenseRepository.getExpense(id, organizationId)
             .onSuccess { logger.info("Expense retrieved: $id") }
             .onFailure { logger.error("Failed to get expense: $id", it) }
             .getOrThrow()
@@ -194,22 +193,22 @@ class CashflowRemoteServiceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): List<Expense> = authInfoProvider.withAuthInfo {
+    ): List<FinancialDocumentDto.ExpenseDto> = authInfoProvider.withAuthInfo {
         logger.info("listExpenses called")
-        val tenantId = requireAuthenticatedTenantId()
-        expenseRepository.listExpenses(tenantId, category, fromDate, toDate, limit, offset)
-            .onSuccess { logger.info("Listed ${it.size} expenses for tenant: $tenantId") }
-            .onFailure { logger.error("Failed to list expenses for tenant: $tenantId", it) }
+        val organizationId = requireAuthenticatedOrganizationId()
+        expenseRepository.listExpenses(organizationId, category, fromDate, toDate, limit, offset)
+            .onSuccess { logger.info("Listed ${it.size} expenses for tenant: $organizationId") }
+            .onFailure { logger.error("Failed to list expenses for tenant: $organizationId", it) }
             .getOrThrow()
     }
 
     override suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): Expense = authInfoProvider.withAuthInfo {
-        val tenantId = requireAuthenticatedTenantId()
+    ): FinancialDocumentDto.ExpenseDto = authInfoProvider.withAuthInfo {
+        val organizationId = requireAuthenticatedOrganizationId()
         logger.info("updateExpense called for expense: $expenseId")
-        expenseRepository.updateExpense(expenseId, tenantId, request)
+        expenseRepository.updateExpense(expenseId, organizationId, request)
             .onSuccess { logger.info("Expense updated: $expenseId") }
             .onFailure { logger.error("Failed to update expense: $expenseId", it) }
             .getOrThrow()
@@ -218,8 +217,8 @@ class CashflowRemoteServiceImpl(
     override suspend fun deleteExpense(expenseId: ExpenseId) {
         authInfoProvider.withAuthInfo {
             logger.info("deleteExpense called for expense: $expenseId")
-            val tenantId = requireAuthenticatedTenantId()
-            expenseRepository.deleteExpense(expenseId, tenantId)
+            val organizationId = requireAuthenticatedOrganizationId()
+            expenseRepository.deleteExpense(expenseId, organizationId)
                 .onSuccess { logger.info("Expense deleted: $expenseId") }
                 .onFailure { logger.error("Failed to delete expense: $expenseId", it) }
                 .getOrThrow()
@@ -235,8 +234,8 @@ class CashflowRemoteServiceImpl(
         return ExpenseCategory.Other
     }
 
-    override fun watchExpenses(tenantId: TenantId): Flow<Expense> {
-        logger.info("watchExpenses called for tenant: $tenantId")
+    override fun watchExpenses(organizationId: OrganizationId): Flow<FinancialDocumentDto.ExpenseDto> {
+        logger.info("watchExpenses called for tenant: $organizationId")
         // TODO: Implement real-time updates
         return emptyFlow()
     }
@@ -253,9 +252,9 @@ class CashflowRemoteServiceImpl(
     ): AttachmentId = authInfoProvider.withAuthInfo {
         logger.info("uploadInvoiceDocument called for invoice: $invoiceId, file: $filename (${fileContent.size} bytes)")
 
-        val tenantId = requireAuthenticatedTenantId()
+        val organizationId = requireAuthenticatedOrganizationId()
 
-        val invoice = invoiceRepository.getInvoice(invoiceId, tenantId)
+        val invoice = invoiceRepository.getInvoice(invoiceId, organizationId)
             .onFailure { logger.error("Failed to verify invoice: $invoiceId", it) }
             .getOrThrow()
             ?: throw IllegalArgumentException("Invoice not found or access denied")
@@ -268,13 +267,13 @@ class CashflowRemoteServiceImpl(
         }
 
         val storageKey = documentStorageService.storeFileLocally(
-            tenantId, "invoice", invoiceId.toString(), filename, fileContent
+            organizationId, "invoice", invoiceId.toString(), filename, fileContent
         )
             .onFailure { logger.error("Failed to store file for invoice: $invoiceId", it) }
             .getOrThrow()
 
         attachmentRepository.uploadAttachment(
-            tenantId = tenantId,
+            organizationId = organizationId,
             entityType = EntityType.Invoice,
             entityId = invoiceId.toString(),
             filename = filename,
@@ -296,9 +295,9 @@ class CashflowRemoteServiceImpl(
     ): AttachmentId = authInfoProvider.withAuthInfo {
         logger.info("uploadExpenseReceipt called for expense: $expenseId, file: $filename (${fileContent.size} bytes)")
 
-        val tenantId = requireAuthenticatedTenantId()
+        val organizationId = requireAuthenticatedOrganizationId()
 
-        val expense = expenseRepository.getExpense(expenseId, tenantId)
+        val expense = expenseRepository.getExpense(expenseId, organizationId)
             .onFailure { logger.error("Failed to verify expense: $expenseId", it) }
             .getOrThrow()
             ?: throw IllegalArgumentException("Expense not found or access denied")
@@ -311,13 +310,13 @@ class CashflowRemoteServiceImpl(
         }
 
         val storageKey = documentStorageService.storeFileLocally(
-            tenantId, "expense", expenseId.toString(), filename, fileContent
+            organizationId, "expense", expenseId.toString(), filename, fileContent
         )
             .onFailure { logger.error("Failed to store file for expense: $expenseId", it) }
             .getOrThrow()
 
         attachmentRepository.uploadAttachment(
-            tenantId = tenantId,
+            organizationId = organizationId,
             entityType = EntityType.Expense,
             entityId = expenseId.toString(),
             filename = filename,
@@ -331,19 +330,19 @@ class CashflowRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<Attachment> =
+    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<AttachmentDto> =
         authInfoProvider.withAuthInfo {
         logger.info("getInvoiceAttachments called for invoice: $invoiceId")
 
-        val tenantId = requireAuthenticatedTenantId()
+        val organizationId = requireAuthenticatedOrganizationId()
 
-        val invoice = invoiceRepository.getInvoice(invoiceId, tenantId)
+        val invoice = invoiceRepository.getInvoice(invoiceId, organizationId)
             .onFailure { logger.error("Failed to verify invoice: $invoiceId", it) }
             .getOrThrow()
             ?: throw IllegalArgumentException("Invoice not found or access denied")
 
         attachmentRepository.getAttachments(
-            tenantId = tenantId,
+            organizationId = organizationId,
             entityType = EntityType.Invoice,
             entityId = invoiceId.toString()
         )
@@ -352,19 +351,19 @@ class CashflowRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun getExpenseAttachments(expenseId: ExpenseId): List<Attachment> =
+    override suspend fun getExpenseAttachments(expenseId: ExpenseId): List<AttachmentDto> =
         authInfoProvider.withAuthInfo {
         logger.info("getExpenseAttachments called for expense: $expenseId")
 
-        val tenantId = requireAuthenticatedTenantId()
+        val organizationId = requireAuthenticatedOrganizationId()
 
-        val expense = expenseRepository.getExpense(expenseId, tenantId)
+        val expense = expenseRepository.getExpense(expenseId, organizationId)
             .onFailure { logger.error("Failed to verify expense: $expenseId", it) }
             .getOrThrow()
             ?: throw IllegalArgumentException("Expense not found or access denied")
 
         attachmentRepository.getAttachments(
-            tenantId = tenantId,
+            organizationId = organizationId,
             entityType = EntityType.Expense,
             entityId = expenseId.toString()
         )
@@ -377,9 +376,9 @@ class CashflowRemoteServiceImpl(
         authInfoProvider.withAuthInfo {
         logger.info("getAttachmentDownloadUrl called for attachment: $attachmentId")
 
-        val tenantId = requireAuthenticatedTenantId()
+        val organizationId = requireAuthenticatedOrganizationId()
 
-        val attachment = attachmentRepository.getAttachment(attachmentId, tenantId)
+        val attachment = attachmentRepository.getAttachment(attachmentId, organizationId)
             .onFailure { logger.error("Failed to get attachment: $attachmentId", it) }
             .getOrThrow()
             ?: throw IllegalArgumentException("Attachment not found or access denied")
@@ -393,10 +392,10 @@ class CashflowRemoteServiceImpl(
         authInfoProvider.withAuthInfo {
             logger.info("deleteAttachment called for attachment: $attachmentId")
 
-            val tenantId = requireAuthenticatedTenantId()
+            val organizationId = requireAuthenticatedOrganizationId()
 
             // First get the attachment to know the storage key
-            val attachment = attachmentRepository.getAttachment(attachmentId, tenantId)
+            val attachment = attachmentRepository.getAttachment(attachmentId, organizationId)
                 .onFailure { logger.error("Failed to get attachment: $attachmentId", it) }
                 .getOrThrow()
                 ?: throw IllegalArgumentException("Attachment not found or access denied")
@@ -412,7 +411,7 @@ class CashflowRemoteServiceImpl(
                 .getOrThrow()
 
             // Delete from database
-            attachmentRepository.deleteAttachment(attachmentId, tenantId)
+            attachmentRepository.deleteAttachment(attachmentId, organizationId)
                 .onSuccess { logger.info("Attachment deleted: $attachmentId") }
                 .onFailure {
                     logger.error(
@@ -433,7 +432,6 @@ class CashflowRemoteServiceImpl(
         toDate: LocalDate
     ): CashflowOverview = authInfoProvider.withAuthInfo {
         logger.info("getCashflowOverview called")
-        val tenantId = requireAuthenticatedTenantId()
         // TODO: Implement overview calculation
         CashflowOverview(
             totalIncome = Money.ZERO,

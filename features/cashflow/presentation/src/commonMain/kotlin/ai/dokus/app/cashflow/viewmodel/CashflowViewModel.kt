@@ -2,8 +2,7 @@ package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.Expense
-import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
@@ -18,8 +17,8 @@ internal class CashflowViewModel : BaseViewModel<CashflowViewModel.State>(State.
     sealed interface State {
         data object Loading : State
         data class Success(
-            val invoices: List<Invoice>,
-            val expenses: List<Expense>
+            val invoices: List<FinancialDocumentDto.InvoiceDto>,
+            val expenses: List<FinancialDocumentDto.ExpenseDto>
         ) : State
         data class Error(val exception: DokusException) : State
     }

@@ -8,7 +8,7 @@ import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.UserDto
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.foundation.ktor.services.UserService
+import ai.dokus.auth.backend.database.repository.UserRepository
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -31,7 +31,7 @@ import kotlin.uuid.ExperimentalUuidApi
  */
 class AuthValidationRemoteServiceImpl(
     private val jwtValidator: JwtValidator,
-    private val userService: UserService
+    private val userRepository: UserRepository
 ) : AuthValidationRemoteService {
 
     private val logger = LoggerFactory.getLogger(AuthValidationRemoteServiceImpl::class.java)
@@ -69,10 +69,10 @@ class AuthValidationRemoteServiceImpl(
                 throw DokusException.TokenInvalid("Invalid or expired token")
             }
 
-        logger.debug("JWT validated for user: ${authInfo.userId}, tenant: ${authInfo.tenantId}")
+        logger.debug("JWT validated for user: ${authInfo.userId}, tenant: ${authInfo.organizationId}")
 
         // Step 2: Fetch full user data from database
-        val user = userService.findById(authInfo.userId)
+        val user = userRepository.findById(authInfo.userId)
             ?: run {
                 logger.error("User not found in database: ${authInfo.userId}")
                 throw DokusException.NotAuthenticated("User not found")
@@ -84,14 +84,18 @@ class AuthValidationRemoteServiceImpl(
             throw DokusException.AccountInactive("Account is not active")
         }
 
-        // Step 4: Verify user role matches allowed roles
-        if (!allowedUserRoles.contains(user.role)) {
+        // Step 4: Get user's organization memberships
+        val memberships = userRepository.getUserOrganizations(authInfo.userId)
+
+        // Step 5: Verify user has at least one allowed role in any organization
+        val userRoles = memberships.map { it.role }.toSet()
+        if (!userRoles.any { allowedUserRoles.contains(it) }) {
             logger.warn(
-                "User ${authInfo.userId} has role ${user.role}, " +
+                "User ${authInfo.userId} has roles $userRoles, " +
                 "but only $allowedUserRoles are allowed"
             )
             throw DokusException.NotAuthorized(
-                "User role '${user.role}' is not allowed for this operation"
+                "User roles are not allowed for this operation"
             )
         }
 
@@ -100,19 +104,18 @@ class AuthValidationRemoteServiceImpl(
             "from ${requestContext.sourceModule}"
         )
 
-        // Step 5: Return complete user DTO with tenant context
+        // Step 6: Return complete user DTO with memberships
         return UserDto.Full(
             id = user.id,
-            tenantId = user.tenantId,
             email = user.email,
             firstName = user.firstName,
             lastName = user.lastName,
-            role = user.role,
             emailVerified = user.emailVerified,
             isActive = user.isActive,
             lastLoginAt = user.lastLoginAt,
             createdAt = user.createdAt,
-            updatedAt = user.updatedAt
+            updatedAt = user.updatedAt,
+            memberships = memberships
         )
     }
 
@@ -127,21 +130,23 @@ class AuthValidationRemoteServiceImpl(
     override suspend fun getUserById(userId: UserId): UserDto.Full {
         logger.debug("Fetching user by ID: ${userId.value}")
 
-        val user = userService.findById(userId)
+        val user = userRepository.findById(userId)
             ?: throw DokusException.NotAuthenticated("User not found: ${userId.value}")
+
+        // Get user's organization memberships
+        val memberships = userRepository.getUserOrganizations(userId)
 
         return UserDto.Full(
             id = user.id,
-            tenantId = user.tenantId,
             email = user.email,
             firstName = user.firstName,
             lastName = user.lastName,
-            role = user.role,
             emailVerified = user.emailVerified,
             isActive = user.isActive,
             lastLoginAt = user.lastLoginAt,
             createdAt = user.createdAt,
-            updatedAt = user.updatedAt
+            updatedAt = user.updatedAt,
+            memberships = memberships
         )
     }
 }

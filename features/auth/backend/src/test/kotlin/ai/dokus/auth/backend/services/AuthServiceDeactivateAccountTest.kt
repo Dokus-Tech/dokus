@@ -3,12 +3,11 @@
 package ai.dokus.auth.backend.services
 
 import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
+import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.BusinessUser
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.ktor.security.JwtGenerator
-import ai.dokus.foundation.ktor.services.TenantService
-import ai.dokus.foundation.ktor.services.UserService
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -42,8 +41,7 @@ import kotlin.uuid.Uuid
 class AuthServiceDeactivateAccountTest {
 
     private lateinit var authService: AuthService
-    private lateinit var userService: UserService
-    private lateinit var tenantService: TenantService
+    private lateinit var userRepository: UserRepository
     private lateinit var jwtGenerator: JwtGenerator
     private lateinit var refreshTokenRepository: RefreshTokenRepository
     private lateinit var rateLimitService: RateLimitService
@@ -56,8 +54,7 @@ class AuthServiceDeactivateAccountTest {
     @BeforeEach
     fun setup() {
         // Create mocks for all dependencies
-        userService = mockk(relaxed = true)
-        tenantService = mockk(relaxed = true)
+        userRepository = mockk(relaxed = true)
         jwtGenerator = mockk(relaxed = true)
         refreshTokenRepository = mockk(relaxed = true)
         rateLimitService = mockk(relaxed = true)
@@ -65,8 +62,7 @@ class AuthServiceDeactivateAccountTest {
         passwordResetService = mockk(relaxed = true)
 
         authService = AuthService(
-            userService = userService,
-            tenantService = tenantService,
+            userRepository = userRepository,
             jwtGenerator = jwtGenerator,
             refreshTokenRepository = refreshTokenRepository,
             rateLimitService = rateLimitService,
@@ -84,12 +80,12 @@ class AuthServiceDeactivateAccountTest {
     fun `deactivateAccount should successfully deactivate active user`() = runBlocking {
         // Given: An active user exists
         val businessUserId = testUserId
-        val activeUser = mockk<BusinessUser> {
+        val activeUser = mockk<User> {
             every { isActive } returns true
             every { id } returns businessUserId
         }
-        coEvery { userService.findById(testUserId) } returns activeUser
-        coEvery { userService.deactivate(testUserId, any()) } just Runs
+        coEvery { userRepository.findById(testUserId) } returns activeUser
+        coEvery { userRepository.deactivate(testUserId, any()) } just Runs
         coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         // When: Deactivate account is called
@@ -100,7 +96,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: User service deactivate was called with correct parameters
         coVerify(exactly = 1) {
-            userService.deactivate(testUserId, testReason)
+            userRepository.deactivate(testUserId, testReason)
         }
 
         // Verify: All refresh tokens were revoked
@@ -112,7 +108,7 @@ class AuthServiceDeactivateAccountTest {
     @Test
     fun `deactivateAccount should fail when user not found`() = runBlocking {
         // Given: User does not exist
-        coEvery { userService.findById(testUserId) } returns null
+        coEvery { userRepository.findById(testUserId) } returns null
 
         // When: Deactivate account is called
         val result = authService.deactivateAccount(testUserId, testReason)
@@ -126,7 +122,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Deactivate was never called
         coVerify(exactly = 0) {
-            userService.deactivate(any(), any())
+            userRepository.deactivate(any(), any())
         }
 
         // Verify: Token revocation was never attempted
@@ -139,11 +135,11 @@ class AuthServiceDeactivateAccountTest {
     fun `deactivateAccount should fail when user already inactive`() = runBlocking {
         // Given: User exists but is already inactive
         val businessUserId = testUserId
-        val inactiveUser = mockk<BusinessUser> {
+        val inactiveUser = mockk<User> {
             every { isActive } returns false
             every { id } returns businessUserId
         }
-        coEvery { userService.findById(testUserId) } returns inactiveUser
+        coEvery { userRepository.findById(testUserId) } returns inactiveUser
 
         // When: Deactivate account is called
         val result = authService.deactivateAccount(testUserId, testReason)
@@ -157,7 +153,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Deactivate was never called
         coVerify(exactly = 0) {
-            userService.deactivate(any(), any())
+            userRepository.deactivate(any(), any())
         }
 
         // Verify: Token revocation was never attempted
@@ -170,12 +166,12 @@ class AuthServiceDeactivateAccountTest {
     fun `deactivateAccount should succeed even if token revocation fails`() = runBlocking {
         // Given: User exists and is active
         val businessUserId = testUserId
-        val activeUser = mockk<BusinessUser> {
+        val activeUser = mockk<User> {
             every { isActive } returns true
             every { id } returns businessUserId
         }
-        coEvery { userService.findById(testUserId) } returns activeUser
-        coEvery { userService.deactivate(testUserId, any()) } just Runs
+        coEvery { userRepository.findById(testUserId) } returns activeUser
+        coEvery { userRepository.deactivate(testUserId, any()) } just Runs
 
         // Token revocation fails
         coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns
@@ -189,7 +185,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: User was still deactivated
         coVerify(exactly = 1) {
-            userService.deactivate(testUserId, testReason)
+            userRepository.deactivate(testUserId, testReason)
         }
     }
 
@@ -197,12 +193,12 @@ class AuthServiceDeactivateAccountTest {
     fun `deactivateAccount should propagate reason to user service`() = runBlocking {
         // Given: User exists and is active
         val businessUserId = testUserId
-        val activeUser = mockk<BusinessUser> {
+        val activeUser = mockk<User> {
             every { isActive } returns true
             every { id } returns businessUserId
         }
-        coEvery { userService.findById(testUserId) } returns activeUser
-        coEvery { userService.deactivate(testUserId, any()) } just Runs
+        coEvery { userRepository.findById(testUserId) } returns activeUser
+        coEvery { userRepository.deactivate(testUserId, any()) } just Runs
         coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         val customReason = "GDPR data deletion request"
@@ -215,7 +211,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Reason was passed to user service
         coVerify(exactly = 1) {
-            userService.deactivate(testUserId, customReason)
+            userRepository.deactivate(testUserId, customReason)
         }
     }
 
@@ -223,14 +219,14 @@ class AuthServiceDeactivateAccountTest {
     fun `deactivateAccount should handle database errors gracefully`() = runBlocking {
         // Given: User exists and is active
         val businessUserId = testUserId
-        val activeUser = mockk<BusinessUser> {
+        val activeUser = mockk<User> {
             every { isActive } returns true
             every { id } returns businessUserId
         }
-        coEvery { userService.findById(testUserId) } returns activeUser
+        coEvery { userRepository.findById(testUserId) } returns activeUser
 
         // Database error occurs during deactivation
-        coEvery { userService.deactivate(testUserId, any()) } throws
+        coEvery { userRepository.deactivate(testUserId, any()) } throws
             RuntimeException("Database connection failed")
 
         // When: Deactivate account is called
@@ -253,12 +249,12 @@ class AuthServiceDeactivateAccountTest {
     fun `deactivateAccount should revoke all tokens after successful deactivation`() = runBlocking {
         // Given: User exists and is active
         val businessUserId = testUserId
-        val activeUser = mockk<BusinessUser> {
+        val activeUser = mockk<User> {
             every { isActive } returns true
             every { id } returns businessUserId
         }
-        coEvery { userService.findById(testUserId) } returns activeUser
-        coEvery { userService.deactivate(testUserId, any()) } just Runs
+        coEvery { userRepository.findById(testUserId) } returns activeUser
+        coEvery { userRepository.deactivate(testUserId, any()) } just Runs
         coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         // When: Deactivate account is called
@@ -269,8 +265,8 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Operations happened in correct order
         coVerifyOrder {
-            userService.findById(testUserId)
-            userService.deactivate(testUserId, testReason)
+            userRepository.findById(testUserId)
+            userRepository.deactivate(testUserId, testReason)
             refreshTokenRepository.revokeAllUserTokens(testUserId)
         }
     }
@@ -279,12 +275,12 @@ class AuthServiceDeactivateAccountTest {
     fun `deactivateAccount should work with empty reason string`() = runBlocking {
         // Given: User exists and is active
         val businessUserId = testUserId
-        val activeUser = mockk<BusinessUser> {
+        val activeUser = mockk<User> {
             every { isActive } returns true
             every { id } returns businessUserId
         }
-        coEvery { userService.findById(testUserId) } returns activeUser
-        coEvery { userService.deactivate(testUserId, any()) } just Runs
+        coEvery { userRepository.findById(testUserId) } returns activeUser
+        coEvery { userRepository.deactivate(testUserId, any()) } just Runs
         coEvery { refreshTokenRepository.revokeAllUserTokens(testUserId) } returns Result.success(Unit)
 
         // When: Deactivate account is called with empty reason
@@ -295,7 +291,7 @@ class AuthServiceDeactivateAccountTest {
 
         // Verify: Empty reason was passed
         coVerify(exactly = 1) {
-            userService.deactivate(testUserId, "")
+            userRepository.deactivate(testUserId, "")
         }
     }
 }

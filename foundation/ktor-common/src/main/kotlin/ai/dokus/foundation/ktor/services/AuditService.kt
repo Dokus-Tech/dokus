@@ -1,11 +1,11 @@
 package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.ids.AuditLogId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.model.AuditLog
+import ai.dokus.foundation.domain.model.AuditLogDto
 import kotlinx.datetime.Instant
 import kotlinx.rpc.annotations.Rpc
 import kotlin.time.ExperimentalTime
@@ -19,7 +19,7 @@ interface AuditService {
      * Logs an audit event
      * Creates an immutable audit record for compliance and debugging
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param userId The user who performed the action (optional for system actions)
      * @param action The action performed (Created, Updated, Deleted, etc.)
      * @param entityType The type of entity affected
@@ -31,7 +31,7 @@ interface AuditService {
      * @return The created audit log
      */
     suspend fun log(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         userId: UserId? = null,
         action: AuditAction,
         entityType: EntityType,
@@ -40,7 +40,7 @@ interface AuditService {
         newValues: String? = null,
         ipAddress: String? = null,
         userAgent: String? = null
-    ): AuditLog
+    ): AuditLogDto
 
     /**
      * Lists audit logs for a specific entity
@@ -50,12 +50,12 @@ interface AuditService {
      * @param entityId The unique identifier of the entity
      * @return List of audit logs ordered by timestamp (newest first)
      */
-    suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<AuditLog>
+    suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<AuditLogDto>
 
     /**
      * Lists audit logs for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param action Filter by action (optional)
      * @param entityType Filter by entity type (optional)
      * @param userId Filter by user (optional)
@@ -66,7 +66,7 @@ interface AuditService {
      * @return List of audit logs ordered by timestamp (newest first)
      */
     suspend fun listByTenant(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         action: AuditAction? = null,
         entityType: EntityType? = null,
         userId: UserId? = null,
@@ -74,7 +74,7 @@ interface AuditService {
         toDate: Instant? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<AuditLog>
+    ): List<AuditLogDto>
 
     /**
      * Lists audit logs for a specific user
@@ -91,13 +91,13 @@ interface AuditService {
         fromDate: Instant? = null,
         toDate: Instant? = null,
         limit: Int? = null
-    ): List<AuditLog>
+    ): List<AuditLogDto>
 
     /**
      * Lists audit logs for a specific action
      * Useful for tracking specific operations (e.g., all deletions)
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param action The action to filter by
      * @param fromDate Filter logs from this timestamp (optional)
      * @param toDate Filter logs until this timestamp (optional)
@@ -105,12 +105,12 @@ interface AuditService {
      * @return List of audit logs ordered by timestamp (newest first)
      */
     suspend fun listByAction(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         action: AuditAction,
         fromDate: Instant? = null,
         toDate: Instant? = null,
         limit: Int? = null
-    ): List<AuditLog>
+    ): List<AuditLogDto>
 
     /**
      * Finds an audit log by its unique ID
@@ -118,18 +118,18 @@ interface AuditService {
      * @param id The audit log's unique identifier
      * @return The audit log if found, null otherwise
      */
-    suspend fun findById(id: AuditLogId): AuditLog?
+    suspend fun findById(id: AuditLogId): AuditLogDto?
 
     /**
      * Gets audit statistics for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param fromDate Start date for statistics (optional)
      * @param toDate End date for statistics (optional)
      * @return Map of statistics (totalActions, byAction, byEntityType, byUser, etc.)
      */
     suspend fun getStatistics(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: Instant? = null,
         toDate: Instant? = null
     ): Map<String, Any>
@@ -138,14 +138,14 @@ interface AuditService {
      * Exports audit logs for compliance reporting
      * Generates a report for a specific time period
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param fromDate Start date for export
      * @param toDate End date for export
      * @param format The export format (CSV, JSON, PDF)
      * @return The export content as ByteArray
      */
     suspend fun exportLogs(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: Instant,
         toDate: Instant,
         format: String = "CSV"
@@ -155,16 +155,16 @@ interface AuditService {
      * Searches audit logs by content
      * Searches in old and new values JSON
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param searchQuery The search query
      * @param limit Maximum number of results (optional)
      * @return List of matching audit logs
      */
     suspend fun search(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         searchQuery: String,
         limit: Int? = null
-    ): List<AuditLog>
+    ): List<AuditLogDto>
 
     /**
      * Gets the most recent audit log for an entity
@@ -173,16 +173,16 @@ interface AuditService {
      * @param entityId The unique identifier of the entity
      * @return The most recent audit log, or null if none exist
      */
-    suspend fun getLatestForEntity(entityType: EntityType, entityId: Uuid): AuditLog?
+    suspend fun getLatestForEntity(entityType: EntityType, entityId: Uuid): AuditLogDto?
 
     /**
      * Archives old audit logs
      * Moves logs older than retention period to archive storage
      * Typically 7 years for financial records
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param olderThan Archive logs older than this timestamp
      * @return Number of logs archived
      */
-    suspend fun archiveLogs(tenantId: TenantId, olderThan: Instant): Int
+    suspend fun archiveLogs(organizationId: OrganizationId, olderThan: Instant): Int
 }

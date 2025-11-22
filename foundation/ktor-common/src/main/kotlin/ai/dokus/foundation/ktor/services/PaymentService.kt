@@ -3,9 +3,9 @@ package ai.dokus.foundation.ktor.services
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentDto
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
 
@@ -15,7 +15,7 @@ interface PaymentService {
      * Records a payment against an invoice
      * Automatically updates invoice status when fully paid
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param invoiceId The invoice's unique identifier
      * @param amount The payment amount
      * @param paymentDate The date the payment was received
@@ -26,14 +26,14 @@ interface PaymentService {
      * @throws IllegalArgumentException if invoice not found or validation fails
      */
     suspend fun recordPayment(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         invoiceId: InvoiceId,
         amount: Money,
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod,
         transactionId: String? = null,
         notes: String? = null
-    ): Payment
+    ): PaymentDto
 
     /**
      * Finds a payment by its unique ID
@@ -41,7 +41,7 @@ interface PaymentService {
      * @param id The payment's unique identifier
      * @return The payment if found, null otherwise
      */
-    suspend fun findById(id: PaymentId): Payment?
+    suspend fun findById(id: PaymentId): PaymentDto?
 
     /**
      * Lists all payments for a specific invoice
@@ -49,12 +49,12 @@ interface PaymentService {
      * @param invoiceId The invoice's unique identifier
      * @return List of payments for the invoice
      */
-    suspend fun listByInvoice(invoiceId: InvoiceId): List<Payment>
+    suspend fun listByInvoice(invoiceId: InvoiceId): List<PaymentDto>
 
     /**
      * Lists all payments for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param fromDate Filter payments on or after this date (optional)
      * @param toDate Filter payments on or before this date (optional)
      * @param paymentMethod Filter by payment method (optional)
@@ -63,13 +63,13 @@ interface PaymentService {
      * @return List of payments
      */
     suspend fun listByTenant(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         paymentMethod: PaymentMethod? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<Payment>
+    ): List<PaymentDto>
 
     /**
      * Deletes a payment record
@@ -93,13 +93,13 @@ interface PaymentService {
     /**
      * Gets payment statistics for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param fromDate Start date for statistics (optional)
      * @param toDate End date for statistics (optional)
      * @return Map of statistics (totalReceived, byPaymentMethod, averagePaymentTime, etc.)
      */
     suspend fun getStatistics(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null
     ): Map<String, Any>

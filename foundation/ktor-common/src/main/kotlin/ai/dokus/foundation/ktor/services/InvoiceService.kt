@@ -3,11 +3,11 @@ package ai.dokus.foundation.ktor.services
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
@@ -27,7 +27,7 @@ interface InvoiceService {
      * @return The created invoice
      * @throws IllegalArgumentException if validation fails
      */
-    suspend fun create(request: CreateInvoiceRequest): Invoice
+    suspend fun create(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto
 
     /**
      * Updates an existing invoice
@@ -57,7 +57,7 @@ interface InvoiceService {
      * @param items The new list of invoice items
      * @throws IllegalArgumentException if invoice not found or not in draft status
      */
-    suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>)
+    suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItemDto>)
 
     /**
      * Soft deletes an invoice by marking it as cancelled
@@ -74,12 +74,12 @@ interface InvoiceService {
      * @param id The invoice's unique identifier
      * @return The invoice if found, null otherwise
      */
-    suspend fun findById(id: InvoiceId): Invoice?
+    suspend fun findById(id: InvoiceId): FinancialDocumentDto.InvoiceDto?
 
     /**
      * Lists all invoices for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param status Filter by status (optional)
      * @param clientId Filter by client (optional)
      * @param fromDate Filter invoices issued on or after this date (optional)
@@ -89,14 +89,14 @@ interface InvoiceService {
      * @return List of invoices
      */
     suspend fun listByTenant(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         status: InvoiceStatus? = null,
         clientId: ClientId? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<Invoice>
+    ): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Lists invoices for a specific client
@@ -105,15 +105,15 @@ interface InvoiceService {
      * @param status Filter by status (optional)
      * @return List of invoices
      */
-    suspend fun listByClient(clientId: ClientId, status: InvoiceStatus? = null): List<Invoice>
+    suspend fun listByClient(clientId: ClientId, status: InvoiceStatus? = null): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Lists overdue invoices for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return List of overdue invoices
      */
-    suspend fun listOverdue(tenantId: TenantId): List<Invoice>
+    suspend fun listOverdue(organizationId: OrganizationId): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Updates the status of an invoice
@@ -190,10 +190,10 @@ interface InvoiceService {
      * Watches invoice updates for a tenant in real-time
      * Returns a Flow that emits whenever invoices are created or updated
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return Flow of invoice updates
      */
-    fun watchInvoices(tenantId: TenantId): Flow<Invoice>
+    fun watchInvoices(organizationId: OrganizationId): Flow<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Calculates totals for an invoice
@@ -202,18 +202,18 @@ interface InvoiceService {
      * @param items List of invoice items
      * @return Invoice totals calculation
      */
-    suspend fun calculateTotals(items: List<InvoiceItem>): InvoiceTotals
+    suspend fun calculateTotals(items: List<InvoiceItemDto>): InvoiceTotals
 
     /**
      * Gets invoice statistics for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param fromDate Start date for statistics (optional)
      * @param toDate End date for statistics (optional)
      * @return Map of statistics (totalInvoiced, totalPaid, totalOverdue, etc.)
      */
     suspend fun getStatistics(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null
     ): Map<String, Money>

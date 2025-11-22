@@ -13,7 +13,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object AttachmentsTable : UUIDTable("attachments") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("tenant_id").index()
+    val organizationId = uuid("organization_id").index()
 
     // Generic entity reference (can attach to invoices, expenses, etc.)
     val entityType = dbEnumeration<EntityType>("entity_type")
@@ -33,11 +33,11 @@ object AttachmentsTable : UUIDTable("attachments") {
 
     init {
         // CRITICAL: Index tenant_id for security and performance
-        index(false, tenantId)
+        index(false, organizationId)
         index(false, entityType)
         index(false, entityId)
 
         // Composite index for retrieving all attachments for an entity
-        index(false, tenantId, entityType, entityId)
+        index(false, organizationId, entityType, entityId)
     }
 }

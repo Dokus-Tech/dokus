@@ -1,7 +1,7 @@
 package ai.dokus.auth.backend.database.tables
 
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.core.ReferenceOption
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -9,9 +9,12 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Tenant-specific preferences and defaults
  * Per-tenant configuration
  */
-object TenantSettingsTable : UUIDTable("tenant_settings") {
-    val tenantId = reference("tenant_id", TenantsTable,
-        onDelete = ReferenceOption.CASCADE).uniqueIndex()
+object OrganizationSettingsTable : UUIDTable("tenant_settings") {
+    val organizationId = reference(
+        name = "organization_id",
+        foreign = OrganizationTable,
+        onDelete = ReferenceOption.CASCADE
+    ).uniqueIndex()
 
     // Invoice defaults
     val invoicePrefix = varchar("invoice_prefix", 20).default("INV")

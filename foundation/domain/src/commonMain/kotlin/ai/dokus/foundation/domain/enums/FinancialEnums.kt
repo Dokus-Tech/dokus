@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 @Serializable
-enum class TenantPlan(override val dbValue: String) : DbEnum {
+enum class OrganizationPlan(override val dbValue: String) : DbEnum {
     Free("FREE"),
     Starter("STARTER"),
     Professional("PROFESSIONAL"),
@@ -47,15 +47,6 @@ enum class UserRole(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
-enum class UserStatus(override val dbValue: String) : DbEnum {
-    Active("ACTIVE"),
-    PendingVerification("PENDING_VERIFICATION"),
-    Suspended("SUSPENDED"),
-    Locked("LOCKED"),
-    Deleted("DELETED")
-}
-
-@Serializable
 enum class Permission(override val dbValue: String) : DbEnum {
     // Invoices
     InvoicesRead("INVOICES_READ"),
@@ -84,8 +75,13 @@ enum class Permission(override val dbValue: String) : DbEnum {
 @Serializable
 enum class SubscriptionTier(override val dbValue: String) : DbEnum {
     SelfHosted("SELF_HOSTED"),
+    CloudFree("CLOUD_FREE"),
     CloudBasic("CLOUD_BASIC"),
-    CloudPro("CLOUD_PRO")
+    CloudPro("CLOUD_PRO");
+
+    companion object {
+        val default = CloudFree
+    }
 }
 
 // ============================================================================

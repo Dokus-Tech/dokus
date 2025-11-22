@@ -58,7 +58,7 @@ data class AuditMessage(
 @OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 @Serializable
 data class AuditEventData(
-    val tenantId: Uuid,
+    val organizationId: Uuid,
     val userId: Uuid?,
     val action: AuditAction,
     val entityType: EntityType,
