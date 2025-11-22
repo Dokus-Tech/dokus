@@ -16,7 +16,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object InvoicesTable : UUIDTable("invoices") {
     // Multi-tenancy (CRITICAL)
-    val organizationId = uuid("organization_id").index()
+    val organizationId = uuid("organization_id")
 
     // Client reference
     val clientId = uuid("client_id")
