@@ -101,10 +101,6 @@ sealed interface FinancialDocumentDto {
     ) : FinancialDocumentDto
 }
 
-// Type aliases for cleaner API usage
-typealias InvoiceDto = FinancialDocumentDto.InvoiceDto
-typealias ExpenseDto = FinancialDocumentDto.ExpenseDto
-
 /**
  * Invoice line item DTO
  */
@@ -125,16 +121,16 @@ data class InvoiceItemDto(
  * Extension function to get a human-readable type name.
  */
 fun FinancialDocumentDto.typeName(): String = when (this) {
-    is InvoiceDto -> "Invoice"
-    is ExpenseDto -> "Expense"
+    is FinancialDocumentDto.InvoiceDto -> "Invoice"
+    is FinancialDocumentDto.ExpenseDto -> "Expense"
 }
 
 /**
  * Extension function to check if document is an invoice.
  */
-fun FinancialDocumentDto.isInvoice(): Boolean = this is InvoiceDto
+fun FinancialDocumentDto.isInvoice(): Boolean = this is FinancialDocumentDto.InvoiceDto
 
 /**
  * Extension function to check if document is an expense.
  */
-fun FinancialDocumentDto.isExpense(): Boolean = this is ExpenseDto
+fun FinancialDocumentDto.isExpense(): Boolean = this is FinancialDocumentDto.ExpenseDto

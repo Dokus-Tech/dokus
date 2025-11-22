@@ -6,8 +6,8 @@ import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
@@ -27,7 +27,7 @@ interface InvoiceService {
      * @return The created invoice
      * @throws IllegalArgumentException if validation fails
      */
-    suspend fun create(request: CreateInvoiceRequest): Invoice
+    suspend fun create(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto
 
     /**
      * Updates an existing invoice
@@ -57,7 +57,7 @@ interface InvoiceService {
      * @param items The new list of invoice items
      * @throws IllegalArgumentException if invoice not found or not in draft status
      */
-    suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItem>)
+    suspend fun updateItems(invoiceId: InvoiceId, items: List<InvoiceItemDto>)
 
     /**
      * Soft deletes an invoice by marking it as cancelled
@@ -74,7 +74,7 @@ interface InvoiceService {
      * @param id The invoice's unique identifier
      * @return The invoice if found, null otherwise
      */
-    suspend fun findById(id: InvoiceId): Invoice?
+    suspend fun findById(id: InvoiceId): FinancialDocumentDto.InvoiceDto?
 
     /**
      * Lists all invoices for a tenant
@@ -193,7 +193,7 @@ interface InvoiceService {
      * @param organizationId The tenant's unique identifier
      * @return Flow of invoice updates
      */
-    fun watchInvoices(organizationId: OrganizationId): Flow<Invoice>
+    fun watchInvoices(organizationId: OrganizationId): Flow<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Calculates totals for an invoice
@@ -202,7 +202,7 @@ interface InvoiceService {
      * @param items List of invoice items
      * @return Invoice totals calculation
      */
-    suspend fun calculateTotals(items: List<InvoiceItem>): InvoiceTotals
+    suspend fun calculateTotals(items: List<InvoiceItemDto>): InvoiceTotals
 
     /**
      * Gets invoice statistics for a tenant

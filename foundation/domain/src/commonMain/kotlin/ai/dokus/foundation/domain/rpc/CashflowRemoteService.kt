@@ -10,8 +10,7 @@ import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.ExpenseDto
-import ai.dokus.foundation.domain.model.InvoiceDto
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
@@ -39,12 +38,12 @@ interface CashflowRemoteService {
     /**
      * Create a new invoice with optional document attachments
      */
-    suspend fun createInvoice(request: CreateInvoiceRequest): InvoiceDto
+    suspend fun createInvoice(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto
 
     /**
      * Get a single invoice by ID with all related documents
      */
-    suspend fun getInvoice(id: InvoiceId): InvoiceDto
+    suspend fun getInvoice(id: InvoiceId): FinancialDocumentDto.InvoiceDto
 
     /**
      * List invoices with optional filtering
@@ -58,12 +57,12 @@ interface CashflowRemoteService {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): List<InvoiceDto>
+    ): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * List all overdue invoices for a tenant
      */
-    suspend fun listOverdueInvoices(): List<InvoiceDto>
+    suspend fun listOverdueInvoices(): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Update invoice status
@@ -76,7 +75,7 @@ interface CashflowRemoteService {
     suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): InvoiceDto
+    ): FinancialDocumentDto.InvoiceDto
 
     /**
      * Delete an invoice (soft delete)
@@ -110,7 +109,7 @@ interface CashflowRemoteService {
     /**
      * Watch for real-time invoice updates
      */
-    fun watchInvoices(organizationId: OrganizationId): Flow<InvoiceDto>
+    fun watchInvoices(organizationId: OrganizationId): Flow<FinancialDocumentDto.InvoiceDto>
 
     // ============================================================================
     // EXPENSE MANAGEMENT
@@ -119,12 +118,12 @@ interface CashflowRemoteService {
     /**
      * Create a new expense
      */
-    suspend fun createExpense(request: CreateExpenseRequest): ExpenseDto
+    suspend fun createExpense(request: CreateExpenseRequest): FinancialDocumentDto.ExpenseDto
 
     /**
      * Get a single expense by ID
      */
-    suspend fun getExpense(id: ExpenseId): ExpenseDto
+    suspend fun getExpense(id: ExpenseId): FinancialDocumentDto.ExpenseDto
 
     /**
      * List expenses with optional filtering
@@ -135,7 +134,7 @@ interface CashflowRemoteService {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): List<ExpenseDto>
+    ): List<FinancialDocumentDto.ExpenseDto>
 
     /**
      * Update an existing expense
@@ -143,7 +142,7 @@ interface CashflowRemoteService {
     suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): ExpenseDto
+    ): FinancialDocumentDto.ExpenseDto
 
     /**
      * Delete an expense
@@ -158,7 +157,7 @@ interface CashflowRemoteService {
     /**
      * Watch for real-time expense updates
      */
-    fun watchExpenses(organizationId: OrganizationId): Flow<ExpenseDto>
+    fun watchExpenses(organizationId: OrganizationId): Flow<FinancialDocumentDto.ExpenseDto>
 
     // ============================================================================
     // DOCUMENT/ATTACHMENT MANAGEMENT

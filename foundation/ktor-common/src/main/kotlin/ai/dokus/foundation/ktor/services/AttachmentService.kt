@@ -3,7 +3,7 @@ package ai.dokus.foundation.ktor.services
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.UploadInfo
 import kotlinx.rpc.annotations.Rpc
 import kotlin.uuid.ExperimentalUuidApi
@@ -32,7 +32,7 @@ interface AttachmentService {
         filename: String,
         mimeType: String,
         fileContent: ByteArray
-    ): Attachment
+    ): AttachmentDto
 
     /**
      * Downloads an attachment's file content
@@ -59,7 +59,7 @@ interface AttachmentService {
      * @param entityId The unique identifier of the entity
      * @return List of attachments for the entity
      */
-    suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<Attachment>
+    suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<AttachmentDto>
 
     /**
      * Lists all attachments for a tenant
@@ -75,7 +75,7 @@ interface AttachmentService {
         entityType: EntityType? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<Attachment>
+    ): List<AttachmentDto>
 
     /**
      * Finds an attachment by its unique ID
@@ -83,7 +83,7 @@ interface AttachmentService {
      * @param id The attachment's unique identifier
      * @return The attachment if found, null otherwise
      */
-    suspend fun findById(id: AttachmentId): Attachment?
+    suspend fun findById(id: AttachmentId): AttachmentDto?
 
     /**
      * Gets a presigned URL for direct file download
@@ -141,7 +141,7 @@ interface AttachmentService {
         sizeBytes: Long,
         s3Key: String,
         s3Bucket: String
-    ): Attachment
+    ): AttachmentDto
 
     /**
      * Gets total storage used by a tenant

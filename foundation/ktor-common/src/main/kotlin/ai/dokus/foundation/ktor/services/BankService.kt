@@ -6,8 +6,8 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.BankProvider
-import ai.dokus.foundation.domain.model.BankConnection
-import ai.dokus.foundation.domain.model.BankTransaction
+import ai.dokus.foundation.domain.model.BankConnectionDto
+import ai.dokus.foundation.domain.model.BankTransactionDto
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
@@ -37,7 +37,7 @@ interface BankService {
         accountId: String,
         accountName: String? = null,
         accessToken: String
-    ): BankConnection
+    ): BankConnectionDto
 
     /**
      * Disconnects a bank account
@@ -93,7 +93,7 @@ interface BankService {
      * @param activeOnly If true, only returns active connections (defaults to true)
      * @return List of bank connections
      */
-    suspend fun listConnections(organizationId: OrganizationId, activeOnly: Boolean = true): List<BankConnection>
+    suspend fun listConnections(organizationId: OrganizationId, activeOnly: Boolean = true): List<BankConnectionDto>
 
     /**
      * Finds a bank connection by its unique ID
@@ -101,7 +101,7 @@ interface BankService {
      * @param id The connection's unique identifier
      * @return The bank connection if found, null otherwise
      */
-    suspend fun findConnectionById(id: BankConnectionId): BankConnection?
+    suspend fun findConnectionById(id: BankConnectionId): BankConnectionDto?
 
     /**
      * Lists bank transactions for a tenant
@@ -123,7 +123,7 @@ interface BankService {
         reconciled: Boolean? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<BankTransaction>
+    ): List<BankTransactionDto>
 
     /**
      * Finds a bank transaction by its unique ID
@@ -131,7 +131,7 @@ interface BankService {
      * @param id The transaction's unique identifier
      * @return The bank transaction if found, null otherwise
      */
-    suspend fun findTransactionById(id: BankTransactionId): BankTransaction?
+    suspend fun findTransactionById(id: BankTransactionId): BankTransactionDto?
 
     /**
      * Lists unreconciled transactions for a tenant
@@ -139,7 +139,7 @@ interface BankService {
      * @param organizationId The tenant's unique identifier
      * @return List of unreconciled transactions
      */
-    suspend fun listUnreconciled(organizationId: OrganizationId): List<BankTransaction>
+    suspend fun listUnreconciled(organizationId: OrganizationId): List<BankTransactionDto>
 
     /**
      * Reconciles a bank transaction with an expense
