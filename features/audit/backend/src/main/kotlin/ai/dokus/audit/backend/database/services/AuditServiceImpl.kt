@@ -3,7 +3,7 @@
 package ai.dokus.audit.backend.database.services
 
 import ai.dokus.foundation.domain.ids.AuditLogId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
@@ -17,7 +17,7 @@ import kotlin.uuid.Uuid
 class AuditServiceImpl : AuditService {
 
     override suspend fun log(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         userId: UserId?,
         action: AuditAction,
         entityType: EntityType,
@@ -35,7 +35,7 @@ class AuditServiceImpl : AuditService {
     }
 
     override suspend fun listByTenant(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         action: AuditAction?,
         entityType: EntityType?,
         userId: UserId?,
@@ -57,7 +57,7 @@ class AuditServiceImpl : AuditService {
     }
 
     override suspend fun listByAction(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         action: AuditAction,
         fromDate: Instant?,
         toDate: Instant?,
@@ -71,7 +71,7 @@ class AuditServiceImpl : AuditService {
     }
 
     override suspend fun getStatistics(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: Instant?,
         toDate: Instant?
     ): Map<String, Any> {
@@ -79,7 +79,7 @@ class AuditServiceImpl : AuditService {
     }
 
     override suspend fun exportLogs(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: Instant,
         toDate: Instant,
         format: String
@@ -88,7 +88,7 @@ class AuditServiceImpl : AuditService {
     }
 
     override suspend fun search(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         searchQuery: String,
         limit: Int?
     ): List<AuditLog> {
@@ -99,7 +99,7 @@ class AuditServiceImpl : AuditService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun archiveLogs(tenantId: TenantId, olderThan: Instant): Int {
+    override suspend fun archiveLogs(organizationId: OrganizationId, olderThan: Instant): Int {
         TODO("Not yet implemented")
     }
 }

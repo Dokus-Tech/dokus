@@ -23,7 +23,7 @@ fun Invoice.toFinancialDocument(
 ): FinancialDocument.InvoiceDocument {
     return FinancialDocument.InvoiceDocument(
         documentId = id.value.toString(),
-        tenantId = tenantId,
+        organizationId = organizationId,
         documentNumber = invoiceNumber.toString(),
         date = issueDate,
         amount = totalAmount,
@@ -55,7 +55,7 @@ fun Expense.toFinancialDocument(
 ): FinancialDocument.ExpenseDocument {
     return FinancialDocument.ExpenseDocument(
         documentId = id.value.toString(),
-        tenantId = tenantId,
+        organizationId = organizationId,
         documentNumber = "EXP-${id.value}",
         date = date,
         amount = amount,

@@ -3,7 +3,7 @@ package ai.dokus.foundation.domain.rpc
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.Attachment
@@ -110,7 +110,7 @@ interface CashflowRemoteService {
     /**
      * Watch for real-time invoice updates
      */
-    fun watchInvoices(tenantId: TenantId): Flow<Invoice>
+    fun watchInvoices(organizationId: OrganizationId): Flow<Invoice>
 
     // ============================================================================
     // EXPENSE MANAGEMENT
@@ -158,7 +158,7 @@ interface CashflowRemoteService {
     /**
      * Watch for real-time expense updates
      */
-    fun watchExpenses(tenantId: TenantId): Flow<Expense>
+    fun watchExpenses(organizationId: OrganizationId): Flow<Expense>
 
     // ============================================================================
     // DOCUMENT/ATTACHMENT MANAGEMENT

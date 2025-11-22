@@ -23,7 +23,7 @@ import kotlin.time.ExperimentalTime
  * ```kotlin
  * withUser(validationService) { user ->
  *     // user: UserDto.Full with complete user data
- *     // user.tenantId is available for multi-tenant queries
+ *     // user.organizationId is available for multi-tenant queries
  * }
  * ```
  */

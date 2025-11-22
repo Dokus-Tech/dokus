@@ -6,7 +6,7 @@ import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
-import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.OrganizationId
@@ -19,15 +19,16 @@ import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.security.JwtGenerator
-import ai.dokus.foundation.ktor.services.TenantService
+import ai.dokus.foundation.ktor.services.OrganizationService
 import ai.dokus.foundation.ktor.services.UserService
 import org.slf4j.LoggerFactory
+import ai.dokus.foundation.domain.model.auth.JwtClaims
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 
 class AuthService(
     private val userService: UserService,
-    private val tenantService: TenantService,
+    private val organizationService: OrganizationService,
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitService,
@@ -63,7 +64,7 @@ class AuthService(
         userService.recordLogin(userId, loginTime)
 
         val organizationScope = createOrganizationScope(
-            organizationId = OrganizationId(user.tenantId.value),
+            organizationId = OrganizationId(user.organizationId.value),
             role = user.role
         )
 
@@ -78,7 +79,7 @@ class AuthService(
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = (now() + 30.days)
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -107,10 +108,10 @@ class AuthService(
 
         logger.debug("Creating new tenant: $tenantName for email: ${request.email.value}")
 
-        val tenant = tenantService.createTenant(
+        val tenant = organizationService.createTenant(
             name = tenantName,
             email = request.email.value,
-            plan = TenantPlan.Free,
+            plan = OrganizationPlan.Free,
             country = "BE",
             language = Language.En,
             vatNumber = null
@@ -119,7 +120,7 @@ class AuthService(
         logger.info("Created tenant: ${tenant.id} with trial ending at: ${tenant.trialEndsAt}")
 
         val user = userService.register(
-            tenantId = tenant.id,
+            organizationId = tenant.id,
             email = request.email.value,
             password = request.password.value,
             firstName = request.firstName.value,
@@ -145,7 +146,7 @@ class AuthService(
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = (now() + 30.days)
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
         ).onFailure { error ->
             logger.error("Failed to save refresh token for user: $userId", error)
             throw DokusException.InternalError("Failed to save refresh token")
@@ -198,7 +199,7 @@ class AuthService(
         }
 
         val organizationScope = createOrganizationScope(
-            organizationId = OrganizationId(user.tenantId.value),
+            organizationId = OrganizationId(user.organizationId.value),
             role = user.role
         )
 
@@ -213,7 +214,7 @@ class AuthService(
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
-            expiresAt = (now() + 30.days)
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
         ).onFailure { error ->
             logger.error("Failed to save rotated refresh token for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")

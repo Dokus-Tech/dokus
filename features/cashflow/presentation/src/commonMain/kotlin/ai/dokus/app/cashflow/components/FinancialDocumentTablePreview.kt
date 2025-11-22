@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.model.FinancialDocument
 import ai.dokus.foundation.domain.model.FinancialDocumentStatus
@@ -53,7 +53,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocument> {
         // Invoice with alert
         FinancialDocument.InvoiceDocument(
             documentId = "1",
-            tenantId = TenantId.generate(),
+            organizationId = OrganizationId.generate(),
             documentNumber = "INV-3006-4400",
             date = date,
             amount = Money("1500.00"),
@@ -74,7 +74,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocument> {
         // Invoice without alert (Cash-Out)
         FinancialDocument.InvoiceDocument(
             documentId = "2",
-            tenantId = TenantId.generate(),
+            organizationId = OrganizationId.generate(),
             documentNumber = "INV-3006-4400",
             date = date,
             amount = Money("1500.00"),
@@ -95,7 +95,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocument> {
         // More sample documents...
         FinancialDocument.InvoiceDocument(
             documentId = "3",
-            tenantId = TenantId.generate(),
+            organizationId = OrganizationId.generate(),
             documentNumber = "INV-3006-4400",
             date = date,
             amount = Money("1500.00"),
@@ -115,7 +115,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocument> {
         ),
         FinancialDocument.InvoiceDocument(
             documentId = "4",
-            tenantId = TenantId.generate(),
+            organizationId = OrganizationId.generate(),
             documentNumber = "INV-3006-4400",
             date = date,
             amount = Money("1500.00"),
@@ -135,7 +135,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocument> {
         ),
         FinancialDocument.InvoiceDocument(
             documentId = "5",
-            tenantId = TenantId.generate(),
+            organizationId = OrganizationId.generate(),
             documentNumber = "INV-3006-4400",
             date = date,
             amount = Money("1500.00"),
@@ -155,7 +155,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocument> {
         ),
         FinancialDocument.InvoiceDocument(
             documentId = "6",
-            tenantId = TenantId.generate(),
+            organizationId = OrganizationId.generate(),
             documentNumber = "INV-3006-4400",
             date = date,
             amount = Money("1500.00"),

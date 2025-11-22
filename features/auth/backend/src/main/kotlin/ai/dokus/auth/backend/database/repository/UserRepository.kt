@@ -3,7 +3,7 @@ package ai.dokus.auth.backend.database.repository
 import ai.dokus.auth.backend.database.mappers.FinancialMappers.toBusinessUser
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.BusinessUser
@@ -42,7 +42,7 @@ class UserRepository(
     private val logger = LoggerFactory.getLogger(UserRepository::class.java)
 
     suspend fun register(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         email: String,
         password: String,
         firstName: String?,
@@ -62,7 +62,7 @@ class UserRepository(
         val passwordHash = passwordCrypto.hashPassword(Password(password))
 
         val userId = UsersTable.insertAndGetId {
-            it[UsersTable.tenantId] = tenantId.value.toJavaUuid()
+            it[UsersTable.organizationId] = organizationId.value.toJavaUuid()
             it[UsersTable.email] = email
             it[UsersTable.passwordHash] = passwordHash
             it[UsersTable.role] = role
@@ -71,7 +71,7 @@ class UserRepository(
             it[UsersTable.isActive] = true
         }.value
 
-        logger.info("Registered new user: $userId with email: $email for tenant: $tenantId")
+        logger.info("Registered new user: $userId with email: $email for tenant: $organizationId")
 
         UsersTable
             .selectAll()
@@ -97,16 +97,16 @@ class UserRepository(
             ?.toBusinessUser()
     }
 
-    suspend fun listByTenant(tenantId: TenantId, activeOnly: Boolean): List<BusinessUser> =
+    suspend fun listByTenant(organizationId: OrganizationId, activeOnly: Boolean): List<BusinessUser> =
         dbQuery {
-            val javaUuid = tenantId.value.toJavaUuid()
+            val javaUuid = organizationId.value.toJavaUuid()
 
             val query = if (activeOnly) {
                 UsersTable.selectAll().where {
-                    (UsersTable.tenantId eq javaUuid) and (UsersTable.isActive eq true)
+                    (UsersTable.organizationId eq javaUuid) and (UsersTable.isActive eq true)
                 }
             } else {
-                UsersTable.selectAll().where { UsersTable.tenantId eq javaUuid }
+                UsersTable.selectAll().where { UsersTable.organizationId eq javaUuid }
             }
 
             query.map { it.toBusinessUser() }

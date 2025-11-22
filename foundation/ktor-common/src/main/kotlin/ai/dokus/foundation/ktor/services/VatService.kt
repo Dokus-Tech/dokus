@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatReturnId
 import ai.dokus.foundation.domain.enums.VatReturnStatus
 import ai.dokus.foundation.domain.model.QuarterInfo
@@ -17,24 +17,24 @@ interface VatService {
      * Calculates VAT for a quarter
      * Computes sales VAT (from invoices) and purchase VAT (from expenses)
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param year The year
      * @param quarter The quarter (1, 2, 3, 4)
      * @return VAT calculation with sales VAT, purchase VAT, and net VAT
      */
-    suspend fun calculateVat(tenantId: TenantId, year: Int, quarter: Int): VatCalculation
+    suspend fun calculateVat(organizationId: OrganizationId, year: Int, quarter: Int): VatCalculation
 
     /**
      * Creates a VAT return for a quarter
      * Automatically calculates VAT from invoices and expenses
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param year The year
      * @param quarter The quarter (1, 2, 3, 4)
      * @return The created VAT return
      * @throws IllegalArgumentException if VAT return already exists for this period
      */
-    suspend fun createReturn(tenantId: TenantId, year: Int, quarter: Int): VatReturn
+    suspend fun createReturn(organizationId: OrganizationId, year: Int, quarter: Int): VatReturn
 
     /**
      * Updates a VAT return
@@ -74,12 +74,12 @@ interface VatService {
     /**
      * Finds a VAT return by year and quarter
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param year The year
      * @param quarter The quarter (1, 2, 3, 4)
      * @return The VAT return if found, null otherwise
      */
-    suspend fun findByQuarter(tenantId: TenantId, year: Int, quarter: Int): VatReturn?
+    suspend fun findByQuarter(organizationId: OrganizationId, year: Int, quarter: Int): VatReturn?
 
     /**
      * Finds a VAT return by its unique ID
@@ -92,13 +92,13 @@ interface VatService {
     /**
      * Lists all VAT returns for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param year Filter by year (optional)
      * @param status Filter by status (optional)
      * @return List of VAT returns
      */
     suspend fun listReturns(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         year: Int? = null,
         status: VatReturnStatus? = null
     ): List<VatReturn>
@@ -106,10 +106,10 @@ interface VatService {
     /**
      * Lists unpaid VAT returns for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return List of submitted but unpaid VAT returns
      */
-    suspend fun listUnpaid(tenantId: TenantId): List<VatReturn>
+    suspend fun listUnpaid(organizationId: OrganizationId): List<VatReturn>
 
     /**
      * Deletes a VAT return
@@ -157,13 +157,13 @@ interface VatService {
      * Gets detailed VAT breakdown for a quarter
      * Includes itemized invoice and expense VAT
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param year The year
      * @param quarter The quarter (1, 2, 3, 4)
      * @return Map with detailed breakdown (invoices, expenses, totals)
      */
     suspend fun getVatBreakdown(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         year: Int,
         quarter: Int
     ): Map<String, Any>

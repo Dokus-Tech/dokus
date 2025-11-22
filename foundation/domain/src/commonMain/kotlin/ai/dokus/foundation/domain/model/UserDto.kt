@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.model
 
 import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import kotlinx.datetime.LocalDateTime
@@ -26,7 +26,7 @@ sealed class UserDto {
     @Serializable
     data class Full(
         val id: UserId,
-        val tenantId: TenantId,
+        val organizationId: OrganizationId,
         val email: Email,
         val firstName: String?,
         val lastName: String?,
@@ -75,7 +75,7 @@ sealed class UserDto {
             val now = Clock.System.now()
             return Full(
                 id = UserId(principal.userId),
-                tenantId = TenantId.parse(principal.tenantId),
+                organizationId = OrganizationId.parse(principal.organizationId),
                 email = Email(principal.email),
                 firstName = principal.firstName,
                 lastName = principal.lastName,

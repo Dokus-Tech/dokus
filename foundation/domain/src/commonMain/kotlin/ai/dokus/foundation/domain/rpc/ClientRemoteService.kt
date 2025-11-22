@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.rpc
 
 import ai.dokus.foundation.domain.ids.ClientId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.model.Client
 import ai.dokus.foundation.domain.model.ClientEvent
@@ -96,5 +96,5 @@ interface ClientRemoteService {
      * Watch for client changes in real-time
      * Emits events when clients are created, updated, or deleted
      */
-    fun watchClients(tenantId: TenantId): Flow<ClientEvent>
+    fun watchClients(organizationId: OrganizationId): Flow<ClientEvent>
 }

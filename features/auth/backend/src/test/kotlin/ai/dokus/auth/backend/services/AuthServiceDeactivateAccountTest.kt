@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.BusinessUser
 import ai.dokus.foundation.ktor.security.JwtGenerator
-import ai.dokus.foundation.ktor.services.TenantService
+import ai.dokus.foundation.ktor.services.OrganizationService
 import ai.dokus.foundation.ktor.services.UserService
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -43,7 +43,7 @@ class AuthServiceDeactivateAccountTest {
 
     private lateinit var authService: AuthService
     private lateinit var userService: UserService
-    private lateinit var tenantService: TenantService
+    private lateinit var organizationService: OrganizationService
     private lateinit var jwtGenerator: JwtGenerator
     private lateinit var refreshTokenRepository: RefreshTokenRepository
     private lateinit var rateLimitService: RateLimitService
@@ -57,7 +57,7 @@ class AuthServiceDeactivateAccountTest {
     fun setup() {
         // Create mocks for all dependencies
         userService = mockk(relaxed = true)
-        tenantService = mockk(relaxed = true)
+        organizationService = mockk(relaxed = true)
         jwtGenerator = mockk(relaxed = true)
         refreshTokenRepository = mockk(relaxed = true)
         rateLimitService = mockk(relaxed = true)
@@ -66,7 +66,7 @@ class AuthServiceDeactivateAccountTest {
 
         authService = AuthService(
             userService = userService,
-            tenantService = tenantService,
+            organizationService = organizationService,
             jwtGenerator = jwtGenerator,
             refreshTokenRepository = refreshTokenRepository,
             rateLimitService = rateLimitService,

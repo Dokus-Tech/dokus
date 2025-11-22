@@ -3,7 +3,7 @@ package ai.dokus.foundation.ktor.services
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.Invoice
@@ -79,7 +79,7 @@ interface InvoiceService {
     /**
      * Lists all invoices for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param status Filter by status (optional)
      * @param clientId Filter by client (optional)
      * @param fromDate Filter invoices issued on or after this date (optional)
@@ -89,7 +89,7 @@ interface InvoiceService {
      * @return List of invoices
      */
     suspend fun listByTenant(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         status: InvoiceStatus? = null,
         clientId: ClientId? = null,
         fromDate: LocalDate? = null,
@@ -110,10 +110,10 @@ interface InvoiceService {
     /**
      * Lists overdue invoices for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return List of overdue invoices
      */
-    suspend fun listOverdue(tenantId: TenantId): List<Invoice>
+    suspend fun listOverdue(organizationId: OrganizationId): List<Invoice>
 
     /**
      * Updates the status of an invoice
@@ -190,10 +190,10 @@ interface InvoiceService {
      * Watches invoice updates for a tenant in real-time
      * Returns a Flow that emits whenever invoices are created or updated
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return Flow of invoice updates
      */
-    fun watchInvoices(tenantId: TenantId): Flow<Invoice>
+    fun watchInvoices(organizationId: OrganizationId): Flow<Invoice>
 
     /**
      * Calculates totals for an invoice
@@ -207,13 +207,13 @@ interface InvoiceService {
     /**
      * Gets invoice statistics for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param fromDate Start date for statistics (optional)
      * @param toDate End date for statistics (optional)
      * @return Map of statistics (totalInvoiced, totalPaid, totalOverdue, etc.)
      */
     suspend fun getStatistics(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null
     ): Map<String, Money>

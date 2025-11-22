@@ -23,8 +23,8 @@ import io.ktor.server.routing.*
  * ```kotlin
  * post("/invoices") {
  *     withUser(validationService) { user ->
- *         // user.tenantId is available for multi-tenant queries
- *         val invoice = invoiceRepository.createInvoice(request, user.tenantId)
+ *         // user.organizationId is available for multi-tenant queries
+ *         val invoice = invoiceRepository.createInvoice(request, user.organizationId)
  *         call.respond(HttpStatusCode.Created, invoice)
  *     }
  * }

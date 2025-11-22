@@ -1,29 +1,10 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.AuditLogId
-import ai.dokus.foundation.domain.ids.BankConnectionId
-import ai.dokus.foundation.domain.ids.BankTransactionId
-import ai.dokus.foundation.domain.ids.Bic
-import ai.dokus.foundation.domain.ids.BusinessUserId
-import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.Iban
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.InvoiceItemId
-import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.Percentage
 import ai.dokus.foundation.domain.Quantity
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.TransactionId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.ids.VatReturnId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
@@ -34,10 +15,29 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.enums.VatReturnStatus
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.AuditLogId
+import ai.dokus.foundation.domain.ids.BankConnectionId
+import ai.dokus.foundation.domain.ids.BankTransactionId
+import ai.dokus.foundation.domain.ids.Bic
+import ai.dokus.foundation.domain.ids.BusinessUserId
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.Iban
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.InvoiceItemId
+import ai.dokus.foundation.domain.ids.InvoiceNumber
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.PaymentId
+import ai.dokus.foundation.domain.ids.PeppolId
+import ai.dokus.foundation.domain.ids.TransactionId
+import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.ids.VatReturnId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -47,11 +47,11 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 @Serializable
-data class Tenant(
-    val id: TenantId,
+data class Organization(
+    val id: OrganizationId,
     val name: String,
     val email: String,
-    val plan: TenantPlan,
+    val plan: OrganizationPlan,
     val status: TenantStatus,
     val country: String,
     val language: Language,
@@ -63,8 +63,8 @@ data class Tenant(
 )
 
 @Serializable
-data class TenantSettings(
-    val tenantId: TenantId,
+data class OrganizationSettings(
+    val organizationId: OrganizationId,
     val invoicePrefix: String = "INV",
     val nextInvoiceNumber: Int = 1,
     val defaultPaymentTerms: Int = 30,
@@ -87,7 +87,7 @@ data class TenantSettings(
 @Serializable
 data class BusinessUser(
     val id: UserId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val email: Email,
     val role: UserRole,
     val firstName: String? = null,
@@ -106,7 +106,7 @@ data class BusinessUser(
 @Serializable
 data class Client(
     val id: ClientId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val name: String,
     val email: Email? = null,
     val vatNumber: VatNumber? = null,
@@ -132,7 +132,7 @@ data class Client(
 @Serializable
 data class Invoice(
     val id: InvoiceId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val clientId: ClientId,
     val invoiceNumber: InvoiceNumber,
     val issueDate: LocalDate,
@@ -177,7 +177,7 @@ data class InvoiceItem(
 @Serializable
 data class Expense(
     val id: ExpenseId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val date: LocalDate,
     val merchant: String,
     val amount: Money,
@@ -203,7 +203,7 @@ data class Expense(
 @Serializable
 data class Payment(
     val id: PaymentId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val invoiceId: InvoiceId,
     val amount: Money,
     val paymentDate: LocalDate,
@@ -220,7 +220,7 @@ data class Payment(
 @Serializable
 data class BankConnection(
     val id: BankConnectionId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val provider: BankProvider,
     val institutionId: String,
     val institutionName: String,
@@ -238,7 +238,7 @@ data class BankConnection(
 data class BankTransaction(
     val id: BankTransactionId,
     val bankConnectionId: BankConnectionId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val externalId: String,
     val date: LocalDate,
     val amount: Money,
@@ -259,7 +259,7 @@ data class BankTransaction(
 @Serializable
 data class VatReturn(
     val id: VatReturnId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val quarter: Int,
     val year: Int,
     val salesVat: Money,
@@ -279,7 +279,7 @@ data class VatReturn(
 @Serializable
 data class AuditLog(
     val id: AuditLogId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val userId: BusinessUserId? = null,
     val action: AuditAction,
     val entityType: EntityType,
@@ -294,7 +294,7 @@ data class AuditLog(
 @Serializable
 data class Attachment(
     val id: AttachmentId,
-    val tenantId: TenantId,
+    val organizationId: OrganizationId,
     val entityType: EntityType,
     val entityId: String, // Generic entity ID as string since it could be any entity
     val filename: String,

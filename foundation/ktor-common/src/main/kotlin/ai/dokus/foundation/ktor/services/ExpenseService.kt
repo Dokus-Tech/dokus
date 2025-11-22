@@ -2,7 +2,7 @@ package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
@@ -76,7 +76,7 @@ interface ExpenseService {
     /**
      * Lists all expenses for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param category Filter by category (optional)
      * @param fromDate Filter expenses on or after this date (optional)
      * @param toDate Filter expenses on or before this date (optional)
@@ -86,7 +86,7 @@ interface ExpenseService {
      * @return List of expenses
      */
     suspend fun listByTenant(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         category: ExpenseCategory? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
@@ -143,30 +143,30 @@ interface ExpenseService {
     /**
      * Lists recurring expenses for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return List of recurring expenses
      */
-    suspend fun listRecurring(tenantId: TenantId): List<Expense>
+    suspend fun listRecurring(organizationId: OrganizationId): List<Expense>
 
     /**
      * Watches expense updates for a tenant in real-time
      * Returns a Flow that emits whenever expenses are created or updated
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return Flow of expense updates
      */
-    fun watchExpenses(tenantId: TenantId): Flow<Expense>
+    fun watchExpenses(organizationId: OrganizationId): Flow<Expense>
 
     /**
      * Gets expense statistics for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param fromDate Start date for statistics (optional)
      * @param toDate End date for statistics (optional)
      * @return Map of statistics (totalExpenses, totalDeductible, byCategory, etc.)
      */
     suspend fun getStatistics(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null
     ): Map<String, Any>

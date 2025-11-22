@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.UserRole
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
@@ -18,7 +18,7 @@ data class JwtPrincipal(
     val userId: String,                    // Subject (sub) - User UUID
     val sessionId: String,                 // Session UUID for session validation
     val email: String,
-    val tenantId: String,                  // Tenant UUID - critical for multi-tenancy
+    val organizationId: String,                  // Tenant UUID - critical for multi-tenancy
 
     // User profile
     val firstName: String? = null,
@@ -37,10 +37,10 @@ data class JwtPrincipal(
     val aud: String? = null                // Audience
 ) {
     /**
-     * Get tenant ID as TenantId type
+     * Get tenant ID as OrganizationId type
      */
-    val tenantIdTyped: TenantId
-        get() = TenantId.parse(tenantId)
+    val organizationIdTyped: OrganizationId
+        get() = OrganizationId.parse(organizationId)
 
     /**
      * Check if user has specific role
@@ -88,7 +88,7 @@ data class JwtPrincipal(
             const val USER_ID = "sub"              // Subject
             const val SESSION_ID = "session_id"    // Custom claim
             const val EMAIL = "email"              // Standard OIDC claim
-            const val TENANT_ID = "tenant_id"      // Custom claim - critical!
+            const val TENANT_ID = "organization_id"      // Custom claim - critical!
             const val FIRST_NAME = "given_name"    // Standard OIDC claim
             const val LAST_NAME = "family_name"    // Standard OIDC claim
             const val FULL_NAME = "name"           // Standard OIDC claim
