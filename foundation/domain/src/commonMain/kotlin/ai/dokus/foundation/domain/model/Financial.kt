@@ -3,7 +3,6 @@ package ai.dokus.foundation.domain.model
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.Quantity
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.BankAccountType
@@ -15,7 +14,6 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.enums.VatReturnStatus
@@ -29,11 +27,8 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.InvoiceItemId
-import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.ids.VatNumber
@@ -126,11 +121,11 @@ data class UserInOrganization(
 )
 
 // ============================================================================
-// INVOICING
+// CLIENTS
 // ============================================================================
 
 @Serializable
-data class Client(
+data class ClientDto(
     val id: ClientId,
     val organizationId: OrganizationId,
     val name: String,
@@ -155,79 +150,15 @@ data class Client(
     val updatedAt: LocalDateTime
 )
 
-@Serializable
-data class Invoice(
-    val id: InvoiceId,
-    val organizationId: OrganizationId,
-    val clientId: ClientId,
-    val invoiceNumber: InvoiceNumber,
-    val issueDate: LocalDate,
-    val dueDate: LocalDate,
-    val subtotalAmount: Money,
-    val vatAmount: Money,
-    val totalAmount: Money,
-    val paidAmount: Money = Money.ZERO,
-    val status: InvoiceStatus,
-    val currency: Currency = Currency.Eur,
-    val notes: String? = null,
-    val termsAndConditions: String? = null,
-    val items: List<InvoiceItem> = emptyList(),
-    val peppolId: PeppolId? = null,
-    val peppolSentAt: LocalDateTime? = null,
-    val peppolStatus: PeppolStatus? = null,
-    val paymentLink: String? = null,
-    val paymentLinkExpiresAt: LocalDateTime? = null,
-    val paidAt: LocalDateTime? = null,
-    val paymentMethod: PaymentMethod? = null,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
-
-@Serializable
-data class InvoiceItem(
-    val id: InvoiceItemId? = null,
-    val invoiceId: InvoiceId? = null,
-    val description: String,
-    val quantity: Quantity,
-    val unitPrice: Money,
-    val vatRate: VatRate,
-    val lineTotal: Money,
-    val vatAmount: Money,
-    val sortOrder: Int = 0
-)
-
-// ============================================================================
-// EXPENSES
-// ============================================================================
-
-@Serializable
-data class Expense(
-    val id: ExpenseId,
-    val organizationId: OrganizationId,
-    val date: LocalDate,
-    val merchant: String,
-    val amount: Money,
-    val vatAmount: Money? = null,
-    val vatRate: VatRate? = null,
-    val category: ExpenseCategory,
-    val description: String? = null,
-    val receiptUrl: String? = null,
-    val receiptFilename: String? = null,
-    val isDeductible: Boolean = true,
-    val deductiblePercentage: Percentage = Percentage.FULL,
-    val paymentMethod: PaymentMethod? = null,
-    val isRecurring: Boolean = false,
-    val notes: String? = null,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
+// NOTE: Invoice and Expense classes have been consolidated into FinancialDocumentDto
+// Use InvoiceDto and ExpenseDto from FinancialDocument.kt
 
 // ============================================================================
 // PAYMENTS
 // ============================================================================
 
 @Serializable
-data class Payment(
+data class PaymentDto(
     val id: PaymentId,
     val organizationId: OrganizationId,
     val invoiceId: InvoiceId,
@@ -244,7 +175,7 @@ data class Payment(
 // ============================================================================
 
 @Serializable
-data class BankConnection(
+data class BankConnectionDto(
     val id: BankConnectionId,
     val organizationId: OrganizationId,
     val provider: BankProvider,
@@ -261,7 +192,7 @@ data class BankConnection(
 )
 
 @Serializable
-data class BankTransaction(
+data class BankTransactionDto(
     val id: BankTransactionId,
     val bankConnectionId: BankConnectionId,
     val organizationId: OrganizationId,
@@ -283,7 +214,7 @@ data class BankTransaction(
 // ============================================================================
 
 @Serializable
-data class VatReturn(
+data class VatReturnDto(
     val id: VatReturnId,
     val organizationId: OrganizationId,
     val quarter: Int,
@@ -303,7 +234,7 @@ data class VatReturn(
 // ============================================================================
 
 @Serializable
-data class AuditLog(
+data class AuditLogDto(
     val id: AuditLogId,
     val organizationId: OrganizationId,
     val userId: BusinessUserId? = null,
@@ -318,7 +249,7 @@ data class AuditLog(
 )
 
 @Serializable
-data class Attachment(
+data class AttachmentDto(
     val id: AttachmentId,
     val organizationId: OrganizationId,
     val entityType: EntityType,
@@ -338,7 +269,7 @@ data class Attachment(
 @Serializable
 data class CreateInvoiceRequest(
     val clientId: ClientId,
-    val items: List<InvoiceItem>,
+    val items: List<InvoiceItemDto>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
     val notes: String? = null

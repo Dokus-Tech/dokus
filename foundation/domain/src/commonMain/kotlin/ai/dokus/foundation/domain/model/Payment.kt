@@ -24,11 +24,11 @@ data class PaymentStats(
 sealed class PaymentEvent {
     @Serializable
     @SerialName("PaymentEvent.PaymentRecorded")
-    data class PaymentRecorded(val payment: Payment) : PaymentEvent()
+    data class PaymentRecorded(val payment: PaymentDto) : PaymentEvent()
 
     @Serializable
     @SerialName("PaymentEvent.PaymentUpdated")
-    data class PaymentUpdated(val payment: Payment) : PaymentEvent()
+    data class PaymentUpdated(val payment: PaymentDto) : PaymentEvent()
 
     @Serializable
     @SerialName("PaymentEvent.PaymentDeleted")
