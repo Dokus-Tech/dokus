@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.ids.PaymentId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentDto
 import ai.dokus.foundation.domain.model.PaymentEvent
 import ai.dokus.foundation.domain.model.PaymentStats
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
@@ -22,7 +22,7 @@ class PaymentRemoteServiceImpl(
     private val invoiceService: InvoiceService
 ) : PaymentRemoteService {
 
-    override suspend fun recordPayment(request: RecordPaymentRequest): Payment {
+    override suspend fun recordPayment(request: RecordPaymentRequest): PaymentDto {
         // Get invoice to extract organizationId for proper tenant isolation
         val invoice = invoiceService.findById(request.invoiceId)
             ?: throw IllegalArgumentException("Invoice not found: ${request.invoiceId}")
@@ -39,7 +39,7 @@ class PaymentRemoteServiceImpl(
         )
     }
 
-    override suspend fun getPayment(id: PaymentId): Payment {
+    override suspend fun getPayment(id: PaymentId): PaymentDto {
         val organizationId = requireAuthenticatedOrganizationId()
         val payment = paymentService.findById(id)
             ?: throw IllegalArgumentException("Payment not found: $id")
@@ -58,7 +58,7 @@ class PaymentRemoteServiceImpl(
         paymentMethod: PaymentMethod?,
         limit: Int,
         offset: Int
-    ): List<Payment> {
+    ): List<PaymentDto> {
         val organizationId = requireAuthenticatedOrganizationId()
         return paymentService.listByTenant(
             organizationId = organizationId,
@@ -70,7 +70,7 @@ class PaymentRemoteServiceImpl(
         )
     }
 
-    override suspend fun getPaymentsByInvoice(invoiceId: InvoiceId): List<Payment> {
+    override suspend fun getPaymentsByInvoice(invoiceId: InvoiceId): List<PaymentDto> {
         val organizationId = requireAuthenticatedOrganizationId()
         val payments = paymentService.listByInvoice(invoiceId)
 
@@ -91,7 +91,7 @@ class PaymentRemoteServiceImpl(
         paymentMethod: PaymentMethod?,
         transactionId: TransactionId?,
         notes: String?
-    ): Payment {
+    ): PaymentDto {
         val organizationId = requireAuthenticatedOrganizationId()
         // Verify payment exists and belongs to tenant
         val existingPayment = paymentService.findById(id)
@@ -128,7 +128,7 @@ class PaymentRemoteServiceImpl(
         paymentService.delete(id)
     }
 
-    override suspend fun findByTransactionId(transactionId: TransactionId): Payment? {
+    override suspend fun findByTransactionId(transactionId: TransactionId): PaymentDto? {
         val organizationId = requireAuthenticatedOrganizationId()
         // PaymentService doesn't provide findByTransactionId directly
         // Search through payments by listing all tenant payments and filtering

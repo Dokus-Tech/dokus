@@ -12,12 +12,11 @@ import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.Expense
-import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.CashflowOverview
@@ -48,7 +47,7 @@ class CashflowRemoteServiceImpl(
     // INVOICE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createInvoice(request: CreateInvoiceRequest): Invoice =
+    override suspend fun createInvoice(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto =
         authInfoProvider.withAuthInfo {
             val organizationId = requireAuthenticatedOrganizationId()
             logger.info("createInvoice called for tenant: $organizationId")
@@ -58,7 +57,7 @@ class CashflowRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun getInvoice(id: InvoiceId): Invoice = authInfoProvider.withAuthInfo {
+    override suspend fun getInvoice(id: InvoiceId): FinancialDocumentDto.InvoiceDto = authInfoProvider.withAuthInfo {
         logger.info("getInvoice called for id: $id")
         val organizationId = requireAuthenticatedOrganizationId()
         invoiceRepository.getInvoice(id, organizationId)
@@ -74,7 +73,7 @@ class CashflowRemoteServiceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): List<Invoice> = authInfoProvider.withAuthInfo {
+    ): List<FinancialDocumentDto.InvoiceDto> = authInfoProvider.withAuthInfo {
         logger.info("listInvoices called")
         val organizationId = requireAuthenticatedOrganizationId()
         invoiceRepository.listInvoices(organizationId, status, fromDate, toDate, limit, offset)
@@ -83,7 +82,7 @@ class CashflowRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun listOverdueInvoices(): List<Invoice> = authInfoProvider.withAuthInfo {
+    override suspend fun listOverdueInvoices(): List<FinancialDocumentDto.InvoiceDto> = authInfoProvider.withAuthInfo {
         logger.info("listOverdueInvoices called")
         val organizationId = requireAuthenticatedOrganizationId()
         invoiceRepository.listOverdueInvoices(organizationId)
@@ -106,7 +105,7 @@ class CashflowRemoteServiceImpl(
     override suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): Invoice = authInfoProvider.withAuthInfo {
+    ): FinancialDocumentDto.InvoiceDto = authInfoProvider.withAuthInfo {
         val organizationId = requireAuthenticatedOrganizationId()
         logger.info("updateInvoice called for invoice: $invoiceId")
         invoiceRepository.updateInvoice(invoiceId, organizationId, request)
@@ -148,7 +147,7 @@ class CashflowRemoteServiceImpl(
         throw NotImplementedError("Mark as sent not yet implemented")
     }
 
-    override suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): InvoiceTotals {
+    override suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): InvoiceTotals {
         logger.info("calculateInvoiceTotals called with ${items.size} items")
         // TODO: Implement totals calculation
         return InvoiceTotals(
@@ -158,7 +157,7 @@ class CashflowRemoteServiceImpl(
         )
     }
 
-    override fun watchInvoices(organizationId: OrganizationId): Flow<Invoice> {
+    override fun watchInvoices(organizationId: OrganizationId): Flow<FinancialDocumentDto.InvoiceDto> {
         logger.info("watchInvoices called for tenant: $organizationId")
         // TODO: Implement real-time updates
         return emptyFlow()
@@ -168,7 +167,7 @@ class CashflowRemoteServiceImpl(
     // EXPENSE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createExpense(request: CreateExpenseRequest): Expense =
+    override suspend fun createExpense(request: CreateExpenseRequest): FinancialDocumentDto.ExpenseDto =
         authInfoProvider.withAuthInfo {
             val organizationId = requireAuthenticatedOrganizationId()
             logger.info("createExpense called for tenant: $organizationId")
@@ -178,7 +177,7 @@ class CashflowRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun getExpense(id: ExpenseId): Expense = authInfoProvider.withAuthInfo {
+    override suspend fun getExpense(id: ExpenseId): FinancialDocumentDto.ExpenseDto = authInfoProvider.withAuthInfo {
         logger.info("getExpense called for id: $id")
         val organizationId = requireAuthenticatedOrganizationId()
         expenseRepository.getExpense(id, organizationId)
@@ -194,7 +193,7 @@ class CashflowRemoteServiceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): List<Expense> = authInfoProvider.withAuthInfo {
+    ): List<FinancialDocumentDto.ExpenseDto> = authInfoProvider.withAuthInfo {
         logger.info("listExpenses called")
         val organizationId = requireAuthenticatedOrganizationId()
         expenseRepository.listExpenses(organizationId, category, fromDate, toDate, limit, offset)
@@ -206,7 +205,7 @@ class CashflowRemoteServiceImpl(
     override suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): Expense = authInfoProvider.withAuthInfo {
+    ): FinancialDocumentDto.ExpenseDto = authInfoProvider.withAuthInfo {
         val organizationId = requireAuthenticatedOrganizationId()
         logger.info("updateExpense called for expense: $expenseId")
         expenseRepository.updateExpense(expenseId, organizationId, request)
@@ -235,7 +234,7 @@ class CashflowRemoteServiceImpl(
         return ExpenseCategory.Other
     }
 
-    override fun watchExpenses(organizationId: OrganizationId): Flow<Expense> {
+    override fun watchExpenses(organizationId: OrganizationId): Flow<FinancialDocumentDto.ExpenseDto> {
         logger.info("watchExpenses called for tenant: $organizationId")
         // TODO: Implement real-time updates
         return emptyFlow()
@@ -331,7 +330,7 @@ class CashflowRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<Attachment> =
+    override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<AttachmentDto> =
         authInfoProvider.withAuthInfo {
         logger.info("getInvoiceAttachments called for invoice: $invoiceId")
 
@@ -352,7 +351,7 @@ class CashflowRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun getExpenseAttachments(expenseId: ExpenseId): List<Attachment> =
+    override suspend fun getExpenseAttachments(expenseId: ExpenseId): List<AttachmentDto> =
         authInfoProvider.withAuthInfo {
         logger.info("getExpenseAttachments called for expense: $expenseId")
 

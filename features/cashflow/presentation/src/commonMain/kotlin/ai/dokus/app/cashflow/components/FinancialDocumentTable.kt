@@ -2,7 +2,8 @@ package ai.dokus.app.cashflow.components
 
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
-import ai.dokus.foundation.domain.model.FinancialDocument
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +39,7 @@ import kotlinx.datetime.LocalDate
 
 /**
  * Data class representing a financial document table row.
- * This maps from FinancialDocument domain model to UI-specific structure.
+ * This maps from FinancialDocumentDto domain model to UI-specific structure.
  */
 data class FinancialDocumentRow(
     val id: String,
@@ -52,22 +53,38 @@ data class FinancialDocumentRow(
 )
 
 /**
- * Converts a FinancialDocument to a FinancialDocumentRow for display.
+ * Converts a FinancialDocumentDto to a FinancialDocumentRow for display.
  */
-fun FinancialDocument.toTableRow(): FinancialDocumentRow {
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
     val cashflowType = when (this) {
-        is FinancialDocument.InvoiceDocument -> CashflowType.CashIn
-        is FinancialDocument.ExpenseDocument -> CashflowType.CashOut
+        is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
+        is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
     }
 
     val contactName = when (this) {
-        is FinancialDocument.InvoiceDocument -> "Name Surname" // TODO: Get from client
-        is FinancialDocument.ExpenseDocument -> this.merchant
+        is FinancialDocumentDto.InvoiceDto -> "Name Surname" // TODO: Get from client
+        is FinancialDocumentDto.ExpenseDto -> this.merchant
     }
 
     val contactEmail = when (this) {
-        is FinancialDocument.InvoiceDocument -> "mailname@email.com" // TODO: Get from client
-        is FinancialDocument.ExpenseDocument -> ""
+        is FinancialDocumentDto.InvoiceDto -> "mailname@email.com" // TODO: Get from client
+        is FinancialDocumentDto.ExpenseDto -> ""
+    }
+
+    val documentId = when (this) {
+        is FinancialDocumentDto.InvoiceDto -> id.value.toString()
+        is FinancialDocumentDto.ExpenseDto -> id.value.toString()
+    }
+
+    val documentNumber = when (this) {
+        is FinancialDocumentDto.InvoiceDto -> invoiceNumber.toString()
+        is FinancialDocumentDto.ExpenseDto -> "EXP-${id.value}"
+    }
+
+    val hasAlert = when (this) {
+        is FinancialDocumentDto.InvoiceDto -> status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
+        is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a status requiring confirmation
     }
 
     // Format amount with comma separator
@@ -87,7 +104,7 @@ fun FinancialDocument.toTableRow(): FinancialDocumentRow {
         amount = formattedAmount,
         date = formatDate(date),
         cashflowType = cashflowType,
-        hasAlert = status == ai.dokus.foundation.domain.model.FinancialDocumentStatus.PendingApproval
+        hasAlert = hasAlert
     )
 }
 
@@ -113,9 +130,9 @@ private fun formatDate(date: LocalDate): String {
  */
 @Composable
 fun FinancialDocumentTable(
-    documents: List<FinancialDocument>,
-    onDocumentClick: (FinancialDocument) -> Unit,
-    onMoreClick: (FinancialDocument) -> Unit,
+    documents: List<FinancialDocumentDto>,
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    onMoreClick: (FinancialDocumentDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(

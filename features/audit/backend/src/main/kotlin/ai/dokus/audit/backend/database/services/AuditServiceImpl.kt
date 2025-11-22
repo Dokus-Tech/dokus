@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.model.AuditLog
+import ai.dokus.foundation.domain.model.AuditLogDto
 import ai.dokus.foundation.ktor.services.AuditService
 import kotlinx.datetime.Instant
 import kotlin.uuid.ExperimentalUuidApi
@@ -26,11 +26,11 @@ class AuditServiceImpl : AuditService {
         newValues: String?,
         ipAddress: String?,
         userAgent: String?
-    ): AuditLog {
+    ): AuditLogDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<AuditLog> {
+    override suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
@@ -43,7 +43,7 @@ class AuditServiceImpl : AuditService {
         toDate: Instant?,
         limit: Int?,
         offset: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
@@ -52,7 +52,7 @@ class AuditServiceImpl : AuditService {
         fromDate: Instant?,
         toDate: Instant?,
         limit: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
@@ -62,11 +62,11 @@ class AuditServiceImpl : AuditService {
         fromDate: Instant?,
         toDate: Instant?,
         limit: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun findById(id: AuditLogId): AuditLog? {
+    override suspend fun findById(id: AuditLogId): AuditLogDto? {
         TODO("Not yet implemented")
     }
 
@@ -91,11 +91,11 @@ class AuditServiceImpl : AuditService {
         organizationId: OrganizationId,
         searchQuery: String,
         limit: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun getLatestForEntity(entityType: EntityType, entityId: Uuid): AuditLog? {
+    override suspend fun getLatestForEntity(entityType: EntityType, entityId: Uuid): AuditLogDto? {
         TODO("Not yet implemented")
     }
 

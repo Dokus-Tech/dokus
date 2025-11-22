@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.Invoice
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun InvoiceCard(
-    invoice: Invoice,
+    invoice: FinancialDocumentDto.InvoiceDto,
     modifier: Modifier = Modifier
 ) {
     Card(

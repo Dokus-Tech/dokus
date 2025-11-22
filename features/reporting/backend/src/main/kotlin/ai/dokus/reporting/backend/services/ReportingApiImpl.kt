@@ -4,9 +4,11 @@ import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.model.CashFlowReport
 import ai.dokus.foundation.domain.model.DateRange
 import ai.dokus.foundation.domain.model.ExpenseAnalytics
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.FinancialSummary
 import ai.dokus.foundation.domain.model.InvoiceAnalytics
 import ai.dokus.foundation.domain.model.MonthlyCashFlow
+import ai.dokus.foundation.domain.model.PaymentDto
 import ai.dokus.foundation.domain.model.VatReport
 import ai.dokus.foundation.domain.rpc.ReportingApi
 import ai.dokus.foundation.ktor.security.requireAuthenticatedOrganizationId
@@ -274,8 +276,8 @@ class ReportingApiImpl(
     }
 
     private fun buildMonthlyData(
-        payments: List<ai.dokus.foundation.domain.model.Payment>,
-        expenses: List<ai.dokus.foundation.domain.model.Expense>
+        payments: List<PaymentDto>,
+        expenses: List<FinancialDocumentDto.ExpenseDto>
     ): List<MonthlyCashFlow> {
         // Group payments and expenses by month
         @Suppress("DEPRECATION")
