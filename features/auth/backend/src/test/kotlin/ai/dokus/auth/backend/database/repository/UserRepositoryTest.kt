@@ -294,7 +294,7 @@ class UserRepositoryTest {
         // Verify organization membership exists
         val memberships = repository.getUserOrganizations(user.id)
         assertEquals(1, memberships.size, "User should have one membership")
-        assertEquals(testOrganizationId, memberships[0].organizationId)
+        assertEquals(testOrganizationId!!, memberships[0].organizationId)
         assertEquals(UserRole.Admin, memberships[0].role)
     }
 
@@ -303,7 +303,7 @@ class UserRepositoryTest {
         val email = "duporg-${Uuid.random()}@example.com"
 
         repository.registerWithOrganization(
-            organizationId = testOrganizationId,
+            organizationId = testOrganizationId!!,
             email = email,
             password = "SecurePass123!",
             firstName = "First",
@@ -314,7 +314,7 @@ class UserRepositoryTest {
         assertThrows<IllegalArgumentException> {
             runBlocking {
                 repository.registerWithOrganization(
-                    organizationId = testOrganizationId,
+                    organizationId = testOrganizationId!!,
                     email = email,
                     password = "AnotherPass123!",
                     firstName = "Second",
@@ -346,12 +346,12 @@ class UserRepositoryTest {
         assertTrue(initialMemberships.isEmpty())
 
         // Add to organization
-        repository.addToOrganization(user.id, testOrganizationId, UserRole.Editor)
+        repository.addToOrganization(user.id, testOrganizationId!!, UserRole.Editor)
 
         // Verify membership was created
         val memberships = repository.getUserOrganizations(user.id)
         assertEquals(1, memberships.size)
-        assertEquals(testOrganizationId, memberships[0].organizationId)
+        assertEquals(testOrganizationId!!, memberships[0].organizationId)
         assertEquals(UserRole.Editor, memberships[0].role)
     }
 
@@ -378,7 +378,7 @@ class UserRepositoryTest {
         )
 
         // Add to both organizations
-        repository.addToOrganization(user.id, testOrganizationId, UserRole.Owner)
+        repository.addToOrganization(user.id, testOrganizationId!!, UserRole.Owner)
         repository.addToOrganization(user.id, secondOrg, UserRole.Viewer)
 
         // Verify memberships
@@ -386,7 +386,7 @@ class UserRepositoryTest {
         assertEquals(2, memberships.size, "User should belong to two organizations")
 
         val roles = memberships.associate { it.organizationId to it.role }
-        assertEquals(UserRole.Owner, roles[testOrganizationId])
+        assertEquals(UserRole.Owner, roles[testOrganizationId!!])
         assertEquals(UserRole.Viewer, roles[secondOrg])
     }
 
@@ -459,7 +459,7 @@ class UserRepositoryTest {
     @Test
     fun `getMembership should return membership for valid user and organization`() = runBlocking {
         val user = repository.registerWithOrganization(
-            organizationId = testOrganizationId,
+            organizationId = testOrganizationId!!,
             email = "getmember-${Uuid.random()}@example.com",
             password = "SecurePass123!",
             firstName = "Get",
@@ -467,7 +467,7 @@ class UserRepositoryTest {
             role = UserRole.Accountant
         )
 
-        val membership = repository.getMembership(user.id, testOrganizationId)
+        val membership = repository.getMembership(user.id, testOrganizationId!!)
 
         assertNotNull(membership)
         assertEquals(UserRole.Accountant, membership?.role)
@@ -482,7 +482,7 @@ class UserRepositoryTest {
             lastName = "Member"
         )
 
-        val membership = repository.getMembership(user.id, testOrganizationId)
+        val membership = repository.getMembership(user.id, testOrganizationId!!)
 
         assertNull(membership, "Should return null for non-member")
     }
@@ -494,7 +494,7 @@ class UserRepositoryTest {
     @Test
     fun `updateRole should change user role in organization`() = runBlocking {
         val user = repository.registerWithOrganization(
-            organizationId = testOrganizationId,
+            organizationId = testOrganizationId!!,
             email = "updaterole-${Uuid.random()}@example.com",
             password = "SecurePass123!",
             firstName = "Update",
@@ -503,9 +503,9 @@ class UserRepositoryTest {
         )
 
         // Update role
-        repository.updateRole(user.id, testOrganizationId, UserRole.Admin)
+        repository.updateRole(user.id, testOrganizationId!!, UserRole.Admin)
 
-        val membership = repository.getMembership(user.id, testOrganizationId)
+        val membership = repository.getMembership(user.id, testOrganizationId!!)
         assertEquals(UserRole.Admin, membership?.role, "Role should be updated")
     }
 }

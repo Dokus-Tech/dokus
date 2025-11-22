@@ -61,7 +61,7 @@ class RefreshTokenRepositoryTest {
         )
 
         runBlocking {
-            database.init(OrganizationTable, UsersTable, RefreshTokensTable)
+            database.init(OrganizationTable, UsersTable, OrganizationMembersTable, RefreshTokensTable)
             testUserId = createTestUser()
         }
 
