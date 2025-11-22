@@ -2,7 +2,6 @@ package ai.dokus.foundation.domain.rpc
 
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.UserStatus
 import ai.dokus.foundation.domain.model.UserDto
 import kotlinx.datetime.Instant
 import kotlinx.rpc.annotations.Rpc

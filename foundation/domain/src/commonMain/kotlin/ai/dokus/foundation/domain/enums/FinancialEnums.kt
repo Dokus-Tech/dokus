@@ -47,15 +47,6 @@ enum class UserRole(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
-enum class UserStatus(override val dbValue: String) : DbEnum {
-    Active("ACTIVE"),
-    PendingVerification("PENDING_VERIFICATION"),
-    Suspended("SUSPENDED"),
-    Locked("LOCKED"),
-    Deleted("DELETED")
-}
-
-@Serializable
 enum class Permission(override val dbValue: String) : DbEnum {
     // Invoices
     InvoicesRead("INVOICES_READ"),

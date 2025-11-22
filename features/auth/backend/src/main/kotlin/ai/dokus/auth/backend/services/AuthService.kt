@@ -59,19 +59,23 @@ class AuthService(
             throw DokusException.AccountInactive()
         }
 
-        val userId = UserId(user.id.value.toString())
+        val userId = user.id
         val loginTime = now()
         userService.recordLogin(userId, loginTime)
 
-        val organizationScope = createOrganizationScope(
-            organizationId = OrganizationId(user.organizationId.value),
-            role = user.role
-        )
+        // Get all user's organizations and create scopes for each
+        val memberships = userService.getUserOrganizations(userId)
+        val organizationScopes = memberships.map { membership ->
+            createOrganizationScope(
+                organizationId = membership.organizationId,
+                role = membership.role
+            )
+        }
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = listOf(organizationScope)
+            organizations = organizationScopes
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -130,9 +134,10 @@ class AuthService(
 
         val userId = user.id
 
+        // For registration, user is owner of the new organization
         val organizationScope = createOrganizationScope(
             organizationId = OrganizationId(tenant.id.value),
-            role = user.role
+            role = UserRole.Owner
         )
 
         val claims = jwtGenerator.generateClaims(
@@ -198,15 +203,19 @@ class AuthService(
             throw DokusException.AccountInactive()
         }
 
-        val organizationScope = createOrganizationScope(
-            organizationId = OrganizationId(user.organizationId.value),
-            role = user.role
-        )
+        // Get all user's organizations and create scopes for each
+        val memberships = userService.getUserOrganizations(userId)
+        val organizationScopes = memberships.map { membership ->
+            createOrganizationScope(
+                organizationId = membership.organizationId,
+                role = membership.role
+            )
+        }
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = listOf(organizationScope)
+            organizations = organizationScopes
         )
 
         val response = jwtGenerator.generateTokens(claims)

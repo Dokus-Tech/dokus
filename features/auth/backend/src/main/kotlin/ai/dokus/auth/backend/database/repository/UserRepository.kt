@@ -1,12 +1,17 @@
 package ai.dokus.auth.backend.database.repository
 
 import ai.dokus.auth.backend.database.mappers.FinancialMappers.toBusinessUser
+import ai.dokus.auth.backend.database.mappers.FinancialMappers.toOrganizationMembership
+import ai.dokus.auth.backend.database.mappers.FinancialMappers.toUserInOrganization
+import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.BusinessUser
+import ai.dokus.foundation.domain.model.OrganizationMembership
+import ai.dokus.foundation.domain.model.UserInOrganization
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Instant
@@ -15,11 +20,11 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
-import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 
@@ -41,6 +46,9 @@ class UserRepository(
 ) {
     private val logger = LoggerFactory.getLogger(UserRepository::class.java)
 
+    /**
+     * Register a new user and add them to an organization with a role.
+     */
     suspend fun register(
         organizationId: OrganizationId,
         email: String,
@@ -61,17 +69,24 @@ class UserRepository(
 
         val passwordHash = passwordCrypto.hashPassword(Password(password))
 
+        // Create user
         val userId = UsersTable.insertAndGetId {
-            it[UsersTable.organizationId] = organizationId.value.toJavaUuid()
             it[UsersTable.email] = email
             it[UsersTable.passwordHash] = passwordHash
-            it[UsersTable.role] = role
             it[UsersTable.firstName] = firstName
             it[UsersTable.lastName] = lastName
             it[UsersTable.isActive] = true
         }.value
 
-        logger.info("Registered new user: $userId with email: $email for tenant: $organizationId")
+        // Create membership
+        OrganizationMembersTable.insert {
+            it[OrganizationMembersTable.userId] = userId
+            it[OrganizationMembersTable.organizationId] = organizationId.value.toJavaUuid()
+            it[OrganizationMembersTable.role] = role
+            it[OrganizationMembersTable.isActive] = true
+        }
+
+        logger.info("Registered new user: $userId with email: $email for organization: $organizationId")
 
         UsersTable
             .selectAll()
@@ -97,32 +112,104 @@ class UserRepository(
             ?.toBusinessUser()
     }
 
-    suspend fun listByTenant(organizationId: OrganizationId, activeOnly: Boolean): List<BusinessUser> =
+    /**
+     * List all users in an organization.
+     */
+    suspend fun listByOrganization(organizationId: OrganizationId, activeOnly: Boolean): List<UserInOrganization> =
         dbQuery {
             val javaUuid = organizationId.value.toJavaUuid()
 
             val query = if (activeOnly) {
-                UsersTable.selectAll().where {
-                    (UsersTable.organizationId eq javaUuid) and (UsersTable.isActive eq true)
-                }
+                UsersTable
+                    .innerJoin(OrganizationMembersTable)
+                    .selectAll()
+                    .where {
+                        (OrganizationMembersTable.organizationId eq javaUuid) and
+                        (UsersTable.isActive eq true) and
+                        (OrganizationMembersTable.isActive eq true)
+                    }
             } else {
-                UsersTable.selectAll().where { UsersTable.organizationId eq javaUuid }
+                UsersTable
+                    .innerJoin(OrganizationMembersTable)
+                    .selectAll()
+                    .where { OrganizationMembersTable.organizationId eq javaUuid }
             }
 
-            query.map { it.toBusinessUser() }
+            query.map { it.toUserInOrganization() }
         }
 
-    suspend fun updateRole(userId: UserId, newRole: UserRole) = dbQuery {
+    /**
+     * Get all organizations a user belongs to.
+     */
+    suspend fun getUserOrganizations(userId: UserId): List<OrganizationMembership> = dbQuery {
         val javaUuid = userId.value.toJavaUuid()
-        val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
+        OrganizationMembersTable
+            .selectAll()
+            .where { OrganizationMembersTable.userId eq javaUuid }
+            .map { it.toOrganizationMembership() }
+    }
+
+    /**
+     * Get user's membership in a specific organization.
+     */
+    suspend fun getMembership(userId: UserId, organizationId: OrganizationId): OrganizationMembership? = dbQuery {
+        OrganizationMembersTable
+            .selectAll()
+            .where {
+                (OrganizationMembersTable.userId eq userId.value.toJavaUuid()) and
+                (OrganizationMembersTable.organizationId eq organizationId.value.toJavaUuid())
+            }
+            .singleOrNull()
+            ?.toOrganizationMembership()
+    }
+
+    /**
+     * Add a user to an organization with a role.
+     */
+    suspend fun addToOrganization(userId: UserId, organizationId: OrganizationId, role: UserRole) = dbQuery {
+        OrganizationMembersTable.insert {
+            it[OrganizationMembersTable.userId] = userId.value.toJavaUuid()
+            it[OrganizationMembersTable.organizationId] = organizationId.value.toJavaUuid()
+            it[OrganizationMembersTable.role] = role
+            it[OrganizationMembersTable.isActive] = true
+        }
+        logger.info("Added user $userId to organization $organizationId with role $role")
+    }
+
+    /**
+     * Update a user's role in an organization.
+     */
+    suspend fun updateRole(userId: UserId, organizationId: OrganizationId, newRole: UserRole) = dbQuery {
+        val updated = OrganizationMembersTable.update({
+            (OrganizationMembersTable.userId eq userId.value.toJavaUuid()) and
+            (OrganizationMembersTable.organizationId eq organizationId.value.toJavaUuid())
+        }) {
             it[role] = newRole
         }
 
         if (updated == 0) {
-            throw IllegalArgumentException("User not found: $userId")
+            throw IllegalArgumentException("Membership not found for user $userId in organization $organizationId")
         }
 
-        logger.info("Updated role for user $userId to $newRole")
+        logger.info("Updated role for user $userId in organization $organizationId to $newRole")
+    }
+
+    /**
+     * Remove a user from an organization (deactivate membership).
+     */
+    suspend fun removeFromOrganization(userId: UserId, organizationId: OrganizationId) = dbQuery {
+        val updated = OrganizationMembersTable.update({
+            (OrganizationMembersTable.userId eq userId.value.toJavaUuid()) and
+            (OrganizationMembersTable.organizationId eq organizationId.value.toJavaUuid())
+        }) {
+            it[isActive] = false
+        }
+
+        if (updated == 0) {
+            throw IllegalArgumentException("Membership not found for user $userId in organization $organizationId")
+        }
+
+        logger.info("Removed user $userId from organization $organizationId")
     }
 
     suspend fun updateProfile(userId: UserId, firstName: String?, lastName: String?) =
@@ -191,32 +278,6 @@ class UserRepository(
         logger.debug("Recorded login for user $userId at $loginTime")
     }
 
-    suspend fun setupMfa(userId: UserId, mfaSecret: String) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
-        val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
-            it[UsersTable.mfaSecret] = mfaSecret
-        }
-
-        if (updated == 0) {
-            throw IllegalArgumentException("User not found: $userId")
-        }
-
-        logger.info("Set up MFA for user $userId")
-    }
-
-    suspend fun removeMfa(userId: UserId) = dbQuery {
-        val javaUuid = userId.value.toJavaUuid()
-        val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
-            it[mfaSecret] = null
-        }
-
-        if (updated == 0) {
-            throw IllegalArgumentException("User not found: $userId")
-        }
-
-        logger.info("Removed MFA for user $userId")
-    }
-
     suspend fun verifyCredentials(email: String, password: String): BusinessUser? =
         dbQuery {
             val user = UsersTable
@@ -243,13 +304,6 @@ class UserRepository(
 
     // Email verification methods
 
-    /**
-     * Set email verification token for a user.
-     *
-     * @param userId The user ID to set verification token for
-     * @param token The cryptographically secure verification token
-     * @param expiry When the verification token expires
-     */
     suspend fun setEmailVerificationToken(
         userId: UserId,
         token: String,
@@ -268,12 +322,6 @@ class UserRepository(
         logger.debug("Set email verification token for user $userId")
     }
 
-    /**
-     * Find a user by their email verification token.
-     *
-     * @param token The verification token to search for
-     * @return User info if found and not yet verified, null otherwise
-     */
     suspend fun findByVerificationToken(token: String): EmailVerificationUserInfo? = dbQuery {
         UsersTable
             .selectAll()
@@ -294,11 +342,6 @@ class UserRepository(
             }
     }
 
-    /**
-     * Mark a user's email as verified and clear the verification token.
-     *
-     * @param userId The user ID to mark as verified
-     */
     suspend fun markEmailVerified(userId: UserId) = dbQuery {
         val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
@@ -314,12 +357,6 @@ class UserRepository(
         logger.info("Marked email as verified for user $userId")
     }
 
-    /**
-     * Check if a user's email is already verified.
-     *
-     * @param userId The user ID to check
-     * @return true if email is verified, false otherwise
-     */
     suspend fun isEmailVerified(userId: UserId): Boolean = dbQuery {
         val javaUuid = userId.value.toJavaUuid()
         UsersTable
