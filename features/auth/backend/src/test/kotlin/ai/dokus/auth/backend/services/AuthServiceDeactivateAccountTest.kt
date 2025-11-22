@@ -4,7 +4,6 @@ package ai.dokus.auth.backend.services
 
 import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.User
@@ -43,7 +42,6 @@ class AuthServiceDeactivateAccountTest {
 
     private lateinit var authService: AuthService
     private lateinit var userRepository: UserRepository
-    private lateinit var organizationRepository: OrganizationRepository
     private lateinit var jwtGenerator: JwtGenerator
     private lateinit var refreshTokenRepository: RefreshTokenRepository
     private lateinit var rateLimitService: RateLimitService
@@ -57,7 +55,6 @@ class AuthServiceDeactivateAccountTest {
     fun setup() {
         // Create mocks for all dependencies
         userRepository = mockk(relaxed = true)
-        organizationRepository = mockk(relaxed = true)
         jwtGenerator = mockk(relaxed = true)
         refreshTokenRepository = mockk(relaxed = true)
         rateLimitService = mockk(relaxed = true)
@@ -66,7 +63,6 @@ class AuthServiceDeactivateAccountTest {
 
         authService = AuthService(
             userRepository = userRepository,
-            organizationRepository = organizationRepository,
             jwtGenerator = jwtGenerator,
             refreshTokenRepository = refreshTokenRepository,
             rateLimitService = rateLimitService,

@@ -50,9 +50,50 @@ class UserRepository(
     private val logger = LoggerFactory.getLogger(UserRepository::class.java)
 
     /**
-     * Register a new user and add them to an organization with a role.
+     * Register a new user without associating them with any organization.
+     * The user can later create or join organizations.
      */
     suspend fun register(
+        email: String,
+        password: String,
+        firstName: String?,
+        lastName: String?
+    ): User = dbQuery {
+        // Check if email already exists
+        val existing = UsersTable
+            .selectAll()
+            .where { UsersTable.email eq email }
+            .singleOrNull()
+
+        if (existing != null) {
+            throw IllegalArgumentException("User with email $email already exists")
+        }
+
+        val passwordHash = passwordCrypto.hashPassword(Password(password))
+
+        // Create user without organization membership
+        val userId = UsersTable.insertAndGetId {
+            it[UsersTable.email] = email
+            it[UsersTable.passwordHash] = passwordHash
+            it[UsersTable.firstName] = firstName
+            it[UsersTable.lastName] = lastName
+            it[UsersTable.isActive] = true
+        }.value
+
+        logger.info("Registered new user: $userId with email: $email (no organization)")
+
+        UsersTable
+            .selectAll()
+            .where { UsersTable.id eq userId }
+            .single()
+            .toUser()
+    }
+
+    /**
+     * Register a new user and add them to an organization with a role.
+     * Used when inviting users to existing organizations.
+     */
+    suspend fun registerWithOrganization(
         organizationId: OrganizationId,
         email: String,
         password: String,
