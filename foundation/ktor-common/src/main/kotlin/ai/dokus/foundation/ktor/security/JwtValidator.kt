@@ -71,16 +71,26 @@ class JwtValidator(
             val userId = payload.subject ?: return null
             val email = payload.getClaim(JwtClaims.CLAIM_EMAIL).asString() ?: return null
 
+            // Preferred: organizations claim (JSON string) → first org
             val orgsClaim = payload.getClaim(JwtClaims.CLAIM_ORGANIZATIONS).asString()
-            val orgId = orgsClaim
+            val orgIdFromList: OrganizationId? = orgsClaim
                 ?.takeIf { it.isNotBlank() }
-                ?.let {
-                    runCatching { json.decodeFromString<List<OrganizationClaimDto>>(it) }.getOrNull()
-                }
+                ?.let { runCatching { json.decodeFromString<List<OrganizationClaimDto>>(it) }.getOrNull() }
                 ?.firstOrNull()
                 ?.organizationId
                 ?.let { OrganizationId(Uuid.parse(it)) }
-                ?: return null
+
+            // Fallback: flat org_id claim if present
+            val orgIdFromFlat: OrganizationId? = payload
+                .getClaim(JwtClaims.CLAIM_ORGANIZATION_ID)
+                .asString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { OrganizationId.parse(it) }
+
+            // Final fallback: use NIL organization to keep principal available
+            val effectiveOrgId: OrganizationId = orgIdFromList
+                ?: orgIdFromFlat
+                ?: OrganizationId.parse("00000000-0000-0000-0000-000000000000")
 
             // We don't store user's name/roles in current JWT; derive minimal values
             val name = email.substringBefore('@', email)
@@ -90,7 +100,7 @@ class JwtValidator(
                 userId = UserId(userId),
                 email = email,
                 name = name,
-                organizationId = orgId,
+                organizationId = effectiveOrgId,
                 roles = roles
             )
         } catch (e: Exception) {
