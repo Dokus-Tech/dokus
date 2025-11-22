@@ -3,7 +3,7 @@ package ai.dokus.foundation.ktor.services
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.model.BusinessUser
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.OrganizationMembership
 import ai.dokus.foundation.domain.model.UserInOrganization
 import kotlinx.datetime.Instant
@@ -22,17 +22,17 @@ interface UserService {
         firstName: String? = null,
         lastName: String? = null,
         role: UserRole = UserRole.Viewer
-    ): BusinessUser
+    ): User
 
     /**
      * Finds a user by their unique ID
      */
-    suspend fun findById(id: UserId): BusinessUser?
+    suspend fun findById(id: UserId): User?
 
     /**
      * Finds a user by their email address
      */
-    suspend fun findByEmail(email: String): BusinessUser?
+    suspend fun findByEmail(email: String): User?
 
     /**
      * Lists all users belonging to an organization
@@ -93,5 +93,5 @@ interface UserService {
     /**
      * Verifies a user's password
      */
-    suspend fun verifyCredentials(email: String, password: String): BusinessUser?
+    suspend fun verifyCredentials(email: String, password: String): User?
 }

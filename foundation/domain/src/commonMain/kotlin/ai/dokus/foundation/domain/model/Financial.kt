@@ -13,9 +13,9 @@ import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.enums.VatReturnStatus
@@ -89,7 +89,7 @@ data class OrganizationSettings(
  * Users can belong to multiple organizations via OrganizationMembership.
  */
 @Serializable
-data class BusinessUser(
+data class User(
     val id: UserId,
     val email: Email,
     val firstName: String? = null,
@@ -119,7 +119,7 @@ data class OrganizationMembership(
  */
 @Serializable
 data class UserInOrganization(
-    val user: BusinessUser,
+    val user: User,
     val organizationId: OrganizationId,
     val role: UserRole,
     val membershipActive: Boolean = true
