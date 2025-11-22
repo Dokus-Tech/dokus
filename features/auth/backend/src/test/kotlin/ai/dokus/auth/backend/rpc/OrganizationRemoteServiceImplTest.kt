@@ -10,21 +10,20 @@ import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.model.Organization
-import ai.dokus.foundation.ktor.security.AuthInfo
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
+import ai.dokus.foundation.ktor.security.withAuthContext
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
-import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.junit.jupiter.api.AfterEach
@@ -42,7 +41,6 @@ import kotlin.uuid.Uuid
  * Tests cover:
  * - Creating organization and auto-adding creator as Owner
  * - Proper authentication context handling
- * - Organization retrieval and settings
  */
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class OrganizationRemoteServiceImplTest {
@@ -54,6 +52,8 @@ class OrganizationRemoteServiceImplTest {
 
     private val testUserId = UserId(Uuid.random().toString())
     private val testOrganizationId = OrganizationId(Uuid.random())
+    // Placeholder org ID for auth context (user may have an existing org for auth purposes)
+    private val existingOrgId = OrganizationId(Uuid.random())
 
     @BeforeEach
     fun setup() {
@@ -73,18 +73,30 @@ class OrganizationRemoteServiceImplTest {
         clearAllMocks()
     }
 
-    @Test
-    fun `createOrganization should create organization and add user as Owner`() = runBlocking {
-        // Given
-        val orgName = "Test Organization"
-        val orgEmail = "org@example.com"
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+    private fun createMockAuthInfo(): AuthenticationInfo {
+        // AuthenticationInfo requires a non-null organizationId, so we use a placeholder
+        // In practice, a user without any organization would need special handling
+        return AuthenticationInfo(
+            userId = testUserId,
+            email = "test@example.com",
+            name = "Test User",
+            organizationId = existingOrgId,
+            roles = setOf("owner")
+        )
+    }
 
-        val mockOrganization = Organization(
-            id = testOrganizationId,
-            name = orgName,
-            email = orgEmail,
-            plan = OrganizationPlan.Free,
+    private fun createMockOrganization(
+        id: OrganizationId = testOrganizationId,
+        name: String = "Test Organization",
+        email: String = "org@example.com",
+        plan: OrganizationPlan = OrganizationPlan.Free
+    ): Organization {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        return Organization(
+            id = id,
+            name = name,
+            email = email,
+            plan = plan,
             status = TenantStatus.Active,
             country = "BE",
             language = Language.En,
@@ -94,17 +106,23 @@ class OrganizationRemoteServiceImplTest {
             createdAt = now,
             updatedAt = now
         )
+    }
+
+    @Test
+    fun `createOrganization should create organization and add user as Owner`() = runBlocking {
+        // Given
+        val orgName = "Test Organization"
+        val orgEmail = "org@example.com"
+        val mockOrganization = createMockOrganization(name = orgName, email = orgEmail)
 
         // Mock auth context
         coEvery {
             authInfoProvider.withAuthInfo<Organization>(any())
         } coAnswers {
-            val block = firstArg<suspend AuthInfo.() -> Organization>()
-            val mockAuthInfo = mockk<AuthInfo> {
-                every { userId } returns testUserId
-                every { organizationId } returns null  // User has no org yet
+            val block = firstArg<suspend () -> Organization>()
+            withAuthContext(createMockAuthInfo()) {
+                block.invoke()
             }
-            block.invoke(mockAuthInfo)
         }
 
         coEvery {
@@ -158,32 +176,15 @@ class OrganizationRemoteServiceImplTest {
     @Test
     fun `createOrganization should add user as Owner in correct order`() = runBlocking {
         // Given
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val mockOrganization = Organization(
-            id = testOrganizationId,
-            name = "Test",
-            email = "test@example.com",
-            plan = OrganizationPlan.Free,
-            status = TenantStatus.Active,
-            country = "BE",
-            language = Language.En,
-            vatNumber = null,
-            trialEndsAt = null,
-            subscriptionStartedAt = null,
-            createdAt = now,
-            updatedAt = now
-        )
+        val mockOrganization = createMockOrganization(name = "Test")
 
         coEvery {
             authInfoProvider.withAuthInfo<Organization>(any())
         } coAnswers {
-            val block = firstArg<suspend AuthInfo.() -> Organization>()
-            val mockAuthInfo = mockk<AuthInfo> {
-                every { userId } returns testUserId
-                every { organizationId } returns null
+            val block = firstArg<suspend () -> Organization>()
+            withAuthContext(createMockAuthInfo()) {
+                block.invoke()
             }
-            block.invoke(mockAuthInfo)
         }
 
         coEvery { organizationRepository.create(any(), any(), any(), any(), any(), any()) } returns testOrganizationId
@@ -211,32 +212,18 @@ class OrganizationRemoteServiceImplTest {
     @Test
     fun `createOrganization should use custom plan when specified`() = runBlocking {
         // Given
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val mockOrganization = Organization(
-            id = testOrganizationId,
-            name = "Premium Org",
-            email = "premium@example.com",
-            plan = OrganizationPlan.Premium,
-            status = TenantStatus.Active,
-            country = "NL",
-            language = Language.Nl,
-            vatNumber = null,
-            trialEndsAt = null,
-            subscriptionStartedAt = null,
-            createdAt = now,
-            updatedAt = now
+        val mockOrganization = createMockOrganization(
+            name = "Professional Org",
+            plan = OrganizationPlan.Professional
         )
 
         coEvery {
             authInfoProvider.withAuthInfo<Organization>(any())
         } coAnswers {
-            val block = firstArg<suspend AuthInfo.() -> Organization>()
-            val mockAuthInfo = mockk<AuthInfo> {
-                every { userId } returns testUserId
-                every { organizationId } returns null
+            val block = firstArg<suspend () -> Organization>()
+            withAuthContext(createMockAuthInfo()) {
+                block.invoke()
             }
-            block.invoke(mockAuthInfo)
         }
 
         val planSlot = slot<OrganizationPlan>()
@@ -259,16 +246,16 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         service.createOrganization(
-            name = "Premium Org",
-            email = "premium@example.com",
-            plan = OrganizationPlan.Premium,
+            name = "Professional Org",
+            email = "pro@example.com",
+            plan = OrganizationPlan.Professional,
             country = "NL",
             language = Language.Nl,
             vatNumber = null
         )
 
         // Then
-        assertEquals(OrganizationPlan.Premium, planSlot.captured)
+        assertEquals(OrganizationPlan.Professional, planSlot.captured)
         assertEquals("NL", countrySlot.captured)
         assertEquals(Language.Nl, languageSlot.captured)
     }
@@ -276,32 +263,15 @@ class OrganizationRemoteServiceImplTest {
     @Test
     fun `user creating organization becomes Owner not Admin or other role`() = runBlocking {
         // Given
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val mockOrganization = Organization(
-            id = testOrganizationId,
-            name = "Test",
-            email = "test@example.com",
-            plan = OrganizationPlan.Free,
-            status = TenantStatus.Active,
-            country = "BE",
-            language = Language.En,
-            vatNumber = null,
-            trialEndsAt = null,
-            subscriptionStartedAt = null,
-            createdAt = now,
-            updatedAt = now
-        )
+        val mockOrganization = createMockOrganization()
 
         coEvery {
             authInfoProvider.withAuthInfo<Organization>(any())
         } coAnswers {
-            val block = firstArg<suspend AuthInfo.() -> Organization>()
-            val mockAuthInfo = mockk<AuthInfo> {
-                every { userId } returns testUserId
-                every { organizationId } returns null
+            val block = firstArg<suspend () -> Organization>()
+            withAuthContext(createMockAuthInfo()) {
+                block.invoke()
             }
-            block.invoke(mockAuthInfo)
         }
 
         coEvery { organizationRepository.create(any(), any(), any(), any(), any(), any()) } returns testOrganizationId
