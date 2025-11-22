@@ -84,6 +84,7 @@ enum class Permission(override val dbValue: String) : DbEnum {
 @Serializable
 enum class SubscriptionTier(override val dbValue: String) : DbEnum {
     SelfHosted("SELF_HOSTED"),
+    CloudFree("CLOUD_FREE"),
     CloudBasic("CLOUD_BASIC"),
     CloudPro("CLOUD_PRO")
 }
