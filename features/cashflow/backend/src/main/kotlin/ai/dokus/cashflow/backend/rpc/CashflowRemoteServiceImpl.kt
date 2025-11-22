@@ -4,22 +4,22 @@ import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
-import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.AttachmentDto
+import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
-import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.requireAuthenticatedOrganizationId
@@ -432,7 +432,6 @@ class CashflowRemoteServiceImpl(
         toDate: LocalDate
     ): CashflowOverview = authInfoProvider.withAuthInfo {
         logger.info("getCashflowOverview called")
-        val organizationId = requireAuthenticatedOrganizationId()
         // TODO: Implement overview calculation
         CashflowOverview(
             totalIncome = Money.ZERO,
