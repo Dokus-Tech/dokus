@@ -6,10 +6,10 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
- * Tenant-specific preferences and defaults
- * Per-tenant configuration
+ * Organization-specific preferences and defaults
+ * Per-organization configuration
  */
-object OrganizationSettingsTable : UUIDTable("tenant_settings") {
+object OrganizationSettingsTable : UUIDTable("organization_settings") {
     val organizationId = reference(
         name = "organization_id",
         foreign = OrganizationTable,

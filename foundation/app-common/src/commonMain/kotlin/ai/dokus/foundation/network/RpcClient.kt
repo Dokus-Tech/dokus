@@ -2,11 +2,10 @@ package ai.dokus.foundation.network
 
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.http.encodedPath
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.http.*
 import kotlinx.rpc.annotations.Rpc
 import kotlinx.rpc.krpc.ktor.client.KtorRpcClient
 import kotlinx.rpc.krpc.ktor.client.installKrpc
@@ -78,24 +77,28 @@ fun createAuthenticatedRpcClient(
             }
             install(Auth) {
                 bearer {
+                    // Always send Authorization header preemptively, including on WebSocket handshake
+                    // Without this, the WS upgrade request may not carry the token and Ktor won't
+                    // attach a principal, leading to missing auth context on the server.
+                    sendWithoutRequest { true }
                     loadTokens {
+                        // Only attach the current valid access token. Do NOT trigger a refresh here.
                         val accessToken = tokenManager.getValidAccessToken()
-                        val refreshToken = tokenManager.refreshToken()
-                        BearerTokens(
-                            accessToken = accessToken.orEmpty(),
-                            refreshToken = refreshToken.orEmpty()
-                        )
+                        accessToken?.let { BearerTokens(accessToken = it, refreshToken = "") }
                     }
                     refreshTokens {
-                        val accessToken = tokenManager.getValidAccessToken()
-                        val refreshToken = tokenManager.refreshToken()
-                        BearerTokens(
-                            accessToken = accessToken.orEmpty(),
-                            refreshToken = refreshToken.orEmpty()
-                        )
+                        // Attempt to refresh the token only when the server requests it (e.g., 401).
+                        val newAccessToken = tokenManager.refreshToken()
+                        if (newAccessToken.isNullOrEmpty()) {
+                            onAuthenticationFailed()
+                            null
+                        } else {
+                            BearerTokens(accessToken = newAccessToken, refreshToken = "")
+                        }
                     }
                 }
             }
+            // WebSockets are required for KRPC transport
             install(WebSockets)
             installKrpc {
                 if (!waitForServices) {

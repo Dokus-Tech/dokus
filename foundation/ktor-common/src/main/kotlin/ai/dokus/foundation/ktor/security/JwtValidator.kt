@@ -5,11 +5,15 @@ package ai.dokus.foundation.ktor.security
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
+import ai.dokus.foundation.domain.model.auth.JwtClaims
+import ai.dokus.foundation.domain.model.auth.OrganizationClaimDto
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
+import com.auth0.jwt.interfaces.Payload
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -24,6 +28,7 @@ class JwtValidator(
 ) {
     private val logger = LoggerFactory.getLogger(JwtValidator::class.java)
     private val algorithm = Algorithm.HMAC256(secret)
+    private val json = Json { ignoreUnknownKeys = true }
 
     val verifier: JWTVerifier = JWT.require(algorithm)
         .withIssuer(issuer)
@@ -45,28 +50,56 @@ class JwtValidator(
     }
 
     /**
-     * Extracts user authentication info from a decoded JWT.
+     * Extracts user authentication info from a decoded JWT using our current claim set.
      *
      * @param jwt The decoded JWT token
      * @return AuthenticationInfo containing user details
      */
     fun extractAuthInfo(jwt: DecodedJWT): AuthenticationInfo? {
+        return extractAuthInfoInternal(jwt)
+    }
+
+    /**
+     * Extracts user authentication info from a JWT payload (used by Ktor JWT plugin).
+     */
+    fun extractAuthInfo(payload: Payload): AuthenticationInfo? {
+        return extractAuthInfoInternal(payload)
+    }
+
+    private fun extractAuthInfoInternal(payload: Payload): AuthenticationInfo? {
         return try {
-            val userId = jwt.subject ?: return null
-            val email = jwt.getClaim("email").asString() ?: return null
-            val name = jwt.getClaim("name").asString() ?: return null
-            val organizationId = jwt.getClaim("organization_id").asString() ?: return null
-            val roles = jwt.getClaim("groups").asList(String::class.java) ?: emptyList()
+            val userId = payload.subject ?: return null
+            val email = payload.getClaim(JwtClaims.CLAIM_EMAIL).asString() ?: return null
+
+            // Preferred: organizations claim (JSON string) → first org
+            val orgsClaim = payload.getClaim(JwtClaims.CLAIM_ORGANIZATIONS).asString()
+            val orgIdFromList: OrganizationId? = orgsClaim
+                ?.takeIf { it.isNotBlank() }
+                ?.let { runCatching { json.decodeFromString<List<OrganizationClaimDto>>(it) }.getOrNull() }
+                ?.firstOrNull()
+                ?.organizationId
+                ?.let { OrganizationId(Uuid.parse(it)) }
+
+            // Fallback: flat org_id claim if present
+            val orgIdFromFlat: OrganizationId? = payload
+                .getClaim(JwtClaims.CLAIM_ORGANIZATION_ID)
+                .asString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { OrganizationId.parse(it) }
+
+            // We don't store user's name/roles in current JWT; derive minimal values
+            val name = email.substringBefore('@', email)
+            val roles: Set<String> = emptySet()
 
             AuthenticationInfo(
                 userId = UserId(userId),
                 email = email,
                 name = name,
-                organizationId = OrganizationId(Uuid.parse(organizationId)),
-                roles = roles.toSet()
+                organizationId = orgIdFromFlat,
+                roles = roles
             )
         } catch (e: Exception) {
-            logger.error("Failed to extract auth info from JWT: ${e.message}", e)
+            logger.error("Failed to extract auth info from JWT payload: ${'$'}{e.message}", e)
             null
         }
     }

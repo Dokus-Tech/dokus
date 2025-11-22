@@ -19,6 +19,6 @@ data class AuthenticationInfo(
     val userId: UserId,
     val email: String,
     val name: String,
-    val organizationId: OrganizationId,
+    val organizationId: OrganizationId?,
     val roles: Set<String>
 )

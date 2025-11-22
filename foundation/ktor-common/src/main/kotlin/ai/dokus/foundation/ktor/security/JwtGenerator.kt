@@ -5,13 +5,14 @@ package ai.dokus.foundation.ktor.security
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginResponse
+import ai.dokus.foundation.domain.model.auth.OrganizationClaimDto
 import ai.dokus.foundation.domain.model.auth.OrganizationScope
 import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import kotlinx.serialization.json.Json
 import java.time.Instant
-import java.util.Date
+import java.util.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -56,14 +57,16 @@ class JwtGenerator(
     }
 
     private fun createAccessToken(claims: JwtClaims): String {
-        val organizationsJson = json.encodeToString(claims.organizations.map { org ->
-            mapOf(
-                JwtClaims.CLAIM_ORGANIZATION_ID to org.organizationId.value.toString(),
-                JwtClaims.CLAIM_PERMISSIONS to org.permissions.map { it.name },
-                JwtClaims.CLAIM_SUBSCRIPTION_TIER to org.subscriptionTier.name,
-                JwtClaims.CLAIM_ROLE to org.role?.name
+        val organizationsDto = claims.organizations.map { org ->
+            OrganizationClaimDto(
+                organizationId = org.organizationId.value.toString(),
+                permissions = org.permissions.map { it.name },
+                subscriptionTier = org.subscriptionTier.name,
+                role = org.role?.name
             )
-        })
+        }
+
+        val organizationsJson = json.encodeToString(organizationsDto)
 
         return JWT.create()
             .withIssuer(claims.iss)
