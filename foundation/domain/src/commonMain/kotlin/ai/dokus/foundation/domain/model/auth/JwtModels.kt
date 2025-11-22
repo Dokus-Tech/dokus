@@ -38,6 +38,9 @@ data class JwtClaims(
         const val ACCESS_TOKEN_EXPIRY_SECONDS = 3600L // 1 hour
         const val REFRESH_TOKEN_EXPIRY_DAYS = 30L
         const val REFRESH_THRESHOLD_SECONDS = 5 * 60 // 5 minutes before expiry
+
+        const val CLAIM_TYPE = "type"
+        const val TOKEN_TYPE_REFRESH = "refresh"
     }
 }
 

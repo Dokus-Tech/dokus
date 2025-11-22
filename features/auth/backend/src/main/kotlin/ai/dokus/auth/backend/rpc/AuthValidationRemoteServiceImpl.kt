@@ -69,7 +69,7 @@ class AuthValidationRemoteServiceImpl(
                 throw DokusException.TokenInvalid("Invalid or expired token")
             }
 
-        logger.debug("JWT validated for user: ${authInfo.userId}, tenant: ${authInfo.tenantId}")
+        logger.debug("JWT validated for user: ${authInfo.userId}, tenant: ${authInfo.organizationId}")
 
         // Step 2: Fetch full user data from database
         val user = userService.findById(authInfo.userId)
@@ -103,7 +103,7 @@ class AuthValidationRemoteServiceImpl(
         // Step 5: Return complete user DTO with tenant context
         return UserDto.Full(
             id = user.id,
-            tenantId = user.tenantId,
+            organizationId = user.organizationId,
             email = user.email,
             firstName = user.firstName,
             lastName = user.lastName,
@@ -132,7 +132,7 @@ class AuthValidationRemoteServiceImpl(
 
         return UserDto.Full(
             id = user.id,
-            tenantId = user.tenantId,
+            organizationId = user.organizationId,
             email = user.email,
             firstName = user.firstName,
             lastName = user.lastName,

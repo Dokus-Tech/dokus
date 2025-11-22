@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class)
 
 package ai.dokus.foundation.ktor.security
 
@@ -13,8 +13,7 @@ import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.util.Date
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -42,7 +41,7 @@ class JwtGenerator(
         organizations: List<OrganizationScope>
     ): JwtClaims {
         val nowTime = now()
-        val accessExpiry = nowTime + 1.hours
+        val accessExpiry = nowTime + JwtClaims.ACCESS_TOKEN_EXPIRY_SECONDS.seconds
 
         return JwtClaims(
             userId = userId,
@@ -85,7 +84,7 @@ class JwtGenerator(
         return JWT.create()
             .withIssuer(issuer)
             .withSubject(userId.value.toString())
-            .withClaim("type", "refresh")
+            .withClaim(JwtClaims.CLAIM_TYPE, JwtClaims.TOKEN_TYPE_REFRESH)
             .withIssuedAt(Date.from(Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
             .withExpiresAt(Date.from(Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))
             .sign(algorithm)

@@ -15,7 +15,7 @@ import java.util.UUID as JavaUUID
  * Encrypted access tokens for transaction syncing
  */
 object BankConnectionsTable : UUIDTable("bank_connections") {
-    val tenantId = uuid("tenant_id")
+    val organizationId = uuid("organization_id")
 
     val provider = dbEnumeration<BankProvider>("provider")
     val institutionId = varchar("institution_id", 255)
@@ -35,7 +35,7 @@ object BankConnectionsTable : UUIDTable("bank_connections") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
-        index(false, tenantId, isActive)
+        index(false, organizationId)
+        index(false, organizationId, isActive)
     }
 }

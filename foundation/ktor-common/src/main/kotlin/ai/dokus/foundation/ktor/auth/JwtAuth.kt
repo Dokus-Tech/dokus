@@ -2,7 +2,7 @@
 
 package ai.dokus.foundation.ktor.auth
 
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.ktor.security.JwtValidator
@@ -59,8 +59,8 @@ fun Application.configureJwtAuth(
                         credential.payload.getClaim("email").asString() ?: return@validate null
                     val name =
                         credential.payload.getClaim("name").asString() ?: return@validate null
-                    val tenantId =
-                        credential.payload.getClaim("tenant_id").asString() ?: return@validate null
+                    val organizationId =
+                        credential.payload.getClaim("organization_id").asString() ?: return@validate null
                     val roles = credential.payload.getClaim("groups").asList(String::class.java)
                         ?: emptyList()
 
@@ -68,14 +68,14 @@ fun Application.configureJwtAuth(
                         userId = UserId(userId),
                         email = email,
                         name = name,
-                        tenantId = TenantId(Uuid.parse(tenantId)),
+                        organizationId = OrganizationId(Uuid.parse(organizationId)),
                         roles = roles.toSet()
                     )
 
                     logger.debug(
                         "JWT validated for user: {}, tenant: {}",
                         authInfo.userId.value,
-                        authInfo.tenantId.value
+                        authInfo.organizationId.value
                     )
 
                     // Store AuthenticationInfo as the principal

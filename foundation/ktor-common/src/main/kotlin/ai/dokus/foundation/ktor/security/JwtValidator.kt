@@ -2,7 +2,7 @@
 
 package ai.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import com.auth0.jwt.JWT
@@ -55,14 +55,14 @@ class JwtValidator(
             val userId = jwt.subject ?: return null
             val email = jwt.getClaim("email").asString() ?: return null
             val name = jwt.getClaim("name").asString() ?: return null
-            val tenantId = jwt.getClaim("tenant_id").asString() ?: return null
+            val organizationId = jwt.getClaim("organization_id").asString() ?: return null
             val roles = jwt.getClaim("groups").asList(String::class.java) ?: emptyList()
 
             AuthenticationInfo(
                 userId = UserId(userId),
                 email = email,
                 name = name,
-                tenantId = TenantId(Uuid.parse(tenantId)),
+                organizationId = OrganizationId(Uuid.parse(organizationId)),
                 roles = roles.toSet()
             )
         } catch (e: Exception) {

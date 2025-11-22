@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ktor.services
 
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.model.BusinessUser
@@ -13,7 +13,7 @@ interface UserService {
     /**
      * Registers a new user for a tenant
      *
-     * @param tenantId The tenant ID this user belongs to
+     * @param organizationId The tenant ID this user belongs to
      * @param email The user's email address (must be unique)
      * @param password The user's plain text password (will be hashed)
      * @param firstName The user's first name (optional)
@@ -23,7 +23,7 @@ interface UserService {
      * @throws IllegalArgumentException if email already exists
      */
     suspend fun register(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         email: String,
         password: String,
         firstName: String? = null,
@@ -50,11 +50,11 @@ interface UserService {
     /**
      * Lists all users belonging to a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param activeOnly If true, only returns active users (defaults to true)
      * @return List of users for the tenant
      */
-    suspend fun listByTenant(tenantId: TenantId, activeOnly: Boolean = true): List<BusinessUser>
+    suspend fun listByTenant(organizationId: OrganizationId, activeOnly: Boolean = true): List<BusinessUser>
 
     /**
      * Updates a user's role

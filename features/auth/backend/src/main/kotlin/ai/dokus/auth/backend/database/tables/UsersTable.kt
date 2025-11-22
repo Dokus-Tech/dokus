@@ -1,9 +1,9 @@
 package ai.dokus.auth.backend.database.tables
 
-import ai.dokus.foundation.ktor.database.dbEnumeration
 import ai.dokus.foundation.domain.enums.UserRole
-import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Support for team members, accountants, and viewers
  */
 object UsersTable : UUIDTable("users") {
-    val tenantId = reference("tenant_id", TenantsTable, onDelete = ReferenceOption.CASCADE)
+    val organizationId = reference("organization_id", OrganizationTable, onDelete = ReferenceOption.CASCADE)
     val email = varchar("email", 255).uniqueIndex()
 
     // Authentication
@@ -40,8 +40,8 @@ object UsersTable : UUIDTable("users") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
+        index(false, organizationId)
         index(false, email)
-        index(false, tenantId, isActive) // Composite for active users query
+        index(false, organizationId, isActive) // Composite for active users query
     }
 }

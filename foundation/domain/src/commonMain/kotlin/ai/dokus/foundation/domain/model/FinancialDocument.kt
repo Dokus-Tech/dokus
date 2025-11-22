@@ -1,13 +1,13 @@
 package ai.dokus.foundation.domain.model
 
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.ids.OrganizationId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -45,7 +45,7 @@ enum class FinancialDocumentStatus {
 sealed interface FinancialDocument {
     // Shared properties across all document types
     val documentId: String
-    val tenantId: TenantId
+    val organizationId: OrganizationId
     val documentNumber: String
     val date: LocalDate
     val amount: Money
@@ -62,7 +62,7 @@ sealed interface FinancialDocument {
     @Serializable
     data class InvoiceDocument(
         override val documentId: String,
-        override val tenantId: TenantId,
+        override val organizationId: OrganizationId,
         override val documentNumber: String,
         override val date: LocalDate,
         override val amount: Money,
@@ -90,7 +90,7 @@ sealed interface FinancialDocument {
     @Serializable
     data class ExpenseDocument(
         override val documentId: String,
-        override val tenantId: TenantId,
+        override val organizationId: OrganizationId,
         override val documentNumber: String,
         override val date: LocalDate,
         override val amount: Money,

@@ -4,7 +4,7 @@ import ai.dokus.foundation.domain.ids.BankConnectionId
 import ai.dokus.foundation.domain.ids.BankTransactionId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.model.BankConnection
 import ai.dokus.foundation.domain.model.BankTransaction
@@ -19,7 +19,7 @@ interface BankService {
      * Connects a bank account via Plaid/Tink/Nordigen
      * Stores encrypted access token for transaction sync
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param provider The bank provider (Plaid, Tink, Nordigen)
      * @param institutionId The institution ID from the provider
      * @param institutionName The institution name
@@ -30,7 +30,7 @@ interface BankService {
      * @throws IllegalArgumentException if validation fails
      */
     suspend fun connectBank(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         provider: BankProvider,
         institutionId: String,
         institutionName: String,
@@ -81,19 +81,19 @@ interface BankService {
     /**
      * Syncs transactions for all active bank connections of a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return Map of connection ID to number of transactions imported
      */
-    suspend fun syncAllConnections(tenantId: TenantId): Map<BankConnectionId, Int>
+    suspend fun syncAllConnections(organizationId: OrganizationId): Map<BankConnectionId, Int>
 
     /**
      * Lists all bank connections for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param activeOnly If true, only returns active connections (defaults to true)
      * @return List of bank connections
      */
-    suspend fun listConnections(tenantId: TenantId, activeOnly: Boolean = true): List<BankConnection>
+    suspend fun listConnections(organizationId: OrganizationId, activeOnly: Boolean = true): List<BankConnection>
 
     /**
      * Finds a bank connection by its unique ID
@@ -106,7 +106,7 @@ interface BankService {
     /**
      * Lists bank transactions for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param connectionId Filter by specific connection (optional)
      * @param fromDate Filter transactions on or after this date (optional)
      * @param toDate Filter transactions on or before this date (optional)
@@ -116,7 +116,7 @@ interface BankService {
      * @return List of bank transactions
      */
     suspend fun listTransactions(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         connectionId: BankConnectionId? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
@@ -136,10 +136,10 @@ interface BankService {
     /**
      * Lists unreconciled transactions for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return List of unreconciled transactions
      */
-    suspend fun listUnreconciled(tenantId: TenantId): List<BankTransaction>
+    suspend fun listUnreconciled(organizationId: OrganizationId): List<BankTransaction>
 
     /**
      * Reconciles a bank transaction with an expense
@@ -172,10 +172,10 @@ interface BankService {
      * Auto-matches bank transactions with expenses/invoices
      * Uses amount, date, and description to find likely matches
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return Number of transactions auto-reconciled
      */
-    suspend fun autoReconcile(tenantId: TenantId): Int
+    suspend fun autoReconcile(organizationId: OrganizationId): Int
 
     /**
      * Gets the last sync time for a bank connection

@@ -13,7 +13,7 @@ import java.util.UUID as JavaUUID
  * Track when and how invoices are paid
  */
 object PaymentsTable : UUIDTable("payments") {
-    val tenantId = uuid("tenant_id")
+    val organizationId = uuid("organization_id")
     val invoiceId = uuid("invoice_id")
 
     val amount = decimal("amount", 12, 2)
@@ -26,9 +26,9 @@ object PaymentsTable : UUIDTable("payments") {
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
+        index(false, organizationId)
         index(false, invoiceId)
         index(false, paymentDate)
-        index(false, tenantId, paymentDate)
+        index(false, organizationId, paymentDate)
     }
 }
