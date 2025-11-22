@@ -87,11 +87,6 @@ class JwtValidator(
                 ?.takeIf { it.isNotBlank() }
                 ?.let { OrganizationId.parse(it) }
 
-            // Final fallback: use NIL organization to keep principal available
-            val effectiveOrgId: OrganizationId = orgIdFromList
-                ?: orgIdFromFlat
-                ?: OrganizationId.parse("00000000-0000-0000-0000-000000000000")
-
             // We don't store user's name/roles in current JWT; derive minimal values
             val name = email.substringBefore('@', email)
             val roles: Set<String> = emptySet()
@@ -100,7 +95,7 @@ class JwtValidator(
                 userId = UserId(userId),
                 email = email,
                 name = name,
-                organizationId = effectiveOrgId,
+                organizationId = orgIdFromFlat,
                 roles = roles
             )
         } catch (e: Exception) {

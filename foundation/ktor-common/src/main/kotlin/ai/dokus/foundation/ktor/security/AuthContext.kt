@@ -52,7 +52,7 @@ suspend fun getAuthenticationInfo(): AuthenticationInfo? {
 }
 
 suspend fun requireAuthenticatedOrganizationId(): OrganizationId {
-    return requireAuthenticationInfo().organizationId
+    return requireAuthenticationInfo().organizationId!!
 }
 
 /**
