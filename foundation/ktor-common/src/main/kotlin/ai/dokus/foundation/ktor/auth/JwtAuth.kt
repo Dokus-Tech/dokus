@@ -13,11 +13,16 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
+import io.ktor.util.AttributeKey
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private val logger = LoggerFactory.getLogger("ServiceAuthConfig")
+
+// Expose JwtValidator via Application.attributes so other components (e.g., AuthInfoProvider)
+// can access it without depending on DI frameworks.
+val JWT_VALIDATOR_ATTRIBUTE_KEY: AttributeKey<JwtValidator> = AttributeKey("jwt-validator")
 
 /**
  * Configures JWT authentication using Ktor's built-in JWT auth plugin.
@@ -37,6 +42,14 @@ fun Application.configureJwtAuth(
     jwtValidator: JwtValidator,
     providerName: String = "jwt-auth"
 ) {
+    // Make JwtValidator available via Application.attributes
+    try {
+        if (!attributes.contains(JWT_VALIDATOR_ATTRIBUTE_KEY)) {
+            attributes.put(JWT_VALIDATOR_ATTRIBUTE_KEY, jwtValidator)
+        }
+    } catch (_: Throwable) {
+        // no-op: attributes API may throw if not initialized yet in some environments
+    }
     install(Authentication) {
         jwt(providerName) {
             // Set the realm for WWW-Authenticate header

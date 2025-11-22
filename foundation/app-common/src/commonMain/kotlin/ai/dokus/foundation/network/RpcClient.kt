@@ -77,6 +77,10 @@ fun createAuthenticatedRpcClient(
             }
             install(Auth) {
                 bearer {
+                    // Always send Authorization header preemptively, including on WebSocket handshake
+                    // Without this, the WS upgrade request may not carry the token and Ktor won't
+                    // attach a principal, leading to missing auth context on the server.
+                    sendWithoutRequest { true }
                     loadTokens {
                         // Only attach the current valid access token. Do NOT trigger a refresh here.
                         val accessToken = tokenManager.getValidAccessToken()
