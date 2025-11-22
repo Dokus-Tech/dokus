@@ -3,7 +3,7 @@ package ai.dokus.foundation.ktor.services
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.Client
+import ai.dokus.foundation.domain.model.ClientDto
 import kotlinx.rpc.annotations.Rpc
 
 @Rpc
@@ -38,7 +38,7 @@ interface ClientService {
         contactPerson: String? = null,
         phone: String? = null,
         notes: String? = null
-    ): Client
+    ): ClientDto
 
     /**
      * Updates an existing client
@@ -95,7 +95,7 @@ interface ClientService {
      * @param id The client's unique identifier
      * @return The client if found, null otherwise
      */
-    suspend fun findById(id: ClientId): Client?
+    suspend fun findById(id: ClientId): ClientDto?
 
     /**
      * Lists all clients for a tenant
@@ -104,7 +104,7 @@ interface ClientService {
      * @param activeOnly If true, only returns active clients (defaults to true)
      * @return List of clients
      */
-    suspend fun listByTenant(organizationId: OrganizationId, activeOnly: Boolean = true): List<Client>
+    suspend fun listByTenant(organizationId: OrganizationId, activeOnly: Boolean = true): List<ClientDto>
 
     /**
      * Searches for clients by name
@@ -118,7 +118,7 @@ interface ClientService {
         organizationId: OrganizationId,
         query: String,
         activeOnly: Boolean = true
-    ): List<Client>
+    ): List<ClientDto>
 
     /**
      * Finds a client by their email address
@@ -127,7 +127,7 @@ interface ClientService {
      * @param email The client's email address
      * @return The client if found, null otherwise
      */
-    suspend fun findByEmail(organizationId: OrganizationId, email: String): Client?
+    suspend fun findByEmail(organizationId: OrganizationId, email: String): ClientDto?
 
     /**
      * Finds a client by their VAT number
@@ -136,5 +136,5 @@ interface ClientService {
      * @param vatNumber The client's VAT number
      * @return The client if found, null otherwise
      */
-    suspend fun findByVatNumber(organizationId: OrganizationId, vatNumber: VatNumber): Client?
+    suspend fun findByVatNumber(organizationId: OrganizationId, vatNumber: VatNumber): ClientDto?
 }

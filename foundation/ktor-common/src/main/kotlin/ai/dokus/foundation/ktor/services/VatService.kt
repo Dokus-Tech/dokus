@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.ids.VatReturnId
 import ai.dokus.foundation.domain.enums.VatReturnStatus
 import ai.dokus.foundation.domain.model.QuarterInfo
 import ai.dokus.foundation.domain.model.VatCalculation
-import ai.dokus.foundation.domain.model.VatReturn
+import ai.dokus.foundation.domain.model.VatReturnDto
 import kotlinx.datetime.Instant
 import kotlinx.rpc.annotations.Rpc
 import kotlin.time.ExperimentalTime
@@ -34,7 +34,7 @@ interface VatService {
      * @return The created VAT return
      * @throws IllegalArgumentException if VAT return already exists for this period
      */
-    suspend fun createReturn(organizationId: OrganizationId, year: Int, quarter: Int): VatReturn
+    suspend fun createReturn(organizationId: OrganizationId, year: Int, quarter: Int): VatReturnDto
 
     /**
      * Updates a VAT return
@@ -79,7 +79,7 @@ interface VatService {
      * @param quarter The quarter (1, 2, 3, 4)
      * @return The VAT return if found, null otherwise
      */
-    suspend fun findByQuarter(organizationId: OrganizationId, year: Int, quarter: Int): VatReturn?
+    suspend fun findByQuarter(organizationId: OrganizationId, year: Int, quarter: Int): VatReturnDto?
 
     /**
      * Finds a VAT return by its unique ID
@@ -87,7 +87,7 @@ interface VatService {
      * @param id The VAT return's unique identifier
      * @return The VAT return if found, null otherwise
      */
-    suspend fun findById(id: VatReturnId): VatReturn?
+    suspend fun findById(id: VatReturnId): VatReturnDto?
 
     /**
      * Lists all VAT returns for a tenant
@@ -101,7 +101,7 @@ interface VatService {
         organizationId: OrganizationId,
         year: Int? = null,
         status: VatReturnStatus? = null
-    ): List<VatReturn>
+    ): List<VatReturnDto>
 
     /**
      * Lists unpaid VAT returns for a tenant
@@ -109,7 +109,7 @@ interface VatService {
      * @param organizationId The tenant's unique identifier
      * @return List of submitted but unpaid VAT returns
      */
-    suspend fun listUnpaid(organizationId: OrganizationId): List<VatReturn>
+    suspend fun listUnpaid(organizationId: OrganizationId): List<VatReturnDto>
 
     /**
      * Deletes a VAT return

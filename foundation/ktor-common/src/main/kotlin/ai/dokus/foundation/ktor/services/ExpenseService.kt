@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.model.Expense
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
@@ -21,7 +21,7 @@ interface ExpenseService {
      * @return The created expense
      * @throws IllegalArgumentException if validation fails
      */
-    suspend fun create(request: CreateExpenseRequest): Expense
+    suspend fun create(request: CreateExpenseRequest): FinancialDocumentDto.ExpenseDto
 
     /**
      * Updates an existing expense
@@ -71,7 +71,7 @@ interface ExpenseService {
      * @param id The expense's unique identifier
      * @return The expense if found, null otherwise
      */
-    suspend fun findById(id: ExpenseId): Expense?
+    suspend fun findById(id: ExpenseId): FinancialDocumentDto.ExpenseDto?
 
     /**
      * Lists all expenses for a tenant
@@ -93,7 +93,7 @@ interface ExpenseService {
         merchant: String? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<Expense>
+    ): List<FinancialDocumentDto.ExpenseDto>
 
     /**
      * Uploads a receipt for an expense
@@ -146,7 +146,7 @@ interface ExpenseService {
      * @param organizationId The tenant's unique identifier
      * @return List of recurring expenses
      */
-    suspend fun listRecurring(organizationId: OrganizationId): List<Expense>
+    suspend fun listRecurring(organizationId: OrganizationId): List<FinancialDocumentDto.ExpenseDto>
 
     /**
      * Watches expense updates for a tenant in real-time
@@ -155,7 +155,7 @@ interface ExpenseService {
      * @param organizationId The tenant's unique identifier
      * @return Flow of expense updates
      */
-    fun watchExpenses(organizationId: OrganizationId): Flow<Expense>
+    fun watchExpenses(organizationId: OrganizationId): Flow<FinancialDocumentDto.ExpenseDto>
 
     /**
      * Gets expense statistics for a tenant

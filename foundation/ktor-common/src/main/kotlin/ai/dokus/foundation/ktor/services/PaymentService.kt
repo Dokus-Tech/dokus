@@ -5,7 +5,7 @@ import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentDto
 import kotlinx.datetime.LocalDate
 import kotlinx.rpc.annotations.Rpc
 
@@ -33,7 +33,7 @@ interface PaymentService {
         paymentMethod: PaymentMethod,
         transactionId: String? = null,
         notes: String? = null
-    ): Payment
+    ): PaymentDto
 
     /**
      * Finds a payment by its unique ID
@@ -41,7 +41,7 @@ interface PaymentService {
      * @param id The payment's unique identifier
      * @return The payment if found, null otherwise
      */
-    suspend fun findById(id: PaymentId): Payment?
+    suspend fun findById(id: PaymentId): PaymentDto?
 
     /**
      * Lists all payments for a specific invoice
@@ -49,7 +49,7 @@ interface PaymentService {
      * @param invoiceId The invoice's unique identifier
      * @return List of payments for the invoice
      */
-    suspend fun listByInvoice(invoiceId: InvoiceId): List<Payment>
+    suspend fun listByInvoice(invoiceId: InvoiceId): List<PaymentDto>
 
     /**
      * Lists all payments for a tenant
@@ -69,7 +69,7 @@ interface PaymentService {
         paymentMethod: PaymentMethod? = null,
         limit: Int? = null,
         offset: Int? = null
-    ): List<Payment>
+    ): List<PaymentDto>
 
     /**
      * Deletes a payment record
