@@ -16,7 +16,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object InvoicesTable : UUIDTable("invoices") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("tenant_id").index()
+    val organizationId = uuid("organization_id").index()
 
     // Client reference
     val clientId = uuid("client_id")
@@ -59,14 +59,14 @@ object InvoicesTable : UUIDTable("invoices") {
 
     init {
         // CRITICAL: Index tenant_id for security and performance
-        index(false, tenantId)
+        index(false, organizationId)
         index(false, clientId)
         index(false, status)
         index(false, issueDate)
         index(false, dueDate)
 
         // Composite index for common queries
-        index(false, tenantId, status)
-        index(false, tenantId, clientId)
+        index(false, organizationId, status)
+        index(false, organizationId, clientId)
     }
 }

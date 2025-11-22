@@ -1,57 +1,57 @@
 package ai.dokus.foundation.domain.model.auth
 
-import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
 import ai.dokus.foundation.domain.enums.UserRole
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.UserId
 import kotlinx.serialization.Serializable
 
-/**
- * JWT Claims data class shared between backend and frontend.
- * Maps to the JWT token payload structure.
- *
- * This JWT represents access to ONE SPECIFIC TENANT and ONE SPECIFIC ORGANIZATION within that tenant.
- */
 @Serializable
 data class JwtClaims(
-    // User identity
     val userId: UserId,
     val email: String,
-
-    // Tenant context - THIS JWT IS FOR ONE SPECIFIC TENANT
-    val tenantId: TenantId,
-    val organizationId: OrganizationId, // Company/business entity within tenant
-    val organizationName: String, // For UI display
-
-    // Permissions for THIS organization only
-    val role: UserRole, // Role in THIS organization
-    val permissions: Set<Permission>, // What user can do in THIS org
-
-    // Belgian context
-    val matricule: String? = null, // This organization's business number
-    val locale: String = "nl-BE", // Full locale code (e.g., "nl-BE", "fr-BE", "en-US")
-
-    // Subscription tier of THIS organization
-    val subscriptionTier: SubscriptionTier,
-    val featureFlags: Set<String> = emptySet(),
-
-    // Accountant context (if applicable)
-    val isAccountantAccess: Boolean = false, // True if accessing client's org
-    val accountantOrganizationId: OrganizationId? = null, // Accountant's own org ID
-
-    // Standard JWT claims
+    val organizations: List<OrganizationScope>,
     val iat: Long,
     val exp: Long,
     val jti: String,
-    val iss: String = "dokus",
-    val aud: String = "dokus-api"
+    val iss: String = ISS_DEFAULT,
+    val aud: String = AUD_DEFAULT
+) {
+    companion object {
+        const val CLAIM_SUB = "sub"
+        const val CLAIM_EMAIL = "email"
+        const val CLAIM_ORGANIZATIONS = "organizations"
+        const val CLAIM_ORGANIZATION_ID = "org_id"
+        const val CLAIM_PERMISSIONS = "permissions"
+        const val CLAIM_SUBSCRIPTION_TIER = "tier"
+        const val CLAIM_ROLE = "role"
+        const val CLAIM_IAT = "iat"
+        const val CLAIM_EXP = "exp"
+        const val CLAIM_JTI = "jti"
+        const val CLAIM_ISS = "iss"
+        const val CLAIM_AUD = "aud"
+
+        const val ISS_DEFAULT = "dokus"
+        const val AUD_DEFAULT = "dokus-api"
+
+        const val ACCESS_TOKEN_EXPIRY_SECONDS = 3600L // 1 hour
+        const val REFRESH_TOKEN_EXPIRY_DAYS = 30L
+        const val REFRESH_THRESHOLD_SECONDS = 5 * 60 // 5 minutes before expiry
+
+        const val CLAIM_TYPE = "type"
+        const val TOKEN_TYPE_REFRESH = "refresh"
+    }
+}
+
+@Serializable
+data class OrganizationScope(
+    val organizationId: OrganizationId,
+    val permissions: Set<Permission>,
+    val subscriptionTier: SubscriptionTier,
+    val role: UserRole?,
 )
 
-/**
- * Token validation status.
- */
 enum class TokenStatus {
     VALID,
     EXPIRED,

@@ -1,16 +1,16 @@
 package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.TenantPlan
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
+import ai.dokus.foundation.domain.enums.OrganizationPlan
+import ai.dokus.foundation.domain.model.Organization
+import ai.dokus.foundation.domain.model.OrganizationSettings
 import kotlinx.rpc.annotations.Rpc
 
 @Rpc
-interface TenantService {
+interface OrganizationService {
     /**
      * Creates a new tenant with default settings
      *
@@ -25,11 +25,11 @@ interface TenantService {
     suspend fun createTenant(
         name: String,
         email: String,
-        plan: TenantPlan = TenantPlan.Free,
+        plan: OrganizationPlan = OrganizationPlan.Free,
         country: String = "BE",
         language: Language = Language.En,
         vatNumber: VatNumber? = null
-    ): Tenant
+    ): Organization
 
     /**
      * Finds a tenant by their unique ID
@@ -37,7 +37,7 @@ interface TenantService {
      * @param id The tenant's unique identifier
      * @return The tenant if found, null otherwise
      */
-    suspend fun findById(id: TenantId): Tenant?
+    suspend fun findById(id: OrganizationId): Organization?
 
     /**
      * Finds a tenant by their email address
@@ -45,37 +45,37 @@ interface TenantService {
      * @param email The tenant's email address
      * @return The tenant if found, null otherwise
      */
-    suspend fun findByEmail(email: String): Tenant?
+    suspend fun findByEmail(email: String): Organization?
 
     /**
      * Updates the settings for a tenant
      *
      * @param settings The updated tenant settings
      */
-    suspend fun updateSettings(settings: TenantSettings)
+    suspend fun updateSettings(settings: OrganizationSettings)
 
     /**
      * Retrieves the settings for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return The tenant's settings
      * @throws IllegalArgumentException if no settings found for the tenant
      */
-    suspend fun getSettings(tenantId: TenantId): TenantSettings
+    suspend fun getSettings(organizationId: OrganizationId): OrganizationSettings
 
     /**
      * Retrieves and increments the next invoice number for a tenant
      * This operation is atomic and thread-safe
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @return The next available invoice number
      */
-    suspend fun getNextInvoiceNumber(tenantId: TenantId): InvoiceNumber
+    suspend fun getNextInvoiceNumber(organizationId: OrganizationId): InvoiceNumber
 
     /**
      * Lists all active tenants in the system
      *
      * @return List of active tenants
      */
-    suspend fun listActiveTenants(): List<Tenant>
+    suspend fun listActiveTenants(): List<Organization>
 }

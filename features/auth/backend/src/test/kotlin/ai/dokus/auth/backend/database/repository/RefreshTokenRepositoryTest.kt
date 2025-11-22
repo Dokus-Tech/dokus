@@ -3,10 +3,11 @@
 package ai.dokus.auth.backend.database.repository
 
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
-import ai.dokus.auth.backend.database.tables.TenantsTable
+import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
@@ -48,7 +49,7 @@ class RefreshTokenRepositoryTest {
     private lateinit var database: DatabaseFactory
     private lateinit var service: RefreshTokenRepository
     private var testUserId: UserId? = null
-    private val testTenantId = Uuid.random()
+    private val testOrganizationId = Uuid.random()
 
     @BeforeAll
     fun setup() {
@@ -60,7 +61,7 @@ class RefreshTokenRepositoryTest {
         )
 
         runBlocking {
-            database.init(TenantsTable, UsersTable, RefreshTokensTable)
+            database.init(OrganizationTable, UsersTable, OrganizationMembersTable, RefreshTokensTable)
             testUserId = createTestUser()
         }
 
@@ -413,19 +414,25 @@ class RefreshTokenRepositoryTest {
 
         dbQuery {
             // Create test tenant first
-            TenantsTable.insert {
-                it[id] = testTenantId.toJavaUuid()
+            OrganizationTable.insert {
+                it[id] = testOrganizationId.toJavaUuid()
                 it[name] = "Test Tenant"
                 it[email] = "test@example.com"
-                it[plan] = TenantPlan.Free
+                it[plan] = OrganizationPlan.Free
             }
 
             // Create test user
             UsersTable.insert {
                 it[id] = userId.toJavaUuid()
-                it[tenantId] = testTenantId.toJavaUuid()
                 it[email] = "test@example.com"
                 it[passwordHash] = "hashed-password"
+                it[isActive] = true
+            }
+
+            // Create membership linking user to organization
+            OrganizationMembersTable.insert {
+                it[OrganizationMembersTable.userId] = userId.toJavaUuid()
+                it[organizationId] = testOrganizationId.toJavaUuid()
                 it[role] = UserRole.Owner
                 it[isActive] = true
             }

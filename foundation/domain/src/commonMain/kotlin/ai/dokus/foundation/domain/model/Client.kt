@@ -23,11 +23,11 @@ data class ClientStats(
 sealed class ClientEvent {
     @Serializable
     @SerialName("ClientEvent.ClientCreated")
-    data class ClientCreated(val client: Client) : ClientEvent()
+    data class ClientCreated(val client: ClientDto) : ClientEvent()
 
     @Serializable
     @SerialName("ClientEvent.ClientUpdated")
-    data class ClientUpdated(val client: Client) : ClientEvent()
+    data class ClientUpdated(val client: ClientDto) : ClientEvent()
 
     @Serializable
     @SerialName("ClientEvent.ClientDeleted")

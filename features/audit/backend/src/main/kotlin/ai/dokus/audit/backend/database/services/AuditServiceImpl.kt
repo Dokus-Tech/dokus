@@ -3,11 +3,11 @@
 package ai.dokus.audit.backend.database.services
 
 import ai.dokus.foundation.domain.ids.AuditLogId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.model.AuditLog
+import ai.dokus.foundation.domain.model.AuditLogDto
 import ai.dokus.foundation.ktor.services.AuditService
 import kotlinx.datetime.Instant
 import kotlin.uuid.ExperimentalUuidApi
@@ -17,7 +17,7 @@ import kotlin.uuid.Uuid
 class AuditServiceImpl : AuditService {
 
     override suspend fun log(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         userId: UserId?,
         action: AuditAction,
         entityType: EntityType,
@@ -26,16 +26,16 @@ class AuditServiceImpl : AuditService {
         newValues: String?,
         ipAddress: String?,
         userAgent: String?
-    ): AuditLog {
+    ): AuditLogDto {
         TODO("Not yet implemented")
     }
 
-    override suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<AuditLog> {
+    override suspend fun listByEntity(entityType: EntityType, entityId: Uuid): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
     override suspend fun listByTenant(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         action: AuditAction?,
         entityType: EntityType?,
         userId: UserId?,
@@ -43,7 +43,7 @@ class AuditServiceImpl : AuditService {
         toDate: Instant?,
         limit: Int?,
         offset: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
@@ -52,26 +52,26 @@ class AuditServiceImpl : AuditService {
         fromDate: Instant?,
         toDate: Instant?,
         limit: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
     override suspend fun listByAction(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         action: AuditAction,
         fromDate: Instant?,
         toDate: Instant?,
         limit: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun findById(id: AuditLogId): AuditLog? {
+    override suspend fun findById(id: AuditLogId): AuditLogDto? {
         TODO("Not yet implemented")
     }
 
     override suspend fun getStatistics(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: Instant?,
         toDate: Instant?
     ): Map<String, Any> {
@@ -79,7 +79,7 @@ class AuditServiceImpl : AuditService {
     }
 
     override suspend fun exportLogs(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         fromDate: Instant,
         toDate: Instant,
         format: String
@@ -88,18 +88,18 @@ class AuditServiceImpl : AuditService {
     }
 
     override suspend fun search(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         searchQuery: String,
         limit: Int?
-    ): List<AuditLog> {
+    ): List<AuditLogDto> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun getLatestForEntity(entityType: EntityType, entityId: Uuid): AuditLog? {
+    override suspend fun getLatestForEntity(entityType: EntityType, entityId: Uuid): AuditLogDto? {
         TODO("Not yet implemented")
     }
 
-    override suspend fun archiveLogs(tenantId: TenantId, olderThan: Instant): Int {
+    override suspend fun archiveLogs(organizationId: OrganizationId, olderThan: Instant): Int {
         TODO("Not yet implemented")
     }
 }

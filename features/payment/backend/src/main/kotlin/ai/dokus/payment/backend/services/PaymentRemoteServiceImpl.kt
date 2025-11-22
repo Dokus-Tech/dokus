@@ -3,15 +3,15 @@ package ai.dokus.payment.backend.services
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.Payment
+import ai.dokus.foundation.domain.model.PaymentDto
 import ai.dokus.foundation.domain.model.PaymentEvent
 import ai.dokus.foundation.domain.model.PaymentStats
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.rpc.PaymentRemoteService
-import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
+import ai.dokus.foundation.ktor.security.requireAuthenticatedOrganizationId
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
 import kotlinx.coroutines.flow.Flow
@@ -22,14 +22,14 @@ class PaymentRemoteServiceImpl(
     private val invoiceService: InvoiceService
 ) : PaymentRemoteService {
 
-    override suspend fun recordPayment(request: RecordPaymentRequest): Payment {
-        // Get invoice to extract tenantId for proper tenant isolation
+    override suspend fun recordPayment(request: RecordPaymentRequest): PaymentDto {
+        // Get invoice to extract organizationId for proper tenant isolation
         val invoice = invoiceService.findById(request.invoiceId)
             ?: throw IllegalArgumentException("Invoice not found: ${request.invoiceId}")
 
         // Record payment with all details from the request
         return paymentService.recordPayment(
-            tenantId = invoice.tenantId,
+            organizationId = invoice.organizationId,
             invoiceId = request.invoiceId,
             amount = request.amount,
             paymentDate = request.paymentDate,
@@ -39,14 +39,14 @@ class PaymentRemoteServiceImpl(
         )
     }
 
-    override suspend fun getPayment(id: PaymentId): Payment {
-        val tenantId = requireAuthenticatedTenantId()
+    override suspend fun getPayment(id: PaymentId): PaymentDto {
+        val organizationId = requireAuthenticatedOrganizationId()
         val payment = paymentService.findById(id)
             ?: throw IllegalArgumentException("Payment not found: $id")
 
         // Verify tenant isolation
-        if (payment.tenantId != tenantId) {
-            throw IllegalArgumentException("Payment does not belong to tenant: $tenantId")
+        if (payment.organizationId != organizationId) {
+            throw IllegalArgumentException("Payment does not belong to tenant: $organizationId")
         }
 
         return payment
@@ -58,10 +58,10 @@ class PaymentRemoteServiceImpl(
         paymentMethod: PaymentMethod?,
         limit: Int,
         offset: Int
-    ): List<Payment> {
-        val tenantId = requireAuthenticatedTenantId()
+    ): List<PaymentDto> {
+        val organizationId = requireAuthenticatedOrganizationId()
         return paymentService.listByTenant(
-            tenantId = tenantId,
+            organizationId = organizationId,
             fromDate = fromDate,
             toDate = toDate,
             paymentMethod = paymentMethod,
@@ -70,14 +70,14 @@ class PaymentRemoteServiceImpl(
         )
     }
 
-    override suspend fun getPaymentsByInvoice(invoiceId: InvoiceId): List<Payment> {
-        val tenantId = requireAuthenticatedTenantId()
+    override suspend fun getPaymentsByInvoice(invoiceId: InvoiceId): List<PaymentDto> {
+        val organizationId = requireAuthenticatedOrganizationId()
         val payments = paymentService.listByInvoice(invoiceId)
 
         // Verify tenant isolation
         payments.forEach { payment ->
-            if (payment.tenantId != tenantId) {
-                throw IllegalArgumentException("Invoice does not belong to tenant: $tenantId")
+            if (payment.organizationId != organizationId) {
+                throw IllegalArgumentException("Invoice does not belong to tenant: $organizationId")
             }
         }
 
@@ -91,14 +91,14 @@ class PaymentRemoteServiceImpl(
         paymentMethod: PaymentMethod?,
         transactionId: TransactionId?,
         notes: String?
-    ): Payment {
-        val tenantId = requireAuthenticatedTenantId()
+    ): PaymentDto {
+        val organizationId = requireAuthenticatedOrganizationId()
         // Verify payment exists and belongs to tenant
         val existingPayment = paymentService.findById(id)
             ?: throw IllegalArgumentException("Payment not found: $id")
 
-        if (existingPayment.tenantId != tenantId) {
-            throw IllegalArgumentException("Payment does not belong to tenant: $tenantId")
+        if (existingPayment.organizationId != organizationId) {
+            throw IllegalArgumentException("Payment does not belong to tenant: $organizationId")
         }
 
         // Update using reconcile for transaction ID
@@ -116,24 +116,24 @@ class PaymentRemoteServiceImpl(
     }
 
     override suspend fun deletePayment(id: PaymentId) {
-        val tenantId = requireAuthenticatedTenantId()
+        val organizationId = requireAuthenticatedOrganizationId()
         // Verify payment exists and belongs to tenant
         val payment = paymentService.findById(id)
             ?: throw IllegalArgumentException("Payment not found: $id")
 
-        if (payment.tenantId != tenantId) {
-            throw IllegalArgumentException("Payment does not belong to tenant: $tenantId")
+        if (payment.organizationId != organizationId) {
+            throw IllegalArgumentException("Payment does not belong to tenant: $organizationId")
         }
 
         paymentService.delete(id)
     }
 
-    override suspend fun findByTransactionId(transactionId: TransactionId): Payment? {
-        val tenantId = requireAuthenticatedTenantId()
+    override suspend fun findByTransactionId(transactionId: TransactionId): PaymentDto? {
+        val organizationId = requireAuthenticatedOrganizationId()
         // PaymentService doesn't provide findByTransactionId directly
         // Search through payments by listing all tenant payments and filtering
         val allPayments = paymentService.listByTenant(
-            tenantId = tenantId,
+            organizationId = organizationId,
             fromDate = null,
             toDate = null,
             paymentMethod = null,
@@ -148,9 +148,9 @@ class PaymentRemoteServiceImpl(
         fromDate: LocalDate?,
         toDate: LocalDate?
     ): PaymentStats {
-        val tenantId = requireAuthenticatedTenantId()
+        val organizationId = requireAuthenticatedOrganizationId()
         val payments = paymentService.listByTenant(
-            tenantId = tenantId,
+            organizationId = organizationId,
             fromDate = fromDate,
             toDate = toDate,
             paymentMethod = null,
@@ -182,7 +182,7 @@ class PaymentRemoteServiceImpl(
         )
     }
 
-    override fun watchPayments(tenantId: TenantId): Flow<PaymentEvent> {
+    override fun watchPayments(organizationId: OrganizationId): Flow<PaymentEvent> {
         // Implement polling-based watching since PaymentService doesn't provide streaming
         return kotlinx.coroutines.flow.flow {
             var lastSeenPayments = emptySet<PaymentId>()
@@ -193,7 +193,7 @@ class PaymentRemoteServiceImpl(
 
                 try {
                     val currentPayments = paymentService.listByTenant(
-                        tenantId = tenantId,
+                        organizationId = organizationId,
                         fromDate = null,
                         toDate = null,
                         paymentMethod = null,

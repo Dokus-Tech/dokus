@@ -1,9 +1,9 @@
 package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.ids.ClientId
-import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.Client
+import ai.dokus.foundation.domain.model.ClientDto
 import kotlinx.rpc.annotations.Rpc
 
 @Rpc
@@ -11,7 +11,7 @@ interface ClientService {
     /**
      * Creates a new client for a tenant
      *
-     * @param tenantId The tenant ID this client belongs to
+     * @param organizationId The tenant ID this client belongs to
      * @param name The client's name or company name
      * @param email The client's email address (optional)
      * @param vatNumber The client's VAT number (optional)
@@ -26,7 +26,7 @@ interface ClientService {
      * @return The created client
      */
     suspend fun create(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         name: String,
         email: String? = null,
         vatNumber: VatNumber? = null,
@@ -38,7 +38,7 @@ interface ClientService {
         contactPerson: String? = null,
         phone: String? = null,
         notes: String? = null
-    ): Client
+    ): ClientDto
 
     /**
      * Updates an existing client
@@ -95,46 +95,46 @@ interface ClientService {
      * @param id The client's unique identifier
      * @return The client if found, null otherwise
      */
-    suspend fun findById(id: ClientId): Client?
+    suspend fun findById(id: ClientId): ClientDto?
 
     /**
      * Lists all clients for a tenant
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param activeOnly If true, only returns active clients (defaults to true)
      * @return List of clients
      */
-    suspend fun listByTenant(tenantId: TenantId, activeOnly: Boolean = true): List<Client>
+    suspend fun listByTenant(organizationId: OrganizationId, activeOnly: Boolean = true): List<ClientDto>
 
     /**
      * Searches for clients by name
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param query The search query (matches against client name)
      * @param activeOnly If true, only searches active clients (defaults to true)
      * @return List of matching clients
      */
     suspend fun search(
-        tenantId: TenantId,
+        organizationId: OrganizationId,
         query: String,
         activeOnly: Boolean = true
-    ): List<Client>
+    ): List<ClientDto>
 
     /**
      * Finds a client by their email address
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param email The client's email address
      * @return The client if found, null otherwise
      */
-    suspend fun findByEmail(tenantId: TenantId, email: String): Client?
+    suspend fun findByEmail(organizationId: OrganizationId, email: String): ClientDto?
 
     /**
      * Finds a client by their VAT number
      *
-     * @param tenantId The tenant's unique identifier
+     * @param organizationId The tenant's unique identifier
      * @param vatNumber The client's VAT number
      * @return The client if found, null otherwise
      */
-    suspend fun findByVatNumber(tenantId: TenantId, vatNumber: VatNumber): Client?
+    suspend fun findByVatNumber(organizationId: OrganizationId, vatNumber: VatNumber): ClientDto?
 }

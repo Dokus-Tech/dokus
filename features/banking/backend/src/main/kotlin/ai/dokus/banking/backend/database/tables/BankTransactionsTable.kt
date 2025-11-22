@@ -12,7 +12,7 @@ import java.util.UUID as JavaUUID
  */
 object BankTransactionsTable : UUIDTable("bank_transactions") {
     val bankConnectionId = uuid("bank_connection_id")
-    val tenantId = uuid("tenant_id")
+    val organizationId = uuid("organization_id")
 
     val externalId = varchar("external_id", 255)
     val date = date("date")
@@ -31,9 +31,9 @@ object BankTransactionsTable : UUIDTable("bank_transactions") {
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId, date)
+        index(false, organizationId, date)
         index(false, bankConnectionId, date)
-        index(false, tenantId, isReconciled)
+        index(false, organizationId, isReconciled)
         uniqueIndex(bankConnectionId, externalId)
     }
 }

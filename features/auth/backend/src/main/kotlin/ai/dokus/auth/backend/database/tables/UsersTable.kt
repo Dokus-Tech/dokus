@@ -1,26 +1,18 @@
 package ai.dokus.auth.backend.database.tables
 
-import ai.dokus.foundation.ktor.database.dbEnumeration
-import ai.dokus.foundation.domain.enums.UserRole
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
-import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
- * People who can access a tenant's account
- * Support for team members, accountants, and viewers
+ * User identity table - stores user credentials and profile.
+ * Users can belong to multiple organizations via OrganizationMembersTable.
  */
 object UsersTable : UUIDTable("users") {
-    val tenantId = reference("tenant_id", TenantsTable, onDelete = ReferenceOption.CASCADE)
     val email = varchar("email", 255).uniqueIndex()
 
     // Authentication
     val passwordHash = varchar("password_hash", 255) // bcrypt
-    val mfaSecret = varchar("mfa_secret", 255).nullable() // TOTP, must be encrypted!
-
-    // Authorization
-    val role = dbEnumeration<UserRole>("role")
 
     // Profile
     val firstName = varchar("first_name", 100).nullable()
@@ -40,8 +32,7 @@ object UsersTable : UUIDTable("users") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
         index(false, email)
-        index(false, tenantId, isActive) // Composite for active users query
     }
 }
+
