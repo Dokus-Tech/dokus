@@ -49,14 +49,19 @@ fun createAuthenticatedHttpClient(
     install(Auth) {
         bearer {
             loadTokens {
+                // Only attach the current valid access token. Do NOT trigger a refresh here.
                 val accessToken = tokenManager.getValidAccessToken()
-                val refreshToken = tokenManager.refreshToken()
-                BearerTokens(accessToken = accessToken.orEmpty(), refreshToken = refreshToken.orEmpty())
+                accessToken?.let { BearerTokens(accessToken = it, refreshToken = "") }
             }
             refreshTokens {
-                val accessToken = tokenManager.getValidAccessToken()
-                val refreshToken = tokenManager.refreshToken()
-                BearerTokens(accessToken = accessToken.orEmpty(), refreshToken = refreshToken.orEmpty())
+                // Attempt to refresh the token only when the server requests it (e.g., 401).
+                val newAccessToken = tokenManager.refreshToken()
+                if (newAccessToken.isNullOrEmpty()) {
+                    onAuthenticationFailed()
+                    null
+                } else {
+                    BearerTokens(accessToken = newAccessToken, refreshToken = "")
+                }
             }
         }
     }

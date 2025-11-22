@@ -2,22 +2,22 @@
 
 package ai.dokus.foundation.ktor.auth
 
-import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.ktor.security.JwtValidator
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.util.*
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private val logger = LoggerFactory.getLogger("ServiceAuthConfig")
+
+// Expose JwtValidator via Application.attributes so other components (e.g., AuthInfoProvider)
+// can access it without depending on DI frameworks.
+val JWT_VALIDATOR_ATTRIBUTE_KEY: AttributeKey<JwtValidator> = AttributeKey("jwt-validator")
 
 /**
  * Configures JWT authentication using Ktor's built-in JWT auth plugin.
@@ -37,6 +37,14 @@ fun Application.configureJwtAuth(
     jwtValidator: JwtValidator,
     providerName: String = "jwt-auth"
 ) {
+    // Make JwtValidator available via Application.attributes
+    try {
+        if (!attributes.contains(JWT_VALIDATOR_ATTRIBUTE_KEY)) {
+            attributes.put(JWT_VALIDATOR_ATTRIBUTE_KEY, jwtValidator)
+        }
+    } catch (_: Throwable) {
+        // no-op: attributes API may throw if not initialized yet in some environments
+    }
     install(Authentication) {
         jwt(providerName) {
             // Set the realm for WWW-Authenticate header
@@ -49,38 +57,20 @@ fun Application.configureJwtAuth(
                     .build()
             )
 
-            // Validate JWT and extract authentication info
+            // Validate JWT and extract authentication info using JwtValidator
             validate { credential ->
                 try {
-                    // Extract authentication info from validated JWT payload
-                    // The payload is already validated by the verifier above
-                    val userId = credential.payload.subject ?: return@validate null
-                    val email =
-                        credential.payload.getClaim("email").asString() ?: return@validate null
-                    val name =
-                        credential.payload.getClaim("name").asString() ?: return@validate null
-                    val organizationId =
-                        credential.payload.getClaim("organization_id").asString() ?: return@validate null
-                    val roles = credential.payload.getClaim("groups").asList(String::class.java)
-                        ?: emptyList()
-
-                    val authInfo = AuthenticationInfo(
-                        userId = UserId(userId),
-                        email = email,
-                        name = name,
-                        organizationId = OrganizationId(Uuid.parse(organizationId)),
-                        roles = roles.toSet()
-                    )
-
-                    logger.debug(
-                        "JWT validated for user: {}, tenant: {}",
-                        authInfo.userId.value,
-                        authInfo.organizationId.value
-                    )
-
-                    // Store AuthenticationInfo as the principal
-                    // This makes it available via call.principal<AuthenticationInfoPrincipal>()
-                    AuthenticationInfoPrincipal(authInfo)
+                    val authInfo = jwtValidator.extractAuthInfo(credential.payload)
+                    if (authInfo != null) {
+                        logger.debug(
+                            "JWT validated for user: {}, organization: {}",
+                            authInfo.userId.value,
+                            authInfo.organizationId?.value
+                        )
+                        AuthenticationInfoPrincipal(authInfo)
+                    } else {
+                        null
+                    }
                 } catch (e: Exception) {
                     logger.error("Error extracting auth info from JWT", e)
                     null
@@ -103,4 +93,4 @@ fun Application.configureJwtAuth(
  */
 data class AuthenticationInfoPrincipal(
     val authInfo: AuthenticationInfo
-) : io.ktor.server.auth.Principal
+) : Principal

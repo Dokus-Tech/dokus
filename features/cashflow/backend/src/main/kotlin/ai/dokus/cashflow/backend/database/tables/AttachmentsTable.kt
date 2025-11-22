@@ -13,7 +13,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object AttachmentsTable : UUIDTable("attachments") {
     // Multi-tenancy (CRITICAL)
-    val organizationId = uuid("organization_id").index()
+    val organizationId = uuid("organization_id")
 
     // Generic entity reference (can attach to invoices, expenses, etc.)
     val entityType = dbEnumeration<EntityType>("entity_type")
