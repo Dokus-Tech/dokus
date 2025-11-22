@@ -1,13 +1,14 @@
 package ai.dokus.app.cashflow.network
 
+import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.*
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
+import ai.dokus.foundation.network.resilient.ResilientDelegate
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -19,24 +20,15 @@ import kotlinx.coroutines.flow.Flow
  * (e.g., via createAuthenticatedRpcClient with waitForServices=false).
  */
 class ResilientCashflowRemoteService(
-    private val serviceProvider: () -> CashflowRemoteService
+    serviceProvider: () -> CashflowRemoteService
 ) : CashflowRemoteService {
 
-    private var cached: CashflowRemoteService? = null
+    private val delegate = ResilientDelegate(serviceProvider)
 
-    private fun get(): CashflowRemoteService = cached ?: serviceProvider().also { cached = it }
+    private fun get(): CashflowRemoteService = delegate.get()
 
-    private suspend inline fun <R> withRetry(crossinline block: suspend (CashflowRemoteService) -> R): R {
-        val first = get()
-        return try {
-            block(first)
-        } catch (e: Throwable) {
-            // Reset and retry once with a fresh instance
-            cached = null
-            val second = get()
-            block(second)
-        }
-    }
+    private suspend inline fun <R> withRetry(crossinline block: suspend (CashflowRemoteService) -> R): R =
+        delegate.withRetry(block)
 
     // Invoices
     override suspend fun createInvoice(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto =
