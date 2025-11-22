@@ -1,7 +1,6 @@
 package ai.dokus.foundation.ktor.auth
 
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.UserStatus
 import ai.dokus.foundation.domain.model.UserDto
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.ktor.utils.extractClientIpAddress

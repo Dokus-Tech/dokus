@@ -84,14 +84,18 @@ class AuthValidationRemoteServiceImpl(
             throw DokusException.AccountInactive("Account is not active")
         }
 
-        // Step 4: Verify user role matches allowed roles
-        if (!allowedUserRoles.contains(user.role)) {
+        // Step 4: Get user's organization memberships
+        val memberships = userService.getUserOrganizations(authInfo.userId)
+
+        // Step 5: Verify user has at least one allowed role in any organization
+        val userRoles = memberships.map { it.role }.toSet()
+        if (!userRoles.any { allowedUserRoles.contains(it) }) {
             logger.warn(
-                "User ${authInfo.userId} has role ${user.role}, " +
+                "User ${authInfo.userId} has roles $userRoles, " +
                 "but only $allowedUserRoles are allowed"
             )
             throw DokusException.NotAuthorized(
-                "User role '${user.role}' is not allowed for this operation"
+                "User roles are not allowed for this operation"
             )
         }
 
@@ -100,19 +104,18 @@ class AuthValidationRemoteServiceImpl(
             "from ${requestContext.sourceModule}"
         )
 
-        // Step 5: Return complete user DTO with tenant context
+        // Step 6: Return complete user DTO with memberships
         return UserDto.Full(
             id = user.id,
-            organizationId = user.organizationId,
             email = user.email,
             firstName = user.firstName,
             lastName = user.lastName,
-            role = user.role,
             emailVerified = user.emailVerified,
             isActive = user.isActive,
             lastLoginAt = user.lastLoginAt,
             createdAt = user.createdAt,
-            updatedAt = user.updatedAt
+            updatedAt = user.updatedAt,
+            memberships = memberships
         )
     }
 
@@ -130,18 +133,20 @@ class AuthValidationRemoteServiceImpl(
         val user = userService.findById(userId)
             ?: throw DokusException.NotAuthenticated("User not found: ${userId.value}")
 
+        // Get user's organization memberships
+        val memberships = userService.getUserOrganizations(userId)
+
         return UserDto.Full(
             id = user.id,
-            organizationId = user.organizationId,
             email = user.email,
             firstName = user.firstName,
             lastName = user.lastName,
-            role = user.role,
             emailVerified = user.emailVerified,
             isActive = user.isActive,
             lastLoginAt = user.lastLoginAt,
             createdAt = user.createdAt,
-            updatedAt = user.updatedAt
+            updatedAt = user.updatedAt,
+            memberships = memberships
         )
     }
 }

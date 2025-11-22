@@ -10,8 +10,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Per-tenant configuration
  */
 object OrganizationSettingsTable : UUIDTable("tenant_settings") {
-    val organizationId = reference("organization_id", OrganizationTable,
-        onDelete = ReferenceOption.CASCADE).uniqueIndex()
+    val organizationId = reference(
+        name = "organization_id",
+        foreign = OrganizationTable,
+        onDelete = ReferenceOption.CASCADE
+    ).uniqueIndex()
 
     // Invoice defaults
     val invoicePrefix = varchar("invoice_prefix", 20).default("INV")

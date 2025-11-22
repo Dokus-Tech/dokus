@@ -84,12 +84,14 @@ data class OrganizationSettings(
     val updatedAt: LocalDateTime
 )
 
+/**
+ * User identity - does not include organization info.
+ * Users can belong to multiple organizations via OrganizationMembership.
+ */
 @Serializable
 data class BusinessUser(
     val id: UserId,
-    val organizationId: OrganizationId,
     val email: Email,
-    val role: UserRole,
     val firstName: String? = null,
     val lastName: String? = null,
     val emailVerified: Boolean = false,
@@ -97,6 +99,30 @@ data class BusinessUser(
     val lastLoginAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
+)
+
+/**
+ * Represents a user's membership in an organization with their role.
+ */
+@Serializable
+data class OrganizationMembership(
+    val userId: UserId,
+    val organizationId: OrganizationId,
+    val role: UserRole,
+    val isActive: Boolean = true,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
+)
+
+/**
+ * User with specific organization context - used when working within an organization.
+ */
+@Serializable
+data class UserInOrganization(
+    val user: BusinessUser,
+    val organizationId: OrganizationId,
+    val role: UserRole,
+    val membershipActive: Boolean = true
 )
 
 // ============================================================================
