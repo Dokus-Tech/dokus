@@ -1,7 +1,10 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package ai.dokus.auth.backend.rpc
 
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.services.AuthService
+import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest

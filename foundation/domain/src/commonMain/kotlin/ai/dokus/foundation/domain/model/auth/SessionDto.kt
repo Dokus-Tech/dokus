@@ -26,7 +26,7 @@ data class SessionDto(
     val isCurrent: Boolean = false,
 ) {
     @OptIn(ExperimentalUuidApi::class)
-    val idUuid: Uuid? get() = runCatching { Uuid.parse(id.value) }.getOrNull()
+    val idUuid: Uuid get() = id.value
 
     @OptIn(ExperimentalTime::class)
     val createdAtInstant: Instant? get() = createdAt?.let { Instant.fromEpochSeconds(it) }
