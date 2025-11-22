@@ -3,7 +3,7 @@ package ai.dokus.foundation.domain.rpc
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.model.Client
+import ai.dokus.foundation.domain.model.ClientDto
 import ai.dokus.foundation.domain.model.ClientEvent
 import ai.dokus.foundation.domain.model.ClientStats
 import kotlinx.coroutines.flow.Flow
@@ -32,13 +32,13 @@ interface ClientRemoteService {
         peppolEnabled: Boolean = false,
         tags: String? = null,
         notes: String? = null
-    ): Client
+    ): ClientDto
 
     /**
      * Get a client by ID
      * Enforces tenant isolation
      */
-    suspend fun getClient(id: ClientId): Client
+    suspend fun getClient(id: ClientId): ClientDto
 
     /**
      * List clients for a tenant
@@ -49,7 +49,7 @@ interface ClientRemoteService {
         isActive: Boolean? = null,
         limit: Int = 100,
         offset: Int = 0
-    ): List<Client>
+    ): List<ClientDto>
 
     /**
      * Update an existing client
@@ -72,7 +72,7 @@ interface ClientRemoteService {
         tags: String? = null,
         notes: String? = null,
         isActive: Boolean? = null
-    ): Client
+    ): ClientDto
 
     /**
      * Delete a client (soft delete)
@@ -84,7 +84,7 @@ interface ClientRemoteService {
      * Find client by Peppol participant ID
      * Used for incoming Peppol e-invoices
      */
-    suspend fun findClientByPeppolId(peppolId: String): Client?
+    suspend fun findClientByPeppolId(peppolId: String): ClientDto?
 
     /**
      * Get client statistics

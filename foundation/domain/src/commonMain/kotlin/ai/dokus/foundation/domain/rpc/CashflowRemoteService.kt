@@ -6,13 +6,13 @@ import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.Attachment
+import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.Expense
-import ai.dokus.foundation.domain.model.Invoice
-import ai.dokus.foundation.domain.model.InvoiceItem
+import ai.dokus.foundation.domain.model.ExpenseDto
+import ai.dokus.foundation.domain.model.InvoiceDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import kotlinx.coroutines.flow.Flow
@@ -39,12 +39,12 @@ interface CashflowRemoteService {
     /**
      * Create a new invoice with optional document attachments
      */
-    suspend fun createInvoice(request: CreateInvoiceRequest): Invoice
+    suspend fun createInvoice(request: CreateInvoiceRequest): InvoiceDto
 
     /**
      * Get a single invoice by ID with all related documents
      */
-    suspend fun getInvoice(id: InvoiceId): Invoice
+    suspend fun getInvoice(id: InvoiceId): InvoiceDto
 
     /**
      * List invoices with optional filtering
@@ -58,12 +58,12 @@ interface CashflowRemoteService {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): List<Invoice>
+    ): List<InvoiceDto>
 
     /**
      * List all overdue invoices for a tenant
      */
-    suspend fun listOverdueInvoices(): List<Invoice>
+    suspend fun listOverdueInvoices(): List<InvoiceDto>
 
     /**
      * Update invoice status
@@ -76,7 +76,7 @@ interface CashflowRemoteService {
     suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): Invoice
+    ): InvoiceDto
 
     /**
      * Delete an invoice (soft delete)
@@ -105,12 +105,12 @@ interface CashflowRemoteService {
     /**
      * Calculate invoice totals from line items
      */
-    suspend fun calculateInvoiceTotals(items: List<InvoiceItem>): InvoiceTotals
+    suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): InvoiceTotals
 
     /**
      * Watch for real-time invoice updates
      */
-    fun watchInvoices(organizationId: OrganizationId): Flow<Invoice>
+    fun watchInvoices(organizationId: OrganizationId): Flow<InvoiceDto>
 
     // ============================================================================
     // EXPENSE MANAGEMENT
@@ -119,12 +119,12 @@ interface CashflowRemoteService {
     /**
      * Create a new expense
      */
-    suspend fun createExpense(request: CreateExpenseRequest): Expense
+    suspend fun createExpense(request: CreateExpenseRequest): ExpenseDto
 
     /**
      * Get a single expense by ID
      */
-    suspend fun getExpense(id: ExpenseId): Expense
+    suspend fun getExpense(id: ExpenseId): ExpenseDto
 
     /**
      * List expenses with optional filtering
@@ -135,7 +135,7 @@ interface CashflowRemoteService {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): List<Expense>
+    ): List<ExpenseDto>
 
     /**
      * Update an existing expense
@@ -143,7 +143,7 @@ interface CashflowRemoteService {
     suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): Expense
+    ): ExpenseDto
 
     /**
      * Delete an expense
@@ -158,7 +158,7 @@ interface CashflowRemoteService {
     /**
      * Watch for real-time expense updates
      */
-    fun watchExpenses(organizationId: OrganizationId): Flow<Expense>
+    fun watchExpenses(organizationId: OrganizationId): Flow<ExpenseDto>
 
     // ============================================================================
     // DOCUMENT/ATTACHMENT MANAGEMENT
@@ -197,12 +197,12 @@ interface CashflowRemoteService {
     /**
      * Get all attachments for an invoice
      */
-    suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<Attachment>
+    suspend fun getInvoiceAttachments(invoiceId: InvoiceId): List<AttachmentDto>
 
     /**
      * Get all attachments for an expense
      */
-    suspend fun getExpenseAttachments(expenseId: ExpenseId): List<Attachment>
+    suspend fun getExpenseAttachments(expenseId: ExpenseId): List<AttachmentDto>
 
     /**
      * Get a download URL for a specific attachment
