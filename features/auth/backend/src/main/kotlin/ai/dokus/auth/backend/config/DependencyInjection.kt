@@ -4,6 +4,7 @@ import ai.dokus.auth.backend.database.repository.PasswordResetTokenRepository
 import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
 import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
@@ -46,6 +47,7 @@ private val appModule = module {
                     OrganizationTable,
                     OrganizationSettingsTable,
                     UsersTable,
+                    OrganizationMembersTable,
                     RefreshTokensTable,
                     PasswordResetTokensTable
                 )
