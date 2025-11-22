@@ -14,7 +14,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object ExpensesTable : UUIDTable("expenses") {
     // Multi-tenancy (CRITICAL)
-    val organizationId = uuid("organization_id").index()
+    val organizationId = uuid("organization_id")
 
     // Expense details
     val date = date("date")
