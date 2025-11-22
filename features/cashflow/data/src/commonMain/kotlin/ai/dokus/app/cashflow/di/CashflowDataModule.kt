@@ -32,7 +32,8 @@ val cashflowNetworkModule = module {
                 CoroutineScope(Dispatchers.Default).launch {
                     authManager.onAuthenticationFailed()
                 }
-            }
+            },
+            waitForServices = false
         )
     }
 
