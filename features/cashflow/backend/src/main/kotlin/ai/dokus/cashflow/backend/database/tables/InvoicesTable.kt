@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
  * Invoices table - stores all customer invoices
- * CRITICAL: All queries MUST filter by tenant_id
+ * CRITICAL: All queries MUST filter by organization_id
  */
 object InvoicesTable : UUIDTable("invoices") {
     // Multi-tenancy (CRITICAL)
@@ -58,7 +58,7 @@ object InvoicesTable : UUIDTable("invoices") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index tenant_id for security and performance
+        // CRITICAL: Index organization_id for security and performance
         index(false, organizationId)
         index(false, clientId)
         index(false, status)

@@ -10,7 +10,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
  * Expenses table - stores all business expenses
- * CRITICAL: All queries MUST filter by tenant_id
+ * CRITICAL: All queries MUST filter by organization_id
  */
 object ExpensesTable : UUIDTable("expenses") {
     // Multi-tenancy (CRITICAL)
@@ -49,7 +49,7 @@ object ExpensesTable : UUIDTable("expenses") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index tenant_id for security and performance
+        // CRITICAL: Index organization_id for security and performance
         index(false, organizationId)
         index(false, category)
         index(false, date)
