@@ -2,11 +2,10 @@ package ai.dokus.foundation.network
 
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.http.encodedPath
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.http.*
 import kotlinx.rpc.annotations.Rpc
 import kotlinx.rpc.krpc.ktor.client.KtorRpcClient
 import kotlinx.rpc.krpc.ktor.client.installKrpc
@@ -95,11 +94,8 @@ fun createAuthenticatedRpcClient(
                     }
                 }
             }
-            install(WebSockets) {
-                // Keep the connection alive and detect dead connections sooner
-                pingInterval = 15_000
-                timeout = 30_000
-            }
+            // WebSockets are required for KRPC transport
+            install(WebSockets)
             installKrpc {
                 if (!waitForServices) {
                     connector {

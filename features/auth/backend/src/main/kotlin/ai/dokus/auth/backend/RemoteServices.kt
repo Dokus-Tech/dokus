@@ -14,6 +14,7 @@ import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.services.ClientService
 import io.ktor.server.routing.Route
+import io.ktor.server.auth.authenticate
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.ktor.ext.get
@@ -26,38 +27,43 @@ private val logger = LoggerFactory.getLogger("RemoteServices")
  * Wraps services with authentication context injection.
  */
 fun Route.withRemoteServices() {
-    rpc("/rpc") {
-        rpcConfig {
-            serialization {
-                json()
+    // Allow optional JWT authentication for RPC endpoint:
+    // - Unauthenticated methods (login/register) work without a token
+    // - Auth-required methods fetch principal via AuthInfoProvider and will fail if absent
+    authenticate("jwt-auth", optional = true) {
+        rpc("/rpc") {
+            rpcConfig {
+                serialization {
+                    json()
+                }
             }
-        }
 
-        // Wrap AccountRemoteService with authentication context injection
-        registerService<AccountRemoteService> {
-            AccountRemoteServiceImpl(
-                authService = get<AuthService>(),
-                authInfoProvider = AuthInfoProvider(call)
-            )
-        }
+            // Wrap AccountRemoteService with authentication context injection
+            registerService<AccountRemoteService> {
+                AccountRemoteServiceImpl(
+                    authService = get<AuthService>(),
+                    authInfoProvider = AuthInfoProvider(call)
+                )
+            }
 
-        registerService<OrganizationRemoteService> {
-            OrganizationRemoteServiceImpl(
-                organizationService = get<OrganizationRepository>(),
-                userRepository = get<UserRepository>(),
-                authInfoProvider = AuthInfoProvider(call)
-            )
-        }
-        registerService<ClientRemoteService> {
-            ClientRemoteServiceImpl(
-                clientService = get<ClientService>(),
-                authInfoProvider = AuthInfoProvider(call)
-            )
-        }
-        registerService<CashflowRemoteService> { get<CashflowRemoteService>() }
+            registerService<OrganizationRemoteService> {
+                OrganizationRemoteServiceImpl(
+                    organizationService = get<OrganizationRepository>(),
+                    userRepository = get<UserRepository>(),
+                    authInfoProvider = AuthInfoProvider(call)
+                )
+            }
+            registerService<ClientRemoteService> {
+                ClientRemoteServiceImpl(
+                    clientService = get<ClientService>(),
+                    authInfoProvider = AuthInfoProvider(call)
+                )
+            }
+            registerService<CashflowRemoteService> { get<CashflowRemoteService>() }
 
-        // Auth validation service for inter-service communication
-        registerService<AuthValidationRemoteService> { get<AuthValidationRemoteService>() }
+            // Auth validation service for inter-service communication
+            registerService<AuthValidationRemoteService> { get<AuthValidationRemoteService>() }
+        }
     }
 
     logger.info("RPC APIs registered at /rpc")
