@@ -52,6 +52,14 @@ data class OrganizationScope(
     val role: UserRole?,
 )
 
+@Serializable
+data class OrganizationClaimDto(
+    val organizationId: String,
+    val permissions: List<String>,
+    val subscriptionTier: String,
+    val role: String? = null
+)
+
 enum class TokenStatus {
     VALID,
     EXPIRED,

@@ -5,11 +5,11 @@ package ai.dokus.foundation.ktor.security
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginResponse
+import ai.dokus.foundation.domain.model.auth.OrganizationClaimDto
 import ai.dokus.foundation.domain.model.auth.OrganizationScope
 import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.util.*
@@ -92,12 +92,4 @@ class JwtGenerator(
             .withExpiresAt(Date.from(Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))
             .sign(algorithm)
     }
-
-    @Serializable
-    private data class OrganizationClaimDto(
-        val organizationId: String,
-        val permissions: List<String>,
-        val subscriptionTier: String,
-        val role: String? = null
-    )
 }

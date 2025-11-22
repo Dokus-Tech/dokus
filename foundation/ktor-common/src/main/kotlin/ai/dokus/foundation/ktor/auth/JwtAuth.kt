@@ -49,38 +49,20 @@ fun Application.configureJwtAuth(
                     .build()
             )
 
-            // Validate JWT and extract authentication info
+            // Validate JWT and extract authentication info using JwtValidator
             validate { credential ->
                 try {
-                    // Extract authentication info from validated JWT payload
-                    // The payload is already validated by the verifier above
-                    val userId = credential.payload.subject ?: return@validate null
-                    val email =
-                        credential.payload.getClaim("email").asString() ?: return@validate null
-                    val name =
-                        credential.payload.getClaim("name").asString() ?: return@validate null
-                    val organizationId =
-                        credential.payload.getClaim("organization_id").asString() ?: return@validate null
-                    val roles = credential.payload.getClaim("groups").asList(String::class.java)
-                        ?: emptyList()
-
-                    val authInfo = AuthenticationInfo(
-                        userId = UserId(userId),
-                        email = email,
-                        name = name,
-                        organizationId = OrganizationId(Uuid.parse(organizationId)),
-                        roles = roles.toSet()
-                    )
-
-                    logger.debug(
-                        "JWT validated for user: {}, tenant: {}",
-                        authInfo.userId.value,
-                        authInfo.organizationId.value
-                    )
-
-                    // Store AuthenticationInfo as the principal
-                    // This makes it available via call.principal<AuthenticationInfoPrincipal>()
-                    AuthenticationInfoPrincipal(authInfo)
+                    val authInfo = jwtValidator.extractAuthInfo(credential.payload)
+                    if (authInfo != null) {
+                        logger.debug(
+                            "JWT validated for user: {}, tenant: {}",
+                            authInfo.userId.value,
+                            authInfo.organizationId.value
+                        )
+                        AuthenticationInfoPrincipal(authInfo)
+                    } else {
+                        null
+                    }
                 } catch (e: Exception) {
                     logger.error("Error extracting auth info from JWT", e)
                     null
