@@ -2,6 +2,7 @@ package ai.dokus.auth.backend
 
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
+import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
 import ai.dokus.auth.backend.rpc.ClientRemoteServiceImpl
 import ai.dokus.auth.backend.rpc.OrganizationRemoteServiceImpl
@@ -43,6 +44,7 @@ fun Route.withRemoteServices() {
         registerService<OrganizationRemoteService> {
             OrganizationRemoteServiceImpl(
                 organizationService = get<OrganizationRepository>(),
+                userRepository = get<UserRepository>(),
                 authInfoProvider = AuthInfoProvider(call)
             )
         }

@@ -112,7 +112,7 @@ private val appModule = module {
     single { RateLimitCleanupJob(get()) }
 
     // Authentication service
-    single { AuthService(get(), get(), get(), get(), get(), get(), get()) }
+    single { AuthService(get(), get(), get(), get(), get(), get()) }
 
     // RPC API implementations
     single<AuthValidationRemoteService> { AuthValidationRemoteServiceImpl(get(), get()) }

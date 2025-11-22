@@ -3,14 +3,14 @@
 package ai.dokus.auth.backend.services
 
 import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
-import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
-import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
@@ -19,16 +19,12 @@ import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.security.JwtGenerator
-import ai.dokus.auth.backend.database.repository.OrganizationRepository
-import ai.dokus.auth.backend.database.repository.UserRepository
-import org.slf4j.LoggerFactory
-import ai.dokus.foundation.domain.model.auth.JwtClaims
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
+import org.slf4j.LoggerFactory
 
 class AuthService(
     private val userRepository: UserRepository,
-    private val organizationRepository: OrganizationRepository,
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitService,
@@ -104,46 +100,22 @@ class AuthService(
     suspend fun register(request: RegisterRequest): Result<LoginResponse> = try {
         logger.debug("Registration attempt for email: ${request.email.value}")
 
-        val tenantName = buildString {
-            append(request.firstName.value)
-            if (request.firstName.value.isNotEmpty() && request.lastName.value.isNotEmpty()) append(" ")
-            append(request.lastName.value)
-        }.ifEmpty { request.email.value }
-
-        logger.debug("Creating new tenant: $tenantName for email: ${request.email.value}")
-
-        val organizationId = organizationRepository.create(
-            name = tenantName,
-            email = request.email.value,
-            plan = OrganizationPlan.Free,
-            country = "BE",
-            language = Language.En,
-            vatNumber = null
-        )
-
-        logger.info("Created tenant: $organizationId")
-
+        // Register user without any organization
+        // User can create or join organizations after registration
         val user = userRepository.register(
-            organizationId = organizationId,
             email = request.email.value,
             password = request.password.value,
             firstName = request.firstName.value,
-            lastName = request.lastName.value,
-            role = UserRole.Owner
+            lastName = request.lastName.value
         )
 
         val userId = user.id
 
-        // For registration, user is owner of the new organization
-        val organizationScope = createOrganizationScope(
-            organizationId = organizationId,
-            role = UserRole.Owner
-        )
-
+        // User starts with no organizations - empty scopes
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = listOf(organizationScope)
+            organizations = emptyList()
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -162,7 +134,7 @@ class AuthService(
                 logger.warn("Failed to send verification email during registration: ${error.message}")
             }
 
-        logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value}), tenant: $organizationId")
+        logger.info("Successful registration and auto-login for user: ${user.id} (email: ${user.email.value})")
         Result.success(response)
     } catch (e: IllegalArgumentException) {
         logger.warn("Registration failed for email: ${request.email.value} - ${e.message}")
