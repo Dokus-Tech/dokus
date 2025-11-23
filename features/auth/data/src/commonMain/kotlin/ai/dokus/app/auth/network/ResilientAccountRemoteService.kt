@@ -5,38 +5,30 @@ import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
-import ai.dokus.foundation.network.resilient.AuthResilient
-import ai.dokus.foundation.network.resilient.AuthenticatedResilientDelegate
-import ai.dokus.foundation.network.resilient.authCall
+import ai.dokus.foundation.network.resilient.RemoteServiceDelegate
+import ai.dokus.foundation.network.resilient.invoke
 
 /**
- * Resilient wrapper for AccountRemoteService that retries requests using ResilientDelegate.
+ * Resilient wrapper for AccountRemoteService that retries requests using RetryResilientDelegate.
  * Mirrors the approach used by ResilientOrganizationRemoteService.
  */
 class ResilientAccountRemoteService(
-    serviceProvider: () -> AccountRemoteService,
-    tokenManager: ai.dokus.foundation.domain.asbtractions.TokenManager,
-    authManager: ai.dokus.foundation.domain.asbtractions.AuthManager
-) : AccountRemoteService, AuthResilient<AccountRemoteService> {
+    private val delegate: RemoteServiceDelegate<AccountRemoteService>,
+) : AccountRemoteService {
 
-    override val authDelegate = AuthenticatedResilientDelegate(
-        serviceProvider = serviceProvider,
-        tokenManager = tokenManager,
-        authManager = authManager
-    )
+    override suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse {
+        return delegate { it.selectOrganization(organizationId) }
+    }
 
-    private suspend fun <R> withRetry(block: suspend (AccountRemoteService) -> R): R =
-        authCall(block)
+    override suspend fun logout(request: LogoutRequest) {
+        return delegate { it.logout(request) }
+    }
 
-    override suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse =
-        withRetry { it.selectOrganization(organizationId) }
+    override suspend fun deactivateAccount(request: DeactivateUserRequest) {
+        return delegate { it.deactivateAccount(request) }
+    }
 
-    override suspend fun logout(request: LogoutRequest) =
-        withRetry { it.logout(request) }
-
-    override suspend fun deactivateAccount(request: DeactivateUserRequest) =
-        withRetry { it.deactivateAccount(request) }
-
-    override suspend fun resendVerificationEmail() =
-        withRetry { it.resendVerificationEmail() }
+    override suspend fun resendVerificationEmail() {
+        return delegate { it.resendVerificationEmail() }
+    }
 }
