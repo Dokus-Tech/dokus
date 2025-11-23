@@ -7,11 +7,8 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.*
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
-import ai.dokus.foundation.network.resilient.ResilientDelegate
+import ai.dokus.foundation.network.resilient.AuthResilientService
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -24,47 +21,13 @@ import kotlinx.coroutines.flow.Flow
  */
 class ResilientCashflowRemoteService(
     serviceProvider: () -> CashflowRemoteService,
-    private val tokenManager: TokenManager,
-    private val authManager: AuthManager
-) : CashflowRemoteService {
+    tokenManager: ai.dokus.foundation.domain.asbtractions.TokenManager,
+    authManager: ai.dokus.foundation.domain.asbtractions.AuthManager
+) : CashflowRemoteService,
+    AuthResilientService<CashflowRemoteService>(serviceProvider, tokenManager, authManager) {
 
-    private val delegate = ResilientDelegate(serviceProvider)
-
-    private fun get(): CashflowRemoteService = delegate.get()
-
-    private suspend inline fun <R> withRetry(crossinline block: suspend (CashflowRemoteService) -> R): R {
-        val first = get()
-        return try {
-            block(first)
-        } catch (t: Throwable) {
-            val authError = t.findAuthError()
-            if (authError != null) {
-                val refreshed = runCatching { tokenManager.refreshToken() }.getOrNull()
-                if (refreshed != null) {
-                    delegate.resetCache()
-                    return block(get())
-                }
-                // Refresh failed - propagate logout
-                runCatching { authManager.onAuthenticationFailed() }
-            } else {
-                delegate.resetCache()
-                return block(get())
-            }
-            throw t
-        }
-    }
-
-    private fun Throwable.findAuthError(): DokusException? {
-        var current: Throwable? = this
-        while (current != null) {
-            when (current) {
-                is DokusException.NotAuthenticated,
-                is DokusException.TokenInvalid -> return current as DokusException
-            }
-            current = current.cause
-        }
-        return null
-    }
+    private suspend fun <R> withRetry(block: suspend (CashflowRemoteService) -> R): R =
+        authCall(block)
 
     // Invoices
     override suspend fun createInvoice(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto =
@@ -114,7 +77,7 @@ class ResilientCashflowRemoteService(
 
     override fun watchInvoices(organizationId: OrganizationId): Flow<FinancialDocumentDto.InvoiceDto> =
         // For streaming flows, just delegate directly (reconnection is handled by consumer if needed)
-        get().watchInvoices(organizationId)
+        service().watchInvoices(organizationId)
 
     // Expenses
     override suspend fun createExpense(request: CreateExpenseRequest): FinancialDocumentDto.ExpenseDto =
@@ -145,7 +108,7 @@ class ResilientCashflowRemoteService(
         withRetry { it.categorizeExpense(merchant, description) }
 
     override fun watchExpenses(organizationId: OrganizationId): Flow<FinancialDocumentDto.ExpenseDto> =
-        get().watchExpenses(organizationId)
+        service().watchExpenses(organizationId)
 
     // Attachments
     override suspend fun uploadInvoiceDocument(

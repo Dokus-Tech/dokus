@@ -5,20 +5,20 @@ import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
-import ai.dokus.foundation.network.resilient.ResilientDelegate
+import ai.dokus.foundation.network.resilient.AuthResilientService
 
 /**
  * Resilient wrapper for AccountRemoteService that retries requests using ResilientDelegate.
  * Mirrors the approach used by ResilientOrganizationRemoteService.
  */
 class ResilientAccountRemoteService(
-    serviceProvider: () -> AccountRemoteService
-) : AccountRemoteService {
+    serviceProvider: () -> AccountRemoteService,
+    tokenManager: ai.dokus.foundation.domain.asbtractions.TokenManager,
+    authManager: ai.dokus.foundation.domain.asbtractions.AuthManager
+) : AccountRemoteService, AuthResilientService<AccountRemoteService>(serviceProvider, tokenManager, authManager) {
 
-    private val delegate = ResilientDelegate(serviceProvider)
-
-    private suspend inline fun <R> withRetry(crossinline block: suspend (AccountRemoteService) -> R): R =
-        delegate.withRetry(block)
+    private suspend fun <R> withRetry(block: suspend (AccountRemoteService) -> R): R =
+        authCall(block)
 
     override suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse =
         withRetry { it.selectOrganization(organizationId) }

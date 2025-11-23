@@ -96,17 +96,21 @@ val authNetworkModule = module {
     // AccountRemoteService (authenticated) with resilience
     single<AccountRemoteService> {
         val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientAccountRemoteService {
-            rpcClient.service<AccountRemoteService>()
-        }
+        ResilientAccountRemoteService(
+            serviceProvider = { rpcClient.service<AccountRemoteService>() },
+            tokenManager = get<TokenManagerMutable>(),
+            authManager = get<AuthManagerMutable>()
+        )
     }
 
     // OrganizationRemoteService (authenticated)
     single<OrganizationRemoteService> {
         val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientOrganizationRemoteService {
-            rpcClient.service<OrganizationRemoteService>()
-        }
+        ResilientOrganizationRemoteService(
+            serviceProvider = { rpcClient.service<OrganizationRemoteService>() },
+            tokenManager = get<TokenManagerMutable>(),
+            authManager = get<AuthManagerMutable>()
+        )
     }
 
     // IdentityRemoteService (unauthenticated)
