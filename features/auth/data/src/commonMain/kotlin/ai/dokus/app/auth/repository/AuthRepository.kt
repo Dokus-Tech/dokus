@@ -155,7 +155,7 @@ class AuthRepository(
     }
 
     /**
-     * Reset password with token.
+     * Reset password with a token.
      */
     suspend fun resetPassword(resetToken: String, newPassword: String): Result<Unit> = runCatching {
         logger.d { "Resetting password with token" }
