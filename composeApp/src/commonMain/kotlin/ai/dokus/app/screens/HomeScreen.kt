@@ -1,7 +1,6 @@
 package ai.dokus.app.screens
 
 import ai.dokus.app.core.AppModule
-import ai.dokus.app.core.extensions.SetupSecondaryPanel
 import ai.dokus.app.core.local.LocalAppModules
 import ai.dokus.app.homeItems
 import ai.dokus.app.homeNavigationProviders
@@ -45,8 +44,6 @@ fun HomeScreen(
     appModules: List<AppModule> = LocalAppModules.current,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
-    SetupSecondaryPanel(null)
-
     val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
     val homeItems = remember(appModules) { appModules.homeItems }
 

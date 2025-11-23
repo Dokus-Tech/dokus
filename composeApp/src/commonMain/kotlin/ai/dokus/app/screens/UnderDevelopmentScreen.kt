@@ -1,6 +1,4 @@
 package ai.dokus.app.screens
-
-import ai.dokus.app.core.extensions.SetupSecondaryPanel
 import ai.dokus.foundation.design.constrains.withContentPadding
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -53,8 +51,6 @@ internal fun UnderDevelopmentScreen() {
     val particleProgress = remember { Animatable(0f) }
     val titleAlpha = remember { Animatable(0f) }
     val subtitleAlpha = remember { Animatable(0f) }
-
-    SetupSecondaryPanel(null)
 
     LaunchedEffect(Unit) {
         // Staggered shape animations

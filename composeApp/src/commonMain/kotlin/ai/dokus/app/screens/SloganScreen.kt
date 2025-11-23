@@ -6,8 +6,6 @@ import ai.dokus.app.resources.generated.brand_motto
 import ai.dokus.app.resources.generated.copyright
 import ai.dokus.app.resources.generated.slogan_line_2
 import ai.dokus.app.resources.generated.slogan_line_3
-import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
@@ -108,13 +106,7 @@ fun SloganScreen() {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Beautiful floating particles/bubbles background
-        EnhancedFloatingBubbles()
-
-        // Spotlight effect from top
-        SpotlightEffect()
-
-        // Main content
+        // Main content (background effects are provided by the parent container once)
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
