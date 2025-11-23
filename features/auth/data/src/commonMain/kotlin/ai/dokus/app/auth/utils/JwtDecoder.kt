@@ -9,9 +9,7 @@ import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.OrganizationScope
 import ai.dokus.foundation.domain.model.auth.TokenStatus
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
@@ -55,13 +53,12 @@ class JwtDecoder {
             val iss = jsonObject[JwtClaims.CLAIM_ISS]?.jsonPrimitive?.content ?: JwtClaims.ISS_DEFAULT
             val aud = jsonObject[JwtClaims.CLAIM_AUD]?.jsonPrimitive?.content ?: JwtClaims.AUD_DEFAULT
 
-            val organizationsJson = jsonObject[JwtClaims.CLAIM_ORGANIZATIONS]?.jsonPrimitive?.content
-            val organizations = parseOrganizations(organizationsJson)
+            val organization = parseOrganization(jsonObject)
 
             JwtClaims(
                 userId = UserId(userIdStr),
                 email = email,
-                organizations = organizations,
+                organization = organization,
                 iat = iat,
                 exp = exp,
                 jti = jti,
@@ -74,34 +71,60 @@ class JwtDecoder {
         }
     }
 
-    private fun parseOrganizations(organizationsJson: String?): List<OrganizationScope> {
-        if (organizationsJson.isNullOrEmpty()) return emptyList()
+    private fun parseOrganization(jsonObject: JsonObject): OrganizationScope? {
+        val orgIdStr = jsonObject[JwtClaims.CLAIM_ORGANIZATION_ID]?.jsonPrimitive?.content
+        val tierStr = jsonObject[JwtClaims.CLAIM_SUBSCRIPTION_TIER]?.jsonPrimitive?.content
 
-        return try {
-            val orgsArray = json.decodeFromString<JsonArray>(organizationsJson)
-            orgsArray.mapNotNull { element ->
-                val obj = element.jsonObject
-                val orgId = obj[JwtClaims.CLAIM_ORGANIZATION_ID]?.jsonPrimitive?.content ?: return@mapNotNull null
-                val tierStr = obj[JwtClaims.CLAIM_SUBSCRIPTION_TIER]?.jsonPrimitive?.content ?: return@mapNotNull null
-                val roleStr = obj[JwtClaims.CLAIM_ROLE]?.jsonPrimitive?.content
+        if (!orgIdStr.isNullOrBlank() && !tierStr.isNullOrBlank()) {
+            return runCatching {
+                val permissions = jsonObject[JwtClaims.CLAIM_PERMISSIONS]
+                    ?.jsonArray
+                    ?.mapNotNull { perm ->
+                        runCatching { Permission.valueOf(perm.jsonPrimitive.content) }.getOrNull()
+                    }
+                    ?.toSet() ?: emptySet()
 
-                val permissions = obj[JwtClaims.CLAIM_PERMISSIONS]?.jsonArray?.mapNotNull { perm ->
-                    try { Permission.valueOf(perm.jsonPrimitive.content) } catch (_: Exception) { null }
-                }?.toSet() ?: emptySet()
-
-                val tier = try { SubscriptionTier.valueOf(tierStr) } catch (_: Exception) { return@mapNotNull null }
-                val role = roleStr?.let { try { UserRole.valueOf(it) } catch (_: Exception) { null } }
+                val role = jsonObject[JwtClaims.CLAIM_ROLE]
+                    ?.jsonPrimitive
+                    ?.content
+                    ?.let { runCatching { UserRole.valueOf(it) }.getOrNull() }
 
                 OrganizationScope(
-                    organizationId = OrganizationId(Uuid.parse(orgId)),
+                    organizationId = OrganizationId(Uuid.parse(orgIdStr)),
                     permissions = permissions,
-                    subscriptionTier = tier,
+                    subscriptionTier = SubscriptionTier.valueOf(tierStr),
                     role = role
                 )
-            }
-        } catch (e: Exception) {
-            emptyList()
+            }.getOrNull()
         }
+
+        // Legacy fallback: parse first organization from old organizations array claim
+        val organizationsJson = jsonObject[JwtClaims.CLAIM_ORGANIZATIONS]?.jsonPrimitive?.content
+        if (organizationsJson.isNullOrEmpty()) return null
+
+        return runCatching {
+            val orgsArray = json.decodeFromString<List<JsonObject>>(organizationsJson)
+            val first = orgsArray.firstOrNull() ?: return null
+            val legacyOrgId = first[JwtClaims.CLAIM_ORGANIZATION_ID]?.jsonPrimitive?.content ?: return null
+            val legacyTier = first[JwtClaims.CLAIM_SUBSCRIPTION_TIER]?.jsonPrimitive?.content ?: return null
+            val legacyPermissions = first[JwtClaims.CLAIM_PERMISSIONS]
+                ?.jsonArray
+                ?.mapNotNull { perm ->
+                    runCatching { Permission.valueOf(perm.jsonPrimitive.content) }.getOrNull()
+                }
+                ?.toSet() ?: emptySet()
+            val legacyRole = first[JwtClaims.CLAIM_ROLE]
+                ?.jsonPrimitive
+                ?.content
+                ?.let { runCatching { UserRole.valueOf(it) }.getOrNull() }
+
+            OrganizationScope(
+                organizationId = OrganizationId(Uuid.parse(legacyOrgId)),
+                permissions = legacyPermissions,
+                subscriptionTier = SubscriptionTier.valueOf(legacyTier),
+                role = legacyRole
+            )
+        }.getOrNull()
     }
 
     fun validateToken(token: String?): TokenStatus {
