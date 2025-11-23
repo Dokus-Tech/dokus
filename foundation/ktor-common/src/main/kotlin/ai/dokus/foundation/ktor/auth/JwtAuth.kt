@@ -4,8 +4,6 @@ package ai.dokus.foundation.ktor.auth
 
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.ktor.security.JwtValidator
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -51,11 +49,7 @@ fun Application.configureJwtAuth(
             realm = jwtValidator.issuer
 
             // Configure the JWT verifier
-            verifier(
-                JWT.require(Algorithm.HMAC256(jwtValidator.secret))
-                    .withIssuer(jwtValidator.issuer)
-                    .build()
-            )
+            verifier(jwtValidator.verifier)
 
             // Validate JWT and extract authentication info using JwtValidator
             validate { credential ->
