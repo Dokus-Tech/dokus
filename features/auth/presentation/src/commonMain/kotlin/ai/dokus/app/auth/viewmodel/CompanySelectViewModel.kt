@@ -31,7 +31,7 @@ internal class CompanySelectViewModel(
             logger.e(error) { "Failed to load organizations" }
             mutableState.value = DokusState.error(
                 exception = error,
-                retryHandler = RetryHandler { loadOrganizations() }
+                retryHandler = { loadOrganizations() }
             )
         }
     }

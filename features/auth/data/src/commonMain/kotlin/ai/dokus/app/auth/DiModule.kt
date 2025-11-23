@@ -18,13 +18,15 @@ import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
+import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
 import ai.dokus.foundation.network.createAuthenticatedHttpClient
+import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.createBaseHttpClient
-import ai.dokus.foundation.network.createRpcClient
 import ai.dokus.foundation.network.or
+import ai.dokus.foundation.network.resilient.ResilientOrganizationRemoteService
 import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,13 +70,32 @@ val authNetworkModule = module {
 
     // RPC client (nullable - graceful degradation)
     factory<KtorRpcClient?>(named(Feature.Auth)) {
-        createRpcClient(DokusEndpoint.Auth)
+        val tokenManager = get<TokenManagerMutable>()
+        val authManager = get<AuthManagerMutable>()
+        createAuthenticatedRpcClient(
+            endpoint = DokusEndpoint.Auth,
+            tokenManager = tokenManager,
+            onAuthenticationFailed = {
+                CoroutineScope(Dispatchers.Default).launch {
+                    tokenManager.onAuthenticationFailed()
+                    authManager.onAuthenticationFailed()
+                }
+            }
+        )
     }
 
     // AccountRemoteService with stub fallback
     single<AccountRemoteService> {
         val rpcClient = getOrNull<KtorRpcClient>(named(Feature.Auth))
         rpcClient?.service<AccountRemoteService>() or MockAccountRemoteService()
+    }
+
+    // OrganizationRemoteService (authenticated)
+    single<OrganizationRemoteService> {
+        val rpcClient = get<KtorRpcClient>(named(Feature.Auth))
+        ResilientOrganizationRemoteService {
+            rpcClient.service<OrganizationRemoteService>()
+        }
     }
 }
 

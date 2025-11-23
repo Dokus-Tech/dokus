@@ -3,8 +3,14 @@ package ai.dokus.app.auth.repository
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
-import ai.dokus.foundation.domain.model.auth.*
 import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
+import ai.dokus.foundation.domain.model.auth.LoginRequest
+import ai.dokus.foundation.domain.model.auth.LoginResponse
+import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
+import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 
@@ -72,7 +78,7 @@ class AuthRepository(
      * Select an organization and refresh scoped tokens.
      */
     suspend fun selectOrganization(organizationId: OrganizationId): Result<Unit> = runCatching {
-        logger.d { "Selecting organization: ${organizationId.value}" }
+        logger.d { "Selecting organization: $organizationId" }
 
         val response = accountService.selectOrganization(organizationId)
         tokenManager.saveTokens(response)
