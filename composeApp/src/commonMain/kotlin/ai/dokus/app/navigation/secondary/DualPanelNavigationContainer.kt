@@ -6,10 +6,10 @@ import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.local.LocalSecondaryNavController
 import ai.dokus.foundation.navigation.local.LocalSecondaryNavigationState
 import ai.dokus.foundation.navigation.local.SecondaryPanelType
 import ai.dokus.foundation.navigation.local.rememberSecondaryNavigationState
+import ai.dokus.app.screens.SloganScreen
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
@@ -42,7 +42,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 
 /**
@@ -60,7 +59,6 @@ fun DualPanelNavigationContainer(
     val reduceMotion = LocalReduceMotion.current
     val navController = rememberNavController()
     val secondaryNavigationState = rememberSecondaryNavigationState()
-    val secondaryNavController = rememberNavController()
     val isPanelVisible by secondaryNavigationState.isPanelVisible.collectAsState()
     val panelType by secondaryNavigationState.panelType.collectAsState()
 
@@ -87,7 +85,6 @@ fun DualPanelNavigationContainer(
     CompositionLocalProvider(
         LocalNavController provides navController,
         LocalSecondaryNavigationState provides secondaryNavigationState,
-        LocalSecondaryNavController provides secondaryNavController
     ) {
         Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             // Measure available width once so we can drive a width-based animation
@@ -122,8 +119,6 @@ fun DualPanelNavigationContainer(
                         isPanelVisible = isPanelVisible,
                         largeScreen = largeScreen,
                         panelType = panelType,
-                        secondaryNavController = secondaryNavController,
-                        navigationProviders = navigationProviders,
                         modifier = Modifier
                             .fillMaxHeight()
                             .width(secondaryWidthDp)
@@ -139,8 +134,6 @@ private fun SecondaryPanel(
     isPanelVisible: Boolean,
     largeScreen: Boolean,
     panelType: SecondaryPanelType,
-    secondaryNavController: NavHostController,
-    navigationProviders: List<NavigationProvider>,
     modifier: Modifier,
 ) {
     val showPanel = isPanelVisible && largeScreen
@@ -208,9 +201,8 @@ private fun SecondaryPanel(
         tonalElevation = 0.dp,
         shadowElevation = panelElevation
     ) {
-        SecondaryNavHost(
-            navController = secondaryNavController,
-            navigationProvider = navigationProviders
-        )
+        // Show Slogan content directly in the secondary panel.
+        // We removed the dedicated secondary NavHost to keep a single nav stack.
+        SloganScreen()
     }
 }
