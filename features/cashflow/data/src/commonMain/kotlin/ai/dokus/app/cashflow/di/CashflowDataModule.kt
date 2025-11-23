@@ -47,7 +47,9 @@ val cashflowNetworkModule = module {
                 // Resolve a fresh RPC client instance (factory binding)
                 val rpcClient = get<KtorRpcClient>(named(Feature.Cashflow))
                 rpcClient.service<CashflowRemoteService>()
-            }
+            },
+            tokenManager = get<TokenManager>(),
+            authManager = get<AuthManager>()
         )
     }
 }

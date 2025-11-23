@@ -1,5 +1,6 @@
 package ai.dokus.app.auth.network
 
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
@@ -10,18 +11,14 @@ import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.domain.model.OrganizationSettings
-import ai.dokus.app.auth.domain.OrganizationRemoteService
-import ai.dokus.foundation.network.resilient.ResilientDelegate
+import ai.dokus.foundation.network.resilient.RemoteServiceDelegate
+import ai.dokus.foundation.network.resilient.invoke
 
 class ResilientOrganizationRemoteService(
-    serviceProvider: () -> OrganizationRemoteService
+    private val delegate: RemoteServiceDelegate<OrganizationRemoteService>,
 ) : OrganizationRemoteService {
 
-    private val delegate = ResilientDelegate(serviceProvider)
-    private suspend inline fun <R> withRetry(crossinline block: suspend (OrganizationRemoteService) -> R): R =
-        delegate.withRetry(block)
-
-    override suspend fun listMyOrganizations(): List<Organization> = withRetry { it.listMyOrganizations() }
+    override suspend fun listMyOrganizations(): List<Organization> = delegate { it.listMyOrganizations() }
 
     override suspend fun createOrganization(
         legalName: LegalName,
@@ -30,15 +27,15 @@ class ResilientOrganizationRemoteService(
         country: Country,
         language: Language,
         vatNumber: VatNumber
-    ): Organization = withRetry { it.createOrganization(legalName, email, plan, country, language, vatNumber) }
+    ): Organization = delegate { it.createOrganization(legalName, email, plan, country, language, vatNumber) }
 
-    override suspend fun getOrganization(id: OrganizationId): Organization = withRetry { it.getOrganization(id) }
+    override suspend fun getOrganization(id: OrganizationId): Organization = delegate { it.getOrganization(id) }
 
-    override suspend fun getOrganizationSettings(): OrganizationSettings = withRetry { it.getOrganizationSettings() }
+    override suspend fun getOrganizationSettings(): OrganizationSettings = delegate { it.getOrganizationSettings() }
 
-    override suspend fun updateOrganizationSettings(settings: OrganizationSettings) = withRetry {
+    override suspend fun updateOrganizationSettings(settings: OrganizationSettings) = delegate {
         it.updateOrganizationSettings(settings)
     }
 
-    override suspend fun getNextInvoiceNumber(): InvoiceNumber = withRetry { it.getNextInvoiceNumber() }
+    override suspend fun getNextInvoiceNumber(): InvoiceNumber = delegate { it.getNextInvoiceNumber() }
 }

@@ -19,16 +19,16 @@ data class AppBaseConfig(
     companion object Companion {
         fun fromConfig(config: Config): AppBaseConfig {
             return AppBaseConfig(
-                ktor = KtorConfig.Companion.fromConfig(config.getConfig("ktor")),
+                ktor = KtorConfig.fromConfig(config.getConfig("ktor")),
                 database = DatabaseConfig.fromConfig(config.getConfig("database")),
-                flyway = FlywayConfig.Companion.fromConfig(config.getConfig("flyway")),
-                jwt = JwtConfig.Companion.fromConfig(config.getConfig("jwt")),
+                flyway = FlywayConfig.fromConfig(config.getConfig("flyway")),
+                jwt = JwtConfig.fromConfig(config.getConfig("jwt")),
                 auth = AuthConfig.fromConfig(config.getConfig("auth")),
-                logging = LoggingConfig.Companion.fromConfig(config.getConfig("logging")),
-                metrics = MetricsConfig.Companion.fromConfig(config.getConfig("metrics")),
-                security = SecurityConfig.Companion.fromConfig(config.getConfig("security")),
+                logging = LoggingConfig.fromConfig(config.getConfig("logging")),
+                metrics = MetricsConfig.fromConfig(config.getConfig("metrics")),
+                security = SecurityConfig.fromConfig(config.getConfig("security")),
                 caching = CachingConfig.fromConfig(config.getConfig("caching")),
-                rabbitmq = RabbitMQConfig.Companion.fromConfig(config.getConfig("rabbitmq")),
+                rabbitmq = RabbitMQConfig.fromConfig(config.getConfig("rabbitmq")),
                 config = config,
             )
         }

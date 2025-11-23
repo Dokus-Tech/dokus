@@ -100,8 +100,8 @@ class AuthServiceRegisterTest {
         val mockUser = mockk<User> {
             every { id } returns testUserId
             every { email } returns Email(testEmail)
-            every { firstName } returns testFirstName
-            every { lastName } returns testLastName
+            every { firstName } returns Name(testFirstName)
+            every { lastName } returns Name(testLastName)
             every { isActive } returns true
         }
 
@@ -182,8 +182,8 @@ class AuthServiceRegisterTest {
         val mockUser = mockk<User> {
             every { id } returns testUserId
             every { email } returns Email(testEmail)
-            every { firstName } returns testFirstName
-            every { lastName } returns testLastName
+            every { firstName } returns Name(testFirstName)
+            every { lastName } returns Name(testLastName)
             every { isActive } returns true
         }
 
@@ -230,8 +230,8 @@ class AuthServiceRegisterTest {
         val mockUser = mockk<User> {
             every { id } returns testUserId
             every { email } returns Email(testEmail)
-            every { firstName } returns testFirstName
-            every { lastName } returns testLastName
+            every { firstName } returns Name(testFirstName)
+            every { lastName } returns Name(testLastName)
             every { isActive } returns true
         }
 
@@ -297,8 +297,8 @@ class AuthServiceRegisterTest {
         val mockUser = mockk<User> {
             every { id } returns testUserId
             every { email } returns Email(testEmail)
-            every { firstName } returns testFirstName
-            every { lastName } returns testLastName
+            every { firstName } returns Name(testFirstName)
+            every { lastName } returns Name(testLastName)
             every { isActive } returns true
         }
 
@@ -339,8 +339,8 @@ class AuthServiceRegisterTest {
         val mockUser = mockk<User> {
             every { id } returns testUserId
             every { email } returns Email(testEmail)
-            every { firstName } returns testFirstName
-            every { lastName } returns testLastName
+            every { firstName } returns Name(testFirstName)
+            every { lastName } returns Name(testLastName)
             every { isActive } returns true
         }
 
@@ -384,8 +384,8 @@ class AuthServiceRegisterTest {
         val mockUser = mockk<User> {
             every { id } returns testUserId
             every { email } returns Email(testEmail)
-            every { firstName } returns ""
-            every { lastName } returns ""
+            every { firstName } returns Name("")
+            every { lastName } returns Name("")
             every { isActive } returns true
         }
 

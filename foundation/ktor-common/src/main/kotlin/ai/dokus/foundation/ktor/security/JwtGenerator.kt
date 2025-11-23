@@ -6,6 +6,7 @@ import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.OrganizationScope
+import ai.dokus.foundation.ktor.config.JwtConfig
 import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -17,10 +18,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class JwtGenerator(
-    secret: String,
-    private val issuer: String = JwtClaims.ISS_DEFAULT
+    private val config: JwtConfig
 ) {
-    private val algorithm = Algorithm.HMAC256(secret)
+    private val algorithm = Algorithm.HMAC256(config.secret)
 
     fun generateTokens(claims: JwtClaims): LoginResponse {
         val accessToken = createAccessToken(claims)
@@ -48,7 +48,7 @@ class JwtGenerator(
             iat = nowTime.epochSeconds,
             exp = accessExpiry.epochSeconds,
             jti = Uuid.random().toString(),
-            iss = issuer,
+            iss = config.issuer,
             aud = JwtClaims.AUD_DEFAULT
         )
     }
@@ -84,7 +84,7 @@ class JwtGenerator(
         val refreshExpiry = nowTime + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days
 
         return JWT.create()
-            .withIssuer(issuer)
+            .withIssuer(config.issuer)
             .withSubject(userId.value.toString())
             .withClaim(JwtClaims.CLAIM_TYPE, JwtClaims.TOKEN_TYPE_REFRESH)
             .withIssuedAt(Date.from(Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))

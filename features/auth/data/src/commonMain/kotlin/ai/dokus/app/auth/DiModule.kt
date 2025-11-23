@@ -4,15 +4,15 @@ import ai.dokus.app.auth.Qualifiers.rpcClientAuth
 import ai.dokus.app.auth.Qualifiers.rpcClientNoAuth
 import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.domain.AccountRemoteService
-import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.app.auth.domain.IdentityRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.app.auth.network.ResilientAccountRemoteService
-import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
 import ai.dokus.app.auth.network.ResilientIdentityRemoteService
+import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -28,6 +28,8 @@ import ai.dokus.foundation.network.createAuthenticatedHttpClient
 import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.createBaseHttpClient
 import ai.dokus.foundation.network.createRpcClient
+import ai.dokus.foundation.network.resilient.createRetryDelegate
+import ai.dokus.foundation.network.resilient.withAuth
 import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.*
@@ -96,25 +98,31 @@ val authNetworkModule = module {
     // AccountRemoteService (authenticated) with resilience
     single<AccountRemoteService> {
         val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientAccountRemoteService {
-            rpcClient.service<AccountRemoteService>()
-        }
+        ResilientAccountRemoteService(
+            delegate = createRetryDelegate { rpcClient.service<AccountRemoteService>() }.withAuth(
+                get<TokenManagerMutable>(),
+                get<AuthManagerMutable>()
+            ),
+        )
     }
 
     // OrganizationRemoteService (authenticated)
     single<OrganizationRemoteService> {
         val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientOrganizationRemoteService {
-            rpcClient.service<OrganizationRemoteService>()
-        }
+        ResilientOrganizationRemoteService(
+            delegate = createRetryDelegate { rpcClient.service<OrganizationRemoteService>() }.withAuth(
+                get<TokenManagerMutable>(),
+                get<AuthManagerMutable>()
+            ),
+        )
     }
 
     // IdentityRemoteService (unauthenticated)
     single<IdentityRemoteService> {
         val rpcClient = get<KtorRpcClient>(rpcClientNoAuth)
-        ResilientIdentityRemoteService {
-            rpcClient.service<IdentityRemoteService>()
-        }
+        ResilientIdentityRemoteService(
+            delegate = createRetryDelegate { rpcClient.service<IdentityRemoteService>() },
+        )
     }
 }
 

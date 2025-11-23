@@ -9,8 +9,7 @@ import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.services.BankService
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -35,10 +34,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
 
         // JWT validator for local token validation
         single {
-            JwtValidator(
-                secret = appConfig.jwt.secret,
-                issuer = appConfig.jwt.issuer
-            )
+            JwtValidator(appConfig.jwt)
         }
     }
 

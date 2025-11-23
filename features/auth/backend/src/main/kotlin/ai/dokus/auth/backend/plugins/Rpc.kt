@@ -1,11 +1,7 @@
 package ai.dokus.auth.backend.plugins
 
-import ai.dokus.foundation.ktor.auth.configureJwtAuth
-import ai.dokus.foundation.ktor.security.JwtValidator
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import kotlinx.rpc.krpc.ktor.server.Krpc
-import org.koin.ktor.ext.get
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("Rpc")
@@ -19,10 +15,6 @@ fun Application.configureRpc() {
 
     // Install KotlinX RPC plugin
     install(Krpc)
-
-    // Configure JWT authentication using Ktor's standard JWT plugin
-    val jwtValidator = get<JwtValidator>()
-    configureJwtAuth(jwtValidator)
 
     logger.info("KotlinX RPC configured with JWT authentication")
 }
