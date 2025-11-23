@@ -172,7 +172,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7091
+      JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       REDIS_HOST: redis-local
       REDIS_PORT: 6379
@@ -217,7 +217,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7091
+      JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       LOG_LEVEL: DEBUG
     ports:
@@ -248,7 +248,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7091
+      JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       LOG_LEVEL: DEBUG
     ports:
@@ -279,7 +279,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7091
+      JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       RABBITMQ_HOST: rabbitmq-local
       RABBITMQ_PORT: 5672
@@ -317,7 +317,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7091
+      JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       LOG_LEVEL: DEBUG
     ports:
@@ -348,7 +348,7 @@ services:
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
       JWT_SECRET: local-secret-key
-      JWT_ISSUER: http://localhost:7091
+      JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       REDIS_HOST: redis-local
       REDIS_PORT: 6379
