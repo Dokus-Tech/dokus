@@ -41,6 +41,7 @@ fun Application.configureJwtAuth(
             attributes.put(JWT_VALIDATOR_ATTRIBUTE_KEY, jwtValidator)
         }
     } catch (_: Throwable) {
+        println("Warning: JWT_VALIDATOR_ATTRIBUTE_KEY already exists")
         // no-op: attributes API may throw if not initialized yet in some environments
     }
     install(Authentication) {
