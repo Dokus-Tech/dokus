@@ -157,7 +157,7 @@ class OrganizationRemoteServiceImplTest {
         // Then
         assertNotNull(result)
         assertEquals(testOrganizationId, result.id)
-        assertEquals(orgName, result.legalName)
+        assertEquals(LegalName(orgName), result.legalName)
 
         // Verify organization was created
         coVerify(exactly = 1) {

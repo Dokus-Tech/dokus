@@ -5,7 +5,12 @@ package ai.dokus.auth.backend.database.repository
 import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
 import ai.dokus.auth.backend.database.tables.OrganizationTable
 import ai.dokus.auth.backend.database.tables.UsersTable
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.enums.Country
+import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
+import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.ktor.config.AppBaseConfig
@@ -182,7 +187,9 @@ class UserRepositoryTest {
         dbQuery {
             OrganizationMembersTable.deleteAll()
             UsersTable.deleteAll()
+            OrganizationTable.deleteAll()
         }
+        testOrganizationId = createTestOrganization()
     }
 
     private suspend fun createTestOrganization(): OrganizationId {
@@ -193,6 +200,9 @@ class UserRepositoryTest {
                 it[name] = "Test Organization"
                 it[email] = "org@example.com"
                 it[plan] = OrganizationPlan.Free
+                it[status] = TenantStatus.Active
+                it[country] = Country.Belgium
+                it[language] = Language.En
             }
         }
         return OrganizationId(orgId)
@@ -216,8 +226,8 @@ class UserRepositoryTest {
 
         assertNotNull(user.id, "User should have an ID")
         assertEquals(email, user.email.value, "Email should match")
-        assertEquals("John", user.firstName, "First name should match")
-        assertEquals("Doe", user.lastName, "Last name should match")
+        assertEquals(Name("John"), user.firstName, "First name should match")
+        assertEquals(Name("Doe"), user.lastName, "Last name should match")
         assertTrue(user.isActive, "User should be active by default")
 
         // Verify no organization membership exists
@@ -266,8 +276,8 @@ class UserRepositoryTest {
         )
 
         assertNotNull(user.id)
-        assertEquals("", user.firstName, "First name should be empty")
-        assertEquals("", user.lastName, "Last name should be empty")
+        assertEquals(Name(""), user.firstName, "First name should be empty")
+        assertEquals(Name(""), user.lastName, "Last name should be empty")
     }
 
     // ===========================================
@@ -365,6 +375,9 @@ class UserRepositoryTest {
                 it[name] = "Second Organization"
                 it[email] = "second@example.com"
                 it[plan] = OrganizationPlan.Free
+                it[status] = TenantStatus.Active
+                it[country] = Country.Belgium
+                it[language] = Language.En
             }
         }
         val secondOrg = OrganizationId(secondOrgId)

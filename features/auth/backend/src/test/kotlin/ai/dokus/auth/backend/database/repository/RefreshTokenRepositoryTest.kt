@@ -189,7 +189,11 @@ class RefreshTokenRepositoryTest {
     fun clearTokens(): Unit = runBlocking {
         dbQuery {
             RefreshTokensTable.deleteAll()
+            OrganizationMembersTable.deleteAll()
+            UsersTable.deleteAll()
+            OrganizationTable.deleteAll()
         }
+        testUserId = createTestUser()
     }
 
     @Test
@@ -414,11 +418,15 @@ class RefreshTokenRepositoryTest {
 
         dbQuery {
             // Create test tenant first
+            OrganizationTable.deleteAll()
             OrganizationTable.insert {
                 it[id] = testOrganizationId.toJavaUuid()
                 it[name] = "Test Tenant"
                 it[email] = "test@example.com"
                 it[plan] = OrganizationPlan.Free
+                it[status] = ai.dokus.foundation.domain.enums.TenantStatus.Active
+                it[country] = ai.dokus.foundation.domain.enums.Country.Belgium
+                it[language] = ai.dokus.foundation.domain.enums.Language.En
             }
 
             // Create test user
@@ -426,6 +434,8 @@ class RefreshTokenRepositoryTest {
                 it[id] = userId.toJavaUuid()
                 it[email] = "test@example.com"
                 it[passwordHash] = "hashed-password"
+                it[firstName] = "Test"
+                it[lastName] = "User"
                 it[isActive] = true
             }
 
