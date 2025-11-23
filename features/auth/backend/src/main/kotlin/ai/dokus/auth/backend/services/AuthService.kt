@@ -61,17 +61,12 @@ class AuthService(
 
         // Get all user's organizations and create scopes for each
         val memberships = userRepository.getUserOrganizations(userId)
-        val organizationScopes = memberships.map { membership ->
-            createOrganizationScope(
-                organizationId = membership.organizationId,
-                role = membership.role
-            )
-        }
+        val selectedOrganization = resolveOrganizationScope(memberships)
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = organizationScopes
+            organization = selectedOrganization
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -115,7 +110,7 @@ class AuthService(
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = emptyList()
+            organization = null
         )
 
         val response = jwtGenerator.generateTokens(claims)
