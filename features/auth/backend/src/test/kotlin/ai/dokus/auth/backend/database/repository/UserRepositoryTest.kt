@@ -254,20 +254,20 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `register should handle null first and last name`() = runBlocking {
+    fun `register should handle empty first and last name`() = runBlocking {
         val email = "nullname-${Uuid.random()}@example.com"
         val password = "SecurePass123!"
 
         val user = repository.register(
             email = email,
             password = password,
-            firstName = null,
-            lastName = null
+            firstName = "",
+            lastName = ""
         )
 
         assertNotNull(user.id)
-        assertNull(user.firstName, "First name should be null")
-        assertNull(user.lastName, "Last name should be null")
+        assertEquals("", user.firstName, "First name should be empty")
+        assertEquals("", user.lastName, "Last name should be empty")
     }
 
     // ===========================================
