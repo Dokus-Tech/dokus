@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 data class JwtClaims(
     val userId: UserId,
     val email: String,
-    val organizations: List<OrganizationScope>,
+    val organization: OrganizationScope?,
     val iat: Long,
     val exp: Long,
     val jti: String,
