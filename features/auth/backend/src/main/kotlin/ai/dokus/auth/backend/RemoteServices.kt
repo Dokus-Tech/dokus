@@ -1,20 +1,22 @@
 package ai.dokus.auth.backend
 
 import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.app.auth.domain.IdentityRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
 import ai.dokus.auth.backend.rpc.ClientRemoteServiceImpl
+import ai.dokus.auth.backend.rpc.IdentityRemoteServiceImpl
 import ai.dokus.auth.backend.rpc.OrganizationRemoteServiceImpl
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.domain.rpc.ClientRemoteService
-import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.services.ClientService
-import io.ktor.server.routing.Route
-import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.*
+import io.ktor.server.routing.*
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.ktor.ext.get
@@ -43,6 +45,13 @@ fun Route.withRemoteServices() {
                 AccountRemoteServiceImpl(
                     authService = get<AuthService>(),
                     authInfoProvider = AuthInfoProvider(call)
+                )
+            }
+
+            // IdentityRemoteService (no authentication required)
+            registerService<IdentityRemoteService> {
+                IdentityRemoteServiceImpl(
+                    authService = get<AuthService>()
                 )
             }
 

@@ -8,12 +8,8 @@ import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
-import ai.dokus.foundation.domain.model.auth.LoginRequest
-import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
-import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
-import ai.dokus.foundation.domain.model.auth.RegisterRequest
-import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.requireAuthenticatedUserId
 import org.slf4j.LoggerFactory
@@ -28,16 +24,6 @@ import org.slf4j.LoggerFactory
  * - Returns plain types on success
  * - Throws exceptions on failure (automatically serialized by RPC framework)
  *
- * Implementation status:
- * - login: Fully implemented
- * - register: Fully implemented
- * - logout: Fully implemented
- * - refreshToken: Fully implemented
- * - verifyEmail: Fully implemented
- * - resendVerificationEmail: Fully implemented
- * - requestPasswordReset: Fully implemented
- * - resetPassword: Fully implemented
- * - deactivateAccount: Fully implemented
  */
 class AccountRemoteServiceImpl(
     private val authService: AuthService,
@@ -45,54 +31,6 @@ class AccountRemoteServiceImpl(
 ) : AccountRemoteService {
 
     private val logger = LoggerFactory.getLogger(AccountRemoteServiceImpl::class.java)
-
-    /**
-     * Authenticate user with email and password.
-     * Returns JWT tokens on success.
-     */
-    override suspend fun login(request: LoginRequest): LoginResponse {
-        logger.debug("RPC: login called for email: ${request.email.value}")
-
-        return authService.login(request)
-            .onSuccess { logger.info("RPC: login successful for email: ${request.email.value}") }
-            .onFailure { error ->
-                logger.error(
-                    "RPC: login failed for email: ${request.email.value}",
-                    error
-                )
-            }
-            .getOrThrow()
-    }
-
-    /**
-     * Register a new user account.
-     * Automatically logs in and returns tokens.
-     */
-    override suspend fun register(request: RegisterRequest): LoginResponse {
-        logger.debug("RPC: register called for email: ${request.email.value}")
-
-        return authService.register(request)
-            .onSuccess { logger.info("RPC: registration successful for email: ${request.email.value}") }
-            .onFailure { error ->
-                logger.error(
-                    "RPC: registration failed for email: ${request.email.value}",
-                    error
-                )
-            }
-            .getOrThrow()
-    }
-
-    /**
-     * Refresh an expired access token using refresh token.
-     * Returns new token pair.
-     */
-    override suspend fun refreshToken(request: RefreshTokenRequest): LoginResponse {
-        logger.debug("RPC: refreshToken called")
-
-        return authService.refreshToken(request)
-            .onFailure { error -> logger.error("RPC: refreshToken failed", error) }
-            .getOrThrow()
-    }
 
     /**
      * Select an organization and re-issue scoped tokens.
@@ -120,34 +58,6 @@ class AccountRemoteServiceImpl(
                 .onFailure { error -> logger.error("RPC: logout failed", error) }
                 .getOrThrow()
         }
-    }
-
-    /**
-     * Request password reset email.
-     *
-     * Always returns success to prevent email enumeration.
-     */
-    override suspend fun requestPasswordReset(email: String) {
-        logger.debug("RPC: requestPasswordReset called for email")
-
-        authService.requestPasswordReset(email)
-            .onSuccess { logger.info("RPC: Password reset email requested successfully") }
-            .onFailure { error -> logger.error("RPC: Password reset request failed", error) }
-            .getOrThrow()
-    }
-
-    /**
-     * Reset password with token from email.
-     *
-     * Validates token and updates password.
-     */
-    override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest) {
-        logger.debug("RPC: resetPassword called with token")
-
-        authService.resetPassword(resetToken, request.newPassword)
-            .onSuccess { logger.info("RPC: Password reset successful") }
-            .onFailure { error -> logger.error("RPC: Password reset failed", error) }
-            .getOrThrow()
     }
 
     /**
@@ -185,18 +95,6 @@ class AccountRemoteServiceImpl(
             logger.error("RPC: Unexpected error in deactivateAccount", e)
             throw e
         }
-    }
-
-    /**
-     * Verify email address with token from email.
-     */
-    override suspend fun verifyEmail(token: String) {
-        logger.debug("RPC: verifyEmail called")
-
-        authService.verifyEmail(token)
-            .onSuccess { logger.info("RPC: email verification successful") }
-            .onFailure { error -> logger.error("RPC: email verification failed", error) }
-            .getOrThrow()
     }
 
     /**
