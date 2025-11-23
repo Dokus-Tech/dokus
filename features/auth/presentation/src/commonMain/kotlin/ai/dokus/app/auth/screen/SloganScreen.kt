@@ -1,4 +1,4 @@
-package ai.dokus.app.screens
+package ai.dokus.app.auth.screen
 
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_slogan
@@ -6,8 +6,6 @@ import ai.dokus.app.resources.generated.brand_motto
 import ai.dokus.app.resources.generated.copyright
 import ai.dokus.app.resources.generated.slogan_line_2
 import ai.dokus.app.resources.generated.slogan_line_3
-import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
@@ -31,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,7 +40,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
 @Composable
-fun SloganScreen() {
+internal fun SloganScreen() {
     // Animation states for text elements
     val sloganLine1Alpha = remember { Animatable(0f) }
     val sloganLine1OffsetY = remember { Animatable(30f) }
@@ -108,13 +105,7 @@ fun SloganScreen() {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Beautiful floating particles/bubbles background
-        EnhancedFloatingBubbles()
-
-        // Spotlight effect from top
-        SpotlightEffect()
-
-        // Main content
+        // Main content (background effects are provided by the parent container once)
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
