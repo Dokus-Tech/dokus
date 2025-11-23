@@ -1,9 +1,6 @@
 package ai.dokus.app.auth.navigation
 
-import ai.dokus.app.auth.screen.ForgotPasswordScreen
-import ai.dokus.app.auth.screen.LoginScreen
-import ai.dokus.app.auth.screen.NewPasswordScreen
-import ai.dokus.app.auth.screen.RegisterScreen
+import ai.dokus.app.auth.screen.*
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import androidx.navigation.NavGraphBuilder
@@ -22,6 +19,12 @@ internal object AuthNavigationProvider : NavigationProvider {
         }
         composable<AuthDestination.PasswordChangeRequested> {
             NewPasswordScreen()
+        }
+        composable<AuthDestination.CompanyCreate> {
+            CompanyCreateScreen()
+        }
+        composable<AuthDestination.CompanySelect> {
+            CompanySelectScreen()
         }
     }
 }
