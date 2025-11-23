@@ -13,14 +13,21 @@ import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.domain.model.OrganizationSettings
-import ai.dokus.foundation.network.resilient.AuthResilientService
+import ai.dokus.foundation.network.resilient.AuthResilient
+import ai.dokus.foundation.network.resilient.AuthenticatedResilientDelegate
+import ai.dokus.foundation.network.resilient.authCall
 
 class ResilientOrganizationRemoteService(
     serviceProvider: () -> OrganizationRemoteService,
     private val tokenManager: TokenManager,
     private val authManager: AuthManager
-) : OrganizationRemoteService,
-    AuthResilientService<OrganizationRemoteService>(serviceProvider, tokenManager, authManager) {
+) : OrganizationRemoteService, AuthResilient<OrganizationRemoteService> {
+
+    override val authDelegate = AuthenticatedResilientDelegate(
+        serviceProvider = serviceProvider,
+        tokenManager = tokenManager,
+        authManager = authManager
+    )
 
     private suspend fun <R> withRetry(block: suspend (OrganizationRemoteService) -> R): R =
         authCall(block)
