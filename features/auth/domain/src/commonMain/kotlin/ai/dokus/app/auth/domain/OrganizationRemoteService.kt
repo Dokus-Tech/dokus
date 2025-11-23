@@ -1,4 +1,4 @@
-package ai.dokus.foundation.domain.rpc
+package ai.dokus.app.auth.domain
 
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName

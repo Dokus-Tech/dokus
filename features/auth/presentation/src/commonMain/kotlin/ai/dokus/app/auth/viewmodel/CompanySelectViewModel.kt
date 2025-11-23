@@ -5,7 +5,7 @@ import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.Organization
-import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
