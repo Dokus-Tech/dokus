@@ -16,8 +16,7 @@ import kotlinx.coroutines.launch
 
 internal class CompanyCreateViewModel(
     private val authRepository: AuthRepository,
-) :
-    BaseViewModel<DokusState<Unit>>(DokusState.idle()) {
+) : BaseViewModel<DokusState<Unit>>(DokusState.idle()) {
 
     private val logger = Logger.forClass<CompanyCreateViewModel>()
     private val mutableEffect = MutableSharedFlow<Effect>()
