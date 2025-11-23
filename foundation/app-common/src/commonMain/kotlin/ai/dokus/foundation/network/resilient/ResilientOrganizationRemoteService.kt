@@ -1,5 +1,8 @@
 package ai.dokus.foundation.network.resilient
 
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
+import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.ids.InvoiceNumber
@@ -14,19 +17,17 @@ class ResilientOrganizationRemoteService(
 ) : OrganizationRemoteService {
 
     private val delegate = ResilientDelegate(serviceProvider)
-
-    private fun get(): OrganizationRemoteService = delegate.get()
     private suspend inline fun <R> withRetry(crossinline block: suspend (OrganizationRemoteService) -> R): R =
         delegate.withRetry(block)
 
     override suspend fun createOrganization(
-        name: String,
-        email: String,
+        legalName: LegalName,
+        email: Email,
         plan: OrganizationPlan,
-        country: String,
+        country: Country,
         language: Language,
-        vatNumber: VatNumber?
-    ): Organization = withRetry { it.createOrganization(name, email, plan, country, language, vatNumber) }
+        vatNumber: VatNumber
+    ): Organization = withRetry { it.createOrganization(legalName, email, plan, country, language, vatNumber) }
 
     override suspend fun getOrganization(id: OrganizationId): Organization = withRetry { it.getOrganization(id) }
 

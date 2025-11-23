@@ -142,7 +142,7 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         val result = service.createOrganization(
-            name = orgName,
+            legalName = orgName,
             email = orgEmail,
             plan = OrganizationPlan.Free,
             country = "BE",
@@ -193,7 +193,7 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         service.createOrganization(
-            name = "Test",
+            legalName = "Test",
             email = "test@example.com",
             plan = OrganizationPlan.Free,
             country = "BE",
@@ -246,7 +246,7 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         service.createOrganization(
-            name = "Professional Org",
+            legalName = "Professional Org",
             email = "pro@example.com",
             plan = OrganizationPlan.Professional,
             country = "NL",
@@ -283,7 +283,7 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         service.createOrganization(
-            name = "Test",
+            legalName = "Test",
             email = "test@example.com",
             plan = OrganizationPlan.Free,
             country = "BE",

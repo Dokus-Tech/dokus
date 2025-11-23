@@ -1,5 +1,8 @@
 package ai.dokus.foundation.domain.rpc
 
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
+import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.ids.InvoiceNumber
@@ -11,14 +14,13 @@ import kotlinx.rpc.annotations.Rpc
 
 @Rpc
 interface OrganizationRemoteService {
-
     suspend fun createOrganization(
-        name: String,
-        email: String,
+        legalName: LegalName,
+        email: Email,
         plan: OrganizationPlan = OrganizationPlan.Free,
-        country: String = "BE",
+        country: Country,
         language: Language = Language.En,
-        vatNumber: VatNumber? = null
+        vatNumber: VatNumber
     ): Organization
 
     suspend fun getOrganization(id: OrganizationId): Organization
