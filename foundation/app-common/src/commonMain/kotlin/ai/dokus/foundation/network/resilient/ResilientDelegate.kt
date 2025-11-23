@@ -17,6 +17,10 @@ class ResilientDelegate<T : Any>(
         cached = null
     }
 
+    fun resetCache() {
+        reset()
+    }
+
     suspend inline fun <R> withRetry(crossinline block: suspend (T) -> R): R {
         val first = get()
         return try {

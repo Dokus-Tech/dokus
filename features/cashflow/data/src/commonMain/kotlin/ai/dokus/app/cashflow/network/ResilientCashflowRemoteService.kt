@@ -7,6 +7,9 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.*
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.asbtractions.TokenManager
+import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.network.resilient.ResilientDelegate
 import kotlinx.coroutines.flow.Flow
@@ -20,15 +23,48 @@ import kotlinx.coroutines.flow.Flow
  * (e.g., via createAuthenticatedRpcClient with waitForServices=false).
  */
 class ResilientCashflowRemoteService(
-    serviceProvider: () -> CashflowRemoteService
+    serviceProvider: () -> CashflowRemoteService,
+    private val tokenManager: TokenManager,
+    private val authManager: AuthManager
 ) : CashflowRemoteService {
 
     private val delegate = ResilientDelegate(serviceProvider)
 
     private fun get(): CashflowRemoteService = delegate.get()
 
-    private suspend inline fun <R> withRetry(crossinline block: suspend (CashflowRemoteService) -> R): R =
-        delegate.withRetry(block)
+    private suspend inline fun <R> withRetry(crossinline block: suspend (CashflowRemoteService) -> R): R {
+        val first = get()
+        return try {
+            block(first)
+        } catch (t: Throwable) {
+            val authError = t.findAuthError()
+            if (authError != null) {
+                val refreshed = runCatching { tokenManager.refreshToken() }.getOrNull()
+                if (refreshed != null) {
+                    delegate.resetCache()
+                    return block(get())
+                }
+                // Refresh failed - propagate logout
+                runCatching { authManager.onAuthenticationFailed() }
+            } else {
+                delegate.resetCache()
+                return block(get())
+            }
+            throw t
+        }
+    }
+
+    private fun Throwable.findAuthError(): DokusException? {
+        var current: Throwable? = this
+        while (current != null) {
+            when (current) {
+                is DokusException.NotAuthenticated,
+                is DokusException.TokenInvalid -> return current as DokusException
+            }
+            current = current.cause
+        }
+        return null
+    }
 
     // Invoices
     override suspend fun createInvoice(request: CreateInvoiceRequest): FinancialDocumentDto.InvoiceDto =
