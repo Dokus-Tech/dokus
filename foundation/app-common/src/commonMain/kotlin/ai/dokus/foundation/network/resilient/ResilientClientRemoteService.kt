@@ -13,11 +13,7 @@ class ResilientClientRemoteService(
     serviceProvider: () -> ClientRemoteService
 ) : ClientRemoteService {
 
-    private val delegate = ResilientDelegate(serviceProvider)
-
-    private fun get(): ClientRemoteService = delegate.get()
-    private suspend inline fun <R> withRetry(crossinline block: suspend (ClientRemoteService) -> R): R =
-        delegate.withRetry(block)
+    private val delegate = RetryResilientDelegate(serviceProvider)
 
     override suspend fun createClient(
         name: String,
@@ -35,7 +31,7 @@ class ResilientClientRemoteService(
         peppolEnabled: Boolean,
         tags: String?,
         notes: String?
-    ): ClientDto = withRetry {
+    ): ClientDto = delegate {
         it.createClient(
             name,
             email,
@@ -55,14 +51,14 @@ class ResilientClientRemoteService(
         )
     }
 
-    override suspend fun getClient(id: ClientId): ClientDto = withRetry { it.getClient(id) }
+    override suspend fun getClient(id: ClientId): ClientDto = delegate { it.getClient(id) }
 
     override suspend fun listClients(
         search: String?,
         isActive: Boolean?,
         limit: Int,
         offset: Int
-    ): List<ClientDto> = withRetry { it.listClients(search, isActive, limit, offset) }
+    ): List<ClientDto> = delegate { it.listClients(search, isActive, limit, offset) }
 
     override suspend fun updateClient(
         id: ClientId,
@@ -81,7 +77,7 @@ class ResilientClientRemoteService(
         tags: String?,
         notes: String?,
         isActive: Boolean?
-    ): ClientDto = withRetry {
+    ): ClientDto = delegate {
         it.updateClient(
             id,
             name,
@@ -102,14 +98,14 @@ class ResilientClientRemoteService(
         )
     }
 
-    override suspend fun deleteClient(id: ClientId) = withRetry { it.deleteClient(id) }
+    override suspend fun deleteClient(id: ClientId) = delegate { it.deleteClient(id) }
 
-    override suspend fun findClientByPeppolId(peppolId: String): ClientDto? = withRetry {
+    override suspend fun findClientByPeppolId(peppolId: String): ClientDto? = delegate {
         it.findClientByPeppolId(peppolId)
     }
 
-    override suspend fun getClientStats(): ClientStats = withRetry { it.getClientStats() }
+    override suspend fun getClientStats(): ClientStats = delegate { it.getClientStats() }
 
     override fun watchClients(organizationId: OrganizationId): Flow<ClientEvent> =
-        get().watchClients(organizationId)
+        delegate.get().watchClients(organizationId)
 }

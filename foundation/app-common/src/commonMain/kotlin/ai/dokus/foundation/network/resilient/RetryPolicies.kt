@@ -4,20 +4,28 @@ import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.exceptions.DokusException
 
-/**
- * Resiliency helper that handles auth errors by attempting a token refresh and retrying once.
- */
+fun <T : Any> createRetryDelegate(serviceProvider: () -> T) = RetryResilientDelegate(serviceProvider)
+
+fun <T : Any> RetryResilientDelegate<T>.withAuth(
+    tokenManager: TokenManager,
+    authManager: AuthManager
+): RemoteServiceDelegate<T> = AuthenticatedResilientDelegate(
+    serviceProvider = { get() },
+    tokenManager = tokenManager,
+    authManager = authManager
+)
+
 class AuthenticatedResilientDelegate<T : Any>(
-    private val serviceProvider: () -> T,
+    serviceProvider: () -> T,
     private val tokenManager: TokenManager,
     private val authManager: AuthManager
-) {
-    private val delegate = ResilientDelegate(serviceProvider)
+) : RemoteServiceDelegate<T> {
+    private val retryDelegate = RetryResilientDelegate(serviceProvider)
 
-    fun get(): T = delegate.get()
+    override fun get(): T = retryDelegate.get()
 
-    suspend fun <R> withAuthRetry(block: suspend (T) -> R): R {
-        val first = delegate.get()
+    override suspend fun <R> call(block: suspend (T) -> R): R {
+        val first = retryDelegate.get()
         return try {
             block(first)
         } catch (t: Throwable) {
@@ -25,13 +33,13 @@ class AuthenticatedResilientDelegate<T : Any>(
             if (authError != null) {
                 val refreshed = runCatching { tokenManager.refreshToken() }.getOrNull()
                 if (refreshed != null) {
-                    delegate.resetCache()
-                    return block(delegate.get())
+                    retryDelegate.resetCache()
+                    return block(retryDelegate.get())
                 }
                 runCatching { authManager.onAuthenticationFailed() }
             } else {
-                delegate.resetCache()
-                return block(delegate.get())
+                retryDelegate.resetCache()
+                return block(retryDelegate.get())
             }
             throw t
         }

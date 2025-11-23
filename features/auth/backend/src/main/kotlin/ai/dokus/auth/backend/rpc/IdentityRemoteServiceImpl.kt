@@ -4,6 +4,7 @@ package ai.dokus.auth.backend.rpc
 
 import ai.dokus.app.auth.domain.IdentityRemoteService
 import ai.dokus.auth.backend.services.AuthService
+import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
@@ -41,9 +42,9 @@ class IdentityRemoteServiceImpl(
             .getOrThrow()
     }
 
-    override suspend fun requestPasswordReset(email: String) {
+    override suspend fun requestPasswordReset(email: Email) {
         logger.debug("RPC: requestPasswordReset called for email")
-        authService.requestPasswordReset(email)
+        authService.requestPasswordReset(email.value)
             .onSuccess { logger.info("RPC: Password reset email requested successfully") }
             .onFailure { error -> logger.error("RPC: Password reset request failed", error) }
             .getOrThrow()

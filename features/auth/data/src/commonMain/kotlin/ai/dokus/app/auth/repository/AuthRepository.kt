@@ -147,8 +147,8 @@ class AuthRepository(
     /**
      * Request password reset email.
      */
-    suspend fun requestPasswordReset(email: String): Result<Unit> = runCatching {
-        logger.d { "Password reset requested for: ${email.take(3)}***" }
+    suspend fun requestPasswordReset(email: Email): Result<Unit> = runCatching {
+        logger.d { "Password reset requested for: ${email.value.take(3)}***" }
         identityService.requestPasswordReset(email)
     }.onFailure { error ->
         logger.e(error) { "Password reset request failed" }

@@ -4,13 +4,13 @@ package ai.dokus.foundation.network.resilient
  * Generic resiliency helper that caches a service instance and retries once
  * with a fresh instance on failure. Use this to wrap RPC service calls.
  */
-class ResilientDelegate<T : Any>(
+class RetryResilientDelegate<T : Any>(
     private val serviceProvider: () -> T
-) {
+) : RemoteServiceDelegate<T> {
     @PublishedApi
     internal var cached: T? = null
 
-    fun get(): T = cached ?: serviceProvider().also { cached = it }
+    override fun get(): T = cached ?: serviceProvider().also { cached = it }
 
     @PublishedApi
     internal fun reset() {
@@ -21,7 +21,7 @@ class ResilientDelegate<T : Any>(
         reset()
     }
 
-    suspend inline fun <R> withRetry(crossinline block: suspend (T) -> R): R {
+    override suspend fun <R> call(block: suspend (T) -> R): R {
         val first = get()
         return try {
             block(first)
