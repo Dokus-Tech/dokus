@@ -4,7 +4,7 @@ import ai.dokus.foundation.domain.model.common.Feature
 
 actual fun createSecureStorage(context: Any?, feature: Feature): SecureStorage {
     return try {
-        // Try to use OS keychain first (most secure)
+        // Try to use the OS keychain first (most secure)
         OSKeychainSecureStorage(feature.serviceName)
     } catch (e: Exception) {
         // Fall back to enhanced file-based storage
