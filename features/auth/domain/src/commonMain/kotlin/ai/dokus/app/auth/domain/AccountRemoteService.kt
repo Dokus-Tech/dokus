@@ -1,5 +1,6 @@
 package ai.dokus.app.auth.domain
 
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
@@ -7,7 +8,6 @@ import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
-import ai.dokus.foundation.domain.ids.OrganizationId
 import kotlinx.rpc.annotations.Rpc
 
 /**
@@ -49,7 +49,7 @@ interface AccountRemoteService {
     suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse
 
     /**
-     * Logout user and revoke current session.
+     * Logout user and revoke the current session.
      * @throws Exception if logout fails
      */
     suspend fun logout(request: LogoutRequest)
