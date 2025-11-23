@@ -8,18 +8,22 @@ import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.app.auth.domain.OrganizationRemoteService
+import ai.dokus.foundation.domain.asbtractions.AuthManager
+import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.domain.model.OrganizationSettings
-import ai.dokus.app.auth.domain.OrganizationRemoteService
-import ai.dokus.foundation.network.resilient.ResilientDelegate
+import ai.dokus.foundation.network.resilient.AuthResilientService
 
 class ResilientOrganizationRemoteService(
-    serviceProvider: () -> OrganizationRemoteService
-) : OrganizationRemoteService {
+    serviceProvider: () -> OrganizationRemoteService,
+    private val tokenManager: TokenManager,
+    private val authManager: AuthManager
+) : OrganizationRemoteService,
+    AuthResilientService<OrganizationRemoteService>(serviceProvider, tokenManager, authManager) {
 
-    private val delegate = ResilientDelegate(serviceProvider)
-    private suspend inline fun <R> withRetry(crossinline block: suspend (OrganizationRemoteService) -> R): R =
-        delegate.withRetry(block)
+    private suspend fun <R> withRetry(block: suspend (OrganizationRemoteService) -> R): R =
+        authCall(block)
 
     override suspend fun listMyOrganizations(): List<Organization> = withRetry { it.listMyOrganizations() }
 
