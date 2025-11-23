@@ -1,8 +1,8 @@
 package ai.dokus.foundation.design.components.fields
 
-import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.design.components.PErrorText
 import ai.dokus.foundation.design.components.PIcon
+import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement

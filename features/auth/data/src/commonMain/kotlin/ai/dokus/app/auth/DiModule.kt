@@ -5,12 +5,14 @@ import ai.dokus.app.auth.Qualifiers.rpcClientNoAuth
 import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.domain.OrganizationRemoteService
+import ai.dokus.app.auth.domain.IdentityRemoteService
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.app.auth.network.ResilientAccountRemoteService
 import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
+import ai.dokus.app.auth.network.ResilientIdentityRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -106,6 +108,14 @@ val authNetworkModule = module {
             rpcClient.service<OrganizationRemoteService>()
         }
     }
+
+    // IdentityRemoteService (unauthenticated)
+    single<IdentityRemoteService> {
+        val rpcClient = get<KtorRpcClient>(rpcClientNoAuth)
+        ResilientIdentityRemoteService {
+            rpcClient.service<IdentityRemoteService>()
+        }
+    }
 }
 
 val authDataModule = module {
@@ -134,7 +144,8 @@ val authDataModule = module {
         AuthRepository(
             tokenManager = get<TokenManagerMutable>(),
             authManager = get<AuthManagerMutable>(),
-            accountService = get<AccountRemoteService>(), // Provided by RPC client configuration
+            accountService = get<AccountRemoteService>(),
+            identityService = get<IdentityRemoteService>(),
             organizationRemoteService = get<OrganizationRemoteService>()
         )
     }

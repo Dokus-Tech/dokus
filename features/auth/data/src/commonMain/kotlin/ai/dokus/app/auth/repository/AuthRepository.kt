@@ -1,9 +1,18 @@
 package ai.dokus.app.auth.repository
 
 import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.app.auth.domain.IdentityRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
+import ai.dokus.foundation.domain.enums.Country
+import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
@@ -11,15 +20,7 @@ import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Country
-import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.OrganizationPlan
-import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.platform.Logger
-import ai.dokus.app.auth.domain.OrganizationRemoteService
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -34,6 +35,7 @@ class AuthRepository(
     private val tokenManager: TokenManagerMutable,
     private val authManager: AuthManagerMutable,
     private val accountService: AccountRemoteService,
+    private val identityService: IdentityRemoteService,
     private val organizationRemoteService: OrganizationRemoteService
 ) {
     private val logger = Logger.forClass<AuthRepository>()
@@ -61,7 +63,7 @@ class AuthRepository(
     suspend fun login(request: LoginRequest): Result<Unit> = runCatching {
         logger.d { "Login attempt for email: ${request.email.value.take(3)}***" }
 
-        val response = accountService.login(request)
+        val response = identityService.login(request)
         logger.i { "Login successful" }
         tokenManager.saveTokens(response)
         authManager.onLoginSuccess()
@@ -75,7 +77,7 @@ class AuthRepository(
     suspend fun register(request: RegisterRequest): Result<Unit> = runCatching {
         logger.d { "Registration attempt for email: ${request.email.value.take(3)}***" }
 
-        val response = accountService.register(request)
+        val response = identityService.register(request)
         logger.i { "Registration successful, auto-logging in" }
         tokenManager.saveTokens(response)
         authManager.onLoginSuccess()
@@ -147,7 +149,7 @@ class AuthRepository(
      */
     suspend fun requestPasswordReset(email: String): Result<Unit> = runCatching {
         logger.d { "Password reset requested for: ${email.take(3)}***" }
-        accountService.requestPasswordReset(email)
+        identityService.requestPasswordReset(email)
     }.onFailure { error ->
         logger.e(error) { "Password reset request failed" }
     }
@@ -158,7 +160,7 @@ class AuthRepository(
     suspend fun resetPassword(resetToken: String, newPassword: String): Result<Unit> = runCatching {
         logger.d { "Resetting password with token" }
         val request = ResetPasswordRequest(newPassword = newPassword)
-        accountService.resetPassword(resetToken, request)
+        identityService.resetPassword(resetToken, request)
     }.onFailure { error ->
         logger.e(error) { "Password reset failed" }
     }
@@ -188,7 +190,7 @@ class AuthRepository(
                 refreshToken = refreshToken,
                 organizationId = organizationId
             )
-            accountService.refreshToken(request).also {
+            identityService.refreshToken(request).also {
                 logger.i { "Token refreshed successfully" }
             }
         } catch (e: Exception) {

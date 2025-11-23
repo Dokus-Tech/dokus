@@ -8,14 +8,19 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -101,6 +106,78 @@ fun SpotlightEffect() {
                 radius = size.maxDimension * 0.9f * radiusScale
             )
         )
+    }
+}
+
+/**
+ * Spotlight that follows the user's pointer/touch.
+ * Uses the brand gold color and a soft breathing animation for brightness.
+ */
+@Composable
+fun SpotlightFollowEffect(
+    color: Color = Color(0xFFD4AF37),
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "spotlightFollow")
+
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.65f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "spotlightFollowPulse"
+    )
+
+    // Track pointer position; default to null until first move/touch
+    var pointer by remember { mutableStateOf<Offset?>(null) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull()
+                        if (change != null) {
+                            val pos = change.position
+                            pointer = pos
+                        }
+                    }
+                }
+            }
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = pointer ?: Offset(size.width / 2f, size.height / 2f)
+            val radius = size.maxDimension * 0.45f
+
+            // Bright core
+            drawRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        color.copy(alpha = pulseAlpha * 0.85f),
+                        Color.White.copy(alpha = pulseAlpha * 0.25f),
+                        Color.Transparent
+                    ),
+                    center = center,
+                    radius = radius * 0.5f
+                )
+            )
+
+            // Soft outer glow
+            drawRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        color.copy(alpha = pulseAlpha * 0.35f),
+                        color.copy(alpha = pulseAlpha * 0.12f),
+                        Color.Transparent
+                    ),
+                    center = center,
+                    radius = radius
+                )
+            )
+        }
     }
 }
 
