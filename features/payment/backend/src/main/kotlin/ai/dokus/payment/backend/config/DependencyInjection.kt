@@ -45,7 +45,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
         single {
             JwtValidator(
                 secret = appConfig.jwt.secret,
-                issuer = appConfig.jwt.issuer
+                envIssuer = appConfig.jwt.issuer
             )
         }
     }

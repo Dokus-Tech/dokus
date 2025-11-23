@@ -1,14 +1,14 @@
 package ai.dokus.auth.backend.config
 
+import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.PasswordResetTokenRepository
 import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
-import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
-import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
-import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
 import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
+import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.auth.backend.rpc.AuthValidationRemoteServiceImpl
@@ -32,8 +32,7 @@ import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.messaging.integration.createDefaultRabbitMqConfig
 import ai.dokus.foundation.messaging.integration.messagingModule
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -78,7 +77,7 @@ private val appModule = module {
         val appConfig = get<AppBaseConfig>()
         JwtValidator(
             secret = appConfig.jwt.secret,
-            issuer = appConfig.jwt.issuer
+            envIssuer = appConfig.jwt.issuer
         )
     }
 
