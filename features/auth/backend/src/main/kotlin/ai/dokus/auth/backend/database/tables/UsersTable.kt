@@ -15,8 +15,8 @@ object UsersTable : UUIDTable("users") {
     val passwordHash = varchar("password_hash", 255) // bcrypt
 
     // Profile
-    val firstName = varchar("first_name", 100).nullable()
-    val lastName = varchar("last_name", 100).nullable()
+    val firstName = varchar("first_name", 100)
+    val lastName = varchar("last_name", 100)
 
     // Email verification
     val emailVerified = bool("email_verified").default(false)

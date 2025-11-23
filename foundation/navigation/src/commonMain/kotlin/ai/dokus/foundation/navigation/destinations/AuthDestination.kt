@@ -22,6 +22,14 @@ sealed interface AuthDestination : NavigationDestination {
     data object PasswordChangeRequested : AuthDestination
 
     @Serializable
+    @SerialName("company/select")
+    data object CompanySelect : AuthDestination
+
+    @Serializable
+    @SerialName("company/create")
+    data object CompanyCreate : AuthDestination
+
+    @Serializable
     @SerialName("profile_settings")
     data object ProfileSettings : AuthDestination
 

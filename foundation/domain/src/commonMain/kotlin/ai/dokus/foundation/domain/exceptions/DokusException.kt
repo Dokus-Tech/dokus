@@ -72,6 +72,12 @@ sealed class DokusException(
         )
 
         @Serializable
+        @SerialName("DokusException.Validation.InvalidLegalName")
+        data object InvalidLegalName : Validation(
+            message = "Invalid legal name",
+        )
+
+        @Serializable
         @SerialName("DokusException.Validation.InvalidVatNumber")
         data object InvalidVatNumber : Validation(
             message = "Invalid VAT number",

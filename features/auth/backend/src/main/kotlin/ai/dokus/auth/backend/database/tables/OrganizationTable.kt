@@ -1,9 +1,10 @@
 package ai.dokus.auth.backend.database.tables
 
-import ai.dokus.foundation.ktor.database.dbEnumeration
+import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
+import ai.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -23,8 +24,8 @@ object OrganizationTable : UUIDTable("organizations") {
     val subscriptionStartedAt = datetime("subscription_started_at").nullable()
 
     // Localization
-    val country = varchar("country", 2).default("BE") // ISO 3166-1 alpha-2
-    val language = dbEnumeration<Language>("language").default(Language.En)
+    val country = dbEnumeration<Country>("country")
+    val language = dbEnumeration<Language>("language")
 
     // Business info
     val vatNumber = varchar("vat_number", 50).nullable()

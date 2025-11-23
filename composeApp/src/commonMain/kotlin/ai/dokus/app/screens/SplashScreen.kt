@@ -58,6 +58,9 @@ private fun BootstrapViewModel.Effect.handle(navController: NavController) {
         is BootstrapViewModel.Effect.NeedsAccountConfirmation -> navController.replace(
             AuthDestination.PendingConfirmAccount
         )
+        is BootstrapViewModel.Effect.NeedsOrganizationSelection -> navController.replace(
+            AuthDestination.CompanySelect
+        )
         is BootstrapViewModel.Effect.Ok -> navController.replace(CoreDestination.Home)
     }
 }

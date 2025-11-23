@@ -6,6 +6,7 @@ import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -18,6 +19,7 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
 
     private val logger = Logger.forClass<RegisterViewModel>()
     private val registerAndLoginUseCase: RegisterAndLoginUseCase by inject()
+    private val tokenManager: TokenManager by inject()
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
@@ -36,7 +38,12 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
             onSuccess = {
                 logger.i { "Registration successful, navigating to home" }
                 mutableState.value = State.Idle
-                mutableEffect.emit(Effect.NavigateToHome)
+                val claims = tokenManager.getCurrentClaims()
+                if (claims?.organization == null) {
+                    mutableEffect.emit(Effect.NavigateToCompanySelect)
+                } else {
+                    mutableEffect.emit(Effect.NavigateToHome)
+                }
             },
             onFailure = { error ->
                 logger.e(error) { "Registration failed" }
@@ -62,5 +69,6 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
 
     sealed interface Effect {
         data object NavigateToHome : Effect
+        data object NavigateToCompanySelect : Effect
     }
 }

@@ -1,12 +1,18 @@
 package ai.dokus.app.auth
 
+import ai.dokus.app.auth.Qualifiers.rpcClientAuth
+import ai.dokus.app.auth.Qualifiers.rpcClientNoAuth
 import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
+import ai.dokus.app.auth.domain.IdentityRemoteService
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
-import ai.dokus.app.auth.network.MockAccountRemoteService
+import ai.dokus.app.auth.network.ResilientAccountRemoteService
+import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
+import ai.dokus.app.auth.network.ResilientIdentityRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -19,12 +25,12 @@ import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
 import ai.dokus.foundation.network.createAuthenticatedHttpClient
+import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.createBaseHttpClient
 import ai.dokus.foundation.network.createRpcClient
-import ai.dokus.foundation.network.or
 import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +46,8 @@ internal object Qualifiers {
     val secureStorageAuth: Qualifier = qualifier(Feature.Auth)
     val httpClientAuth: Qualifier = named("http_client_auth")
     val httpClientNoAuth: Qualifier = named("http_client_no_auth")
+    val rpcClientAuth: Qualifier = named("rpc_client_auth")
+    val rpcClientNoAuth: Qualifier = named("rpc_client_no_auth")
 }
 
 expect val authPlatformModule: Module
@@ -66,15 +74,47 @@ val authNetworkModule = module {
         )
     }
 
-    // RPC client (nullable - graceful degradation)
-    factory<KtorRpcClient?>(named(Feature.Auth)) {
-        createRpcClient(DokusEndpoint.Auth)
+    factory<KtorRpcClient>(rpcClientAuth) {
+        val tokenManager = get<TokenManagerMutable>()
+        val authManager = get<AuthManagerMutable>()
+        createAuthenticatedRpcClient(
+            endpoint = DokusEndpoint.Auth,
+            tokenManager = tokenManager,
+            onAuthenticationFailed = {
+                CoroutineScope(Dispatchers.Default).launch {
+                    tokenManager.onAuthenticationFailed()
+                    authManager.onAuthenticationFailed()
+                }
+            }
+        )
     }
 
-    // AccountRemoteService with stub fallback
+    factory<KtorRpcClient>(rpcClientNoAuth) {
+        createRpcClient(endpoint = DokusEndpoint.Auth)
+    }
+
+    // AccountRemoteService (authenticated) with resilience
     single<AccountRemoteService> {
-        val rpcClient = getOrNull<KtorRpcClient>(named(Feature.Auth))
-        rpcClient?.service<AccountRemoteService>() or MockAccountRemoteService()
+        val rpcClient = get<KtorRpcClient>(rpcClientAuth)
+        ResilientAccountRemoteService {
+            rpcClient.service<AccountRemoteService>()
+        }
+    }
+
+    // OrganizationRemoteService (authenticated)
+    single<OrganizationRemoteService> {
+        val rpcClient = get<KtorRpcClient>(rpcClientAuth)
+        ResilientOrganizationRemoteService {
+            rpcClient.service<OrganizationRemoteService>()
+        }
+    }
+
+    // IdentityRemoteService (unauthenticated)
+    single<IdentityRemoteService> {
+        val rpcClient = get<KtorRpcClient>(rpcClientNoAuth)
+        ResilientIdentityRemoteService {
+            rpcClient.service<IdentityRemoteService>()
+        }
     }
 }
 
@@ -104,7 +144,9 @@ val authDataModule = module {
         AuthRepository(
             tokenManager = get<TokenManagerMutable>(),
             authManager = get<AuthManagerMutable>(),
-            accountService = get() // Provided by RPC client configuration
+            accountService = get<AccountRemoteService>(),
+            identityService = get<IdentityRemoteService>(),
+            organizationRemoteService = get<OrganizationRemoteService>()
         )
     }
 }

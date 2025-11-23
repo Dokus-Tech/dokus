@@ -2,6 +2,7 @@ package ai.dokus.foundation.domain
 
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
+import ai.dokus.foundation.domain.usecases.validators.ValidateLegalNameUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidateNameUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
 import kotlinx.serialization.Serializable
@@ -49,4 +50,18 @@ value class Name(override val value: String) : ValueClass<String>, Validatable<N
 
     override val validOrThrows: Name
         get() = if (isValid) this else throw DokusException.Validation.InvalidFirstName
+}
+
+@Serializable
+@JvmInline
+value class LegalName(override val value: String) : ValueClass<String>, Validatable<LegalName> {
+    override fun toString(): String = value
+
+    val initialOrEmpty: String
+        get() = value.firstOrNull()?.toString() ?: ""
+
+    override val isValid get() = ValidateLegalNameUseCase(this)
+
+    override val validOrThrows: LegalName
+        get() = if (isValid) this else throw DokusException.Validation.InvalidLegalName
 }

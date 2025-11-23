@@ -74,6 +74,9 @@ internal fun RegisterScreen(
                 is RegisterViewModel.Effect.NavigateToHome -> {
                     navController.replace(CoreDestination.Home)
                 }
+                is RegisterViewModel.Effect.NavigateToCompanySelect -> {
+                    navController.replace(AuthDestination.CompanySelect)
+                }
             }
         }
     }
