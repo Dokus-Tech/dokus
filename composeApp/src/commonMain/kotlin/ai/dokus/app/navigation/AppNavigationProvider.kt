@@ -2,7 +2,6 @@ package ai.dokus.app.navigation
 
 import ai.dokus.app.screens.EmptyScreen
 import ai.dokus.app.screens.HomeScreen
-import ai.dokus.app.screens.SloganScreen
 import ai.dokus.app.screens.SplashScreen
 import ai.dokus.app.screens.UnderDevelopmentScreen
 import ai.dokus.foundation.navigation.NavigationProvider
@@ -18,9 +17,6 @@ internal object AppNavigationProvider : NavigationProvider {
         }
         composable<CoreDestination.Home> {
             HomeScreen()
-        }
-        composable<AppDestination.Slogan> {
-            SloganScreen()
         }
         composable<AppDestination.UnderDevelopment> {
             UnderDevelopmentScreen()
