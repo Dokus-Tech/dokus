@@ -4,6 +4,7 @@ import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.foundation.domain.model.auth.*
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 
@@ -26,8 +27,8 @@ class AuthRepository(
 
     init {
         // Set up token refresh callback
-        tokenManager.onTokenRefreshNeeded = { refreshToken ->
-            refreshTokenInternal(refreshToken)
+        tokenManager.onTokenRefreshNeeded = { refreshToken, organizationId ->
+            refreshTokenInternal(refreshToken, organizationId)
         }
     }
 
@@ -65,6 +66,19 @@ class AuthRepository(
         authManager.onLoginSuccess()
     }.onFailure { error ->
         logger.e(error) { "Registration failed" }
+    }
+
+    /**
+     * Select an organization and refresh scoped tokens.
+     */
+    suspend fun selectOrganization(organizationId: OrganizationId): Result<Unit> = runCatching {
+        logger.d { "Selecting organization: ${organizationId.value}" }
+
+        val response = accountService.selectOrganization(organizationId)
+        tokenManager.saveTokens(response)
+        authManager.onLoginSuccess()
+    }.onFailure { error ->
+        logger.e(error) { "Organization selection failed" }
     }
 
     /**
@@ -122,11 +136,17 @@ class AuthRepository(
     /**
      * Internal token refresh implementation.
      */
-    private suspend fun refreshTokenInternal(refreshToken: String): LoginResponse? {
+    private suspend fun refreshTokenInternal(
+        refreshToken: String,
+        organizationId: OrganizationId?
+    ): LoginResponse? {
         logger.d { "Refreshing access token" }
 
         return try {
-            val request = RefreshTokenRequest(refreshToken = refreshToken)
+            val request = RefreshTokenRequest(
+                refreshToken = refreshToken,
+                organizationId = organizationId
+            )
             accountService.refreshToken(request).also {
                 logger.i { "Token refreshed successfully" }
             }

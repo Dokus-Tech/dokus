@@ -20,6 +20,8 @@ class ResilientOrganizationRemoteService(
     private suspend inline fun <R> withRetry(crossinline block: suspend (OrganizationRemoteService) -> R): R =
         delegate.withRetry(block)
 
+    override suspend fun listMyOrganizations(): List<Organization> = withRetry { it.listMyOrganizations() }
+
     override suspend fun createOrganization(
         legalName: LegalName,
         email: Email,

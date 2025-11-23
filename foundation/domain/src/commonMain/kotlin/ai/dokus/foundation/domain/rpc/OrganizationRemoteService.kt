@@ -14,6 +14,8 @@ import kotlinx.rpc.annotations.Rpc
 
 @Rpc
 interface OrganizationRemoteService {
+    suspend fun listMyOrganizations(): List<Organization>
+
     suspend fun createOrganization(
         legalName: LegalName,
         email: Email,

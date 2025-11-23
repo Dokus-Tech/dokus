@@ -1,6 +1,7 @@
 package ai.dokus.app.auth.manager
 
 import ai.dokus.foundation.domain.asbtractions.TokenManager
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.TokenStatus
@@ -13,7 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 interface TokenManagerMutable : TokenManager {
-    var onTokenRefreshNeeded: (suspend (String) -> LoginResponse?)?
+    var onTokenRefreshNeeded: (suspend (refreshToken: String, organizationId: OrganizationId?) -> LoginResponse?)?
     suspend fun initialize()
     suspend fun saveTokens(loginResponse: LoginResponse)
 }
@@ -33,7 +34,7 @@ class TokenManagerImpl(
     private val refreshMutex = Mutex()
 
     // Callback for token refresh (to be set by the repository)
-    override var onTokenRefreshNeeded: (suspend (String) -> LoginResponse?)? = null
+    override var onTokenRefreshNeeded: (suspend (refreshToken: String, organizationId: OrganizationId?) -> LoginResponse?)? = null
 
     /**
      * Initializes the token manager by loading stored tokens.
@@ -97,7 +98,8 @@ class TokenManagerImpl(
         val refreshCallback = onTokenRefreshNeeded ?: return null
 
         try {
-            val response = refreshCallback(refreshToken)
+            val selectedOrganizationId = jwtDecoder.decode(currentToken)?.organization?.organizationId
+            val response = refreshCallback(refreshToken, selectedOrganizationId)
             if (response != null) {
                 saveTokens(response)
                 return response.accessToken

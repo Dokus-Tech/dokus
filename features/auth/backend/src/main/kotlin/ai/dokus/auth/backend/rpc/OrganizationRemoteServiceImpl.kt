@@ -27,6 +27,17 @@ class OrganizationRemoteServiceImpl(
 
     private val logger = LoggerFactory.getLogger(OrganizationRemoteServiceImpl::class.java)
 
+    override suspend fun listMyOrganizations(): List<Organization> {
+        return authInfoProvider.withAuthInfo {
+            val userId = requireAuthenticatedUserId()
+            logger.debug("Listing organizations for user: {}", userId.value)
+            val memberships = userRepository.getUserOrganizations(userId)
+            memberships.mapNotNull { membership ->
+                organizationService.findById(membership.organizationId)
+            }
+        }
+    }
+
     override suspend fun createOrganization(
         legalName: LegalName,
         email: Email,
