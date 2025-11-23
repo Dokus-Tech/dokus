@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package ai.dokus.auth.backend.rpc
 
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
@@ -18,6 +20,7 @@ import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.requireAuthenticatedOrganizationId
 import ai.dokus.foundation.ktor.security.requireAuthenticatedUserId
 import org.slf4j.LoggerFactory
+import kotlin.uuid.ExperimentalUuidApi
 
 class OrganizationRemoteServiceImpl(
     private val organizationService: OrganizationRepository,
