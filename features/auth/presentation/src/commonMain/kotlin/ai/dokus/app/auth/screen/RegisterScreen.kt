@@ -6,7 +6,6 @@ import ai.dokus.app.auth.components.RegisterProfileFields
 import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.auth.model.RegisterPage
 import ai.dokus.app.auth.viewmodel.RegisterViewModel
-import ai.dokus.app.core.extensions.SetupSecondaryPanel
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_has_account_prefix
 import ai.dokus.app.resources.generated.auth_login_link
@@ -14,15 +13,11 @@ import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.navigation.destinations.AppDestination
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.local.SecondaryPanelType
 import ai.dokus.foundation.navigation.navigateTo
 import ai.dokus.foundation.navigation.replace
-import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightEffect
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -66,8 +61,6 @@ internal fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val mutableInteractionSource = remember { MutableInteractionSource() }
     val scope = rememberCoroutineScope()
-
-    SetupSecondaryPanel(AppDestination.Slogan, SecondaryPanelType.Inline)
 
     // Handle navigation effects
     LaunchedEffect(Unit) {
@@ -116,10 +109,6 @@ internal fun RegisterScreen(
                     focusManager.clearFocus()
                 }
         ) {
-            // Background animations/effects
-            EnhancedFloatingBubbles()
-            SpotlightEffect()
-
             val currentPage = RegisterPage.fromIndex(pagerState.currentPage)
             val onBack: () -> Unit = when (currentPage) {
                 RegisterPage.Profile -> {
