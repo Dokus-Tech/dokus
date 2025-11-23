@@ -2,6 +2,7 @@ package ai.dokus.app.viewmodel
 
 import ai.dokus.app.auth.AuthInitializer
 import ai.dokus.app.core.viewmodel.BaseViewModel
+import ai.dokus.foundation.domain.asbtractions.TokenManager
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,6 +11,7 @@ import kotlinx.coroutines.launch
 
 class BootstrapViewModel(
     private val authInitializer: AuthInitializer,
+    private val tokenManager: TokenManager,
 //    private val userRepository: UserRepository,
 ) : BaseViewModel<List<BootstrapViewModel.BootstrapState>>(BootstrapState.all) {
     private val mutableEffect = MutableStateFlow<Effect>(Effect.Idle)
@@ -21,6 +23,7 @@ class BootstrapViewModel(
                 needsUpdate() -> Effect.NeedsUpdate
                 needsLogin() -> Effect.NeedsLogin
                 needsAccountConfirmation() -> Effect.NeedsAccountConfirmation
+                needsOrganizationSelection() -> Effect.NeedsOrganizationSelection
                 else -> Effect.Ok
             }
         }
@@ -45,6 +48,11 @@ class BootstrapViewModel(
     private fun needsUpdate(): Boolean {
         updateStep(BootstrapState.CheckUpdate(isActive = true, isCurrent = true))
         return false
+    }
+
+    private suspend fun needsOrganizationSelection(): Boolean {
+        val claims = tokenManager.getCurrentClaims()
+        return claims?.organization == null
     }
 
     private fun updateStep(step: BootstrapState) {
@@ -105,6 +113,7 @@ class BootstrapViewModel(
         data object NeedsLogin : Effect
         data object NeedsUpdate : Effect
         data object NeedsAccountConfirmation : Effect
+        data object NeedsOrganizationSelection : Effect
         data object Ok : Effect
     }
 }

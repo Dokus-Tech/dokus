@@ -12,7 +12,8 @@ import ai.dokus.foundation.domain.model.Organization
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,14 +67,12 @@ private fun DesktopLayout(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SectionTitle(
-                    text = "Select your company",
-                    horizontalArrangement = Arrangement.Center
+                SelectionBody(
+                    state = state,
+                    isMobile = false,
+                    onCompanyClick = onCompanyClick,
+                    onAddCompanyClick = onAddCompanyClick
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                StateDrivenContent(state, isMobile = false, onCompanyClick, onAddCompanyClick)
             }
 
             CopyRightText()
@@ -99,14 +98,12 @@ private fun MobileLayout(
         Spacer(modifier = Modifier.height(32.dp))
 
         Column(modifier = Modifier.limitWidthCenteredContent()) {
-            SectionTitle(
-                text = "Select your company",
-                horizontalArrangement = Arrangement.Center
+            SelectionBody(
+                state = state,
+                isMobile = true,
+                onCompanyClick = onCompanyClick,
+                onAddCompanyClick = onAddCompanyClick
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            StateDrivenContent(state, isMobile = true, onCompanyClick, onAddCompanyClick)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -114,6 +111,29 @@ private fun MobileLayout(
     }
 }
 
+@Composable
+private fun SelectionBody(
+    state: DokusState<List<Organization>>,
+    isMobile: Boolean,
+    onCompanyClick: (Organization?) -> Unit,
+    onAddCompanyClick: () -> Unit,
+) {
+    SectionTitle(
+        text = "Select your company",
+        horizontalArrangement = Arrangement.Center
+    )
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    StateDrivenContent(
+        state = state,
+        isMobile = isMobile,
+        onCompanyClick = onCompanyClick,
+        onAddCompanyClick = onAddCompanyClick
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StateDrivenContent(
     state: DokusState<List<Organization>>,
@@ -124,50 +144,27 @@ private fun StateDrivenContent(
     when (state) {
         is DokusState.Success -> {
             val companies = state.data
-            if (isMobile) {
-                val rows = companies.chunked(2)
-                rows.forEach { pair ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        pair.forEach { organization ->
-                            CompanyTile(
-                                modifier = Modifier.weight(1f),
-                                initial = organization.legalName.initialOrEmpty,
-                                label = organization.legalName.value
-                            ) { onCompanyClick(organization) }
-                        }
-                        if (pair.size == 1) {
-                            AddCompanyTile(
-                                modifier = Modifier.weight(1f),
-                                onClick = onAddCompanyClick
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
+            // FlowRow adapts to available width, suitable for both mobile and desktop.
+            // Items use width constraints so they can expand when space allows.
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                maxItemsInEachRow = Int.MAX_VALUE // let items flow naturally; no fixed columns
+            ) {
+                companies.forEach { organization ->
+                    CompanyTile(
+                        // Let tiles grow but keep a sensible minimum so rows wrap nicely on mobile.
+                        modifier = Modifier.widthIn(min = 140.dp, max = 320.dp),
+                        initial = organization.legalName.initialOrEmpty,
+                        label = organization.legalName.value
+                    ) { onCompanyClick(organization) }
                 }
-
-                if (companies.isEmpty() || companies.size % 2 == 0) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        AddCompanyTile(onClick = onAddCompanyClick)
-                    }
-                }
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    companies.forEach { organization ->
-                        CompanyTile(
-                            modifier = Modifier,
-                            initial = organization.legalName.initialOrEmpty,
-                            label = organization.legalName.value
-                        ) { onCompanyClick(organization) }
-                    }
-                    AddCompanyTile(onClick = onAddCompanyClick)
-                }
+                // Always provide an option to add a company; participates in flow like others.
+                AddCompanyTile(
+                    modifier = Modifier.widthIn(min = 140.dp, max = 320.dp),
+                    onClick = onAddCompanyClick
+                )
             }
         }
 

@@ -1,10 +1,8 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.auth.viewmodel.CompanySelectViewModel
-import ai.dokus.foundation.design.components.text.AppNameText
-import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.app.auth.components.CompanySelectLayout
 import ai.dokus.app.auth.components.CompanySelection
+import ai.dokus.app.auth.viewmodel.CompanySelectViewModel
 import ai.dokus.foundation.design.constrains.isLargeScreen
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination

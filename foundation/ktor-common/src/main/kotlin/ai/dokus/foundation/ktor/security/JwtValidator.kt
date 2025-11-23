@@ -71,7 +71,14 @@ class JwtValidator(
             val userId = payload.subject ?: return null
             val email = payload.getClaim(JwtClaims.CLAIM_EMAIL).asString() ?: return null
 
-            // Preferred: organizations claim (JSON string) → first org
+            // Preferred: flat org_id claim if present
+            val orgIdFromFlat: OrganizationId? = payload
+                .getClaim(JwtClaims.CLAIM_ORGANIZATION_ID)
+                .asString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { OrganizationId.parse(it) }
+
+            // Legacy fallback: organizations claim (JSON string) → first org
             val orgsClaim = payload.getClaim(JwtClaims.CLAIM_ORGANIZATIONS).asString()
             val orgIdFromList: OrganizationId? = orgsClaim
                 ?.takeIf { it.isNotBlank() }

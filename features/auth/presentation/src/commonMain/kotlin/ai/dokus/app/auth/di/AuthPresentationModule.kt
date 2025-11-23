@@ -17,6 +17,6 @@ val authPresentationModule = module {
     viewModel { RegisterViewModel() }
     viewModel { ForgotPasswordViewModel() }
     viewModel { NewPasswordViewModel() }
-    viewModel { CompanySelectViewModel() }
+    viewModel { CompanySelectViewModel(get(), get()) }
     viewModel { CompanyCreateViewModel() }
 }

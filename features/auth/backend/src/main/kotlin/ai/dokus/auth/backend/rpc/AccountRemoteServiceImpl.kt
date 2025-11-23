@@ -6,6 +6,7 @@ import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.services.AuthService
 import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
@@ -91,6 +92,20 @@ class AccountRemoteServiceImpl(
         return authService.refreshToken(request)
             .onFailure { error -> logger.error("RPC: refreshToken failed", error) }
             .getOrThrow()
+    }
+
+    /**
+     * Select an organization and re-issue scoped tokens.
+     */
+    override suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse {
+        logger.debug("RPC: selectOrganization called for org: ${organizationId.value}")
+
+        return authInfoProvider.withAuthInfo {
+            val userId = requireAuthenticatedUserId()
+            authService.selectOrganization(userId, organizationId)
+                .onFailure { error -> logger.error("RPC: selectOrganization failed for user: ${userId.value}", error) }
+                .getOrThrow()
+        }
     }
 
     /**

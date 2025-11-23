@@ -7,6 +7,7 @@ import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import ai.dokus.foundation.domain.ids.OrganizationId
 import kotlinx.rpc.annotations.Rpc
 
 /**
@@ -40,6 +41,12 @@ interface AccountRemoteService {
      * @throws Exception if token refresh fails
      */
     suspend fun refreshToken(request: RefreshTokenRequest): LoginResponse
+
+    /**
+     * Select an organization and issue tokens scoped to it.
+     * @throws Exception if selection fails or user is not a member
+     */
+    suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse
 
     /**
      * Logout user and revoke current session.
