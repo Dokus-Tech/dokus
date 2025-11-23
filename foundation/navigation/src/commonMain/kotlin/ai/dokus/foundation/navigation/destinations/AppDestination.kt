@@ -9,10 +9,6 @@ interface AppDestination : NavigationDestination {
     data object Notifications : AppDestination
 
     @Serializable
-    @SerialName("slogan")
-    data object Slogan : AppDestination
-
-    @Serializable
     @SerialName("app/under_development")
     data object UnderDevelopment : AppDestination
 
