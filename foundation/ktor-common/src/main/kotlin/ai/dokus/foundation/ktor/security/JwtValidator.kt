@@ -24,11 +24,13 @@ import kotlin.uuid.Uuid
  */
 class JwtValidator(
     val secret: String,
-    val issuer: String = "dokus-auth"
+    val envIssuer: String = "dokus-auth"
 ) {
     private val logger = LoggerFactory.getLogger(JwtValidator::class.java)
     private val algorithm = Algorithm.HMAC256(secret)
     private val json = Json { ignoreUnknownKeys = true }
+
+    val issuer: String = "https://dokus.tech"
 
     val verifier: JWTVerifier = JWT.require(algorithm)
         .withIssuer(issuer)
