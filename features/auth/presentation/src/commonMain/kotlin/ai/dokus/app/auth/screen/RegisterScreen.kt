@@ -21,6 +21,8 @@ import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.local.SecondaryPanelType
 import ai.dokus.foundation.navigation.navigateTo
 import ai.dokus.foundation.navigation.replace
+import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
+import ai.dokus.foundation.design.components.background.SpotlightEffect
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -114,6 +116,10 @@ internal fun RegisterScreen(
                     focusManager.clearFocus()
                 }
         ) {
+            // Background animations/effects
+            EnhancedFloatingBubbles()
+            SpotlightEffect()
+
             val currentPage = RegisterPage.fromIndex(pagerState.currentPage)
             val onBack: () -> Unit = when (currentPage) {
                 RegisterPage.Profile -> {
