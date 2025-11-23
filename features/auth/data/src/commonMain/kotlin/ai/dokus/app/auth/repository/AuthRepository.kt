@@ -11,7 +11,15 @@ import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
+import ai.dokus.foundation.domain.enums.Country
+import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.OrganizationPlan
+import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.platform.Logger
+import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -25,7 +33,8 @@ import kotlinx.coroutines.flow.StateFlow
 class AuthRepository(
     private val tokenManager: TokenManagerMutable,
     private val authManager: AuthManagerMutable,
-    private val accountService: AccountRemoteService
+    private val accountService: AccountRemoteService,
+    private val organizationRemoteService: OrganizationRemoteService
 ) {
     private val logger = Logger.forClass<AuthRepository>()
 
@@ -85,6 +94,32 @@ class AuthRepository(
         authManager.onLoginSuccess()
     }.onFailure { error ->
         logger.e(error) { "Organization selection failed" }
+    }
+
+    /**
+     * Create an organization and scope tokens to it.
+     */
+    suspend fun createOrganization(
+        legalName: LegalName,
+        email: Email,
+        plan: OrganizationPlan,
+        country: Country,
+        language: Language,
+        vatNumber: VatNumber
+    ): Result<Organization> = runCatching {
+        logger.d { "Creating organization: ${legalName.value}" }
+        val organization = organizationRemoteService.createOrganization(
+            legalName = legalName,
+            email = email,
+            plan = plan,
+            country = country,
+            language = language,
+            vatNumber = vatNumber
+        )
+        selectOrganization(organization.id).getOrThrow()
+        organization
+    }.onFailure { error ->
+        logger.e(error) { "Organization creation failed" }
     }
 
     /**

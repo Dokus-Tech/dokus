@@ -42,7 +42,7 @@ internal class CompanySelectViewModel(
             runCatching {
                 authRepository.selectOrganization(organizationId).getOrThrow()
             }.onSuccess {
-                mutableEffect.emit(Effect.SelectionCompleted)
+                mutableEffect.emit(Effect.NavigateHome)
             }.onFailure { error ->
                 logger.e(error) { "Failed to select organization $organizationId" }
                 mutableEffect.emit(Effect.SelectionFailed(error))
@@ -51,7 +51,7 @@ internal class CompanySelectViewModel(
     }
 
     sealed interface Effect {
-        data object SelectionCompleted : Effect
+        data object NavigateHome : Effect
         data class SelectionFailed(val error: Throwable) : Effect
     }
 }

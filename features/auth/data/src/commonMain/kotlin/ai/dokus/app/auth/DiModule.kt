@@ -125,7 +125,8 @@ val authDataModule = module {
         AuthRepository(
             tokenManager = get<TokenManagerMutable>(),
             authManager = get<AuthManagerMutable>(),
-            accountService = get() // Provided by RPC client configuration
+            accountService = get(), // Provided by RPC client configuration
+            organizationRemoteService = get()
         )
     }
 }
