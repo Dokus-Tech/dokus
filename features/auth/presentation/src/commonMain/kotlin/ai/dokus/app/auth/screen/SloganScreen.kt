@@ -1,4 +1,4 @@
-package ai.dokus.app.screens
+package ai.dokus.app.auth.screen
 
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_slogan
@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,7 +40,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
 @Composable
-fun SloganScreen() {
+internal fun SloganScreen() {
     // Animation states for text elements
     val sloganLine1Alpha = remember { Animatable(0f) }
     val sloganLine1OffsetY = remember { Animatable(30f) }
