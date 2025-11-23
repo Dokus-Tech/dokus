@@ -52,7 +52,7 @@ class OrganizationRemoteServiceImplTest {
 
     private val testUserId = UserId(Uuid.random().toString())
     private val testOrganizationId = OrganizationId(Uuid.random())
-    // Placeholder org ID for auth context (user may have an existing org for auth purposes)
+    // Placeholder org ID for auth context (a user may have an existing org for auth purposes)
     private val existingOrgId = OrganizationId(Uuid.random())
 
     @BeforeEach
