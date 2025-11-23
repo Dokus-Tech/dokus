@@ -29,7 +29,7 @@ interface AuthInfoProvider {
                     val token = call.request.authorization()?.substringAfter("Bearer ")
                     if (token.isNullOrEmpty()) throw DokusException.NotAuthenticated()
                     val authInfo = jwtValidator.validateAndExtract(token)
-                    if (authInfo == null) throw DokusException.NotAuthenticated()
+                    if (authInfo == null) throw DokusException.TokenInvalid()
 
                     // Inject the auth info into a coroutine context
                     return withAuthContext(authInfo, block)
