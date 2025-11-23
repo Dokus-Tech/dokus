@@ -125,7 +125,7 @@ class AuthServiceRegisterTest {
             jwtGenerator.generateClaims(
                 userId = testUserId,
                 email = testEmail,
-                organizations = emptyList()
+                organization = null
             )
         } returns mockClaims
 
@@ -164,7 +164,7 @@ class AuthServiceRegisterTest {
             jwtGenerator.generateClaims(
                 userId = testUserId,
                 email = testEmail,
-                organizations = emptyList()
+                organization = null
             )
         }
     }

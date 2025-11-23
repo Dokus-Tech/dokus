@@ -31,7 +31,7 @@ class OrganizationRemoteServiceImpl(
         return authInfoProvider.withAuthInfo {
             val userId = requireAuthenticatedUserId()
             logger.debug("Listing organizations for user: {}", userId.value)
-            val memberships = userRepository.getUserOrganizations(userId)
+            val memberships = userRepository.getUserOrganizations(userId).filter { it.isActive }
             memberships.mapNotNull { membership ->
                 organizationService.findById(membership.organizationId)
             }
