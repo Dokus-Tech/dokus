@@ -4,6 +4,8 @@ import ai.dokus.auth.backend.database.mappers.TenantMapper.toOrganizationSetting
 import ai.dokus.auth.backend.database.mappers.TenantMapper.toTenant
 import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
 import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
@@ -31,20 +33,20 @@ class OrganizationRepository {
     private val logger = LoggerFactory.getLogger(OrganizationRepository::class.java)
 
     suspend fun create(
-        name: String,
-        email: String,
+        name: LegalName,
+        email: Email,
         plan: OrganizationPlan = OrganizationPlan.Free,
         country: Country,
         language: Language,
-        vatNumber: VatNumber?,
+        vatNumber: VatNumber,
     ): OrganizationId = dbQuery {
         val organizationId = OrganizationTable.insertAndGetId {
-            it[OrganizationTable.name] = name
-            it[OrganizationTable.email] = email
+            it[OrganizationTable.name] = name.value
+            it[OrganizationTable.email] = email.value
             it[OrganizationTable.plan] = plan
             it[OrganizationTable.country] = country
             it[OrganizationTable.language] = language
-            it[OrganizationTable.vatNumber] = vatNumber?.value
+            it[OrganizationTable.vatNumber] = vatNumber.value
             it[status] = TenantStatus.Active
         }.value
 

@@ -41,8 +41,8 @@ class OrganizationRemoteServiceImpl(
 
             // Create the organization
             val organizationId = organizationService.create(
-                name = legalName.value,
-                email = email.value,
+                name = legalName,
+                email = email,
                 plan = plan,
                 country = country,
                 language = language,
