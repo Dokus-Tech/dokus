@@ -1,12 +1,16 @@
 package ai.dokus.app.auth
 
+import ai.dokus.app.auth.Qualifiers.rpcClientAuth
+import ai.dokus.app.auth.Qualifiers.rpcClientNoAuth
 import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.app.auth.network.ResilientAccountRemoteService
+import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -18,11 +22,10 @@ import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.foundation.network.createAuthenticatedHttpClient
 import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.createBaseHttpClient
-import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
+import ai.dokus.foundation.network.createRpcClient
 import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.*
@@ -41,6 +44,8 @@ internal object Qualifiers {
     val secureStorageAuth: Qualifier = qualifier(Feature.Auth)
     val httpClientAuth: Qualifier = named("http_client_auth")
     val httpClientNoAuth: Qualifier = named("http_client_no_auth")
+    val rpcClientAuth: Qualifier = named("rpc_client_auth")
+    val rpcClientNoAuth: Qualifier = named("rpc_client_no_auth")
 }
 
 expect val authPlatformModule: Module
@@ -67,8 +72,7 @@ val authNetworkModule = module {
         )
     }
 
-    // RPC client (nullable - graceful degradation)
-    factory<KtorRpcClient>(named(Feature.Auth)) {
+    factory<KtorRpcClient>(rpcClientAuth) {
         val tokenManager = get<TokenManagerMutable>()
         val authManager = get<AuthManagerMutable>()
         createAuthenticatedRpcClient(
@@ -83,9 +87,13 @@ val authNetworkModule = module {
         )
     }
 
+    factory<KtorRpcClient>(rpcClientNoAuth) {
+        createRpcClient(endpoint = DokusEndpoint.Auth)
+    }
+
     // AccountRemoteService (authenticated) with resilience
     single<AccountRemoteService> {
-        val rpcClient = get<KtorRpcClient>(named(Feature.Auth))
+        val rpcClient = get<KtorRpcClient>(rpcClientAuth)
         ResilientAccountRemoteService {
             rpcClient.service<AccountRemoteService>()
         }
@@ -93,7 +101,7 @@ val authNetworkModule = module {
 
     // OrganizationRemoteService (authenticated)
     single<OrganizationRemoteService> {
-        val rpcClient = get<KtorRpcClient>(named(Feature.Auth))
+        val rpcClient = get<KtorRpcClient>(rpcClientAuth)
         ResilientOrganizationRemoteService {
             rpcClient.service<OrganizationRemoteService>()
         }

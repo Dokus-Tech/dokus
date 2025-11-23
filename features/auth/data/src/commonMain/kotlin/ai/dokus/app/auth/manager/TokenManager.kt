@@ -1,12 +1,12 @@
 package ai.dokus.app.auth.manager
 
+import ai.dokus.app.auth.storage.TokenStorage
+import ai.dokus.app.auth.utils.JwtDecoder
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.TokenStatus
-import ai.dokus.app.auth.storage.TokenStorage
-import ai.dokus.app.auth.utils.JwtDecoder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +34,8 @@ class TokenManagerImpl(
     private val refreshMutex = Mutex()
 
     // Callback for token refresh (to be set by the repository)
-    override var onTokenRefreshNeeded: (suspend (refreshToken: String, organizationId: OrganizationId?) -> LoginResponse?)? = null
+    override var onTokenRefreshNeeded: (suspend (refreshToken: String, organizationId: OrganizationId?) -> LoginResponse?)? =
+        null
 
     /**
      * Initializes the token manager by loading stored tokens.
@@ -76,7 +77,6 @@ class TokenManagerImpl(
             }
 
             TokenStatus.INVALID -> null
-            else -> null // TODO: Check
         }
     }
 
