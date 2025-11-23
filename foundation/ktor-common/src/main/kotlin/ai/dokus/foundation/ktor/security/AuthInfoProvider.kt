@@ -1,8 +1,8 @@
 package ai.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.ktor.auth.AuthenticationInfoPrincipal
+import ai.dokus.foundation.domain.exceptions.DokusException
 import io.ktor.server.application.*
-import io.ktor.server.auth.*
+import io.ktor.server.request.*
 
 /**
  * Provider interface for accessing authentication information in RPC services.
@@ -23,13 +23,17 @@ interface AuthInfoProvider {
          *   single source of truth for principal creation. If no principal is present,
          *   the route is either unauthenticated or misconfigured.
          */
-        operator fun invoke(call: ApplicationCall): AuthInfoProvider = object : AuthInfoProvider {
-            override suspend fun <T> withAuthInfo(block: suspend () -> T): T {
-                val principal = call.principal<AuthenticationInfoPrincipal>()
-                    ?: throw IllegalStateException("No authentication info found in the request context")
+        operator fun invoke(call: ApplicationCall, jwtValidator: JwtValidator): AuthInfoProvider {
+            return object : AuthInfoProvider {
+                override suspend fun <T> withAuthInfo(block: suspend () -> T): T {
+                    val token = call.request.authorization()?.substringAfter("Bearer ")
+                    if (token.isNullOrEmpty()) throw DokusException.NotAuthenticated()
+                    val authInfo = jwtValidator.validateAndExtract(token)
+                    if (authInfo == null) throw DokusException.InvalidCredentials()
 
-                // Inject the auth info into a coroutine context
-                return withAuthContext(principal.authInfo, block)
+                    // Inject the auth info into a coroutine context
+                    return withAuthContext(authInfo, block)
+                }
             }
         }
     }
