@@ -6,7 +6,6 @@ import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
-import ai.dokus.app.auth.network.MockAccountRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -22,7 +21,6 @@ import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
 import ai.dokus.foundation.network.createAuthenticatedHttpClient
 import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.createBaseHttpClient
-import ai.dokus.foundation.network.or
 import ai.dokus.foundation.network.resilient.ResilientOrganizationRemoteService
 import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
@@ -69,7 +67,7 @@ val authNetworkModule = module {
     }
 
     // RPC client (nullable - graceful degradation)
-    factory<KtorRpcClient?>(named(Feature.Auth)) {
+    factory<KtorRpcClient>(named(Feature.Auth)) {
         val tokenManager = get<TokenManagerMutable>()
         val authManager = get<AuthManagerMutable>()
         createAuthenticatedRpcClient(
@@ -86,8 +84,8 @@ val authNetworkModule = module {
 
     // AccountRemoteService with stub fallback
     single<AccountRemoteService> {
-        val rpcClient = getOrNull<KtorRpcClient>(named(Feature.Auth))
-        rpcClient?.service<AccountRemoteService>() or MockAccountRemoteService()
+        val rpcClient = get<KtorRpcClient>(named(Feature.Auth))
+        rpcClient.service<AccountRemoteService>()
     }
 
     // OrganizationRemoteService (authenticated)
@@ -125,8 +123,8 @@ val authDataModule = module {
         AuthRepository(
             tokenManager = get<TokenManagerMutable>(),
             authManager = get<AuthManagerMutable>(),
-            accountService = get(), // Provided by RPC client configuration
-            organizationRemoteService = get()
+            accountService = get<AccountRemoteService>(), // Provided by RPC client configuration
+            organizationRemoteService = get<OrganizationRemoteService>()
         )
     }
 }
