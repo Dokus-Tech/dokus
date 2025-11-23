@@ -66,19 +66,13 @@ private val appModule = module {
     // JWT token generation
     single {
         val appConfig = get<AppBaseConfig>()
-        JwtGenerator(
-            secret = appConfig.jwt.secret,
-            issuer = appConfig.jwt.issuer
-        )
+        JwtGenerator(appConfig.jwt)
     }
 
     // JWT token validation
     single {
         val appConfig = get<AppBaseConfig>()
-        JwtValidator(
-            secret = appConfig.jwt.secret,
-            envIssuer = appConfig.jwt.issuer
-        )
+        JwtValidator(appConfig.jwt)
     }
 
     // Email service (SMTP or disabled based on configuration)

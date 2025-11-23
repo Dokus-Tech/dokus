@@ -216,6 +216,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-payment-local:5432/dokus_payment
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: http://localhost:7091
+      JWT_AUDIENCE: dokus-api-local
       LOG_LEVEL: DEBUG
     ports:
       - "7093:7093"
@@ -244,6 +247,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-reporting-local:5432/dokus_reporting
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: http://localhost:7091
+      JWT_AUDIENCE: dokus-api-local
       LOG_LEVEL: DEBUG
     ports:
       - "7094:7094"
@@ -272,6 +278,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-audit-local:5432/dokus_audit
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: http://localhost:7091
+      JWT_AUDIENCE: dokus-api-local
       RABBITMQ_HOST: rabbitmq-local
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: dokus
@@ -307,6 +316,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-banking-local:5432/dokus_banking
       DB_USERNAME: dev
       DB_PASSWORD: localpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: http://localhost:7091
+      JWT_AUDIENCE: dokus-api-local
       LOG_LEVEL: DEBUG
     ports:
       - "7096:7096"

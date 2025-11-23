@@ -34,10 +34,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
 
         // JWT validator for local token validation
         single {
-            JwtValidator(
-                secret = appConfig.jwt.secret,
-                envIssuer = appConfig.jwt.issuer
-            )
+            JwtValidator(appConfig.jwt)
         }
     }
 
