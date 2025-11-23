@@ -10,7 +10,7 @@ import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.domain.rpc.ClientRemoteService
-import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.services.ClientService
 import io.ktor.server.routing.Route

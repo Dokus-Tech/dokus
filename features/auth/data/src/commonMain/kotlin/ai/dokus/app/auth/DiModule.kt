@@ -6,6 +6,7 @@ import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
+import ai.dokus.app.auth.network.ResilientAccountRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -17,11 +18,11 @@ import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
 import ai.dokus.foundation.network.createAuthenticatedHttpClient
 import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.createBaseHttpClient
-import ai.dokus.foundation.network.resilient.ResilientOrganizationRemoteService
+import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
 import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.*
@@ -82,10 +83,12 @@ val authNetworkModule = module {
         )
     }
 
-    // AccountRemoteService with stub fallback
+    // AccountRemoteService (authenticated) with resilience
     single<AccountRemoteService> {
         val rpcClient = get<KtorRpcClient>(named(Feature.Auth))
-        rpcClient.service<AccountRemoteService>()
+        ResilientAccountRemoteService {
+            rpcClient.service<AccountRemoteService>()
+        }
     }
 
     // OrganizationRemoteService (authenticated)

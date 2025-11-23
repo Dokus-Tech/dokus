@@ -1,4 +1,4 @@
-package ai.dokus.foundation.network.resilient
+package ai.dokus.app.auth.network
 
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
@@ -10,7 +10,8 @@ import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.domain.model.OrganizationSettings
-import ai.dokus.foundation.domain.rpc.OrganizationRemoteService
+import ai.dokus.app.auth.domain.OrganizationRemoteService
+import ai.dokus.foundation.network.resilient.ResilientDelegate
 
 class ResilientOrganizationRemoteService(
     serviceProvider: () -> OrganizationRemoteService
