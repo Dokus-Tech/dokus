@@ -254,6 +254,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-cashflow:5432/dokus_cashflow
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: ${REDIS_HOST:-redis}
@@ -286,6 +289,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-payment:5432/dokus_payment
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: ${REDIS_HOST:-redis}
@@ -318,6 +324,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-reporting:5432/dokus_reporting
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: ${REDIS_HOST:-redis}
@@ -350,6 +359,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-audit:5432/dokus_audit
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: ${REDIS_HOST:-redis}
@@ -390,6 +402,9 @@ services:
       DB_URL: jdbc:postgresql://postgres-banking:5432/dokus_banking
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: ${REDIS_HOST:-redis}

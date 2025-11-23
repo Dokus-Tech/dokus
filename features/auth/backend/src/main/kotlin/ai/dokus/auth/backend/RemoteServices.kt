@@ -11,15 +11,15 @@ import ai.dokus.auth.backend.rpc.IdentityRemoteServiceImpl
 import ai.dokus.auth.backend.rpc.OrganizationRemoteServiceImpl
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
-import ai.dokus.foundation.domain.rpc.CashflowRemoteService
 import ai.dokus.foundation.domain.rpc.ClientRemoteService
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
+import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.services.ClientService
-import io.ktor.server.auth.*
 import io.ktor.server.routing.*
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
 import org.koin.ktor.ext.get
+import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("RemoteServices")
@@ -29,50 +29,46 @@ private val logger = LoggerFactory.getLogger("RemoteServices")
  * Wraps services with authentication context injection.
  */
 fun Route.withRemoteServices() {
-    // Allow optional JWT authentication for RPC endpoint:
-    // - Unauthenticated methods (login/register) work without a token
-    // - Auth-required methods fetch principal via AuthInfoProvider and will fail if absent
-    authenticate("jwt-auth", optional = true) {
-        rpc("/rpc") {
-            rpcConfig {
-                serialization {
-                    json()
-                }
-            }
+    val jwtValidator by inject<JwtValidator>()
 
-            // Wrap AccountRemoteService with authentication context injection
-            registerService<AccountRemoteService> {
-                AccountRemoteServiceImpl(
-                    authService = get<AuthService>(),
-                    authInfoProvider = AuthInfoProvider(call)
-                )
+    rpc("/rpc") {
+        rpcConfig {
+            serialization {
+                json()
             }
-
-            // IdentityRemoteService (no authentication required)
-            registerService<IdentityRemoteService> {
-                IdentityRemoteServiceImpl(
-                    authService = get<AuthService>()
-                )
-            }
-
-            registerService<OrganizationRemoteService> {
-                OrganizationRemoteServiceImpl(
-                    organizationService = get<OrganizationRepository>(),
-                    userRepository = get<UserRepository>(),
-                    authInfoProvider = AuthInfoProvider(call)
-                )
-            }
-            registerService<ClientRemoteService> {
-                ClientRemoteServiceImpl(
-                    clientService = get<ClientService>(),
-                    authInfoProvider = AuthInfoProvider(call)
-                )
-            }
-            registerService<CashflowRemoteService> { get<CashflowRemoteService>() }
-
-            // Auth validation service for inter-service communication
-            registerService<AuthValidationRemoteService> { get<AuthValidationRemoteService>() }
         }
+
+        // Wrap AccountRemoteService with authentication context injection
+        registerService<AccountRemoteService> {
+            AccountRemoteServiceImpl(
+                authService = get<AuthService>(),
+                authInfoProvider = AuthInfoProvider(call, jwtValidator)
+            )
+        }
+
+        // IdentityRemoteService (no authentication required)
+        registerService<IdentityRemoteService> {
+            IdentityRemoteServiceImpl(
+                authService = get<AuthService>()
+            )
+        }
+
+        registerService<OrganizationRemoteService> {
+            OrganizationRemoteServiceImpl(
+                organizationService = get<OrganizationRepository>(),
+                userRepository = get<UserRepository>(),
+                authInfoProvider = AuthInfoProvider(call, jwtValidator)
+            )
+        }
+        registerService<ClientRemoteService> {
+            ClientRemoteServiceImpl(
+                clientService = get<ClientService>(),
+                authInfoProvider = AuthInfoProvider(call, jwtValidator)
+            )
+        }
+
+        // Auth validation service for inter-service communication
+        registerService<AuthValidationRemoteService> { get<AuthValidationRemoteService>() }
     }
 
     logger.info("RPC APIs registered at /rpc")

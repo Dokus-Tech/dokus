@@ -7,6 +7,7 @@ import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.OrganizationClaimDto
+import ai.dokus.foundation.ktor.config.JwtConfig
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
@@ -23,15 +24,14 @@ import kotlin.uuid.Uuid
  * Validates JWT tokens and extracts user claims.
  */
 class JwtValidator(
-    val secret: String,
-    val issuer: String = "dokus-auth"
+    config: JwtConfig,
 ) {
     private val logger = LoggerFactory.getLogger(JwtValidator::class.java)
-    private val algorithm = Algorithm.HMAC256(secret)
+    private val algorithm = Algorithm.HMAC256(config.secret)
     private val json = Json { ignoreUnknownKeys = true }
 
     val verifier: JWTVerifier = JWT.require(algorithm)
-        .withIssuer(issuer)
+        .withIssuer(config.issuer)
         .build()
 
     /**

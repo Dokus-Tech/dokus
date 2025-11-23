@@ -11,8 +11,7 @@ import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -36,10 +35,7 @@ fun coreModule(appConfig: AppBaseConfig) = module {
 
     // JWT validator for local token validation
     single {
-        JwtValidator(
-            secret = appConfig.jwt.secret,
-            issuer = appConfig.jwt.issuer
-        )
+        JwtValidator(appConfig.jwt)
     }
 }
 
