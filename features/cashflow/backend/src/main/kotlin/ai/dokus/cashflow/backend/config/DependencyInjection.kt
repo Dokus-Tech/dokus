@@ -38,7 +38,7 @@ fun coreModule(appConfig: AppBaseConfig) = module {
     single {
         JwtValidator(
             secret = appConfig.jwt.secret,
-            issuer = appConfig.jwt.issuer
+            envIssuer = appConfig.jwt.issuer
         )
     }
 }
