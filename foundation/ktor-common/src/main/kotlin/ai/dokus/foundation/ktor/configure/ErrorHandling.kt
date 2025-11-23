@@ -1,11 +1,10 @@
 package ai.dokus.foundation.ktor.configure
 
 import ai.dokus.foundation.domain.exceptions.DokusException
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.response.respond
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
@@ -65,6 +64,7 @@ fun Application.configureErrorHandling() {
                 is DokusException.Validation.PasswordDoNotMatch -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidFirstName -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidLastName -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidLegalName -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidTaxNumber -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidWorkspaceName -> HttpStatusCode.BadRequest
 

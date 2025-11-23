@@ -5,12 +5,10 @@ package ai.dokus.foundation.ktor.security
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginResponse
-import ai.dokus.foundation.domain.model.auth.OrganizationClaimDto
 import ai.dokus.foundation.domain.model.auth.OrganizationScope
 import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.util.*
 import kotlin.time.Duration.Companion.days
@@ -23,7 +21,6 @@ class JwtGenerator(
     private val issuer: String = JwtClaims.ISS_DEFAULT
 ) {
     private val algorithm = Algorithm.HMAC256(secret)
-    private val json = Json { encodeDefaults = true }
 
     fun generateTokens(claims: JwtClaims): LoginResponse {
         val accessToken = createAccessToken(claims)
@@ -39,7 +36,7 @@ class JwtGenerator(
     fun generateClaims(
         userId: UserId,
         email: String,
-        organizations: List<OrganizationScope>
+        organization: OrganizationScope?
     ): JwtClaims {
         val nowTime = now()
         val accessExpiry = nowTime + JwtClaims.ACCESS_TOKEN_EXPIRY_SECONDS.seconds
@@ -47,7 +44,7 @@ class JwtGenerator(
         return JwtClaims(
             userId = userId,
             email = email,
-            organizations = organizations,
+            organization = organization,
             iat = nowTime.epochSeconds,
             exp = accessExpiry.epochSeconds,
             jti = Uuid.random().toString(),
@@ -57,27 +54,29 @@ class JwtGenerator(
     }
 
     private fun createAccessToken(claims: JwtClaims): String {
-        val organizationsDto = claims.organizations.map { org ->
-            OrganizationClaimDto(
-                organizationId = org.organizationId.value.toString(),
-                permissions = org.permissions.map { it.name },
-                subscriptionTier = org.subscriptionTier.name,
-                role = org.role?.name
-            )
-        }
-
-        val organizationsJson = json.encodeToString(organizationsDto)
-
-        return JWT.create()
+        val builder = JWT.create()
             .withIssuer(claims.iss)
             .withAudience(claims.aud)
             .withSubject(claims.userId.value.toString())
             .withJWTId(claims.jti)
             .withClaim(JwtClaims.CLAIM_EMAIL, claims.email)
-            .withClaim(JwtClaims.CLAIM_ORGANIZATIONS, organizationsJson)
             .withIssuedAt(Date.from(Instant.ofEpochSecond(claims.iat)))
             .withExpiresAt(Date.from(Instant.ofEpochSecond(claims.exp)))
-            .sign(algorithm)
+
+        claims.organization?.let { org ->
+            builder
+                .withClaim(JwtClaims.CLAIM_ORGANIZATION_ID, org.organizationId.value.toString())
+                .withArrayClaim(
+                    JwtClaims.CLAIM_PERMISSIONS,
+                    org.permissions.map { it.name }.toTypedArray()
+                )
+                .withClaim(JwtClaims.CLAIM_SUBSCRIPTION_TIER, org.subscriptionTier.name)
+                .apply {
+                    org.role?.name?.let { withClaim(JwtClaims.CLAIM_ROLE, it) }
+                }
+        }
+
+        return builder.sign(algorithm)
     }
 
     private fun createRefreshToken(userId: UserId): String {

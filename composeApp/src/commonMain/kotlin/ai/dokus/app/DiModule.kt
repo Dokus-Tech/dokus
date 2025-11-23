@@ -7,6 +7,7 @@ import ai.dokus.app.viewmodel.BootstrapViewModel
 import ai.dokus.app.viewmodel.HomeViewModel
 import ai.dokus.foundation.domain.flags.FeatureFlagService
 import ai.dokus.foundation.domain.model.common.Feature
+import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.rpc.HealthRemoteService
 import ai.dokus.foundation.domain.usecases.GetCombinedHealthStatusUseCase
 import androidx.lifecycle.SavedStateHandle
@@ -18,6 +19,7 @@ internal val diModuleApp = module {
     viewModel<BootstrapViewModel> {
         BootstrapViewModel(
             get<AuthInitializer>(),
+            get<TokenManager>(),
         )
     }
     viewModel { AppVersionCheckViewModel() }

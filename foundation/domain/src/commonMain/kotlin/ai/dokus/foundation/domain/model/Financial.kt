@@ -1,38 +1,8 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.enums.AuditAction
-import ai.dokus.foundation.domain.enums.BankAccountType
-import ai.dokus.foundation.domain.enums.BankProvider
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.OrganizationPlan
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.enums.TenantStatus
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.VatReturnStatus
-import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.AuditLogId
-import ai.dokus.foundation.domain.ids.BankConnectionId
-import ai.dokus.foundation.domain.ids.BankTransactionId
-import ai.dokus.foundation.domain.ids.Bic
-import ai.dokus.foundation.domain.ids.BusinessUserId
-import ai.dokus.foundation.domain.ids.ClientId
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.Iban
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.TransactionId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.ids.VatReturnId
+import ai.dokus.foundation.domain.*
+import ai.dokus.foundation.domain.enums.*
+import ai.dokus.foundation.domain.ids.*
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -44,11 +14,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Organization(
     val id: OrganizationId,
-    val name: String,
-    val email: String,
+    val legalName: LegalName,
+    val email: Email,
     val plan: OrganizationPlan,
     val status: TenantStatus,
-    val country: String,
+    val country: Country,
     val language: Language,
     val vatNumber: VatNumber? = null,
     val trialEndsAt: LocalDateTime? = null,
@@ -87,8 +57,8 @@ data class OrganizationSettings(
 data class User(
     val id: UserId,
     val email: Email,
-    val firstName: String? = null,
-    val lastName: String? = null,
+    val firstName: Name? = null,
+    val lastName: Name? = null,
     val emailVerified: Boolean = false,
     val isActive: Boolean = true,
     val lastLoginAt: LocalDateTime? = null,
@@ -128,7 +98,7 @@ data class UserInOrganization(
 data class ClientDto(
     val id: ClientId,
     val organizationId: OrganizationId,
-    val name: String,
+    val name: Name,
     val email: Email? = null,
     val vatNumber: VatNumber? = null,
     val addressLine1: String? = null,

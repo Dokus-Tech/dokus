@@ -79,6 +79,9 @@ internal fun LoginScreen(
                 is LoginViewModel.Effect.NavigateToHome -> {
                     navController.replace(CoreDestination.Home)
                 }
+                is LoginViewModel.Effect.NavigateToCompanySelect -> {
+                    navController.replace(AuthDestination.CompanySelect)
+                }
             }
         }
     }

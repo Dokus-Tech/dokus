@@ -14,6 +14,7 @@ import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.OrganizationMembership
 import ai.dokus.foundation.domain.model.auth.OrganizationScope
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
@@ -61,17 +62,12 @@ class AuthService(
 
         // Get all user's organizations and create scopes for each
         val memberships = userRepository.getUserOrganizations(userId)
-        val organizationScopes = memberships.map { membership ->
-            createOrganizationScope(
-                organizationId = membership.organizationId,
-                role = membership.role
-            )
-        }
+        val selectedOrganization = resolveOrganizationScope(memberships)
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = organizationScopes
+            organization = selectedOrganization
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -115,7 +111,7 @@ class AuthService(
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = emptyList()
+            organization = null
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -177,17 +173,19 @@ class AuthService(
 
         // Get all user's organizations and create scopes for each
         val memberships = userRepository.getUserOrganizations(userId)
-        val organizationScopes = memberships.map { membership ->
-            createOrganizationScope(
-                organizationId = membership.organizationId,
-                role = membership.role
-            )
+        val selectedOrganization = resolveOrganizationScope(
+            memberships = memberships,
+            selectedOrganizationId = request.organizationId
+        ) ?: if (request.organizationId != null) {
+            throw DokusException.NotAuthorized("User is not a member of organization ${request.organizationId}")
+        } else {
+            null
         }
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organizations = organizationScopes
+            organization = selectedOrganization
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -209,6 +207,52 @@ class AuthService(
     } catch (e: Exception) {
         logger.error("Token refresh error", e)
         Result.failure(DokusException.RefreshTokenExpired())
+    }
+
+    suspend fun selectOrganization(
+        userId: UserId,
+        organizationId: OrganizationId
+    ): Result<LoginResponse> = try {
+        logger.debug("Selecting organization $organizationId for user $userId")
+
+        val user = userRepository.findById(userId)
+            ?: throw DokusException.InvalidCredentials("User account no longer exists")
+
+        if (!user.isActive) {
+            throw DokusException.AccountInactive()
+        }
+
+        val memberships = userRepository.getUserOrganizations(userId)
+        val selectedOrganization = resolveOrganizationScope(
+            memberships = memberships,
+            selectedOrganizationId = organizationId
+        ) ?: throw DokusException.NotAuthorized("User is not a member of organization $organizationId")
+
+        val claims = jwtGenerator.generateClaims(
+            userId = userId,
+            email = user.email.value,
+            organization = selectedOrganization
+        )
+
+        val response = jwtGenerator.generateTokens(claims)
+
+        refreshTokenRepository.saveRefreshToken(
+            userId = userId,
+            token = response.refreshToken,
+            expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
+        ).onFailure { error ->
+            logger.error("Failed to save refresh token after organization selection for user: ${userId.value}", error)
+            throw DokusException.InternalError("Failed to save refresh token")
+        }
+
+        logger.info("Organization selection successful for user: $userId -> $organizationId")
+        Result.success(response)
+    } catch (e: DokusException) {
+        logger.error("Organization selection failed: ${e.errorCode} for user: ${userId.value}", e)
+        Result.failure(e)
+    } catch (e: Exception) {
+        logger.error("Unexpected error selecting organization for user: ${userId.value}", e)
+        Result.failure(DokusException.InternalError(e.message ?: "Organization selection failed"))
     }
 
     suspend fun logout(request: LogoutRequest): Result<Unit> = try {
@@ -283,6 +327,26 @@ class AuthService(
     } catch (e: Exception) {
         logger.error("Account deactivation error for user: ${userId.value}", e)
         Result.failure(DokusException.InternalError(e.message ?: "Account deactivation failed"))
+    }
+
+    private fun resolveOrganizationScope(
+        memberships: List<OrganizationMembership>,
+        selectedOrganizationId: OrganizationId? = null
+    ): OrganizationScope? {
+        val activeMemberships = memberships.filter { it.isActive }
+        val targetOrganizationId = when {
+            selectedOrganizationId != null -> selectedOrganizationId
+            activeMemberships.size == 1 -> activeMemberships.first().organizationId
+            else -> return null
+        }
+
+        val membership = activeMemberships.firstOrNull { it.organizationId == targetOrganizationId }
+            ?: return null
+
+        return createOrganizationScope(
+            organizationId = membership.organizationId,
+            role = membership.role
+        )
     }
 
     private fun createOrganizationScope(

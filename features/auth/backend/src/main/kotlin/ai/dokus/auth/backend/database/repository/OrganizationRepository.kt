@@ -1,22 +1,26 @@
 package ai.dokus.auth.backend.database.repository
 
-import ai.dokus.auth.backend.database.mappers.TenantMapper.toTenant
 import ai.dokus.auth.backend.database.mappers.TenantMapper.toOrganizationSettings
+import ai.dokus.auth.backend.database.mappers.TenantMapper.toTenant
 import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
 import ai.dokus.auth.backend.database.tables.OrganizationTable
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
+import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
+import ai.dokus.foundation.domain.ids.InvoiceNumber
+import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.domain.model.OrganizationSettings
-import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.jdbc.selectAll
+import ai.dokus.foundation.ktor.database.dbQuery
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
@@ -29,20 +33,20 @@ class OrganizationRepository {
     private val logger = LoggerFactory.getLogger(OrganizationRepository::class.java)
 
     suspend fun create(
-        name: String,
-        email: String,
+        name: LegalName,
+        email: Email,
         plan: OrganizationPlan = OrganizationPlan.Free,
-        country: String = "BE",
-        language: Language = Language.En,
-        vatNumber: VatNumber? = null
+        country: Country,
+        language: Language,
+        vatNumber: VatNumber,
     ): OrganizationId = dbQuery {
         val organizationId = OrganizationTable.insertAndGetId {
-            it[OrganizationTable.name] = name
-            it[OrganizationTable.email] = email
+            it[OrganizationTable.name] = name.value
+            it[OrganizationTable.email] = email.value
             it[OrganizationTable.plan] = plan
             it[OrganizationTable.country] = country
             it[OrganizationTable.language] = language
-            it[OrganizationTable.vatNumber] = vatNumber?.value
+            it[OrganizationTable.vatNumber] = vatNumber.value
             it[status] = TenantStatus.Active
         }.value
 

@@ -2,13 +2,13 @@
 
 package ai.dokus.auth.backend.rpc
 
-import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.UserDto
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.auth.backend.database.repository.UserRepository
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -56,7 +56,7 @@ class AuthValidationRemoteServiceImpl(
     ): UserDto.Full {
         logger.debug(
             "Validating session for module: ${requestContext.sourceModule}, " +
-            "IP: ${requestContext.ipAddress}"
+                    "IP: ${requestContext.ipAddress}"
         )
 
         // Step 1: Validate JWT signature and extract claims
@@ -64,7 +64,7 @@ class AuthValidationRemoteServiceImpl(
             ?: run {
                 logger.warn(
                     "Invalid JWT token from ${requestContext.sourceModule} " +
-                    "(IP: ${requestContext.ipAddress})"
+                            "(IP: ${requestContext.ipAddress})"
                 )
                 throw DokusException.TokenInvalid("Invalid or expired token")
             }
@@ -92,7 +92,7 @@ class AuthValidationRemoteServiceImpl(
         if (!userRoles.any { allowedUserRoles.contains(it) }) {
             logger.warn(
                 "User ${authInfo.userId} has roles $userRoles, " +
-                "but only $allowedUserRoles are allowed"
+                        "but only $allowedUserRoles are allowed"
             )
             throw DokusException.NotAuthorized(
                 "User roles are not allowed for this operation"
@@ -101,7 +101,7 @@ class AuthValidationRemoteServiceImpl(
 
         logger.info(
             "Session validated successfully for user ${authInfo.userId} " +
-            "from ${requestContext.sourceModule}"
+                    "from ${requestContext.sourceModule}"
         )
 
         // Step 6: Return complete user DTO with memberships

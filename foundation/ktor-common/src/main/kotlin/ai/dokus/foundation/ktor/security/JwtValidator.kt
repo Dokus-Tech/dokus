@@ -71,7 +71,14 @@ class JwtValidator(
             val userId = payload.subject ?: return null
             val email = payload.getClaim(JwtClaims.CLAIM_EMAIL).asString() ?: return null
 
-            // Preferred: organizations claim (JSON string) → first org
+            // Preferred: flat org_id claim if present
+            val orgIdFromFlat: OrganizationId? = payload
+                .getClaim(JwtClaims.CLAIM_ORGANIZATION_ID)
+                .asString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { OrganizationId.parse(it) }
+
+            // Legacy fallback: organizations claim (JSON string) → first org
             val orgsClaim = payload.getClaim(JwtClaims.CLAIM_ORGANIZATIONS).asString()
             val orgIdFromList: OrganizationId? = orgsClaim
                 ?.takeIf { it.isNotBlank() }
@@ -80,22 +87,16 @@ class JwtValidator(
                 ?.organizationId
                 ?.let { OrganizationId(Uuid.parse(it)) }
 
-            // Fallback: flat org_id claim if present
-            val orgIdFromFlat: OrganizationId? = payload
-                .getClaim(JwtClaims.CLAIM_ORGANIZATION_ID)
-                .asString()
-                ?.takeIf { it.isNotBlank() }
-                ?.let { OrganizationId.parse(it) }
-
             // We don't store user's name/roles in current JWT; derive minimal values
             val name = email.substringBefore('@', email)
-            val roles: Set<String> = emptySet()
+            val roleClaim = payload.getClaim(JwtClaims.CLAIM_ROLE).asString()
+            val roles: Set<String> = roleClaim?.let { setOf(it) } ?: emptySet()
 
             AuthenticationInfo(
                 userId = UserId(userId),
                 email = email,
                 name = name,
-                organizationId = orgIdFromFlat,
+                organizationId = orgIdFromFlat ?: orgIdFromList,
                 roles = roles
             )
         } catch (e: Exception) {

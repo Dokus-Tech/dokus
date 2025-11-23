@@ -52,7 +52,8 @@ suspend fun getAuthenticationInfo(): AuthenticationInfo? {
 }
 
 suspend fun requireAuthenticatedOrganizationId(): OrganizationId {
-    return requireAuthenticationInfo().organizationId!!
+    return requireAuthenticationInfo().organizationId
+        ?: throw IllegalStateException("Organization context required but not selected")
 }
 
 /**

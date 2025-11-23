@@ -5,6 +5,7 @@ import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -16,6 +17,7 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
     private val logger = Logger.forClass<LoginViewModel>()
     private val loginUseCase: LoginUseCase by inject()
+    private val tokenManager: TokenManager by inject()
 
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
@@ -30,7 +32,12 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
             onSuccess = {
                 logger.i { "Login successful, navigating to home" }
                 mutableState.value = State.Idle
-                mutableEffect.emit(Effect.NavigateToHome)
+                val claims = tokenManager.getCurrentClaims()
+                if (claims?.organization == null) {
+                    mutableEffect.emit(Effect.NavigateToCompanySelect)
+                } else {
+                    mutableEffect.emit(Effect.NavigateToHome)
+                }
             },
             onFailure = { error ->
                 logger.e(error) { "Login failed" }
@@ -55,5 +62,6 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
     sealed interface Effect {
         data object NavigateToHome : Effect
+        data object NavigateToCompanySelect : Effect
     }
 }

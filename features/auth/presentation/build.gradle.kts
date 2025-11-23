@@ -37,6 +37,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.features.auth.data)
+            implementation(projects.features.auth.domain)
             implementation(projects.foundation.domain)
 
             implementation(projects.foundation.navigation)

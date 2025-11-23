@@ -1,7 +1,6 @@
 package ai.dokus.foundation.design.components
 
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,7 +16,7 @@ fun PIcon(
     val tint = if (isError) {
         MaterialTheme.colorScheme.error
     } else {
-        LocalContentColor.current
+        MaterialTheme.colorScheme.onSurfaceVariant
     }
     Icon(
         imageVector = icon,

@@ -56,8 +56,8 @@ class UserRepository(
     suspend fun register(
         email: String,
         password: String,
-        firstName: String?,
-        lastName: String?
+        firstName: String,
+        lastName: String
     ): User = dbQuery {
         // Check if email already exists
         val existing = UsersTable
@@ -97,8 +97,8 @@ class UserRepository(
         organizationId: OrganizationId,
         email: String,
         password: String,
-        firstName: String?,
-        lastName: String?,
+        firstName: String,
+        lastName: String,
         role: UserRole
     ): User = dbQuery {
         // Check if email already exists

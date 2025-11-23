@@ -34,6 +34,13 @@ enum class Language(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
+enum class Country(override val dbValue: String) : DbEnum {
+    Belgium("BE"),
+    Netherlands("NL"),
+    France("FR")
+}
+
+@Serializable
 enum class UserRole(override val dbValue: String) : DbEnum {
     Owner("OWNER"),
     Admin("ADMIN"),

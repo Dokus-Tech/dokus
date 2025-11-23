@@ -1,6 +1,7 @@
 package ai.dokus.foundation.domain.model
 
 import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
@@ -23,8 +24,8 @@ sealed class UserDto {
     data class Full(
         val id: UserId,
         val email: Email,
-        val firstName: String?,
-        val lastName: String?,
+        val firstName: Name?,
+        val lastName: Name?,
         val emailVerified: Boolean = false,
         val isActive: Boolean = true,
         val lastLoginAt: LocalDateTime? = null,
@@ -37,7 +38,7 @@ sealed class UserDto {
                 .ifEmpty { email.value }
 
         /**
-         * Get user's role in a specific organization
+         * Get a user's role in a specific organization
          */
         fun getRoleIn(organizationId: OrganizationId): UserRole? =
             memberships.find { it.organizationId == organizationId }?.role
@@ -57,7 +58,7 @@ sealed class UserDto {
     data class Summary(
         val id: UserId,
         val email: Email,
-        val fullName: String,
+        val fullName: Name,
         val role: UserRole? = null
     )
 
@@ -68,7 +69,7 @@ sealed class UserDto {
     @Serializable
     data class Public(
         val id: UserId,
-        val fullName: String,
+        val fullName: Name,
         val email: Email
     )
 }

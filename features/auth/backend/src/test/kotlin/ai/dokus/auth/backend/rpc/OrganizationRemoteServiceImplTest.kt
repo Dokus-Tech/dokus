@@ -4,12 +4,16 @@ package ai.dokus.auth.backend.rpc
 
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.UserRole
+import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.model.Organization
 import ai.dokus.foundation.ktor.security.AuthInfoProvider
@@ -52,7 +56,7 @@ class OrganizationRemoteServiceImplTest {
 
     private val testUserId = UserId(Uuid.random().toString())
     private val testOrganizationId = OrganizationId(Uuid.random())
-    // Placeholder org ID for auth context (user may have an existing org for auth purposes)
+    // Placeholder org ID for auth context (a user may have an existing org for auth purposes)
     private val existingOrgId = OrganizationId(Uuid.random())
 
     @BeforeEach
@@ -94,11 +98,11 @@ class OrganizationRemoteServiceImplTest {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         return Organization(
             id = id,
-            name = name,
-            email = email,
+            legalName = LegalName(name),
+            email = Email(email),
             plan = plan,
             status = TenantStatus.Active,
-            country = "BE",
+            country = Country.Belgium,
             language = Language.En,
             vatNumber = null,
             trialEndsAt = null,
@@ -127,12 +131,12 @@ class OrganizationRemoteServiceImplTest {
 
         coEvery {
             organizationRepository.create(
-                name = orgName,
-                email = orgEmail,
+                name = LegalName(orgName),
+                email = Email(orgEmail),
                 plan = OrganizationPlan.Free,
-                country = "BE",
+                country = Country.Belgium,
                 language = Language.En,
-                vatNumber = null
+                vatNumber = any()
             )
         } returns testOrganizationId
 
@@ -142,28 +146,28 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         val result = service.createOrganization(
-            name = orgName,
-            email = orgEmail,
+            legalName = LegalName(orgName),
+            email = Email(orgEmail),
             plan = OrganizationPlan.Free,
-            country = "BE",
+            country = Country.Belgium,
             language = Language.En,
-            vatNumber = null
+            vatNumber = VatNumber("BE0123456789")
         )
 
         // Then
         assertNotNull(result)
         assertEquals(testOrganizationId, result.id)
-        assertEquals(orgName, result.name)
+        assertEquals(orgName, result.legalName)
 
         // Verify organization was created
         coVerify(exactly = 1) {
             organizationRepository.create(
-                name = orgName,
-                email = orgEmail,
+                name = LegalName(orgName),
+                email = Email(orgEmail),
                 plan = OrganizationPlan.Free,
-                country = "BE",
+                country = Country.Belgium,
                 language = Language.En,
-                vatNumber = null
+                vatNumber = any()
             )
         }
 
@@ -193,12 +197,12 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         service.createOrganization(
-            name = "Test",
-            email = "test@example.com",
+            legalName = LegalName("Test"),
+            email = Email("test@example.com"),
             plan = OrganizationPlan.Free,
-            country = "BE",
+            country = Country.Belgium,
             language = Language.En,
-            vatNumber = null
+            vatNumber = VatNumber("BE0123456789")
         )
 
         // Then - verify order: create org first, then add membership
@@ -227,7 +231,7 @@ class OrganizationRemoteServiceImplTest {
         }
 
         val planSlot = slot<OrganizationPlan>()
-        val countrySlot = slot<String>()
+        val countrySlot = slot<Country>()
         val languageSlot = slot<Language>()
 
         coEvery {
@@ -246,17 +250,17 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         service.createOrganization(
-            name = "Professional Org",
-            email = "pro@example.com",
+            legalName = LegalName("Professional Org"),
+            email = Email("pro@example.com"),
             plan = OrganizationPlan.Professional,
-            country = "NL",
+            country = Country.Netherlands,
             language = Language.Nl,
-            vatNumber = null
+            vatNumber = VatNumber("NL012345678B01")
         )
 
         // Then
         assertEquals(OrganizationPlan.Professional, planSlot.captured)
-        assertEquals("NL", countrySlot.captured)
+        assertEquals(Country.Netherlands, countrySlot.captured)
         assertEquals(Language.Nl, languageSlot.captured)
     }
 
@@ -283,12 +287,12 @@ class OrganizationRemoteServiceImplTest {
 
         // When
         service.createOrganization(
-            name = "Test",
-            email = "test@example.com",
+            legalName = LegalName("Test"),
+            email = Email("test@example.com"),
             plan = OrganizationPlan.Free,
-            country = "BE",
+            country = Country.Belgium,
             language = Language.En,
-            vatNumber = null
+            vatNumber = VatNumber("BE0123456789")
         )
 
         // Then - verify user is assigned Owner role, not any other role
