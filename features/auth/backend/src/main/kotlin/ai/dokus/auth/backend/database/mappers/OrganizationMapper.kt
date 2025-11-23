@@ -1,12 +1,16 @@
 package ai.dokus.auth.backend.database.mappers
 
-import ai.dokus.auth.backend.database.tables.*
+import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
+import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.*
+import ai.dokus.foundation.domain.model.Organization
+import ai.dokus.foundation.domain.model.OrganizationSettings
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -16,8 +20,8 @@ object TenantMapper {
 
     fun ResultRow.toTenant(): Organization = Organization(
         id = OrganizationId(this[OrganizationTable.id].value.toKotlinUuid()),
-        name = this[OrganizationTable.name],
-        email = this[OrganizationTable.email],
+        legalName = LegalName(this[OrganizationTable.name]),
+        email = Email(this[OrganizationTable.email]),
         plan = this[OrganizationTable.plan],
         status = this[OrganizationTable.status],
         trialEndsAt = this[OrganizationTable.trialEndsAt],

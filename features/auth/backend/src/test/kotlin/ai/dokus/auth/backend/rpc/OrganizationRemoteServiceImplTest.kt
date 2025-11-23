@@ -94,7 +94,7 @@ class OrganizationRemoteServiceImplTest {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         return Organization(
             id = id,
-            name = name,
+            legalName = name,
             email = email,
             plan = plan,
             status = TenantStatus.Active,
@@ -153,7 +153,7 @@ class OrganizationRemoteServiceImplTest {
         // Then
         assertNotNull(result)
         assertEquals(testOrganizationId, result.id)
-        assertEquals(orgName, result.name)
+        assertEquals(orgName, result.legalName)
 
         // Verify organization was created
         coVerify(exactly = 1) {

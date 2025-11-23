@@ -3,6 +3,7 @@ package ai.dokus.auth.backend.database.mappers
 import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.ids.OrganizationId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.OrganizationMembership
@@ -21,8 +22,8 @@ object FinancialMappers {
     fun ResultRow.toUser(): User = User(
         id = UserId(this[UsersTable.id].value.toString()),
         email = Email(this[UsersTable.email]),
-        firstName = this[UsersTable.firstName],
-        lastName = this[UsersTable.lastName],
+        firstName = Name(this[UsersTable.firstName]),
+        lastName = Name(this[UsersTable.lastName]),
         emailVerified = this[UsersTable.emailVerified],
         isActive = this[UsersTable.isActive],
         lastLoginAt = this[UsersTable.lastLoginAt],
