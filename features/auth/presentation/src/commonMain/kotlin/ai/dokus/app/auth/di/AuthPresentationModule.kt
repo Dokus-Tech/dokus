@@ -1,6 +1,7 @@
 package ai.dokus.app.auth.di
 
 import ai.dokus.app.auth.AuthInitializer
+import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
 import ai.dokus.app.auth.viewmodel.CompanySelectViewModel
 import ai.dokus.app.auth.viewmodel.ForgotPasswordViewModel
@@ -18,5 +19,5 @@ val authPresentationModule = module {
     viewModel { ForgotPasswordViewModel() }
     viewModel { NewPasswordViewModel() }
     viewModel { CompanySelectViewModel(get(), get()) }
-    viewModel { CompanyCreateViewModel() }
+    viewModel { CompanyCreateViewModel(get<AuthRepository>()) }
 }
