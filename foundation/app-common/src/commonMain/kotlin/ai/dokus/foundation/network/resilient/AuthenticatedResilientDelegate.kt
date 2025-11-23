@@ -42,7 +42,7 @@ class AuthenticatedResilientDelegate<T : Any>(
         while (current != null) {
             when (current) {
                 is DokusException.NotAuthenticated,
-                is DokusException.TokenInvalid -> return current as DokusException
+                is DokusException.TokenInvalid -> return current
             }
             current = current.cause
         }

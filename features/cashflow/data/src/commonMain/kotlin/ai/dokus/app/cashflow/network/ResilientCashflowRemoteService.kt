@@ -1,14 +1,26 @@
 package ai.dokus.app.cashflow.network
 
+import ai.dokus.foundation.domain.asbtractions.AuthManager
+import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.model.*
+import ai.dokus.foundation.domain.model.AttachmentDto
+import ai.dokus.foundation.domain.model.CashflowOverview
+import ai.dokus.foundation.domain.model.CreateExpenseRequest
+import ai.dokus.foundation.domain.model.CreateInvoiceRequest
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
+import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.rpc.CashflowRemoteService
-import ai.dokus.foundation.network.resilient.AuthResilientService
+import ai.dokus.foundation.network.resilient.AuthResilient
+import ai.dokus.foundation.network.resilient.AuthenticatedResilientDelegate
+import ai.dokus.foundation.network.resilient.authCall
+import ai.dokus.foundation.network.resilient.service
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -21,10 +33,15 @@ import kotlinx.coroutines.flow.Flow
  */
 class ResilientCashflowRemoteService(
     serviceProvider: () -> CashflowRemoteService,
-    tokenManager: ai.dokus.foundation.domain.asbtractions.TokenManager,
-    authManager: ai.dokus.foundation.domain.asbtractions.AuthManager
-) : CashflowRemoteService,
-    AuthResilientService<CashflowRemoteService>(serviceProvider, tokenManager, authManager) {
+    tokenManager: TokenManager,
+    authManager: AuthManager
+) : CashflowRemoteService, AuthResilient<CashflowRemoteService> {
+
+    override val authDelegate = AuthenticatedResilientDelegate(
+        serviceProvider = serviceProvider,
+        tokenManager = tokenManager,
+        authManager = authManager
+    )
 
     private suspend fun <R> withRetry(block: suspend (CashflowRemoteService) -> R): R =
         authCall(block)
