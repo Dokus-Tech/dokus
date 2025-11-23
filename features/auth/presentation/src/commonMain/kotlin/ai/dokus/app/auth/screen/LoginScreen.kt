@@ -13,8 +13,6 @@ import ai.dokus.app.resources.generated.auth_sign_in_button
 import ai.dokus.app.resources.generated.auth_sign_up_link
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
 import ai.dokus.foundation.design.components.fields.PTextFieldPassword
@@ -110,10 +108,6 @@ internal fun LoginScreen(
                     focusManager.clearFocus()
                 }
         ) {
-            // Background animations/effects
-            EnhancedFloatingBubbles()
-            SpotlightEffect()
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
