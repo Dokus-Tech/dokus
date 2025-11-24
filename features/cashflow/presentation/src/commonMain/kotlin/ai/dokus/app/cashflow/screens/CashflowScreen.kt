@@ -9,10 +9,17 @@ import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
 import ai.dokus.foundation.design.components.common.Breakpoints
-import ai.dokus.foundation.design.components.common.PTopAppBar
+import ai.dokus.foundation.design.components.PButton
+import ai.dokus.foundation.design.components.PButtonVariant
+import ai.dokus.foundation.design.components.PIconPosition
+import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.navigation.destinations.HomeDestination
+import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,9 +45,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -52,10 +64,29 @@ internal fun CashflowScreen(
     viewModel: CashflowViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val navController = LocalNavController.current
+    var searchQuery by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
-            PTopAppBar(title = "Cashflow")
+            PTopAppBarSearchAction(
+                searchContent = {
+                    PSearchFieldCompact(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = "Search..."
+                    )
+                },
+                actions = {
+                    PButton(
+                        text = "Add new document",
+                        variant = PButtonVariant.Outline,
+                        icon = Icons.Default.Add,
+                        iconPosition = PIconPosition.Trailing,
+                        onClick = { navController.navigateTo(HomeDestination.CashflowUpload) }
+                    )
+                }
+            )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
