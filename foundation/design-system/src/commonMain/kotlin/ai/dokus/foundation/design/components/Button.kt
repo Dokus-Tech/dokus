@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.arrow_left
+import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.painterResource
 
 enum class PButtonVariant {
@@ -26,10 +27,13 @@ enum class PButtonVariant {
     Outline
 }
 
+enum class PIconPosition { Leading, Trailing }
+
 object PButtonDefaults {
     val variant: PButtonVariant = PButtonVariant.Default
     val icon: ImageVector? = null
     val contentDescription: String? = null
+    val iconPosition: PIconPosition = PIconPosition.Leading
 }
 
 @Composable
@@ -38,6 +42,7 @@ fun PButton(
     variant: PButtonVariant = PButtonDefaults.variant,
     icon: ImageVector? = PButtonDefaults.icon,
     contentDescription: String? = PButtonDefaults.contentDescription,
+    iconPosition: PIconPosition = PButtonDefaults.iconPosition,
     isEnabled: Boolean = true,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
@@ -47,6 +52,7 @@ fun PButton(
             text = text,
             icon = icon,
             contentDescription = contentDescription,
+            iconPosition = iconPosition,
             modifier = modifier,
             onClick = onClick
         )
@@ -54,16 +60,34 @@ fun PButton(
         PButtonVariant.CallToAction -> {}
         PButtonVariant.Outline -> {
             OutlinedButton(
-                onClick = onClick
+                onClick = onClick,
+                enabled = isEnabled,
+                modifier = modifier.height(42.dp),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 16.dp,
+                    vertical = 10.dp
+                )
             ) {
-                if (icon != null) {
+                if (icon != null && iconPosition == PIconPosition.Leading) {
                     Icon(
-                        icon,
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        contentDescription = contentDescription
+                        imageVector = icon,
+                        contentDescription = contentDescription,
+                        modifier = Modifier.size(18.dp).padding(end = 8.dp)
                     )
                 }
-                Text(text, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    fontSize = 14.sp
+                )
+                if (icon != null && iconPosition == PIconPosition.Trailing) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = contentDescription,
+                        modifier = Modifier.size(18.dp).padding(start = 8.dp)
+                    )
+                }
             }
         }
     }
@@ -74,18 +98,26 @@ private fun PButtonDefault(
     text: String,
     icon: ImageVector? = PButtonDefaults.icon,
     contentDescription: String? = PButtonDefaults.contentDescription,
+    iconPosition: PIconPosition = PButtonDefaults.iconPosition,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Button(modifier = modifier, onClick = onClick) {
-        if (icon != null) {
+        if (icon != null && iconPosition == PIconPosition.Leading) {
             Icon(
                 icon,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier.padding(end = 8.dp),
                 contentDescription = contentDescription
             )
         }
         Text(text, modifier = Modifier.padding(4.dp))
+        if (icon != null && iconPosition == PIconPosition.Trailing) {
+            Icon(
+                icon,
+                modifier = Modifier.padding(start = 8.dp),
+                contentDescription = contentDescription
+            )
+        }
     }
 }
 

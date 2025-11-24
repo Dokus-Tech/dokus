@@ -2,6 +2,7 @@ package ai.dokus.app.screens
 
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
+import ai.dokus.foundation.design.components.PIconPosition
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.navigation.destinations.AuthDestination
@@ -33,9 +34,10 @@ fun DashboardScreen() {
                 },
                 actions = {
                     PButton(
-                        text = "Company",
+                        text = "Workspace 1",
                         variant = PButtonVariant.Outline,
                         icon = FeatherIcons.Briefcase,
+                        iconPosition = PIconPosition.Leading,
                         onClick = { navController.navigateTo(AuthDestination.CompanySelect) }
                     )
                 }
