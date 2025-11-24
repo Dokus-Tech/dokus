@@ -4,6 +4,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -11,6 +12,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.cos
@@ -724,4 +727,220 @@ fun EnhancedFloatingBubbles() {
         }
     }
 }
+
+/**
+ * Space warp jump animation effect for transitioning between screens.
+ * Creates a hyperspace-like effect with star streaks, warp tunnel, and energy burst.
+ *
+ * @param isActive Whether the warp animation is currently active
+ * @param selectedItemPosition The position of the selected item to warp from
+ * @param onAnimationComplete Callback when the animation completes
+ */
+@Composable
+fun WarpJumpEffect(
+    isActive: Boolean,
+    selectedItemPosition: Offset? = null,
+    onAnimationComplete: () -> Unit = {}
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "warpStars")
+
+    // Animation values for the warp effect
+    val warpProgress by animateFloatAsState(
+        targetValue = if (isActive) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 2500,
+            easing = FastOutSlowInEasing
+        ),
+        label = "warpProgress"
+    )
+
+    // Star field rotation for depth
+    val starFieldRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 20000, easing = LinearEasing)
+        ),
+        label = "starRotation"
+    )
+
+    // Tunnel pulsation
+    val tunnelPulse by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "tunnelPulse"
+    )
+
+    // Trigger completion callback
+    LaunchedEffect(warpProgress, isActive) {
+        if (isActive && warpProgress >= 0.95f) {
+            onAnimationComplete()
+        }
+    }
+
+    // Generate star positions once
+    val stars = remember {
+        List(200) {
+            WarpStar(
+                angle = Random.nextFloat() * 360f,
+                distance = Random.nextFloat(),
+                size = Random.nextFloat() * 2f + 0.5f,
+                speed = Random.nextFloat() * 0.5f + 0.5f,
+                color = listOf(
+                    Color.White,
+                    Color(0xFFB8D4FF), // Light blue
+                    Color(0xFFFFE4B8), // Light yellow
+                    Color(0xFFE4B8FF)  // Light purple
+                ).random()
+            )
+        }
+    }
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        if (!isActive && warpProgress <= 0.01f) return@Canvas
+
+        val centerPoint = selectedItemPosition ?: Offset(size.width / 2f, size.height / 2f)
+
+        // Phase 1: Initial burst and card scaling (0-0.2)
+        if (warpProgress < 0.3f) {
+            val burstPhase = (warpProgress / 0.3f)
+            val burstRadius = size.minDimension * burstPhase * 0.8f
+
+            // Energy burst from selected item
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = (1f - burstPhase) * 0.9f),
+                        Color(0xFF3498DB).copy(alpha = (1f - burstPhase) * 0.5f),
+                        Color(0xFF9B59B6).copy(alpha = (1f - burstPhase) * 0.3f),
+                        Color.Transparent
+                    ),
+                    center = centerPoint,
+                    radius = burstRadius
+                ),
+                center = centerPoint,
+                radius = burstRadius
+            )
+        }
+
+        // Phase 2: Star streaks forming (0.2-0.7)
+        if (warpProgress > 0.2f) {
+            val streakPhase = ((warpProgress - 0.2f) / 0.5f).coerceIn(0f, 1f)
+            val warpCenter = Offset(
+                centerPoint.x + (size.width / 2f - centerPoint.x) * streakPhase,
+                centerPoint.y + (size.height / 2f - centerPoint.y) * streakPhase
+            )
+
+            // Draw star streaks
+            stars.forEach { star ->
+                val angle = (star.angle + starFieldRotation * star.speed) * 0.017453f
+                val baseDistance = star.distance * size.maxDimension
+
+                // Calculate streak length based on progress
+                val streakLength = baseDistance * streakPhase * 2f * star.speed
+                val startDistance = baseDistance * (1f - streakPhase * 0.5f)
+
+                val startPoint = Offset(
+                    warpCenter.x + cos(angle) * startDistance,
+                    warpCenter.y + sin(angle) * startDistance
+                )
+
+                val endPoint = Offset(
+                    warpCenter.x + cos(angle) * (startDistance + streakLength),
+                    warpCenter.y + sin(angle) * (startDistance + streakLength)
+                )
+
+                // Draw streak with gradient
+                drawLine(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            star.color.copy(alpha = 0f),
+                            star.color.copy(alpha = streakPhase * 0.8f),
+                            star.color.copy(alpha = streakPhase * 0.3f)
+                        ),
+                        start = startPoint,
+                        end = endPoint
+                    ),
+                    start = startPoint,
+                    end = endPoint,
+                    strokeWidth = star.size * (1f + streakPhase)
+                )
+            }
+        }
+
+        // Phase 3: Warp tunnel (0.5-1.0)
+        if (warpProgress > 0.5f) {
+            val tunnelPhase = ((warpProgress - 0.5f) / 0.5f).coerceIn(0f, 1f)
+            val warpCenter = Offset(size.width / 2f, size.height / 2f)
+
+            // Draw concentric warp rings
+            for (ring in 0..8) {
+                val ringProgress = (tunnelPhase - ring * 0.1f).coerceIn(0f, 1f)
+                if (ringProgress > 0f) {
+                    val ringRadius = size.minDimension * 0.1f * ring * tunnelPulse
+                    val ringAlpha = ringProgress * (1f - ring * 0.1f) * 0.5f
+
+                    drawCircle(
+                        color = Color(0xFF00CED1).copy(alpha = ringAlpha),
+                        radius = ringRadius,
+                        center = warpCenter,
+                        style = Stroke(
+                            width = 2f * (1f + tunnelPhase)
+                        )
+                    )
+                }
+            }
+
+            // Central warp vortex
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = tunnelPhase * 0.9f),
+                        Color(0xFF00CED1).copy(alpha = tunnelPhase * 0.5f),
+                        Color(0xFF3498DB).copy(alpha = tunnelPhase * 0.3f),
+                        Color(0xFF9B59B6).copy(alpha = tunnelPhase * 0.1f),
+                        Color.Transparent
+                    ),
+                    center = warpCenter,
+                    radius = size.minDimension * 0.3f * tunnelPhase
+                ),
+                center = warpCenter,
+                radius = size.minDimension * 0.3f * tunnelPhase
+            )
+
+            // Hyperspace flash at the end
+            if (tunnelPhase > 0.8f) {
+                val flashAlpha = ((tunnelPhase - 0.8f) / 0.2f) * 0.9f
+                drawRect(
+                    color = Color.White.copy(alpha = flashAlpha),
+                    size = size
+                )
+            }
+        }
+
+        // Overall fade effect
+        if (warpProgress > 0.7f) {
+            val fadePhase = ((warpProgress - 0.7f) / 0.3f).coerceIn(0f, 1f)
+            drawRect(
+                color = Color.Black.copy(alpha = fadePhase * 0.8f),
+                size = size
+            )
+        }
+    }
+}
+
+/**
+ * Data class representing a star in the warp field
+ */
+private data class WarpStar(
+    val angle: Float,
+    val distance: Float,
+    val size: Float,
+    val speed: Float,
+    val color: Color
+)
 
