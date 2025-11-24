@@ -20,15 +20,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun SelectableCard(
     title: String,
-    icon: ImageVector,
+    icon: Painter,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth()
@@ -54,7 +52,7 @@ fun SelectableCard(
             horizontalArrangement = Arrangement.Start
         ) {
             Icon(
-                imageVector = icon,
+                painter = icon,
                 contentDescription = title,
                 tint = if (isSelected) {
                     MaterialTheme.colorScheme.primary
@@ -66,10 +64,7 @@ fun SelectableCard(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                ),
+                style = MaterialTheme.typography.bodyMedium,
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -83,13 +78,12 @@ fun SelectableCard(
 @Composable
 fun SelectableOutlineCard(
     title: String,
-    icon: ImageVector,
+    icon: Painter,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(
             1.dp,
@@ -112,18 +106,15 @@ fun SelectableOutlineCard(
             horizontalArrangement = Arrangement.Start
         ) {
             Icon(
-                imageVector = icon,
+                painter = icon,
                 contentDescription = title,
                 tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                ),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }

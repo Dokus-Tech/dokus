@@ -167,7 +167,7 @@ private fun BottomNavigationLayout(
         topBar = {
             if (selectedItem.showTopBar) {
                 ai.dokus.foundation.design.components.common.PTopAppBar(
-                    title = org.jetbrains.compose.resources.stringResource(selectedItem.title)
+                    title = org.jetbrains.compose.resources.stringResource(selectedItem.titleRes)
                 )
             }
         },

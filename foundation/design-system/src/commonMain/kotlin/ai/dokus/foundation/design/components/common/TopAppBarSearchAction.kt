@@ -2,6 +2,8 @@ package ai.dokus.foundation.design.components.common
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +32,13 @@ fun PTopAppBarSearchAction(
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                 actionIconContentColor = MaterialTheme.colorScheme.onSurface
             ),
-            title = { searchContent() },
-            actions = { actions() }
+            title = {
+                searchContent()
+            },
+            actions = {
+                actions()
+                Spacer(Modifier.width(16.dp))
+            }
         )
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,

@@ -8,15 +8,14 @@ import ai.dokus.app.core.DashboardWidget
 import ai.dokus.app.core.ModuleSettingsGroup
 import ai.dokus.app.navigation.AppNavigationProvider
 import ai.dokus.app.navigation.HomeNavigationProvider
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.chart_bar_trend_up
+import ai.dokus.app.resources.generated.home_dashboard
+import ai.dokus.app.resources.generated.home_settings
+import ai.dokus.app.resources.generated.user
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.destinations.HomeDestination
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Settings
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.home_dashboard
-import ai.dokus.app.resources.generated.home_settings
 
 internal object AppMainModule : AppModule {
     // Presentation layer
@@ -24,14 +23,14 @@ internal object AppMainModule : AppModule {
     override val homeNavigationProvider = HomeNavigationProvider
     override val homeItems: List<HomeItem> = listOf(
         HomeItem(
-            title = Res.string.home_dashboard,
-            icon = Icons.Default.Dashboard,
+            titleRes = Res.string.home_dashboard,
+            iconRes = Res.drawable.chart_bar_trend_up,
             destination = HomeDestination.Dashboard,
             priority = HomeItemPriority.High,
         ),
         HomeItem(
-            title = Res.string.home_settings,
-            icon = Icons.Default.Settings,
+            titleRes = Res.string.home_settings,
+            iconRes = Res.drawable.user,
             destination = HomeDestination.Settings,
             showTopBar = true,
             priority = HomeItemPriority.Low,
