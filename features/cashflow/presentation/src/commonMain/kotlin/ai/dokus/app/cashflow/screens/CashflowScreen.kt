@@ -8,16 +8,16 @@ import ai.dokus.app.cashflow.components.needingConfirmation
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
-import ai.dokus.foundation.design.components.common.Breakpoints
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
-import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.components.common.Breakpoints
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
-import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.navigation.destinations.HomeDestination
+import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.background
@@ -36,6 +36,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,12 +53,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * Main cashflow screen showing financial documents table and VAT summary.
+ * The main cashflow screen showing financial documents table and VAT summary.
  * Responsive layout that adapts to mobile and desktop screen sizes.
  */
 @Composable
@@ -83,7 +83,7 @@ internal fun CashflowScreen(
                         variant = PButtonVariant.Outline,
                         icon = Icons.Default.Add,
                         iconPosition = PIconPosition.Trailing,
-                        onClick = { navController.navigateTo(HomeDestination.CashflowUpload) }
+                        onClick = { navController.navigateTo(CashFlowDestination.AddDocument) }
                     )
                 }
             )
