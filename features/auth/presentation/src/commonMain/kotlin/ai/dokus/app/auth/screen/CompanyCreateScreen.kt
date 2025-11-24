@@ -4,7 +4,6 @@ import ai.dokus.app.auth.components.CompanyCreateContent
 import ai.dokus.app.auth.components.CompanyCreateLayout
 import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightFollowEffect
 import ai.dokus.foundation.design.constrains.isLargeScreen
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
@@ -52,9 +51,8 @@ internal fun CompanyCreateScreen(
     val isSubmitting = state is ai.dokus.app.core.state.DokusState.Loading
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Background effects: bubbles + brand spotlight following the cursor
+        // Background effects: bubbles and brand spotlight following the cursor
         EnhancedFloatingBubbles()
-        SpotlightFollowEffect()
 
         CompanyCreateContent(
             layout = if (isLargeScreen) CompanyCreateLayout.Desktop else CompanyCreateLayout.Mobile,
