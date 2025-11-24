@@ -7,14 +7,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -26,7 +27,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 
 /**
- * Compact search field used in top bars and narrow spaces.
+ * Compact search field for top bars; independent of PTextField.
  */
 @Composable
 fun PSearchFieldCompact(
@@ -34,8 +35,9 @@ fun PSearchFieldCompact(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
+    fieldName: String = "Search",
 ) {
-    val containerShape = remember { RoundedCornerShape(8.dp) }
+    val shape = RoundedCornerShape(8.dp)
     val textStyle: TextStyle = LocalTextStyle.current.copy(
         fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
@@ -44,31 +46,30 @@ fun PSearchFieldCompact(
 
     Row(
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 40.dp)
-            .border(1.dp, MaterialTheme.colorScheme.outline, containerShape)
-            .background(MaterialTheme.colorScheme.surface, containerShape)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .widthIn(min = 200.dp, max = 360.dp)
+            .height(42.dp)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        PIcon(icon = FeatherIcons.Search, description = "Search", modifier = Modifier)
-
+        PIcon(icon = FeatherIcons.Search, description = fieldName)
         Box(Modifier.weight(1f)) {
             if (value.isEmpty()) {
-                // Placeholder uses onSurfaceVariant to be less prominent
-                androidx.compose.material3.Text(
+                Text(
+                    modifier = Modifier.align(Alignment.CenterStart),
                     text = placeholder,
                     style = textStyle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
                 textStyle = textStyle,
                 singleLine = true,
+                modifier = Modifier.fillMaxWidth().align(Alignment.CenterStart),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { inner -> inner() }
             )
