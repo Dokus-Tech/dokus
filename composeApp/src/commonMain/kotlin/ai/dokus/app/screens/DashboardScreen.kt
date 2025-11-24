@@ -8,14 +8,14 @@ import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Briefcase
 
 @Composable
 fun DashboardScreen() {
@@ -36,8 +36,8 @@ fun DashboardScreen() {
                     PButton(
                         text = "Workspace 1",
                         variant = PButtonVariant.Outline,
-                        icon = FeatherIcons.Briefcase,
-                        iconPosition = PIconPosition.Leading,
+                        icon = Icons.Default.SwitchAccount,
+                        iconPosition = PIconPosition.Trailing,
                         onClick = { navController.navigateTo(AuthDestination.CompanySelect) }
                     )
                 }

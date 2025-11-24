@@ -18,7 +18,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+
+private fun CompanySelectViewModel.Effect.handle(navController: NavController) {
+    when (this) {
+        is CompanySelectViewModel.Effect.CompanySelected -> {
+            navController.replace(CoreDestination.Home)
+        }
+
+        is CompanySelectViewModel.Effect.SelectionFailed -> {}
+    }
+}
 
 @Composable
 internal fun CompanySelectScreen(
@@ -28,18 +40,18 @@ internal fun CompanySelectScreen(
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(viewModel) {
+        launch { viewModel.effect.collect { it.handle(navController) } }
         viewModel.loadOrganizations()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Background effects: bubbles and spotlight following the cursor
         EnhancedFloatingBubbles()
         SpotlightFollowEffect()
 
         CompanySelection(
             state = state,
             layout = if (isLargeScreen) CompanySelectLayout.Desktop else CompanySelectLayout.Mobile,
-            onCompanyClick = { navController.replace(CoreDestination.Home) },
+            onCompanyClick = { viewModel.selectOrganization(it.id) },
             onAddCompanyClick = { navController.navigateTo(AuthDestination.CompanyCreate) }
         )
     }
