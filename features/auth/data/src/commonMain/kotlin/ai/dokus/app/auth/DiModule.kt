@@ -16,9 +16,13 @@ import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
+import ai.dokus.app.auth.usecases.GetCurrentOrganizationUseCase
+import ai.dokus.app.auth.usecases.GetCurrentOrganizationUseCaseImpl
 import ai.dokus.app.auth.usecases.LoginUseCase
 import ai.dokus.app.auth.usecases.LogoutUseCase
 import ai.dokus.app.auth.usecases.RegisterAndLoginUseCase
+import ai.dokus.app.auth.usecases.SelectOrganizationUseCase
+import ai.dokus.app.auth.usecases.SelectOrganizationUseCaseImpl
 import ai.dokus.app.auth.utils.JwtDecoder
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
@@ -164,4 +168,11 @@ val authDomainModule = module {
     single { RegisterAndLoginUseCase(get()) }
     single { LogoutUseCase(get()) }
     single { CheckAccountUseCase() }
+    single<GetCurrentOrganizationUseCase> {
+        GetCurrentOrganizationUseCaseImpl(
+            get<TokenManager>(),
+            get<OrganizationRemoteService>()
+        )
+    }
+    single<SelectOrganizationUseCase> { SelectOrganizationUseCaseImpl(get<AuthRepository>()) }
 }

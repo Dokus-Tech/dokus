@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -25,8 +26,8 @@ fun ColumnScope.DokusNavigationRail(
         mainItems.forEach { item ->
             val isSelected = selectedItem == item
             SelectableCard(
-                stringResource(item.title),
-                item.icon,
+                title = stringResource(item.titleRes),
+                icon = painterResource(item.iconRes),
                 isSelected = isSelected,
                 onClick = { onSelectedItemChange(item) }
             )
@@ -38,8 +39,8 @@ fun ColumnScope.DokusNavigationRail(
     // Profile/Settings Section
     val profileItem = navItems.last()
     SelectableOutlineCard(
-        stringResource(profileItem.title),
-        profileItem.icon,
+        stringResource(profileItem.titleRes),
+        painterResource(profileItem.iconRes),
         selectedItem == profileItem
     ) { onSelectedItemChange(profileItem) }
 }

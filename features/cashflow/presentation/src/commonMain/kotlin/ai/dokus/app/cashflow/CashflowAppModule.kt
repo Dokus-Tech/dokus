@@ -10,14 +10,13 @@ import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.AppPresentationModuleDi
 import ai.dokus.app.core.DashboardWidget
 import ai.dokus.app.core.ModuleSettingsGroup
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow
+import ai.dokus.app.resources.generated.cashflow_title
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.HomeDestination
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow_title
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
 
 /**
  * Cashflow module registration for dependency injection.
@@ -31,8 +30,8 @@ object CashflowAppModule : AppModule {
     override val homeItems: List<HomeItem> = listOf(
         HomeItem(
             destination = HomeDestination.Cashflow,
-            title = Res.string.cashflow_title,
-            icon = Icons.Default.AccountBalance,
+            titleRes = Res.string.cashflow_title,
+            iconRes = Res.drawable.cashflow,
             priority = HomeItemPriority.High,
             showTopBar = false
         )
