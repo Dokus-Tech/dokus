@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.domain.OrganizationRemoteService
-import ai.dokus.app.auth.repository.AuthRepository
+import ai.dokus.app.auth.usecases.SelectOrganizationUseCase
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.ids.OrganizationId
@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 internal class CompanySelectViewModel(
     private val organizationRemoteService: OrganizationRemoteService,
-    private val authRepository: AuthRepository
+    private val selectOrganizationUseCase: SelectOrganizationUseCase
 ) : BaseViewModel<DokusState<List<Organization>>>(DokusState.idle()) {
 
     private val logger = Logger.forClass<CompanySelectViewModel>()
@@ -40,7 +40,7 @@ internal class CompanySelectViewModel(
     fun selectOrganization(organizationId: OrganizationId) {
         scope.launch {
             runCatching {
-                authRepository.selectOrganization(organizationId).getOrThrow()
+                selectOrganizationUseCase(organizationId).getOrThrow()
             }.onSuccess {
                 mutableEffect.emit(Effect.CompanySelected)
             }.onFailure { error ->

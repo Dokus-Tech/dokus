@@ -44,6 +44,7 @@ fun PButton(
     contentDescription: String? = PButtonDefaults.contentDescription,
     iconPosition: PIconPosition = PButtonDefaults.iconPosition,
     isEnabled: Boolean = true,
+    isLoading: Boolean = false,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
