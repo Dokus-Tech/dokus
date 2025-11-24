@@ -40,7 +40,7 @@ enum class CompanySelectLayout { Desktop, Mobile }
 fun CompanySelection(
     state: DokusState<List<Organization>>,
     layout: CompanySelectLayout,
-    onCompanyClick: (Organization?) -> Unit,
+    onCompanyClick: (Organization) -> Unit,
     onAddCompanyClick: () -> Unit,
 ) {
     when (layout) {
@@ -52,7 +52,7 @@ fun CompanySelection(
 @Composable
 private fun DesktopLayout(
     state: DokusState<List<Organization>>,
-    onCompanyClick: (Organization?) -> Unit,
+    onCompanyClick: (Organization) -> Unit,
     onAddCompanyClick: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -83,7 +83,7 @@ private fun DesktopLayout(
 @Composable
 private fun MobileLayout(
     state: DokusState<List<Organization>>,
-    onCompanyClick: (Organization?) -> Unit,
+    onCompanyClick: (Organization) -> Unit,
     onAddCompanyClick: () -> Unit,
 ) {
     Column(
@@ -115,7 +115,7 @@ private fun MobileLayout(
 private fun SelectionBody(
     state: DokusState<List<Organization>>,
     isMobile: Boolean,
-    onCompanyClick: (Organization?) -> Unit,
+    onCompanyClick: (Organization) -> Unit,
     onAddCompanyClick: () -> Unit,
 ) {
     SectionTitle(
@@ -138,13 +138,13 @@ private fun SelectionBody(
 private fun StateDrivenContent(
     state: DokusState<List<Organization>>,
     isMobile: Boolean,
-    onCompanyClick: (Organization?) -> Unit,
+    onCompanyClick: (Organization) -> Unit,
     onAddCompanyClick: () -> Unit,
 ) {
     when (state) {
         is DokusState.Success -> {
             val companies = state.data
-            // FlowRow adapts to available width, suitable for both mobile and desktop.
+            // FlowRow adapts to the available width, suitable for both mobile and desktop.
             // Items use width constraints so they can expand when space allows.
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),

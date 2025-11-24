@@ -1,6 +1,9 @@
 package ai.dokus.foundation.design.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.arrow_left
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,9 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.arrow_left
-import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.painterResource
 
 enum class PButtonVariant {
@@ -64,28 +64,27 @@ fun PButton(
                 enabled = isEnabled,
                 modifier = modifier.height(42.dp),
                 shape = RoundedCornerShape(8.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                contentPadding = PaddingValues(
                     horizontal = 16.dp,
-                    vertical = 10.dp
+                    vertical = 8.dp
                 )
             ) {
                 if (icon != null && iconPosition == PIconPosition.Leading) {
                     Icon(
                         imageVector = icon,
                         contentDescription = contentDescription,
-                        modifier = Modifier.size(18.dp).padding(end = 8.dp)
+                        modifier = Modifier.size(24.dp).padding(end = 8.dp)
                     )
                 }
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    fontSize = 14.sp
+                    style = MaterialTheme.typography.bodyMedium,
                 )
                 if (icon != null && iconPosition == PIconPosition.Trailing) {
                     Icon(
                         imageVector = icon,
                         contentDescription = contentDescription,
-                        modifier = Modifier.size(18.dp).padding(start = 8.dp)
+                        modifier = Modifier.size(24.dp).padding(start = 8.dp)
                     )
                 }
             }
