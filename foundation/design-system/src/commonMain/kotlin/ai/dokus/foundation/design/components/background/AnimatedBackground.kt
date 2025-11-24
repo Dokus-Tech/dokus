@@ -385,136 +385,343 @@ fun SpotlightFollowEffect() {
 }
 
 /**
- * Enhanced floating bubbles effect with 100 particles featuring complex animations:
- * - Upward floating motion
- * - Horizontal wobble
- * - Circular drift
- * - Multi-layer glow effects
- * - 3D highlights and shadows
+ * Enum representing different types of mystical particles
+ */
+enum class ParticleType {
+    CRYSTAL,  // Prismatic crystal fragments
+    FIREFLY,  // Glowing energy orbs
+    STARDUST  // Twinkling star particles
+}
+
+/**
+ * Data class representing a mystical particle with advanced properties
+ */
+data class MysticalParticle(
+    val type: ParticleType,
+    val x: Float,              // Horizontal position (0-1)
+    val y: Float,              // Vertical position (0-1)
+    val z: Float,              // Depth layer (0=back, 1=front)
+    val size: Float,           // Base particle size
+    val speed: Float,          // Movement speed multiplier
+    val color: Color,          // Base color
+    val pulsePhase: Float,     // Individual animation phase offset
+    val orbitRadius: Float     // Orbital movement radius
+)
+
+/**
+ * Advanced mystical particle system featuring multiple particle types:
+ * - Crystal fragments with prismatic refraction
+ * - Firefly-like energy orbs with pulsing light
+ * - Stardust trails with constellation connections
+ * - Magnetic field interactions between particles
+ * - Depth layers with bokeh and parallax effects
  */
 @Composable
 fun EnhancedFloatingBubbles() {
-    val bubbleCount = 100
-    val bubbles = remember {
-        List(bubbleCount) {
-            Bubble(
+    // Create diverse particle types for rich visual effect
+    val particles = remember {
+        val particleList = mutableListOf<MysticalParticle>()
+
+        // Layer 1: Background stardust (60 particles)
+        repeat(60) {
+            particleList.add(MysticalParticle(
+                type = ParticleType.STARDUST,
                 x = Random.nextFloat(),
-                startY = Random.nextFloat(),
-                size = Random.nextFloat() * 3f + 0.5f,
-                speed = Random.nextFloat() * 0.5f + 0.2f,
-                wobbleAmplitude = Random.nextFloat() * 25f + 10f,
-                wobbleFrequency = Random.nextFloat() * 4f + 1f,
-                delay = Random.nextFloat() * 20f,
-                opacity = Random.nextFloat() * 0.3f + 0.15f,
-                angle = Random.nextFloat() * 360f
-            )
+                y = Random.nextFloat(),
+                z = Random.nextFloat() * 0.3f, // Far background
+                size = Random.nextFloat() * 1.5f + 0.3f,
+                speed = Random.nextFloat() * 0.15f + 0.05f,
+                color = listOf(
+                    Color(0xFFB8D4E3), // Pale blue
+                    Color(0xFFE3D4FF), // Pale purple
+                    Color(0xFFFFE4E1)  // Pale pink
+                ).random(),
+                pulsePhase = Random.nextFloat() * 6.28f,
+                orbitRadius = 0f
+            ))
         }
+
+        // Layer 2: Crystal fragments (25 particles)
+        repeat(25) {
+            particleList.add(MysticalParticle(
+                type = ParticleType.CRYSTAL,
+                x = Random.nextFloat(),
+                y = Random.nextFloat(),
+                z = Random.nextFloat() * 0.4f + 0.3f, // Mid-ground
+                size = Random.nextFloat() * 4f + 2f,
+                speed = Random.nextFloat() * 0.25f + 0.1f,
+                color = listOf(
+                    Color(0xFF7B68EE), // Medium slate blue
+                    Color(0xFF9370DB), // Medium purple
+                    Color(0xFF40E0D0), // Turquoise
+                    Color(0xFFDDA0DD), // Plum
+                ).random(),
+                pulsePhase = Random.nextFloat() * 6.28f,
+                orbitRadius = Random.nextFloat() * 30f + 10f
+            ))
+        }
+
+        // Layer 3: Firefly energy orbs (20 particles)
+        repeat(20) {
+            particleList.add(MysticalParticle(
+                type = ParticleType.FIREFLY,
+                x = Random.nextFloat(),
+                y = Random.nextFloat(),
+                z = Random.nextFloat() * 0.3f + 0.7f, // Foreground
+                size = Random.nextFloat() * 2f + 1f,
+                speed = Random.nextFloat() * 0.3f + 0.15f,
+                color = listOf(
+                    Color(0xFFFFD700), // Gold
+                    Color(0xFFFFA500), // Orange
+                    Color(0xFF00CED1), // Dark turquoise
+                ).random(),
+                pulsePhase = Random.nextFloat() * 6.28f,
+                orbitRadius = Random.nextFloat() * 50f + 20f
+            ))
+        }
+
+        particleList
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "bubbles")
-    val time by infiniteTransition.animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "mysticalParticles")
+
+    val globalTime by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 100f,
+        targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 50000, easing = LinearEasing)
+            animation = tween(durationMillis = 60000, easing = LinearEasing)
         ),
-        label = "bubbleTime"
+        label = "globalTime"
+    )
+
+    val breathingPulse by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "breathingPulse"
+    )
+
+    val magneticField by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 6.28f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 10000, easing = LinearEasing)
+        ),
+        label = "magneticField"
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val canvasWidth = size.width
         val canvasHeight = size.height
 
-        bubbles.forEach { bubble ->
-            val progress = ((time + bubble.delay) * bubble.speed) % 100f / 100f
+        // Sort particles by Z-depth for proper layering
+        val sortedParticles = particles.sortedBy { it.z }
 
-            val baseY = (bubble.startY + progress) % 1.2f
-            val y = canvasHeight * baseY
+        // Track particle positions for constellation connections
+        val crystalPositions = mutableListOf<Offset>()
 
-            val wobblePhase = (time + bubble.delay) * bubble.wobbleFrequency * 0.05f
-            val wobble = sin(wobblePhase) * bubble.wobbleAmplitude
+        sortedParticles.forEach { particle ->
+            val timeOffset = globalTime * 0.01f * particle.speed
 
-            val circularPhase = (time + bubble.delay + bubble.angle) * 0.02f
-            val circularDrift = cos(circularPhase) * 15f
+            // Calculate position with depth-based parallax
+            val parallaxFactor = 1f - particle.z * 0.5f
+            val baseX = particle.x * canvasWidth
+            val baseY = ((particle.y + timeOffset) % 1.3f - 0.15f) * canvasHeight
 
-            val x = (bubble.x * canvasWidth) + wobble + circularDrift
+            // Add magnetic field influence
+            val magneticInfluence = sin(magneticField + particle.pulsePhase) * 20f * particle.z
+            val wobble = cos(globalTime * 0.02f + particle.pulsePhase) * particle.orbitRadius * parallaxFactor
 
-            val distanceFromCenter = kotlin.math.abs(x - canvasWidth / 2f) / (canvasWidth / 2f)
-            val centerFade = 1f - (distanceFromCenter * 0.3f)
+            val x = baseX + wobble + magneticInfluence
+            val y = baseY
 
-            val verticalFade = when {
-                baseY < 0.15f -> baseY / 0.15f
-                baseY > 1.0f -> kotlin.math.max(0f, (1.2f - baseY) / 0.2f)
-                else -> 1f
+            // Depth-based opacity and blur effect
+            val depthAlpha = 0.3f + particle.z * 0.7f
+            val blurRadius = (1f - particle.z) * 3f
+
+            when (particle.type) {
+                ParticleType.CRYSTAL -> {
+                    val position = Offset(x, y)
+                    crystalPositions.add(position)
+
+                    // Crystal refraction effect - multiple color layers
+                    val rotation = globalTime * 2f + particle.pulsePhase * 57.3f
+
+                    // Prismatic light splitting
+                    val prismColors = listOf(
+                        Color(0xFFFF6B6B), // Red
+                        Color(0xFF4ECDC4), // Cyan
+                        Color(0xFF95E77E), // Green
+                        Color(0xFFF7DC6F), // Yellow
+                        Color(0xFFBB8FCE), // Purple
+                    )
+
+                    prismColors.forEachIndexed { index, prismColor ->
+                        val angle = (rotation + index * 72f) * 0.017453f
+                        val offset = Offset(
+                            x + cos(angle) * particle.size * 0.3f,
+                            y + sin(angle) * particle.size * 0.3f
+                        )
+
+                        drawCircle(
+                            color = prismColor.copy(alpha = depthAlpha * 0.15f * breathingPulse),
+                            radius = particle.size * 1.2f,
+                            center = offset
+                        )
+                    }
+
+                    // Crystal core with gradient
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                particle.color.copy(alpha = depthAlpha * 0.8f),
+                                particle.color.copy(alpha = depthAlpha * 0.4f),
+                                Color.Transparent
+                            ),
+                            center = position,
+                            radius = particle.size
+                        ),
+                        center = position,
+                        radius = particle.size
+                    )
+
+                    // Crystal facet highlights
+                    repeat(3) { facet ->
+                        val facetAngle = (rotation + facet * 120f) * 0.017453f
+                        val facetOffset = Offset(
+                            x + cos(facetAngle) * particle.size * 0.5f,
+                            y + sin(facetAngle) * particle.size * 0.5f
+                        )
+                        drawCircle(
+                            color = Color.White.copy(alpha = depthAlpha * 0.9f * breathingPulse),
+                            radius = particle.size * 0.15f,
+                            center = facetOffset
+                        )
+                    }
+                }
+
+                ParticleType.FIREFLY -> {
+                    val pulseFactor = sin(globalTime * 0.05f + particle.pulsePhase) * 0.5f + 0.5f
+                    val glowIntensity = pulseFactor * breathingPulse
+
+                    // Outer energy field
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                particle.color.copy(alpha = depthAlpha * 0.1f * glowIntensity),
+                                Color.Transparent
+                            ),
+                            center = Offset(x, y),
+                            radius = particle.size * 8f
+                        ),
+                        center = Offset(x, y),
+                        radius = particle.size * 8f
+                    )
+
+                    // Middle glow ring
+                    drawCircle(
+                        color = particle.color.copy(alpha = depthAlpha * 0.3f * glowIntensity),
+                        radius = particle.size * 3f,
+                        center = Offset(x, y)
+                    )
+
+                    // Bright core
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = depthAlpha * 0.95f),
+                                particle.color.copy(alpha = depthAlpha * 0.7f),
+                                particle.color.copy(alpha = depthAlpha * 0.3f)
+                            ),
+                            center = Offset(x, y),
+                            radius = particle.size * glowIntensity
+                        ),
+                        center = Offset(x, y),
+                        radius = particle.size * glowIntensity
+                    )
+
+                    // Energy sparks
+                    repeat(4) { spark ->
+                        val sparkAngle = (globalTime * 3f + spark * 90f) * 0.017453f
+                        val sparkDistance = particle.size * 2f * glowIntensity
+                        drawCircle(
+                            color = Color.White.copy(alpha = depthAlpha * 0.6f * pulseFactor),
+                            radius = 0.5f,
+                            center = Offset(
+                                x + cos(sparkAngle) * sparkDistance,
+                                y + sin(sparkAngle) * sparkDistance
+                            )
+                        )
+                    }
+                }
+
+                ParticleType.STARDUST -> {
+                    val twinkle = kotlin.math.abs(sin(globalTime * 0.1f + particle.pulsePhase))
+
+                    // Bokeh blur for depth
+                    if (particle.z < 0.2f) {
+                        drawCircle(
+                            color = particle.color.copy(alpha = depthAlpha * 0.1f),
+                            radius = particle.size * (3f + blurRadius),
+                            center = Offset(x, y)
+                        )
+                    }
+
+                    // Star core
+                    drawCircle(
+                        color = particle.color.copy(alpha = depthAlpha * 0.6f * twinkle),
+                        radius = particle.size,
+                        center = Offset(x, y)
+                    )
+
+                    // Star rays
+                    val rayLength = particle.size * 4f * twinkle
+                    listOf(0f, 90f, 180f, 270f).forEach { angle ->
+                        val rad = angle * 0.017453f
+                        drawLine(
+                            color = particle.color.copy(alpha = depthAlpha * 0.3f * twinkle),
+                            start = Offset(x, y),
+                            end = Offset(
+                                x + cos(rad) * rayLength,
+                                y + sin(rad) * rayLength
+                            ),
+                            strokeWidth = 0.5f
+                        )
+                    }
+                }
             }
+        }
 
-            val alpha = centerFade * verticalFade * bubble.opacity
-
-            val sizeSpeedFactor = 1f + (1f - bubble.size / 3.5f) * 0.3f
-            val adjustedY = y - (progress * 10f * sizeSpeedFactor)
-
-            // Outer glow
-            drawCircle(
-                color = Color.White.copy(alpha = alpha * 0.06f),
-                radius = bubble.size * 5f,
-                center = Offset(x, adjustedY)
-            )
-
-            // Middle glow
-            drawCircle(
-                color = Color.White.copy(alpha = alpha * 0.12f),
-                radius = bubble.size * 2.5f,
-                center = Offset(x, adjustedY)
-            )
-
-            // Core glow with gold tint
-            drawCircle(
-                color = Color(0xFFD4AF37).copy(alpha = alpha * 0.08f),
-                radius = bubble.size * 1.3f,
-                center = Offset(x, adjustedY)
-            )
-
-            // Main bubble
-            drawCircle(
-                color = Color.White.copy(alpha = alpha * 0.4f),
-                radius = bubble.size,
-                center = Offset(x, adjustedY)
-            )
-
-            // Highlight for 3D effect
-            drawCircle(
-                color = Color.White.copy(alpha = alpha * 0.7f),
-                radius = bubble.size * 0.35f,
-                center = Offset(
-                    x - bubble.size * 0.3f,
-                    adjustedY - bubble.size * 0.3f
+        // Draw constellation connections between nearby crystals
+        crystalPositions.forEachIndexed { i, pos1 ->
+            crystalPositions.drop(i + 1).forEach { pos2 ->
+                val distance = kotlin.math.sqrt(
+                    (pos2.x - pos1.x) * (pos2.x - pos1.x) +
+                    (pos2.y - pos1.y) * (pos2.y - pos1.y)
                 )
-            )
 
-            // Subtle shadow/depth
-            drawCircle(
-                color = Color(0xFF000000).copy(alpha = alpha * 0.08f),
-                radius = bubble.size * 0.25f,
-                center = Offset(
-                    x + bubble.size * 0.35f,
-                    adjustedY + bubble.size * 0.35f
-                )
-            )
+                if (distance < 150f) {
+                    val connectionAlpha = (1f - distance / 150f) * 0.15f
+                    drawLine(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF9370DB).copy(alpha = connectionAlpha),
+                                Color(0xFF9370DB).copy(alpha = connectionAlpha * 0.3f),
+                                Color(0xFF9370DB).copy(alpha = connectionAlpha)
+                            ),
+                            start = pos1,
+                            end = pos2
+                        ),
+                        start = pos1,
+                        end = pos2,
+                        strokeWidth = 0.5f * breathingPulse
+                    )
+                }
+            }
         }
     }
 }
 
-/**
- * Data class representing a single floating bubble particle.
- */
-data class Bubble(
-    val x: Float,
-    val startY: Float,
-    val size: Float,
-    val speed: Float,
-    val wobbleAmplitude: Float,
-    val wobbleFrequency: Float,
-    val delay: Float,
-    val opacity: Float,
-    val angle: Float
-)
