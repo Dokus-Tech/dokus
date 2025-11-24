@@ -122,6 +122,26 @@ services:
       timeout: 5s
       retries: 10
 
+  # PostgreSQL Database for Media Service
+  postgres-media-local:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-media-local
+    environment:
+      POSTGRES_DB: dokus_media
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: localpassword
+    ports:
+      - "15547:5432"
+    volumes:
+      - postgres-media-local:/var/lib/postgresql/data
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_media"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # Shared Redis
   redis-local:
     image: redis:8-alpine
@@ -383,6 +403,45 @@ services:
       - ./logs-local:/app/logs
       - cashflow-storage-local:/app/storage/documents
 
+  # Media Service
+  media-service-local:
+    image: invoid-vision/dokus-media:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-media-local
+    environment:
+      PORT: 7097
+      ENVIRONMENT: local
+      DB_URL: jdbc:postgresql://postgres-media-local:5432/dokus_media
+      DB_USERNAME: dev
+      DB_PASSWORD: localpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: local.dokus.tech
+      JWT_AUDIENCE: dokus-api-local
+      RABBITMQ_HOST: rabbitmq-local
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: dokus
+      RABBITMQ_PASSWORD: localrabbitpass
+      RABBITMQ_VHOST: /dokus
+      LOG_LEVEL: DEBUG
+    ports:
+      - "7097:7097"
+      - "15013:5013"
+    depends_on:
+      postgres-media-local:
+        condition: service_healthy
+      rabbitmq-local:
+        condition: service_healthy
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7097/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-local:/app/logs
+      - media-storage-local:/app/storage/media
+
   # pgAdmin for database management (profile: tools)
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -410,7 +469,9 @@ volumes:
   postgres-audit-local:
   postgres-banking-local:
   postgres-cashflow-local:
+  postgres-media-local:
   redis-data-local:
   rabbitmq-data-local:
   pgadmin-data:
   cashflow-storage-local:
+  media-storage-local:

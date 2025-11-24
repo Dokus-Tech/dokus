@@ -81,6 +81,9 @@ kotlin {
 
             implementation(projects.features.cashflow.data)
             implementation(projects.features.cashflow.presentation)
+            implementation(projects.features.media.data)
+            implementation(projects.features.media.presentation)
+            implementation(projects.features.media.domain)
 
             implementation(projects.foundation.domain)
 
