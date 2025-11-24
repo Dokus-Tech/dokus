@@ -1,11 +1,114 @@
 package ai.dokus.app.screens
 
+import ai.dokus.app.core.state.isLoading
+import ai.dokus.app.core.state.isSuccess
+import ai.dokus.app.viewmodel.DashboardViewModel
+import ai.dokus.foundation.design.components.PButton
+import ai.dokus.foundation.design.components.PButtonVariant
+import ai.dokus.foundation.design.components.PIconPosition
+import ai.dokus.foundation.design.components.common.PSearchFieldCompact
+import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.constrains.isLargeScreen
+import ai.dokus.foundation.navigation.destinations.AuthDestination
+import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.navigation.navigateTo
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwitchAccount
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Search
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun DashboardScreen() {
-    Scaffold {
+internal fun DashboardScreen(
+    viewModel: DashboardViewModel = koinViewModel()
+) {
+    val navController = LocalNavController.current
+    var searchQuery by remember { mutableStateOf("") }
+    val isLargeScreen = isLargeScreen
+    var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
+    val searchExpanded = isLargeScreen || isSearchExpanded
 
+    val currentOrganizationState by viewModel.currentOrganizationState.collectAsState()
+    val currentOrganization = currentOrganizationState.let { if (it.isSuccess()) it.data else null }
+
+    LaunchedEffect(viewModel) {
+        viewModel.refreshOrganization()
+    }
+
+    LaunchedEffect(isLargeScreen) {
+        isSearchExpanded = isLargeScreen
+    }
+
+    Scaffold(
+        topBar = {
+            PTopAppBarSearchAction(
+                searchContent = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (!isLargeScreen && !searchExpanded) {
+                            IconButton(
+                                onClick = { isSearchExpanded = true },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = FeatherIcons.Search,
+                                    contentDescription = "Search"
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(
+                            visible = searchExpanded,
+                            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+                            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
+                        ) {
+                            PSearchFieldCompact(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                placeholder = "Search...",
+                                modifier = if (isLargeScreen) Modifier else Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    PButton(
+                        text = currentOrganization?.legalName?.value ?: "Select Organization",
+                        variant = PButtonVariant.Outline,
+                        icon = Icons.Default.SwitchAccount,
+                        iconPosition = PIconPosition.Trailing,
+                        isLoading = currentOrganizationState.isLoading(),
+                        onClick = { navController.navigateTo(AuthDestination.CompanySelect) }
+                    )
+                }
+            )
+        }
+    ) { _ ->
+        // Content goes here
     }
 }

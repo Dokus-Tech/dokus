@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -22,10 +23,10 @@ fun DokusNavigationBar(
     NavigationBar(modifier = modifier) {
         navItems.forEach {
             NavigationBarItem(
-                icon = { Icon(it.icon, contentDescription = null) },
+                icon = { Icon(painterResource(it.iconRes), contentDescription = null) },
                 label = {
                     Text(
-                        stringResource(it.title),
+                        stringResource(it.titleRes),
                         style = MaterialTheme.typography.labelSmall,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
