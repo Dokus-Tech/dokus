@@ -96,7 +96,7 @@ BANKING_SERVICE_DIR="features/banking/backend"
 # Format: container:port:dbname
 # Bash 3.2 compatible (no associative arrays)
 
-DB_KEYS="auth payment reporting audit banking cashflow"
+DB_KEYS="auth payment reporting audit banking cashflow media"
 
 # Function to get database config for a given key
 # Returns: service:port:dbname (service name for docker-compose exec)
@@ -109,6 +109,7 @@ get_db_config() {
         reporting) echo "postgres-reporting-local:15544:dokus_reporting" ;;
         audit)     echo "postgres-audit-local:15545:dokus_audit" ;;
         banking)   echo "postgres-banking-local:15546:dokus_banking" ;;
+        media)     echo "postgres-media-local:15547:dokus_media" ;;
         *) echo "" ;;
     esac
 }
@@ -289,7 +290,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow")
+    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "media")
     local total=${#services[@]}
     local current=0
 
@@ -400,12 +401,12 @@ start_services() {
 
         local services=(
             "Auth:7091:/metrics"
-            "Audit:7096:/health"
-            "Banking:7097:/health"
-            "Invoicing:7092:/health"
-            "Expense:7093:/health"
-            "Payment:7094:/health"
-            "Reporting:7095:/health"
+            "Cashflow:7092:/health"
+            "Payment:7093:/health"
+            "Reporting:7094:/health"
+            "Audit:7095:/health"
+            "Banking:7096:/health"
+            "Media:7097:/health"
         )
 
         for service_info in "${services[@]}"; do
@@ -511,6 +512,7 @@ show_status() {
         "Reporting Service:7094:/health"
         "Audit Service:7095:/health"
         "Banking Service:7096:/health"
+        "Media Service:7097:/health"
     )
 
     for service_info in "${services[@]}"; do
@@ -559,12 +561,12 @@ reset_db() {
 
     local options=(
         "① Auth (dokus_auth)"
-        "② Invoicing (dokus_invoicing)"
-        "③ Expense (dokus_expense)"
-        "④ Payment (dokus_payment)"
-        "⑤ Reporting (dokus_reporting)"
-        "⑥ Audit (dokus_audit)"
-        "⑦ Banking (dokus_banking)"
+        "② Cashflow (dokus_cashflow)"
+        "③ Payment (dokus_payment)"
+        "④ Reporting (dokus_reporting)"
+        "⑤ Audit (dokus_audit)"
+        "⑥ Banking (dokus_banking)"
+        "⑦ Media (dokus_media)"
         "⑧ All databases"
     )
 
@@ -580,12 +582,12 @@ reset_db() {
 
     case $choice in
         1) reset_single_db "auth" ;;
-        2) reset_single_db "invoicing" ;;
-        3) reset_single_db "expense" ;;
-        4) reset_single_db "payment" ;;
-        5) reset_single_db "reporting" ;;
-        6) reset_single_db "audit" ;;
-        7) reset_single_db "banking" ;;
+        2) reset_single_db "cashflow" ;;
+        3) reset_single_db "payment" ;;
+        4) reset_single_db "reporting" ;;
+        5) reset_single_db "audit" ;;
+        6) reset_single_db "banking" ;;
+        7) reset_single_db "media" ;;
         8) reset_all_databases ;;
         0) print_status info "Operation cancelled"; echo ""; return ;;
         *) print_status error "Invalid choice"; echo ""; return ;;
@@ -662,13 +664,13 @@ access_db() {
     echo -e "  ${SOFT_CYAN}${BOLD}Select database to access:${NC}\n"
 
     local options=(
-        "① Auth (dokus_auth) - localhost:5541"
-        "② Invoicing (dokus_invoicing) - localhost:5542"
-        "③ Expense (dokus_expense) - localhost:5543"
-        "④ Payment (dokus_payment) - localhost:5544"
-        "⑤ Reporting (dokus_reporting) - localhost:5545"
-        "⑥ Audit (dokus_audit) - localhost:5546"
-        "⑦ Banking (dokus_banking) - localhost:5547"
+        "① Auth (dokus_auth) - localhost:15541"
+        "② Cashflow (dokus_cashflow) - localhost:15542"
+        "③ Payment (dokus_payment) - localhost:15543"
+        "④ Reporting (dokus_reporting) - localhost:15544"
+        "⑤ Audit (dokus_audit) - localhost:15545"
+        "⑥ Banking (dokus_banking) - localhost:15546"
+        "⑦ Media (dokus_media) - localhost:15547"
     )
 
     for option in "${options[@]}"; do
@@ -683,12 +685,12 @@ access_db() {
 
     case $choice in
         1) access_single_db "auth" ;;
-        2) access_single_db "invoicing" ;;
-        3) access_single_db "expense" ;;
-        4) access_single_db "payment" ;;
-        5) access_single_db "reporting" ;;
-        6) access_single_db "audit" ;;
-        7) access_single_db "banking" ;;
+        2) access_single_db "cashflow" ;;
+        3) access_single_db "payment" ;;
+        4) access_single_db "reporting" ;;
+        5) access_single_db "audit" ;;
+        6) access_single_db "banking" ;;
+        7) access_single_db "media" ;;
         0) print_status info "Operation cancelled"; echo ""; return ;;
         *) print_status error "Invalid choice"; echo ""; return ;;
     esac
@@ -778,6 +780,9 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Media Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15013${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
@@ -787,15 +792,15 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Database${NC}             ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Auth${NC}                 ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5541${NC} • ${SOFT_GRAY}dokus_auth${NC}         ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Invoicing${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5542${NC} • ${SOFT_GRAY}dokus_invoicing${NC}    ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Expense${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5543${NC} • ${SOFT_GRAY}dokus_expense${NC}      ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Payment${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5544${NC} • ${SOFT_GRAY}dokus_payment${NC}      ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Reporting${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5545${NC} • ${SOFT_GRAY}dokus_reporting${NC}    ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Audit${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5546${NC} • ${SOFT_GRAY}dokus_audit${NC}        ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Banking${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5547${NC} • ${SOFT_GRAY}dokus_banking${NC}      ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Auth${NC}                 ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15541${NC} • ${SOFT_GRAY}dokus_auth${NC}        ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Cashflow${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15542${NC} • ${SOFT_GRAY}dokus_cashflow${NC}    ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Payment${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15543${NC} • ${SOFT_GRAY}dokus_payment${NC}     ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Reporting${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15544${NC} • ${SOFT_GRAY}dokus_reporting${NC}   ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Audit${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15545${NC} • ${SOFT_GRAY}dokus_audit${NC}       ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Banking${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15546${NC} • ${SOFT_GRAY}dokus_banking${NC}     ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Media${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15547${NC} • ${SOFT_GRAY}dokus_media${NC}       ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:6380${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:25673${NC} • ${SOFT_GRAY}pass: devrabbitpass${NC} ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"

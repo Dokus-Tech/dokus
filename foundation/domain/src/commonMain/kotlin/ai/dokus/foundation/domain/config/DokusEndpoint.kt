@@ -47,4 +47,11 @@ sealed class DokusEndpoint(
         internalHost = BuildKonfig.bankingInternalHost,
         internalPort = BuildKonfig.bankingInternalPort
     )
+
+    data object Media : DokusEndpoint(
+        host = BuildKonfig.mediaHost,
+        port = BuildKonfig.mediaPort,
+        internalHost = BuildKonfig.mediaInternalHost,
+        internalPort = BuildKonfig.mediaInternalPort
+    )
 }

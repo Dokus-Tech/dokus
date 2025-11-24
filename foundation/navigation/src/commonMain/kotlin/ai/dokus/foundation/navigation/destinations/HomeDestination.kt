@@ -14,6 +14,10 @@ sealed interface HomeDestination : NavigationDestination {
     data object Cashflow : HomeDestination
 
     @Serializable
+    @SerialName("media")
+    data object Media : HomeDestination
+
+    @Serializable
     @SerialName("users")
     data object Users : HomeDestination
 

@@ -5,6 +5,7 @@ import ai.dokus.app.cashflow.CashflowAppModule
 import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.ModuleSettingsGroup
 import ai.dokus.app.core.diModules
+import ai.dokus.app.media.MediaAppModule
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import org.jetbrains.compose.resources.StringResource
@@ -13,7 +14,8 @@ import org.koin.core.module.Module
 private val baseAppModules = listOf<AppModule>(
     AppMainModule,
     AuthAppModule,
-    CashflowAppModule
+    CashflowAppModule,
+    MediaAppModule
 )
 
 private val conditionalModules = emptyList<AppModule>()
