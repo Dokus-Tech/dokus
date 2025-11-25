@@ -71,11 +71,11 @@ COPY --from=builder --chown=dokus:dokus \
 USER dokus
 
 # Expose port
-EXPOSE 8091
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8091/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Environment variables with defaults
 ENV JAVA_OPTS="-XX:+UseG1GC \

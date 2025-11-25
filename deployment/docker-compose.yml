@@ -174,7 +174,7 @@ services:
     image: 94.111.226.82:5000/dokus-auth:latest
     container_name: dokus-auth
     environment:
-      PORT: 6091
+      PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-auth:5432/dokus_auth
       DB_USERNAME: ${DB_USERNAME}
@@ -226,7 +226,7 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL}
     ports:
-      - "6091:6091"
+      - "6091:8080"
     depends_on:
       postgres-auth:
         condition: service_healthy
@@ -237,7 +237,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6091/metrics"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -249,7 +249,7 @@ services:
     image: 94.111.226.82:5000/dokus-cashflow:latest
     container_name: dokus-cashflow
     environment:
-      PORT: 6092
+      PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-cashflow:5432/dokus_cashflow
       DB_USERNAME: ${DB_USERNAME}
@@ -265,14 +265,14 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "6092:6092"
+      - "6092:8080"
     depends_on:
       postgres-cashflow:
         condition: service_healthy
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6092/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -284,7 +284,7 @@ services:
     image: 94.111.226.82:5000/dokus-payment:latest
     container_name: dokus-payment
     environment:
-      PORT: 6093
+      PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-payment:5432/dokus_payment
       DB_USERNAME: ${DB_USERNAME}
@@ -300,14 +300,14 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "6093:6093"
+      - "6093:8080"
     depends_on:
       postgres-payment:
         condition: service_healthy
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6093/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -319,7 +319,7 @@ services:
     image: 94.111.226.82:5000/dokus-reporting:latest
     container_name: dokus-reporting
     environment:
-      PORT: 6094
+      PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-reporting:5432/dokus_reporting
       DB_USERNAME: ${DB_USERNAME}
@@ -335,14 +335,14 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "6094:6094"
+      - "6094:8080"
     depends_on:
       postgres-reporting:
         condition: service_healthy
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6094/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -354,7 +354,7 @@ services:
     image: 94.111.226.82:5000/dokus-audit:latest
     container_name: dokus-audit
     environment:
-      PORT: 6095
+      PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-audit:5432/dokus_audit
       DB_USERNAME: ${DB_USERNAME}
@@ -376,7 +376,7 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "6095:6095"
+      - "6095:8080"
     depends_on:
       postgres-audit:
         condition: service_healthy
@@ -385,7 +385,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6095/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -397,7 +397,7 @@ services:
     image: 94.111.226.82:5000/dokus-banking:latest
     container_name: dokus-banking
     environment:
-      PORT: 6096
+      PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres-banking:5432/dokus_banking
       DB_USERNAME: ${DB_USERNAME}
@@ -413,14 +413,14 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "6096:6096"
+      - "6096:8080"
     depends_on:
       postgres-banking:
         condition: service_healthy
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6096/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
