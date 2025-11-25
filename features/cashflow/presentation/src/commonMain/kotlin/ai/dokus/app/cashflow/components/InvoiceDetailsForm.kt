@@ -86,24 +86,20 @@ fun InvoiceDetailsForm(
             )
 
             // Category
-            FormField(label = "Category") {
-                PTextFieldStandard(
-                    fieldName = "Category",
-                    value = category,
-                    onValueChange = { category = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            PTextFieldStandard(
+                fieldName = "Category",
+                value = category,
+                onValueChange = { category = it },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Issue date
-            FormField(label = "Issue date") {
-                PTextFieldStandard(
-                    fieldName = "Issue date",
-                    value = issueDate,
-                    onValueChange = { issueDate = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            PTextFieldStandard(
+                fieldName = "Issue date",
+                value = issueDate,
+                onValueChange = { issueDate = it },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Due date
             PTextFieldStandard(
