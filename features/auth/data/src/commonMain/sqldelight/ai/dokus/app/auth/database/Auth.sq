@@ -1,3 +1,6 @@
 CREATE TABLE IF NOT EXISTS UserEntity (
     id TEXT PRIMARY KEY NOT NULL
 );
+
+clearAllUsers:
+DELETE FROM UserEntity;
