@@ -6,11 +6,8 @@ import ai.dokus.app.cashflow.components.InvoiceDetailsForm
 import ai.dokus.app.cashflow.components.UploadIcon
 import ai.dokus.app.cashflow.components.documentDropTarget
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
-import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.Breakpoints
-import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,10 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,6 +36,7 @@ import com.mohamedrejeb.calf.io.readByteArray
 import com.mohamedrejeb.calf.picker.FilePickerFileType
 import com.mohamedrejeb.calf.picker.FilePickerSelectionMode
 import com.mohamedrejeb.calf.picker.rememberFilePickerLauncher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -57,7 +52,6 @@ internal fun AddDocumentScreen(
     val state by viewModel.state.collectAsState()
     val scope = rememberCoroutineScope()
     val platformContext = LocalPlatformContext.current
-    var searchQuery by remember { mutableStateOf("") }
 
     val filePickerLauncher = rememberFilePickerLauncher(
         type = FilePickerFileType.Document,
@@ -79,8 +73,6 @@ internal fun AddDocumentScreen(
         if (isLargeScreen) {
             // Desktop layout with top bar
             DesktopLayout(
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
                 onAddNewDocument = { filePickerLauncher.launch() },
                 onUploadFile = { filePickerLauncher.launch() },
                 isUploading = state is AddDocumentViewModel.State.Uploading,
@@ -93,7 +85,6 @@ internal fun AddDocumentScreen(
                 onUploadFile = { filePickerLauncher.launch() },
                 onUploadCamera = { /* TODO: Implement camera upload */ },
                 isUploading = state is AddDocumentViewModel.State.Uploading,
-                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
@@ -104,33 +95,14 @@ internal fun AddDocumentScreen(
  */
 @Composable
 private fun DesktopLayout(
-    searchQuery: String,
-    onSearchChange: (String) -> Unit,
     onAddNewDocument: () -> Unit,
     onUploadFile: () -> Unit,
     isUploading: Boolean,
     viewModel: AddDocumentViewModel,
-    scope: kotlinx.coroutines.CoroutineScope
+    scope: CoroutineScope
 ) {
     Scaffold(
-        topBar = {
-            PTopAppBarSearchAction(
-                searchContent = {
-                    PSearchFieldCompact(
-                        value = searchQuery,
-                        onValueChange = onSearchChange,
-                        placeholder = "Search..."
-                    )
-                },
-                actions = {
-                    PPrimaryButton(
-                        text = "Add new document",
-                        onClick = onAddNewDocument,
-                        enabled = !isUploading
-                    )
-                }
-            )
-        },
+        topBar = { PTopAppBar("Add a new document") },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Row(
@@ -202,14 +174,11 @@ private fun MobileLayout(
     onUploadFile: () -> Unit,
     onUploadCamera: () -> Unit,
     isUploading: Boolean,
-    onNavigateBack: () -> Unit
 ) {
     Scaffold(
         topBar = {
             PTopAppBar(
                 title = "Upload document",
-                canNavigateBack = true,
-                onNavigateBack = onNavigateBack
             )
         },
         containerColor = MaterialTheme.colorScheme.background
