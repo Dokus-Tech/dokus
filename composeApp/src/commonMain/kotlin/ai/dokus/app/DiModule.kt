@@ -1,8 +1,11 @@
 package ai.dokus.app
 
 import ai.dokus.app.auth.AuthInitializer
+import ai.dokus.app.auth.database.AuthDatabase
 import ai.dokus.app.auth.usecases.GetCurrentOrganizationUseCase
+import ai.dokus.app.core.database.LocalDatabaseCleaner
 import ai.dokus.app.core.viewmodel.HealthStatusViewModel
+import ai.dokus.app.local.DefaultLocalDatabaseCleaner
 import ai.dokus.app.viewmodel.AppVersionCheckViewModel
 import ai.dokus.app.viewmodel.BootstrapViewModel
 import ai.dokus.app.viewmodel.DashboardViewModel
@@ -31,6 +34,11 @@ internal val diModuleApp = module {
     viewModel { HealthStatusViewModel(get<GetCombinedHealthStatusUseCase>()) }
 
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
+    single<LocalDatabaseCleaner> {
+        DefaultLocalDatabaseCleaner(
+            authDatabase = get<AuthDatabase>(),
+        )
+    }
 }
 
 internal val diModuleUseCases = module {

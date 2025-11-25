@@ -76,6 +76,7 @@ kotlin {
             implementation(projects.foundation.platform)
             implementation(projects.foundation.navigation)
 
+            implementation(projects.features.auth.data)
             implementation(projects.features.auth.presentation)
             implementation(projects.features.auth.domain)
 
