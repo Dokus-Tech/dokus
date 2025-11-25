@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * Form component for invoice details.
+ * Form a component for invoice details.
  * Displays fields for invoice name, amount, VAT, dates, client, etc.
  */
 @Composable
@@ -62,34 +62,28 @@ fun InvoiceDetailsForm(
             )
 
             // Invoice name
-            FormField(label = "Invoice name") {
-                PTextFieldStandard(
-                    fieldName = "Invoice name",
-                    value = invoiceName,
-                    onValueChange = { invoiceName = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            PTextFieldStandard(
+                fieldName = "Invoice name",
+                value = invoiceName,
+                onValueChange = { invoiceName = it },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Total amount
-            FormField(label = "Total amount") {
-                PTextFieldStandard(
-                    fieldName = "Total amount",
-                    value = totalAmount,
-                    onValueChange = { totalAmount = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            PTextFieldStandard(
+                fieldName = "Total amount",
+                value = totalAmount,
+                onValueChange = { totalAmount = it },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // VAT
-            FormField(label = "VAT") {
-                PTextFieldStandard(
-                    fieldName = "VAT",
-                    value = vat,
-                    onValueChange = { vat = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            PTextFieldStandard(
+                fieldName = "VAT",
+                value = vat,
+                onValueChange = { vat = it },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Category
             FormField(label = "Category") {
@@ -118,7 +112,7 @@ fun InvoiceDetailsForm(
                 onValueChange = { dueDate = it },
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             // Client
             PTextFieldStandard(
                 fieldName = "Client",
