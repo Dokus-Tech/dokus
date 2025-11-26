@@ -12,6 +12,9 @@ plugins {
     alias(libs.plugins.buildKonfig)
 }
 
+val appVersion = providers.gradleProperty("versionName").orElse("dev")
+version = appVersion.get()
+
 kotlin {
     jvmToolchain(17)
 
@@ -64,6 +67,7 @@ android {
 buildkonfig {
     packageName = "ai.dokus.foundation.domain.config"
     defaultConfigs {
+        buildConfigField(STRING, "appVersion", "\"${appVersion.get()}\"")
         buildConfigField(STRING, "env", "cloud")
 
         // External endpoints (for clients outside Docker) - Cloud

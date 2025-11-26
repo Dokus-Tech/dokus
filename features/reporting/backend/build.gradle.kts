@@ -6,8 +6,10 @@ plugins {
     application
 }
 
+val serviceVersion = providers.gradleProperty("versionName").orElse("1.0.0")
+
 group = "ai.dokus.reporting"
-version = "1.0.0"
+version = serviceVersion.get()
 
 application {
     mainClass.set("ai.dokus.reporting.backend.ApplicationKt")
@@ -65,6 +67,7 @@ tasks {
     shadowJar {
         manifest {
             attributes["Main-Class"] = "ai.dokus.reporting.backend.ApplicationKt"
+            attributes["Implementation-Version"] = project.version
         }
         archiveBaseName.set("backend")
         archiveVersion.set(project.version.toString())

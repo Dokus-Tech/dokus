@@ -11,12 +11,15 @@ import ai.dokus.foundation.ktor.NonHeapMemoryInfo
 import ai.dokus.foundation.ktor.ServerStatus
 import ai.dokus.foundation.ktor.SystemInfo
 import ai.dokus.foundation.ktor.ThreadInfo
+import ai.dokus.foundation.domain.config.BuildKonfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import java.io.File
 import java.lang.management.ManagementFactory
+
+private val appVersion: String = BuildKonfig.appVersion
 
 fun Routing.healthRoutes() {
     get("/health/live") {
@@ -75,7 +78,7 @@ fun Routing.healthRoutes() {
             status = ServerStatus.UP,
             application = ApplicationInfo(
                 name = "dokus-service",
-                version = "1.0.0",
+                version = appVersion,
                 environment = System.getenv("ENVIRONMENT") ?: "local"
             ),
             jvm = JvmInfo(

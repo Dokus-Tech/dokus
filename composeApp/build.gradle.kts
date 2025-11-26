@@ -31,7 +31,8 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             binaryOption("bundleId", "ai.dokus.app")
-            binaryOption("bundleVersion", "1")
+            binaryOption("bundleVersion", resolvedVersionCode.toString())
+            binaryOption("bundleShortVersionString", desktopPackageVersion)
 
             linkerOpts("-lsqlite3")
         }
@@ -116,6 +117,16 @@ kotlin {
     }
 }
 
+val resolvedVersionName = providers.gradleProperty("versionName").orElse("1.0.0").get()
+val resolvedVersionCode = providers.gradleProperty("versionCode").orElse("1").get().toIntOrNull() ?: 1
+val desktopPackageVersion = resolvedVersionName
+    .removePrefix("v")
+    .removePrefix("V")
+    .takeIf { Regex("^\\d+(\\.\\d+){0,2}\$").matches(it) }
+    ?: "1.0.0"
+
+version = resolvedVersionName
+
 android {
     namespace = "ai.dokus.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -124,8 +135,8 @@ android {
         applicationId = "ai.dokus.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = resolvedVersionCode
+        versionName = resolvedVersionName
     }
     packaging {
         resources {
@@ -168,7 +179,7 @@ compose.desktop {
             modules("java.sql")  // Required for SQLDelight/JDBC
 
             packageName = "Dokus"
-            packageVersion = "1.0.0"
+            packageVersion = desktopPackageVersion
             vendor = "Invoid Vision"
 
             macOS {

@@ -3,8 +3,10 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
+val moduleVersion = providers.gradleProperty("versionName").orElse("1.0.0")
+
 group = "ai.dokus.foundation.messaging"
-version = "1.0.0"
+version = moduleVersion.get()
 
 kotlin {
     jvmToolchain(17)

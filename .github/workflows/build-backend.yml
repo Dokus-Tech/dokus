@@ -159,12 +159,22 @@ jobs:
       - name: 🏗️ Build all backend services
         run: |
           echo "Building backend services..."
+
+          VERSION_NAME="${{ needs.detect-changes.outputs.release-version }}"
+          if [ -z "$VERSION_NAME" ]; then
+            REF_NAME="${GITHUB_REF_NAME}"
+            SANITIZED_REF=$(echo "$REF_NAME" | sed 's/[^A-Za-z0-9._-]/-/g')
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            VERSION_NAME="${SANITIZED_REF}-${SHORT_SHA}"
+          fi
+
           ./gradlew :features:auth:backend:shadowJar \
                     :features:audit:backend:shadowJar \
                     :features:banking:backend:shadowJar \
                     :features:cashflow:backend:shadowJar \
                     :features:payment:backend:shadowJar \
                     :features:reporting:backend:shadowJar \
+                    -PversionName="${VERSION_NAME}" \
                     -x test
 
       - name: 📦 Upload build artifacts

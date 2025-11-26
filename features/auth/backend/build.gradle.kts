@@ -6,8 +6,10 @@ plugins {
     application
 }
 
+val serviceVersion = providers.gradleProperty("versionName").orElse("1.0.0")
+
 group = "ai.dokus.users"
-version = "1.0.0"
+version = serviceVersion.get()
 
 application {
     mainClass.set("ai.dokus.auth.backend.ApplicationKt")
@@ -106,6 +108,7 @@ tasks.test {
 tasks.shadowJar {
     manifest {
         attributes["Main-Class"] = "ai.dokus.auth.backend.ApplicationKt"
+        attributes["Implementation-Version"] = project.version
     }
     mergeServiceFiles()
     archiveClassifier.set("")
