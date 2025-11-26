@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow
 import ai.dokus.app.cashflow.di.cashflowNetworkModule
 import ai.dokus.app.cashflow.di.cashflowPresentationModule
 import ai.dokus.app.cashflow.di.cashflowViewModelModule
+import ai.dokus.app.cashflow.navigation.CashflowHomeNavigationProvider
 import ai.dokus.app.cashflow.navigation.CashflowNavigationProvider
 import ai.dokus.app.core.AppDataModuleDi
 import ai.dokus.app.core.AppDomainModuleDi
@@ -25,8 +26,8 @@ import ai.dokus.foundation.navigation.destinations.HomeDestination
  */
 object CashflowAppModule : AppModule {
     // Presentation layer
-    override val navigationProvider: NavigationProvider? = null
-    override val homeNavigationProvider: NavigationProvider = CashflowNavigationProvider
+    override val navigationProvider: NavigationProvider = CashflowNavigationProvider
+    override val homeNavigationProvider: NavigationProvider = CashflowHomeNavigationProvider
     override val homeItems: List<HomeItem> = listOf(
         HomeItem(
             destination = HomeDestination.Cashflow,

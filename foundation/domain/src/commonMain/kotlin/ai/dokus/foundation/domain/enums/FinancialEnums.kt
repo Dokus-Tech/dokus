@@ -260,5 +260,6 @@ enum class EntityType(override val dbValue: String) : DbEnum {
     User("USER"),
     Tenant("TENANT"),
     Settings("SETTINGS"),
-    Attachment("ATTACHMENT")
+    Attachment("ATTACHMENT"),
+    Media("MEDIA")
 }

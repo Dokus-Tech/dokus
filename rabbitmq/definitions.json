@@ -4,7 +4,7 @@
   "users": [
     {
       "name": "dokus",
-      "password_hash": "zQFj0IU+m1+57+U2rq3xbHMS/vbgxACekD5qqn/ZREzn5i/U",
+      "password_hash": "UkFCVBPR4wyq3x1AbD2UfmmuS8J6WWnD2GpDHkaFkNReE/pW",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": ["administrator"]
     }

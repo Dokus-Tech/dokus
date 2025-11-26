@@ -24,6 +24,7 @@ import ai.dokus.app.auth.usecases.RegisterAndLoginUseCase
 import ai.dokus.app.auth.usecases.SelectOrganizationUseCase
 import ai.dokus.app.auth.usecases.SelectOrganizationUseCaseImpl
 import ai.dokus.app.auth.utils.JwtDecoder
+import ai.dokus.app.core.database.LocalDatabaseCleaner
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
@@ -166,7 +167,7 @@ val authDataModule = module {
 val authDomainModule = module {
     single { LoginUseCase(get()) }
     single { RegisterAndLoginUseCase(get()) }
-    single { LogoutUseCase(get()) }
+    single { LogoutUseCase(get(), get<LocalDatabaseCleaner>()) }
     single { CheckAccountUseCase() }
     single<GetCurrentOrganizationUseCase> {
         GetCurrentOrganizationUseCaseImpl(

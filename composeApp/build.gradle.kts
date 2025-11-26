@@ -76,11 +76,15 @@ kotlin {
             implementation(projects.foundation.platform)
             implementation(projects.foundation.navigation)
 
+            implementation(projects.features.auth.data)
             implementation(projects.features.auth.presentation)
             implementation(projects.features.auth.domain)
 
             implementation(projects.features.cashflow.data)
             implementation(projects.features.cashflow.presentation)
+            implementation(projects.features.media.data)
+            implementation(projects.features.media.presentation)
+            implementation(projects.features.media.domain)
 
             implementation(projects.foundation.domain)
 
