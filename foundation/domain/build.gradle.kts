@@ -79,6 +79,8 @@ buildkonfig {
         buildConfigField(INT, "auditPort", "6095")
         buildConfigField(STRING, "bankingHost", "94.111.226.82")
         buildConfigField(INT, "bankingPort", "6096")
+        buildConfigField(STRING, "mediaHost", "94.111.226.82")
+        buildConfigField(INT, "mediaPort", "6097")
 
         // RabbitMQ Configuration - Cloud (credentials from env vars at runtime)
         buildConfigField(STRING, "rabbitmqHost", "rabbitmq")
@@ -98,6 +100,8 @@ buildkonfig {
         buildConfigField(INT, "auditInternalPort", "6095")
         buildConfigField(STRING, "bankingInternalHost", "banking-service")
         buildConfigField(INT, "bankingInternalPort", "6096")
+        buildConfigField(STRING, "mediaInternalHost", "media-service")
+        buildConfigField(INT, "mediaInternalPort", "6097")
     }
     defaultConfigs("local") {
         buildConfigField(STRING, "env", "local")
@@ -115,6 +119,8 @@ buildkonfig {
         buildConfigField(INT, "auditPort", "7095")
         buildConfigField(STRING, "bankingHost", "0.0.0.0")
         buildConfigField(INT, "bankingPort", "7096")
+        buildConfigField(STRING, "mediaHost", "0.0.0.0")
+        buildConfigField(INT, "mediaPort", "7097")
 
         // RabbitMQ Configuration - Local (credentials from env vars at runtime)
         buildConfigField(STRING, "rabbitmqHost", "localhost")
@@ -134,6 +140,8 @@ buildkonfig {
         buildConfigField(INT, "auditInternalPort", "7095")
         buildConfigField(STRING, "bankingInternalHost", "banking-service-local")
         buildConfigField(INT, "bankingInternalPort", "7096")
+        buildConfigField(STRING, "mediaInternalHost", "media-service-local")
+        buildConfigField(INT, "mediaInternalPort", "7097")
     }
     targetConfigs("local") {
         create("wasmJs") {
@@ -143,6 +151,7 @@ buildkonfig {
             buildConfigField(STRING, "reportingHost", "localhost")
             buildConfigField(STRING, "auditHost", "localhost")
             buildConfigField(STRING, "bankingHost", "localhost")
+            buildConfigField(STRING, "mediaHost", "localhost")
         }
     }
 }
