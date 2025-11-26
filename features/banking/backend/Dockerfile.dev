@@ -22,11 +22,11 @@ RUN mkdir -p /app/logs && chown -R appuser:appuser /app
 USER appuser
 
 # Expose dev port
-EXPOSE 7096 5012
+EXPOSE 8080 5005
 
 # Health check for dev
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:7096/metrics || exit 1
+  CMD curl -f http://localhost:8080/metrics || exit 1
 
 # Run the application with dev-specific JVM options
 # The config file will be selected based on ENVIRONMENT variable
@@ -37,6 +37,6 @@ ENTRYPOINT ["java", \
   "-XX:MaxGCPauseMillis=100", \
   "-Dconfig.override_with_env_vars=true", \
   "-Dlogback.configurationFile=resources/logback.xml", \
-  "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5012", \
+  "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", \
   "-jar", \
   "app.jar"]

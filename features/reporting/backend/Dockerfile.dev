@@ -9,7 +9,7 @@ COPY features/reporting/backend/build/libs/backend-1.0.0.jar /app/reporting-serv
 RUN mkdir -p /app/logs
 
 # Expose application port and debug port
-EXPOSE 9095 5012
+EXPOSE 8080 5005
 
 # Run with debug enabled
-ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5012", "-jar", "/app/reporting-service.jar"]
+ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-jar", "/app/reporting-service.jar"]

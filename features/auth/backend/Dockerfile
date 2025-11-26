@@ -22,11 +22,11 @@ RUN mkdir -p /app/logs && chown -R appuser:appuser /app
 USER appuser
 
 # Expose service port
-EXPOSE 6091
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:6091/metrics || exit 1
+  CMD curl -f http://localhost:8080/metrics || exit 1
 
 # Run the application
 # The config file will be selected based on ENVIRONMENT variable
