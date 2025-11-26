@@ -13,6 +13,14 @@ on:
         required: false
         type: boolean
         default: false
+      version-name:
+        description: 'Override version name to stamp into artifacts'
+        required: false
+        type: string
+      version-code:
+        description: 'Override version/build code'
+        required: false
+        type: string
     secrets:
       KEYSTORE_FILE:
         description: 'Base64 encoded keystore file'
@@ -45,11 +53,24 @@ jobs:
       - name: 📊 Generate version information
         id: version
         run: |
-          # Use git commit count as version code
-          VERSION_CODE=$(git rev-list --count HEAD)
+          # Prefer provided versioning; fall back to run number and branch info
+          VERSION_CODE="${{ inputs.version-code }}"
+          if [ -z "$VERSION_CODE" ]; then
+            VERSION_CODE="${GITHUB_RUN_NUMBER}"
+          fi
+
           SHORT_SHA=$(git rev-parse --short HEAD)
-          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/\//-/g')
-          VERSION_NAME="${BRANCH_NAME}-${SHORT_SHA}"
+          REF_NAME="${GITHUB_REF_NAME}"
+          if [ -z "$REF_NAME" ]; then
+            REF_NAME="${GITHUB_REF#refs/heads/}"
+          fi
+          BRANCH_NAME=$(echo "${REF_NAME}" | sed 's/[^A-Za-z0-9._-]/-/g')
+
+          if [ -n "${{ inputs.version-name }}" ]; then
+            VERSION_NAME="${{ inputs.version-name }}"
+          else
+            VERSION_NAME="${BRANCH_NAME}-${SHORT_SHA}"
+          fi
 
           echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT

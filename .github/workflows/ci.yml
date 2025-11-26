@@ -3,6 +3,7 @@ name: CI Pipeline
 on:
   push:
     branches: [ main, develop ]
+    tags: [ '*' ]
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
@@ -23,6 +24,50 @@ env:
   JAVA_VERSION: '21'
 
 jobs:
+  version:
+    name: 🏷️ Version Info
+    runs-on: ubuntu-latest
+    outputs:
+      is-release: ${{ steps.compute.outputs.is-release }}
+      version-name: ${{ steps.compute.outputs.version-name }}
+      version-code: ${{ steps.compute.outputs.version-code }}
+      release-version: ${{ steps.compute.outputs.release-version }}
+
+    steps:
+      - name: 🧮 Determine version info
+        id: compute
+        run: |
+          REF_TYPE="branch"
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            REF_TYPE="tag"
+          fi
+
+          REF_NAME="${GITHUB_REF_NAME}"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ] && [ -n "${GITHUB_HEAD_REF}" ]; then
+            REF_NAME="${GITHUB_HEAD_REF}"
+          fi
+
+          SANITIZED_REF=$(echo "${REF_NAME}" | sed 's/[^A-Za-z0-9._-]/-/g')
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          if [ "$REF_TYPE" = "tag" ]; then
+            VERSION_NAME="${GITHUB_REF_NAME}"
+            RELEASE_VERSION="${GITHUB_REF_NAME}"
+            IS_RELEASE=true
+          else
+            VERSION_NAME="${SANITIZED_REF}-${SHORT_SHA}"
+            RELEASE_VERSION=""
+            IS_RELEASE=false
+          fi
+
+          VERSION_CODE="${GITHUB_RUN_NUMBER}"
+
+          echo "is-release=$IS_RELEASE" >> $GITHUB_OUTPUT
+          echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "release-version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "ref-type=$REF_TYPE" >> $GITHUB_OUTPUT
+
   # Quick validation checks that fail fast
   validation:
     name: 🔍 Validation
@@ -142,39 +187,42 @@ jobs:
   # Build Android APK
   build-android:
     name: 🏗️ Build Android
-    needs: [test, changes]
+    needs: [test, changes, version]
     if: |
       always() &&
       (needs.test.result == 'success' || needs.test.result == 'skipped') &&
       (github.ref == 'refs/heads/main' || github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.android == 'true')
     uses: ./.github/workflows/build-android.yml
     with:
-      build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
-      create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+      build-type: ${{ needs.version.outputs.is-release == 'true' && 'release' || 'debug' }}
+      create-release: ${{ needs.version.outputs.is-release == 'true' }}
+      version-code: ${{ needs.version.outputs.version-code }}
+      version-name: ${{ needs.version.outputs.version-name }}
     secrets: inherit
 
   # Build macOS DMG
   build-macos:
     name: 🏗️ Build macOS
-    needs: [test, changes]
+    needs: [test, changes, version]
     if: |
       always() &&
       (needs.test.result == 'success' || needs.test.result == 'skipped') &&
       (github.ref == 'refs/heads/main' || github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.desktop == 'true')
     uses: ./.github/workflows/build-macos.yml
     with:
-      build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
-      create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+      build-type: ${{ needs.version.outputs.is-release == 'true' && 'release' || 'debug' }}
+      create-release: ${{ needs.version.outputs.is-release == 'true' }}
+      version-code: ${{ needs.version.outputs.version-code }}
+      version-name: ${{ needs.version.outputs.version-name }}
 
   # Create deployment package for releases
   create-deployment-package:
     name: 📦 Create Deployment Package
-    needs: [ test ]
+    needs: [ test, version ]
     if: |
       always() &&
       (needs.test.result == 'success' || needs.test.result == 'skipped') &&
-      github.ref == 'refs/heads/main' &&
-      github.event_name == 'push'
+      needs.version.outputs.is-release == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -182,25 +230,38 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 📦 Create deployment package
+        id: package
         run: |
+          VERSION_NAME="${{ needs.version.outputs.release-version }}"
+          if [ -z "$VERSION_NAME" ]; then
+            VERSION_NAME="${{ needs.version.outputs.version-name }}"
+          fi
+          if [ -z "$VERSION_NAME" ]; then
+            VERSION_NAME="build-${GITHUB_RUN_NUMBER}"
+          fi
+
           # Create deployment archive
+          ZIP_NAME="dokus-quick-deploy-${VERSION_NAME}.zip"
           cd deployment
-          zip -r ../dokus-quick-deploy.zip . -x "*.git*" -x ".env" -x ".env.backup"
+          zip -r "../${ZIP_NAME}" . -x "*.git*" -x ".env" -x ".env.backup"
           cd ..
+
+          echo "zip-name=${ZIP_NAME}" >> $GITHUB_OUTPUT
+          echo "zip-path=$(pwd)/${ZIP_NAME}" >> $GITHUB_OUTPUT
 
           # Show contents
           echo "📦 Package contents:"
-          unzip -l dokus-quick-deploy.zip
+          unzip -l "${ZIP_NAME}"
 
           # Get file size
-          SIZE=$(du -h dokus-quick-deploy.zip | cut -f1)
+          SIZE=$(du -h "${ZIP_NAME}" | cut -f1)
           echo "📊 Package size: $SIZE"
 
       - name: 📤 Upload deployment package
         uses: actions/upload-artifact@v4
         with:
           name: deployment-package
-          path: dokus-quick-deploy.zip
+          path: ${{ steps.package.outputs.zip-path }}
           retention-days: 90
 
   # Summary and status reporting
@@ -250,10 +311,9 @@ jobs:
   # Automatic release on main branch
   release:
     name: 🚀 Create Release
-    needs: [ build-android, build-macos, create-deployment-package ]
+    needs: [ version, build-android, build-macos, create-deployment-package ]
     if: |
-      github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
+      needs.version.outputs.is-release == 'true' &&
       needs.build-android.result == 'success' &&
       needs.build-macos.result == 'success' &&
       needs.create-deployment-package.result == 'success'
@@ -267,13 +327,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🏷️ Generate version tag
-        id: version
+      - name: 🏷️ Prepare release metadata
+        id: meta
         run: |
-          # Generate version from commit count and short SHA
-          VERSION_CODE=$(git rev-list --count HEAD)
+          VERSION_TAG="${{ needs.version.outputs.release-version }}"
+          VERSION_CODE="${{ needs.version.outputs.version-code }}"
           SHORT_SHA=$(git rev-parse --short HEAD)
-          VERSION_TAG="v0.0.${VERSION_CODE}"
+
+          if [ -z "$VERSION_TAG" ]; then
+            echo "Release version is required for tagged releases."
+            exit 1
+          fi
 
           echo "version-tag=$VERSION_TAG" >> $GITHUB_OUTPUT
           echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
@@ -285,16 +349,18 @@ jobs:
         id: changelog
         run: |
           # Get commits since last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          VERSION_TAG="${{ steps.meta.outputs.version-tag }}"
+          LAST_TAG=$(git describe --tags --abbrev=0 "${VERSION_TAG}^" 2>/dev/null || echo "")
 
           if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s (%h)" -n 10)
+            COMMITS=$(git log --pretty=format:"- %s (%h)" -n 20)
           else
-            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)")
+            COMMITS=$(git log "${LAST_TAG}..${VERSION_TAG}" --pretty=format:"- %s (%h)")
           fi
 
-          # Save to file for multiline
-          echo "$COMMITS" > changelog.txt
+          echo "commits<<'EOF'" >> $GITHUB_OUTPUT
+          echo "${COMMITS}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
           echo "📋 Generated changelog"
 
@@ -319,15 +385,15 @@ jobs:
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.version-tag }}
-          name: Release ${{ steps.version.outputs.version-tag }}
+          tag_name: ${{ steps.meta.outputs.version-tag }}
+          name: Release ${{ steps.meta.outputs.version-tag }}
           body: |
-            # 🚀 Dokus Release ${{ steps.version.outputs.version-tag }}
+            # 🚀 Dokus Release ${{ steps.meta.outputs.version-tag }}
 
-            **Build:** ${{ steps.version.outputs.version-code }}
-            **Commit:** ${{ steps.version.outputs.short-sha }}
-            **Branch:** ${{ github.ref_name }}
-            **Date:** ${{ github.event.head_commit.timestamp }}
+            **Build:** ${{ steps.meta.outputs.version-code }}
+            **Commit:** ${{ steps.meta.outputs.short-sha }}
+            **Tag:** ${{ github.ref_name }}
+            **Date:** ${{ github.event.head_commit.timestamp || '' }}
 
             ## 📝 Changes
 
@@ -341,7 +407,7 @@ jobs:
             - **Release Bundle (AAB)**: Available in [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
             ### 🐳 Backend Server
-            - **Quick Deploy Package**: `dokus-quick-deploy.zip` - One-click deployment for any platform
+            - **Quick Deploy Package**: `dokus-quick-deploy-${{ steps.meta.outputs.version-tag }}.zip` - One-click deployment for any platform
 
             ## 🚀 Quick Start
 
@@ -349,13 +415,13 @@ jobs:
 
             **Linux / macOS:**
             ```bash
-            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version-tag }}/dokus-quick-deploy.zip -o dokus.zip
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.meta.outputs.version-tag }}/dokus-quick-deploy-${{ steps.meta.outputs.version-tag }}.zip -o dokus.zip
             unzip dokus.zip -d dokus && cd dokus
             chmod +x dokus.sh && ./dokus.sh
             ```
 
             **Windows:**
-            1. Download `dokus-quick-deploy.zip` from assets
+            1. Download `dokus-quick-deploy-${{ steps.meta.outputs.version-tag }}.zip` from assets
             2. Extract and run `dokus.bat`
 
             **What's included:**
@@ -381,7 +447,7 @@ jobs:
             This release was automatically built and signed by GitHub Actions.
 
             - Workflow: [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - Commit: [${{ steps.version.outputs.short-sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            - Commit: [${{ steps.meta.outputs.short-sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
           files: |
             ./artifacts/*.apk
             ./artifacts/*.dmg
@@ -392,6 +458,5 @@ jobs:
 
       - name: 🎉 Release created
         run: |
-          echo "✅ Release ${{ steps.version.outputs.version-tag }} created successfully!"
-          echo "🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version-tag }}"
-
+          echo "✅ Release ${{ steps.meta.outputs.version-tag }} created successfully!"
+          echo "🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.version-tag }}"
