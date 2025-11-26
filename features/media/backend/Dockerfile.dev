@@ -9,7 +9,7 @@ COPY features/media/backend/build/libs/backend-1.0.0.jar /app/media-service.jar
 RUN mkdir -p /app/logs
 
 # Expose application port and debug port
-EXPOSE 7097 5013
+EXPOSE 8080 5005
 
 # Run with debug enabled
-ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5013", "-jar", "/app/media-service.jar"]
+ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-jar", "/app/media-service.jar"]
