@@ -39,8 +39,8 @@ import kotlin.uuid.Uuid
  * Comprehensive tests for AuthService.register()
  *
  * Tests cover:
- * - Successful registration without organization
- * - JWT token generation with empty organization scopes
+ * - Successful registration without tenant
+ * - JWT token generation with empty tenant scopes
  * - Refresh token persistence
  * - Email verification email sending
  * - Duplicate email handling
@@ -125,7 +125,7 @@ class AuthServiceRegisterTest {
             jwtGenerator.generateClaims(
                 userId = testUserId,
                 email = testEmail,
-                organization = null
+                tenant = null
             )
         } returns mockClaims
 
@@ -159,12 +159,12 @@ class AuthServiceRegisterTest {
             )
         }
 
-        // Verify JWT was generated with empty organization scopes
+        // Verify JWT was generated with empty tenant scopes
         coVerify(exactly = 1) {
             jwtGenerator.generateClaims(
                 userId = testUserId,
                 email = testEmail,
-                organization = null
+                tenant = null
             )
         }
     }

@@ -2,16 +2,17 @@
 
 package ai.dokus.auth.backend.database.repository
 
-import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
-import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.auth.backend.database.tables.TenantMembersTable
+import ai.dokus.auth.backend.database.tables.TenantTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.OrganizationPlan
+import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
+import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j
 import ai.dokus.foundation.ktor.database.DatabaseFactory
@@ -38,9 +39,9 @@ import kotlin.uuid.toJavaUuid
  * Comprehensive tests for UserRepository
  *
  * Tests cover:
- * - User registration without organization
- * - User registration with organization
- * - Adding users to organizations
+ * - User registration without tenant
+ * - User registration with tenant
+ * - Adding users to tenants
  * - Credential verification
  * - User profile management
  */
@@ -49,7 +50,7 @@ class UserRepositoryTest {
 
     private lateinit var database: DatabaseFactory
     private lateinit var repository: UserRepository
-    private var testOrganizationId: OrganizationId? = null
+    private var testTenantId: TenantId? = null
 
     @BeforeAll
     fun setup() {
@@ -60,8 +61,8 @@ class UserRepositoryTest {
         )
 
         runBlocking {
-            database.init(OrganizationTable, UsersTable, OrganizationMembersTable)
-            testOrganizationId = createTestOrganization()
+            database.init(TenantTable, UsersTable, TenantMembersTable)
+            testTenantId = createTestTenant()
         }
 
         repository = UserRepository(PasswordCryptoService4j())
@@ -184,34 +185,36 @@ class UserRepositoryTest {
     @BeforeEach
     fun clearData(): Unit = runBlocking {
         dbQuery {
-            OrganizationMembersTable.deleteAll()
+            TenantMembersTable.deleteAll()
             UsersTable.deleteAll()
-            OrganizationTable.deleteAll()
+            TenantTable.deleteAll()
         }
-        testOrganizationId = createTestOrganization()
+        testTenantId = createTestTenant()
     }
 
-    private suspend fun createTestOrganization(): OrganizationId {
-        val orgId = Uuid.random()
+    private suspend fun createTestTenant(): TenantId {
+        val tenantId = Uuid.random()
         dbQuery {
-            OrganizationTable.insert {
-                it[id] = orgId.toJavaUuid()
-                it[name] = "Test Organization"
-                it[plan] = OrganizationPlan.Free
+            TenantTable.insert {
+                it[id] = tenantId.toJavaUuid()
+                it[type] = TenantType.Company
+                it[legalName] = "Test Tenant"
+                it[displayName] = "Test Display"
+                it[plan] = TenantPlan.Free
                 it[status] = TenantStatus.Active
                 it[country] = Country.Belgium
                 it[language] = Language.En
             }
         }
-        return OrganizationId(orgId)
+        return TenantId(tenantId)
     }
 
     // ===========================================
-    // Tests for register() - without organization
+    // Tests for register() - without tenant
     // ===========================================
 
     @Test
-    fun `register should create user without organization`() = runBlocking {
+    fun `register should create user without tenant`() = runBlocking {
         val email = "test-${Uuid.random()}@example.com"
         val password = "SecurePass123!"
 
@@ -228,9 +231,9 @@ class UserRepositoryTest {
         assertEquals(Name("Doe"), user.lastName, "Last name should match")
         assertTrue(user.isActive, "User should be active by default")
 
-        // Verify no organization membership exists
-        val memberships = repository.getUserOrganizations(user.id)
-        assertTrue(memberships.isEmpty(), "User should have no organization memberships")
+        // Verify no tenant membership exists
+        val memberships = repository.getUserTenants(user.id)
+        assertTrue(memberships.isEmpty(), "User should have no tenant memberships")
     }
 
     @Test
@@ -279,16 +282,16 @@ class UserRepositoryTest {
     }
 
     // ===========================================
-    // Tests for registerWithOrganization()
+    // Tests for registerWithTenant()
     // ===========================================
 
     @Test
-    fun `registerWithOrganization should create user with membership`() = runBlocking {
-        val email = "withorg-${Uuid.random()}@example.com"
+    fun `registerWithTenant should create user with membership`() = runBlocking {
+        val email = "withtenant-${Uuid.random()}@example.com"
         val password = "SecurePass123!"
 
-        val user = repository.registerWithOrganization(
-            organizationId = testOrganizationId!!,
+        val user = repository.registerWithTenant(
+            tenantId = testTenantId!!,
             email = email,
             password = password,
             firstName = "Jane",
@@ -299,19 +302,19 @@ class UserRepositoryTest {
         assertNotNull(user.id)
         assertEquals(email, user.email.value)
 
-        // Verify organization membership exists
-        val memberships = repository.getUserOrganizations(user.id)
+        // Verify tenant membership exists
+        val memberships = repository.getUserTenants(user.id)
         assertEquals(1, memberships.size, "User should have one membership")
-        assertEquals(testOrganizationId!!, memberships[0].organizationId)
+        assertEquals(testTenantId!!, memberships[0].tenantId)
         assertEquals(UserRole.Admin, memberships[0].role)
     }
 
     @Test
-    fun `registerWithOrganization should fail for duplicate email`() = runBlocking {
-        val email = "duporg-${Uuid.random()}@example.com"
+    fun `registerWithTenant should fail for duplicate email`() = runBlocking {
+        val email = "duptenant-${Uuid.random()}@example.com"
 
-        repository.registerWithOrganization(
-            organizationId = testOrganizationId!!,
+        repository.registerWithTenant(
+            tenantId = testTenantId!!,
             email = email,
             password = "SecurePass123!",
             firstName = "First",
@@ -321,8 +324,8 @@ class UserRepositoryTest {
 
         assertThrows<IllegalArgumentException> {
             runBlocking {
-                repository.registerWithOrganization(
-                    organizationId = testOrganizationId!!,
+                repository.registerWithTenant(
+                    tenantId = testTenantId!!,
                     email = email,
                     password = "AnotherPass123!",
                     firstName = "Second",
@@ -334,70 +337,72 @@ class UserRepositoryTest {
     }
 
     // ===========================================
-    // Tests for addToOrganization()
+    // Tests for addToTenant()
     // ===========================================
 
     @Test
-    fun `addToOrganization should add existing user to organization`() = runBlocking {
+    fun `addToTenant should add existing user to tenant`() = runBlocking {
         val email = "addto-${Uuid.random()}@example.com"
 
-        // Register user without organization
+        // Register user without tenant
         val user = repository.register(
             email = email,
             password = "SecurePass123!",
             firstName = "Add",
-            lastName = "ToOrg"
+            lastName = "ToTenant"
         )
 
         // Verify no memberships initially
-        val initialMemberships = repository.getUserOrganizations(user.id)
+        val initialMemberships = repository.getUserTenants(user.id)
         assertTrue(initialMemberships.isEmpty())
 
-        // Add to organization
-        repository.addToOrganization(user.id, testOrganizationId!!, UserRole.Editor)
+        // Add to tenant
+        repository.addToTenant(user.id, testTenantId!!, UserRole.Editor)
 
         // Verify membership was created
-        val memberships = repository.getUserOrganizations(user.id)
+        val memberships = repository.getUserTenants(user.id)
         assertEquals(1, memberships.size)
-        assertEquals(testOrganizationId!!, memberships[0].organizationId)
+        assertEquals(testTenantId!!, memberships[0].tenantId)
         assertEquals(UserRole.Editor, memberships[0].role)
     }
 
     @Test
-    fun `user can be added to multiple organizations`() = runBlocking {
-        // Create another organization
-        val secondOrgId = Uuid.random()
+    fun `user can be added to multiple tenants`() = runBlocking {
+        // Create another tenant
+        val secondTenantUuid = Uuid.random()
         dbQuery {
-            OrganizationTable.insert {
-                it[id] = secondOrgId.toJavaUuid()
-                it[name] = "Second Organization"
-                it[plan] = OrganizationPlan.Free
+            TenantTable.insert {
+                it[id] = secondTenantUuid.toJavaUuid()
+                it[type] = TenantType.Freelancer
+                it[legalName] = "Second Tenant"
+                it[displayName] = "Second Display"
+                it[plan] = TenantPlan.Free
                 it[status] = TenantStatus.Active
                 it[country] = Country.Belgium
                 it[language] = Language.En
             }
         }
-        val secondOrg = OrganizationId(secondOrgId)
+        val secondTenantId = TenantId(secondTenantUuid)
 
-        // Register user without organization
+        // Register user without tenant
         val user = repository.register(
-            email = "multiorg-${Uuid.random()}@example.com",
+            email = "multitenant-${Uuid.random()}@example.com",
             password = "SecurePass123!",
             firstName = "Multi",
-            lastName = "Org"
+            lastName = "Tenant"
         )
 
-        // Add to both organizations
-        repository.addToOrganization(user.id, testOrganizationId!!, UserRole.Owner)
-        repository.addToOrganization(user.id, secondOrg, UserRole.Viewer)
+        // Add to both tenants
+        repository.addToTenant(user.id, testTenantId!!, UserRole.Owner)
+        repository.addToTenant(user.id, secondTenantId, UserRole.Viewer)
 
         // Verify memberships
-        val memberships = repository.getUserOrganizations(user.id)
-        assertEquals(2, memberships.size, "User should belong to two organizations")
+        val memberships = repository.getUserTenants(user.id)
+        assertEquals(2, memberships.size, "User should belong to two tenants")
 
-        val roles = memberships.associate { it.organizationId to it.role }
-        assertEquals(UserRole.Owner, roles[testOrganizationId!!])
-        assertEquals(UserRole.Viewer, roles[secondOrg])
+        val roles = memberships.associate { it.tenantId to it.role }
+        assertEquals(UserRole.Owner, roles[testTenantId!!])
+        assertEquals(UserRole.Viewer, roles[secondTenantId])
     }
 
     // ===========================================
@@ -467,9 +472,9 @@ class UserRepositoryTest {
     // ===========================================
 
     @Test
-    fun `getMembership should return membership for valid user and organization`() = runBlocking {
-        val user = repository.registerWithOrganization(
-            organizationId = testOrganizationId!!,
+    fun `getMembership should return membership for valid user and tenant`() = runBlocking {
+        val user = repository.registerWithTenant(
+            tenantId = testTenantId!!,
             email = "getmember-${Uuid.random()}@example.com",
             password = "SecurePass123!",
             firstName = "Get",
@@ -477,7 +482,7 @@ class UserRepositoryTest {
             role = UserRole.Accountant
         )
 
-        val membership = repository.getMembership(user.id, testOrganizationId!!)
+        val membership = repository.getMembership(user.id, testTenantId!!)
 
         assertNotNull(membership)
         assertEquals(UserRole.Accountant, membership?.role)
@@ -492,7 +497,7 @@ class UserRepositoryTest {
             lastName = "Member"
         )
 
-        val membership = repository.getMembership(user.id, testOrganizationId!!)
+        val membership = repository.getMembership(user.id, testTenantId!!)
 
         assertNull(membership, "Should return null for non-member")
     }
@@ -502,9 +507,9 @@ class UserRepositoryTest {
     // ===========================================
 
     @Test
-    fun `updateRole should change user role in organization`() = runBlocking {
-        val user = repository.registerWithOrganization(
-            organizationId = testOrganizationId!!,
+    fun `updateRole should change user role in tenant`() = runBlocking {
+        val user = repository.registerWithTenant(
+            tenantId = testTenantId!!,
             email = "updaterole-${Uuid.random()}@example.com",
             password = "SecurePass123!",
             firstName = "Update",
@@ -513,9 +518,9 @@ class UserRepositoryTest {
         )
 
         // Update role
-        repository.updateRole(user.id, testOrganizationId!!, UserRole.Admin)
+        repository.updateRole(user.id, testTenantId!!, UserRole.Admin)
 
-        val membership = repository.getMembership(user.id, testOrganizationId!!)
+        val membership = repository.getMembership(user.id, testTenantId!!)
         assertEquals(UserRole.Admin, membership?.role, "Role should be updated")
     }
 }
