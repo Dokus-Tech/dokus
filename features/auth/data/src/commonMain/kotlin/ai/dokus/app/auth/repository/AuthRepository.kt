@@ -38,7 +38,7 @@ class AuthRepository(
     private val authManager: AuthManagerMutable,
     private val accountService: AccountRemoteService,
     private val identityService: IdentityRemoteService,
-    private val organizationRemoteService: OrganizationRemoteService
+    private val tenantRemoteService: TenantRemoteService
 ) {
     private val logger = Logger.forClass<AuthRepository>()
 
@@ -46,8 +46,8 @@ class AuthRepository(
 
     init {
         // Set up token refresh callback
-        tokenManager.onTokenRefreshNeeded = { refreshToken, organizationId ->
-            refreshTokenInternal(refreshToken, organizationId)
+        tokenManager.onTokenRefreshNeeded = { refreshToken, tenantId ->
+            refreshTokenInternal(refreshToken, tenantId)
         }
     }
 
@@ -88,40 +88,44 @@ class AuthRepository(
     }
 
     /**
-     * Select an organization and refresh scoped tokens.
+     * Select a tenant and refresh scoped tokens.
      */
-    suspend fun selectOrganization(organizationId: OrganizationId): Result<Unit> = runCatching {
-        logger.d { "Selecting organization: $organizationId" }
+    suspend fun selectTenant(tenantId: TenantId): Result<Unit> = runCatching {
+        logger.d { "Selecting tenant: $tenantId" }
 
-        val response = accountService.selectOrganization(organizationId)
+        val response = accountService.selectTenant(tenantId)
         tokenManager.saveTokens(response)
         authManager.onLoginSuccess()
     }.onFailure { error ->
-        logger.e(error) { "Organization selection failed" }
+        logger.e(error) { "Tenant selection failed" }
     }
 
     /**
-     * Create an organization and scope tokens to it.
+     * Create a tenant and scope tokens to it.
      */
-    suspend fun createOrganization(
+    suspend fun createTenant(
+        type: TenantType,
         legalName: LegalName,
-        plan: OrganizationPlan,
+        displayName: DisplayName,
+        plan: TenantPlan,
         country: Country,
         language: Language,
         vatNumber: VatNumber
-    ): Result<Organization> = runCatching {
-        logger.d { "Creating organization: ${legalName.value}" }
-        val organization = organizationRemoteService.createOrganization(
+    ): Result<Tenant> = runCatching {
+        logger.d { "Creating tenant: ${legalName.value}" }
+        val tenant = tenantRemoteService.createTenant(
+            type = type,
             legalName = legalName,
+            displayName = displayName,
             plan = plan,
             country = country,
             language = language,
             vatNumber = vatNumber
         )
-        selectOrganization(organization.id).getOrThrow()
-        organization
+        selectTenant(tenant.id).getOrThrow()
+        tenant
     }.onFailure { error ->
-        logger.e(error) { "Organization creation failed" }
+        logger.e(error) { "Tenant creation failed" }
     }
 
     /**
@@ -181,14 +185,14 @@ class AuthRepository(
      */
     private suspend fun refreshTokenInternal(
         refreshToken: String,
-        organizationId: OrganizationId?
+        tenantId: TenantId?
     ): LoginResponse? {
         logger.d { "Refreshing access token" }
 
         return try {
             val request = RefreshTokenRequest(
                 refreshToken = refreshToken,
-                organizationId = organizationId
+                tenantId = tenantId
             )
             identityService.refreshToken(request).also {
                 logger.i { "Token refreshed successfully" }

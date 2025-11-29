@@ -5,7 +5,7 @@ import ai.dokus.foundation.design.components.common.ErrorBox
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.components.tiles.AddCompanyTile
 import ai.dokus.foundation.design.components.tiles.CompanyTile
-import ai.dokus.foundation.domain.model.Organization
+import ai.dokus.foundation.domain.model.Tenant
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -25,9 +25,9 @@ private fun Modifier.widthInCompanyItem(): Modifier = widthIn(min = 140.dp, max 
 
 @Composable
 fun SelectionBody(
-    state: DokusState<List<Organization>>,
-    onCompanyClick: (Organization) -> Unit,
-    onAddCompanyClick: () -> Unit,
+    state: DokusState<List<Tenant>>,
+    onTenantClick: (Tenant) -> Unit,
+    onAddTenantClick: () -> Unit,
 ) {
     SectionTitle(
         text = "Select your company",
@@ -38,21 +38,21 @@ fun SelectionBody(
 
     StateDrivenContent(
         state = state,
-        onCompanyClick = onCompanyClick,
-        onAddCompanyClick = onAddCompanyClick
+        onTenantClick = onTenantClick,
+        onAddTenantClick = onAddTenantClick
     )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StateDrivenContent(
-    state: DokusState<List<Organization>>,
-    onCompanyClick: (Organization) -> Unit,
-    onAddCompanyClick: () -> Unit,
+    state: DokusState<List<Tenant>>,
+    onTenantClick: (Tenant) -> Unit,
+    onAddTenantClick: () -> Unit,
 ) {
     when (state) {
         is DokusState.Success -> {
-            val companies = state.data
+            val tenants = state.data
             // FlowRow adapts to the available width, suitable for both mobile and desktop.
             // Items use width constraints so they can expand when space allows.
             FlowRow(
@@ -61,18 +61,18 @@ private fun StateDrivenContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 maxItemsInEachRow = Int.MAX_VALUE
             ) {
-                companies.forEach { organization ->
+                tenants.forEach { tenant ->
                     CompanyTile(
                         // Let tiles grow but keep a sensible minimum so rows wrap nicely on mobile.
                         modifier = Modifier.widthInCompanyItem(),
-                        initial = organization.legalName.initialOrEmpty,
-                        label = organization.legalName.value
-                    ) { onCompanyClick(organization) }
+                        initial = tenant.displayName.initialOrEmpty,
+                        label = tenant.displayName.value
+                    ) { onTenantClick(tenant) }
                 }
-                // Always provide an option to add a company; participates in flow like others.
+                // Always provide an option to add a tenant; participates in flow like others.
                 AddCompanyTile(
                     modifier = Modifier.widthInCompanyItem(),
-                    onClick = onAddCompanyClick
+                    onClick = onAddTenantClick
                 )
             }
         }
