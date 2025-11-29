@@ -23,7 +23,7 @@ class PaymentRemoteServiceImpl(
 ) : PaymentRemoteService {
 
     override suspend fun recordPayment(request: RecordPaymentRequest): PaymentDto {
-        // Get invoice to extract organizationId for proper tenant isolation
+        // Get invoice to extract tenantId for proper tenant isolation
         val invoice = invoiceService.findById(request.invoiceId)
             ?: throw IllegalArgumentException("Invoice not found: ${request.invoiceId}")
 
