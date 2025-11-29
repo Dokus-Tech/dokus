@@ -3,7 +3,6 @@ package ai.dokus.app.auth.screen
 import ai.dokus.app.auth.components.CompanyCreateContent
 import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightFollowEffect
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
 import ai.dokus.foundation.design.components.text.AppNameText
 import ai.dokus.foundation.design.components.text.CopyRightText
@@ -25,10 +24,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.calculateBottomPadding
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.calculateTopPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -106,7 +103,6 @@ internal fun CompanyCreateScreen(
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     EnhancedFloatingBubbles()
-                    SpotlightFollowEffect()
                 }
             }
 
