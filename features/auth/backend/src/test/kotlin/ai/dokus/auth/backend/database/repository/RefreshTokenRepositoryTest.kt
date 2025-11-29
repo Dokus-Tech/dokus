@@ -3,11 +3,12 @@
 package ai.dokus.auth.backend.database.repository
 
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
-import ai.dokus.auth.backend.database.tables.OrganizationTable
-import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
+import ai.dokus.auth.backend.database.tables.TenantTable
+import ai.dokus.auth.backend.database.tables.TenantMembersTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.enums.OrganizationPlan
+import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
@@ -49,7 +50,7 @@ class RefreshTokenRepositoryTest {
     private lateinit var database: DatabaseFactory
     private lateinit var service: RefreshTokenRepository
     private var testUserId: UserId? = null
-    private val testOrganizationId = Uuid.random()
+    private val testTenantId = Uuid.random()
 
     @BeforeAll
     fun setup() {
@@ -61,7 +62,7 @@ class RefreshTokenRepositoryTest {
         )
 
         runBlocking {
-            database.init(OrganizationTable, UsersTable, OrganizationMembersTable, RefreshTokensTable)
+            database.init(TenantTable, UsersTable, TenantMembersTable, RefreshTokensTable)
             testUserId = createTestUser()
         }
 
@@ -189,9 +190,9 @@ class RefreshTokenRepositoryTest {
     fun clearTokens(): Unit = runBlocking {
         dbQuery {
             RefreshTokensTable.deleteAll()
-            OrganizationMembersTable.deleteAll()
+            TenantMembersTable.deleteAll()
             UsersTable.deleteAll()
-            OrganizationTable.deleteAll()
+            TenantTable.deleteAll()
         }
         testUserId = createTestUser()
     }
@@ -418,11 +419,13 @@ class RefreshTokenRepositoryTest {
 
         dbQuery {
             // Create test tenant first
-            OrganizationTable.deleteAll()
-            OrganizationTable.insert {
-                it[id] = testOrganizationId.toJavaUuid()
-                it[name] = "Test Tenant"
-                it[plan] = OrganizationPlan.Free
+            TenantTable.deleteAll()
+            TenantTable.insert {
+                it[id] = testTenantId.toJavaUuid()
+                it[type] = TenantType.Company
+                it[legalName] = "Test Tenant"
+                it[displayName] = "Test Display"
+                it[plan] = TenantPlan.Free
                 it[status] = ai.dokus.foundation.domain.enums.TenantStatus.Active
                 it[country] = ai.dokus.foundation.domain.enums.Country.Belgium
                 it[language] = ai.dokus.foundation.domain.enums.Language.En
@@ -438,10 +441,10 @@ class RefreshTokenRepositoryTest {
                 it[isActive] = true
             }
 
-            // Create membership linking user to organization
-            OrganizationMembersTable.insert {
-                it[OrganizationMembersTable.userId] = userId.toJavaUuid()
-                it[organizationId] = testOrganizationId.toJavaUuid()
+            // Create membership linking user to tenant
+            TenantMembersTable.insert {
+                it[TenantMembersTable.userId] = userId.toJavaUuid()
+                it[tenantId] = testTenantId.toJavaUuid()
                 it[role] = UserRole.Owner
                 it[isActive] = true
             }
