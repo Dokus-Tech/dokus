@@ -2,7 +2,7 @@ package ai.dokus.foundation.network.resilient
 
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.ids.ClientId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ClientDto
 import ai.dokus.foundation.domain.model.ClientEvent
 import ai.dokus.foundation.domain.model.ClientStats
@@ -106,6 +106,6 @@ class ResilientClientRemoteService(
 
     override suspend fun getClientStats(): ClientStats = delegate { it.getClientStats() }
 
-    override fun watchClients(organizationId: OrganizationId): Flow<ClientEvent> =
-        delegate.get().watchClients(organizationId)
+    override fun watchClients(tenantId: TenantId): Flow<ClientEvent> =
+        delegate.get().watchClients(tenantId)
 }
