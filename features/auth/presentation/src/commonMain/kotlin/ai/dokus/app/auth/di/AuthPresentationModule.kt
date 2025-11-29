@@ -1,9 +1,9 @@
 package ai.dokus.app.auth.di
 
 import ai.dokus.app.auth.AuthInitializer
-import ai.dokus.app.auth.domain.OrganizationRemoteService
+import ai.dokus.app.auth.domain.TenantRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.app.auth.usecases.SelectOrganizationUseCase
+import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
 import ai.dokus.app.auth.viewmodel.CompanySelectViewModel
 import ai.dokus.app.auth.viewmodel.ForgotPasswordViewModel
@@ -20,6 +20,6 @@ val authPresentationModule = module {
     viewModel { RegisterViewModel() }
     viewModel { ForgotPasswordViewModel() }
     viewModel { NewPasswordViewModel() }
-    viewModel { CompanySelectViewModel(get<OrganizationRemoteService>(), get<SelectOrganizationUseCase>()) }
+    viewModel { CompanySelectViewModel(get<TenantRemoteService>(), get<SelectTenantUseCase>()) }
     viewModel { CompanyCreateViewModel(get<AuthRepository>()) }
 }
