@@ -7,6 +7,7 @@ import ai.dokus.foundation.design.components.background.WarpJumpEffect
 import ai.dokus.foundation.design.components.text.AppNameText
 import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.foundation.design.constrains.limitWidth
+import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withVerticalPadding
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
@@ -145,7 +146,8 @@ internal fun CompanyCreateScreen(
                                     language = Language.En,
                                     vatNumber = vatNumber
                                 )
-                            }
+                            },
+                            modifier = Modifier.limitWidthCenteredContent()
                         )
 
                         CopyRightText()
