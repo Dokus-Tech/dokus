@@ -3,7 +3,6 @@ package ai.dokus.app.auth.viewmodel
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -24,7 +23,6 @@ internal class CompanyCreateViewModel(
 
     fun createOrganization(
         legalName: LegalName,
-        email: Email,
         plan: OrganizationPlan = OrganizationPlan.Free,
         country: Country,
         language: Language = Language.En,
@@ -35,7 +33,6 @@ internal class CompanyCreateViewModel(
             runCatching {
                 authRepository.createOrganization(
                     legalName = legalName,
-                    email = email,
                     plan = plan,
                     country = country,
                     language = language,
@@ -48,7 +45,7 @@ internal class CompanyCreateViewModel(
                 logger.e(error) { "Failed to create organization" }
                 mutableState.value = DokusState.error(
                     exception = error,
-                    retryHandler = { createOrganization(legalName, email, plan, country, language, vatNumber) }
+                    retryHandler = { createOrganization(legalName, plan, country, language, vatNumber) }
                 )
                 mutableEffect.emit(Effect.CreationFailed(error))
             }

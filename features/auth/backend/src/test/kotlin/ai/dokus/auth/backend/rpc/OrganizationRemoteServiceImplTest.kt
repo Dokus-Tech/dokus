@@ -4,7 +4,6 @@ package ai.dokus.auth.backend.rpc
 
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
@@ -92,14 +91,12 @@ class OrganizationRemoteServiceImplTest {
     private fun createMockOrganization(
         id: OrganizationId = testOrganizationId,
         name: String = "Test Organization",
-        email: String = "org@example.com",
         plan: OrganizationPlan = OrganizationPlan.Free
     ): Organization {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         return Organization(
             id = id,
             legalName = LegalName(name),
-            email = Email(email),
             plan = plan,
             status = TenantStatus.Active,
             country = Country.Belgium,
@@ -116,8 +113,7 @@ class OrganizationRemoteServiceImplTest {
     fun `createOrganization should create organization and add user as Owner`() = runBlocking {
         // Given
         val orgName = "Test Organization"
-        val orgEmail = "org@example.com"
-        val mockOrganization = createMockOrganization(name = orgName, email = orgEmail)
+        val mockOrganization = createMockOrganization(name = orgName)
 
         // Mock auth context
         coEvery {
@@ -132,7 +128,6 @@ class OrganizationRemoteServiceImplTest {
         coEvery {
             organizationRepository.create(
                 name = LegalName(orgName),
-                email = Email(orgEmail),
                 plan = OrganizationPlan.Free,
                 country = Country.Belgium,
                 language = Language.En,
@@ -147,7 +142,6 @@ class OrganizationRemoteServiceImplTest {
         // When
         val result = service.createOrganization(
             legalName = LegalName(orgName),
-            email = Email(orgEmail),
             plan = OrganizationPlan.Free,
             country = Country.Belgium,
             language = Language.En,
@@ -163,7 +157,6 @@ class OrganizationRemoteServiceImplTest {
         coVerify(exactly = 1) {
             organizationRepository.create(
                 name = LegalName(orgName),
-                email = Email(orgEmail),
                 plan = OrganizationPlan.Free,
                 country = Country.Belgium,
                 language = Language.En,
@@ -191,14 +184,13 @@ class OrganizationRemoteServiceImplTest {
             }
         }
 
-        coEvery { organizationRepository.create(any(), any(), any(), any(), any(), any()) } returns testOrganizationId
+        coEvery { organizationRepository.create(any(), any(), any(), any(), any()) } returns testOrganizationId
         coEvery { userRepository.addToOrganization(any(), any(), any()) } just Runs
         coEvery { organizationRepository.findById(any()) } returns mockOrganization
 
         // When
         service.createOrganization(
             legalName = LegalName("Test"),
-            email = Email("test@example.com"),
             plan = OrganizationPlan.Free,
             country = Country.Belgium,
             language = Language.En,
@@ -207,7 +199,7 @@ class OrganizationRemoteServiceImplTest {
 
         // Then - verify order: create org first, then add membership
         coVerifyOrder {
-            organizationRepository.create(any(), any(), any(), any(), any(), any())
+            organizationRepository.create(any(), any(), any(), any(), any())
             userRepository.addToOrganization(testUserId, testOrganizationId, UserRole.Owner)
             organizationRepository.findById(testOrganizationId)
         }
@@ -237,7 +229,6 @@ class OrganizationRemoteServiceImplTest {
         coEvery {
             organizationRepository.create(
                 name = any(),
-                email = any(),
                 plan = capture(planSlot),
                 country = capture(countrySlot),
                 language = capture(languageSlot),
@@ -251,7 +242,6 @@ class OrganizationRemoteServiceImplTest {
         // When
         service.createOrganization(
             legalName = LegalName("Professional Org"),
-            email = Email("pro@example.com"),
             plan = OrganizationPlan.Professional,
             country = Country.Netherlands,
             language = Language.Nl,
@@ -278,7 +268,7 @@ class OrganizationRemoteServiceImplTest {
             }
         }
 
-        coEvery { organizationRepository.create(any(), any(), any(), any(), any(), any()) } returns testOrganizationId
+        coEvery { organizationRepository.create(any(), any(), any(), any(), any()) } returns testOrganizationId
 
         val roleSlot = slot<UserRole>()
         coEvery { userRepository.addToOrganization(any(), any(), capture(roleSlot)) } just Runs
@@ -288,7 +278,6 @@ class OrganizationRemoteServiceImplTest {
         // When
         service.createOrganization(
             legalName = LegalName("Test"),
-            email = Email("test@example.com"),
             plan = OrganizationPlan.Free,
             country = Country.Belgium,
             language = Language.En,

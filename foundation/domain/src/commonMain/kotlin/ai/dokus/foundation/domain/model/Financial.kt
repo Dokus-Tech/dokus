@@ -15,7 +15,6 @@ import kotlinx.serialization.Serializable
 data class Organization(
     val id: OrganizationId,
     val legalName: LegalName,
-    val email: Email,
     val plan: OrganizationPlan,
     val status: TenantStatus,
     val country: Country,
