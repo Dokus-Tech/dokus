@@ -1,15 +1,19 @@
 package ai.dokus.auth.backend.database.mappers
 
-import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
-import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.auth.backend.database.tables.AddressTable
+import ai.dokus.auth.backend.database.tables.TenantSettingsTable
+import ai.dokus.auth.backend.database.tables.TenantTable
+import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.VatRate
+import ai.dokus.foundation.domain.ids.AddressId
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.Organization
-import ai.dokus.foundation.domain.model.OrganizationSettings
+import ai.dokus.foundation.domain.model.Address
+import ai.dokus.foundation.domain.model.Tenant
+import ai.dokus.foundation.domain.model.TenantSettings
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -17,38 +21,52 @@ import kotlin.uuid.toKotlinUuid
 @OptIn(ExperimentalUuidApi::class)
 object TenantMapper {
 
-    fun ResultRow.toTenant(): Organization = Organization(
-        id = OrganizationId(this[OrganizationTable.id].value.toKotlinUuid()),
-        legalName = LegalName(this[OrganizationTable.name]),
-        plan = this[OrganizationTable.plan],
-        status = this[OrganizationTable.status],
-        trialEndsAt = this[OrganizationTable.trialEndsAt],
-        subscriptionStartedAt = this[OrganizationTable.subscriptionStartedAt],
-        country = this[OrganizationTable.country],
-        language = this[OrganizationTable.language],
-        vatNumber = this[OrganizationTable.vatNumber]?.let { VatNumber(it) },
-        createdAt = this[OrganizationTable.createdAt],
-        updatedAt = this[OrganizationTable.updatedAt]
+    fun ResultRow.toTenant(): Tenant = Tenant(
+        id = TenantId(this[TenantTable.id].value.toKotlinUuid()),
+        type = this[TenantTable.type],
+        legalName = LegalName(this[TenantTable.legalName]),
+        displayName = DisplayName(this[TenantTable.displayName]),
+        plan = this[TenantTable.plan],
+        status = this[TenantTable.status],
+        trialEndsAt = this[TenantTable.trialEndsAt],
+        subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
+        country = this[TenantTable.country],
+        language = this[TenantTable.language],
+        vatNumber = this[TenantTable.vatNumber]?.let { VatNumber(it) },
+        createdAt = this[TenantTable.createdAt],
+        updatedAt = this[TenantTable.updatedAt]
     )
 
-    fun ResultRow.toOrganizationSettings(): OrganizationSettings = OrganizationSettings(
-        organizationId = OrganizationId(this[OrganizationSettingsTable.organizationId].value.toKotlinUuid()),
-        invoicePrefix = this[OrganizationSettingsTable.invoicePrefix],
-        nextInvoiceNumber = this[OrganizationSettingsTable.nextInvoiceNumber],
-        defaultPaymentTerms = this[OrganizationSettingsTable.defaultPaymentTerms],
-        defaultVatRate = VatRate(this[OrganizationSettingsTable.defaultVatRate].toString()),
-        companyName = this[OrganizationSettingsTable.companyName],
-        companyAddress = this[OrganizationSettingsTable.companyAddress],
-        companyVatNumber = this[OrganizationSettingsTable.companyVatNumber]?.let { VatNumber(it) },
-        companyIban = this[OrganizationSettingsTable.companyIban]?.let { Iban(it) },
-        companyBic = this[OrganizationSettingsTable.companyBic]?.let { Bic(it) },
-        companyLogoUrl = this[OrganizationSettingsTable.companyLogoUrl],
-        emailInvoiceReminders = this[OrganizationSettingsTable.emailInvoiceReminders],
-        emailPaymentConfirmations = this[OrganizationSettingsTable.emailPaymentConfirmations],
-        emailWeeklyReports = this[OrganizationSettingsTable.emailWeeklyReports],
-        enableBankSync = this[OrganizationSettingsTable.enableBankSync],
-        enablePeppol = this[OrganizationSettingsTable.enablePeppol],
-        createdAt = this[OrganizationSettingsTable.createdAt],
-        updatedAt = this[OrganizationSettingsTable.updatedAt]
+    fun ResultRow.toTenantSettings(): TenantSettings = TenantSettings(
+        tenantId = TenantId(this[TenantSettingsTable.tenantId].value.toKotlinUuid()),
+        invoicePrefix = this[TenantSettingsTable.invoicePrefix],
+        nextInvoiceNumber = this[TenantSettingsTable.nextInvoiceNumber],
+        defaultPaymentTerms = this[TenantSettingsTable.defaultPaymentTerms],
+        defaultVatRate = VatRate(this[TenantSettingsTable.defaultVatRate].toString()),
+        companyName = this[TenantSettingsTable.companyName],
+        companyAddress = this[TenantSettingsTable.companyAddress],
+        companyVatNumber = this[TenantSettingsTable.companyVatNumber]?.let { VatNumber(it) },
+        companyIban = this[TenantSettingsTable.companyIban]?.let { Iban(it) },
+        companyBic = this[TenantSettingsTable.companyBic]?.let { Bic(it) },
+        companyLogoUrl = this[TenantSettingsTable.companyLogoUrl],
+        emailInvoiceReminders = this[TenantSettingsTable.emailInvoiceReminders],
+        emailPaymentConfirmations = this[TenantSettingsTable.emailPaymentConfirmations],
+        emailWeeklyReports = this[TenantSettingsTable.emailWeeklyReports],
+        enableBankSync = this[TenantSettingsTable.enableBankSync],
+        enablePeppol = this[TenantSettingsTable.enablePeppol],
+        createdAt = this[TenantSettingsTable.createdAt],
+        updatedAt = this[TenantSettingsTable.updatedAt]
+    )
+
+    fun ResultRow.toAddress(): Address = Address(
+        id = AddressId(this[AddressTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(this[AddressTable.tenantId].value.toKotlinUuid()),
+        streetLine1 = this[AddressTable.streetLine1],
+        streetLine2 = this[AddressTable.streetLine2],
+        city = this[AddressTable.city],
+        postalCode = this[AddressTable.postalCode],
+        country = this[AddressTable.country],
+        createdAt = this[AddressTable.createdAt],
+        updatedAt = this[AddressTable.updatedAt]
     )
 }

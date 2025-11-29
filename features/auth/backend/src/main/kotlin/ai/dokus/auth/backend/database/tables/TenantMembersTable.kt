@@ -8,12 +8,12 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
- * Organization membership table - links users to organizations with roles.
- * A user can belong to multiple organizations with different roles.
+ * Tenant membership table - links users to tenants with roles.
+ * A user can belong to multiple tenants with different roles.
  */
-object OrganizationMembersTable : UUIDTable("organization_members") {
+object TenantMembersTable : UUIDTable("tenant_members") {
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE)
-    val organizationId = reference("organization_id", OrganizationTable, onDelete = ReferenceOption.CASCADE)
+    val tenantId = reference("tenant_id", TenantTable, onDelete = ReferenceOption.CASCADE)
     val role = dbEnumeration<UserRole>("role")
     val isActive = bool("is_active").default(true)
 
@@ -22,9 +22,9 @@ object OrganizationMembersTable : UUIDTable("organization_members") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        uniqueIndex(userId, organizationId)
+        uniqueIndex(userId, tenantId)
         index(false, userId)
-        index(false, organizationId)
-        index(false, organizationId, isActive) // For active members query
+        index(false, tenantId)
+        index(false, tenantId, isActive) // For active members query
     }
 }
