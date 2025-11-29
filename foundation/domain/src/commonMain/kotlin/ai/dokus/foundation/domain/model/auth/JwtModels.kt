@@ -3,7 +3,7 @@ package ai.dokus.foundation.domain.model.auth
 import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import kotlinx.serialization.Serializable
 
@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 data class JwtClaims(
     val userId: UserId,
     val email: String,
-    val organization: OrganizationScope?,
+    val tenant: TenantScope?,
     val iat: Long,
     val exp: Long,
     val jti: String,
@@ -21,8 +21,8 @@ data class JwtClaims(
     companion object {
         const val CLAIM_SUB = "sub"
         const val CLAIM_EMAIL = "email"
-        const val CLAIM_ORGANIZATIONS = "organizations"
-        const val CLAIM_ORGANIZATION_ID = "org_id"
+        const val CLAIM_TENANTS = "tenants"
+        const val CLAIM_TENANT_ID = "tenant_id"
         const val CLAIM_PERMISSIONS = "permissions"
         const val CLAIM_SUBSCRIPTION_TIER = "tier"
         const val CLAIM_ROLE = "role"
@@ -45,16 +45,16 @@ data class JwtClaims(
 }
 
 @Serializable
-data class OrganizationScope(
-    val organizationId: OrganizationId,
+data class TenantScope(
+    val tenantId: TenantId,
     val permissions: Set<Permission>,
     val subscriptionTier: SubscriptionTier,
     val role: UserRole?,
 )
 
 @Serializable
-data class OrganizationClaimDto(
-    val organizationId: String,
+data class TenantClaimDto(
+    val tenantId: String,
     val permissions: List<String>,
     val subscriptionTier: String,
     val role: String? = null

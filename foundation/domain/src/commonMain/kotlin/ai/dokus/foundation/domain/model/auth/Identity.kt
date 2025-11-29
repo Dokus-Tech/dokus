@@ -5,7 +5,7 @@ import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.current
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,7 +27,7 @@ data class LoginResponse(
 data class RefreshTokenRequest(
     val refreshToken: String,
     val deviceType: DeviceType = DeviceType.current,
-    val organizationId: OrganizationId? = null,
+    val tenantId: TenantId? = null,
 )
 
 @Serializable

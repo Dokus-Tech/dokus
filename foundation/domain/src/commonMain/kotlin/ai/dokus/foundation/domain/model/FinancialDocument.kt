@@ -12,7 +12,7 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.PeppolId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -28,7 +28,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface FinancialDocumentDto {
-    val organizationId: OrganizationId
+    val tenantId: TenantId
     val date: LocalDate
     val amount: Money
     val currency: Currency
@@ -44,7 +44,7 @@ sealed interface FinancialDocumentDto {
     @SerialName("Invoice")
     data class InvoiceDto(
         val id: InvoiceId,
-        override val organizationId: OrganizationId,
+        override val tenantId: TenantId,
         val clientId: ClientId,
         val invoiceNumber: InvoiceNumber,
         val issueDate: LocalDate,
@@ -80,7 +80,7 @@ sealed interface FinancialDocumentDto {
     @SerialName("Expense")
     data class ExpenseDto(
         val id: ExpenseId,
-        override val organizationId: OrganizationId,
+        override val tenantId: TenantId,
         override val date: LocalDate,
         val merchant: String,
         override val amount: Money,

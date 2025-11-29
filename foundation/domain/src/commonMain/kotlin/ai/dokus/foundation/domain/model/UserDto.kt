@@ -3,7 +3,7 @@ package ai.dokus.foundation.domain.model
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -31,23 +31,23 @@ sealed class UserDto {
         val lastLoginAt: LocalDateTime? = null,
         val createdAt: LocalDateTime,
         val updatedAt: LocalDateTime,
-        val memberships: List<OrganizationMembership> = emptyList()
+        val memberships: List<TenantMembership> = emptyList()
     ) {
         val fullName: String
             get() = listOfNotNull(firstName, lastName).joinToString(" ").trim()
                 .ifEmpty { email.value }
 
         /**
-         * Get a user's role in a specific organization
+         * Get a user's role in a specific tenant
          */
-        fun getRoleIn(organizationId: OrganizationId): UserRole? =
-            memberships.find { it.organizationId == organizationId }?.role
+        fun getRoleIn(tenantId: TenantId): UserRole? =
+            memberships.find { it.tenantId == tenantId }?.role
 
         /**
-         * Check if user has access to a specific organization
+         * Check if user has access to a specific tenant
          */
-        fun hasAccessTo(organizationId: OrganizationId): Boolean =
-            memberships.any { it.organizationId == organizationId && it.isActive }
+        fun hasAccessTo(tenantId: TenantId): Boolean =
+            memberships.any { it.tenantId == tenantId && it.isActive }
     }
 
     /**
