@@ -39,7 +39,7 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
                 logger.i { "Registration successful, navigating to home" }
                 mutableState.value = State.Idle
                 val claims = tokenManager.getCurrentClaims()
-                if (claims?.organization == null) {
+                if (claims?.tenant == null) {
                     mutableEffect.emit(Effect.NavigateToCompanySelect)
                 } else {
                     mutableEffect.emit(Effect.NavigateToHome)

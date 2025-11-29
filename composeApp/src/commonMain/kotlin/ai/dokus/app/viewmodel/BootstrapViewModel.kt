@@ -23,7 +23,7 @@ class BootstrapViewModel(
                 needsUpdate() -> Effect.NeedsUpdate
                 needsLogin() -> Effect.NeedsLogin
                 needsAccountConfirmation() -> Effect.NeedsAccountConfirmation
-                needsOrganizationSelection() -> Effect.NeedsOrganizationSelection
+                needsTenantSelection() -> Effect.NeedsTenantSelection
                 else -> Effect.Ok
             }
         }
@@ -50,9 +50,9 @@ class BootstrapViewModel(
         return false
     }
 
-    private suspend fun needsOrganizationSelection(): Boolean {
+    private suspend fun needsTenantSelection(): Boolean {
         val claims = tokenManager.getCurrentClaims()
-        return claims?.organization == null
+        return claims?.tenant == null
     }
 
     private fun updateStep(step: BootstrapState) {
@@ -113,7 +113,7 @@ class BootstrapViewModel(
         data object NeedsLogin : Effect
         data object NeedsUpdate : Effect
         data object NeedsAccountConfirmation : Effect
-        data object NeedsOrganizationSelection : Effect
+        data object NeedsTenantSelection : Effect
         data object Ok : Effect
     }
 }
