@@ -55,7 +55,7 @@ fun Route.withRemoteServices() {
 
         registerService<TenantRemoteService> {
             TenantRemoteServiceImpl(
-                tenantService = get<TenantRepository>(),
+                tenantRepository = get<TenantRepository>(),
                 userRepository = get<UserRepository>(),
                 authInfoProvider = AuthInfoProvider(call, jwtValidator)
             )
