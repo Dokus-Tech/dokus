@@ -90,8 +90,8 @@ private fun RegisterContent(
                 is RegisterViewModel.Effect.NavigateToHome -> {
                     navController.replace(CoreDestination.Home)
                 }
-                is RegisterViewModel.Effect.NavigateToCompanySelect -> {
-                    navController.replace(AuthDestination.CompanySelect)
+                is RegisterViewModel.Effect.NavigateToWorkspaceSelect -> {
+                    navController.replace(AuthDestination.WorkspaceSelect)
                 }
             }
         }

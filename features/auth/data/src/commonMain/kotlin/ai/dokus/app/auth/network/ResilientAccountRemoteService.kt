@@ -2,6 +2,7 @@ package ai.dokus.app.auth.network
 
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
@@ -15,6 +16,10 @@ import ai.dokus.foundation.network.resilient.invoke
 class ResilientAccountRemoteService(
     private val delegate: RemoteServiceDelegate<AccountRemoteService>,
 ) : AccountRemoteService {
+
+    override suspend fun getCurrentUser(): User {
+        return delegate { it.getCurrentUser() }
+    }
 
     override suspend fun selectTenant(tenantId: TenantId): LoginResponse {
         return delegate { it.selectTenant(tenantId) }

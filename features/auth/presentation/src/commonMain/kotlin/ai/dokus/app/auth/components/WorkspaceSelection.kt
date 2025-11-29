@@ -21,16 +21,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Stable
-private fun Modifier.widthInCompanyItem(): Modifier = widthIn(min = 140.dp, max = 320.dp)
+private fun Modifier.widthInWorkspaceItem(): Modifier = widthIn(min = 140.dp, max = 320.dp)
 
 @Composable
-fun SelectionBody(
+fun WorkspaceSelectionBody(
     state: DokusState<List<Tenant>>,
     onTenantClick: (Tenant) -> Unit,
     onAddTenantClick: () -> Unit,
 ) {
     SectionTitle(
-        text = "Select your company",
+        text = "Select your workspace",
         horizontalArrangement = Arrangement.Center
     )
 
@@ -64,14 +64,14 @@ private fun StateDrivenContent(
                 tenants.forEach { tenant ->
                     CompanyTile(
                         // Let tiles grow but keep a sensible minimum so rows wrap nicely on mobile.
-                        modifier = Modifier.widthInCompanyItem(),
+                        modifier = Modifier.widthInWorkspaceItem(),
                         initial = tenant.displayName.initialOrEmpty,
                         label = tenant.displayName.value
                     ) { onTenantClick(tenant) }
                 }
                 // Always provide an option to add a tenant; participates in flow like others.
                 AddCompanyTile(
-                    modifier = Modifier.widthInCompanyItem(),
+                    modifier = Modifier.widthInWorkspaceItem(),
                     onClick = onAddTenantClick
                 )
             }

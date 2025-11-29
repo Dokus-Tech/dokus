@@ -3,10 +3,12 @@
 package ai.dokus.auth.backend.rpc
 
 import ai.dokus.app.auth.domain.AccountRemoteService
+import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.auth.backend.services.AuthService
 import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
@@ -27,10 +29,22 @@ import org.slf4j.LoggerFactory
  */
 class AccountRemoteServiceImpl(
     private val authService: AuthService,
-    private val authInfoProvider: AuthInfoProvider
+    private val authInfoProvider: AuthInfoProvider,
+    private val userRepository: UserRepository
 ) : AccountRemoteService {
 
     private val logger = LoggerFactory.getLogger(AccountRemoteServiceImpl::class.java)
+
+    /**
+     * Get the current authenticated user.
+     */
+    override suspend fun getCurrentUser(): User {
+        return authInfoProvider.withAuthInfo {
+            val userId = requireAuthenticatedUserId()
+            userRepository.findById(userId)
+                ?: throw DokusException.NotAuthenticated("User not found")
+        }
+    }
 
     /**
      * Select a tenant and re-issue scoped tokens.

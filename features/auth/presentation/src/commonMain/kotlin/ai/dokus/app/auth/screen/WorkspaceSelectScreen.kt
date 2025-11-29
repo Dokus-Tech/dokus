@@ -1,23 +1,17 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.auth.components.CompanyCreateContent
-import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
+import ai.dokus.app.auth.components.WorkspaceSelectionBody
+import ai.dokus.app.auth.viewmodel.WorkspaceSelectViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
 import ai.dokus.foundation.design.components.text.AppNameText
 import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.foundation.design.constrains.limitWidth
-import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withVerticalPadding
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Country
-import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.TenantPlan
-import ai.dokus.foundation.domain.enums.TenantType
-import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.navigation.navigateTo
 import ai.dokus.foundation.navigation.replace
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -41,20 +35,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-internal fun CompanyCreateScreen(
-    viewModel: CompanyCreateViewModel = koinViewModel()
+internal fun WorkspaceSelectScreen(
+    viewModel: WorkspaceSelectViewModel = koinViewModel()
 ) {
     val navController = LocalNavController.current
     val state by viewModel.state.collectAsState()
 
     // Warp animation state
     var isWarpActive by remember { mutableStateOf(false) }
+    var selectedItemPosition by remember { mutableStateOf<Offset?>(null) }
     var shouldNavigate by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(true) }
 
@@ -66,27 +62,22 @@ internal fun CompanyCreateScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is CompanyCreateViewModel.Effect.NavigateHome -> {
-                    // Trigger warp animation instead of immediate navigation
-                    isWarpActive = true
-                    contentVisible = false
-                }
+    LaunchedEffect(viewModel) {
+        launch {
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is WorkspaceSelectViewModel.Effect.WorkspaceSelected -> {
+                        // Trigger warp animation instead of immediate navigation
+                        isWarpActive = true
+                        contentVisible = false
+                    }
 
-                is CompanyCreateViewModel.Effect.CreationFailed -> Unit
+                    is WorkspaceSelectViewModel.Effect.SelectionFailed -> {}
+                }
             }
         }
+        viewModel.loadTenants()
     }
-
-    var tenantType by remember { mutableStateOf(TenantType.Company) }
-    var legalName by remember { mutableStateOf(LegalName("")) }
-    var displayName by remember { mutableStateOf(DisplayName("")) }
-    var vatNumber by remember { mutableStateOf(VatNumber("")) }
-    var country by remember { mutableStateOf(Country.Belgium) }
-
-    val isSubmitting = state is ai.dokus.app.core.state.DokusState.Loading
 
     Scaffold { contentPadding ->
         Box(
@@ -121,7 +112,6 @@ internal fun CompanyCreateScreen(
                         modifier = Modifier
                             .withVerticalPadding()
                             .limitWidth()
-                            .padding(horizontal = 16.dp)
                             .fillMaxHeight()
                             .align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -129,31 +119,17 @@ internal fun CompanyCreateScreen(
                     ) {
                         AppNameText()
 
-                        CompanyCreateContent(
-                            tenantType = tenantType,
-                            legalName = legalName,
-                            displayName = displayName,
-                            vatNumber = vatNumber,
-                            country = country,
-                            isSubmitting = isSubmitting,
-                            onTenantTypeChange = { tenantType = it },
-                            onLegalNameChange = { legalName = it },
-                            onDisplayNameChange = { displayName = it },
-                            onVatNumberChange = { vatNumber = it },
-                            onCountryChange = { country = it },
-                            onSubmit = {
-                                viewModel.createTenant(
-                                    type = tenantType,
-                                    legalName = legalName,
-                                    displayName = displayName,
-                                    plan = TenantPlan.Free,
-                                    country = country,
-                                    language = Language.En,
-                                    vatNumber = vatNumber
-                                )
-                            },
-                            modifier = Modifier.limitWidthCenteredContent()
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            WorkspaceSelectionBody(
+                                state = state,
+                                onTenantClick = { tenant ->
+                                    viewModel.selectTenant(tenant.id)
+                                },
+                                onAddTenantClick = { navController.navigateTo(AuthDestination.WorkspaceCreate) }
+                            )
+                        }
 
                         CopyRightText()
                     }
@@ -163,7 +139,7 @@ internal fun CompanyCreateScreen(
             // Warp jump effect overlay
             WarpJumpEffect(
                 isActive = isWarpActive,
-                selectedItemPosition = null, // Start from center for company creation
+                selectedItemPosition = selectedItemPosition,
                 onAnimationComplete = {
                     shouldNavigate = true
                 }
