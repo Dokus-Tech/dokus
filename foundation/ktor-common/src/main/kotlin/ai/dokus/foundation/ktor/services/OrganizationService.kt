@@ -15,7 +15,6 @@ interface OrganizationService {
      * Creates a new tenant with default settings
      *
      * @param name The tenant's company or organization name
-     * @param email The tenant's primary email address
      * @param plan The subscription plan (defaults to Free)
      * @param country The tenant's country code (ISO 3166-1 alpha-2)
      * @param language The tenant's preferred language
@@ -24,7 +23,6 @@ interface OrganizationService {
      */
     suspend fun createTenant(
         name: String,
-        email: String,
         plan: OrganizationPlan = OrganizationPlan.Free,
         country: String = "BE",
         language: Language = Language.En,
@@ -38,14 +36,6 @@ interface OrganizationService {
      * @return The tenant if found, null otherwise
      */
     suspend fun findById(id: OrganizationId): Organization?
-
-    /**
-     * Finds a tenant by their email address
-     *
-     * @param email The tenant's email address
-     * @return The tenant if found, null otherwise
-     */
-    suspend fun findByEmail(email: String): Organization?
 
     /**
      * Updates the settings for a tenant
