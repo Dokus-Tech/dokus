@@ -111,11 +111,11 @@ val authNetworkModule = module {
         )
     }
 
-    // OrganizationRemoteService (authenticated)
-    single<OrganizationRemoteService> {
+    // TenantRemoteService (authenticated)
+    single<TenantRemoteService> {
         val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientOrganizationRemoteService(
-            delegate = createRetryDelegate { rpcClient.service<OrganizationRemoteService>() }.withAuth(
+        ResilientTenantRemoteService(
+            delegate = createRetryDelegate { rpcClient.service<TenantRemoteService>() }.withAuth(
                 get<TokenManagerMutable>(),
                 get<AuthManagerMutable>()
             ),
@@ -159,7 +159,7 @@ val authDataModule = module {
             authManager = get<AuthManagerMutable>(),
             accountService = get<AccountRemoteService>(),
             identityService = get<IdentityRemoteService>(),
-            organizationRemoteService = get<OrganizationRemoteService>()
+            tenantRemoteService = get<TenantRemoteService>()
         )
     }
 }
@@ -169,11 +169,11 @@ val authDomainModule = module {
     single { RegisterAndLoginUseCase(get()) }
     single { LogoutUseCase(get(), get<LocalDatabaseCleaner>()) }
     single { CheckAccountUseCase() }
-    single<GetCurrentOrganizationUseCase> {
-        GetCurrentOrganizationUseCaseImpl(
+    single<GetCurrentTenantUseCase> {
+        GetCurrentTenantUseCaseImpl(
             get<TokenManager>(),
-            get<OrganizationRemoteService>()
+            get<TenantRemoteService>()
         )
     }
-    single<SelectOrganizationUseCase> { SelectOrganizationUseCaseImpl(get<AuthRepository>()) }
+    single<SelectTenantUseCase> { SelectTenantUseCaseImpl(get<AuthRepository>()) }
 }
