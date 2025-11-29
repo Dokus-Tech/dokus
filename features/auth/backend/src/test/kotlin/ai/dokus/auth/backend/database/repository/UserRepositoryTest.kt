@@ -371,7 +371,6 @@ class UserRepositoryTest {
             OrganizationTable.insert {
                 it[id] = secondOrgId.toJavaUuid()
                 it[name] = "Second Organization"
-                it[email] = "second@example.com"
                 it[plan] = OrganizationPlan.Free
                 it[status] = TenantStatus.Active
                 it[country] = Country.Belgium
