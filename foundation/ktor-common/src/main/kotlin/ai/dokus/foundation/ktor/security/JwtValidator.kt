@@ -2,11 +2,11 @@
 
 package ai.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.model.auth.JwtClaims
-import ai.dokus.foundation.domain.model.auth.OrganizationClaimDto
+import ai.dokus.foundation.domain.model.auth.TenantClaimDto
 import ai.dokus.foundation.ktor.config.JwtConfig
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
@@ -71,21 +71,21 @@ class JwtValidator(
             val userId = payload.subject ?: return null
             val email = payload.getClaim(JwtClaims.CLAIM_EMAIL).asString() ?: return null
 
-            // Preferred: flat org_id claim if present
-            val orgIdFromFlat: OrganizationId? = payload
-                .getClaim(JwtClaims.CLAIM_ORGANIZATION_ID)
+            // Preferred: flat tenant_id claim if present
+            val tenantIdFromFlat: TenantId? = payload
+                .getClaim(JwtClaims.CLAIM_TENANT_ID)
                 .asString()
                 ?.takeIf { it.isNotBlank() }
-                ?.let { OrganizationId.parse(it) }
+                ?.let { TenantId.parse(it) }
 
-            // Legacy fallback: organizations claim (JSON string) → first org
-            val orgsClaim = payload.getClaim(JwtClaims.CLAIM_ORGANIZATIONS).asString()
-            val orgIdFromList: OrganizationId? = orgsClaim
+            // Legacy fallback: tenants claim (JSON string) → first tenant
+            val tenantsClaim = payload.getClaim(JwtClaims.CLAIM_TENANTS).asString()
+            val tenantIdFromList: TenantId? = tenantsClaim
                 ?.takeIf { it.isNotBlank() }
-                ?.let { runCatching { json.decodeFromString<List<OrganizationClaimDto>>(it) }.getOrNull() }
+                ?.let { runCatching { json.decodeFromString<List<TenantClaimDto>>(it) }.getOrNull() }
                 ?.firstOrNull()
-                ?.organizationId
-                ?.let { OrganizationId(Uuid.parse(it)) }
+                ?.tenantId
+                ?.let { TenantId(Uuid.parse(it)) }
 
             // We don't store user's name/roles in current JWT; derive minimal values
             val name = email.substringBefore('@', email)
@@ -96,7 +96,7 @@ class JwtValidator(
                 userId = UserId(userId),
                 email = email,
                 name = name,
-                organizationId = orgIdFromFlat ?: orgIdFromList,
+                tenantId = tenantIdFromFlat ?: tenantIdFromList,
                 roles = roles
             )
         } catch (e: Exception) {

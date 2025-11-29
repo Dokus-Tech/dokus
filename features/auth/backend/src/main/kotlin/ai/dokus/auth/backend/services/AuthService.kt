@@ -8,14 +8,14 @@ import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
-import ai.dokus.foundation.domain.model.OrganizationMembership
-import ai.dokus.foundation.domain.model.auth.OrganizationScope
+import ai.dokus.foundation.domain.model.TenantMembership
+import ai.dokus.foundation.domain.model.auth.TenantScope
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.ktor.database.now
@@ -60,14 +60,14 @@ class AuthService(
         val loginTime = now()
         userRepository.recordLogin(userId, loginTime)
 
-        // Get all user's organizations and create scopes for each
-        val memberships = userRepository.getUserOrganizations(userId)
-        val selectedOrganization = resolveOrganizationScope(memberships)
+        // Get all user's tenants and create scopes for each
+        val memberships = userRepository.getUserTenants(userId)
+        val selectedTenant = resolveTenantScope(memberships)
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organization = selectedOrganization
+            organization = selectedTenant
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -96,8 +96,8 @@ class AuthService(
     suspend fun register(request: RegisterRequest): Result<LoginResponse> = try {
         logger.debug("Registration attempt for email: ${request.email.value}")
 
-        // Register user without any organization
-        // User can create or join organizations after registration
+        // Register user without any tenant
+        // User can create or join tenants after registration
         val user = userRepository.register(
             email = request.email.value,
             password = request.password.value,
@@ -107,7 +107,7 @@ class AuthService(
 
         val userId = user.id
 
-        // User starts with no organizations - empty scopes
+        // User starts with no tenants - empty scopes
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,

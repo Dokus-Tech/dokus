@@ -65,6 +65,7 @@ fun Application.configureErrorHandling() {
                 is DokusException.Validation.InvalidFirstName -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidLastName -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidLegalName -> HttpStatusCode.BadRequest
+                is DokusException.Validation.InvalidDisplayName -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidTaxNumber -> HttpStatusCode.BadRequest
                 is DokusException.Validation.InvalidWorkspaceName -> HttpStatusCode.BadRequest
 

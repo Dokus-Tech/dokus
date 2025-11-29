@@ -1,7 +1,7 @@
 package ai.dokus.foundation.messaging.messages
 
 import ai.dokus.foundation.domain.ids.MediaId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.messaging.core.ChannelName
 import ai.dokus.foundation.messaging.core.Message
 import ai.dokus.foundation.messaging.core.MessageId
@@ -23,7 +23,7 @@ data class MediaProcessingRequestedMessage(
     override val timestamp: Instant,
     override val sourceService: String,
     val mediaId: MediaId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val storageKey: String,
     val storageBucket: String,
     val filename: String,
@@ -39,7 +39,7 @@ data class MediaProcessingRequestedMessage(
 
         fun create(
             mediaId: MediaId,
-            organizationId: OrganizationId,
+            tenantId: TenantId,
             storageKey: String,
             storageBucket: String,
             filename: String,
@@ -51,7 +51,7 @@ data class MediaProcessingRequestedMessage(
             timestamp = Clock.System.now(),
             sourceService = sourceService,
             mediaId = mediaId,
-            organizationId = organizationId,
+            tenantId = tenantId,
             storageKey = storageKey,
             storageBucket = storageBucket,
             filename = filename,
