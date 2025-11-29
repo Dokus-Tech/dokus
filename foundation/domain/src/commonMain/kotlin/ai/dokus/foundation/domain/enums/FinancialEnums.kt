@@ -8,7 +8,13 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 @Serializable
-enum class OrganizationPlan(override val dbValue: String) : DbEnum {
+enum class TenantType(override val dbValue: String) : DbEnum {
+    Freelancer("FREELANCER"),
+    Company("COMPANY")
+}
+
+@Serializable
+enum class TenantPlan(override val dbValue: String) : DbEnum {
     Free("FREE"),
     Starter("STARTER"),
     Professional("PROFESSIONAL"),

@@ -3,7 +3,7 @@ package ai.dokus.foundation.ktor.services
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.PaymentDto
 import kotlinx.datetime.LocalDate
@@ -15,7 +15,7 @@ interface PaymentService {
      * Records a payment against an invoice
      * Automatically updates invoice status when fully paid
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param invoiceId The invoice's unique identifier
      * @param amount The payment amount
      * @param paymentDate The date the payment was received
@@ -26,7 +26,7 @@ interface PaymentService {
      * @throws IllegalArgumentException if invoice not found or validation fails
      */
     suspend fun recordPayment(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         invoiceId: InvoiceId,
         amount: Money,
         paymentDate: LocalDate,
@@ -54,7 +54,7 @@ interface PaymentService {
     /**
      * Lists all payments for a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param fromDate Filter payments on or after this date (optional)
      * @param toDate Filter payments on or before this date (optional)
      * @param paymentMethod Filter by payment method (optional)
@@ -63,7 +63,7 @@ interface PaymentService {
      * @return List of payments
      */
     suspend fun listByTenant(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         paymentMethod: PaymentMethod? = null,
@@ -93,13 +93,13 @@ interface PaymentService {
     /**
      * Gets payment statistics for a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param fromDate Start date for statistics (optional)
      * @param toDate End date for statistics (optional)
      * @return Map of statistics (totalReceived, byPaymentMethod, averagePaymentTime, etc.)
      */
     suspend fun getStatistics(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null
     ): Map<String, Any>

@@ -1,12 +1,12 @@
 package ai.dokus.auth.backend.config
 
-import ai.dokus.auth.backend.database.repository.OrganizationRepository
+import ai.dokus.auth.backend.database.repository.TenantRepository
 import ai.dokus.auth.backend.database.repository.PasswordResetTokenRepository
 import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
-import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
-import ai.dokus.auth.backend.database.tables.OrganizationTable
+import ai.dokus.auth.backend.database.tables.TenantMembersTable
+import ai.dokus.auth.backend.database.tables.TenantSettingsTable
+import ai.dokus.auth.backend.database.tables.TenantTable
 import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.UsersTable
@@ -43,10 +43,10 @@ private val appModule = module {
         DatabaseFactory(get(), "auth-pool").apply {
             runBlocking {
                 init(
-                    OrganizationTable,
-                    OrganizationSettingsTable,
+                    TenantTable,
+                    TenantSettingsTable,
                     UsersTable,
-                    OrganizationMembersTable,
+                    TenantMembersTable,
                     RefreshTokensTable,
                     PasswordResetTokensTable
                 )
@@ -58,7 +58,7 @@ private val appModule = module {
     single<PasswordCryptoService> { PasswordCryptoService4j() }
 
     // Repositories (data access layer)
-    single<OrganizationRepository> { OrganizationRepository() }
+    single<TenantRepository> { TenantRepository() }
     single<UserRepository> { UserRepository(get()) }
     single<RefreshTokenRepository> { RefreshTokenRepository() }
     single<PasswordResetTokenRepository> { PasswordResetTokenRepository() }

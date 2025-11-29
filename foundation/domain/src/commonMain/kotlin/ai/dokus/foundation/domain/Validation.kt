@@ -65,3 +65,17 @@ value class LegalName(override val value: String) : ValueClass<String>, Validata
     override val validOrThrows: LegalName
         get() = if (isValid) this else throw DokusException.Validation.InvalidLegalName
 }
+
+@Serializable
+@JvmInline
+value class DisplayName(override val value: String) : ValueClass<String>, Validatable<DisplayName> {
+    override fun toString(): String = value
+
+    val initialOrEmpty: String
+        get() = value.firstOrNull()?.toString() ?: ""
+
+    override val isValid get() = value.isNotBlank() && value.length <= 255
+
+    override val validOrThrows: DisplayName
+        get() = if (isValid) this else throw DokusException.Validation.InvalidDisplayName
+}

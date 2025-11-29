@@ -5,7 +5,7 @@ package ai.dokus.payment.backend.database.services
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.PaymentDto
 import ai.dokus.foundation.ktor.services.PaymentService
@@ -18,7 +18,7 @@ class PaymentServiceImpl(
 ) : PaymentService {
 
     override suspend fun recordPayment(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         invoiceId: InvoiceId,
         amount: Money,
         paymentDate: LocalDate,
@@ -38,7 +38,7 @@ class PaymentServiceImpl(
     }
 
     override suspend fun listByTenant(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         paymentMethod: PaymentMethod?,
@@ -57,7 +57,7 @@ class PaymentServiceImpl(
     }
 
     override suspend fun getStatistics(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         fromDate: LocalDate?,
         toDate: LocalDate?
     ): Map<String, Any> {

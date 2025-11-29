@@ -2,13 +2,13 @@ package ai.dokus.auth.backend
 
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.domain.IdentityRemoteService
-import ai.dokus.app.auth.domain.OrganizationRemoteService
-import ai.dokus.auth.backend.database.repository.OrganizationRepository
+import ai.dokus.app.auth.domain.TenantRemoteService
+import ai.dokus.auth.backend.database.repository.TenantRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.auth.backend.rpc.AccountRemoteServiceImpl
 import ai.dokus.auth.backend.rpc.ClientRemoteServiceImpl
 import ai.dokus.auth.backend.rpc.IdentityRemoteServiceImpl
-import ai.dokus.auth.backend.rpc.OrganizationRemoteServiceImpl
+import ai.dokus.auth.backend.rpc.TenantRemoteServiceImpl
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.domain.rpc.ClientRemoteService
@@ -53,9 +53,9 @@ fun Route.withRemoteServices() {
             )
         }
 
-        registerService<OrganizationRemoteService> {
-            OrganizationRemoteServiceImpl(
-                organizationService = get<OrganizationRepository>(),
+        registerService<TenantRemoteService> {
+            TenantRemoteServiceImpl(
+                tenantRepository = get<TenantRepository>(),
                 userRepository = get<UserRepository>(),
                 authInfoProvider = AuthInfoProvider(call, jwtValidator)
             )

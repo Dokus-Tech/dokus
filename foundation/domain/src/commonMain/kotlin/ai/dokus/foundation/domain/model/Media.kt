@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.MediaDocumentType
 import ai.dokus.foundation.domain.enums.MediaStatus
 import ai.dokus.foundation.domain.ids.MediaId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.VatRate
 import kotlinx.datetime.LocalDate
@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class MediaDto(
     val id: MediaId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val filename: String,
     val mimeType: String,
     val sizeBytes: Long,

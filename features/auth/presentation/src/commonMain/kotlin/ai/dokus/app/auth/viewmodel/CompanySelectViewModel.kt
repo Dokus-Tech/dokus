@@ -1,50 +1,50 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.app.auth.domain.OrganizationRemoteService
-import ai.dokus.app.auth.usecases.SelectOrganizationUseCase
+import ai.dokus.app.auth.domain.TenantRemoteService
+import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.domain.ids.OrganizationId
-import ai.dokus.foundation.domain.model.Organization
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 internal class CompanySelectViewModel(
-    private val organizationRemoteService: OrganizationRemoteService,
-    private val selectOrganizationUseCase: SelectOrganizationUseCase
-) : BaseViewModel<DokusState<List<Organization>>>(DokusState.idle()) {
+    private val tenantRemoteService: TenantRemoteService,
+    private val selectTenantUseCase: SelectTenantUseCase
+) : BaseViewModel<DokusState<List<Tenant>>>(DokusState.idle()) {
 
     private val logger = Logger.forClass<CompanySelectViewModel>()
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun loadOrganizations() {
+    fun loadTenants() {
         scope.launch {
             mutableState.value = DokusState.loading()
             runCatching {
-                organizationRemoteService.listMyOrganizations()
-            }.onSuccess { organizations ->
-                mutableState.value = DokusState.success(organizations)
+                tenantRemoteService.listMyTenants()
+            }.onSuccess { tenants ->
+                mutableState.value = DokusState.success(tenants)
             }.onFailure { error ->
-                logger.e(error) { "Failed to load organizations" }
+                logger.e(error) { "Failed to load tenants" }
                 mutableState.value = DokusState.error(
                     exception = error,
-                    retryHandler = { loadOrganizations() }
+                    retryHandler = { loadTenants() }
                 )
             }
         }
     }
 
-    fun selectOrganization(organizationId: OrganizationId) {
+    fun selectTenant(tenantId: TenantId) {
         scope.launch {
             runCatching {
-                selectOrganizationUseCase(organizationId).getOrThrow()
+                selectTenantUseCase(tenantId).getOrThrow()
             }.onSuccess {
                 mutableEffect.emit(Effect.CompanySelected)
             }.onFailure { error ->
-                logger.e(error) { "Failed to select organization $organizationId" }
+                logger.e(error) { "Failed to select tenant $tenantId" }
                 mutableEffect.emit(Effect.SelectionFailed(error))
             }
         }

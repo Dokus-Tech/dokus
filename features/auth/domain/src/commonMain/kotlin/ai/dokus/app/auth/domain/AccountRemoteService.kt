@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.domain
 
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
@@ -18,10 +18,10 @@ import kotlinx.rpc.annotations.Rpc
 interface AccountRemoteService {
 
     /**
-     * Select an organization and issue tokens scoped to it.
+     * Select a tenant and issue tokens scoped to it.
      * @throws Exception if selection fails or user is not a member
      */
-    suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse
+    suspend fun selectTenant(tenantId: TenantId): LoginResponse
 
     /**
      * Logout user and revoke the current session.

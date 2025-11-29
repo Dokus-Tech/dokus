@@ -1,6 +1,6 @@
 package ai.dokus.payment.backend.routes
 
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.PaymentId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -20,14 +20,14 @@ fun Route.paymentRoutes() {
     route("/api/payments") {
         // List payments
         get {
-            val organizationIdStr = call.request.queryParameters["organizationId"] ?: "00000000-0000-0000-0000-000000000001"
+            val tenantIdStr = call.request.queryParameters["tenantId"] ?: "00000000-0000-0000-0000-000000000001"
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
             val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
 
             try {
-                val organizationId = OrganizationId(Uuid.parse(organizationIdStr))
+                val tenantId = TenantId(Uuid.parse(tenantIdStr))
                 val payments = paymentService.listByTenant(
-                    organizationId = organizationId,
+                    tenantId = tenantId,
                     limit = limit,
                     offset = offset
                 )

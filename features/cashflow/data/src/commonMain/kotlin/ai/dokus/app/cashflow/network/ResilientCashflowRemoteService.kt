@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
@@ -86,9 +86,9 @@ class ResilientCashflowRemoteService(
     override suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): InvoiceTotals =
         delegate { it.calculateInvoiceTotals(items) }
 
-    override fun watchInvoices(organizationId: OrganizationId): Flow<FinancialDocumentDto.InvoiceDto> =
+    override fun watchInvoices(tenantId: TenantId): Flow<FinancialDocumentDto.InvoiceDto> =
         // For streaming flows, just delegate directly (reconnection is handled by consumer if needed)
-        delegate.get().watchInvoices(organizationId)
+        delegate.get().watchInvoices(tenantId)
 
     // Expenses
     override suspend fun createExpense(request: CreateExpenseRequest): FinancialDocumentDto.ExpenseDto =
@@ -118,8 +118,8 @@ class ResilientCashflowRemoteService(
     override suspend fun categorizeExpense(merchant: String, description: String?): ExpenseCategory =
         delegate { it.categorizeExpense(merchant, description) }
 
-    override fun watchExpenses(organizationId: OrganizationId): Flow<FinancialDocumentDto.ExpenseDto> =
-        delegate.get().watchExpenses(organizationId)
+    override fun watchExpenses(tenantId: TenantId): Flow<FinancialDocumentDto.ExpenseDto> =
+        delegate.get().watchExpenses(tenantId)
 
     // Attachments
     override suspend fun uploadInvoiceDocument(

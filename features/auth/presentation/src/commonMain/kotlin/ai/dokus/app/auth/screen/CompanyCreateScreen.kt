@@ -9,10 +9,12 @@ import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.foundation.design.constrains.limitWidth
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withVerticalPadding
+import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.OrganizationPlan
+import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -78,7 +80,9 @@ internal fun CompanyCreateScreen(
         }
     }
 
+    var tenantType by remember { mutableStateOf(TenantType.Company) }
     var legalName by remember { mutableStateOf(LegalName("")) }
+    var displayName by remember { mutableStateOf(DisplayName("")) }
     var vatNumber by remember { mutableStateOf(VatNumber("")) }
     var country by remember { mutableStateOf(Country.Belgium) }
 
@@ -126,17 +130,23 @@ internal fun CompanyCreateScreen(
                         AppNameText()
 
                         CompanyCreateContent(
+                            tenantType = tenantType,
                             legalName = legalName,
+                            displayName = displayName,
                             vatNumber = vatNumber,
                             country = country,
                             isSubmitting = isSubmitting,
+                            onTenantTypeChange = { tenantType = it },
                             onLegalNameChange = { legalName = it },
+                            onDisplayNameChange = { displayName = it },
                             onVatNumberChange = { vatNumber = it },
                             onCountryChange = { country = it },
                             onSubmit = {
-                                viewModel.createOrganization(
+                                viewModel.createTenant(
+                                    type = tenantType,
                                     legalName = legalName,
-                                    plan = OrganizationPlan.Free,
+                                    displayName = displayName,
+                                    plan = TenantPlan.Free,
                                     country = country,
                                     language = Language.En,
                                     vatNumber = vatNumber

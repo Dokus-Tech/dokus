@@ -1,7 +1,7 @@
 package ai.dokus.media.backend.storage
 
 import ai.dokus.foundation.domain.ids.MediaId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.UUID
@@ -14,7 +14,7 @@ data class StoredMedia(
 interface MediaStorage {
     fun validate(fileContent: ByteArray, filename: String, mimeType: String): String?
     suspend fun store(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         mediaId: MediaId,
         filename: String,
         mimeType: String,
@@ -71,13 +71,13 @@ class LocalMediaStorage(
     }
 
     override suspend fun store(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         mediaId: MediaId,
         filename: String,
         mimeType: String,
         fileContent: ByteArray
     ): Result<StoredMedia> = runCatching {
-        val orgDir = File(storageBasePath, organizationId.toString())
+        val orgDir = File(storageBasePath, tenantId.toString())
         val mediaDir = File(orgDir, mediaId.toString())
         mediaDir.mkdirs()
 
