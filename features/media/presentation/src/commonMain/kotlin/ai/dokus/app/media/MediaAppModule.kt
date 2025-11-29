@@ -10,27 +10,14 @@ import ai.dokus.app.media.di.mediaDataModule
 import ai.dokus.app.media.di.mediaDomainModule
 import ai.dokus.app.media.di.mediaPresentationModule
 import ai.dokus.app.media.di.mediaViewModelModule
-import ai.dokus.app.media.navigation.MediaNavigationProvider
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.inbox
-import ai.dokus.app.resources.generated.media_title
+import ai.dokus.app.media.navigation.MediaHomeNavigationProvider
 import ai.dokus.foundation.design.model.HomeItem
-import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.HomeDestination
 
 object MediaAppModule : AppModule {
     override val navigationProvider: NavigationProvider? = null
-    override val homeNavigationProvider: NavigationProvider = MediaNavigationProvider
-    override val homeItems: List<HomeItem> = listOf(
-        HomeItem(
-            destination = HomeDestination.Media,
-            titleRes = Res.string.media_title,
-            iconRes = Res.drawable.inbox,
-            priority = HomeItemPriority.Medium,
-            showTopBar = false
-        )
-    )
+    override val homeNavigationProvider: NavigationProvider = MediaHomeNavigationProvider
+    override val homeItems: List<HomeItem> = listOf()
     override val settingsGroups: List<ModuleSettingsGroup> = emptyList()
     override val dashboardWidgets: List<DashboardWidget> = emptyList()
 
