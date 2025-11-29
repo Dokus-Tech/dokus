@@ -1,12 +1,14 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.components.CompanyCreateContent
-import ai.dokus.app.auth.components.CompanyCreateLayout
 import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightFollowEffect
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
-import ai.dokus.foundation.design.local.LocalScreenSize
+import ai.dokus.foundation.design.components.text.AppNameText
+import ai.dokus.foundation.design.components.text.CopyRightText
+import ai.dokus.foundation.design.constrains.limitWidth
+import ai.dokus.foundation.design.constrains.withVerticalPadding
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
@@ -20,8 +22,15 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,7 +38,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -74,57 +86,83 @@ internal fun CompanyCreateScreen(
 
     val isSubmitting = state is ai.dokus.app.core.state.DokusState.Loading
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Background effects with fade animation
-        AnimatedVisibility(
-            visible = contentVisible,
-            enter = fadeIn(),
-            exit = fadeOut(animationSpec = tween(800))
+    Scaffold { contentPadding ->
+        Box(
+            modifier = Modifier
+                .padding(
+                    bottom = contentPadding.calculateBottomPadding(),
+                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                    top = contentPadding.calculateTopPadding(),
+                )
+                .fillMaxSize()
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                EnhancedFloatingBubbles()
-                SpotlightFollowEffect()
+            // Background effects with fade animation
+            AnimatedVisibility(
+                visible = contentVisible,
+                enter = fadeIn(),
+                exit = fadeOut(animationSpec = tween(800))
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    EnhancedFloatingBubbles()
+                    SpotlightFollowEffect()
+                }
             }
-        }
 
-        // Main content with fade animation
-        AnimatedVisibility(
-            visible = contentVisible,
-            enter = fadeIn(),
-            exit = fadeOut(animationSpec = tween(600))
-        ) {
-            CompanyCreateContent(
-                layout = if (LocalScreenSize.current.isLarge) CompanyCreateLayout.Desktop else CompanyCreateLayout.Mobile,
-                state = state,
-                legalName = legalName,
-                email = email,
-                vatNumber = vatNumber,
-                country = country,
-                isSubmitting = isSubmitting,
-                onLegalNameChange = { legalName = it },
-                onEmailChange = { email = it },
-                onVatNumberChange = { vatNumber = it },
-                onCountryChange = { country = it },
-                onSubmit = {
-                    viewModel.createOrganization(
-                        legalName = legalName,
-                        email = email,
-                        plan = OrganizationPlan.Free,
-                        country = country,
-                        language = Language.En,
-                        vatNumber = vatNumber
-                    )
+            // Main content with fade animation
+            AnimatedVisibility(
+                visible = contentVisible,
+                enter = fadeIn(),
+                exit = fadeOut(animationSpec = tween(600))
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .withVerticalPadding()
+                            .limitWidth()
+                            .padding(horizontal = 16.dp)
+                            .fillMaxHeight()
+                            .align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        AppNameText()
+
+                        CompanyCreateContent(
+                            legalName = legalName,
+                            email = email,
+                            vatNumber = vatNumber,
+                            country = country,
+                            isSubmitting = isSubmitting,
+                            onLegalNameChange = { legalName = it },
+                            onEmailChange = { email = it },
+                            onVatNumberChange = { vatNumber = it },
+                            onCountryChange = { country = it },
+                            onSubmit = {
+                                viewModel.createOrganization(
+                                    legalName = legalName,
+                                    email = email,
+                                    plan = OrganizationPlan.Free,
+                                    country = country,
+                                    language = Language.En,
+                                    vatNumber = vatNumber
+                                )
+                            }
+                        )
+
+                        CopyRightText()
+                    }
+                }
+            }
+
+            // Warp jump effect overlay
+            WarpJumpEffect(
+                isActive = isWarpActive,
+                selectedItemPosition = null, // Start from center for company creation
+                onAnimationComplete = {
+                    shouldNavigate = true
                 }
             )
         }
-
-        // Warp jump effect overlay
-        WarpJumpEffect(
-            isActive = isWarpActive,
-            selectedItemPosition = null, // Start from center for company creation
-            onAnimationComplete = {
-                shouldNavigate = true
-            }
-        )
     }
 }
