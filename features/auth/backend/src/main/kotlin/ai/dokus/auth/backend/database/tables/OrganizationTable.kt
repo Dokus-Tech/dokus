@@ -15,7 +15,6 @@ import org.jetbrains.exposed.v1.datetime.datetime
 object OrganizationTable : UUIDTable("organizations") {
     // Identity
     val name = varchar("name", 255)
-    val email = varchar("email", 255).uniqueIndex()
 
     // Subscription
     val plan = dbEnumeration<OrganizationPlan>("plan")
@@ -35,7 +34,6 @@ object OrganizationTable : UUIDTable("organizations") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, email)
         index(false, status)
     }
 }

@@ -4,7 +4,6 @@ package ai.dokus.auth.backend.rpc
 
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.OrganizationPlan
@@ -92,14 +91,12 @@ class OrganizationRemoteServiceImplTest {
     private fun createMockOrganization(
         id: OrganizationId = testOrganizationId,
         name: String = "Test Organization",
-        email: String = "org@example.com",
         plan: OrganizationPlan = OrganizationPlan.Free
     ): Organization {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         return Organization(
             id = id,
             legalName = LegalName(name),
-            email = Email(email),
             plan = plan,
             status = TenantStatus.Active,
             country = Country.Belgium,

@@ -23,7 +23,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
-import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
@@ -39,11 +38,8 @@ class OrganizationRepository {
         language: Language,
         vatNumber: VatNumber,
     ): OrganizationId = dbQuery {
-        // Email is no longer collected during creation; generate a unique placeholder to satisfy the schema.
-        val placeholderEmail = "org-${UUID.randomUUID()}@placeholder.local"
         val organizationId = OrganizationTable.insertAndGetId {
             it[OrganizationTable.name] = name.value
-            it[OrganizationTable.email] = placeholderEmail
             it[OrganizationTable.plan] = plan
             it[OrganizationTable.country] = country
             it[OrganizationTable.language] = language
@@ -56,7 +52,7 @@ class OrganizationRepository {
             it[OrganizationSettingsTable.organizationId] = organizationId
         }
 
-        logger.info("Created new tenant: $organizationId with generated email placeholder")
+        logger.info("Created new tenant: $organizationId")
         OrganizationId(organizationId.toKotlinUuid())
     }
 
@@ -65,14 +61,6 @@ class OrganizationRepository {
         OrganizationTable
             .selectAll()
             .where { OrganizationTable.id eq javaUuid }
-            .singleOrNull()
-            ?.toTenant()
-    }
-
-    suspend fun findByEmail(email: String): Organization? = dbQuery {
-        OrganizationTable
-            .selectAll()
-            .where { OrganizationTable.email eq email }
             .singleOrNull()
             ?.toTenant()
     }

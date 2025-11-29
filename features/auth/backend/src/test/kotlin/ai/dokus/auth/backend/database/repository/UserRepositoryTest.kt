@@ -5,7 +5,6 @@ package ai.dokus.auth.backend.database.repository
 import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
 import ai.dokus.auth.backend.database.tables.OrganizationTable
 import ai.dokus.auth.backend.database.tables.UsersTable
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -198,7 +197,6 @@ class UserRepositoryTest {
             OrganizationTable.insert {
                 it[id] = orgId.toJavaUuid()
                 it[name] = "Test Organization"
-                it[email] = "org@example.com"
                 it[plan] = OrganizationPlan.Free
                 it[status] = TenantStatus.Active
                 it[country] = Country.Belgium
