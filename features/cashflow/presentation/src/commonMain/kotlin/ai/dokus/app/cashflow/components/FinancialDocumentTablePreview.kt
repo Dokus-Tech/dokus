@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
@@ -53,7 +53,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
         // Invoice with alert (Sent status)
         FinancialDocumentDto.InvoiceDto(
             id = InvoiceId.generate(),
-            organizationId = OrganizationId.generate(),
+            tenantId = TenantId.generate(),
             clientId = ClientId.generate(),
             invoiceNumber = InvoiceNumber("INV-3006-4400"),
             issueDate = date,
@@ -73,7 +73,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
         // Invoice without alert (Paid status)
         FinancialDocumentDto.InvoiceDto(
             id = InvoiceId.generate(),
-            organizationId = OrganizationId.generate(),
+            tenantId = TenantId.generate(),
             clientId = ClientId.generate(),
             invoiceNumber = InvoiceNumber("INV-3006-4401"),
             issueDate = date,
@@ -93,7 +93,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
         // Invoice with Overdue status
         FinancialDocumentDto.InvoiceDto(
             id = InvoiceId.generate(),
-            organizationId = OrganizationId.generate(),
+            tenantId = TenantId.generate(),
             clientId = ClientId.generate(),
             invoiceNumber = InvoiceNumber("INV-3006-4402"),
             issueDate = date,
@@ -113,7 +113,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
         // Invoice with Draft status
         FinancialDocumentDto.InvoiceDto(
             id = InvoiceId.generate(),
-            organizationId = OrganizationId.generate(),
+            tenantId = TenantId.generate(),
             clientId = ClientId.generate(),
             invoiceNumber = InvoiceNumber("INV-3006-4403"),
             issueDate = date,
@@ -133,7 +133,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
         // Invoice with Viewed status
         FinancialDocumentDto.InvoiceDto(
             id = InvoiceId.generate(),
-            organizationId = OrganizationId.generate(),
+            tenantId = TenantId.generate(),
             clientId = ClientId.generate(),
             invoiceNumber = InvoiceNumber("INV-3006-4404"),
             issueDate = date,
@@ -153,7 +153,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
         // Invoice with PartiallyPaid status
         FinancialDocumentDto.InvoiceDto(
             id = InvoiceId.generate(),
-            organizationId = OrganizationId.generate(),
+            tenantId = TenantId.generate(),
             clientId = ClientId.generate(),
             invoiceNumber = InvoiceNumber("INV-3006-4405"),
             issueDate = date,

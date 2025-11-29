@@ -51,11 +51,11 @@ internal fun DashboardScreen(
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val searchExpanded = isLargeScreen || isSearchExpanded
 
-    val currentOrganizationState by viewModel.currentOrganizationState.collectAsState()
-    val currentOrganization = currentOrganizationState.let { if (it.isSuccess()) it.data else null }
+    val currentTenantState by viewModel.currentTenantState.collectAsState()
+    val currentTenant = currentTenantState.let { if (it.isSuccess()) it.data else null }
 
     LaunchedEffect(viewModel) {
-        viewModel.refreshOrganization()
+        viewModel.refreshTenant()
     }
 
     LaunchedEffect(isLargeScreen) {
@@ -98,11 +98,11 @@ internal fun DashboardScreen(
                 },
                 actions = {
                     PButton(
-                        text = currentOrganization?.legalName?.value ?: "Select Organization",
+                        text = currentTenant?.displayName?.value ?: "Select Tenant",
                         variant = PButtonVariant.Outline,
                         icon = Icons.Default.SwitchAccount,
                         iconPosition = PIconPosition.Trailing,
-                        isLoading = currentOrganizationState.isLoading(),
+                        isLoading = currentTenantState.isLoading(),
                         onClick = { navController.navigateTo(AuthDestination.CompanySelect) }
                     )
                 }
