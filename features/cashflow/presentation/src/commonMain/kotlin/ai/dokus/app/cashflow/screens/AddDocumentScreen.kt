@@ -6,14 +6,16 @@ import ai.dokus.app.cashflow.components.InvoiceDetailsForm
 import ai.dokus.app.cashflow.components.UploadIcon
 import ai.dokus.app.cashflow.components.documentDropTarget
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
-import ai.dokus.foundation.design.components.common.Breakpoints
 import ai.dokus.foundation.design.components.common.PTopAppBar
+import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.calf.core.LocalPlatformContext
@@ -52,6 +55,7 @@ internal fun AddDocumentScreen(
     val state by viewModel.state.collectAsState()
     val scope = rememberCoroutineScope()
     val platformContext = LocalPlatformContext.current
+    val isLarge = LocalScreenSize.current.isLarge
 
     val filePickerLauncher = rememberFilePickerLauncher(
         type = FilePickerFileType.Document,
@@ -67,10 +71,16 @@ internal fun AddDocumentScreen(
         }
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val isLargeScreen = maxWidth >= Breakpoints.LARGE.dp
-
-        if (isLargeScreen) {
+    Scaffold { contentPadding ->
+        Box(
+            modifier = Modifier.padding(
+                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                top = contentPadding.calculateTopPadding(),
+                bottom = contentPadding.calculateBottomPadding()
+            )
+        )
+        if (isLarge) {
             // Desktop layout with top bar
             DesktopLayout(
                 onAddNewDocument = { filePickerLauncher.launch() },
@@ -178,7 +188,7 @@ private fun MobileLayout(
     Scaffold(
         topBar = {
             PTopAppBar(
-                title = "Upload document",
+                title = "Add a new document",
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -191,13 +201,6 @@ private fun MobileLayout(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Upload new document",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
             // Camera upload zone
             DocumentUploadZone(
                 onUploadClick = onUploadCamera,
