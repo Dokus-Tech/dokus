@@ -4,7 +4,6 @@ package ai.dokus.auth.backend.rpc
 
 import ai.dokus.auth.backend.database.repository.OrganizationRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -43,7 +42,6 @@ class OrganizationRemoteServiceImpl(
 
     override suspend fun createOrganization(
         legalName: LegalName,
-        email: Email,
         plan: OrganizationPlan,
         country: Country,
         language: Language,
@@ -56,7 +54,6 @@ class OrganizationRemoteServiceImpl(
             // Create the organization
             val organizationId = organizationService.create(
                 name = legalName,
-                email = email,
                 plan = plan,
                 country = country,
                 language = language,

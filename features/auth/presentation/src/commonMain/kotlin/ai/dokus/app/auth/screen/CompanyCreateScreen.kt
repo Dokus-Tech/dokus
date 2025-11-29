@@ -9,7 +9,6 @@ import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.foundation.design.constrains.limitWidth
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withVerticalPadding
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -80,7 +79,6 @@ internal fun CompanyCreateScreen(
     }
 
     var legalName by remember { mutableStateOf(LegalName("")) }
-    var email by remember { mutableStateOf(Email("")) }
     var vatNumber by remember { mutableStateOf(VatNumber("")) }
     var country by remember { mutableStateOf(Country.Belgium) }
 
@@ -129,18 +127,15 @@ internal fun CompanyCreateScreen(
 
                         CompanyCreateContent(
                             legalName = legalName,
-                            email = email,
                             vatNumber = vatNumber,
                             country = country,
                             isSubmitting = isSubmitting,
                             onLegalNameChange = { legalName = it },
-                            onEmailChange = { email = it },
                             onVatNumberChange = { vatNumber = it },
                             onCountryChange = { country = it },
                             onSubmit = {
                                 viewModel.createOrganization(
                                     legalName = legalName,
-                                    email = email,
                                     plan = OrganizationPlan.Free,
                                     country = country,
                                     language = Language.En,

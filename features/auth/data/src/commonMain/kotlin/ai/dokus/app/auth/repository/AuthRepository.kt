@@ -103,7 +103,6 @@ class AuthRepository(
      */
     suspend fun createOrganization(
         legalName: LegalName,
-        email: Email,
         plan: OrganizationPlan,
         country: Country,
         language: Language,
@@ -112,7 +111,6 @@ class AuthRepository(
         logger.d { "Creating organization: ${legalName.value}" }
         val organization = organizationRemoteService.createOrganization(
             legalName = legalName,
-            email = email,
             plan = plan,
             country = country,
             language = language,

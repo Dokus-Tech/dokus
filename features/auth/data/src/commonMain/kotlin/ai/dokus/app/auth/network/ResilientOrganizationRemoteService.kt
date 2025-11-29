@@ -1,7 +1,6 @@
 package ai.dokus.app.auth.network
 
 import ai.dokus.app.auth.domain.OrganizationRemoteService
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -22,12 +21,11 @@ class ResilientOrganizationRemoteService(
 
     override suspend fun createOrganization(
         legalName: LegalName,
-        email: Email,
         plan: OrganizationPlan,
         country: Country,
         language: Language,
         vatNumber: VatNumber
-    ): Organization = delegate { it.createOrganization(legalName, email, plan, country, language, vatNumber) }
+    ): Organization = delegate { it.createOrganization(legalName, plan, country, language, vatNumber) }
 
     override suspend fun getOrganization(id: OrganizationId): Organization = delegate { it.getOrganization(id) }
 

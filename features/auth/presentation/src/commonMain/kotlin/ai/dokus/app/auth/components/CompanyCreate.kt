@@ -1,11 +1,9 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
 import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
 import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.ids.VatNumber
@@ -31,12 +29,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun CompanyCreateContent(
     legalName: LegalName,
-    email: Email,
     vatNumber: VatNumber,
     country: Country,
     isSubmitting: Boolean,
     onLegalNameChange: (LegalName) -> Unit,
-    onEmailChange: (Email) -> Unit,
     onVatNumberChange: (VatNumber) -> Unit,
     onCountryChange: (Country) -> Unit,
     onSubmit: () -> Unit,
@@ -57,12 +53,10 @@ fun CompanyCreateContent(
 
         FormFields(
             legalName = legalName,
-            email = email,
             vatNumber = vatNumber,
             country = country,
             isSubmitting = isSubmitting,
             onLegalNameChange = onLegalNameChange,
-            onEmailChange = onEmailChange,
             onVatNumberChange = onVatNumberChange,
             onCountryChange = onCountryChange,
             onSubmit = onSubmit
@@ -73,31 +67,21 @@ fun CompanyCreateContent(
 @Composable
 private fun FormFields(
     legalName: LegalName,
-    email: Email,
     vatNumber: VatNumber,
     country: Country,
     isSubmitting: Boolean,
     onLegalNameChange: (LegalName) -> Unit,
-    onEmailChange: (Email) -> Unit,
     onVatNumberChange: (VatNumber) -> Unit,
     onCountryChange: (Country) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    val canSubmit = legalName.isValid && email.isValid && vatNumber.isValid
+    val canSubmit = legalName.isValid && vatNumber.isValid
 
     PTextFieldWorkspaceName(
         fieldName = "Company name",
         value = legalName.value,
         modifier = Modifier.fillMaxWidth()
     ) { onLegalNameChange(LegalName(it)) }
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    PTextFieldEmail(
-        fieldName = "Company email",
-        value = email,
-        modifier = Modifier.fillMaxWidth()
-    ) { onEmailChange(it) }
 
     Spacer(modifier = Modifier.height(12.dp))
 

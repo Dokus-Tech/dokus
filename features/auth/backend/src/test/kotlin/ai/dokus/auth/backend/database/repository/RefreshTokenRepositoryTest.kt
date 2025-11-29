@@ -422,7 +422,6 @@ class RefreshTokenRepositoryTest {
             OrganizationTable.insert {
                 it[id] = testOrganizationId.toJavaUuid()
                 it[name] = "Test Tenant"
-                it[email] = "test@example.com"
                 it[plan] = OrganizationPlan.Free
                 it[status] = ai.dokus.foundation.domain.enums.TenantStatus.Active
                 it[country] = ai.dokus.foundation.domain.enums.Country.Belgium
