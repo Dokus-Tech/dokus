@@ -8,7 +8,7 @@ import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
-import ai.dokus.foundation.design.constrains.isLargeScreen
+import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -47,7 +47,7 @@ internal fun DashboardScreen(
 ) {
     val navController = LocalNavController.current
     var searchQuery by remember { mutableStateOf("") }
-    val isLargeScreen = isLargeScreen
+    val isLargeScreen = LocalScreenSize.current.isLarge
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val searchExpanded = isLargeScreen || isSearchExpanded
 
