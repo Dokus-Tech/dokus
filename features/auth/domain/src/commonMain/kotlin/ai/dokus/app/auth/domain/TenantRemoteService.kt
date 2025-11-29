@@ -2,7 +2,6 @@ package ai.dokus.app.auth.domain
 
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
@@ -22,7 +21,6 @@ interface TenantRemoteService {
         legalName: LegalName,
         displayName: DisplayName,
         plan: TenantPlan = TenantPlan.Free,
-        country: Country,
         language: Language = Language.En,
         vatNumber: VatNumber
     ): Tenant
@@ -34,4 +32,7 @@ interface TenantRemoteService {
     suspend fun updateTenantSettings(settings: TenantSettings)
 
     suspend fun getNextInvoiceNumber(): InvoiceNumber
+
+    /** Check if the current user already has a freelancer tenant */
+    suspend fun hasFreelancerTenant(): Boolean
 }
