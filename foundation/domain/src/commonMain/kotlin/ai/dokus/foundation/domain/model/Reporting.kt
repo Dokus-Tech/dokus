@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FinancialSummary(
-    val organizationId: String,
+    val tenantId: String,
     val period: DateRange,
     val totalRevenue: Money,
     val totalExpenses: Money,

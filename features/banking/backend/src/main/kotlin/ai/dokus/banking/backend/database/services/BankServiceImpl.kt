@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.ids.BankConnectionId
 import ai.dokus.foundation.domain.ids.BankTransactionId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.model.BankConnectionDto
 import ai.dokus.foundation.domain.model.BankTransactionDto
@@ -17,7 +17,7 @@ import kotlinx.datetime.LocalDate
 class BankServiceImpl : BankService {
 
     override suspend fun connectBank(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         provider: BankProvider,
         institutionId: String,
         institutionName: String,
@@ -44,11 +44,11 @@ class BankServiceImpl : BankService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun syncAllConnections(organizationId: OrganizationId): Map<BankConnectionId, Int> {
+    override suspend fun syncAllConnections(tenantId: TenantId): Map<BankConnectionId, Int> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun listConnections(organizationId: OrganizationId, activeOnly: Boolean): List<BankConnectionDto> {
+    override suspend fun listConnections(tenantId: TenantId, activeOnly: Boolean): List<BankConnectionDto> {
         TODO("Not yet implemented")
     }
 
@@ -57,7 +57,7 @@ class BankServiceImpl : BankService {
     }
 
     override suspend fun listTransactions(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         connectionId: BankConnectionId?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
@@ -72,7 +72,7 @@ class BankServiceImpl : BankService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun listUnreconciled(organizationId: OrganizationId): List<BankTransactionDto> {
+    override suspend fun listUnreconciled(tenantId: TenantId): List<BankTransactionDto> {
         TODO("Not yet implemented")
     }
 
@@ -88,7 +88,7 @@ class BankServiceImpl : BankService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun autoReconcile(organizationId: OrganizationId): Int {
+    override suspend fun autoReconcile(tenantId: TenantId): Int {
         TODO("Not yet implemented")
     }
 

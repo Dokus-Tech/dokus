@@ -2,7 +2,7 @@ package ai.dokus.cashflow.backend.repository
 
 import ai.dokus.cashflow.backend.database.tables.AttachmentsTable
 import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.ktor.database.dbQuery
@@ -25,7 +25,7 @@ class AttachmentRepository {
      * CRITICAL: MUST include tenant_id for multi-tenancy security
      */
     suspend fun uploadAttachment(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType,
         entityId: String,
         filename: String,
@@ -36,7 +36,7 @@ class AttachmentRepository {
     ): Result<AttachmentId> = runCatching {
         dbQuery {
             val attachmentId = AttachmentsTable.insertAndGetId {
-                it[AttachmentsTable.organizationId] = UUID.fromString(organizationId.toString())
+                it[AttachmentsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[AttachmentsTable.entityType] = entityType
                 it[AttachmentsTable.entityId] = entityId
                 it[AttachmentsTable.filename] = filename
@@ -55,19 +55,19 @@ class AttachmentRepository {
      * CRITICAL: MUST filter by tenant_id
      */
     suspend fun getAttachments(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType,
         entityId: String
     ): Result<List<AttachmentDto>> = runCatching {
         dbQuery {
             AttachmentsTable.selectAll().where {
-                (AttachmentsTable.organizationId eq UUID.fromString(organizationId.toString())) and
+                (AttachmentsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (AttachmentsTable.entityType eq entityType) and
                 (AttachmentsTable.entityId eq entityId)
             }.map { row ->
                 AttachmentDto(
                     id = AttachmentId.parse(row[AttachmentsTable.id].value.toString()),
-                    organizationId = OrganizationId.parse(row[AttachmentsTable.organizationId].toString()),
+                    tenantId = TenantId.parse(row[AttachmentsTable.tenantId].toString()),
                     entityType = row[AttachmentsTable.entityType],
                     entityId = row[AttachmentsTable.entityId],
                     filename = row[AttachmentsTable.filename],
@@ -87,16 +87,16 @@ class AttachmentRepository {
      */
     suspend fun getAttachment(
         attachmentId: AttachmentId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<AttachmentDto?> = runCatching {
         dbQuery {
             AttachmentsTable.selectAll().where {
                 (AttachmentsTable.id eq UUID.fromString(attachmentId.toString())) and
-                (AttachmentsTable.organizationId eq UUID.fromString(organizationId.toString()))
+                (AttachmentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
                 AttachmentDto(
                     id = AttachmentId.parse(row[AttachmentsTable.id].value.toString()),
-                    organizationId = OrganizationId.parse(row[AttachmentsTable.organizationId].toString()),
+                    tenantId = TenantId.parse(row[AttachmentsTable.tenantId].toString()),
                     entityType = row[AttachmentsTable.entityType],
                     entityId = row[AttachmentsTable.entityId],
                     filename = row[AttachmentsTable.filename],
@@ -116,12 +116,12 @@ class AttachmentRepository {
      */
     suspend fun deleteAttachment(
         attachmentId: AttachmentId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<Boolean> = runCatching {
         dbQuery {
             val deletedRows = AttachmentsTable.deleteWhere {
                 (AttachmentsTable.id eq UUID.fromString(attachmentId.toString())) and
-                (AttachmentsTable.organizationId eq UUID.fromString(organizationId.toString()))
+                (AttachmentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
             deletedRows > 0
         }
@@ -133,13 +133,13 @@ class AttachmentRepository {
      * Use case: When deleting an invoice/expense, also delete its attachments
      */
     suspend fun deleteAttachmentsForEntity(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType,
         entityId: String
     ): Result<Int> = runCatching {
         dbQuery {
             AttachmentsTable.deleteWhere {
-                (AttachmentsTable.organizationId eq UUID.fromString(organizationId.toString())) and
+                (AttachmentsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (AttachmentsTable.entityType eq entityType) and
                 (AttachmentsTable.entityId eq entityId)
             }
@@ -152,12 +152,12 @@ class AttachmentRepository {
      */
     suspend fun exists(
         attachmentId: AttachmentId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<Boolean> = runCatching {
         dbQuery {
             AttachmentsTable.selectAll().where {
                 (AttachmentsTable.id eq UUID.fromString(attachmentId.toString())) and
-                (AttachmentsTable.organizationId eq UUID.fromString(organizationId.toString()))
+                (AttachmentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
         }
     }

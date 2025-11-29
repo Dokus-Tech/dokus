@@ -14,7 +14,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object ExpensesTable : UUIDTable("expenses") {
     // Multi-tenancy (CRITICAL)
-    val organizationId = uuid("organization_id")
+    val tenantId = uuid("organization_id")
 
     // Expense details
     val date = date("date")
@@ -50,13 +50,13 @@ object ExpensesTable : UUIDTable("expenses") {
 
     init {
         // CRITICAL: Index organization_id for security and performance
-        index(false, organizationId)
+        index(false, tenantId)
         index(false, category)
         index(false, date)
         index(false, merchant)
 
         // Composite index for common queries
-        index(false, organizationId, category)
-        index(false, organizationId, date)
+        index(false, tenantId, category)
+        index(false, tenantId, date)
     }
 }

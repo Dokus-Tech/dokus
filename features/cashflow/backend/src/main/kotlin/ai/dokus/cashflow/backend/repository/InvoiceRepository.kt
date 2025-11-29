@@ -10,7 +10,7 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceItemId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
@@ -49,7 +49,7 @@ class InvoiceRepository {
      * CRITICAL: MUST include tenant_id for multi-tenancy security
      */
     suspend fun createInvoice(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         request: CreateInvoiceRequest
     ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
         dbQuery {
@@ -59,7 +59,7 @@ class InvoiceRepository {
 
             // Insert invoice
             val invoiceId = InvoicesTable.insertAndGetId {
-                it[InvoicesTable.organizationId] = UUID.fromString(organizationId.toString())
+                it[InvoicesTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[clientId] = UUID.fromString(request.clientId.toString())
                 it[InvoicesTable.invoiceNumber] = invoiceNumber
                 val today = kotlinx.datetime.Clock.System.now()
@@ -95,7 +95,7 @@ class InvoiceRepository {
             // Manually fetch and return the complete invoice
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq invoiceId.value) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single()
 
             val items = InvoiceItemsTable.selectAll().where {
@@ -117,7 +117,7 @@ class InvoiceRepository {
 
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
-                organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
+                tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
                 clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
@@ -150,12 +150,12 @@ class InvoiceRepository {
      */
     suspend fun getInvoice(
         invoiceId: InvoiceId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<FinancialDocumentDto.InvoiceDto?> = runCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull() ?: return@dbQuery null
 
             // Fetch invoice items
@@ -179,7 +179,7 @@ class InvoiceRepository {
             // Map to domain model
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
-                organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
+                tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
                 clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
@@ -211,7 +211,7 @@ class InvoiceRepository {
      * CRITICAL: MUST filter by tenant_id
      */
     suspend fun listInvoices(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         status: InvoiceStatus? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
@@ -220,7 +220,7 @@ class InvoiceRepository {
     ): Result<List<FinancialDocumentDto.InvoiceDto>> = runCatching {
         dbQuery {
             var query = InvoicesTable.selectAll().where {
-                InvoicesTable.organizationId eq UUID.fromString(organizationId.toString())
+                InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())
             }
 
             // Apply filters
@@ -242,7 +242,7 @@ class InvoiceRepository {
                     // Items will be loaded when getting individual invoice
                     FinancialDocumentDto.InvoiceDto(
                         id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
-                        organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
+                        tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
                         clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
                         invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                         issueDate = row[InvoicesTable.issueDate],
@@ -274,14 +274,14 @@ class InvoiceRepository {
      * List overdue invoices for a tenant
      * CRITICAL: MUST filter by tenant_id
      */
-    suspend fun listOverdueInvoices(organizationId: OrganizationId): Result<List<FinancialDocumentDto.InvoiceDto>> =
+    suspend fun listOverdueInvoices(tenantId: TenantId): Result<List<FinancialDocumentDto.InvoiceDto>> =
         runCatching {
             dbQuery {
                 val today = kotlinx.datetime.Clock.System.now()
                     .toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
 
                 InvoicesTable.selectAll().where {
-                    (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString())) and
+                    (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                             (InvoicesTable.dueDate less today) and
                             (InvoicesTable.status inList listOf(
                                 InvoiceStatus.Sent,
@@ -291,7 +291,7 @@ class InvoiceRepository {
                     .map { row ->
                         FinancialDocumentDto.InvoiceDto(
                             id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
-                            organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
+                            tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
                             clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
                             invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                             issueDate = row[InvoicesTable.issueDate],
@@ -325,13 +325,13 @@ class InvoiceRepository {
      */
     suspend fun updateInvoiceStatus(
         invoiceId: InvoiceId,
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         status: InvoiceStatus
     ): Result<Boolean> = runCatching {
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[InvoicesTable.status] = status
             }
@@ -345,14 +345,14 @@ class InvoiceRepository {
      */
     suspend fun updateInvoice(
         invoiceId: InvoiceId,
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         request: CreateInvoiceRequest
     ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
         dbQuery {
             // Verify invoice exists and belongs to tenant
             val exists = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
 
             if (!exists) {
@@ -362,7 +362,7 @@ class InvoiceRepository {
             // Update invoice
             InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[clientId] = UUID.fromString(request.clientId.toString())
                 it[subtotalAmount] =
@@ -399,7 +399,7 @@ class InvoiceRepository {
             // Manually fetch and return the updated invoice
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single()
 
             val items = InvoiceItemsTable.selectAll().where {
@@ -421,7 +421,7 @@ class InvoiceRepository {
 
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
-                organizationId = OrganizationId.parse(row[InvoicesTable.organizationId].toString()),
+                tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
                 clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
@@ -454,7 +454,7 @@ class InvoiceRepository {
      */
     suspend fun deleteInvoice(
         invoiceId: InvoiceId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<Boolean> = runCatching {
         dbQuery {
             // For now, we'll do a hard delete of items and invoice
@@ -468,7 +468,7 @@ class InvoiceRepository {
             // Delete invoice
             val deletedRows = InvoicesTable.deleteWhere {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
 
             deletedRows > 0
@@ -481,12 +481,12 @@ class InvoiceRepository {
      */
     suspend fun exists(
         invoiceId: InvoiceId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<Boolean> = runCatching {
         dbQuery {
             InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
-                        (InvoicesTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
         }
     }
