@@ -6,7 +6,7 @@ import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightFollowEffect
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
-import ai.dokus.foundation.design.constrains.isLargeScreen
+import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
@@ -61,6 +61,7 @@ internal fun CompanyCreateScreen(
                     isWarpActive = true
                     contentVisible = false
                 }
+
                 is CompanyCreateViewModel.Effect.CreationFailed -> Unit
             }
         }
@@ -93,7 +94,7 @@ internal fun CompanyCreateScreen(
             exit = fadeOut(animationSpec = tween(600))
         ) {
             CompanyCreateContent(
-                layout = if (isLargeScreen) CompanyCreateLayout.Desktop else CompanyCreateLayout.Mobile,
+                layout = if (LocalScreenSize.current.isLarge) CompanyCreateLayout.Desktop else CompanyCreateLayout.Mobile,
                 state = state,
                 legalName = legalName,
                 email = email,
