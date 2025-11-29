@@ -19,7 +19,6 @@ data class Tenant(
     val displayName: DisplayName,
     val plan: TenantPlan,
     val status: TenantStatus,
-    val country: Country,
     val language: Language,
     val vatNumber: VatNumber? = null,
     val trialEndsAt: LocalDateTime? = null,
