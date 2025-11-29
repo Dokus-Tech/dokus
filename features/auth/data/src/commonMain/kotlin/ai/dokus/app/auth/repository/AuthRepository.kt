@@ -2,17 +2,19 @@ package ai.dokus.app.auth.repository
 
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.domain.IdentityRemoteService
-import ai.dokus.app.auth.domain.OrganizationRemoteService
+import ai.dokus.app.auth.domain.TenantRemoteService
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
+import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.OrganizationPlan
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.TenantType
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.Organization
+import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
