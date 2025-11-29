@@ -202,7 +202,6 @@ class UserRepositoryTest {
                 it[displayName] = "Test Display"
                 it[plan] = TenantPlan.Free
                 it[status] = TenantStatus.Active
-                it[country] = Country.Belgium
                 it[language] = Language.En
             }
         }
@@ -378,7 +377,6 @@ class UserRepositoryTest {
                 it[displayName] = "Second Display"
                 it[plan] = TenantPlan.Free
                 it[status] = TenantStatus.Active
-                it[country] = Country.Belgium
                 it[language] = Language.En
             }
         }

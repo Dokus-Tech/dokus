@@ -20,11 +20,11 @@ internal object AuthNavigationProvider : NavigationProvider {
         composable<AuthDestination.PasswordChangeRequested> {
             NewPasswordScreen()
         }
-        composable<AuthDestination.CompanyCreate> {
-            CompanyCreateScreen()
+        composable<AuthDestination.WorkspaceCreate> {
+            WorkspaceCreateScreen()
         }
-        composable<AuthDestination.CompanySelect> {
-            CompanySelectScreen()
+        composable<AuthDestination.WorkspaceSelect> {
+            WorkspaceSelectScreen()
         }
     }
 }

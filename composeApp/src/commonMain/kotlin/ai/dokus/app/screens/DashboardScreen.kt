@@ -103,7 +103,7 @@ internal fun DashboardScreen(
                         icon = Icons.Default.SwitchAccount,
                         iconPosition = PIconPosition.Trailing,
                         isLoading = currentTenantState.isLoading(),
-                        onClick = { navController.navigateTo(AuthDestination.CompanySelect) }
+                        onClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) }
                     )
                 }
             )

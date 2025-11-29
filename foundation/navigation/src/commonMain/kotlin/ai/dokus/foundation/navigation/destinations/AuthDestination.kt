@@ -22,12 +22,12 @@ sealed interface AuthDestination : NavigationDestination {
     data object PasswordChangeRequested : AuthDestination
 
     @Serializable
-    @SerialName("company/select")
-    data object CompanySelect : AuthDestination
+    @SerialName("workspace/select")
+    data object WorkspaceSelect : AuthDestination
 
     @Serializable
-    @SerialName("company/create")
-    data object CompanyCreate : AuthDestination
+    @SerialName("workspace/create")
+    data object WorkspaceCreate : AuthDestination
 
     @Serializable
     @SerialName("profile_settings")

@@ -34,6 +34,7 @@ fun PTextFieldWorkspaceName(
     keyboardOptions: KeyboardOptions = PTextFieldWorkspaceNameDefaults.keyboardOptions,
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldWorkspaceNameDefaults.visualTransformation,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
 ) {
@@ -47,6 +48,7 @@ fun PTextFieldWorkspaceName(
         keyboardOptions = keyboardOptions,
         error = error,
         visualTransformation = visualTransformation,
+        enabled = enabled,
         modifier = modifier,
         onValueChange = onValueChange
     )

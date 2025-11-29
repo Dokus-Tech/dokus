@@ -3,7 +3,6 @@ package ai.dokus.app.auth.network
 import ai.dokus.app.auth.domain.TenantRemoteService
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
@@ -26,10 +25,11 @@ class ResilientTenantRemoteService(
         legalName: LegalName,
         displayName: DisplayName,
         plan: TenantPlan,
-        country: Country,
         language: Language,
         vatNumber: VatNumber
-    ): Tenant = delegate { it.createTenant(type, legalName, displayName, plan, country, language, vatNumber) }
+    ): Tenant = delegate { it.createTenant(type, legalName, displayName, plan, language, vatNumber) }
+
+    override suspend fun hasFreelancerTenant(): Boolean = delegate { it.hasFreelancerTenant() }
 
     override suspend fun getTenant(id: TenantId): Tenant = delegate { it.getTenant(id) }
 
