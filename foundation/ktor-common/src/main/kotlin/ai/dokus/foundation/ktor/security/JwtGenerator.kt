@@ -5,7 +5,7 @@ package ai.dokus.foundation.ktor.security
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginResponse
-import ai.dokus.foundation.domain.model.auth.OrganizationScope
+import ai.dokus.foundation.domain.model.auth.TenantScope
 import ai.dokus.foundation.ktor.config.JwtConfig
 import ai.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT
@@ -36,7 +36,7 @@ class JwtGenerator(
     fun generateClaims(
         userId: UserId,
         email: String,
-        organization: OrganizationScope?
+        tenant: TenantScope?
     ): JwtClaims {
         val nowTime = now()
         val accessExpiry = nowTime + JwtClaims.ACCESS_TOKEN_EXPIRY_SECONDS.seconds
@@ -44,7 +44,7 @@ class JwtGenerator(
         return JwtClaims(
             userId = userId,
             email = email,
-            organization = organization,
+            tenant = tenant,
             iat = nowTime.epochSeconds,
             exp = accessExpiry.epochSeconds,
             jti = Uuid.random().toString(),
@@ -63,16 +63,16 @@ class JwtGenerator(
             .withIssuedAt(Date.from(Instant.ofEpochSecond(claims.iat)))
             .withExpiresAt(Date.from(Instant.ofEpochSecond(claims.exp)))
 
-        claims.organization?.let { org ->
+        claims.tenant?.let { tenant ->
             builder
-                .withClaim(JwtClaims.CLAIM_ORGANIZATION_ID, org.organizationId.value.toString())
+                .withClaim(JwtClaims.CLAIM_TENANT_ID, tenant.tenantId.value.toString())
                 .withArrayClaim(
                     JwtClaims.CLAIM_PERMISSIONS,
-                    org.permissions.map { it.name }.toTypedArray()
+                    tenant.permissions.map { it.name }.toTypedArray()
                 )
-                .withClaim(JwtClaims.CLAIM_SUBSCRIPTION_TIER, org.subscriptionTier.name)
+                .withClaim(JwtClaims.CLAIM_SUBSCRIPTION_TIER, tenant.subscriptionTier.name)
                 .apply {
-                    org.role?.name?.let { withClaim(JwtClaims.CLAIM_ROLE, it) }
+                    tenant.role?.name?.let { withClaim(JwtClaims.CLAIM_ROLE, it) }
                 }
         }
 

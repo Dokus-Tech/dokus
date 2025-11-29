@@ -6,13 +6,13 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
- * Organization-specific preferences and defaults
- * Per-organization configuration
+ * Tenant-specific preferences and defaults
+ * Per-tenant configuration
  */
-object OrganizationSettingsTable : UUIDTable("organization_settings") {
-    val organizationId = reference(
-        name = "organization_id",
-        foreign = OrganizationTable,
+object TenantSettingsTable : UUIDTable("tenant_settings") {
+    val tenantId = reference(
+        name = "tenant_id",
+        foreign = TenantTable,
         onDelete = ReferenceOption.CASCADE
     ).uniqueIndex()
 

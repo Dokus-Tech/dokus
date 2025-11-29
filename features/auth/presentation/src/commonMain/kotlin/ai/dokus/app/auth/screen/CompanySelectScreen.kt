@@ -76,7 +76,7 @@ internal fun CompanySelectScreen(
                 }
             }
         }
-        viewModel.loadOrganizations()
+        viewModel.loadTenants()
     }
 
     Scaffold { contentPadding ->
@@ -124,10 +124,10 @@ internal fun CompanySelectScreen(
                         ) {
                             SelectionBody(
                                 state = state,
-                                onCompanyClick = { organization ->
-                                    viewModel.selectOrganization(organization.id)
+                                onTenantClick = { tenant ->
+                                    viewModel.selectTenant(tenant.id)
                                 },
-                                onAddCompanyClick = { navController.navigateTo(AuthDestination.CompanyCreate) }
+                                onAddTenantClick = { navController.navigateTo(AuthDestination.CompanyCreate) }
                             )
                         }
 

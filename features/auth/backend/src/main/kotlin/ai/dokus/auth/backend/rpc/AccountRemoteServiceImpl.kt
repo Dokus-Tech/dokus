@@ -6,7 +6,7 @@ import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.auth.backend.services.AuthService
 import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
@@ -33,15 +33,15 @@ class AccountRemoteServiceImpl(
     private val logger = LoggerFactory.getLogger(AccountRemoteServiceImpl::class.java)
 
     /**
-     * Select an organization and re-issue scoped tokens.
+     * Select a tenant and re-issue scoped tokens.
      */
-    override suspend fun selectOrganization(organizationId: OrganizationId): LoginResponse {
-        logger.debug("RPC: selectOrganization called for org: ${organizationId.value}")
+    override suspend fun selectTenant(tenantId: TenantId): LoginResponse {
+        logger.debug("RPC: selectTenant called for tenant: ${tenantId.value}")
 
         return authInfoProvider.withAuthInfo {
             val userId = requireAuthenticatedUserId()
-            authService.selectOrganization(userId, organizationId)
-                .onFailure { error -> logger.error("RPC: selectOrganization failed for user: ${userId.value}", error) }
+            authService.selectOrganization(userId, tenantId)
+                .onFailure { error -> logger.error("RPC: selectTenant failed for user: ${userId.value}", error) }
                 .getOrThrow()
         }
     }

@@ -4,18 +4,22 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
 import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
 import ai.dokus.foundation.design.components.text.SectionTitle
+import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
+import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.ids.VatNumber
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -28,11 +32,15 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun CompanyCreateContent(
+    tenantType: TenantType,
     legalName: LegalName,
+    displayName: DisplayName,
     vatNumber: VatNumber,
     country: Country,
     isSubmitting: Boolean,
+    onTenantTypeChange: (TenantType) -> Unit,
     onLegalNameChange: (LegalName) -> Unit,
+    onDisplayNameChange: (DisplayName) -> Unit,
     onVatNumberChange: (VatNumber) -> Unit,
     onCountryChange: (Country) -> Unit,
     onSubmit: () -> Unit,
@@ -45,18 +53,22 @@ fun CompanyCreateContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SectionTitle(
-            text = "Create your company",
+            text = if (tenantType == TenantType.Company) "Create your company" else "Setup freelancer profile",
             horizontalArrangement = Arrangement.Center
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         FormFields(
+            tenantType = tenantType,
             legalName = legalName,
+            displayName = displayName,
             vatNumber = vatNumber,
             country = country,
             isSubmitting = isSubmitting,
+            onTenantTypeChange = onTenantTypeChange,
             onLegalNameChange = onLegalNameChange,
+            onDisplayNameChange = onDisplayNameChange,
             onVatNumberChange = onVatNumberChange,
             onCountryChange = onCountryChange,
             onSubmit = onSubmit
@@ -66,22 +78,42 @@ fun CompanyCreateContent(
 
 @Composable
 private fun FormFields(
+    tenantType: TenantType,
     legalName: LegalName,
+    displayName: DisplayName,
     vatNumber: VatNumber,
     country: Country,
     isSubmitting: Boolean,
+    onTenantTypeChange: (TenantType) -> Unit,
     onLegalNameChange: (LegalName) -> Unit,
+    onDisplayNameChange: (DisplayName) -> Unit,
     onVatNumberChange: (VatNumber) -> Unit,
     onCountryChange: (Country) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    val canSubmit = legalName.isValid && vatNumber.isValid
+    val canSubmit = legalName.isValid && displayName.isValid && vatNumber.isValid
+
+    // Tenant type selector
+    TenantTypeSelector(
+        selected = tenantType,
+        onSelected = onTenantTypeChange
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
 
     PTextFieldWorkspaceName(
-        fieldName = "Company name",
+        fieldName = if (tenantType == TenantType.Company) "Legal name" else "Full name",
         value = legalName.value,
         modifier = Modifier.fillMaxWidth()
     ) { onLegalNameChange(LegalName(it)) }
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    PTextFieldWorkspaceName(
+        fieldName = "Display name",
+        value = displayName.value,
+        modifier = Modifier.fillMaxWidth()
+    ) { onDisplayNameChange(DisplayName(it)) }
 
     Spacer(modifier = Modifier.height(12.dp))
 
@@ -101,11 +133,33 @@ private fun FormFields(
     Spacer(modifier = Modifier.height(24.dp))
 
     PPrimaryButton(
-        text = "Create company",
+        text = if (tenantType == TenantType.Company) "Create company" else "Create profile",
         enabled = canSubmit && !isSubmitting,
         modifier = Modifier.fillMaxWidth(),
         onClick = onSubmit
     )
+}
+
+@Composable
+private fun TenantTypeSelector(
+    selected: TenantType,
+    onSelected: (TenantType) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+    ) {
+        FilterChip(
+            selected = selected == TenantType.Company,
+            onClick = { onSelected(TenantType.Company) },
+            label = { Text("Company") }
+        )
+        FilterChip(
+            selected = selected == TenantType.Freelancer,
+            onClick = { onSelected(TenantType.Freelancer) },
+            label = { Text("Freelancer") }
+        )
+    }
 }
 
 @Composable

@@ -2,7 +2,7 @@ package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
@@ -76,7 +76,7 @@ interface ExpenseService {
     /**
      * Lists all expenses for a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param category Filter by category (optional)
      * @param fromDate Filter expenses on or after this date (optional)
      * @param toDate Filter expenses on or before this date (optional)
@@ -86,7 +86,7 @@ interface ExpenseService {
      * @return List of expenses
      */
     suspend fun listByTenant(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         category: ExpenseCategory? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
@@ -143,30 +143,30 @@ interface ExpenseService {
     /**
      * Lists recurring expenses for a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @return List of recurring expenses
      */
-    suspend fun listRecurring(organizationId: OrganizationId): List<FinancialDocumentDto.ExpenseDto>
+    suspend fun listRecurring(tenantId: TenantId): List<FinancialDocumentDto.ExpenseDto>
 
     /**
      * Watches expense updates for a tenant in real-time
      * Returns a Flow that emits whenever expenses are created or updated
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @return Flow of expense updates
      */
-    fun watchExpenses(organizationId: OrganizationId): Flow<FinancialDocumentDto.ExpenseDto>
+    fun watchExpenses(tenantId: TenantId): Flow<FinancialDocumentDto.ExpenseDto>
 
     /**
      * Gets expense statistics for a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param fromDate Start date for statistics (optional)
      * @param toDate End date for statistics (optional)
      * @return Map of statistics (totalExpenses, totalDeductible, byCategory, etc.)
      */
     suspend fun getStatistics(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null
     ): Map<String, Any>

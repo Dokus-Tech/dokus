@@ -3,7 +3,7 @@ package ai.dokus.foundation.domain.rpc
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.model.PaymentDto
@@ -89,5 +89,5 @@ interface PaymentRemoteService {
      * Watch for payment changes in real-time
      * Emits events when payments are recorded, updated, or deleted
      */
-    fun watchPayments(organizationId: OrganizationId): Flow<PaymentEvent>
+    fun watchPayments(tenantId: TenantId): Flow<PaymentEvent>
 }

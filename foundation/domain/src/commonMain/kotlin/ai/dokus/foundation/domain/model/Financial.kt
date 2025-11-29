@@ -12,10 +12,12 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 @Serializable
-data class Organization(
-    val id: OrganizationId,
+data class Tenant(
+    val id: TenantId,
+    val type: TenantType,
     val legalName: LegalName,
-    val plan: OrganizationPlan,
+    val displayName: DisplayName,
+    val plan: TenantPlan,
     val status: TenantStatus,
     val country: Country,
     val language: Language,
@@ -27,8 +29,21 @@ data class Organization(
 )
 
 @Serializable
-data class OrganizationSettings(
-    val organizationId: OrganizationId,
+data class Address(
+    val id: AddressId,
+    val tenantId: TenantId,
+    val streetLine1: String,
+    val streetLine2: String? = null,
+    val city: String,
+    val postalCode: String,
+    val country: Country,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
+)
+
+@Serializable
+data class TenantSettings(
+    val tenantId: TenantId,
     val invoicePrefix: String = "INV",
     val nextInvoiceNumber: Int = 1,
     val defaultPaymentTerms: Int = 30,
@@ -49,8 +64,8 @@ data class OrganizationSettings(
 )
 
 /**
- * User identity - does not include organization info.
- * Users can belong to multiple organizations via OrganizationMembership.
+ * User identity - does not include tenant info.
+ * Users can belong to multiple tenants via TenantMembership.
  */
 @Serializable
 data class User(
@@ -66,12 +81,12 @@ data class User(
 )
 
 /**
- * Represents a user's membership in an organization with their role.
+ * Represents a user's membership in a tenant with their role.
  */
 @Serializable
-data class OrganizationMembership(
+data class TenantMembership(
     val userId: UserId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val role: UserRole,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
@@ -79,12 +94,12 @@ data class OrganizationMembership(
 )
 
 /**
- * User with specific organization context - used when working within an organization.
+ * User with specific tenant context - used when working within a tenant.
  */
 @Serializable
-data class UserInOrganization(
+data class UserInTenant(
     val user: User,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val role: UserRole,
     val membershipActive: Boolean = true
 )
@@ -96,7 +111,7 @@ data class UserInOrganization(
 @Serializable
 data class ClientDto(
     val id: ClientId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val name: Name,
     val email: Email? = null,
     val vatNumber: VatNumber? = null,
@@ -129,7 +144,7 @@ data class ClientDto(
 @Serializable
 data class PaymentDto(
     val id: PaymentId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val invoiceId: InvoiceId,
     val amount: Money,
     val paymentDate: LocalDate,
@@ -146,7 +161,7 @@ data class PaymentDto(
 @Serializable
 data class BankConnectionDto(
     val id: BankConnectionId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val provider: BankProvider,
     val institutionId: String,
     val institutionName: String,
@@ -164,7 +179,7 @@ data class BankConnectionDto(
 data class BankTransactionDto(
     val id: BankTransactionId,
     val bankConnectionId: BankConnectionId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val externalId: String,
     val date: LocalDate,
     val amount: Money,
@@ -185,7 +200,7 @@ data class BankTransactionDto(
 @Serializable
 data class VatReturnDto(
     val id: VatReturnId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val quarter: Int,
     val year: Int,
     val salesVat: Money,
@@ -205,7 +220,7 @@ data class VatReturnDto(
 @Serializable
 data class AuditLogDto(
     val id: AuditLogId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val userId: BusinessUserId? = null,
     val action: AuditAction,
     val entityType: EntityType,
@@ -220,7 +235,7 @@ data class AuditLogDto(
 @Serializable
 data class AttachmentDto(
     val id: AttachmentId,
-    val organizationId: OrganizationId,
+    val tenantId: TenantId,
     val entityType: EntityType,
     val entityId: String, // Generic entity ID as string since it could be any entity
     val filename: String,

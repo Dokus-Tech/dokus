@@ -1,14 +1,14 @@
 package ai.dokus.auth.backend.database.mappers
 
-import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
+import ai.dokus.auth.backend.database.tables.TenantMembersTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.OrganizationMembership
+import ai.dokus.foundation.domain.model.TenantMembership
 import ai.dokus.foundation.domain.model.User
-import ai.dokus.foundation.domain.model.UserInOrganization
+import ai.dokus.foundation.domain.model.UserInTenant
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -32,24 +32,24 @@ object FinancialMappers {
     )
 
     /**
-     * Maps a ResultRow from OrganizationMembersTable to OrganizationMembership.
+     * Maps a ResultRow from TenantMembersTable to TenantMembership.
      */
-    fun ResultRow.toOrganizationMembership(): OrganizationMembership = OrganizationMembership(
-        userId = UserId(this[OrganizationMembersTable.userId].value.toString()),
-        organizationId = OrganizationId(this[OrganizationMembersTable.organizationId].value.toKotlinUuid()),
-        role = this[OrganizationMembersTable.role],
-        isActive = this[OrganizationMembersTable.isActive],
-        createdAt = this[OrganizationMembersTable.createdAt],
-        updatedAt = this[OrganizationMembersTable.updatedAt]
+    fun ResultRow.toTenantMembership(): TenantMembership = TenantMembership(
+        userId = UserId(this[TenantMembersTable.userId].value.toString()),
+        tenantId = TenantId(this[TenantMembersTable.tenantId].value.toKotlinUuid()),
+        role = this[TenantMembersTable.role],
+        isActive = this[TenantMembersTable.isActive],
+        createdAt = this[TenantMembersTable.createdAt],
+        updatedAt = this[TenantMembersTable.updatedAt]
     )
 
     /**
-     * Maps joined UsersTable + OrganizationMembersTable to UserInOrganization.
+     * Maps joined UsersTable + TenantMembersTable to UserInTenant.
      */
-    fun ResultRow.toUserInOrganization(): UserInOrganization = UserInOrganization(
+    fun ResultRow.toUserInTenant(): UserInTenant = UserInTenant(
         user = this.toUser(),
-        organizationId = OrganizationId(this[OrganizationMembersTable.organizationId].value.toKotlinUuid()),
-        role = this[OrganizationMembersTable.role],
-        membershipActive = this[OrganizationMembersTable.isActive]
+        tenantId = TenantId(this[TenantMembersTable.tenantId].value.toKotlinUuid()),
+        role = this[TenantMembersTable.role],
+        membershipActive = this[TenantMembersTable.isActive]
     )
 }

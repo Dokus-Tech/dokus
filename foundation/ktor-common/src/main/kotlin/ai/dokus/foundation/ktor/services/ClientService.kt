@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.ids.ClientId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.ClientDto
 import kotlinx.rpc.annotations.Rpc
@@ -11,7 +11,7 @@ interface ClientService {
     /**
      * Creates a new client for a tenant
      *
-     * @param organizationId The tenant ID this client belongs to
+     * @param tenantId The tenant ID this client belongs to
      * @param name The client's name or company name
      * @param email The client's email address (optional)
      * @param vatNumber The client's VAT number (optional)
@@ -26,7 +26,7 @@ interface ClientService {
      * @return The created client
      */
     suspend fun create(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         name: String,
         email: String? = null,
         vatNumber: VatNumber? = null,
@@ -100,22 +100,22 @@ interface ClientService {
     /**
      * Lists all clients for a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param activeOnly If true, only returns active clients (defaults to true)
      * @return List of clients
      */
-    suspend fun listByTenant(organizationId: OrganizationId, activeOnly: Boolean = true): List<ClientDto>
+    suspend fun listByTenant(tenantId: TenantId, activeOnly: Boolean = true): List<ClientDto>
 
     /**
      * Searches for clients by name
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param query The search query (matches against client name)
      * @param activeOnly If true, only searches active clients (defaults to true)
      * @return List of matching clients
      */
     suspend fun search(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         query: String,
         activeOnly: Boolean = true
     ): List<ClientDto>
@@ -123,18 +123,18 @@ interface ClientService {
     /**
      * Finds a client by their email address
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param email The client's email address
      * @return The client if found, null otherwise
      */
-    suspend fun findByEmail(organizationId: OrganizationId, email: String): ClientDto?
+    suspend fun findByEmail(tenantId: TenantId, email: String): ClientDto?
 
     /**
      * Finds a client by their VAT number
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param vatNumber The client's VAT number
      * @return The client if found, null otherwise
      */
-    suspend fun findByVatNumber(organizationId: OrganizationId, vatNumber: VatNumber): ClientDto?
+    suspend fun findByVatNumber(tenantId: TenantId, vatNumber: VatNumber): ClientDto?
 }

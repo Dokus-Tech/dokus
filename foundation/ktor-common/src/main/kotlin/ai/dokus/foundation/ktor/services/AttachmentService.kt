@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ktor.services
 
 import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.UploadInfo
@@ -16,7 +16,7 @@ interface AttachmentService {
      * Uploads a file and associates it with an entity
      * Stores the file in S3/MinIO and creates metadata record
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param entityType The type of entity this attachment belongs to
      * @param entityId The unique identifier of the entity
      * @param filename The original filename
@@ -26,7 +26,7 @@ interface AttachmentService {
      * @throws IllegalArgumentException if file validation fails or entity not found
      */
     suspend fun upload(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType,
         entityId: Uuid,
         filename: String,
@@ -64,14 +64,14 @@ interface AttachmentService {
     /**
      * Lists all attachments for a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param entityType Filter by entity type (optional)
      * @param limit Maximum number of results (optional)
      * @param offset Pagination offset (optional)
      * @return List of attachments
      */
     suspend fun listByTenant(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType? = null,
         limit: Int? = null,
         offset: Int? = null
@@ -100,7 +100,7 @@ interface AttachmentService {
      * Gets a presigned URL for direct file upload
      * Allows browser to upload directly to S3 without proxying through backend
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param entityType The type of entity this attachment will belong to
      * @param entityId The unique identifier of the entity
      * @param filename The filename for the upload
@@ -110,7 +110,7 @@ interface AttachmentService {
      * @throws IllegalArgumentException if validation fails
      */
     suspend fun getPresignedUploadUrl(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType,
         entityId: Uuid,
         filename: String,
@@ -122,7 +122,7 @@ interface AttachmentService {
      * Creates attachment metadata after a presigned upload
      * Call this after successfully uploading via presigned URL
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @param entityType The type of entity
      * @param entityId The unique identifier of the entity
      * @param filename The original filename
@@ -133,7 +133,7 @@ interface AttachmentService {
      * @return The created attachment record
      */
     suspend fun createMetadata(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType,
         entityId: Uuid,
         filename: String,
@@ -146,10 +146,10 @@ interface AttachmentService {
     /**
      * Gets total storage used by a tenant
      *
-     * @param organizationId The tenant's unique identifier
+     * @param tenantId The tenant's unique identifier
      * @return Total bytes used
      */
-    suspend fun getTotalStorageUsed(organizationId: OrganizationId): Long
+    suspend fun getTotalStorageUsed(tenantId: TenantId): Long
 
     /**
      * Validates file type and size

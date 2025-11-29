@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.model.UserDto
@@ -51,9 +51,9 @@ suspend fun getAuthenticationInfo(): AuthenticationInfo? {
     return currentCoroutineContext()[AuthContext]?.authInfo
 }
 
-suspend fun requireAuthenticatedOrganizationId(): OrganizationId {
-    return requireAuthenticationInfo().organizationId
-        ?: throw IllegalStateException("Organization context required but not selected")
+suspend fun requireAuthenticatedTenantId(): TenantId {
+    return requireAuthenticationInfo().tenantId
+        ?: throw IllegalStateException("Tenant context required but not selected")
 }
 
 /**

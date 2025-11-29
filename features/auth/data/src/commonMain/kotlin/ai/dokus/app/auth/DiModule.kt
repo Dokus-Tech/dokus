@@ -5,24 +5,24 @@ import ai.dokus.app.auth.Qualifiers.rpcClientNoAuth
 import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.domain.AccountRemoteService
 import ai.dokus.app.auth.domain.IdentityRemoteService
-import ai.dokus.app.auth.domain.OrganizationRemoteService
+import ai.dokus.app.auth.domain.TenantRemoteService
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.app.auth.network.ResilientAccountRemoteService
 import ai.dokus.app.auth.network.ResilientIdentityRemoteService
-import ai.dokus.app.auth.network.ResilientOrganizationRemoteService
+import ai.dokus.app.auth.network.ResilientTenantRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
-import ai.dokus.app.auth.usecases.GetCurrentOrganizationUseCase
-import ai.dokus.app.auth.usecases.GetCurrentOrganizationUseCaseImpl
+import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
+import ai.dokus.app.auth.usecases.GetCurrentTenantUseCaseImpl
 import ai.dokus.app.auth.usecases.LoginUseCase
 import ai.dokus.app.auth.usecases.LogoutUseCase
 import ai.dokus.app.auth.usecases.RegisterAndLoginUseCase
-import ai.dokus.app.auth.usecases.SelectOrganizationUseCase
-import ai.dokus.app.auth.usecases.SelectOrganizationUseCaseImpl
+import ai.dokus.app.auth.usecases.SelectTenantUseCase
+import ai.dokus.app.auth.usecases.SelectTenantUseCaseImpl
 import ai.dokus.app.auth.utils.JwtDecoder
 import ai.dokus.app.core.database.LocalDatabaseCleaner
 import ai.dokus.foundation.domain.asbtractions.AuthManager
@@ -111,11 +111,11 @@ val authNetworkModule = module {
         )
     }
 
-    // OrganizationRemoteService (authenticated)
-    single<OrganizationRemoteService> {
+    // TenantRemoteService (authenticated)
+    single<TenantRemoteService> {
         val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientOrganizationRemoteService(
-            delegate = createRetryDelegate { rpcClient.service<OrganizationRemoteService>() }.withAuth(
+        ResilientTenantRemoteService(
+            delegate = createRetryDelegate { rpcClient.service<TenantRemoteService>() }.withAuth(
                 get<TokenManagerMutable>(),
                 get<AuthManagerMutable>()
             ),
@@ -159,7 +159,7 @@ val authDataModule = module {
             authManager = get<AuthManagerMutable>(),
             accountService = get<AccountRemoteService>(),
             identityService = get<IdentityRemoteService>(),
-            organizationRemoteService = get<OrganizationRemoteService>()
+            tenantRemoteService = get<TenantRemoteService>()
         )
     }
 }
@@ -169,11 +169,11 @@ val authDomainModule = module {
     single { RegisterAndLoginUseCase(get()) }
     single { LogoutUseCase(get(), get<LocalDatabaseCleaner>()) }
     single { CheckAccountUseCase() }
-    single<GetCurrentOrganizationUseCase> {
-        GetCurrentOrganizationUseCaseImpl(
+    single<GetCurrentTenantUseCase> {
+        GetCurrentTenantUseCaseImpl(
             get<TokenManager>(),
-            get<OrganizationRemoteService>()
+            get<TenantRemoteService>()
         )
     }
-    single<SelectOrganizationUseCase> { SelectOrganizationUseCaseImpl(get<AuthRepository>()) }
+    single<SelectTenantUseCase> { SelectTenantUseCaseImpl(get<AuthRepository>()) }
 }

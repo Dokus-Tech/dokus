@@ -3,7 +3,7 @@ package ai.dokus.media.backend.repository
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.MediaStatus
 import ai.dokus.foundation.domain.ids.MediaId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaExtraction
 import ai.dokus.foundation.ktor.database.dbQuery
@@ -33,7 +33,7 @@ class MediaRepository(
 
     suspend fun create(
         mediaId: MediaId,
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         filename: String,
         mimeType: String,
         sizeBytes: Long,
@@ -47,7 +47,7 @@ class MediaRepository(
         dbQuery {
             MediaTable.insert {
                 it[id] = EntityID(UUID.fromString(mediaId.toString()), MediaTable)
-                it[MediaTable.organizationId] = UUID.fromString(organizationId.toString())
+                it[MediaTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[MediaTable.filename] = filename
                 it[MediaTable.mimeType] = mimeType
                 it[MediaTable.sizeBytes] = sizeBytes
@@ -64,13 +64,13 @@ class MediaRepository(
 
     suspend fun get(
         mediaId: MediaId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<MediaRecord?> = runCatching {
         dbQuery {
             MediaTable.selectAll()
                 .where {
                     (MediaTable.id eq UUID.fromString(mediaId.toString())) and
-                        (MediaTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (MediaTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .singleOrNull()
                 ?.let { toRecord(it) }
@@ -78,14 +78,14 @@ class MediaRepository(
     }
 
     suspend fun list(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         status: MediaStatus?,
         limit: Int,
         offset: Int
     ): Result<List<MediaRecord>> = runCatching {
         dbQuery {
             val baseQuery = MediaTable.selectAll().where {
-                MediaTable.organizationId eq UUID.fromString(organizationId.toString())
+                MediaTable.tenantId eq UUID.fromString(tenantId.toString())
             }
             val filtered = status?.let { baseQuery.andWhere { MediaTable.status eq it } } ?: baseQuery
 
@@ -98,7 +98,7 @@ class MediaRepository(
 
     suspend fun attach(
         mediaId: MediaId,
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: EntityType,
         entityId: String
     ): Result<MediaRecord?> = runCatching {
@@ -106,7 +106,7 @@ class MediaRepository(
             MediaTable.update(
                 where = {
                     (MediaTable.id eq UUID.fromString(mediaId.toString())) and
-                        (MediaTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (MediaTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
             ) {
                 it[attachedEntityType] = entityType
@@ -114,12 +114,12 @@ class MediaRepository(
                 it[updatedAt] = CurrentDateTime
             }
         }
-        get(mediaId, organizationId).getOrThrow()
+        get(mediaId, tenantId).getOrThrow()
     }
 
     suspend fun updateProcessing(
         mediaId: MediaId,
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         status: MediaStatus,
         processingSummary: String?,
         extraction: MediaExtraction?,
@@ -131,7 +131,7 @@ class MediaRepository(
             MediaTable.update(
                 where = {
                     (MediaTable.id eq UUID.fromString(mediaId.toString())) and
-                        (MediaTable.organizationId eq UUID.fromString(organizationId.toString()))
+                        (MediaTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
             ) {
                 it[MediaTable.status] = status
@@ -143,7 +143,7 @@ class MediaRepository(
                 it[updatedAt] = CurrentDateTime
             }
         }
-        get(mediaId, organizationId).getOrThrow()
+        get(mediaId, tenantId).getOrThrow()
     }
 
     private fun toRecord(row: ResultRow): MediaRecord {
@@ -152,7 +152,7 @@ class MediaRepository(
 
         val dto = MediaDto(
             id = MediaId.parse(row[MediaTable.id].value.toString()),
-            organizationId = OrganizationId.parse(row[MediaTable.organizationId].toString()),
+            tenantId = TenantId.parse(row[MediaTable.tenantId].toString()),
             filename = row[MediaTable.filename],
             mimeType = row[MediaTable.mimeType],
             sizeBytes = row[MediaTable.sizeBytes],

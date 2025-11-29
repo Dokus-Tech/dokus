@@ -2,7 +2,7 @@ package ai.dokus.app
 
 import ai.dokus.app.auth.AuthInitializer
 import ai.dokus.app.auth.database.AuthDatabase
-import ai.dokus.app.auth.usecases.GetCurrentOrganizationUseCase
+import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.core.database.LocalDatabaseCleaner
 import ai.dokus.app.core.viewmodel.HealthStatusViewModel
 import ai.dokus.app.local.DefaultLocalDatabaseCleaner
@@ -28,7 +28,7 @@ internal val diModuleApp = module {
         )
     }
     viewModel { AppVersionCheckViewModel() }
-    viewModel { DashboardViewModel(get<GetCurrentOrganizationUseCase>()) }
+    viewModel { DashboardViewModel(get<GetCurrentTenantUseCase>()) }
     viewModel { HomeViewModel(SavedStateHandle.createHandle(null, null)) }
 
     viewModel { HealthStatusViewModel(get<GetCombinedHealthStatusUseCase>()) }

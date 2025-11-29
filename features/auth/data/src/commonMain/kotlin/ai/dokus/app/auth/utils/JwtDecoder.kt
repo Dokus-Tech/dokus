@@ -3,10 +3,10 @@ package ai.dokus.app.auth.utils
 import ai.dokus.foundation.domain.enums.Permission
 import ai.dokus.foundation.domain.enums.SubscriptionTier
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.auth.JwtClaims
-import ai.dokus.foundation.domain.model.auth.OrganizationScope
+import ai.dokus.foundation.domain.model.auth.TenantScope
 import ai.dokus.foundation.domain.model.auth.TokenStatus
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -53,12 +53,12 @@ class JwtDecoder {
             val iss = jsonObject[JwtClaims.CLAIM_ISS]?.jsonPrimitive?.content ?: JwtClaims.ISS_DEFAULT
             val aud = jsonObject[JwtClaims.CLAIM_AUD]?.jsonPrimitive?.content ?: JwtClaims.AUD_DEFAULT
 
-            val organization = parseOrganization(jsonObject)
+            val tenant = parseTenant(jsonObject)
 
             JwtClaims(
                 userId = UserId(userIdStr),
                 email = email,
-                organization = organization,
+                tenant = tenant,
                 iat = iat,
                 exp = exp,
                 jti = jti,
@@ -71,11 +71,11 @@ class JwtDecoder {
         }
     }
 
-    private fun parseOrganization(jsonObject: JsonObject): OrganizationScope? {
-        val orgIdStr = jsonObject[JwtClaims.CLAIM_ORGANIZATION_ID]?.jsonPrimitive?.content
+    private fun parseTenant(jsonObject: JsonObject): TenantScope? {
+        val tenantIdStr = jsonObject[JwtClaims.CLAIM_TENANT_ID]?.jsonPrimitive?.content
         val tierStr = jsonObject[JwtClaims.CLAIM_SUBSCRIPTION_TIER]?.jsonPrimitive?.content
 
-        if (!orgIdStr.isNullOrBlank() && !tierStr.isNullOrBlank()) {
+        if (!tenantIdStr.isNullOrBlank() && !tierStr.isNullOrBlank()) {
             return runCatching {
                 val permissions = jsonObject[JwtClaims.CLAIM_PERMISSIONS]
                     ?.jsonArray
@@ -89,8 +89,8 @@ class JwtDecoder {
                     ?.content
                     ?.let { runCatching { UserRole.valueOf(it) }.getOrNull() }
 
-                OrganizationScope(
-                    organizationId = OrganizationId(Uuid.parse(orgIdStr)),
+                TenantScope(
+                    tenantId = TenantId(Uuid.parse(tenantIdStr)),
                     permissions = permissions,
                     subscriptionTier = SubscriptionTier.valueOf(tierStr),
                     role = role
@@ -98,14 +98,14 @@ class JwtDecoder {
             }.getOrNull()
         }
 
-        // Legacy fallback: parse first organization from old organizations array claim
-        val organizationsJson = jsonObject[JwtClaims.CLAIM_ORGANIZATIONS]?.jsonPrimitive?.content
-        if (organizationsJson.isNullOrEmpty()) return null
+        // Legacy fallback: parse first tenant from old tenants array claim
+        val tenantsJson = jsonObject[JwtClaims.CLAIM_TENANTS]?.jsonPrimitive?.content
+        if (tenantsJson.isNullOrEmpty()) return null
 
         return runCatching {
-            val orgsArray = json.decodeFromString<List<JsonObject>>(organizationsJson)
-            val first = orgsArray.firstOrNull() ?: return null
-            val legacyOrgId = first[JwtClaims.CLAIM_ORGANIZATION_ID]?.jsonPrimitive?.content ?: return null
+            val tenantsArray = json.decodeFromString<List<JsonObject>>(tenantsJson)
+            val first = tenantsArray.firstOrNull() ?: return null
+            val legacyTenantId = first[JwtClaims.CLAIM_TENANT_ID]?.jsonPrimitive?.content ?: return null
             val legacyTier = first[JwtClaims.CLAIM_SUBSCRIPTION_TIER]?.jsonPrimitive?.content ?: return null
             val legacyPermissions = first[JwtClaims.CLAIM_PERMISSIONS]
                 ?.jsonArray
@@ -118,8 +118,8 @@ class JwtDecoder {
                 ?.content
                 ?.let { runCatching { UserRole.valueOf(it) }.getOrNull() }
 
-            OrganizationScope(
-                organizationId = OrganizationId(Uuid.parse(legacyOrgId)),
+            TenantScope(
+                tenantId = TenantId(Uuid.parse(legacyTenantId)),
                 permissions = legacyPermissions,
                 subscriptionTier = SubscriptionTier.valueOf(legacyTier),
                 role = legacyRole

@@ -1,17 +1,17 @@
 package ai.dokus.auth.backend.database.repository
 
 import ai.dokus.auth.backend.database.mappers.FinancialMappers.toUser
-import ai.dokus.auth.backend.database.mappers.FinancialMappers.toOrganizationMembership
-import ai.dokus.auth.backend.database.mappers.FinancialMappers.toUserInOrganization
-import ai.dokus.auth.backend.database.tables.OrganizationMembersTable
+import ai.dokus.auth.backend.database.mappers.FinancialMappers.toTenantMembership
+import ai.dokus.auth.backend.database.mappers.FinancialMappers.toUserInTenant
+import ai.dokus.auth.backend.database.tables.TenantMembersTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.User
-import ai.dokus.foundation.domain.model.OrganizationMembership
-import ai.dokus.foundation.domain.model.UserInOrganization
+import ai.dokus.foundation.domain.model.TenantMembership
+import ai.dokus.foundation.domain.model.UserInTenant
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Instant
@@ -50,8 +50,8 @@ class UserRepository(
     private val logger = LoggerFactory.getLogger(UserRepository::class.java)
 
     /**
-     * Register a new user without associating them with any organization.
-     * The user can later create or join organizations.
+     * Register a new user without associating them with any tenant.
+     * The user can later create or join tenants.
      */
     suspend fun register(
         email: String,
@@ -71,7 +71,7 @@ class UserRepository(
 
         val passwordHash = passwordCrypto.hashPassword(Password(password))
 
-        // Create user without organization membership
+        // Create user without tenant membership
         val userId = UsersTable.insertAndGetId {
             it[UsersTable.email] = email
             it[UsersTable.passwordHash] = passwordHash
@@ -80,7 +80,7 @@ class UserRepository(
             it[UsersTable.isActive] = true
         }.value
 
-        logger.info("Registered new user: $userId with email: $email (no organization)")
+        logger.info("Registered new user: $userId with email: $email (no tenant)")
 
         UsersTable
             .selectAll()
@@ -90,11 +90,11 @@ class UserRepository(
     }
 
     /**
-     * Register a new user and add them to an organization with a role.
-     * Used when inviting users to existing organizations.
+     * Register a new user and add them to a tenant with a role.
+     * Used when inviting users to existing tenants.
      */
-    suspend fun registerWithOrganization(
-        organizationId: OrganizationId,
+    suspend fun registerWithTenant(
+        tenantId: TenantId,
         email: String,
         password: String,
         firstName: String,
@@ -123,14 +123,14 @@ class UserRepository(
         }.value
 
         // Create membership
-        OrganizationMembersTable.insert {
-            it[OrganizationMembersTable.userId] = userId
-            it[OrganizationMembersTable.organizationId] = organizationId.value.toJavaUuid()
-            it[OrganizationMembersTable.role] = role
-            it[OrganizationMembersTable.isActive] = true
+        TenantMembersTable.insert {
+            it[TenantMembersTable.userId] = userId
+            it[TenantMembersTable.tenantId] = tenantId.value.toJavaUuid()
+            it[TenantMembersTable.role] = role
+            it[TenantMembersTable.isActive] = true
         }
 
-        logger.info("Registered new user: $userId with email: $email for organization: $organizationId")
+        logger.info("Registered new user: $userId with email: $email for tenant: $tenantId")
 
         UsersTable
             .selectAll()
@@ -157,111 +157,111 @@ class UserRepository(
     }
 
     /**
-     * List all users in an organization.
+     * List all users in a tenant.
      */
-    suspend fun listByOrganization(
-        organizationId: OrganizationId,
+    suspend fun listByTenant(
+        tenantId: TenantId,
         activeOnly: Boolean
-    ): List<UserInOrganization> =
+    ): List<UserInTenant> =
         dbQuery {
-            val javaUuid = organizationId.value.toJavaUuid()
+            val javaUuid = tenantId.value.toJavaUuid()
 
             val query = if (activeOnly) {
                 UsersTable
-                    .innerJoin(OrganizationMembersTable)
+                    .innerJoin(TenantMembersTable)
                     .selectAll()
                     .where {
-                        (OrganizationMembersTable.organizationId eq javaUuid) and
+                        (TenantMembersTable.tenantId eq javaUuid) and
                                 (UsersTable.isActive eq true) and
-                                (OrganizationMembersTable.isActive eq true)
+                                (TenantMembersTable.isActive eq true)
                     }
             } else {
                 UsersTable
-                    .innerJoin(OrganizationMembersTable)
+                    .innerJoin(TenantMembersTable)
                     .selectAll()
-                    .where { OrganizationMembersTable.organizationId eq javaUuid }
+                    .where { TenantMembersTable.tenantId eq javaUuid }
             }
 
-            query.map { it.toUserInOrganization() }
+            query.map { it.toUserInTenant() }
         }
 
     /**
-     * Get all organizations a user belongs to.
+     * Get all tenants a user belongs to.
      */
-    suspend fun getUserOrganizations(userId: UserId): List<OrganizationMembership> = dbQuery {
+    suspend fun getUserTenants(userId: UserId): List<TenantMembership> = dbQuery {
         val javaUuid = userId.value.toJavaUuid()
-        OrganizationMembersTable
+        TenantMembersTable
             .selectAll()
-            .where { OrganizationMembersTable.userId eq javaUuid }
-            .map { it.toOrganizationMembership() }
+            .where { TenantMembersTable.userId eq javaUuid }
+            .map { it.toTenantMembership() }
     }
 
     /**
-     * Get user's membership in a specific organization.
+     * Get user's membership in a specific tenant.
      */
     suspend fun getMembership(
         userId: UserId,
-        organizationId: OrganizationId
-    ): OrganizationMembership? = dbQuery {
-        OrganizationMembersTable
+        tenantId: TenantId
+    ): TenantMembership? = dbQuery {
+        TenantMembersTable
             .selectAll()
             .where {
-                (OrganizationMembersTable.userId eq userId.value.toJavaUuid()) and
-                        (OrganizationMembersTable.organizationId eq organizationId.value.toJavaUuid())
+                (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
+                        (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
             }
             .singleOrNull()
-            ?.toOrganizationMembership()
+            ?.toTenantMembership()
     }
 
     /**
-     * Add a user to an organization with a role.
+     * Add a user to a tenant with a role.
      */
-    suspend fun addToOrganization(userId: UserId, organizationId: OrganizationId, role: UserRole) =
+    suspend fun addToTenant(userId: UserId, tenantId: TenantId, role: UserRole) =
         dbQuery {
-            OrganizationMembersTable.insert {
-                it[OrganizationMembersTable.userId] = userId.value.toJavaUuid()
-                it[OrganizationMembersTable.organizationId] = organizationId.value.toJavaUuid()
-                it[OrganizationMembersTable.role] = role
-                it[OrganizationMembersTable.isActive] = true
+            TenantMembersTable.insert {
+                it[TenantMembersTable.userId] = userId.value.toJavaUuid()
+                it[TenantMembersTable.tenantId] = tenantId.value.toJavaUuid()
+                it[TenantMembersTable.role] = role
+                it[TenantMembersTable.isActive] = true
             }
-            logger.info("Added user $userId to organization $organizationId with role $role")
+            logger.info("Added user $userId to tenant $tenantId with role $role")
         }
 
     /**
-     * Update a user's role in an organization.
+     * Update a user's role in a tenant.
      */
-    suspend fun updateRole(userId: UserId, organizationId: OrganizationId, newRole: UserRole) =
+    suspend fun updateRole(userId: UserId, tenantId: TenantId, newRole: UserRole) =
         dbQuery {
-            val updated = OrganizationMembersTable.update({
-                (OrganizationMembersTable.userId eq userId.value.toJavaUuid()) and
-                        (OrganizationMembersTable.organizationId eq organizationId.value.toJavaUuid())
+            val updated = TenantMembersTable.update({
+                (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
+                        (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
             }) {
                 it[role] = newRole
             }
 
             if (updated == 0) {
-                throw IllegalArgumentException("Membership not found for user $userId in organization $organizationId")
+                throw IllegalArgumentException("Membership not found for user $userId in tenant $tenantId")
             }
 
-            logger.info("Updated role for user $userId in organization $organizationId to $newRole")
+            logger.info("Updated role for user $userId in tenant $tenantId to $newRole")
         }
 
     /**
-     * Remove a user from an organization (deactivate membership).
+     * Remove a user from a tenant (deactivate membership).
      */
-    suspend fun removeFromOrganization(userId: UserId, organizationId: OrganizationId) = dbQuery {
-        val updated = OrganizationMembersTable.update({
-            (OrganizationMembersTable.userId eq userId.value.toJavaUuid()) and
-                    (OrganizationMembersTable.organizationId eq organizationId.value.toJavaUuid())
+    suspend fun removeFromTenant(userId: UserId, tenantId: TenantId) = dbQuery {
+        val updated = TenantMembersTable.update({
+            (TenantMembersTable.userId eq userId.value.toJavaUuid()) and
+                    (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
         }) {
             it[isActive] = false
         }
 
         if (updated == 0) {
-            throw IllegalArgumentException("Membership not found for user $userId in organization $organizationId")
+            throw IllegalArgumentException("Membership not found for user $userId in tenant $tenantId")
         }
 
-        logger.info("Removed user $userId from organization $organizationId")
+        logger.info("Removed user $userId from tenant $tenantId")
     }
 
     suspend fun updateProfile(userId: UserId, firstName: String?, lastName: String?) =

@@ -69,7 +69,7 @@ class AuthValidationRemoteServiceImpl(
                 throw DokusException.TokenInvalid("Invalid or expired token")
             }
 
-        logger.debug("JWT validated for user: ${authInfo.userId}, tenant: ${authInfo.organizationId}")
+        logger.debug("JWT validated for user: ${authInfo.userId}, tenant: ${authInfo.tenantId}")
 
         // Step 2: Fetch full user data from database
         val user = userRepository.findById(authInfo.userId)
@@ -84,8 +84,8 @@ class AuthValidationRemoteServiceImpl(
             throw DokusException.AccountInactive("Account is not active")
         }
 
-        // Step 4: Get user's organization memberships
-        val memberships = userRepository.getUserOrganizations(authInfo.userId)
+        // Step 4: Get user's tenant memberships
+        val memberships = userRepository.getUserTenants(authInfo.userId)
 
         // Step 5: Verify user has at least one allowed role in any organization
         val userRoles = memberships.map { it.role }.toSet()
@@ -133,8 +133,8 @@ class AuthValidationRemoteServiceImpl(
         val user = userRepository.findById(userId)
             ?: throw DokusException.NotAuthenticated("User not found: ${userId.value}")
 
-        // Get user's organization memberships
-        val memberships = userRepository.getUserOrganizations(userId)
+        // Get user's tenant memberships
+        val memberships = userRepository.getUserTenants(userId)
 
         return UserDto.Full(
             id = user.id,

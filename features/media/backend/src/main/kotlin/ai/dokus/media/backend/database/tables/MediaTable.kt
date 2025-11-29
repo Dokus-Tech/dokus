@@ -10,10 +10,10 @@ import org.jetbrains.exposed.v1.datetime.datetime
 /**
  * Media table - stores uploaded documents and their processing state.
  *
- * CRITICAL: Always scope queries by organizationId for tenant isolation.
+ * CRITICAL: Always scope queries by tenantId for tenant isolation.
  */
 object MediaTable : UUIDTable("media") {
-    val organizationId = uuid("organization_id")
+    val tenantId = uuid("tenant_id")
 
     // File metadata
     val filename = varchar("filename", 255)
@@ -39,8 +39,8 @@ object MediaTable : UUIDTable("media") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, organizationId)
+        index(false, tenantId)
         index(false, status)
-        index(false, organizationId, status)
+        index(false, tenantId, status)
     }
 }
