@@ -1,11 +1,13 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.auth.components.CompanySelectLayout
-import ai.dokus.app.auth.components.CompanySelection
+import ai.dokus.app.auth.components.SelectionBody
 import ai.dokus.app.auth.viewmodel.CompanySelectViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
-import ai.dokus.foundation.design.constrains.isLargeScreen
+import ai.dokus.foundation.design.components.text.AppNameText
+import ai.dokus.foundation.design.components.text.CopyRightText
+import ai.dokus.foundation.design.constrains.limitWidth
+import ai.dokus.foundation.design.constrains.withVerticalPadding
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -15,8 +17,15 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,8 +33,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalLayoutDirection
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -68,43 +79,71 @@ internal fun CompanySelectScreen(
         viewModel.loadOrganizations()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Background effects with fade animation
-        AnimatedVisibility(
-            visible = contentVisible,
-            enter = fadeIn(),
-            exit = fadeOut(animationSpec = tween(800))
+    Scaffold { contentPadding ->
+        Box(
+            modifier = Modifier
+                .padding(
+                    bottom = contentPadding.calculateBottomPadding(),
+                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                    top = contentPadding.calculateTopPadding(),
+                )
+                .fillMaxSize()
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                EnhancedFloatingBubbles()
+            // Background effects with fade animation
+            AnimatedVisibility(
+                visible = contentVisible,
+                enter = fadeIn(),
+                exit = fadeOut(animationSpec = tween(800))
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    EnhancedFloatingBubbles()
+                }
             }
-        }
 
-        // Main content with fade animation
-        AnimatedVisibility(
-            visible = contentVisible,
-            enter = fadeIn(),
-            exit = fadeOut(animationSpec = tween(600))
-        ) {
-            CompanySelection(
-                state = state,
-                layout = if (isLargeScreen) CompanySelectLayout.Desktop else CompanySelectLayout.Mobile,
-                onCompanyClick = { organization ->
-                    // Note: We'd ideally capture the click position here
-                    // For now, warp will start from center
-                    viewModel.selectOrganization(organization.id)
-                },
-                onAddCompanyClick = { navController.navigateTo(AuthDestination.CompanyCreate) }
+            // Main content with fade animation
+            AnimatedVisibility(
+                visible = contentVisible,
+                enter = fadeIn(),
+                exit = fadeOut(animationSpec = tween(600))
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .withVerticalPadding()
+                            .limitWidth()
+                            .fillMaxHeight()
+                            .align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        AppNameText()
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            SelectionBody(
+                                state = state,
+                                onCompanyClick = { organization ->
+                                    viewModel.selectOrganization(organization.id)
+                                },
+                                onAddCompanyClick = { navController.navigateTo(AuthDestination.CompanyCreate) }
+                            )
+                        }
+
+                        CopyRightText()
+                    }
+                }
+            }
+
+            // Warp jump effect overlay
+            WarpJumpEffect(
+                isActive = isWarpActive,
+                selectedItemPosition = selectedItemPosition,
+                onAnimationComplete = {
+                    shouldNavigate = true
+                }
             )
         }
-
-        // Warp jump effect overlay
-        WarpJumpEffect(
-            isActive = isWarpActive,
-            selectedItemPosition = selectedItemPosition,
-            onAnimationComplete = {
-                shouldNavigate = true
-            }
-        )
     }
 }

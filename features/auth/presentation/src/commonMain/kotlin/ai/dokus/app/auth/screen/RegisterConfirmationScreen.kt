@@ -1,10 +1,10 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.constrains.isLargeScreen
 import ai.dokus.foundation.design.components.text.AppNameText
 import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.foundation.design.components.text.SectionTitle
+import ai.dokus.foundation.design.local.LocalScreenSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 fun RegisterConfirmationScreen() {
     Scaffold { contentPadding ->
         Box(Modifier.padding(contentPadding)) {
-            if (isLargeScreen) {
+            if (LocalScreenSize.current.isLarge) {
                 RegisterConfirmationFormDesktop {
 //                    navigator.navigateToHome()
                 }

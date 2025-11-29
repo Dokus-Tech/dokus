@@ -1,14 +1,10 @@
 package ai.dokus.app.auth.components
 
-import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
 import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
-import ai.dokus.foundation.design.components.text.AppNameText
-import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
@@ -17,11 +13,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -35,15 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/**
- * Adaptive Company Create content with a shared layout.
- */
-enum class CompanyCreateLayout { Desktop, Mobile }
-
 @Composable
 fun CompanyCreateContent(
-    layout: CompanyCreateLayout,
-    state: DokusState<Unit>,
     legalName: LegalName,
     email: Email,
     vatNumber: VatNumber,
@@ -54,136 +40,33 @@ fun CompanyCreateContent(
     onVatNumberChange: (VatNumber) -> Unit,
     onCountryChange: (Country) -> Unit,
     onSubmit: () -> Unit,
-) {
-    when (layout) {
-        CompanyCreateLayout.Desktop -> DesktopLayout(
-            state = state,
-            legalName = legalName,
-            email = email,
-            vatNumber = vatNumber,
-            country = country,
-            isSubmitting = isSubmitting,
-            onLegalNameChange = onLegalNameChange,
-            onEmailChange = onEmailChange,
-            onVatNumberChange = onVatNumberChange,
-            onCountryChange = onCountryChange,
-            onSubmit = onSubmit
-        )
-
-        CompanyCreateLayout.Mobile -> MobileLayout(
-            state = state,
-            legalName = legalName,
-            email = email,
-            vatNumber = vatNumber,
-            country = country,
-            isSubmitting = isSubmitting,
-            onLegalNameChange = onLegalNameChange,
-            onEmailChange = onEmailChange,
-            onVatNumberChange = onVatNumberChange,
-            onCountryChange = onCountryChange,
-            onSubmit = onSubmit
-        )
-    }
-}
-
-@Composable
-private fun DesktopLayout(
-    state: DokusState<Unit>,
-    legalName: LegalName,
-    email: Email,
-    vatNumber: VatNumber,
-    country: Country,
-    isSubmitting: Boolean,
-    onLegalNameChange: (LegalName) -> Unit,
-    onEmailChange: (Email) -> Unit,
-    onVatNumberChange: (VatNumber) -> Unit,
-    onCountryChange: (Country) -> Unit,
-    onSubmit: () -> Unit,
-) {
-    Box(Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.widthIn(max = 480.dp).fillMaxHeight().align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            AppNameText()
-
-            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                SectionTitle(
-                    text = "Create your company",
-                    horizontalArrangement = Arrangement.Center
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                FormFields(
-                    legalName = legalName,
-                    email = email,
-                    vatNumber = vatNumber,
-                    country = country,
-                    isSubmitting = isSubmitting,
-                    onLegalNameChange = onLegalNameChange,
-                    onEmailChange = onEmailChange,
-                    onVatNumberChange = onVatNumberChange,
-                    onCountryChange = onCountryChange,
-                    onSubmit = onSubmit
-                )
-            }
-
-            CopyRightText()
-        }
-    }
-}
-
-@Composable
-private fun MobileLayout(
-    state: DokusState<Unit>,
-    legalName: LegalName,
-    email: Email,
-    vatNumber: VatNumber,
-    country: Country,
-    isSubmitting: Boolean,
-    onLegalNameChange: (LegalName) -> Unit,
-    onEmailChange: (Email) -> Unit,
-    onVatNumberChange: (VatNumber) -> Unit,
-    onCountryChange: (Country) -> Unit,
-    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = modifier
+            .fillMaxWidth()
+            .widthIn(max = 480.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AppNameText()
+        SectionTitle(
+            text = "Create your company",
+            horizontalArrangement = Arrangement.Center
+        )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Column(modifier = Modifier.limitWidthCenteredContent()) {
-            SectionTitle(
-                text = "Create your company",
-                horizontalArrangement = Arrangement.Center
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            FormFields(
-                legalName = legalName,
-                email = email,
-                vatNumber = vatNumber,
-                country = country,
-                isSubmitting = isSubmitting,
-                onLegalNameChange = onLegalNameChange,
-                onEmailChange = onEmailChange,
-                onVatNumberChange = onVatNumberChange,
-                onCountryChange = onCountryChange,
-                onSubmit = onSubmit
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-        CopyRightText()
+        FormFields(
+            legalName = legalName,
+            email = email,
+            vatNumber = vatNumber,
+            country = country,
+            isSubmitting = isSubmitting,
+            onLegalNameChange = onLegalNameChange,
+            onEmailChange = onEmailChange,
+            onVatNumberChange = onVatNumberChange,
+            onCountryChange = onCountryChange,
+            onSubmit = onSubmit
+        )
     }
 }
 
