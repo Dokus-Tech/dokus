@@ -11,7 +11,7 @@ import ai.dokus.foundation.domain.model.MonthlyCashFlow
 import ai.dokus.foundation.domain.model.PaymentDto
 import ai.dokus.foundation.domain.model.VatReport
 import ai.dokus.foundation.domain.rpc.ReportingApi
-import ai.dokus.foundation.ktor.security.requireAuthenticatedOrganizationId
+import ai.dokus.foundation.ktor.security.requireAuthenticatedTenantId
 import ai.dokus.foundation.ktor.services.ExpenseService
 import ai.dokus.foundation.ktor.services.InvoiceService
 import ai.dokus.foundation.ktor.services.PaymentService
@@ -29,9 +29,9 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): FinancialSummary {
-        val organizationId = requireAuthenticatedOrganizationId()
+        val tenantId = requireAuthenticatedTenantId()
         val invoices = invoiceService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             status = null,
             clientId = null,
             fromDate = startDate,
@@ -40,7 +40,7 @@ class ReportingApiImpl(
             offset = null
         )
         val expenses = expenseService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             category = null,
             fromDate = startDate,
             toDate = endDate,
@@ -49,7 +49,7 @@ class ReportingApiImpl(
             offset = null
         )
         val payments = paymentService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             fromDate = startDate,
             toDate = endDate,
             paymentMethod = null,
@@ -72,7 +72,7 @@ class ReportingApiImpl(
         )
 
         return FinancialSummary(
-            organizationId = organizationId.value.toString(),
+            tenantId = tenantId.value.toString(),
             period = DateRange(startDate, endDate),
             totalRevenue = totalRevenue,
             totalExpenses = totalExpenses,
@@ -90,9 +90,9 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): InvoiceAnalytics {
-        val organizationId = requireAuthenticatedOrganizationId()
+        val tenantId = requireAuthenticatedTenantId()
         val invoices = invoiceService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             status = null,
             clientId = null,
             fromDate = startDate,
@@ -111,7 +111,7 @@ class ReportingApiImpl(
             (java.math.BigDecimal(totalAmount.value) - java.math.BigDecimal(paidAmount.value)).toString()
         )
 
-        val overdueInvoices = invoiceService.listOverdue(organizationId)
+        val overdueInvoices = invoiceService.listOverdue(tenantId)
         val overdueAmount = Money(
             overdueInvoices.sumOf {
                 java.math.BigDecimal(it.totalAmount.value) - java.math.BigDecimal(it.paidAmount.value)
@@ -144,9 +144,9 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): ExpenseAnalytics {
-        val organizationId = requireAuthenticatedOrganizationId()
+        val tenantId = requireAuthenticatedTenantId()
         val expenses = expenseService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             category = null,
             fromDate = startDate,
             toDate = endDate,
@@ -191,9 +191,9 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): CashFlowReport {
-        val organizationId = requireAuthenticatedOrganizationId()
+        val tenantId = requireAuthenticatedTenantId()
         val payments = paymentService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             fromDate = startDate,
             toDate = endDate,
             paymentMethod = null,
@@ -202,7 +202,7 @@ class ReportingApiImpl(
         )
 
         val expenses = expenseService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             category = null,
             fromDate = startDate,
             toDate = endDate,
@@ -236,9 +236,9 @@ class ReportingApiImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): VatReport {
-        val organizationId = requireAuthenticatedOrganizationId()
+        val tenantId = requireAuthenticatedTenantId()
         val invoices = invoiceService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             status = null,
             clientId = null,
             fromDate = startDate,
@@ -247,7 +247,7 @@ class ReportingApiImpl(
             offset = null
         )
         val expenses = expenseService.listByTenant(
-            organizationId = organizationId,
+            tenantId = tenantId,
             category = null,
             fromDate = startDate,
             toDate = endDate,

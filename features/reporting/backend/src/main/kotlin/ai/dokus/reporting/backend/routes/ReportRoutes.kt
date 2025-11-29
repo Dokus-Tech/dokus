@@ -1,6 +1,6 @@
 package ai.dokus.reporting.backend.routes
 
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import ai.dokus.foundation.ktor.services.*
@@ -21,20 +21,20 @@ fun Route.reportRoutes() {
     route("/api/reports") {
         // Financial summary report
         get("/financial-summary") {
-            val organizationIdStr = call.request.queryParameters["organizationId"] ?: "00000000-0000-0000-0000-000000000001"
+            val tenantIdStr = call.request.queryParameters["tenantId"] ?: "00000000-0000-0000-0000-000000000001"
             val startDate = call.request.queryParameters["startDate"]
             val endDate = call.request.queryParameters["endDate"]
 
             try {
-                val organizationId = OrganizationId(Uuid.parse(organizationIdStr))
+                val tenantId = TenantId(Uuid.parse(tenantIdStr))
 
                 // Aggregate data from multiple services
-                val invoices = invoiceService.listByTenant(organizationId, limit = 1000, offset = 0)
-                val expenses = expenseService.listByTenant(organizationId, limit = 1000, offset = 0)
-                val payments = paymentService.listByTenant(organizationId, limit = 1000, offset = 0)
+                val invoices = invoiceService.listByTenant(tenantId, limit = 1000, offset = 0)
+                val expenses = expenseService.listByTenant(tenantId, limit = 1000, offset = 0)
+                val payments = paymentService.listByTenant(tenantId, limit = 1000, offset = 0)
 
                 val summary = mapOf(
-                    "organizationId" to organizationIdStr,
+                    "tenantId" to tenantIdStr,
                     "period" to mapOf("start" to startDate, "end" to endDate),
                     "invoiceCount" to invoices.size,
                     "expenseCount" to expenses.size,

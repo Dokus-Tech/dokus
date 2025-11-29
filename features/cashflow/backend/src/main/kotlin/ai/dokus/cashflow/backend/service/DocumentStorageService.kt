@@ -1,7 +1,7 @@
 package ai.dokus.cashflow.backend.service
 
 import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.OrganizationId
+import ai.dokus.foundation.domain.ids.TenantId
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
@@ -81,14 +81,14 @@ class DocumentStorageService(
      * Returns the storage key (file path) on success
      */
     suspend fun storeFileLocally(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: String,
         entityId: String,
         filename: String,
         fileContent: ByteArray
     ): Result<String> = runCatching {
-        // Create tenant-specific directory structure: storage/documents/{organizationId}/{entityType}/{entityId}/
-        val tenantDir = File(storageBasePath, organizationId.toString())
+        // Create tenant-specific directory structure: storage/documents/{tenantId}/{entityType}/{entityId}/
+        val tenantDir = File(storageBasePath, tenantId.toString())
         val entityTypeDir = File(tenantDir, entityType.lowercase())
         val entityDir = File(entityTypeDir, entityId)
 
@@ -181,7 +181,7 @@ class DocumentStorageService(
      * TODO: Implement S3 upload when needed
      */
     suspend fun storeFileS3(
-        organizationId: OrganizationId,
+        tenantId: TenantId,
         entityType: String,
         entityId: String,
         filename: String,
@@ -190,7 +190,7 @@ class DocumentStorageService(
     ): Result<String> = runCatching {
         // TODO: Implement S3 upload
         // For now, fall back to local storage
-        storeFileLocally(organizationId, entityType, entityId, filename, fileContent).getOrThrow()
+        storeFileLocally(tenantId, entityType, entityId, filename, fileContent).getOrThrow()
     }
 
     /**
