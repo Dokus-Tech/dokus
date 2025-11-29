@@ -8,14 +8,28 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class OrganizationId(val value: Uuid) {
+value class TenantId(val value: Uuid) {
     constructor(value: String) : this(Uuid.parse(value))
 
     override fun toString(): String = value.toString()
 
     companion object {
-        fun generate(): OrganizationId = OrganizationId(Uuid.random())
-        fun parse(value: String): OrganizationId = OrganizationId(Uuid.parse(value))
+        fun generate(): TenantId = TenantId(Uuid.random())
+        fun parse(value: String): TenantId = TenantId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class AddressId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): AddressId = AddressId(Uuid.random())
+        fun parse(value: String): AddressId = AddressId(Uuid.parse(value))
     }
 }
 
