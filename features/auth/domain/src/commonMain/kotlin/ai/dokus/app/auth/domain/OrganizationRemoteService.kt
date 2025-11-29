@@ -1,6 +1,5 @@
 package ai.dokus.app.auth.domain
 
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -18,7 +17,6 @@ interface OrganizationRemoteService {
 
     suspend fun createOrganization(
         legalName: LegalName,
-        email: Email,
         plan: OrganizationPlan = OrganizationPlan.Free,
         country: Country,
         language: Language = Language.En,

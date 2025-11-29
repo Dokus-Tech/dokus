@@ -3,13 +3,13 @@ package ai.dokus.app.auth.screen
 import ai.dokus.app.auth.components.CompanyCreateContent
 import ai.dokus.app.auth.viewmodel.CompanyCreateViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
+import ai.dokus.foundation.design.components.background.SpotlightFollowEffect
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
 import ai.dokus.foundation.design.components.text.AppNameText
 import ai.dokus.foundation.design.components.text.CopyRightText
 import ai.dokus.foundation.design.constrains.limitWidth
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withVerticalPadding
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -25,8 +25,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.calculateBottomPadding
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.calculateTopPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -80,7 +82,6 @@ internal fun CompanyCreateScreen(
     }
 
     var legalName by remember { mutableStateOf(LegalName("")) }
-    var email by remember { mutableStateOf(Email("")) }
     var vatNumber by remember { mutableStateOf(VatNumber("")) }
     var country by remember { mutableStateOf(Country.Belgium) }
 
@@ -105,6 +106,7 @@ internal fun CompanyCreateScreen(
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     EnhancedFloatingBubbles()
+                    SpotlightFollowEffect()
                 }
             }
 
@@ -129,18 +131,15 @@ internal fun CompanyCreateScreen(
 
                         CompanyCreateContent(
                             legalName = legalName,
-                            email = email,
                             vatNumber = vatNumber,
                             country = country,
                             isSubmitting = isSubmitting,
                             onLegalNameChange = { legalName = it },
-                            onEmailChange = { email = it },
                             onVatNumberChange = { vatNumber = it },
                             onCountryChange = { country = it },
                             onSubmit = {
                                 viewModel.createOrganization(
                                     legalName = legalName,
-                                    email = email,
                                     plan = OrganizationPlan.Free,
                                     country = country,
                                     language = Language.En,

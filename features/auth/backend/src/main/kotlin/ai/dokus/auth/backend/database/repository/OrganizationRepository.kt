@@ -4,7 +4,6 @@ import ai.dokus.auth.backend.database.mappers.TenantMapper.toOrganizationSetting
 import ai.dokus.auth.backend.database.mappers.TenantMapper.toTenant
 import ai.dokus.auth.backend.database.tables.OrganizationSettingsTable
 import ai.dokus.auth.backend.database.tables.OrganizationTable
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
@@ -24,6 +23,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
+import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
@@ -34,15 +34,16 @@ class OrganizationRepository {
 
     suspend fun create(
         name: LegalName,
-        email: Email,
         plan: OrganizationPlan = OrganizationPlan.Free,
         country: Country,
         language: Language,
         vatNumber: VatNumber,
     ): OrganizationId = dbQuery {
+        // Email is no longer collected during creation; generate a unique placeholder to satisfy the schema.
+        val placeholderEmail = "org-${UUID.randomUUID()}@placeholder.local"
         val organizationId = OrganizationTable.insertAndGetId {
             it[OrganizationTable.name] = name.value
-            it[OrganizationTable.email] = email.value
+            it[OrganizationTable.email] = placeholderEmail
             it[OrganizationTable.plan] = plan
             it[OrganizationTable.country] = country
             it[OrganizationTable.language] = language
@@ -55,7 +56,7 @@ class OrganizationRepository {
             it[OrganizationSettingsTable.organizationId] = organizationId
         }
 
-        logger.info("Created new tenant: $organizationId with email: $email")
+        logger.info("Created new tenant: $organizationId with generated email placeholder")
         OrganizationId(organizationId.toKotlinUuid())
     }
 
