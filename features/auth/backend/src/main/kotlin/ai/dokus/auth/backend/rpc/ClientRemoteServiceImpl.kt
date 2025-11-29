@@ -46,7 +46,7 @@ class ClientRemoteServiceImpl(
             // Note: ClientService doesn't support all the new Peppol fields yet
             // For now, we'll use the available fields and TODO: update ClientService
             return@withAuthInfo clientService.create(
-                organizationId = tenantId,
+                tenantId = tenantId,
                 name = name,
                 email = email,
                 vatNumber = vatNumberValue,
@@ -69,7 +69,7 @@ class ClientRemoteServiceImpl(
             ?: throw IllegalArgumentException("Client not found: $id")
 
         // Verify tenant isolation
-        if (client.organizationId != tenantId) {
+        if (client.tenantId != tenantId) {
             throw IllegalArgumentException("Client does not belong to tenant: $tenantId")
         }
 
@@ -119,7 +119,7 @@ class ClientRemoteServiceImpl(
         val existingClient = clientService.findById(id)
             ?: throw IllegalArgumentException("Client not found: $id")
 
-        if (existingClient.organizationId != tenantId) {
+        if (existingClient.tenantId != tenantId) {
             throw IllegalArgumentException("Client does not belong to tenant: $tenantId")
         }
 
@@ -155,7 +155,7 @@ class ClientRemoteServiceImpl(
         val client = clientService.findById(id)
             ?: throw IllegalArgumentException("Client not found: $id")
 
-        if (client.organizationId != tenantId) {
+        if (client.tenantId != tenantId) {
             throw IllegalArgumentException("Client does not belong to tenant: $tenantId")
         }
 

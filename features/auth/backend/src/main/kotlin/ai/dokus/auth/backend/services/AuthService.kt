@@ -67,7 +67,7 @@ class AuthService(
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organization = selectedTenant
+            tenant = selectedTenant
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -111,7 +111,7 @@ class AuthService(
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organization = null
+            tenant = null
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -171,13 +171,13 @@ class AuthService(
             throw DokusException.AccountInactive()
         }
 
-        // Get all user's organizations and create scopes for each
-        val memberships = userRepository.getUserOrganizations(userId)
-        val selectedOrganization = resolveOrganizationScope(
+        // Get all user's tenants and create scopes for each
+        val memberships = userRepository.getUserTenants(userId)
+        val selectedTenant = resolveTenantScope(
             memberships = memberships,
-            selectedOrganizationId = request.organizationId
-        ) ?: if (request.organizationId != null) {
-            throw DokusException.NotAuthorized("User is not a member of organization ${request.organizationId}")
+            selectedTenantId = request.tenantId
+        ) ?: if (request.tenantId != null) {
+            throw DokusException.NotAuthorized("User is not a member of tenant ${request.tenantId}")
         } else {
             null
         }
@@ -185,7 +185,7 @@ class AuthService(
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organization = selectedOrganization
+            tenant = selectedTenant
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -211,9 +211,9 @@ class AuthService(
 
     suspend fun selectOrganization(
         userId: UserId,
-        organizationId: OrganizationId
+        tenantId: TenantId
     ): Result<LoginResponse> = try {
-        logger.debug("Selecting organization $organizationId for user $userId")
+        logger.debug("Selecting tenant $tenantId for user $userId")
 
         val user = userRepository.findById(userId)
             ?: throw DokusException.InvalidCredentials("User account no longer exists")
@@ -222,16 +222,16 @@ class AuthService(
             throw DokusException.AccountInactive()
         }
 
-        val memberships = userRepository.getUserOrganizations(userId)
-        val selectedOrganization = resolveOrganizationScope(
+        val memberships = userRepository.getUserTenants(userId)
+        val selectedTenant = resolveTenantScope(
             memberships = memberships,
-            selectedOrganizationId = organizationId
-        ) ?: throw DokusException.NotAuthorized("User is not a member of organization $organizationId")
+            selectedTenantId = tenantId
+        ) ?: throw DokusException.NotAuthorized("User is not a member of tenant $tenantId")
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
-            organization = selectedOrganization
+            tenant = selectedTenant
         )
 
         val response = jwtGenerator.generateTokens(claims)
@@ -241,18 +241,18 @@ class AuthService(
             token = response.refreshToken,
             expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
         ).onFailure { error ->
-            logger.error("Failed to save refresh token after organization selection for user: ${userId.value}", error)
+            logger.error("Failed to save refresh token after tenant selection for user: ${userId.value}", error)
             throw DokusException.InternalError("Failed to save refresh token")
         }
 
-        logger.info("Organization selection successful for user: $userId -> $organizationId")
+        logger.info("Tenant selection successful for user: $userId -> $tenantId")
         Result.success(response)
     } catch (e: DokusException) {
-        logger.error("Organization selection failed: ${e.errorCode} for user: ${userId.value}", e)
+        logger.error("Tenant selection failed: ${e.errorCode} for user: ${userId.value}", e)
         Result.failure(e)
     } catch (e: Exception) {
-        logger.error("Unexpected error selecting organization for user: ${userId.value}", e)
-        Result.failure(DokusException.InternalError(e.message ?: "Organization selection failed"))
+        logger.error("Unexpected error selecting tenant for user: ${userId.value}", e)
+        Result.failure(DokusException.InternalError(e.message ?: "Tenant selection failed"))
     }
 
     suspend fun logout(request: LogoutRequest): Result<Unit> = try {
@@ -329,35 +329,35 @@ class AuthService(
         Result.failure(DokusException.InternalError(e.message ?: "Account deactivation failed"))
     }
 
-    private fun resolveOrganizationScope(
-        memberships: List<OrganizationMembership>,
-        selectedOrganizationId: OrganizationId? = null
-    ): OrganizationScope? {
+    private fun resolveTenantScope(
+        memberships: List<TenantMembership>,
+        selectedTenantId: TenantId? = null
+    ): TenantScope? {
         val activeMemberships = memberships.filter { it.isActive }
-        val targetOrganizationId = when {
-            selectedOrganizationId != null -> selectedOrganizationId
-            activeMemberships.size == 1 -> activeMemberships.first().organizationId
+        val targetTenantId = when {
+            selectedTenantId != null -> selectedTenantId
+            activeMemberships.size == 1 -> activeMemberships.first().tenantId
             else -> return null
         }
 
-        val membership = activeMemberships.firstOrNull { it.organizationId == targetOrganizationId }
+        val membership = activeMemberships.firstOrNull { it.tenantId == targetTenantId }
             ?: return null
 
-        return createOrganizationScope(
-            organizationId = membership.organizationId,
+        return createTenantScope(
+            tenantId = membership.tenantId,
             role = membership.role
         )
     }
 
-    private fun createOrganizationScope(
-        organizationId: OrganizationId,
+    private fun createTenantScope(
+        tenantId: TenantId,
         role: UserRole
-    ): OrganizationScope {
+    ): TenantScope {
         val permissions = getPermissionsForRole(role)
-        val tier = SubscriptionTier.CloudFree // TODO: Get from tenant/organization
+        val tier = SubscriptionTier.CloudFree // TODO: Get from tenant
 
-        return OrganizationScope(
-            organizationId = organizationId,
+        return TenantScope(
+            tenantId = tenantId,
             permissions = permissions,
             subscriptionTier = tier,
             role = role
