@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -15,8 +16,14 @@ object Constrains {
     val largeScreenHeight = 840.dp
 }
 
-fun Modifier.limitWidth(): Modifier = widthIn(max = 980.dp)
+@Stable
+fun Modifier.limitWidth(): Modifier = widthIn(max = Constrains.largeScreenWidth)
+
+@Stable
 fun Modifier.limitWidthCenteredContent(): Modifier = widthIn(max = 360.dp)
+
+@Stable
+fun Modifier.withVerticalPadding(): Modifier = then(Modifier.padding(vertical = 32.dp))
 
 @Composable
 fun Modifier.withContentPaddingForScrollable(): Modifier {
