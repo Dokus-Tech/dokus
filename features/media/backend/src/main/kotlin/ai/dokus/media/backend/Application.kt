@@ -9,7 +9,6 @@ import ai.dokus.media.backend.config.configureDependencyInjection
 import ai.dokus.media.backend.plugins.configureDatabase
 import ai.dokus.media.backend.plugins.configureGracefulDatabaseShutdown
 import ai.dokus.media.backend.plugins.configureRouting
-import ai.dokus.media.backend.plugins.configureRpc
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -49,8 +48,6 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureErrorHandling()
     configureSecurity(appConfig.security)
     configureMonitoring()
-
-    configureRpc()
     configureRouting()
 
     configureGracefulDatabaseShutdown()
