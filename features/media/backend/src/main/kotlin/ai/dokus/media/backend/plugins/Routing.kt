@@ -1,6 +1,7 @@
 package ai.dokus.media.backend.plugins
 
 import ai.dokus.foundation.ktor.routes.healthRoutes
+import ai.dokus.media.backend.routes.mediaRoutes
 import ai.dokus.media.backend.withRemoteServices
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
@@ -12,7 +13,13 @@ fun Application.configureRouting() {
     logger.info("Configuring media routes...")
 
     routing {
+        // Health check endpoint
         healthRoutes()
+
+        // REST API routes (new)
+        mediaRoutes()
+
+        // RPC routes (legacy - will be deprecated)
         withRemoteServices()
     }
 
