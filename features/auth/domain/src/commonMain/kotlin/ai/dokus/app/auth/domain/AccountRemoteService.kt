@@ -1,6 +1,7 @@
 package ai.dokus.app.auth.domain
 
 import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
@@ -16,6 +17,12 @@ import kotlinx.rpc.annotations.Rpc
  */
 @Rpc
 interface AccountRemoteService {
+
+    /**
+     * Get the current authenticated user.
+     * @throws Exception if not authenticated
+     */
+    suspend fun getCurrentUser(): User
 
     /**
      * Select a tenant and issue tokens scoped to it.

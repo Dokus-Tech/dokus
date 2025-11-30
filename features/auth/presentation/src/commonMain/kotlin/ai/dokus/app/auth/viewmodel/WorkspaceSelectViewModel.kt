@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
-internal class CompanySelectViewModel(
+internal class WorkspaceSelectViewModel(
     private val tenantRemoteService: TenantRemoteService,
     private val selectTenantUseCase: SelectTenantUseCase
 ) : BaseViewModel<DokusState<List<Tenant>>>(DokusState.idle()) {
 
-    private val logger = Logger.forClass<CompanySelectViewModel>()
+    private val logger = Logger.forClass<WorkspaceSelectViewModel>()
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
@@ -42,7 +42,7 @@ internal class CompanySelectViewModel(
             runCatching {
                 selectTenantUseCase(tenantId).getOrThrow()
             }.onSuccess {
-                mutableEffect.emit(Effect.CompanySelected)
+                mutableEffect.emit(Effect.WorkspaceSelected)
             }.onFailure { error ->
                 logger.e(error) { "Failed to select tenant $tenantId" }
                 mutableEffect.emit(Effect.SelectionFailed(error))
@@ -51,7 +51,7 @@ internal class CompanySelectViewModel(
     }
 
     sealed interface Effect {
-        data object CompanySelected : Effect
+        data object WorkspaceSelected : Effect
         data class SelectionFailed(val error: Throwable) : Effect
     }
 }

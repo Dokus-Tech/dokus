@@ -6,7 +6,6 @@ import ai.dokus.auth.backend.database.repository.TenantRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
@@ -47,7 +46,6 @@ class TenantRemoteServiceImpl(
         legalName: LegalName,
         displayName: DisplayName,
         plan: TenantPlan,
-        country: Country,
         language: Language,
         vatNumber: VatNumber
     ): Tenant {
@@ -55,13 +53,23 @@ class TenantRemoteServiceImpl(
             // Get the authenticated user creating the tenant
             val userId = requireAuthenticatedUserId()
 
+            // Validate: user can only have one Freelancer tenant
+            if (type == TenantType.Freelancer) {
+                val existingTenants = userRepository.getUserTenants(userId)
+                    .filter { it.isActive }
+                    .mapNotNull { tenantRepository.findById(it.tenantId) }
+
+                if (existingTenants.any { it.type == TenantType.Freelancer }) {
+                    throw IllegalArgumentException("User can only have one Freelancer workspace")
+                }
+            }
+
             // Create the tenant
             val tenantId = tenantRepository.create(
                 type = type,
                 legalName = legalName,
                 displayName = displayName,
                 plan = plan,
-                country = country,
                 language = language,
                 vatNumber = vatNumber
             )
@@ -94,6 +102,16 @@ class TenantRemoteServiceImpl(
         return authInfoProvider.withAuthInfo {
             val tenantId = requireAuthenticatedTenantId()
             return@withAuthInfo tenantRepository.getNextInvoiceNumber(tenantId)
+        }
+    }
+
+    override suspend fun hasFreelancerTenant(): Boolean {
+        return authInfoProvider.withAuthInfo {
+            val userId = requireAuthenticatedUserId()
+            val memberships = userRepository.getUserTenants(userId).filter { it.isActive }
+            memberships.any { membership ->
+                tenantRepository.findById(membership.tenantId)?.type == TenantType.Freelancer
+            }
         }
     }
 }

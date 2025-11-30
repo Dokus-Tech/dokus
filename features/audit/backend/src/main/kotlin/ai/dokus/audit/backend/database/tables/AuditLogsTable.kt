@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Immutable records with 7-year retention for financial records
  */
 object AuditLogsTable : UUIDTable("audit_logs") {
-    val organizationId = uuid("organization_id")
+    val tenantId = uuid("tenant_id")
     val userId = uuid("user_id").nullable()
 
     val action = dbEnumeration<AuditAction>("action")
@@ -30,7 +30,7 @@ object AuditLogsTable : UUIDTable("audit_logs") {
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, organizationId, createdAt)
+        index(false, tenantId, createdAt)
         index(false, entityType, entityId)
         index(false, userId)
         index(false, action)

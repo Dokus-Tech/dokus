@@ -8,9 +8,23 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 @Serializable
-enum class TenantType(override val dbValue: String) : DbEnum {
-    Freelancer("FREELANCER"),
-    Company("COMPANY")
+enum class TenantType(
+    override val dbValue: String,
+    /** Whether this tenant type requires a separate display name (different from legal name) */
+    val requiresDisplayName: Boolean,
+    /** Whether the legal name should be derived from the user's name (and locked) */
+    val legalNameFromUser: Boolean
+) : DbEnum {
+    Freelancer(
+        dbValue = "FREELANCER",
+        requiresDisplayName = false,
+        legalNameFromUser = true
+    ),
+    Company(
+        dbValue = "COMPANY",
+        requiresDisplayName = true,
+        legalNameFromUser = false
+    )
 }
 
 @Serializable
