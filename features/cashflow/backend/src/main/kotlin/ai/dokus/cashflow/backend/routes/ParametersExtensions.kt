@@ -7,19 +7,24 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import io.ktor.http.*
 import kotlinx.datetime.LocalDate
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Extension properties for extracting typed parameters from Ktor Parameters.
  */
 
+@OptIn(ExperimentalUuidApi::class)
 val Parameters.invoiceId: InvoiceId?
-    get() = this["invoiceId"]?.let { InvoiceId(it) }
+    get() = this["invoiceId"]?.let { InvoiceId(Uuid.parse(it)) }
 
+@OptIn(ExperimentalUuidApi::class)
 val Parameters.expenseId: ExpenseId?
-    get() = this["expenseId"]?.let { ExpenseId(it) }
+    get() = this["expenseId"]?.let { ExpenseId(Uuid.parse(it)) }
 
+@OptIn(ExperimentalUuidApi::class)
 val Parameters.attachmentId: AttachmentId?
-    get() = this["id"]?.let { AttachmentId(it) }
+    get() = this["id"]?.let { AttachmentId(Uuid.parse(it)) }
 
 val Parameters.invoiceStatus: InvoiceStatus?
     get() = this["status"]?.let {
