@@ -4,7 +4,6 @@ import ai.dokus.app.auth.AuthInitializer
 import ai.dokus.app.auth.database.AuthDatabase
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.core.database.LocalDatabaseCleaner
-import ai.dokus.app.core.viewmodel.HealthStatusViewModel
 import ai.dokus.app.local.DefaultLocalDatabaseCleaner
 import ai.dokus.app.viewmodel.AppVersionCheckViewModel
 import ai.dokus.app.viewmodel.BootstrapViewModel
@@ -12,12 +11,8 @@ import ai.dokus.app.viewmodel.DashboardViewModel
 import ai.dokus.app.viewmodel.HomeViewModel
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.flags.FeatureFlagService
-import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.foundation.domain.rpc.HealthRemoteService
-import ai.dokus.foundation.domain.usecases.GetCombinedHealthStatusUseCase
 import androidx.lifecycle.SavedStateHandle
 import org.koin.core.module.dsl.viewModel
-import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 internal val diModuleApp = module {
@@ -31,8 +26,6 @@ internal val diModuleApp = module {
     viewModel { DashboardViewModel(get<GetCurrentTenantUseCase>()) }
     viewModel { HomeViewModel(SavedStateHandle.createHandle(null, null)) }
 
-    viewModel { HealthStatusViewModel(get<GetCombinedHealthStatusUseCase>()) }
-
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
     single<LocalDatabaseCleaner> {
         DefaultLocalDatabaseCleaner(
@@ -42,11 +35,5 @@ internal val diModuleApp = module {
 }
 
 internal val diModuleUseCases = module {
-    factory {
-        GetCombinedHealthStatusUseCase(
-            authHealthRemoteService = get<HealthRemoteService>(named(Feature.Auth)),
-            expenseHealthRemoteService = get<HealthRemoteService>(named(Feature.Expense)),
-            invoicingHealthRemoteService = get<HealthRemoteService>(named(Feature.Invoicing)),
-        )
-    }
+    // UseCases are now wired in their respective feature modules
 }

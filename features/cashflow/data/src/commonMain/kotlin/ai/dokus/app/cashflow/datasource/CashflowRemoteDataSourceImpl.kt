@@ -233,6 +233,7 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<AttachmentId> {
         return runCatching {
             httpClient.submitFormWithBinaryData(
+                url = "/api/v1/attachments/invoice/$invoiceId",
                 formData = formData {
                     append(
                         key = "file",
@@ -246,9 +247,7 @@ internal class CashflowRemoteDataSourceImpl(
                         }
                     )
                 }
-            ) {
-                url("/api/v1/attachments/invoice/$invoiceId")
-            }.body()
+            ).body()
         }
     }
 
@@ -260,6 +259,7 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<AttachmentId> {
         return runCatching {
             httpClient.submitFormWithBinaryData(
+                url = "/api/v1/attachments/expense/$expenseId",
                 formData = formData {
                     append(
                         key = "file",
@@ -273,9 +273,7 @@ internal class CashflowRemoteDataSourceImpl(
                         }
                     )
                 }
-            ) {
-                url("/api/v1/attachments/expense/$expenseId")
-            }.body()
+            ).body()
         }
     }
 
