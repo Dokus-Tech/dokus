@@ -42,7 +42,8 @@ fun Route.withRemoteServices() {
         registerService<AccountRemoteService> {
             AccountRemoteServiceImpl(
                 authService = get<AuthService>(),
-                authInfoProvider = AuthInfoProvider(call, jwtValidator)
+                authInfoProvider = AuthInfoProvider(call, jwtValidator),
+                userRepository = get<UserRepository>()
             )
         }
 

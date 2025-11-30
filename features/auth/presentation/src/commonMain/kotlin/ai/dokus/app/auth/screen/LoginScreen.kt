@@ -96,8 +96,8 @@ private fun LoginContent(
                 is LoginViewModel.Effect.NavigateToHome -> {
                     navController.replace(CoreDestination.Home)
                 }
-                is LoginViewModel.Effect.NavigateToCompanySelect -> {
-                    navController.replace(AuthDestination.CompanySelect)
+                is LoginViewModel.Effect.NavigateToWorkspaceSelect -> {
+                    navController.replace(AuthDestination.WorkspaceSelect)
                 }
             }
         }

@@ -36,7 +36,10 @@ class AuthenticatedResilientDelegate<T : Any>(
                     retryDelegate.resetCache()
                     return block(retryDelegate.get())
                 }
-                runCatching { authManager.onAuthenticationFailed() }
+                runCatching {
+                    tokenManager.onAuthenticationFailed()
+                    authManager.onAuthenticationFailed()
+                }
             } else {
                 retryDelegate.resetCache()
                 return block(retryDelegate.get())
@@ -45,12 +48,38 @@ class AuthenticatedResilientDelegate<T : Any>(
         }
     }
 
+    private val authErrorClassNames = setOf(
+        "NotAuthenticated",
+        "TokenInvalid",
+        "TokenExpired",
+        "RefreshTokenExpired",
+        "RefreshTokenRevoked",
+        "SessionExpired",
+        "SessionInvalid"
+    )
+
     private fun Throwable.findAuthError(): DokusException? {
+        val visited = mutableSetOf<Throwable>()
         var current: Throwable? = this
-        while (current != null) {
+        while (current != null && current !in visited) {
+            visited.add(current)
+            // Direct type check for all auth-related exceptions
             when (current) {
                 is DokusException.NotAuthenticated,
-                is DokusException.TokenInvalid -> return current
+                is DokusException.TokenInvalid,
+                is DokusException.TokenExpired,
+                is DokusException.RefreshTokenExpired,
+                is DokusException.RefreshTokenRevoked,
+                is DokusException.SessionExpired,
+                is DokusException.SessionInvalid -> return current
+            }
+            // Fallback: check class name for KRPC DeserializedException wrapper
+            val className = current::class.simpleName ?: ""
+            val message = current.message ?: ""
+            if (className in authErrorClassNames ||
+                authErrorClassNames.any { message.startsWith("$it(") }) {
+                // Return a synthetic DokusException for auth error handling
+                return DokusException.NotAuthenticated(message)
             }
             current = current.cause
         }

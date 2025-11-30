@@ -11,7 +11,6 @@ import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.ids.VatNumber
@@ -105,7 +104,6 @@ class TenantRemoteServiceImplTest {
             displayName = DisplayName(displayName),
             plan = plan,
             status = TenantStatus.Active,
-            country = Country.Belgium,
             language = Language.En,
             vatNumber = null,
             trialEndsAt = null,
@@ -138,7 +136,6 @@ class TenantRemoteServiceImplTest {
                 legalName = LegalName(legalName),
                 displayName = DisplayName(displayName),
                 plan = TenantPlan.Free,
-                country = Country.Belgium,
                 language = Language.En,
                 vatNumber = any()
             )
@@ -154,7 +151,6 @@ class TenantRemoteServiceImplTest {
             legalName = LegalName(legalName),
             displayName = DisplayName(displayName),
             plan = TenantPlan.Free,
-            country = Country.Belgium,
             language = Language.En,
             vatNumber = VatNumber("BE0123456789")
         )
@@ -172,7 +168,6 @@ class TenantRemoteServiceImplTest {
                 legalName = LegalName(legalName),
                 displayName = DisplayName(displayName),
                 plan = TenantPlan.Free,
-                country = Country.Belgium,
                 language = Language.En,
                 vatNumber = any()
             )
@@ -198,9 +193,10 @@ class TenantRemoteServiceImplTest {
             }
         }
 
-        coEvery { tenantRepository.create(any(), any(), any(), any(), any(), any(), any()) } returns testTenantId
+        coEvery { tenantRepository.create(any(), any(), any(), any(), any(), any()) } returns testTenantId
         coEvery { userRepository.addToTenant(any(), any(), any()) } just Runs
         coEvery { tenantRepository.findById(any()) } returns mockTenant
+        coEvery { userRepository.getUserTenants(any()) } returns emptyList()
 
         // When
         service.createTenant(
@@ -208,14 +204,13 @@ class TenantRemoteServiceImplTest {
             legalName = LegalName("Test"),
             displayName = DisplayName("Test Display"),
             plan = TenantPlan.Free,
-            country = Country.Belgium,
             language = Language.En,
             vatNumber = VatNumber("BE0123456789")
         )
 
         // Then - verify order: create tenant first, then add membership
         coVerifyOrder {
-            tenantRepository.create(any(), any(), any(), any(), any(), any(), any())
+            tenantRepository.create(any(), any(), any(), any(), any(), any())
             userRepository.addToTenant(testUserId, testTenantId, UserRole.Owner)
             tenantRepository.findById(testTenantId)
         }
@@ -239,7 +234,6 @@ class TenantRemoteServiceImplTest {
         }
 
         val planSlot = slot<TenantPlan>()
-        val countrySlot = slot<Country>()
         val languageSlot = slot<Language>()
 
         coEvery {
@@ -248,7 +242,6 @@ class TenantRemoteServiceImplTest {
                 legalName = any(),
                 displayName = any(),
                 plan = capture(planSlot),
-                country = capture(countrySlot),
                 language = capture(languageSlot),
                 vatNumber = any()
             )
@@ -263,14 +256,12 @@ class TenantRemoteServiceImplTest {
             legalName = LegalName("Professional Org"),
             displayName = DisplayName("Pro Display"),
             plan = TenantPlan.Professional,
-            country = Country.Netherlands,
             language = Language.Nl,
             vatNumber = VatNumber("NL012345678B01")
         )
 
         // Then
         assertEquals(TenantPlan.Professional, planSlot.captured)
-        assertEquals(Country.Netherlands, countrySlot.captured)
         assertEquals(Language.Nl, languageSlot.captured)
     }
 
@@ -288,7 +279,7 @@ class TenantRemoteServiceImplTest {
             }
         }
 
-        coEvery { tenantRepository.create(any(), any(), any(), any(), any(), any(), any()) } returns testTenantId
+        coEvery { tenantRepository.create(any(), any(), any(), any(), any(), any()) } returns testTenantId
 
         val roleSlot = slot<UserRole>()
         coEvery { userRepository.addToTenant(any(), any(), capture(roleSlot)) } just Runs
@@ -301,7 +292,6 @@ class TenantRemoteServiceImplTest {
             legalName = LegalName("Test"),
             displayName = DisplayName("Test Display"),
             plan = TenantPlan.Free,
-            country = Country.Belgium,
             language = Language.En,
             vatNumber = VatNumber("BE0123456789")
         )

@@ -30,7 +30,6 @@ object TenantMapper {
         status = this[TenantTable.status],
         trialEndsAt = this[TenantTable.trialEndsAt],
         subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
-        country = this[TenantTable.country],
         language = this[TenantTable.language],
         vatNumber = this[TenantTable.vatNumber]?.let { VatNumber(it) },
         createdAt = this[TenantTable.createdAt],

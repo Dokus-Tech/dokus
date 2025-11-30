@@ -42,10 +42,19 @@ class TokenManagerImpl(
      */
     override suspend fun initialize() {
         val accessToken = tokenStorage.getAccessToken()
-        if (accessToken != null) {
-            validateAndUpdateState(accessToken)
-        } else {
+        if (accessToken == null) {
             updateAuthenticationState(false)
+            return
+        }
+
+        when (jwtDecoder.validateToken(accessToken)) {
+            TokenStatus.VALID -> updateAuthenticationState(true)
+            TokenStatus.REFRESH_NEEDED, TokenStatus.EXPIRED -> {
+                val refreshed = runCatching { refreshToken() }.getOrNull()
+                updateAuthenticationState(refreshed != null)
+            }
+
+            TokenStatus.INVALID -> updateAuthenticationState(false)
         }
     }
 
@@ -104,6 +113,8 @@ class TokenManagerImpl(
                 saveTokens(response)
                 return response.accessToken
             }
+            // Treat null response as an auth failure
+            onAuthenticationFailed()
         } catch (e: Exception) {
             // Refresh failed, clear tokens
             onAuthenticationFailed()

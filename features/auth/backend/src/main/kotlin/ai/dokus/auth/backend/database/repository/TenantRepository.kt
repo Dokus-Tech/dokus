@@ -6,7 +6,6 @@ import ai.dokus.auth.backend.database.tables.TenantSettingsTable
 import ai.dokus.auth.backend.database.tables.TenantTable
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
@@ -38,7 +37,6 @@ class TenantRepository {
         legalName: LegalName,
         displayName: DisplayName,
         plan: TenantPlan = TenantPlan.Free,
-        country: Country,
         language: Language,
         vatNumber: VatNumber,
     ): TenantId = dbQuery {
@@ -47,7 +45,6 @@ class TenantRepository {
             it[TenantTable.legalName] = legalName.value
             it[TenantTable.displayName] = displayName.value
             it[TenantTable.plan] = plan
-            it[TenantTable.country] = country
             it[TenantTable.language] = language
             it[TenantTable.vatNumber] = vatNumber.value
             it[status] = TenantStatus.Active

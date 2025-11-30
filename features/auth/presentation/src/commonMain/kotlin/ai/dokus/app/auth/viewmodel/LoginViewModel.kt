@@ -34,7 +34,7 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
                 mutableState.value = State.Idle
                 val claims = tokenManager.getCurrentClaims()
                 if (claims?.tenant == null) {
-                    mutableEffect.emit(Effect.NavigateToCompanySelect)
+                    mutableEffect.emit(Effect.NavigateToWorkspaceSelect)
                 } else {
                     mutableEffect.emit(Effect.NavigateToHome)
                 }
@@ -62,6 +62,6 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
 
     sealed interface Effect {
         data object NavigateToHome : Effect
-        data object NavigateToCompanySelect : Effect
+        data object NavigateToWorkspaceSelect : Effect
     }
 }

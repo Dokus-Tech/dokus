@@ -13,7 +13,7 @@ import java.util.UUID as JavaUUID
  * Belgian quarterly VAT returns
  */
 object VatReturnsTable : UUIDTable("vat_returns") {
-    val organizationId = uuid("organization_id")
+    val tenantId = uuid("tenant_id")
 
     val periodStart = date("period_start")
     val periodEnd = date("period_end")
@@ -34,8 +34,8 @@ object VatReturnsTable : UUIDTable("vat_returns") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, organizationId)
-        index(false, organizationId, quarterYear, quarter)
-        uniqueIndex(organizationId, quarterYear, quarter)
+        index(false, tenantId)
+        index(false, tenantId, quarterYear, quarter)
+        uniqueIndex(tenantId, quarterYear, quarter)
     }
 }

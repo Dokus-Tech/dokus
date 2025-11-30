@@ -8,13 +8,13 @@ import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.Tenant
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
@@ -108,7 +108,6 @@ class AuthRepository(
         legalName: LegalName,
         displayName: DisplayName,
         plan: TenantPlan,
-        country: Country,
         language: Language,
         vatNumber: VatNumber
     ): Result<Tenant> = runCatching {
@@ -118,7 +117,6 @@ class AuthRepository(
             legalName = legalName,
             displayName = displayName,
             plan = plan,
-            country = country,
             language = language,
             vatNumber = vatNumber
         )
@@ -126,6 +124,24 @@ class AuthRepository(
         tenant
     }.onFailure { error ->
         logger.e(error) { "Tenant creation failed" }
+    }
+
+    /**
+     * Check if the current user already has a freelancer tenant.
+     */
+    suspend fun hasFreelancerTenant(): Result<Boolean> = runCatching {
+        tenantRemoteService.hasFreelancerTenant()
+    }.onFailure { error ->
+        logger.e(error) { "Failed to check freelancer tenant status" }
+    }
+
+    /**
+     * Get current user info.
+     */
+    suspend fun getCurrentUser(): Result<User> = runCatching {
+        accountService.getCurrentUser()
+    }.onFailure { error ->
+        logger.e(error) { "Failed to get current user" }
     }
 
     /**

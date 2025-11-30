@@ -16,7 +16,8 @@ interface AuthManagerMutable : AuthManager {
  * Provides a centralized way to handle authentication failures and force logouts.
  */
 internal class AuthManagerImpl : AuthManager, AuthManagerMutable {
-    private val _authenticationEvents = MutableSharedFlow<AuthEvent>()
+    // Replay=1 ensures ForceLogout isn't lost if emitted before UI is ready to collect
+    private val _authenticationEvents = MutableSharedFlow<AuthEvent>(replay = 1)
     override val authenticationEvents: SharedFlow<AuthEvent> = _authenticationEvents.asSharedFlow()
 
     /**

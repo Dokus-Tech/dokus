@@ -2,6 +2,9 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Copy the fat JAR
 COPY features/payment/backend/build/libs/backend-1.0.0.jar /app/payment-service.jar
 

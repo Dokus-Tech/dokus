@@ -41,6 +41,7 @@ fun PTextField(
     keyboardOptions: KeyboardOptions,
     error: DokusException?,
     visualTransformation: VisualTransformation,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
 ) {
@@ -92,7 +93,11 @@ fun PTextField(
                 minLines = minLines,
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 16.sp,
-                    color = if (value.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                    color = when {
+                        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        value.isEmpty() -> MaterialTheme.colorScheme.onSurfaceVariant
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
                 ),
                 singleLine = singleLine,
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -102,6 +107,7 @@ fun PTextField(
                 ),
                 keyboardOptions = keyboardOptions,
                 visualTransformation = visualTransformation,
+                enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
                 decorationBox = { innerTextField ->
                     innerTextField()

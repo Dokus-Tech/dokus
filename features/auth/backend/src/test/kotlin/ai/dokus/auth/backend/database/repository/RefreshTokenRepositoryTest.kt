@@ -427,7 +427,6 @@ class RefreshTokenRepositoryTest {
                 it[displayName] = "Test Display"
                 it[plan] = TenantPlan.Free
                 it[status] = ai.dokus.foundation.domain.enums.TenantStatus.Active
-                it[country] = ai.dokus.foundation.domain.enums.Country.Belgium
                 it[language] = ai.dokus.foundation.domain.enums.Language.En
             }
 
