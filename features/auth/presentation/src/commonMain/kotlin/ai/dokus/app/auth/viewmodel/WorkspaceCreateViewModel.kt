@@ -37,26 +37,24 @@ internal class WorkspaceCreateViewModel(
     private fun loadUserInfo() {
         scope.launch {
             // Check if the user already has a freelancer workspace
-            runCatching {
-                authRepository.hasFreelancerTenant().getOrThrow()
-            }.onSuccess { hasFreelancer ->
-                mutableHasFreelancerWorkspace.value = hasFreelancer
-            }.onFailure { error ->
-                logger.e(error) { "Failed to check freelancer workspace status" }
-            }
+            authRepository.hasFreelancerTenant()
+                .onSuccess { hasFreelancer ->
+                    mutableHasFreelancerWorkspace.value = hasFreelancer
+                }.onFailure { error ->
+                    logger.e(error) { "Failed to check freelancer workspace status" }
+                }
 
             // Get a user's name for freelancer autofill
-            runCatching {
-                authRepository.getCurrentUser().getOrThrow()
-            }.onSuccess { user ->
-                val fullName = listOfNotNull(
-                    user.firstName?.value,
-                    user.lastName?.value
-                ).joinToString(" ")
-                mutableUserName.value = fullName
-            }.onFailure { error ->
-                logger.e(error) { "Failed to load user info" }
-            }
+            authRepository.getCurrentUser()
+                .onSuccess { user ->
+                    val fullName = listOfNotNull(
+                        user.firstName?.value,
+                        user.lastName?.value
+                    ).joinToString(" ")
+                    mutableUserName.value = fullName
+                }.onFailure { error ->
+                    logger.e(error) { "Failed to load user info" }
+                }
         }
     }
 
@@ -85,16 +83,14 @@ internal class WorkspaceCreateViewModel(
                 displayName
             }
 
-            runCatching {
-                authRepository.createTenant(
-                    type = type,
-                    legalName = effectiveLegalName,
-                    displayName = effectiveDisplayName,
-                    plan = plan,
-                    language = language,
-                    vatNumber = vatNumber
-                ).getOrThrow()
-            }.onSuccess {
+            authRepository.createTenant(
+                type = type,
+                legalName = effectiveLegalName,
+                displayName = effectiveDisplayName,
+                plan = plan,
+                language = language,
+                vatNumber = vatNumber
+            ).onSuccess {
                 mutableState.value = DokusState.success(Unit)
                 mutableEffect.emit(Effect.NavigateHome)
             }.onFailure { error ->

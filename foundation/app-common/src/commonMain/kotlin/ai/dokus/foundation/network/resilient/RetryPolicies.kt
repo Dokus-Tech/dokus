@@ -36,7 +36,10 @@ class AuthenticatedResilientDelegate<T : Any>(
                     retryDelegate.resetCache()
                     return block(retryDelegate.get())
                 }
-                runCatching { authManager.onAuthenticationFailed() }
+                runCatching {
+                    tokenManager.onAuthenticationFailed()
+                    authManager.onAuthenticationFailed()
+                }
             } else {
                 retryDelegate.resetCache()
                 return block(retryDelegate.get())
