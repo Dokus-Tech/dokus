@@ -51,9 +51,6 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureSecurity(appConfig.security)
     configureMonitoring()
 
-    // RPC configuration
-    configureRpc()
-
     // Application features
     configureRouting()
 
