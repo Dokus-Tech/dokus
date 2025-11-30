@@ -15,13 +15,72 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+
+/**
+ * Internal data class for workspace creation form fields.
+ * Encapsulates form state and provides validation logic.
+ */
+internal data class WorkspaceFormFields(
+    val tenantType: TenantType,
+    val legalName: LegalName,
+    val displayName: DisplayName,
+    val vatNumber: VatNumber,
+    val userName: String,
+    val hasFreelancerWorkspace: Boolean,
+) {
+    /**
+     * The effective legal name based on tenant type.
+     * For Freelancer, uses userName; for Company, uses legalName.
+     */
+    val effectiveLegalName: String
+        get() = if (tenantType.legalNameFromUser) userName else legalName.value
+
+    /**
+     * Whether the legal name field is valid.
+     * For Freelancer: checks userName is not blank.
+     * For Company: checks legalName.isValid.
+     */
+    val isLegalNameValid: Boolean
+        get() = if (tenantType.legalNameFromUser) {
+            userName.isNotBlank()
+        } else {
+            legalName.isValid
+        }
+
+    /**
+     * Whether the display name field is valid.
+     * Only required for Company type.
+     */
+    val isDisplayNameValid: Boolean
+        get() = !tenantType.requiresDisplayName || displayName.isValid
+
+    /**
+     * Whether the VAT number is valid.
+     */
+    val isVatNumberValid: Boolean
+        get() = vatNumber.isValid
+
+    /**
+     * Whether the form can be submitted.
+     * All required fields must be valid.
+     */
+    val canSubmit: Boolean
+        get() = isLegalNameValid && isDisplayNameValid && isVatNumberValid
+
+    /**
+     * Whether the current tenant type selection is allowed.
+     * Freelancer is disabled if user already has one.
+     */
+    fun isTenantTypeAllowed(type: TenantType): Boolean {
+        return !(type == TenantType.Freelancer && hasFreelancerWorkspace)
+    }
+}
 
 @Composable
 fun WorkspaceCreateContent(
@@ -39,10 +98,17 @@ fun WorkspaceCreateContent(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val formFields = WorkspaceFormFields(
+        tenantType = tenantType,
+        legalName = legalName,
+        displayName = displayName,
+        vatNumber = vatNumber,
+        userName = userName,
+        hasFreelancerWorkspace = hasFreelancerWorkspace
+    )
+
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .widthIn(max = 480.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SectionTitle(
@@ -53,13 +119,8 @@ fun WorkspaceCreateContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         FormFields(
-            tenantType = tenantType,
-            legalName = legalName,
-            displayName = displayName,
-            vatNumber = vatNumber,
-            userName = userName,
+            formFields = formFields,
             isSubmitting = isSubmitting,
-            hasFreelancerWorkspace = hasFreelancerWorkspace,
             onTenantTypeChange = onTenantTypeChange,
             onLegalNameChange = onLegalNameChange,
             onDisplayNameChange = onDisplayNameChange,
@@ -72,27 +133,18 @@ fun WorkspaceCreateContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FormFields(
-    tenantType: TenantType,
-    legalName: LegalName,
-    displayName: DisplayName,
-    vatNumber: VatNumber,
-    userName: String,
+    formFields: WorkspaceFormFields,
     isSubmitting: Boolean,
-    hasFreelancerWorkspace: Boolean,
     onTenantTypeChange: (TenantType) -> Unit,
     onLegalNameChange: (LegalName) -> Unit,
     onDisplayNameChange: (DisplayName) -> Unit,
     onVatNumberChange: (VatNumber) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    val canSubmit = legalName.isValid &&
-        (!tenantType.requiresDisplayName || displayName.isValid) &&
-        vatNumber.isValid
-
     // Workspace type selector using FlowRow
     WorkspaceTypeSelector(
-        selected = tenantType,
-        hasFreelancerWorkspace = hasFreelancerWorkspace,
+        selected = formFields.tenantType,
+        formFields = formFields,
         onSelected = onTenantTypeChange
     )
 
@@ -100,23 +152,23 @@ private fun FormFields(
 
     // Legal name field - locked for Freelancer (uses user's name)
     PTextFieldWorkspaceName(
-        fieldName = if (tenantType == TenantType.Company) "Legal name" else "Your name",
-        value = if (tenantType.legalNameFromUser) userName else legalName.value,
-        enabled = !tenantType.legalNameFromUser,
+        fieldName = if (formFields.tenantType == TenantType.Company) "Legal name" else "Your name",
+        value = formFields.effectiveLegalName,
+        enabled = !formFields.tenantType.legalNameFromUser,
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (!tenantType.legalNameFromUser) {
+        if (!formFields.tenantType.legalNameFromUser) {
             onLegalNameChange(LegalName(it))
         }
     }
 
     // Display name field - only shown when required
-    if (tenantType.requiresDisplayName) {
+    if (formFields.tenantType.requiresDisplayName) {
         Spacer(modifier = Modifier.height(12.dp))
 
         PTextFieldWorkspaceName(
             fieldName = "Display name",
-            value = displayName.value,
+            value = formFields.displayName.value,
             modifier = Modifier.fillMaxWidth()
         ) { onDisplayNameChange(DisplayName(it)) }
     }
@@ -125,7 +177,7 @@ private fun FormFields(
 
     PTextFieldTaxNumber(
         fieldName = "VAT number",
-        value = vatNumber.value,
+        value = formFields.vatNumber.value,
         modifier = Modifier.fillMaxWidth()
     ) { onVatNumberChange(VatNumber(it)) }
 
@@ -133,7 +185,7 @@ private fun FormFields(
 
     PPrimaryButton(
         text = "Create workspace",
-        enabled = canSubmit && !isSubmitting,
+        enabled = formFields.canSubmit && !isSubmitting,
         modifier = Modifier.fillMaxWidth(),
         onClick = onSubmit
     )
@@ -143,7 +195,7 @@ private fun FormFields(
 @Composable
 private fun WorkspaceTypeSelector(
     selected: TenantType,
-    hasFreelancerWorkspace: Boolean,
+    formFields: WorkspaceFormFields,
     onSelected: (TenantType) -> Unit,
 ) {
     FlowRow(
@@ -151,11 +203,9 @@ private fun WorkspaceTypeSelector(
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
     ) {
         TenantType.entries.forEach { type ->
-            val isFreelancerDisabled = type == TenantType.Freelancer && hasFreelancerWorkspace
-
             FilterChip(
                 selected = selected == type,
-                enabled = !isFreelancerDisabled,
+                enabled = formFields.isTenantTypeAllowed(type),
                 onClick = { onSelected(type) },
                 label = {
                     Text(

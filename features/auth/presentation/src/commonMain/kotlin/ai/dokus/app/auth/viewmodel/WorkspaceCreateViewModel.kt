@@ -36,7 +36,7 @@ internal class WorkspaceCreateViewModel(
 
     private fun loadUserInfo() {
         scope.launch {
-            // Check if user already has a freelancer workspace
+            // Check if the user already has a freelancer workspace
             runCatching {
                 authRepository.hasFreelancerTenant().getOrThrow()
             }.onSuccess { hasFreelancer ->
@@ -45,7 +45,7 @@ internal class WorkspaceCreateViewModel(
                 logger.e(error) { "Failed to check freelancer workspace status" }
             }
 
-            // Get user's name for freelancer auto-fill
+            // Get a user's name for freelancer autofill
             runCatching {
                 authRepository.getCurrentUser().getOrThrow()
             }.onSuccess { user ->
