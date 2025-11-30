@@ -167,7 +167,7 @@ interface CashflowRemoteDataSource {
 
     /**
      * Upload a document for an invoice
-     * POST /api/v1/attachments/invoice/{invoiceId}
+     * POST /api/v1/invoices/{invoiceId}/attachments
      *
      * @param invoiceId The invoice to attach the document to
      * @param fileContent The file content as ByteArray
@@ -184,7 +184,7 @@ interface CashflowRemoteDataSource {
 
     /**
      * Upload a receipt for an expense
-     * POST /api/v1/attachments/expense/{expenseId}
+     * POST /api/v1/expenses/{expenseId}/attachments
      *
      * @param expenseId The expense to attach the receipt to
      * @param fileContent The file content as ByteArray
@@ -201,13 +201,13 @@ interface CashflowRemoteDataSource {
 
     /**
      * Get all attachments for an invoice
-     * GET /api/v1/attachments/invoice/{invoiceId}
+     * GET /api/v1/invoices/{invoiceId}/attachments
      */
     suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<AttachmentDto>>
 
     /**
      * Get all attachments for an expense
-     * GET /api/v1/attachments/expense/{expenseId}
+     * GET /api/v1/expenses/{expenseId}/attachments
      */
     suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<AttachmentDto>>
 

@@ -233,7 +233,7 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<AttachmentId> {
         return runCatching {
             httpClient.submitFormWithBinaryData(
-                url = "/api/v1/attachments/invoice/$invoiceId",
+                url = "/api/v1/invoices/$invoiceId/attachments",
                 formData = formData {
                     append(
                         key = "file",
@@ -259,7 +259,7 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<AttachmentId> {
         return runCatching {
             httpClient.submitFormWithBinaryData(
-                url = "/api/v1/attachments/expense/$expenseId",
+                url = "/api/v1/expenses/$expenseId/attachments",
                 formData = formData {
                     append(
                         key = "file",
@@ -279,13 +279,13 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<AttachmentDto>> {
         return runCatching {
-            httpClient.get("/api/v1/attachments/invoice/$invoiceId").body()
+            httpClient.get("/api/v1/invoices/$invoiceId/attachments").body()
         }
     }
 
     override suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<AttachmentDto>> {
         return runCatching {
-            httpClient.get("/api/v1/attachments/expense/$expenseId").body()
+            httpClient.get("/api/v1/expenses/$expenseId/attachments").body()
         }
     }
 

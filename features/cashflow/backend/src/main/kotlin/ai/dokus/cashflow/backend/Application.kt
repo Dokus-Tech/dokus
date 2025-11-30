@@ -5,6 +5,7 @@ import ai.dokus.cashflow.backend.plugins.*
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
 import ai.dokus.foundation.ktor.configure.configureMonitoring
+import ai.dokus.foundation.ktor.configure.configureJwtAuthentication
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
 import io.ktor.server.application.Application
@@ -49,6 +50,7 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
+    configureJwtAuthentication()
     configureMonitoring()
 
     // Application features
