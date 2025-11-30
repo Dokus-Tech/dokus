@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
+import io.ktor.utils.io.jvm.javaio.copyTo
 
 /**
  * Attachment API Routes
