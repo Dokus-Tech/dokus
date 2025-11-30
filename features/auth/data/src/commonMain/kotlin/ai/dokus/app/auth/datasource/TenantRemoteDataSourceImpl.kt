@@ -13,11 +13,13 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * HTTP implementation of TenantRemoteDataSource.
  * Uses authenticated Ktor HttpClient to communicate with the tenant service.
  */
+@OptIn(ExperimentalUuidApi::class)
 internal class TenantRemoteDataSourceImpl(
     private val httpClient: HttpClient,
 ) : TenantRemoteDataSource {
