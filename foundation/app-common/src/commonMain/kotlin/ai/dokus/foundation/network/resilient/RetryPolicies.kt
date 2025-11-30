@@ -49,11 +49,22 @@ class AuthenticatedResilientDelegate<T : Any>(
     }
 
     private fun Throwable.findAuthError(): DokusException? {
+        val visited = mutableSetOf<Throwable>()
         var current: Throwable? = this
-        while (current != null) {
+        while (current != null && current !in visited) {
+            visited.add(current)
+            // Direct type check
             when (current) {
                 is DokusException.NotAuthenticated,
                 is DokusException.TokenInvalid -> return current
+            }
+            // Fallback: check class name for KRPC DeserializedException wrapper
+            val className = current::class.simpleName ?: ""
+            val message = current.message ?: ""
+            if (className == "NotAuthenticated" || className == "TokenInvalid" ||
+                message.startsWith("NotAuthenticated(") || message.startsWith("TokenInvalid(")) {
+                // Return a synthetic DokusException for auth error handling
+                return DokusException.NotAuthenticated(message)
             }
             current = current.cause
         }
