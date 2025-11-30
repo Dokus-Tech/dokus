@@ -113,6 +113,8 @@ class TokenManagerImpl(
                 saveTokens(response)
                 return response.accessToken
             }
+            // Treat null response as an auth failure
+            onAuthenticationFailed()
         } catch (e: Exception) {
             // Refresh failed, clear tokens
             onAuthenticationFailed()

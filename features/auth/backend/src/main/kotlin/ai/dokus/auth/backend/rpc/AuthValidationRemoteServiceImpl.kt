@@ -69,14 +69,13 @@ class AuthValidationRemoteServiceImpl(
                 throw DokusException.TokenInvalid("Invalid or expired token")
             }
 
-        logger.debug("JWT validated for user: ${authInfo.userId}, tenant: ${authInfo.tenantId}")
+        logger.debug("JWT validated for user: {}, tenant: {}", authInfo.userId, authInfo.tenantId)
 
         // Step 2: Fetch full user data from database
-        val user = userRepository.findById(authInfo.userId)
-            ?: run {
-                logger.error("User not found in database: ${authInfo.userId}")
-                throw DokusException.NotAuthenticated("User not found")
-            }
+        val user = userRepository.findById(authInfo.userId) ?: run {
+            logger.error("User not found in database: ${authInfo.userId}")
+            throw DokusException.NotAuthenticated()
+        }
 
         // Step 3: Check if user account is active
         if (!user.isActive) {

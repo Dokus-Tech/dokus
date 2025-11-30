@@ -30,6 +30,12 @@ sealed class DokusException(
         }
 
         @Serializable
+        @SerialName("DokusException.Validation.Other")
+        data object Other : Validation(
+            message = "Bad request"
+        )
+
+        @Serializable
         @SerialName("DokusException.Validation.InvalidEmail")
         data object InvalidEmail : Validation(
             message = "Invalid email address",
@@ -167,7 +173,7 @@ sealed class DokusException(
     @Serializable
     @SerialName("DokusException.NotAuthenticated")
     data class NotAuthenticated(
-        override val message: String? = "Please log in to continue",
+        override val message: String? = "Not authenticated",
     ) : DokusException(
         httpStatusCode = HTTP_STATUS,
         errorCode = ERROR_CODE,
