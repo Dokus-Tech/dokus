@@ -2,14 +2,11 @@ package ai.dokus.auth.backend.routes
 
 import ai.dokus.auth.backend.database.repository.TenantRepository
 import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.CreateTenantRequest
+import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
@@ -20,23 +17,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
-/**
- * Request DTO for creating a tenant
- */
-@Serializable
-data class CreateTenantRequest(
-    val type: TenantType,
-    val legalName: LegalName,
-    val displayName: DisplayName,
-    val plan: TenantPlan = TenantPlan.Free,
-    val language: Language = Language.En,
-    val vatNumber: VatNumber
-)
 
 /**
  * Tenant routes for tenant management operations:
@@ -139,7 +122,7 @@ fun Route.tenantRoutes() {
              * Update tenant settings
              */
             put("/settings") {
-                val settings = call.receive<ai.dokus.foundation.domain.model.TenantSettings>()
+                val settings = call.receive<TenantSettings>()
                 tenantRepository.updateSettings(settings)
                 call.respond(HttpStatusCode.NoContent)
             }

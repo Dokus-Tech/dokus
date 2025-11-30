@@ -3,9 +3,9 @@ package ai.dokus.auth.backend.routes
 import ai.dokus.auth.backend.database.repository.UserRepository
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.auth.SelectTenantRequest
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
@@ -15,16 +15,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
-
-/**
- * Request DTO for selecting a tenant
- */
-@Serializable
-data class SelectTenantRequest(
-    val tenantId: TenantId
-)
 
 /**
  * Account routes for authenticated user operations:

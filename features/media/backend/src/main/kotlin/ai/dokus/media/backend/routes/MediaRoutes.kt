@@ -2,7 +2,9 @@ package ai.dokus.media.backend.routes
 
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.MediaStatus
+import ai.dokus.foundation.domain.exceptions.BadRequest
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.exceptions.NotFound
 import ai.dokus.foundation.domain.ids.MediaId
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaProcessingUpdateRequest
@@ -48,8 +50,8 @@ fun Route.mediaRoutes() {
     val processingPublisher by inject<MessagePublisher<MediaProcessingRequestedMessage>>()
 
     route("/api/v1/media") {
-        // POST /api/v1/media - Upload media file (multipart form)
         authenticateJwt {
+            // POST /api/v1/media - Upload media file (multipart form)
             post {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
@@ -137,7 +139,6 @@ fun Route.mediaRoutes() {
                 val enrichedDto = enrichRecord(record, storage)
                 call.respond(HttpStatusCode.Created, enrichedDto)
             }
-        }
 
             // GET /api/v1/media/{id} - Get media by ID
             get("/{id}") {
