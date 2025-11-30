@@ -59,3 +59,11 @@ data class RegisterResponse(
 data class DeactivateUserRequest(
     val reason: String
 )
+
+/**
+ * Request to select/switch to a different tenant
+ */
+@Serializable
+data class SelectTenantRequest(
+    val tenantId: TenantId
+)

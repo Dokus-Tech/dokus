@@ -3,6 +3,8 @@ package ai.dokus.auth.backend.routes
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.ClientStats
+import ai.dokus.foundation.domain.model.CreateClientRequest
+import ai.dokus.foundation.domain.model.UpdateClientRequest
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import ai.dokus.foundation.ktor.services.ClientService
@@ -15,46 +17,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
-/**
- * Request DTO for creating a client
- */
-@Serializable
-data class CreateClientRequest(
-    val name: String,
-    val email: String? = null,
-    val phone: String? = null,
-    val vatNumber: String? = null,
-    val addressLine1: String? = null,
-    val addressLine2: String? = null,
-    val city: String? = null,
-    val postalCode: String? = null,
-    val country: String? = null,
-    val contactPerson: String? = null,
-    val notes: String? = null
-)
-
-/**
- * Request DTO for updating a client
- */
-@Serializable
-data class UpdateClientRequest(
-    val name: String? = null,
-    val email: String? = null,
-    val phone: String? = null,
-    val vatNumber: String? = null,
-    val addressLine1: String? = null,
-    val addressLine2: String? = null,
-    val city: String? = null,
-    val postalCode: String? = null,
-    val country: String? = null,
-    val contactPerson: String? = null,
-    val notes: String? = null
-)
 
 /**
  * Client routes for client management operations:

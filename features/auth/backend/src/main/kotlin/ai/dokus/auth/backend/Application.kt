@@ -5,9 +5,10 @@ import ai.dokus.auth.backend.plugins.configureBackgroundJobs
 import ai.dokus.auth.backend.plugins.configureDatabase
 import ai.dokus.auth.backend.plugins.configureGracefulDatabaseShutdown
 import ai.dokus.auth.backend.plugins.configureRouting
-import ai.dokus.auth.backend.plugins.configureRpc
+import ai.dokus.auth.backend.routes.configureRoutes
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
+import ai.dokus.foundation.ktor.configure.configureJwtAuthentication
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
@@ -56,11 +57,16 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureSecurity(appConfig.security)
     configureMonitoring()
 
-    // RPC configuration
-    configureRpc()
+    // JWT Authentication
+    configureJwtAuthentication()
 
     // Application features
     configureBackgroundJobs()
+
+    // REST API routes (replaces RPC)
+    configureRoutes()
+
+    // Legacy routes (health checks etc.)
     configureRouting()
 
     // Lifecycle management
