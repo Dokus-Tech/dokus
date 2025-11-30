@@ -5,12 +5,10 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.UploadInfo
-import kotlinx.rpc.annotations.Rpc
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
-@Rpc
 interface AttachmentService {
     /**
      * Uploads a file and associates it with an entity

@@ -1,13 +1,11 @@
 package ai.dokus.reporting.backend.config
 
-import ai.dokus.foundation.domain.rpc.ReportingApi
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.reporting.backend.database.tables.VatReturnsTable
-import ai.dokus.reporting.backend.services.ReportingApiImpl
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
@@ -22,15 +20,6 @@ private val appModule = module {
             }
         }
     }
-
-    // API implementations
-    single<ReportingApi> {
-        ReportingApiImpl(
-            invoiceService = get(),
-            expenseService = get(),
-            paymentService = get()
-        )
-    }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
@@ -44,6 +33,6 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     }
 
     install(Koin) {
-        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Reporting), rpcClientModule)
+        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Reporting))
     }
 }

@@ -4,9 +4,6 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.ClientDto
-import kotlinx.rpc.annotations.Rpc
-
-@Rpc
 interface ClientService {
     /**
      * Creates a new client for a tenant
