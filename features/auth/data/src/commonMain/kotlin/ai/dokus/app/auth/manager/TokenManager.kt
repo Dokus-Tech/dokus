@@ -50,7 +50,7 @@ class TokenManagerImpl(
         when (jwtDecoder.validateToken(accessToken)) {
             TokenStatus.VALID -> updateAuthenticationState(true)
             TokenStatus.REFRESH_NEEDED, TokenStatus.EXPIRED -> {
-                val refreshed = refreshToken()
+                val refreshed = runCatching { refreshToken() }.getOrNull()
                 updateAuthenticationState(refreshed != null)
             }
 
