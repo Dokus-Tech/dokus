@@ -21,8 +21,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
         modules(
             coreModule(appConfig),
             databaseModule,
-            serviceModule,
-            rpcClientModule
+            serviceModule
         )
     }
 }

@@ -10,9 +10,6 @@ import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.annotations.Rpc
-
-@Rpc
 interface ExpenseService {
     /**
      * Creates a new expense
