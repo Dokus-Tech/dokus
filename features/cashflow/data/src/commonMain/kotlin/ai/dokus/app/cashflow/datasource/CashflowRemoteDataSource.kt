@@ -1,0 +1,246 @@
+package ai.dokus.app.cashflow.datasource
+
+import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.model.AttachmentDto
+import ai.dokus.foundation.domain.model.CashflowOverview
+import ai.dokus.foundation.domain.model.CreateExpenseRequest
+import ai.dokus.foundation.domain.model.CreateInvoiceRequest
+import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.InvoiceItemDto
+import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.RecordPaymentRequest
+import io.ktor.client.HttpClient
+import kotlinx.datetime.LocalDate
+
+/**
+ * Remote data source for cashflow operations
+ * Provides HTTP-based access to invoice, expense, and attachment management endpoints
+ */
+interface CashflowRemoteDataSource {
+
+    // ============================================================================
+    // INVOICE MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Create a new invoice with optional document attachments
+     * POST /api/v1/invoices
+     */
+    suspend fun createInvoice(request: CreateInvoiceRequest): Result<FinancialDocumentDto.InvoiceDto>
+
+    /**
+     * Get a single invoice by ID with all related documents
+     * GET /api/v1/invoices/{id}
+     */
+    suspend fun getInvoice(id: InvoiceId): Result<FinancialDocumentDto.InvoiceDto>
+
+    /**
+     * List invoices with optional filtering
+     * GET /api/v1/invoices?status={status}&fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
+     *
+     * @param status Filter by invoice status (DRAFT, SENT, PAID, OVERDUE, CANCELLED)
+     * @param fromDate Start date filter
+     * @param toDate End date filter
+     */
+    suspend fun listInvoices(
+        status: InvoiceStatus? = null,
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<List<FinancialDocumentDto.InvoiceDto>>
+
+    /**
+     * List all overdue invoices for a tenant
+     * GET /api/v1/invoices/overdue
+     */
+    suspend fun listOverdueInvoices(): Result<List<FinancialDocumentDto.InvoiceDto>>
+
+    /**
+     * Update invoice status
+     * PATCH /api/v1/invoices/{id}/status
+     */
+    suspend fun updateInvoiceStatus(invoiceId: InvoiceId, status: InvoiceStatus): Result<Unit>
+
+    /**
+     * Update an existing invoice
+     * PUT /api/v1/invoices/{id}
+     */
+    suspend fun updateInvoice(
+        invoiceId: InvoiceId,
+        request: CreateInvoiceRequest
+    ): Result<FinancialDocumentDto.InvoiceDto>
+
+    /**
+     * Delete an invoice (soft delete)
+     * DELETE /api/v1/invoices/{id}
+     */
+    suspend fun deleteInvoice(invoiceId: InvoiceId): Result<Unit>
+
+    /**
+     * Record a payment for an invoice
+     * POST /api/v1/invoices/{id}/payments
+     */
+    suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit>
+
+    /**
+     * Send invoice via email
+     * POST /api/v1/invoices/{id}/send-email
+     */
+    suspend fun sendInvoiceEmail(
+        invoiceId: InvoiceId,
+        recipientEmail: String? = null,
+        message: String? = null
+    ): Result<Unit>
+
+    /**
+     * Mark invoice as sent
+     * POST /api/v1/invoices/{id}/mark-sent
+     */
+    suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit>
+
+    /**
+     * Calculate invoice totals from line items
+     * POST /api/v1/invoices/calculate-totals
+     */
+    suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): Result<InvoiceTotals>
+
+    // ============================================================================
+    // EXPENSE MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Create a new expense
+     * POST /api/v1/expenses
+     */
+    suspend fun createExpense(request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto>
+
+    /**
+     * Get a single expense by ID
+     * GET /api/v1/expenses/{id}
+     */
+    suspend fun getExpense(id: ExpenseId): Result<FinancialDocumentDto.ExpenseDto>
+
+    /**
+     * List expenses with optional filtering
+     * GET /api/v1/expenses?category={category}&fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
+     */
+    suspend fun listExpenses(
+        category: ExpenseCategory? = null,
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<List<FinancialDocumentDto.ExpenseDto>>
+
+    /**
+     * Update an existing expense
+     * PUT /api/v1/expenses/{id}
+     */
+    suspend fun updateExpense(
+        expenseId: ExpenseId,
+        request: CreateExpenseRequest
+    ): Result<FinancialDocumentDto.ExpenseDto>
+
+    /**
+     * Delete an expense
+     * DELETE /api/v1/expenses/{id}
+     */
+    suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit>
+
+    /**
+     * Automatically categorize an expense based on merchant and description
+     * POST /api/v1/expenses/categorize
+     */
+    suspend fun categorizeExpense(
+        merchant: String,
+        description: String? = null
+    ): Result<ExpenseCategory>
+
+    // ============================================================================
+    // DOCUMENT/ATTACHMENT MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Upload a document for an invoice
+     * POST /api/v1/invoices/{invoiceId}/attachments
+     *
+     * @param invoiceId The invoice to attach the document to
+     * @param fileContent The file content as ByteArray
+     * @param filename Original filename
+     * @param contentType MIME type (e.g., "application/pdf", "image/jpeg")
+     * @return The attachment ID
+     */
+    suspend fun uploadInvoiceDocument(
+        invoiceId: InvoiceId,
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String
+    ): Result<AttachmentId>
+
+    /**
+     * Upload a receipt for an expense
+     * POST /api/v1/expenses/{expenseId}/attachments
+     *
+     * @param expenseId The expense to attach the receipt to
+     * @param fileContent The file content as ByteArray
+     * @param filename Original filename
+     * @param contentType MIME type
+     * @return The attachment ID
+     */
+    suspend fun uploadExpenseReceipt(
+        expenseId: ExpenseId,
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String
+    ): Result<AttachmentId>
+
+    /**
+     * Get all attachments for an invoice
+     * GET /api/v1/invoices/{invoiceId}/attachments
+     */
+    suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<AttachmentDto>>
+
+    /**
+     * Get all attachments for an expense
+     * GET /api/v1/expenses/{expenseId}/attachments
+     */
+    suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<AttachmentDto>>
+
+    /**
+     * Get a download URL for a specific attachment
+     * GET /api/v1/attachments/{attachmentId}/download-url
+     *
+     * Returns a presigned URL valid for a limited time
+     */
+    suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): Result<String>
+
+    /**
+     * Delete an attachment
+     * DELETE /api/v1/attachments/{attachmentId}
+     */
+    suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit>
+
+    // ============================================================================
+    // STATISTICS & OVERVIEW
+    // ============================================================================
+
+    /**
+     * Get cashflow overview for a date range
+     * GET /api/v1/cashflow/overview?fromDate={fromDate}&toDate={toDate}
+     */
+    suspend fun getCashflowOverview(
+        fromDate: LocalDate,
+        toDate: LocalDate
+    ): Result<CashflowOverview>
+
+    companion object {
+        internal fun create(httpClient: HttpClient): CashflowRemoteDataSource {
+            return CashflowRemoteDataSourceImpl(httpClient)
+        }
+    }
+}

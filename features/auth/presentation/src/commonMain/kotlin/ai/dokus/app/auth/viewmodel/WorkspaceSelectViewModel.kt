@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.app.auth.domain.TenantRemoteService
+import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.viewmodel.BaseViewModel
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 internal class WorkspaceSelectViewModel(
-    private val tenantRemoteService: TenantRemoteService,
+    private val tenantDataSource: TenantRemoteDataSource,
     private val selectTenantUseCase: SelectTenantUseCase
 ) : BaseViewModel<DokusState<List<Tenant>>>(DokusState.idle()) {
 
@@ -23,17 +23,17 @@ internal class WorkspaceSelectViewModel(
     fun loadTenants() {
         scope.launch {
             mutableState.value = DokusState.loading()
-            runCatching {
-                tenantRemoteService.listMyTenants()
-            }.onSuccess { tenants ->
-                mutableState.value = DokusState.success(tenants)
-            }.onFailure { error ->
-                logger.e(error) { "Failed to load tenants" }
-                mutableState.value = DokusState.error(
-                    exception = error,
-                    retryHandler = { loadTenants() }
-                )
-            }
+            tenantDataSource.listMyTenants()
+                .onSuccess { tenants ->
+                    mutableState.value = DokusState.success(tenants)
+                }
+                .onFailure { error ->
+                    logger.e(error) { "Failed to load tenants" }
+                    mutableState.value = DokusState.error(
+                        exception = error,
+                        retryHandler = { loadTenants() }
+                    )
+                }
         }
     }
 

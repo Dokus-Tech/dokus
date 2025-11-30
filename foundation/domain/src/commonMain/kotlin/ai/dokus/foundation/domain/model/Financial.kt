@@ -249,6 +249,19 @@ data class AttachmentDto(
 // REQUEST/RESPONSE MODELS
 // ============================================================================
 
+/**
+ * Request DTO for creating a tenant
+ */
+@Serializable
+data class CreateTenantRequest(
+    val type: TenantType,
+    val legalName: LegalName,
+    val displayName: DisplayName,
+    val plan: TenantPlan = TenantPlan.Free,
+    val language: Language = Language.En,
+    val vatNumber: VatNumber
+)
+
 @Serializable
 data class CreateInvoiceRequest(
     val clientId: ClientId,

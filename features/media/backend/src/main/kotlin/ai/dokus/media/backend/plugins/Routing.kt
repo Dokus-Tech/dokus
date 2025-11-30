@@ -1,7 +1,7 @@
 package ai.dokus.media.backend.plugins
 
 import ai.dokus.foundation.ktor.routes.healthRoutes
-import ai.dokus.media.backend.withRemoteServices
+import ai.dokus.media.backend.routes.mediaRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
 import org.slf4j.LoggerFactory
@@ -12,8 +12,11 @@ fun Application.configureRouting() {
     logger.info("Configuring media routes...")
 
     routing {
+        // Health check endpoint
         healthRoutes()
-        withRemoteServices()
+
+        // REST API routes
+        mediaRoutes()
     }
 
     logger.info("Routes configured for media service")

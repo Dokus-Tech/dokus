@@ -11,7 +11,6 @@ import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
 import ai.dokus.auth.backend.database.tables.RefreshTokensTable
 import ai.dokus.auth.backend.database.tables.UsersTable
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
-import ai.dokus.auth.backend.rpc.AuthValidationRemoteServiceImpl
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.auth.backend.services.DisabledEmailService
 import ai.dokus.auth.backend.services.EmailConfig
@@ -20,7 +19,6 @@ import ai.dokus.auth.backend.services.EmailVerificationService
 import ai.dokus.auth.backend.services.PasswordResetService
 import ai.dokus.auth.backend.services.RateLimitService
 import ai.dokus.auth.backend.services.SmtpEmailService
-import ai.dokus.foundation.domain.rpc.AuthValidationRemoteService
 import ai.dokus.foundation.ktor.DokusRabbitMq
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -108,9 +106,6 @@ private val appModule = module {
 
     // Authentication service
     single { AuthService(get(), get(), get(), get(), get(), get()) }
-
-    // RPC API implementations
-    single<AuthValidationRemoteService> { AuthValidationRemoteServiceImpl(get(), get()) }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
@@ -134,8 +129,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             coreModule,
             appModule,
             redisModule(appConfig, RedisNamespace.Auth),
-            messagingModule(rabbitmqConfig, "auth"),
-            rpcClientModule
+            messagingModule(rabbitmqConfig, "auth")
         )
     }
 }

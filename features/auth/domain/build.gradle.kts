@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.kotlinxRpcPlugin)
 }
 
 kotlin {
@@ -44,8 +43,6 @@ kotlin {
             implementation(libs.koin.core)
 
             implementation(libs.kotlinx.coroutinesCore)
-
-            implementation(libs.bundles.rpc.client)
 
             implementation(libs.kotlinx.datetime)
         }
