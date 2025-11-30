@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.kotlinxRpcPlugin)
     alias(libs.plugins.buildKonfig)
 }
 
@@ -39,8 +38,6 @@ kotlin {
             api(libs.kotlinx.serialization)
 
             implementation(libs.ktor.client.core)
-            implementation(libs.kotlinx.rpc.core)
-            implementation(libs.kotlinx.rpc.krpc.serialization.json)
 
             implementation(projects.foundation.platform)
         }

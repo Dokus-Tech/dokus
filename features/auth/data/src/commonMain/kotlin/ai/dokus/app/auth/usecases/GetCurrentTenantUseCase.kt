@@ -1,7 +1,6 @@
 package ai.dokus.app.auth.usecases
 
-import ai.dokus.app.auth.domain.TenantRemoteService
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
+import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.platform.Logger
@@ -12,22 +11,25 @@ import ai.dokus.foundation.platform.Logger
  */
 class GetCurrentTenantUseCaseImpl(
     private val tokenManager: TokenManager,
-    private val tenantRemoteService: TenantRemoteService
+    private val tenantDataSource: TenantRemoteDataSource
 ) : GetCurrentTenantUseCase {
     private val logger = Logger.forClass<GetCurrentTenantUseCaseImpl>()
 
-    override suspend operator fun invoke(): Result<Tenant?> = runCatching {
+    override suspend operator fun invoke(): Result<Tenant?> {
         val claims = tokenManager.getCurrentClaims()
         val tenantScope = claims?.tenant
         if (tenantScope == null) {
             logger.d { "No tenant present in JWT claims" }
-            return@runCatching null
+            return Result.success(null)
         }
 
-        tenantRemoteService.getTenant(tenantScope.tenantId).also { tenant ->
-            logger.d { "Loaded current tenant ${tenant.legalName.value}" }
-        }
-    }.onFailure { error ->
-        logger.e(error) { "Failed to load current tenant from claims" }
+        return tenantDataSource.getTenant(tenantScope.tenantId)
+            .onSuccess { tenant ->
+                logger.d { "Loaded current tenant ${tenant.legalName.value}" }
+            }
+            .onFailure { error ->
+                logger.e(error) { "Failed to load current tenant from claims" }
+            }
+            .map { it }
     }
 }

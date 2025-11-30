@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.kotlinxRpcPlugin)
 }
 
 kotlin {
@@ -52,8 +51,9 @@ kotlin {
 
             implementation(libs.kotlinx.coroutinesCore)
 
-            implementation(libs.bundles.rpc.client)
-            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
 
             implementation(libs.kotlinx.datetime)
         }
