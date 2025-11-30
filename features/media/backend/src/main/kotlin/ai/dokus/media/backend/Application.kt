@@ -2,6 +2,7 @@ package ai.dokus.media.backend
 
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
+import ai.dokus.foundation.ktor.configure.configureJwtAuthentication
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
@@ -47,6 +48,7 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
+    configureJwtAuthentication()
     configureMonitoring()
     configureRouting()
 
