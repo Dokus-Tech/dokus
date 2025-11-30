@@ -76,6 +76,9 @@ fun Route.attachmentRoutes() {
                                 outputStream.toByteArray()
                             }
                         }
+                        else -> {
+                            // Ignore non-file parts
+                        }
                     }
                     part.dispose()
                 }
@@ -205,6 +208,9 @@ fun Route.attachmentRoutes() {
                                 part.provider().copyTo(outputStream)
                                 outputStream.toByteArray()
                             }
+                        }
+                        else -> {
+                            // Ignore non-file parts
                         }
                     }
                     part.dispose()
