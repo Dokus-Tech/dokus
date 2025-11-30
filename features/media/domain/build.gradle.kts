@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.kotlinxRpcPlugin)
 }
 
 kotlin {
@@ -44,8 +43,6 @@ kotlin {
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)
-
-            implementation(libs.bundles.rpc.client)
         }
         androidMain.dependencies {
             implementation(libs.koin.android)

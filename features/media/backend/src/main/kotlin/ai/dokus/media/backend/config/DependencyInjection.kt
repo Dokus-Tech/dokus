@@ -1,10 +1,8 @@
 package ai.dokus.media.backend.config
 
-import ai.dokus.foundation.domain.rpc.MediaRemoteService
 import ai.dokus.foundation.ktor.DokusRabbitMq
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.security.AuthInfoProvider
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.messaging.core.MessagePublisher
 import ai.dokus.foundation.messaging.integration.createDefaultRabbitMqConfig
@@ -14,7 +12,6 @@ import ai.dokus.foundation.messaging.transport.RabbitMqTransport
 import ai.dokus.foundation.messaging.transport.RabbitMqTransportConfig
 import ai.dokus.media.backend.database.tables.MediaTable
 import ai.dokus.media.backend.repository.MediaRepository
-import ai.dokus.media.backend.services.MediaRemoteServiceImpl
 import ai.dokus.media.backend.storage.LocalMediaStorage
 import ai.dokus.media.backend.storage.MediaStorage
 import io.ktor.server.application.Application
@@ -62,14 +59,6 @@ private val mediaModule = module {
         )
     }
     single { MediaRepository() }
-    factory<MediaRemoteService> { (authInfoProvider: AuthInfoProvider) ->
-        MediaRemoteServiceImpl(
-            authInfoProvider = authInfoProvider,
-            repository = get(),
-            storage = get(),
-            processingPublisher = get()
-        )
-    }
 }
 
 private fun mediaMessagingModule(

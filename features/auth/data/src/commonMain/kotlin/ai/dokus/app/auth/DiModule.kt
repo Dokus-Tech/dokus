@@ -1,18 +1,16 @@
 package ai.dokus.app.auth
 
-import ai.dokus.app.auth.Qualifiers.rpcClientAuth
-import ai.dokus.app.auth.Qualifiers.rpcClientNoAuth
 import ai.dokus.app.auth.database.AuthDb
-import ai.dokus.app.auth.domain.AccountRemoteService
-import ai.dokus.app.auth.domain.IdentityRemoteService
-import ai.dokus.app.auth.domain.TenantRemoteService
+import ai.dokus.app.auth.datasource.AccountRemoteDataSource
+import ai.dokus.app.auth.datasource.AccountRemoteDataSourceImpl
+import ai.dokus.app.auth.datasource.IdentityRemoteDataSource
+import ai.dokus.app.auth.datasource.IdentityRemoteDataSourceImpl
+import ai.dokus.app.auth.datasource.TenantRemoteDataSource
+import ai.dokus.app.auth.datasource.TenantRemoteDataSourceImpl
 import ai.dokus.app.auth.manager.AuthManagerImpl
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
-import ai.dokus.app.auth.network.ResilientAccountRemoteService
-import ai.dokus.app.auth.network.ResilientIdentityRemoteService
-import ai.dokus.app.auth.network.ResilientTenantRemoteService
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
@@ -30,18 +28,12 @@ import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.model.common.Feature
 import ai.dokus.foundation.network.createAuthenticatedHttpClient
-import ai.dokus.foundation.network.createAuthenticatedRpcClient
 import ai.dokus.foundation.network.createBaseHttpClient
-import ai.dokus.foundation.network.createRpcClient
-import ai.dokus.foundation.network.resilient.createRetryDelegate
-import ai.dokus.foundation.network.resilient.withAuth
-import ai.dokus.foundation.network.service
 import ai.dokus.foundation.sstorage.SecureStorage
-import io.ktor.client.*
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.rpc.krpc.ktor.client.KtorRpcClient
 import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
@@ -53,8 +45,6 @@ internal object Qualifiers {
     val secureStorageAuth: Qualifier = qualifier(Feature.Auth)
     val httpClientAuth: Qualifier = named("http_client_auth")
     val httpClientNoAuth: Qualifier = named("http_client_no_auth")
-    val rpcClientAuth: Qualifier = named("rpc_client_auth")
-    val rpcClientNoAuth: Qualifier = named("rpc_client_no_auth")
 }
 
 expect val authPlatformModule: Module
@@ -81,52 +71,24 @@ val authNetworkModule = module {
         )
     }
 
-    factory<KtorRpcClient>(rpcClientAuth) {
-        val tokenManager = get<TokenManagerMutable>()
-        val authManager = get<AuthManagerMutable>()
-        createAuthenticatedRpcClient(
-            endpoint = DokusEndpoint.Auth,
-            tokenManager = tokenManager,
-            onAuthenticationFailed = {
-                CoroutineScope(Dispatchers.Default).launch {
-                    tokenManager.onAuthenticationFailed()
-                    authManager.onAuthenticationFailed()
-                }
-            }
+    // IdentityRemoteDataSource (unauthenticated - uses httpClientNoAuth)
+    single<IdentityRemoteDataSource> {
+        IdentityRemoteDataSourceImpl(
+            httpClient = get<HttpClient>(Qualifiers.httpClientNoAuth)
         )
     }
 
-    factory<KtorRpcClient>(rpcClientNoAuth) {
-        createRpcClient(endpoint = DokusEndpoint.Auth)
-    }
-
-    // AccountRemoteService (authenticated) with resilience
-    single<AccountRemoteService> {
-        val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientAccountRemoteService(
-            delegate = createRetryDelegate { rpcClient.service<AccountRemoteService>() }.withAuth(
-                get<TokenManagerMutable>(),
-                get<AuthManagerMutable>()
-            ),
+    // AccountRemoteDataSource (authenticated)
+    single<AccountRemoteDataSource> {
+        AccountRemoteDataSourceImpl(
+            httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
         )
     }
 
-    // TenantRemoteService (authenticated)
-    single<TenantRemoteService> {
-        val rpcClient = get<KtorRpcClient>(rpcClientAuth)
-        ResilientTenantRemoteService(
-            delegate = createRetryDelegate { rpcClient.service<TenantRemoteService>() }.withAuth(
-                get<TokenManagerMutable>(),
-                get<AuthManagerMutable>()
-            ),
-        )
-    }
-
-    // IdentityRemoteService (unauthenticated)
-    single<IdentityRemoteService> {
-        val rpcClient = get<KtorRpcClient>(rpcClientNoAuth)
-        ResilientIdentityRemoteService(
-            delegate = createRetryDelegate { rpcClient.service<IdentityRemoteService>() },
+    // TenantRemoteDataSource (authenticated)
+    single<TenantRemoteDataSource> {
+        TenantRemoteDataSourceImpl(
+            httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
         )
     }
 }
@@ -157,9 +119,9 @@ val authDataModule = module {
         AuthRepository(
             tokenManager = get<TokenManagerMutable>(),
             authManager = get<AuthManagerMutable>(),
-            accountService = get<AccountRemoteService>(),
-            identityService = get<IdentityRemoteService>(),
-            tenantRemoteService = get<TenantRemoteService>()
+            accountDataSource = get<AccountRemoteDataSource>(),
+            identityDataSource = get<IdentityRemoteDataSource>(),
+            tenantDataSource = get<TenantRemoteDataSource>()
         )
     }
 }
@@ -172,7 +134,7 @@ val authDomainModule = module {
     single<GetCurrentTenantUseCase> {
         GetCurrentTenantUseCaseImpl(
             get<TokenManager>(),
-            get<TenantRemoteService>()
+            get<TenantRemoteDataSource>()
         )
     }
     single<SelectTenantUseCase> { SelectTenantUseCaseImpl(get<AuthRepository>()) }

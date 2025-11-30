@@ -14,10 +14,8 @@ import ai.dokus.foundation.domain.model.UpdateInvoiceStatusRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.rpc.annotations.Rpc
 import kotlin.time.ExperimentalTime
 
-@Rpc
 interface InvoiceService {
     /**
      * Creates a new invoice with items

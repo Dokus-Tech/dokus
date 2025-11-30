@@ -4,6 +4,41 @@ import ai.dokus.foundation.domain.ids.ClientId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * Request DTO for creating a client
+ */
+@Serializable
+data class CreateClientRequest(
+    val name: String,
+    val email: String? = null,
+    val phone: String? = null,
+    val vatNumber: String? = null,
+    val addressLine1: String? = null,
+    val addressLine2: String? = null,
+    val city: String? = null,
+    val postalCode: String? = null,
+    val country: String? = null,
+    val contactPerson: String? = null,
+    val notes: String? = null
+)
+
+/**
+ * Request DTO for updating a client
+ */
+@Serializable
+data class UpdateClientRequest(
+    val name: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
+    val vatNumber: String? = null,
+    val addressLine1: String? = null,
+    val addressLine2: String? = null,
+    val city: String? = null,
+    val postalCode: String? = null,
+    val country: String? = null,
+    val contactPerson: String? = null,
+    val notes: String? = null
+)
 
 /**
  * Client statistics for dashboard

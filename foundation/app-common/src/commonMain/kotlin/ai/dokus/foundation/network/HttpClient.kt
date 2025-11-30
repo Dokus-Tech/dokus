@@ -22,6 +22,8 @@ fun createBaseHttpClient(
     onAuthenticationFailed: suspend () -> Unit = {},
     block: HttpClientConfig<*>.() -> Unit = {},
 ) = createDokusHttpClient {
+    // Let HttpResponseValidator handle non-2xx responses instead of throwing at the engine level.
+    expectSuccess = false
     withJsonContentNegotiation()
     withDokusEndpoint(dokusEndpoint)
     withLogging()

@@ -19,6 +19,26 @@ fun Application.configureErrorHandling() {
     val logger = LoggerFactory.getLogger("ErrorHandler")
 
     install(StatusPages) {
+        status(HttpStatusCode.NotFound) { call, status ->
+            call.respond(
+                status,
+                ErrorResponse(
+                    error = "NotFound",
+                    message = "Resource not found"
+                )
+            )
+        }
+
+        status(HttpStatusCode.MethodNotAllowed) { call, status ->
+            call.respond(
+                status,
+                ErrorResponse(
+                    error = "MethodNotAllowed",
+                    message = "HTTP method is not supported for this endpoint"
+                )
+            )
+        }
+
         exception<DokusException> { call, cause ->
             val errorName = cause::class.simpleName ?: "DokusException"
 

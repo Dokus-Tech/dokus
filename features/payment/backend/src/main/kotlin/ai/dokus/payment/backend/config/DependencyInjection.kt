@@ -1,6 +1,5 @@
 package ai.dokus.payment.backend.config
 
-import ai.dokus.foundation.domain.rpc.PaymentRemoteService
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig
@@ -9,7 +8,6 @@ import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.services.PaymentService
 import ai.dokus.payment.backend.database.services.PaymentServiceImpl
 import ai.dokus.payment.backend.database.tables.PaymentsTable
-import ai.dokus.payment.backend.services.PaymentRemoteServiceImpl
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
@@ -27,14 +25,6 @@ private val appModule = module {
 
     // Local database services
     single<PaymentService> { PaymentServiceImpl(get()) }
-
-    // API implementations
-    single<PaymentRemoteService> {
-        PaymentRemoteServiceImpl(
-            paymentService = get(),
-            invoiceService = get()
-        )
-    }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
@@ -48,6 +38,6 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     }
 
     install(Koin) {
-        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Payment), rpcClientModule)
+        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Payment))
     }
 }

@@ -18,6 +18,32 @@ fun fromRestStatus(statusCode: Int): DokusException? =
     }
 
 /**
+ * Helper function to create a validation/bad request exception with a custom message.
+ * Maps to HTTP 400 Bad Request.
+ *
+ * @param message The error message
+ * @return A validation exception (returns Validation.Other)
+ */
+@Suppress("FunctionName")
+fun DokusException.Companion.BadRequest(message: String = "Bad request"): DokusException =
+    DokusException.Validation.Other
+
+/**
+ * Helper function to create a not found exception with a custom message.
+ * Maps to HTTP 404 Not Found.
+ *
+ * Note: This creates an InternalError with 500 status code as there is no dedicated
+ * 404 exception type in the current DokusException hierarchy. Consider adding a proper
+ * NotFound exception type to the sealed class hierarchy.
+ *
+ * @param message The error message
+ * @return An exception indicating resource not found
+ */
+@Suppress("FunctionName")
+fun DokusException.Companion.NotFound(message: String = "Resource not found"): DokusException =
+    DokusException.InternalError(message)
+
+/**
  * Converts a Throwable to a DokusException.
  * If the Throwable is already a DokusException, it returns it as-is.
  * Otherwise, it attempts to match the error message to a known exception type,
