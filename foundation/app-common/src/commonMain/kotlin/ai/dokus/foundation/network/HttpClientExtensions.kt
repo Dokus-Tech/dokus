@@ -12,9 +12,12 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.logging.SIMPLE
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
@@ -42,25 +45,26 @@ fun HttpClientConfig<*>.withResponseValidation(onUnauthorized: suspend () -> Uni
             if (response.status == HttpStatusCode.SwitchingProtocols) return@validateResponse
 
             if (response.status.isSuccess()) return@validateResponse
-            runCatching { response.body<DokusException>() }.fold(
-                onSuccess = { throw it },
-                onFailure = {
-                    when (response.status) {
-                        HttpStatusCode.Unauthorized -> {
-                            onUnauthorized()
-                            throw DokusException.NotAuthenticated()
-                        }
 
-                        HttpStatusCode.Forbidden -> {
-                            throw DokusException.NotAuthorized()
-                        }
+            // Attempt to parse a structured DokusException only when JSON is present.
+            val isJson = response.contentType()?.match(ContentType.Application.Json) == true
+            val bodyText = runCatching { response.bodyAsText() }.getOrNull()
+            if (isJson && bodyText != null) {
+                runCatching { Json { ignoreUnknownKeys = true }.decodeFromString(DokusException.serializer(), bodyText) }
+                    .onSuccess { throw it }
+            }
 
-                        HttpStatusCode.NotFound -> throw DokusException.Unknown(it)
-
-                        else -> throw DokusException.Unknown(it)
-                    }
+            // Fallback: map common HTTP codes; include body text for diagnostics.
+            when (response.status) {
+                HttpStatusCode.Unauthorized -> {
+                    onUnauthorized()
+                    throw DokusException.NotAuthenticated()
                 }
-            )
+
+                HttpStatusCode.Forbidden -> throw DokusException.NotAuthorized()
+                HttpStatusCode.NotFound -> throw DokusException.InternalError(bodyText ?: "Resource not found")
+                else -> throw DokusException.Unknown(IllegalStateException("HTTP ${response.status.value}: ${bodyText.orEmpty()}"))
+            }
         }
     }
 }

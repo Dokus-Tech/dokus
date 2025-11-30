@@ -16,11 +16,11 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 val Parameters.invoiceId: InvoiceId?
-    get() = this["invoiceId"]?.let { InvoiceId(Uuid.parse(it)) }
+    get() = (this["invoiceId"] ?: this["id"])?.let { InvoiceId(Uuid.parse(it)) }
 
 @OptIn(ExperimentalUuidApi::class)
 val Parameters.expenseId: ExpenseId?
-    get() = this["expenseId"]?.let { ExpenseId(Uuid.parse(it)) }
+    get() = (this["expenseId"] ?: this["id"])?.let { ExpenseId(Uuid.parse(it)) }
 
 @OptIn(ExperimentalUuidApi::class)
 val Parameters.attachmentId: AttachmentId?

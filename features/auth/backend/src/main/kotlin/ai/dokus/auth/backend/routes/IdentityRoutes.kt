@@ -59,9 +59,9 @@ fun Route.identityRoutes() {
          * POST /api/v1/identity/password-reset/request
          * Request password reset email
          */
-        post("/password-reset/request") {
-            val email = call.request.queryParameters["email"]
-                ?: throw IllegalArgumentException("Email parameter is required")
+        post("/request-password-reset") {
+            val payload = call.receive<RequestPasswordReset>()
+            val email = payload.email.value
 
             authService.requestPasswordReset(email).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
@@ -71,9 +71,9 @@ fun Route.identityRoutes() {
          * POST /api/v1/identity/password-reset/confirm
          * Confirm password reset with token and new password
          */
-        post("/password-reset/confirm") {
-            val resetToken = call.request.queryParameters["resetToken"]
-                ?: throw IllegalArgumentException("resetToken parameter is required")
+        post("/reset-password/{token}") {
+            val resetToken = call.parameters["token"]
+                ?: throw IllegalArgumentException("reset token is required")
 
             val request = call.receive<ResetPasswordRequest>()
             authService.resetPassword(resetToken, request.newPassword).getOrThrow()
@@ -84,12 +84,17 @@ fun Route.identityRoutes() {
          * POST /api/v1/identity/verify-email
          * Verify email address with token
          */
-        post("/verify-email") {
-            val token = call.request.queryParameters["token"]
-                ?: throw IllegalArgumentException("token parameter is required")
+        post("/verify-email/{token}") {
+            val token = call.parameters["token"]
+                ?: throw IllegalArgumentException("verification token is required")
 
             authService.verifyEmail(token).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
     }
 }
+
+@kotlinx.serialization.Serializable
+private data class RequestPasswordReset(
+    val email: Email
+)
