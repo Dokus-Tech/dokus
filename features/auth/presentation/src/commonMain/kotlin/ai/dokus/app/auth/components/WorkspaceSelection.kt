@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.app.core.state.DokusState
-import ai.dokus.foundation.design.components.common.ErrorBox
+import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.components.tiles.AddCompanyTile
 import ai.dokus.foundation.design.components.tiles.CompanyTile
@@ -69,7 +69,7 @@ private fun StateDrivenContent(
                         label = tenant.displayName.value
                     ) { onTenantClick(tenant) }
                 }
-                // Always provide an option to add a tenant; participates in flow like others.
+                // Always provide an option to add a tenant; participates in the flow like others.
                 AddCompanyTile(
                     modifier = Modifier.widthInWorkspaceItem(),
                     onClick = onAddTenantClick
@@ -78,7 +78,7 @@ private fun StateDrivenContent(
         }
 
         is DokusState.Error -> {
-            ErrorBox(exception = state.exception) { state.retryHandler.retry() }
+            DokusErrorContent(state.exception, state.retryHandler)
         }
 
         else -> {

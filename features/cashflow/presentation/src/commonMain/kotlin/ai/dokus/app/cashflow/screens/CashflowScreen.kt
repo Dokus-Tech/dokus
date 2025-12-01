@@ -12,7 +12,7 @@ import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
 import ai.dokus.foundation.design.components.common.Breakpoints
-import ai.dokus.foundation.design.components.common.ErrorBox
+import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.domain.enums.InvoiceStatus
@@ -45,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,10 @@ internal fun CashflowScreen(
     val state by viewModel.state.collectAsState()
     val navController = LocalNavController.current
     var searchQuery by remember { mutableStateOf("") }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadCashflowData()
+    }
 
     Scaffold(
         topBar = {
@@ -111,14 +116,14 @@ internal fun CashflowScreen(
             }
 
             is DokusState.Error -> {
-                ErrorBox(currentState.exception) { currentState.retryHandler.retry() }
+                DokusErrorContent(currentState.exception, currentState.retryHandler)
             }
         }
     }
 }
 
 /**
- * Loading state content with centered progress indicator.
+ * Loading state content with a centered progress indicator.
  */
 @Composable
 private fun LoadingContent(
@@ -175,7 +180,7 @@ private fun SuccessContent(
 }
 
 /**
- * Desktop layout with two-column structure.
+ * Desktop layout with a two-column structure.
  * Left: Financial documents table
  * Right: VAT summary card (sticky)
  */
@@ -291,7 +296,7 @@ private fun DesktopLayout(
 
 /**
  * Mobile layout with single-column scrollable content.
- * Stacks VAT summary above the documents table.
+ * Stacks VAT summary above the document table.
  */
 @Composable
 private fun MobileLayout(
