@@ -2,6 +2,7 @@ package ai.dokus.app.cashflow.datasource
 
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import io.ktor.client.HttpClient
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId

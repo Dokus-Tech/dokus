@@ -2,11 +2,11 @@ package ai.dokus.app.media.di
 
 import ai.dokus.app.media.datasource.MediaRemoteDataSource
 import ai.dokus.app.media.datasource.MediaRemoteDataSourceImpl
-import ai.dokus.app.media.domain.MediaRepository
 import ai.dokus.app.media.repository.MediaRepositoryImpl
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
+import ai.dokus.foundation.domain.repository.MediaRepository
 import ai.dokus.foundation.network.createAuthenticatedHttpClient
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +38,12 @@ val mediaNetworkModule = module {
     }
 }
 
+/**
+ * Media data module providing repository implementation.
+ *
+ * The MediaRepository implementation is bound to the interface
+ * from foundation/domain, allowing any module to inject it.
+ */
 val mediaDataModule = module {
     includes(mediaNetworkModule)
 

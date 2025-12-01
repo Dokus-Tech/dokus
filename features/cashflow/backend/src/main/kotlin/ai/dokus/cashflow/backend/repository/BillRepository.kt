@@ -13,15 +13,12 @@ import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.ktor.database.dbQuery
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
-import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.core.andWhere
-import org.jetbrains.exposed.v1.jdbc.ResultRow
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.*
 import java.util.UUID
 
 /**
@@ -64,7 +61,33 @@ class BillRepository {
             BillsTable.selectAll().where {
                 (BillsTable.id eq billId.value) and
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.single().let { row -> mapRowToBillDto(row) }
+            }.single().let { row ->
+                FinancialDocumentDto.BillDto(
+                    id = BillId.parse(row[BillsTable.id].value.toString()),
+                    tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                    supplierName = row[BillsTable.supplierName],
+                    supplierVatNumber = row[BillsTable.supplierVatNumber],
+                    invoiceNumber = row[BillsTable.invoiceNumber],
+                    issueDate = row[BillsTable.issueDate],
+                    dueDate = row[BillsTable.dueDate],
+                    amount = Money(row[BillsTable.amount].toString()),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    status = row[BillsTable.status],
+                    category = row[BillsTable.category],
+                    currency = row[BillsTable.currency],
+                    description = row[BillsTable.description],
+                    documentUrl = row[BillsTable.documentUrl],
+                    paidAt = row[BillsTable.paidAt],
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paymentMethod = row[BillsTable.paymentMethod],
+                    paymentReference = row[BillsTable.paymentReference],
+                    mediaId = row[BillsTable.mediaId]?.let { MediaId.parse(it.toString()) },
+                    notes = row[BillsTable.notes],
+                    createdAt = row[BillsTable.createdAt],
+                    updatedAt = row[BillsTable.updatedAt]
+                )
+            }
         }
     }
 
@@ -80,7 +103,33 @@ class BillRepository {
             BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.singleOrNull()?.let { row -> mapRowToBillDto(row) }
+            }.singleOrNull()?.let { row ->
+                FinancialDocumentDto.BillDto(
+                    id = BillId.parse(row[BillsTable.id].value.toString()),
+                    tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                    supplierName = row[BillsTable.supplierName],
+                    supplierVatNumber = row[BillsTable.supplierVatNumber],
+                    invoiceNumber = row[BillsTable.invoiceNumber],
+                    issueDate = row[BillsTable.issueDate],
+                    dueDate = row[BillsTable.dueDate],
+                    amount = Money(row[BillsTable.amount].toString()),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    status = row[BillsTable.status],
+                    category = row[BillsTable.category],
+                    currency = row[BillsTable.currency],
+                    description = row[BillsTable.description],
+                    documentUrl = row[BillsTable.documentUrl],
+                    paidAt = row[BillsTable.paidAt],
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paymentMethod = row[BillsTable.paymentMethod],
+                    paymentReference = row[BillsTable.paymentReference],
+                    mediaId = row[BillsTable.mediaId]?.let { MediaId.parse(it.toString()) },
+                    notes = row[BillsTable.notes],
+                    createdAt = row[BillsTable.createdAt],
+                    updatedAt = row[BillsTable.updatedAt]
+                )
+            }
         }
     }
 
@@ -118,10 +167,36 @@ class BillRepository {
 
             val total = query.count()
 
-            // Apply pagination and ordering
+            // Apply pagination and ordering (using same pattern as ExpenseRepository)
             val items = query.orderBy(BillsTable.dueDate to SortOrder.ASC)
                 .limit(limit + offset)
-                .map { row -> mapRowToBillDto(row) }
+                .map { row ->
+                    FinancialDocumentDto.BillDto(
+                        id = BillId.parse(row[BillsTable.id].value.toString()),
+                        tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                        supplierName = row[BillsTable.supplierName],
+                        supplierVatNumber = row[BillsTable.supplierVatNumber],
+                        invoiceNumber = row[BillsTable.invoiceNumber],
+                        issueDate = row[BillsTable.issueDate],
+                        dueDate = row[BillsTable.dueDate],
+                        amount = Money(row[BillsTable.amount].toString()),
+                        vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
+                        vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                        status = row[BillsTable.status],
+                        category = row[BillsTable.category],
+                        currency = row[BillsTable.currency],
+                        description = row[BillsTable.description],
+                        documentUrl = row[BillsTable.documentUrl],
+                        paidAt = row[BillsTable.paidAt],
+                        paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                        paymentMethod = row[BillsTable.paymentMethod],
+                        paymentReference = row[BillsTable.paymentReference],
+                        mediaId = row[BillsTable.mediaId]?.let { MediaId.parse(it.toString()) },
+                        notes = row[BillsTable.notes],
+                        createdAt = row[BillsTable.createdAt],
+                        updatedAt = row[BillsTable.updatedAt]
+                    )
+                }
                 .drop(offset)
 
             PaginatedResponse(
@@ -139,16 +214,40 @@ class BillRepository {
      */
     suspend fun listOverdueBills(tenantId: TenantId): Result<List<FinancialDocumentDto.BillDto>> = runCatching {
         dbQuery {
-            val today = kotlinx.datetime.Clock.System.now()
-                .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
-                .date
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
             BillsTable.selectAll().where {
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (BillsTable.dueDate less today) and
                 (BillsTable.status inList listOf(BillStatus.Pending, BillStatus.Draft))
             }.orderBy(BillsTable.dueDate to SortOrder.ASC)
-                .map { row -> mapRowToBillDto(row) }
+                .map { row ->
+                    FinancialDocumentDto.BillDto(
+                        id = BillId.parse(row[BillsTable.id].value.toString()),
+                        tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                        supplierName = row[BillsTable.supplierName],
+                        supplierVatNumber = row[BillsTable.supplierVatNumber],
+                        invoiceNumber = row[BillsTable.invoiceNumber],
+                        issueDate = row[BillsTable.issueDate],
+                        dueDate = row[BillsTable.dueDate],
+                        amount = Money(row[BillsTable.amount].toString()),
+                        vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
+                        vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                        status = row[BillsTable.status],
+                        category = row[BillsTable.category],
+                        currency = row[BillsTable.currency],
+                        description = row[BillsTable.description],
+                        documentUrl = row[BillsTable.documentUrl],
+                        paidAt = row[BillsTable.paidAt],
+                        paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                        paymentMethod = row[BillsTable.paymentMethod],
+                        paymentReference = row[BillsTable.paymentReference],
+                        mediaId = row[BillsTable.mediaId]?.let { MediaId.parse(it.toString()) },
+                        notes = row[BillsTable.notes],
+                        createdAt = row[BillsTable.createdAt],
+                        updatedAt = row[BillsTable.updatedAt]
+                    )
+                }
         }
     }
 
@@ -215,7 +314,33 @@ class BillRepository {
             BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.single().let { row -> mapRowToBillDto(row) }
+            }.single().let { row ->
+                FinancialDocumentDto.BillDto(
+                    id = BillId.parse(row[BillsTable.id].value.toString()),
+                    tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                    supplierName = row[BillsTable.supplierName],
+                    supplierVatNumber = row[BillsTable.supplierVatNumber],
+                    invoiceNumber = row[BillsTable.invoiceNumber],
+                    issueDate = row[BillsTable.issueDate],
+                    dueDate = row[BillsTable.dueDate],
+                    amount = Money(row[BillsTable.amount].toString()),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    status = row[BillsTable.status],
+                    category = row[BillsTable.category],
+                    currency = row[BillsTable.currency],
+                    description = row[BillsTable.description],
+                    documentUrl = row[BillsTable.documentUrl],
+                    paidAt = row[BillsTable.paidAt],
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paymentMethod = row[BillsTable.paymentMethod],
+                    paymentReference = row[BillsTable.paymentReference],
+                    mediaId = row[BillsTable.mediaId]?.let { MediaId.parse(it.toString()) },
+                    notes = row[BillsTable.notes],
+                    createdAt = row[BillsTable.createdAt],
+                    updatedAt = row[BillsTable.updatedAt]
+                )
+            }
         }
     }
 
@@ -245,7 +370,7 @@ class BillRepository {
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
                 it[status] = BillStatus.Paid
-                it[paidAt] = request.paidAt.atTime(12, 0, 0)
+                it[paidAt] = request.paidAt.toDateTime()
                 it[paidAmount] = java.math.BigDecimal(request.paidAmount.value)
                 it[paymentMethod] = request.paymentMethod
                 it[paymentReference] = request.paymentReference
@@ -255,7 +380,33 @@ class BillRepository {
             BillsTable.selectAll().where {
                 (BillsTable.id eq UUID.fromString(billId.toString())) and
                 (BillsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.single().let { row -> mapRowToBillDto(row) }
+            }.single().let { row ->
+                FinancialDocumentDto.BillDto(
+                    id = BillId.parse(row[BillsTable.id].value.toString()),
+                    tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                    supplierName = row[BillsTable.supplierName],
+                    supplierVatNumber = row[BillsTable.supplierVatNumber],
+                    invoiceNumber = row[BillsTable.invoiceNumber],
+                    issueDate = row[BillsTable.issueDate],
+                    dueDate = row[BillsTable.dueDate],
+                    amount = Money(row[BillsTable.amount].toString()),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    status = row[BillsTable.status],
+                    category = row[BillsTable.category],
+                    currency = row[BillsTable.currency],
+                    description = row[BillsTable.description],
+                    documentUrl = row[BillsTable.documentUrl],
+                    paidAt = row[BillsTable.paidAt],
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paymentMethod = row[BillsTable.paymentMethod],
+                    paymentReference = row[BillsTable.paymentReference],
+                    mediaId = row[BillsTable.mediaId]?.let { MediaId.parse(it.toString()) },
+                    notes = row[BillsTable.notes],
+                    createdAt = row[BillsTable.createdAt],
+                    updatedAt = row[BillsTable.updatedAt]
+                )
+            }
         }
     }
 
@@ -324,34 +475,10 @@ class BillRepository {
     }
 
     /**
-     * Maps a database row to BillDto
+     * Helper function to convert LocalDate to LocalDateTime at noon
      */
-    private fun mapRowToBillDto(row: ResultRow): FinancialDocumentDto.BillDto {
-        return FinancialDocumentDto.BillDto(
-            id = BillId.parse(row[BillsTable.id].value.toString()),
-            tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
-            supplierName = row[BillsTable.supplierName],
-            supplierVatNumber = row[BillsTable.supplierVatNumber],
-            invoiceNumber = row[BillsTable.invoiceNumber],
-            issueDate = row[BillsTable.issueDate],
-            dueDate = row[BillsTable.dueDate],
-            amount = Money(row[BillsTable.amount].toString()),
-            vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
-            vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
-            status = row[BillsTable.status],
-            currency = row[BillsTable.currency],
-            category = row[BillsTable.category],
-            description = row[BillsTable.description],
-            documentUrl = row[BillsTable.documentUrl],
-            paidAt = row[BillsTable.paidAt],
-            paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
-            paymentMethod = row[BillsTable.paymentMethod],
-            paymentReference = row[BillsTable.paymentReference],
-            mediaId = row[BillsTable.mediaId]?.let { MediaId.parse(it.toString()) },
-            notes = row[BillsTable.notes],
-            createdAt = row[BillsTable.createdAt],
-            updatedAt = row[BillsTable.updatedAt]
-        )
+    private fun LocalDate.toDateTime(): kotlinx.datetime.LocalDateTime {
+        return kotlinx.datetime.LocalDateTime(this.year, this.monthNumber, this.dayOfMonth, 12, 0, 0)
     }
 }
 

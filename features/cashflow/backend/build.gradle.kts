@@ -40,6 +40,11 @@ dependencies {
     implementation(libs.ktor.server.openapi)
     implementation(libs.ktor.server.swagger)
 
+    // Ktor Client (for inter-service communication)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+
     // Database - Exposed
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
