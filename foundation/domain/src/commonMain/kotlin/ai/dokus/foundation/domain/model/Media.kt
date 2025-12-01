@@ -38,7 +38,15 @@ data class MediaExtraction(
     val summary: String? = null,
     val invoice: ExtractedInvoiceData? = null,
     val expense: ExtractedExpenseData? = null,
+    val bill: ExtractedBillData? = null,
+    val confidence: ExtractionConfidence? = null,
     val rawText: String? = null
+)
+
+@Serializable
+data class ExtractionConfidence(
+    val overall: Double,
+    val fields: Map<String, Double> = emptyMap()
 )
 
 @Serializable
@@ -67,6 +75,22 @@ data class ExtractedExpenseData(
     val category: ExpenseCategory? = null,
     val currency: Currency? = null,
     val paymentMethod: String? = null,
+    val notes: String? = null
+)
+
+@Serializable
+data class ExtractedBillData(
+    val supplierName: String? = null,
+    val supplierVatNumber: String? = null,
+    val invoiceNumber: String? = null,
+    val issueDate: LocalDate? = null,
+    val dueDate: LocalDate? = null,
+    val amount: Money? = null,
+    val vatAmount: Money? = null,
+    val vatRate: VatRate? = null,
+    val category: ExpenseCategory? = null,
+    val currency: Currency? = null,
+    val description: String? = null,
     val notes: String? = null
 )
 
