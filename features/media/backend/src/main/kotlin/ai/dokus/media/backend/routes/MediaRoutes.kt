@@ -2,9 +2,7 @@ package ai.dokus.media.backend.routes
 
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.MediaStatus
-import ai.dokus.foundation.domain.exceptions.BadRequest
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.exceptions.NotFound
 import ai.dokus.foundation.domain.ids.MediaId
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaProcessingUpdateRequest
