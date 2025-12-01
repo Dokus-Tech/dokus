@@ -2,6 +2,8 @@ package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.LoginViewModel
 import ai.dokus.app.core.extensions.rememberIsValid
+import ai.dokus.app.core.state.exceptionIfError
+import ai.dokus.app.core.state.isLoading
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_name
 import ai.dokus.app.resources.generated.auth_email_label
@@ -96,6 +98,7 @@ private fun LoginContent(
                 is LoginViewModel.Effect.NavigateToHome -> {
                     navController.replace(CoreDestination.Home)
                 }
+
                 is LoginViewModel.Effect.NavigateToWorkspaceSelect -> {
                     navController.replace(AuthDestination.WorkspaceSelect)
                 }
@@ -104,14 +107,12 @@ private fun LoginContent(
     }
 
     val state by viewModel.state.collectAsState()
-    val fieldsError: DokusException? =
-        (state as? LoginViewModel.State.Error)?.exception
+    val fieldsError = state.exceptionIfError()
 
     var email by remember { mutableStateOf(Email("")) }
     var password by remember { mutableStateOf(Password("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
-    val isLoading = state is LoginViewModel.State.Loading
     val emailIsValid = email.rememberIsValid()
     val passwordIsValid = password.rememberIsValid()
     val canLogin = emailIsValid && passwordIsValid
@@ -198,7 +199,7 @@ private fun LoginContent(
                 // Login Button
                 PPrimaryButton(
                     text = stringResource(Res.string.auth_sign_in_button),
-                    enabled = canLogin && !isLoading,
+                    enabled = canLogin && !state.isLoading(),
                     onClick = {
                         focusManager.clearFocus()
                         viewModel.login(email, password)

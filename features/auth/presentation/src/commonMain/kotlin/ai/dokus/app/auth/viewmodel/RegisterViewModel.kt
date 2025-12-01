@@ -1,11 +1,14 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.RegisterAndLoginUseCase
+import ai.dokus.app.core.state.DokusState
+import ai.dokus.app.core.state.emit
+import ai.dokus.app.core.state.emitIdle
+import ai.dokus.app.core.state.emitLoading
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,8 +17,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.Idle),
-    KoinComponent {
+internal class RegisterViewModel : BaseViewModel<DokusState<Unit>>(DokusState.idle()), KoinComponent {
 
     private val logger = Logger.forClass<RegisterViewModel>()
     private val registerAndLoginUseCase: RegisterAndLoginUseCase by inject()
@@ -28,43 +30,30 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
         password: Password,
         firstName: Name,
         lastName: Name
-    ) = scope.launch {
-        logger.d { "Registration attempt started for email: ${email.value.take(3)}***" }
-        mutableState.value = State.Loading
+    ) {
+        scope.launch {
+            logger.d { "Registration attempt started for email: ${email.value.take(3)}***" }
+            mutableState.emitLoading()
 
-        val result = registerAndLoginUseCase(email, password, firstName, lastName)
+            val result = registerAndLoginUseCase(email, password, firstName, lastName)
 
-        result.fold(
-            onSuccess = {
-                logger.i { "Registration successful, navigating to home" }
-                mutableState.value = State.Idle
-                val claims = tokenManager.getCurrentClaims()
-                if (claims?.tenant == null) {
-                    mutableEffect.emit(Effect.NavigateToWorkspaceSelect)
-                } else {
-                    mutableEffect.emit(Effect.NavigateToHome)
+            result.fold(
+                onSuccess = {
+                    logger.i { "Registration successful, navigating to home" }
+                    mutableState.emitIdle()
+                    val claims = tokenManager.getCurrentClaims()
+                    if (claims?.tenant == null) {
+                        mutableEffect.emit(Effect.NavigateToWorkspaceSelect)
+                    } else {
+                        mutableEffect.emit(Effect.NavigateToHome)
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Registration failed" }
+                    mutableState.emit(error) { register(email, password, firstName, lastName) }
                 }
-            },
-            onFailure = { error ->
-                logger.e(error) { "Registration failed" }
-                val dokusException = when {
-                    error.message?.contains("email") == true -> DokusException.Validation.InvalidEmail
-                    error.message?.contains("password") == true -> DokusException.Validation.WeakPassword
-                    error.message?.contains("First name") == true -> DokusException.Validation.InvalidFirstName
-                    error.message?.contains("Last name") == true -> DokusException.Validation.InvalidLastName
-                    else -> DokusException.ConnectionError()
-                }
-                mutableState.value = State.Error(dokusException)
-            }
-        )
-    }
-
-    sealed interface State {
-        data object Idle : State
-
-        data object Loading : State
-
-        data class Error(val exception: DokusException) : State
+            )
+        }
     }
 
     sealed interface Effect {

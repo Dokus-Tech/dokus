@@ -4,7 +4,6 @@ import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.*
@@ -29,8 +28,7 @@ fun Route.expenseRoutes() {
 
             // POST /api/v1/expenses - Create expense
             post {
-                val principal = dokusPrincipal
-                val tenantId = principal.requireTenantId()
+                val tenantId = dokusPrincipal.requireTenantId()
                 val request = call.receive<CreateExpenseRequest>()
                 logger.info("Creating expense for tenant: $tenantId")
 
@@ -47,10 +45,9 @@ fun Route.expenseRoutes() {
 
             // GET /api/v1/expenses/{id} - Get expense by ID
             get("/{expenseId}") {
-                val principal = dokusPrincipal
-                val tenantId = principal.requireTenantId()
+                val tenantId = dokusPrincipal.requireTenantId()
                 val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Fetching expense: $expenseId for tenant: $tenantId")
 
@@ -60,15 +57,14 @@ fun Route.expenseRoutes() {
                         throw DokusException.InternalError("Failed to fetch expense: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 call.respond(HttpStatusCode.OK, expense)
             }
 
             // GET /api/v1/expenses - List expenses with query params
             get {
-                val principal = dokusPrincipal
-                val tenantId = principal.requireTenantId()
+                val tenantId = dokusPrincipal.requireTenantId()
                 val category = call.parameters.expenseCategory
                 val fromDate = call.parameters.fromDate
                 val toDate = call.parameters.toDate
@@ -100,7 +96,7 @@ fun Route.expenseRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val request = call.receive<CreateExpenseRequest>()
                 logger.info("Updating expense: $expenseId")
@@ -121,7 +117,7 @@ fun Route.expenseRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Deleting expense: $expenseId")
 

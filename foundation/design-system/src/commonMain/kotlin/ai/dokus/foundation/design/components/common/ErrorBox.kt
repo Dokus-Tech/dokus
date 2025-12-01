@@ -1,33 +1,130 @@
 package ai.dokus.foundation.design.components.common
 
+import ai.dokus.foundation.design.components.POutlinedButton
+import ai.dokus.foundation.design.extensions.localized
+import ai.dokus.foundation.design.tooling.PreviewParameters
+import ai.dokus.foundation.design.tooling.PreviewParametersProvider
+import ai.dokus.foundation.design.tooling.TestWrapper
+import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PErrorText
-import ai.dokus.foundation.design.components.PTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.RefreshCw
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
 @Composable
-fun ErrorBox(exception: DokusException, modifier: Modifier = Modifier, onRetry: () -> Unit) {
+fun DokusErrorText(
+    text: String,
+    modifier: Modifier = Modifier.padding(all = 16.dp)
+) {
+    Text(
+        text,
+        modifier = modifier,
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.error
+    )
+}
+
+@Composable
+fun DokusErrorContent(
+    text: String,
+    retryHandler: RetryHandler?,
+    title: String? = null,
+    modifier: Modifier = Modifier.fillMaxWidth()
+) {
     Column(
-        modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
     ) {
-        PTitle("Oops")
-        Spacer(Modifier.padding(vertical = 8.dp))
-        PErrorText(exception)
-        if (exception.recoverable) {
-            Spacer(Modifier.padding(vertical = 8.dp))
-            PButton("Try again", icon = FeatherIcons.RefreshCw, onClick = onRetry)
+        Icon(
+            imageVector = Icons.Default.ErrorOutline,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        if (title != null) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        if (retryHandler != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            POutlinedButton(
+                text = "Retry",
+                onClick = { retryHandler.retry() }
+            )
+        }
+    }
+}
+
+@Composable
+fun DokusErrorContent(
+    exception: DokusException,
+    retryHandler: RetryHandler?,
+    title: String? = null,
+    modifier: Modifier = Modifier.fillMaxWidth()
+) {
+    DokusErrorContent(
+        title = title,
+        text = exception.localized,
+        retryHandler = retryHandler.takeIf { exception.recoverable },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun DokusErrorText(exception: DokusException, modifier: Modifier = Modifier.padding(all = 16.dp)) {
+    DokusErrorText(text = exception.localized, modifier)
+}
+
+@Preview
+@Composable
+private fun PulseErrorTextPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusErrorText(text = "An error occurred while processing your request")
+    }
+}
+
+@Preview
+@Composable
+private fun PulseErrorContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DokusErrorContent(
+            title = "Connection Error",
+            text = "Unable to connect to the server. Please check your internet connection and try again.",
+            retryHandler = RetryHandler { }
+        )
     }
 }

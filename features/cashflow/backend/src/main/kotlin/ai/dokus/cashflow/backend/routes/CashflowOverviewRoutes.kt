@@ -27,10 +27,10 @@ fun Route.cashflowOverviewRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val fromDate = call.parameters.fromDate
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val toDate = call.parameters.toDate
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Getting cashflow overview for tenant: $tenantId (from=$fromDate, to=$toDate)")
 

@@ -1,11 +1,11 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.NewPasswordViewModel
+import ai.dokus.app.core.state.exceptionIfError
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.components.layout.TwoPaneContainer
 import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -43,9 +43,8 @@ private fun NewPasswordContent(
     viewModel: NewPasswordViewModel,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val data = viewModel.state.collectAsState()
-    val fieldsError: DokusException? =
-        (data.value as? NewPasswordViewModel.State.Error)?.exception
+    val state by viewModel.state.collectAsState()
+    val fieldsError = state.exceptionIfError()
 
     val focusManager = LocalFocusManager.current
 

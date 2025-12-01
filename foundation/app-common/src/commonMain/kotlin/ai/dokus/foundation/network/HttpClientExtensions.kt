@@ -2,23 +2,14 @@ package ai.dokus.foundation.network
 
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.exceptions.DokusException
-import io.ktor.client.HttpClientConfig
-import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpResponseValidator
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.logging.SIMPLE
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.decodeFromString
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
@@ -42,30 +33,26 @@ fun HttpClientConfig<*>.withDokusEndpoint(endpoint: DokusEndpoint) {
 fun HttpClientConfig<*>.withResponseValidation(onUnauthorized: suspend () -> Unit = {}) {
     HttpResponseValidator {
         validateResponse { response: HttpResponse ->
-            // Skip validation for WebSocket upgrade responses (101 Switching Protocols)
-            if (response.status == HttpStatusCode.SwitchingProtocols) return@validateResponse
-
             if (response.status.isSuccess()) return@validateResponse
+            runCatching { response.body<DokusException>() }.fold(
+                onSuccess = { throw it },
+                onFailure = {
+                    when (response.status) {
+                        HttpStatusCode.Unauthorized -> {
+                            onUnauthorized()
+                            throw DokusException.NotAuthenticated()
+                        }
 
-            // Attempt to parse a structured DokusException only when JSON is present.
-            val isJson = response.contentType()?.match(ContentType.Application.Json) == true
-            val bodyText = runCatching { response.bodyAsText() }.getOrNull()
-            if (isJson && bodyText != null) {
-                runCatching { Json { ignoreUnknownKeys = true }.decodeFromString(DokusException.serializer(), bodyText) }
-                    .onSuccess { throw it }
-            }
+                        HttpStatusCode.Forbidden -> {
+                            throw DokusException.NotAuthorized()
+                        }
 
-            // Fallback: map common HTTP codes; include body text for diagnostics.
-            when (response.status) {
-                HttpStatusCode.Unauthorized -> {
-                    onUnauthorized()
-                    throw DokusException.NotAuthenticated()
+                        HttpStatusCode.NotFound -> throw DokusException.NotFound()
+
+                        else -> throw DokusException.Unknown(it)
+                    }
                 }
-
-                HttpStatusCode.Forbidden -> throw DokusException.NotAuthorized()
-                HttpStatusCode.NotFound -> throw DokusException.InternalError(bodyText ?: "Resource not found")
-                else -> throw DokusException.Unknown(IllegalStateException("HTTP ${response.status.value}: ${bodyText.orEmpty()}"))
-            }
+            )
         }
     }
 }
