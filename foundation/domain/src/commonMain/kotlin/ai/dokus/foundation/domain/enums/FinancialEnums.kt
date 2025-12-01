@@ -128,6 +128,16 @@ enum class InvoiceStatus(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
+enum class BillStatus(override val dbValue: String) : DbEnum {
+    Draft("DRAFT"),
+    Pending("PENDING"),
+    Scheduled("SCHEDULED"),
+    Paid("PAID"),
+    Overdue("OVERDUE"),
+    Cancelled("CANCELLED")
+}
+
+@Serializable
 enum class Currency(override val dbValue: String) : DbEnum {
     Eur("EUR"),
     Usd("USD"),
@@ -241,6 +251,13 @@ enum class AuditAction(override val dbValue: String) : DbEnum {
     ExpenseUpdated("EXPENSE_UPDATED"),
     ExpenseDeleted("EXPENSE_DELETED"),
 
+    // Bill actions
+    BillCreated("BILL_CREATED"),
+    BillUpdated("BILL_UPDATED"),
+    BillDeleted("BILL_DELETED"),
+    BillPaid("BILL_PAID"),
+    BillStatusChanged("BILL_STATUS_CHANGED"),
+
     // Client actions
     ClientCreated("CLIENT_CREATED"),
     ClientUpdated("CLIENT_UPDATED"),
@@ -273,6 +290,7 @@ enum class EntityType(override val dbValue: String) : DbEnum {
     InvoiceItem("INVOICE_ITEM"),
     Client("CLIENT"),
     Expense("EXPENSE"),
+    Bill("BILL"),
     Payment("PAYMENT"),
     BankConnection("BANK_CONNECTION"),
     BankTransaction("BANK_TRANSACTION"),

@@ -15,5 +15,6 @@ enum class MediaStatus(override val dbValue: String) : DbEnum {
 enum class MediaDocumentType {
     Invoice,
     Expense,
+    Bill,
     Unknown
 }
