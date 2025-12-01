@@ -1,17 +1,21 @@
 package ai.dokus.app.cashflow.datasource
 
+import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
+import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import io.ktor.client.HttpClient
@@ -219,6 +223,81 @@ internal class CashflowRemoteDataSourceImpl(
                     "description" to description
                 ))
             }.body()
+        }
+    }
+
+    // ============================================================================
+    // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
+    // ============================================================================
+
+    override suspend fun createBill(request: CreateBillRequest): Result<FinancialDocumentDto.BillDto> {
+        return runCatching {
+            httpClient.post("/api/v1/cashflow/cash-out/bills") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun getBill(id: BillId): Result<FinancialDocumentDto.BillDto> {
+        return runCatching {
+            httpClient.get("/api/v1/cashflow/cash-out/bills/$id").body()
+        }
+    }
+
+    override suspend fun listBills(
+        status: BillStatus?,
+        category: ExpenseCategory?,
+        fromDate: LocalDate?,
+        toDate: LocalDate?,
+        limit: Int,
+        offset: Int
+    ): Result<PaginatedResponse<FinancialDocumentDto.BillDto>> {
+        return runCatching {
+            httpClient.get("/api/v1/cashflow/cash-out/bills") {
+                status?.let { parameter("status", it.name) }
+                category?.let { parameter("category", it.name) }
+                fromDate?.let { parameter("fromDate", it.toString()) }
+                toDate?.let { parameter("toDate", it.toString()) }
+                parameter("limit", limit)
+                parameter("offset", offset)
+            }.body()
+        }
+    }
+
+    override suspend fun listOverdueBills(): Result<List<FinancialDocumentDto.BillDto>> {
+        return runCatching {
+            httpClient.get("/api/v1/cashflow/cash-out/bills/overdue").body()
+        }
+    }
+
+    override suspend fun updateBill(
+        billId: BillId,
+        request: CreateBillRequest
+    ): Result<FinancialDocumentDto.BillDto> {
+        return runCatching {
+            httpClient.put("/api/v1/cashflow/cash-out/bills/$billId") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun markBillPaid(
+        billId: BillId,
+        request: MarkBillPaidRequest
+    ): Result<FinancialDocumentDto.BillDto> {
+        return runCatching {
+            httpClient.post("/api/v1/cashflow/cash-out/bills/$billId/pay") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun deleteBill(billId: BillId): Result<Unit> {
+        return runCatching {
+            httpClient.delete("/api/v1/cashflow/cash-out/bills/$billId").body()
         }
     }
 
