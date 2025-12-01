@@ -14,6 +14,21 @@ sealed class DokusException(
     val errorId: String = generateErrorId(),
 ) : Throwable() {
 
+    @Serializable
+    @SerialName("DokusException.BadRequest")
+    data class BadRequest(
+        override val message: String = "Bad request",
+    ) : DokusException(
+        httpStatusCode = HTTP_STATUS,
+        errorCode = ERROR_CODE,
+        recoverable = false,
+    ) {
+        companion object {
+            const val HTTP_STATUS = 400
+            const val ERROR_CODE = "BAD_REQUEST"
+        }
+    }
+
     // 400 Bad Request - Validation Errors
     @Serializable
     @SerialName("DokusException.Validation")
@@ -28,12 +43,6 @@ sealed class DokusException(
             const val HTTP_STATUS = 400
             const val ERROR_CODE = "VALIDATION_ERROR"
         }
-
-        @Serializable
-        @SerialName("DokusException.Validation.Other")
-        data object Other : Validation(
-            message = "Bad request"
-        )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidEmail")
@@ -424,6 +433,25 @@ sealed class DokusException(
             const val ERROR_CODE = "USER_ALREADY_EXISTS"
         }
     }
+
+    // 404 Not Found
+    @Serializable
+    @SerialName("DokusException.UserNotFound")
+    data class UserNotFound(
+        override val message: String? = "User not found",
+    ) : DokusException(
+        httpStatusCode = 404,
+        errorCode = "USER_NOT_FOUND",
+    )
+
+    @Serializable
+    @SerialName("DokusException.NotFound")
+    data class NotFound(
+        override val message: String? = "Resource was not found",
+    ) : DokusException(
+        httpStatusCode = 404,
+        errorCode = "RESOURCE_NOT_FOUND",
+    )
 
     // 429 Too Many Requests
     @Serializable

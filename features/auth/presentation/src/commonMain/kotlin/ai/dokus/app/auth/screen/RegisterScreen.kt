@@ -6,6 +6,8 @@ import ai.dokus.app.auth.components.RegisterProfileFields
 import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.auth.model.RegisterPage
 import ai.dokus.app.auth.viewmodel.RegisterViewModel
+import ai.dokus.app.core.state.exceptionIfError
+import ai.dokus.app.core.state.isLoading
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_has_account_prefix
 import ai.dokus.app.resources.generated.auth_login_link
@@ -15,7 +17,6 @@ import ai.dokus.foundation.design.components.layout.TwoPaneContainer
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
-import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -26,6 +27,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -50,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.PaddingValues
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -90,6 +91,7 @@ private fun RegisterContent(
                 is RegisterViewModel.Effect.NavigateToHome -> {
                     navController.replace(CoreDestination.Home)
                 }
+
                 is RegisterViewModel.Effect.NavigateToWorkspaceSelect -> {
                     navController.replace(AuthDestination.WorkspaceSelect)
                 }
@@ -97,13 +99,11 @@ private fun RegisterContent(
         }
     }
 
-    val state = viewModel.state.collectAsState()
-    val fieldsError: DokusException? =
-        (state.value as? RegisterViewModel.State.Error)?.exception
+    val state by viewModel.state.collectAsState()
+    val fieldsError = state.exceptionIfError()
 
     var fields by remember(viewModel) { mutableStateOf(RegisterFormFields()) }
     val pagerState = rememberPagerState(pageCount = { 2 })
-    val isLoading = state.value is RegisterViewModel.State.Loading
 
     val onContinueClick = { page: RegisterPage ->
         when (page) {
@@ -202,7 +202,7 @@ private fun RegisterContent(
                 fields = fields,
                 onContinueClick = { onContinueClick(RegisterPage.fromIndex(pagerState.currentPage)) },
                 modifier = Modifier.limitWidthCenteredContent().fillMaxWidth(),
-                isLoading = isLoading,
+                isLoading = state.isLoading(),
             )
             Spacer(modifier = Modifier.height(16.dp))
 

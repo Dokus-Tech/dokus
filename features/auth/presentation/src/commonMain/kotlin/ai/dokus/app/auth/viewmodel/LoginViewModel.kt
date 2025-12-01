@@ -1,10 +1,12 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.LoginUseCase
+import ai.dokus.app.core.state.DokusState
+import ai.dokus.app.core.state.emit
+import ai.dokus.app.core.state.emitLoading
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,7 +15,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle), KoinComponent {
+internal class LoginViewModel : BaseViewModel<DokusState<Unit>>(DokusState.idle()), KoinComponent {
 
     private val logger = Logger.forClass<LoginViewModel>()
     private val loginUseCase: LoginUseCase by inject()
@@ -22,42 +24,30 @@ internal class LoginViewModel : BaseViewModel<LoginViewModel.State>(State.Idle),
     private val mutableEffect = MutableSharedFlow<Effect>()
     val effect = mutableEffect.asSharedFlow()
 
-    fun login(emailValue: Email, passwordValue: Password) = scope.launch {
-        logger.d { "Login attempt started for email: ${emailValue.value.take(3)}***" }
-        mutableState.value = State.Loading
+    fun login(emailValue: Email, passwordValue: Password) {
+        scope.launch {
+            logger.d { "Login attempt started for email: ${emailValue.value.take(3)}***" }
+            mutableState.emitLoading()
 
-        val result = loginUseCase(emailValue, passwordValue)
+            val result = loginUseCase(emailValue, passwordValue)
 
-        result.fold(
-            onSuccess = {
-                logger.i { "Login successful, navigating to home" }
-                mutableState.value = State.Idle
-                val claims = tokenManager.getCurrentClaims()
-                if (claims?.tenant == null) {
-                    mutableEffect.emit(Effect.NavigateToWorkspaceSelect)
-                } else {
-                    mutableEffect.emit(Effect.NavigateToHome)
+            result.fold(
+                onSuccess = {
+                    logger.i { "Login successful, navigating to home" }
+                    mutableState.emit(Unit)
+                    val claims = tokenManager.getCurrentClaims()
+                    if (claims?.tenant == null) {
+                        mutableEffect.emit(Effect.NavigateToWorkspaceSelect)
+                    } else {
+                        mutableEffect.emit(Effect.NavigateToHome)
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Login failed" }
+                    mutableState.emit(error) { login(emailValue, passwordValue) }
                 }
-            },
-            onFailure = { error ->
-                logger.e(error) { "Login failed" }
-                val dokusException = when {
-                    error.message?.contains("email") == true -> DokusException.Validation.InvalidEmail
-                    error.message?.contains("password") == true -> DokusException.Validation.WeakPassword
-                    error.message?.contains("Invalid credentials") == true -> DokusException.InvalidCredentials()
-                    else -> DokusException.ConnectionError()
-                }
-                mutableState.value = State.Error(dokusException)
-            }
-        )
-    }
-
-    sealed interface State {
-        data object Idle : State
-
-        data object Loading : State
-
-        data class Error(val exception: DokusException) : State
+            )
+        }
     }
 
     sealed interface Effect {

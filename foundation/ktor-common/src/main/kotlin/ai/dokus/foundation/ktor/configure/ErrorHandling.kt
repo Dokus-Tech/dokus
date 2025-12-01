@@ -5,79 +5,61 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
-import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
-
-@Serializable
-data class ErrorResponse(
-    val error: String,
-    val message: String,
-    val timestamp: Long = System.currentTimeMillis()
-)
+import java.net.ConnectException
+import java.net.SocketTimeoutException
 
 fun Application.configureErrorHandling() {
     val logger = LoggerFactory.getLogger("ErrorHandler")
 
     install(StatusPages) {
-        status(HttpStatusCode.NotFound) { call, status ->
-            call.respond(
-                status,
-                ErrorResponse(
-                    error = "NotFound",
-                    message = "Resource not found"
-                )
-            )
-        }
-
-        status(HttpStatusCode.MethodNotAllowed) { call, status ->
-            call.respond(
-                status,
-                ErrorResponse(
-                    error = "MethodNotAllowed",
-                    message = "HTTP method is not supported for this endpoint"
-                )
-            )
-        }
-
         exception<DokusException> { call, cause ->
-            val errorName = cause::class.simpleName ?: "DokusException"
-
-            if (cause.httpStatusCode >= 500) {
-                logger.error("DokusException [$errorName]: ${cause.message}", cause)
-            } else {
-                logger.warn("DokusException [$errorName]: ${cause.message}")
-            }
-
-            call.respond<DokusException>(HttpStatusCode.fromValue(cause.httpStatusCode), cause)
+            logger.warn("DokusException: ${cause.message}")
+            call.respond<DokusException>(
+                HttpStatusCode.fromValue(cause.httpStatusCode),
+                cause,
+            )
         }
 
         exception<IllegalArgumentException> { call, cause ->
             logger.warn("IllegalArgumentException: ${cause.message}")
-            call.respond(
+            call.respond<DokusException>(
                 HttpStatusCode.BadRequest,
-                DokusException.Validation.Other,
+                DokusException.BadRequest(cause.message ?: "Invalid request"),
             )
         }
 
         exception<NoSuchElementException> { call, cause ->
             logger.warn("NoSuchElementException: ${cause.message}")
-            call.respond(
+            call.respond<DokusException>(
                 HttpStatusCode.NotFound,
-                ErrorResponse(
-                    error = "NotFound",
-                    message = "Resource not found"
-                )
+                DokusException.NotFound(),
+            )
+        }
+
+        // Map downstream connection failures to a more appropriate 503 instead of 500
+        exception<ConnectException> { call, cause ->
+            logger.error("Downstream connection failed: ${cause.message}")
+            call.respond<DokusException>(
+                HttpStatusCode.ServiceUnavailable,
+                DokusException.ConnectionError(cause.message ?: "Downstream service is unavailable"),
+            )
+        }
+
+        // Map downstream timeouts to 504 Gateway Timeout
+        exception<SocketTimeoutException> { call, cause ->
+            logger.error("Downstream connection timed out: ${cause.message}")
+            call.respond<DokusException>(
+                HttpStatusCode.GatewayTimeout,
+                DokusException.ConnectionError(cause.message ?: "Downstream service timed out"),
             )
         }
 
         exception<Throwable> { call, cause ->
             logger.error("Unhandled exception", cause)
-            call.respond(
+            call.respond<DokusException>(
                 HttpStatusCode.InternalServerError,
-                ErrorResponse(
-                    error = "InternalServerError",
-                    message = "An unexpected error occurred"
-                )
+                DokusException.InternalError(cause.message ?: "An unexpected error occurred"),
             )
         }
     }
