@@ -42,5 +42,5 @@ value class InvoiceNumber(override val value: String) : ValueClass<String>, Vali
         get() = ValidateInvoiceNumberUseCase(this)
 
     override val validOrThrows: InvoiceNumber
-        get() = if (isValid) this else throw DokusException.Validation.InvalidInvoiceNumber
+        get() = if (isValid) this else throw DokusException.Validation.InvalidInvoiceNumber()
 }

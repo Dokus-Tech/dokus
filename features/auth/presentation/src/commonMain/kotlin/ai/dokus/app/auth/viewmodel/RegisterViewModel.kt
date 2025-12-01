@@ -48,10 +48,10 @@ internal class RegisterViewModel : BaseViewModel<RegisterViewModel.State>(State.
             onFailure = { error ->
                 logger.e(error) { "Registration failed" }
                 val dokusException = when {
-                    error.message?.contains("email") == true -> DokusException.Validation.InvalidEmail
-                    error.message?.contains("password") == true -> DokusException.Validation.WeakPassword
-                    error.message?.contains("First name") == true -> DokusException.Validation.InvalidFirstName
-                    error.message?.contains("Last name") == true -> DokusException.Validation.InvalidLastName
+                    error.message?.contains("email") == true -> DokusException.Validation.InvalidEmail()
+                    error.message?.contains("password") == true -> DokusException.Validation.WeakPassword()
+                    error.message?.contains("First name") == true -> DokusException.Validation.InvalidFirstName()
+                    error.message?.contains("Last name") == true -> DokusException.Validation.InvalidLastName()
                     else -> DokusException.ConnectionError()
                 }
                 mutableState.value = State.Error(dokusException)

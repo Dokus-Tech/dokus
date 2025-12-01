@@ -10,29 +10,19 @@ import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaProcessingUpdateRequest
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
-import ai.dokus.media.backend.repository.MediaRepository
-import ai.dokus.media.backend.repository.MediaRecord
-import ai.dokus.media.backend.storage.MediaStorage
-import ai.dokus.media.backend.storage.StoredMedia
 import ai.dokus.foundation.messaging.core.MessagePublisher
 import ai.dokus.foundation.messaging.messages.MediaProcessingRequestedMessage
-import io.ktor.http.ContentDisposition
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.PartData
-import io.ktor.http.content.forEachPart
-import io.ktor.http.content.streamProvider
-import io.ktor.server.application.call
-import io.ktor.server.request.receive
-import io.ktor.server.request.receiveMultipart
-import io.ktor.server.response.header
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
+import ai.dokus.media.backend.repository.MediaRecord
+import ai.dokus.media.backend.repository.MediaRepository
+import ai.dokus.media.backend.storage.MediaStorage
+import ai.dokus.media.backend.storage.StoredMedia
+import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 
@@ -68,7 +58,7 @@ fun Route.mediaRoutes() {
                         is PartData.FileItem -> {
                             filename = part.originalFileName ?: "unknown"
                             contentType = part.contentType?.toString() ?: "application/octet-stream"
-                            // Read bytes from input stream
+                            // Read bytes from the input stream
                             val channel = part.streamProvider()
                             fileContent = runBlocking {
                                 val outputStream = java.io.ByteArrayOutputStream()
@@ -76,12 +66,16 @@ fun Route.mediaRoutes() {
                                 outputStream.toByteArray()
                             }
                         }
+
                         is PartData.FormItem -> {
                             when (part.name) {
-                                "entityType" -> entityType = part.value.takeIf { it.isNotBlank() }?.let { EntityType.valueOf(it) }
+                                "entityType" -> entityType =
+                                    part.value.takeIf { it.isNotBlank() }?.let { EntityType.valueOf(it) }
+
                                 "entityId" -> entityId = part.value.takeIf { it.isNotBlank() }
                             }
                         }
+
                         else -> {}
                     }
                     part.dispose()
@@ -92,7 +86,7 @@ fun Route.mediaRoutes() {
                 }
 
                 // Validate file
-                val validationError = storage.validate(fileContent!!, filename!!, contentType!!)
+                val validationError = storage.validate(fileContent, filename, contentType)
                 if (validationError != null) {
                     logger.warn("File validation failed for tenant=$tenantId: $validationError")
                     throw DokusException.BadRequest(validationError)
@@ -104,9 +98,9 @@ fun Route.mediaRoutes() {
                 val stored = storage.store(
                     tenantId = tenantId,
                     mediaId = mediaId,
-                    filename = filename!!,
-                    mimeType = contentType!!,
-                    fileContent = fileContent!!
+                    filename = filename,
+                    mimeType = contentType,
+                    fileContent = fileContent
                 ).getOrElse {
                     logger.error("Failed to store media for tenant=$tenantId", it)
                     throw DokusException.InternalError("Failed to store media file")
@@ -116,9 +110,9 @@ fun Route.mediaRoutes() {
                 val record = repository.create(
                     mediaId = mediaId,
                     tenantId = tenantId,
-                    filename = filename!!,
-                    mimeType = contentType!!,
-                    sizeBytes = fileContent!!.size.toLong(),
+                    filename = filename,
+                    mimeType = contentType,
+                    sizeBytes = fileContent.size.toLong(),
                     status = MediaStatus.Pending,
                     storageKey = stored.storageKey,
                     storageBucket = stored.bucket,
@@ -273,7 +267,7 @@ fun Route.mediaRoutes() {
 /**
  * Request body for attaching media to an entity
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class AttachMediaRequest(
     val entityType: EntityType,
     val entityId: String

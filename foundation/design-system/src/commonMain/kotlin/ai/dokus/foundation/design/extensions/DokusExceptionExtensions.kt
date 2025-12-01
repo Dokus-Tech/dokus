@@ -93,6 +93,7 @@ val DokusException.localized: String
         is DokusException.Validation.InvalidPostalCode -> stringResource(Res.string.exception_invalid_postal_code)
         is DokusException.Validation.InvalidCountry -> stringResource(Res.string.exception_invalid_country)
         is DokusException.Validation -> stringResource(Res.string.exception_validation_error)
+        is DokusException.BadRequest -> message
 
         // 401 Authentication Errors
         is DokusException.NotAuthenticated -> stringResource(Res.string.exception_not_authenticated)

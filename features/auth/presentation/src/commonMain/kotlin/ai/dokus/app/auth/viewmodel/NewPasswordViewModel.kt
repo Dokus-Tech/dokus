@@ -17,7 +17,7 @@ internal class NewPasswordViewModel :
         mutableState.value = State.Loading
 
         if (!validatePasswordUseCase(password)) {
-            mutableState.value = State.Error(DokusException.Validation.WeakPassword)
+            mutableState.value = State.Error(DokusException.Validation.WeakPassword())
             return@launch
         }
 //

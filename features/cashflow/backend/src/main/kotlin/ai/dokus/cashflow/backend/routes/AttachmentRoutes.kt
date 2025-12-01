@@ -44,7 +44,7 @@ fun Route.attachmentRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Uploading invoice document for: $invoiceId")
 
@@ -55,7 +55,7 @@ fun Route.attachmentRoutes() {
                         throw DokusException.InternalError("Failed to verify invoice: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 // Handle multipart upload
                 val multipart = call.receiveMultipart()
@@ -84,7 +84,7 @@ fun Route.attachmentRoutes() {
                 }
 
                 if (fileBytes == null || filename == null) {
-                    throw DokusException.Validation.Other
+                    throw DokusException.BadRequest()
                 }
 
                 // Validate file
@@ -95,7 +95,7 @@ fun Route.attachmentRoutes() {
                 )
                 if (validationError != null) {
                     logger.error("File validation failed: $validationError")
-                    throw DokusException.Validation.Other
+                    throw DokusException.BadRequest()
                 }
 
                 // Store file
@@ -138,7 +138,7 @@ fun Route.attachmentRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Listing attachments for invoice: $invoiceId")
 
@@ -149,7 +149,7 @@ fun Route.attachmentRoutes() {
                         throw DokusException.InternalError("Failed to verify invoice: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val attachments = attachmentRepository.getAttachments(
                     tenantId = tenantId,
@@ -177,7 +177,7 @@ fun Route.attachmentRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Uploading expense receipt for: $expenseId")
 
@@ -188,7 +188,7 @@ fun Route.attachmentRoutes() {
                         throw DokusException.InternalError("Failed to verify expense: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 // Handle multipart upload
                 val multipart = call.receiveMultipart()
@@ -217,7 +217,7 @@ fun Route.attachmentRoutes() {
                 }
 
                 if (fileBytes == null || filename == null) {
-                    throw DokusException.Validation.Other
+                    throw DokusException.BadRequest()
                 }
 
                 // Validate file
@@ -228,7 +228,7 @@ fun Route.attachmentRoutes() {
                 )
                 if (validationError != null) {
                     logger.error("File validation failed: $validationError")
-                    throw DokusException.Validation.Other
+                    throw DokusException.BadRequest()
                 }
 
                 // Store file
@@ -271,7 +271,7 @@ fun Route.attachmentRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Listing attachments for expense: $expenseId")
 
@@ -282,7 +282,7 @@ fun Route.attachmentRoutes() {
                         throw DokusException.InternalError("Failed to verify expense: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val attachments = attachmentRepository.getAttachments(
                     tenantId = tenantId,
@@ -310,7 +310,7 @@ fun Route.attachmentRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val attachmentId = call.parameters.attachmentId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Getting download URL for attachment: $attachmentId")
 
@@ -320,7 +320,7 @@ fun Route.attachmentRoutes() {
                         throw DokusException.InternalError("Failed to get attachment: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val downloadUrl = documentStorageService.generateDownloadUrl(attachment.s3Key)
                 logger.info("Generated download URL for attachment: $attachmentId")
@@ -333,7 +333,7 @@ fun Route.attachmentRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val attachmentId = call.parameters.attachmentId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Deleting attachment: $attachmentId")
 
@@ -344,7 +344,7 @@ fun Route.attachmentRoutes() {
                         throw DokusException.InternalError("Failed to get attachment: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 // Delete from storage
                 documentStorageService.deleteFileLocally(attachment.s3Key)
