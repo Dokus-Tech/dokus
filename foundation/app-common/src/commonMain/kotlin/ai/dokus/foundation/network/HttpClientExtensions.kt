@@ -3,7 +3,7 @@ package ai.dokus.foundation.network
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.exceptions.DokusException
 import io.ktor.client.*
-import io.ktor.client.call.body
+import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
@@ -40,11 +40,11 @@ fun HttpClientConfig<*>.withResponseValidation(onUnauthorized: suspend () -> Uni
                     when (response.status) {
                         HttpStatusCode.Unauthorized -> {
                             onUnauthorized()
-                            throw DokusException.Unauthorized()
+                            throw DokusException.NotAuthenticated()
                         }
 
                         HttpStatusCode.Forbidden -> {
-                            throw DokusException.Forbidden()
+                            throw DokusException.NotAuthorized()
                         }
 
                         HttpStatusCode.NotFound -> throw DokusException.NotFound()

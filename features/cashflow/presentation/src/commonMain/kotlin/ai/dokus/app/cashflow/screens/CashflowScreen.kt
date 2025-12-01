@@ -3,19 +3,19 @@ package ai.dokus.app.cashflow.screens
 import ai.dokus.app.cashflow.components.FinancialDocumentTable
 import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
-import ai.dokus.app.cashflow.components.combineFinancialDocuments
 import ai.dokus.app.cashflow.components.needingConfirmation
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
+import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
 import ai.dokus.foundation.design.components.common.Breakpoints
+import ai.dokus.foundation.design.components.common.ErrorBox
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -92,14 +92,14 @@ internal fun CashflowScreen(
     ) { contentPadding ->
         // Main content based on state
         when (val currentState = state) {
-            is CashflowViewModel.State.Loading -> {
+            is DokusState.Loading -> {
                 LoadingContent(contentPadding)
             }
 
-            is CashflowViewModel.State.Success -> {
+            is DokusState.Success -> {
                 SuccessContent(
-                    invoices = currentState.invoices,
-                    expenses = currentState.expenses,
+                    allDocuments = currentState.data,
+                    vatSummaryData = VatSummaryData.empty,
                     contentPadding = contentPadding,
                     onDocumentClick = { document ->
                         // TODO: Navigate to document detail
@@ -110,12 +110,8 @@ internal fun CashflowScreen(
                 )
             }
 
-            is CashflowViewModel.State.Error -> {
-                ErrorContent(
-                    exception = currentState.exception,
-                    contentPadding = contentPadding,
-                    onRetry = { viewModel.refresh() }
-                )
+            is DokusState.Error -> {
+                ErrorBox(currentState.exception) { currentState.retryHandler.retry() }
             }
         }
     }
@@ -139,60 +135,17 @@ private fun LoadingContent(
 }
 
 /**
- * Error state content with error message and retry option.
- */
-@Composable
-private fun ErrorContent(
-    exception: DokusException,
-    contentPadding: PaddingValues,
-    onRetry: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(24.dp)
-        ) {
-            Text(
-                text = when (exception) {
-                    is DokusException.ConnectionError -> "Connection error. Please check your internet connection."
-                    is DokusException.NotAuthenticated -> "Authentication failed. Please log in again."
-                    else -> "An error occurred: ${exception.message}"
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-    }
-}
-
-/**
  * Success state content with responsive layout for financial documents and VAT summary.
  * Adapts layout based on screen width.
  */
 @Composable
 private fun SuccessContent(
-    invoices: List<FinancialDocumentDto.InvoiceDto>,
-    expenses: List<FinancialDocumentDto.ExpenseDto>,
+    allDocuments: List<FinancialDocumentDto>,
+    vatSummaryData: VatSummaryData,
     contentPadding: PaddingValues,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit
 ) {
-    // Convert domain models to FinancialDocuments
-    val allDocuments = combineFinancialDocuments(
-        invoices = invoices,
-        expenses = expenses,
-        limit = 50 // Show more documents in the table
-    )
-
-    // Calculate VAT summary data (placeholder values for now)
-    val vatSummaryData = calculateVatSummary(invoices, expenses)
-
     // Use BoxWithConstraints to determine layout based on screen size
     BoxWithConstraints(
         modifier = Modifier
@@ -219,33 +172,6 @@ private fun SuccessContent(
             )
         }
     }
-}
-
-/**
- * Calculates VAT summary from invoices and expenses.
- * TODO: Replace with actual calculations based on business logic.
- */
-private fun calculateVatSummary(
-    invoices: List<FinancialDocumentDto.InvoiceDto>,
-    expenses: List<FinancialDocumentDto.ExpenseDto>
-): VatSummaryData {
-    // Calculate total VAT from invoices
-    val totalVat = invoices.sumOf { it.vatAmount.value.toDoubleOrNull() ?: 0.0 }
-
-    // Calculate net amount (total - vat)
-    val totalInvoices = invoices.sumOf { it.totalAmount.value.toDoubleOrNull() ?: 0.0 }
-    val totalExpenses = expenses.sumOf { it.amount.value.toDoubleOrNull() ?: 0.0 }
-    val netAmount = totalInvoices - totalExpenses
-
-    // Predicted net amount (simplified prediction)
-    val predictedNet = netAmount * 1.1 // 10% growth prediction
-
-    return VatSummaryData(
-        vatAmount = ai.dokus.foundation.domain.Money(totalVat.toString()),
-        netAmount = ai.dokus.foundation.domain.Money(netAmount.toString()),
-        predictedNetAmount = ai.dokus.foundation.domain.Money(predictedNet.toString()),
-        quarterInfo = null
-    )
 }
 
 /**
