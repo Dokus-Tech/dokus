@@ -44,3 +44,15 @@ value class InvoiceNumber(override val value: String) : ValueClass<String>, Vali
     override val validOrThrows: InvoiceNumber
         get() = if (isValid) this else throw DokusException.Validation.InvalidInvoiceNumber
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class BillId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): BillId = BillId(Uuid.random())
+        fun parse(value: String): BillId = BillId(Uuid.parse(value))
+    }
+}
