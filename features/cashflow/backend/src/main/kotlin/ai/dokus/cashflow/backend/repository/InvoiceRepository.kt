@@ -15,6 +15,7 @@ import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
+import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
@@ -217,7 +218,7 @@ class InvoiceRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<FinancialDocumentDto.InvoiceDto>> = runCatching {
+    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> = runCatching {
         dbQuery {
             var query = InvoicesTable.selectAll().where {
                 InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -234,9 +235,11 @@ class InvoiceRepository {
                 query = query.andWhere { InvoicesTable.issueDate lessEq toDate }
             }
 
+            val total = query.count()
+
             // Apply pagination and ordering
-            query.orderBy(InvoicesTable.createdAt to SortOrder.DESC)
-                .limit(limit)
+            val items = query.orderBy(InvoicesTable.createdAt to SortOrder.DESC)
+                .limit(limit + offset)
                 .map { row ->
                     // For list view, we don't fetch items to improve performance
                     // Items will be loaded when getting individual invoice
@@ -267,6 +270,14 @@ class InvoiceRepository {
                         updatedAt = row[InvoicesTable.updatedAt]
                     )
                 }
+                .drop(offset)
+
+            PaginatedResponse(
+                items = items,
+                total = total,
+                limit = limit,
+                offset = offset
+            )
         }
     }
 

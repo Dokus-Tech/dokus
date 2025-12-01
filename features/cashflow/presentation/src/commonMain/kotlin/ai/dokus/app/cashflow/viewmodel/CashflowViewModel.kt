@@ -6,44 +6,53 @@ import ai.dokus.app.core.state.emit
 import ai.dokus.app.core.state.emitLoading
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.platform.Logger
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-internal class CashflowViewModel : BaseViewModel<DokusState<List<FinancialDocumentDto>>>(DokusState.idle()),
+internal class CashflowViewModel :
+    BaseViewModel<DokusState<PaginatedResponse<FinancialDocumentDto>>>(DokusState.idle()),
     KoinComponent {
 
     private val logger = Logger.forClass<CashflowViewModel>()
     private val cashflowDataSource: CashflowRemoteDataSource by inject()
+    private val pageSize = 20
 
-    fun loadCashflowData() {
+    fun loadCashflowPage(offset: Int = 0) {
         scope.launch {
-            logger.d { "Loading cashflow data" }
+            logger.d { "Loading cashflow data (offset=$offset, limit=$pageSize)" }
             mutableState.emitLoading()
 
-            // Load invoices and expenses in parallel
-            val invoicesDeferred = async {
-                cashflowDataSource.listInvoices(limit = 50, offset = 0)
-            }
-            val expensesDeferred = async {
-                cashflowDataSource.listExpenses(limit = 50, offset = 0)
-            }
+            val pageResult = cashflowDataSource.listCashflowDocuments(
+                limit = pageSize,
+                offset = offset
+            )
 
-            val invoicesResult = invoicesDeferred.await()
-            val expensesResult = expensesDeferred.await()
-
-            if (invoicesResult.isSuccess && expensesResult.isSuccess) {
-                val invoices = invoicesResult.getOrThrow()
-                val expenses = expensesResult.getOrThrow()
-                logger.i { "Loaded ${invoices.size} invoices and ${expenses.size} expenses" }
-                mutableState.emit(invoices + expenses)
+            if (pageResult.isSuccess) {
+                val page = pageResult.getOrThrow()
+                logger.i { "Loaded ${page.items.size} cashflow documents (total=${page.total})" }
+                mutableState.emit(page)
             } else {
-                val error = invoicesResult.exceptionOrNull() ?: expensesResult.exceptionOrNull()!!
+                val error = pageResult.exceptionOrNull()!!
                 logger.e(error) { "Failed to load cashflow data" }
-                mutableState.emit(error) { loadCashflowData() }
+                mutableState.emit(error) { loadCashflowPage(offset) }
             }
         }
+    }
+
+    fun loadNextPage() {
+        val current = (state.value as? DokusState.Success)?.data ?: return
+        val nextOffset = current.offset + pageSize
+        if (nextOffset >= current.total) return
+        loadCashflowPage(nextOffset)
+    }
+
+    fun loadPreviousPage() {
+        val current = (state.value as? DokusState.Success)?.data ?: return
+        val previousOffset = (current.offset - pageSize).coerceAtLeast(0)
+        if (previousOffset == current.offset) return
+        loadCashflowPage(previousOffset)
     }
 }

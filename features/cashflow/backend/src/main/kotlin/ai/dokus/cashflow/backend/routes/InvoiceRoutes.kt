@@ -78,6 +78,13 @@ fun Route.invoiceRoutes() {
                 val limit = call.parameters.limit
                 val offset = call.parameters.offset
 
+                if (limit < 1 || limit > 200) {
+                    throw DokusException.BadRequest("Limit must be between 1 and 200")
+                }
+                if (offset < 0) {
+                    throw DokusException.BadRequest("Offset must be non-negative")
+                }
+
                 logger.info("Listing invoices for tenant: $tenantId (status=$status, limit=$limit, offset=$offset)")
 
                 val invoices = invoiceRepository.listInvoices(
@@ -88,7 +95,7 @@ fun Route.invoiceRoutes() {
                     limit = limit,
                     offset = offset
                 )
-                    .onSuccess { logger.info("Retrieved ${it.size} invoices") }
+                    .onSuccess { logger.info("Retrieved ${it.items.size} invoices (total=${it.total})") }
                     .onFailure {
                         logger.error("Failed to list invoices for tenant: $tenantId", it)
                         throw DokusException.InternalError("Failed to list invoices: ${it.message}")

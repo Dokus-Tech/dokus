@@ -26,5 +26,6 @@ fun Application.configureCashflowRoutes() {
         expenseRoutes()
         attachmentRoutes()
         cashflowOverviewRoutes()
+        cashflowDocumentRoutes()
     }
 }

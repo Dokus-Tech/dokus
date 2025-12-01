@@ -6,6 +6,7 @@ import ai.dokus.cashflow.backend.database.tables.InvoiceItemsTable
 import ai.dokus.cashflow.backend.database.tables.InvoicesTable
 import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
+import ai.dokus.cashflow.backend.repository.CashflowRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.ktor.config.AppBaseConfig
@@ -64,6 +65,7 @@ val serviceModule = module {
     single { AttachmentRepository() }
     single { InvoiceRepository() }
     single { ExpenseRepository() }
+    single { CashflowRepository(get(), get()) }
 
     // Services
     single {

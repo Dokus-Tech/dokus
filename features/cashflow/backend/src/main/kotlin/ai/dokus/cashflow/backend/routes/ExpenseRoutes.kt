@@ -71,6 +71,13 @@ fun Route.expenseRoutes() {
                 val limit = call.parameters.limit
                 val offset = call.parameters.offset
 
+                if (limit < 1 || limit > 200) {
+                    throw DokusException.BadRequest("Limit must be between 1 and 200")
+                }
+                if (offset < 0) {
+                    throw DokusException.BadRequest("Offset must be non-negative")
+                }
+
                 logger.info("Listing expenses for tenant: $tenantId (category=$category, limit=$limit, offset=$offset)")
 
                 val expenses = expenseRepository.listExpenses(
@@ -81,7 +88,7 @@ fun Route.expenseRoutes() {
                     limit = limit,
                     offset = offset
                 )
-                    .onSuccess { logger.info("Retrieved ${it.size} expenses") }
+                    .onSuccess { logger.info("Retrieved ${it.items.size} expenses (total=${it.total})") }
                     .onFailure {
                         logger.error("Failed to list expenses for tenant: $tenantId", it)
                         throw DokusException.InternalError("Failed to list expenses: ${it.message}")

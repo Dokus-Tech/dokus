@@ -12,8 +12,8 @@ import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
-import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
 
 /**
@@ -52,7 +52,7 @@ interface CashflowRemoteDataSource {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<FinancialDocumentDto.InvoiceDto>>
+    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>
 
     /**
      * List all overdue invoices for a tenant
@@ -135,7 +135,7 @@ interface CashflowRemoteDataSource {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<FinancialDocumentDto.ExpenseDto>>
+    ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>>
 
     /**
      * Update an existing expense
@@ -228,6 +228,17 @@ interface CashflowRemoteDataSource {
     // ============================================================================
     // STATISTICS & OVERVIEW
     // ============================================================================
+
+    /**
+     * List combined cashflow documents (invoices + expenses) with pagination.
+     * GET /api/v1/cashflow/documents?fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
+     */
+    suspend fun listCashflowDocuments(
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<FinancialDocumentDto>>
 
     /**
      * Get cashflow overview for a date range
