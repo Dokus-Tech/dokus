@@ -12,6 +12,7 @@ import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -63,7 +64,7 @@ internal class CashflowRemoteDataSourceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<List<FinancialDocumentDto.InvoiceDto>> {
+    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
         return runCatching {
             httpClient.get("/api/v1/invoices") {
                 status?.let { parameter("status", it.name) }
@@ -176,7 +177,7 @@ internal class CashflowRemoteDataSourceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<List<FinancialDocumentDto.ExpenseDto>> {
+    ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>> {
         return runCatching {
             httpClient.get("/api/v1/expenses") {
                 category?.let { parameter("category", it.name) }
@@ -304,6 +305,22 @@ internal class CashflowRemoteDataSourceImpl(
     // ============================================================================
     // STATISTICS & OVERVIEW
     // ============================================================================
+
+    override suspend fun listCashflowDocuments(
+        fromDate: LocalDate?,
+        toDate: LocalDate?,
+        limit: Int,
+        offset: Int
+    ): Result<PaginatedResponse<FinancialDocumentDto>> {
+        return runCatching {
+            httpClient.get("/api/v1/cashflow/documents") {
+                fromDate?.let { parameter("fromDate", it.toString()) }
+                toDate?.let { parameter("toDate", it.toString()) }
+                parameter("limit", limit)
+                parameter("offset", offset)
+            }.body()
+        }
+    }
 
     override suspend fun getCashflowOverview(
         fromDate: LocalDate,

@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.*
@@ -126,7 +127,7 @@ class ExpenseRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<FinancialDocumentDto.ExpenseDto>> = runCatching {
+    ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>> = runCatching {
         dbQuery {
             var query = ExpensesTable.selectAll().where {
                 ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -143,9 +144,11 @@ class ExpenseRepository {
                 query = query.andWhere { ExpensesTable.date lessEq toDate }
             }
 
+            val total = query.count()
+
             // Apply pagination and ordering
-            query.orderBy(ExpensesTable.date to SortOrder.DESC)
-                .limit(limit)
+            val items = query.orderBy(ExpensesTable.date to SortOrder.DESC)
+                .limit(limit + offset)
                 .map { row ->
                     FinancialDocumentDto.ExpenseDto(
                         id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
@@ -168,6 +171,14 @@ class ExpenseRepository {
                         updatedAt = row[ExpensesTable.updatedAt]
                     )
                 }
+                .drop(offset)
+
+            PaginatedResponse(
+                items = items,
+                total = total,
+                limit = limit,
+                offset = offset
+            )
         }
     }
 
