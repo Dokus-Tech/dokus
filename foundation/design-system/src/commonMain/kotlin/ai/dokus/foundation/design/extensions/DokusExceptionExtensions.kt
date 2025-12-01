@@ -1,49 +1,6 @@
 package ai.dokus.foundation.design.extensions
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.exception_account_inactive
-import ai.dokus.app.resources.generated.exception_account_locked
-import ai.dokus.app.resources.generated.exception_connection_error
-import ai.dokus.app.resources.generated.exception_email_already_verified
-import ai.dokus.app.resources.generated.exception_email_not_verified
-import ai.dokus.app.resources.generated.exception_email_verification_token_expired
-import ai.dokus.app.resources.generated.exception_email_verification_token_invalid
-import ai.dokus.app.resources.generated.exception_invalid_bic
-import ai.dokus.app.resources.generated.exception_invalid_city
-import ai.dokus.app.resources.generated.exception_invalid_country
-import ai.dokus.app.resources.generated.exception_invalid_credentials
-import ai.dokus.app.resources.generated.exception_invalid_email
-import ai.dokus.app.resources.generated.exception_invalid_first_name
-import ai.dokus.app.resources.generated.exception_invalid_iban
-import ai.dokus.app.resources.generated.exception_invalid_invoice_number
-import ai.dokus.app.resources.generated.exception_invalid_last_name
-import ai.dokus.app.resources.generated.exception_invalid_money
-import ai.dokus.app.resources.generated.exception_invalid_peppol_id
-import ai.dokus.app.resources.generated.exception_invalid_percentage
-import ai.dokus.app.resources.generated.exception_invalid_postal_code
-import ai.dokus.app.resources.generated.exception_invalid_quantity
-import ai.dokus.app.resources.generated.exception_invalid_street_name
-import ai.dokus.app.resources.generated.exception_invalid_tax_number
-import ai.dokus.app.resources.generated.exception_invalid_vat_number
-import ai.dokus.app.resources.generated.exception_invalid_vat_rate
-import ai.dokus.app.resources.generated.exception_invalid_workspace_name
-import ai.dokus.app.resources.generated.exception_not_authenticated
-import ai.dokus.app.resources.generated.exception_not_authorized
-import ai.dokus.app.resources.generated.exception_password_do_not_match
-import ai.dokus.app.resources.generated.exception_password_reset_token_expired
-import ai.dokus.app.resources.generated.exception_password_reset_token_invalid
-import ai.dokus.app.resources.generated.exception_refresh_token_expired
-import ai.dokus.app.resources.generated.exception_refresh_token_revoked
-import ai.dokus.app.resources.generated.exception_session_expired
-import ai.dokus.app.resources.generated.exception_session_invalid
-import ai.dokus.app.resources.generated.exception_tenant_creation_failed
-import ai.dokus.app.resources.generated.exception_token_expired
-import ai.dokus.app.resources.generated.exception_token_invalid
-import ai.dokus.app.resources.generated.exception_too_many_login_attempts
-import ai.dokus.app.resources.generated.exception_unknown
-import ai.dokus.app.resources.generated.exception_user_already_exists
-import ai.dokus.app.resources.generated.exception_validation_error
-import ai.dokus.app.resources.generated.exception_weak_password
+import ai.dokus.app.resources.generated.*
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
@@ -129,4 +86,6 @@ val DokusException.localized: String
 
         // 503 Service Unavailable
         is DokusException.ConnectionError -> stringResource(Res.string.exception_connection_error)
+        is DokusException.NotFound -> "TODO"
+        is DokusException.UserNotFound -> "TODO"
     }

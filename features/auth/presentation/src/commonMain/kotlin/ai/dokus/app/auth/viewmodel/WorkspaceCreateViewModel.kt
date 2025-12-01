@@ -2,6 +2,8 @@ package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.core.state.DokusState
+import ai.dokus.app.core.state.emit
+import ai.dokus.app.core.state.emitLoading
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
@@ -36,12 +38,15 @@ internal class WorkspaceCreateViewModel(
 
     private fun loadUserInfo() {
         scope.launch {
+            mutableState.emitLoading()
             // Check if the user already has a freelancer workspace
             authRepository.hasFreelancerTenant()
                 .onSuccess { hasFreelancer ->
                     mutableHasFreelancerWorkspace.value = hasFreelancer
+                    mutableState.emit(Unit)
                 }.onFailure { error ->
                     logger.e(error) { "Failed to check freelancer workspace status" }
+                    mutableState.emit(error) { loadUserInfo() }
                 }
 
             // Get a user's name for freelancer autofill
@@ -52,8 +57,10 @@ internal class WorkspaceCreateViewModel(
                         user.lastName?.value
                     ).joinToString(" ")
                     mutableUserName.value = fullName
+                    mutableState.emit(Unit)
                 }.onFailure { error ->
                     logger.e(error) { "Failed to load user info" }
+                    mutableState.emit(error) { loadUserInfo() }
                 }
         }
     }
@@ -67,9 +74,9 @@ internal class WorkspaceCreateViewModel(
         vatNumber: VatNumber
     ) {
         scope.launch {
-            mutableState.value = DokusState.loading()
+            mutableState.emitLoading()
 
-            // For freelancer, use the user's name as legal name
+            // For freelancer, use the user's name as a legal name
             val effectiveLegalName = if (type.legalNameFromUser) {
                 LegalName(userName.value)
             } else {
@@ -91,14 +98,11 @@ internal class WorkspaceCreateViewModel(
                 language = language,
                 vatNumber = vatNumber
             ).onSuccess {
-                mutableState.value = DokusState.success(Unit)
+                mutableState.emit(Unit)
                 mutableEffect.emit(Effect.NavigateHome)
             }.onFailure { error ->
                 logger.e(error) { "Failed to create workspace" }
-                mutableState.value = DokusState.error(
-                    exception = error,
-                    retryHandler = { createWorkspace(type, legalName, displayName, plan, language, vatNumber) }
-                )
+                mutableState.emit(error) { createWorkspace(type, legalName, displayName, plan, language, vatNumber) }
                 mutableEffect.emit(Effect.CreationFailed(error))
             }
         }
