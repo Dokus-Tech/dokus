@@ -53,7 +53,7 @@ fun Route.invoiceRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Fetching invoice: $invoiceId for tenant: $tenantId")
 
@@ -63,7 +63,7 @@ fun Route.invoiceRoutes() {
                         throw DokusException.InternalError("Failed to fetch invoice: ${it.message}")
                     }
                     .getOrThrow()
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 call.respond(HttpStatusCode.OK, invoice)
             }
@@ -120,10 +120,10 @@ fun Route.invoiceRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val status = call.receiveNullable<InvoiceStatusRequest>()?.status
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Updating invoice status: $invoiceId to $status")
 
@@ -143,7 +143,7 @@ fun Route.invoiceRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val request = call.receive<CreateInvoiceRequest>()
                 logger.info("Updating invoice: $invoiceId")
@@ -164,7 +164,7 @@ fun Route.invoiceRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Deleting invoice: $invoiceId")
 
@@ -184,7 +184,7 @@ fun Route.invoiceRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val request = call.receive<RecordPaymentRequest>()
                 logger.info("Recording payment for invoice: $invoiceId")
@@ -198,7 +198,7 @@ fun Route.invoiceRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 val request = call.receiveNullable<SendInvoiceEmailRequest>()
                 logger.info("Sending invoice email: $invoiceId to ${request?.recipientEmail}")
@@ -212,7 +212,7 @@ fun Route.invoiceRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
                 val invoiceId = call.parameters.invoiceId
-                    ?: throw DokusException.Validation.Other
+                    ?: throw DokusException.BadRequest()
 
                 logger.info("Marking invoice as sent: $invoiceId")
 

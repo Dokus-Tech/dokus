@@ -31,7 +31,7 @@ value class PeppolId(override val value: String) : ValueClass<String>, Validatab
         get() = ValidatePeppolIdUseCase(this)
 
     override val validOrThrows: PeppolId
-        get() = if (isValid) this else throw DokusException.Validation.InvalidPeppolId
+        get() = if (isValid) this else throw DokusException.Validation.InvalidPeppolId()
 }
 
 @Serializable
@@ -43,5 +43,5 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
         get() = ValidateVatNumberUseCase(this)
 
     override val validOrThrows: VatNumber
-        get() = if (isValid) this else throw DokusException.Validation.InvalidVatNumber
+        get() = if (isValid) this else throw DokusException.Validation.InvalidVatNumber()
 }

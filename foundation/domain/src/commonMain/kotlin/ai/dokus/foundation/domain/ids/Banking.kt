@@ -53,7 +53,7 @@ value class Iban(override val value: String) : ValueClass<String>, Validatable<I
         get() = ValidateIbanUseCase(this)
 
     override val validOrThrows: Iban
-        get() = if (isValid) this else throw DokusException.Validation.InvalidIban
+        get() = if (isValid) this else throw DokusException.Validation.InvalidIban()
 }
 
 @Serializable
@@ -65,5 +65,5 @@ value class Bic(override val value: String) : ValueClass<String>, Validatable<Bi
         get() = ValidateBicUseCase(this)
 
     override val validOrThrows: Bic
-        get() = if (isValid) this else throw DokusException.Validation.InvalidBic
+        get() = if (isValid) this else throw DokusException.Validation.InvalidBic()
 }

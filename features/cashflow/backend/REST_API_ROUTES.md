@@ -109,7 +109,7 @@ Routes use `DokusException` for consistent error responses:
 
 - `DokusException.NotAuthenticated` (401) - Missing or invalid JWT
 - `DokusException.NotAuthorized` (403) - Missing tenant context or permission denied
-- `DokusException.Validation.Other` (400) - Invalid request parameters
+- `DokusException.BadRequest` (400) - Invalid request parameters
 - `DokusException.InternalError` (500) - Server-side errors
 
 ## HTTP Status Codes

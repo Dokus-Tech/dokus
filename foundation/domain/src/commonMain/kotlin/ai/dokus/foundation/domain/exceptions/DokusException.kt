@@ -14,6 +14,21 @@ sealed class DokusException(
     val errorId: String = generateErrorId(),
 ) : Throwable() {
 
+    @Serializable
+    @SerialName("DokusException.BadRequest")
+    data class BadRequest(
+        override val message: String = "Bad request",
+    ) : DokusException(
+        httpStatusCode = HTTP_STATUS,
+        errorCode = ERROR_CODE,
+        recoverable = false,
+    ) {
+        companion object {
+            const val HTTP_STATUS = 400
+            const val ERROR_CODE = "BAD_REQUEST"
+        }
+    }
+
     // 400 Bad Request - Validation Errors
     @Serializable
     @SerialName("DokusException.Validation")
@@ -30,111 +45,139 @@ sealed class DokusException(
         }
 
         @Serializable
-        @SerialName("DokusException.Validation.Other")
-        data object Other : Validation(
-            message = "Bad request"
-        )
-
-        @Serializable
         @SerialName("DokusException.Validation.InvalidEmail")
-        data object InvalidEmail : Validation(
-            message = "Invalid email address",
+        data class InvalidEmail(
+            override val message: String = "Invalid email address",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.WeakPassword")
-        data object WeakPassword : Validation(
-            message = "Password does not meet security requirements",
+        data class WeakPassword(
+            override val message: String = "Password does not meet security requirements",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.PasswordDoNotMatch")
-        data object PasswordDoNotMatch : Validation(
-            message = "Passwords do not match",
+        data class PasswordDoNotMatch(
+            override val message: String = "Passwords do not match",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidFirstName")
-        data object InvalidFirstName : Validation(
-            message = "Invalid first name",
+        data class InvalidFirstName(
+            override val message: String = "Invalid first name",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidLastName")
-        data object InvalidLastName : Validation(
-            message = "Invalid last name",
+        data class InvalidLastName(
+            override val message: String = "Invalid last name",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidTaxNumber")
-        data object InvalidTaxNumber : Validation(
-            message = "Invalid tax number",
+        data class InvalidTaxNumber(
+            override val message: String = "Invalid tax number",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidWorkspaceName")
-        data object InvalidWorkspaceName : Validation(
-            message = "Invalid workspace name",
+        data class InvalidWorkspaceName(
+            override val message: String = "Invalid workspace name",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidLegalName")
-        data object InvalidLegalName : Validation(
-            message = "Invalid legal name",
+        data class InvalidLegalName(
+            override val message: String = "Invalid legal name",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidDisplayName")
-        data object InvalidDisplayName : Validation(
-            message = "Invalid display name",
+        data class InvalidDisplayName(
+            override val message: String = "Invalid display name",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidVatNumber")
-        data object InvalidVatNumber : Validation(
-            message = "Invalid VAT number",
+        data class InvalidVatNumber(
+            override val message: String = "Invalid VAT number",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidIban")
-        data object InvalidIban : Validation(
-            message = "Invalid IBAN",
+        data class InvalidIban(
+            override val message: String = "Invalid IBAN",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidBic")
-        data object InvalidBic : Validation(
-            message = "Invalid BIC/SWIFT code",
+        data class InvalidBic(
+            override val message: String = "Invalid BIC/SWIFT code",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidPeppolId")
-        data object InvalidPeppolId : Validation(
-            message = "Invalid Peppol ID",
+        data class InvalidPeppolId(
+            override val message: String = "Invalid Peppol ID",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidInvoiceNumber")
-        data object InvalidInvoiceNumber : Validation(
-            message = "Invalid invoice number",
+        data class InvalidInvoiceNumber(
+            override val message: String = "Invalid invoice number",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidMoney")
-        data object InvalidMoney : Validation(
-            message = "Invalid monetary amount",
+        data class InvalidMoney(
+            override val message: String = "Invalid monetary amount",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidVatRate")
-        data object InvalidVatRate : Validation(
-            message = "Invalid VAT rate",
+        data class InvalidVatRate(
+            override val message: String = "Invalid VAT rate",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidPercentage")
-        data object InvalidPercentage : Validation(
-            message = "Invalid percentage value",
+        data class InvalidPercentage(
+            override val message: String = "Invalid percentage value",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
@@ -146,26 +189,34 @@ sealed class DokusException(
         // Address Validation Errors
         @Serializable
         @SerialName("DokusException.Validation.InvalidStreetName")
-        data object InvalidStreetName : Validation(
-            message = "Invalid street name",
+        data class InvalidStreetName(
+            override val message: String = "Invalid street name",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidCity")
-        data object InvalidCity : Validation(
-            message = "Invalid city",
+        data class InvalidCity(
+            override val message: String = "Invalid city",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidPostalCode")
-        data object InvalidPostalCode : Validation(
-            message = "Invalid postal code",
+        data class InvalidPostalCode(
+            override val message: String = "Invalid postal code",
+        ) : Validation(
+            message = message,
         )
 
         @Serializable
         @SerialName("DokusException.Validation.InvalidCountry")
-        data object InvalidCountry : Validation(
-            message = "Invalid country",
+        data class InvalidCountry(
+            override val message: String = "Invalid country",
+        ) : Validation(
+            message = message,
         )
     }
 
@@ -424,6 +475,25 @@ sealed class DokusException(
             const val ERROR_CODE = "USER_ALREADY_EXISTS"
         }
     }
+
+    // 404 Not Found
+    @Serializable
+    @SerialName("DokusException.UserNotFound")
+    data class UserNotFound(
+        override val message: String? = "User not found",
+    ) : DokusException(
+        httpStatusCode = 404,
+        errorCode = "USER_NOT_FOUND",
+    )
+
+    @Serializable
+    @SerialName("DokusException.NotFound")
+    data class NotFound(
+        override val message: String? = "Resource was not found",
+    ) : DokusException(
+        httpStatusCode = 404,
+        errorCode = "RESOURCE_NOT_FOUND",
+    )
 
     // 429 Too Many Requests
     @Serializable
