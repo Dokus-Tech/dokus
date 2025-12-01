@@ -59,7 +59,7 @@ fun Application.configureErrorHandling() {
             logger.error("Unhandled exception", cause)
             call.respond<DokusException>(
                 HttpStatusCode.InternalServerError,
-                DokusException.SystemError(cause.message ?: "An unexpected error occurred"),
+                DokusException.InternalError(cause.message ?: "An unexpected error occurred"),
             )
         }
     }

@@ -2,7 +2,6 @@ package ai.dokus.foundation.network
 
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.exceptions.NotFound
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.plugins.*

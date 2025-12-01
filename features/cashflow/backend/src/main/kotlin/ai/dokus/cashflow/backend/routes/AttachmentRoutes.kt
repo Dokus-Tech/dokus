@@ -7,7 +7,6 @@ import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.*
@@ -15,16 +14,17 @@ import io.ktor.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
-import io.ktor.utils.io.jvm.javaio.copyTo
 
 /**
  * Attachment API Routes
- * Base path: /api/v1/invoices/{invoiceId}/attachments and /api/v1/expenses/{expenseId}/attachments
+ * a Base path: /api/v1/invoices/{invoiceId}/attachments and /api/v1/expenses/{expenseId}/attachments
  *
  * All routes require JWT authentication and tenant context.
  */
@@ -76,6 +76,7 @@ fun Route.attachmentRoutes() {
                                 outputStream.toByteArray()
                             }
                         }
+
                         else -> {
                             // Ignore non-file parts
                         }
@@ -89,8 +90,8 @@ fun Route.attachmentRoutes() {
 
                 // Validate file
                 val validationError = documentStorageService.validateFile(
-                    fileBytes!!,
-                    filename!!,
+                    fileBytes,
+                    filename,
                     contentType!!
                 )
                 if (validationError != null) {
@@ -103,8 +104,8 @@ fun Route.attachmentRoutes() {
                     tenantId,
                     "invoice",
                     invoiceId.toString(),
-                    filename!!,
-                    fileBytes!!
+                    filename,
+                    fileBytes
                 )
                     .onFailure {
                         logger.error("Failed to store file for invoice: $invoiceId", it)
@@ -117,9 +118,9 @@ fun Route.attachmentRoutes() {
                     tenantId = tenantId,
                     entityType = EntityType.Invoice,
                     entityId = invoiceId.toString(),
-                    filename = filename!!,
-                    mimeType = contentType!!,
-                    sizeBytes = fileBytes!!.size.toLong(),
+                    filename = filename,
+                    mimeType = contentType,
+                    sizeBytes = fileBytes.size.toLong(),
                     s3Key = storageKey,
                     s3Bucket = "local"
                 )
@@ -209,6 +210,7 @@ fun Route.attachmentRoutes() {
                                 outputStream.toByteArray()
                             }
                         }
+
                         else -> {
                             // Ignore non-file parts
                         }
@@ -222,8 +224,8 @@ fun Route.attachmentRoutes() {
 
                 // Validate file
                 val validationError = documentStorageService.validateFile(
-                    fileBytes!!,
-                    filename!!,
+                    fileBytes,
+                    filename,
                     contentType!!
                 )
                 if (validationError != null) {
@@ -236,8 +238,8 @@ fun Route.attachmentRoutes() {
                     tenantId,
                     "expense",
                     expenseId.toString(),
-                    filename!!,
-                    fileBytes!!
+                    filename,
+                    fileBytes
                 )
                     .onFailure {
                         logger.error("Failed to store file for expense: $expenseId", it)
@@ -250,9 +252,9 @@ fun Route.attachmentRoutes() {
                     tenantId = tenantId,
                     entityType = EntityType.Expense,
                     entityId = expenseId.toString(),
-                    filename = filename!!,
-                    mimeType = contentType!!,
-                    sizeBytes = fileBytes!!.size.toLong(),
+                    filename = filename,
+                    mimeType = contentType,
+                    sizeBytes = fileBytes.size.toLong(),
                     s3Key = storageKey,
                     s3Bucket = "local"
                 )
@@ -370,8 +372,8 @@ fun Route.attachmentRoutes() {
 }
 
 // Response DTOs
-@kotlinx.serialization.Serializable
+@Serializable
 private data class UploadAttachmentResponse(val attachmentId: AttachmentId)
 
-@kotlinx.serialization.Serializable
+@Serializable
 private data class DownloadUrlResponse(val downloadUrl: String)
