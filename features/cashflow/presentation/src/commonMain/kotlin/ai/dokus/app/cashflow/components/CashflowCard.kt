@@ -153,6 +153,7 @@ private fun CashflowDocumentItem(
     val documentNumber = when (document) {
         is FinancialDocumentDto.InvoiceDto -> document.invoiceNumber.toString()
         is FinancialDocumentDto.ExpenseDto -> "EXP-${document.id.value}"
+        is FinancialDocumentDto.BillDto -> document.invoiceNumber ?: "BILL-${document.id.value}"
     }
 
     Row(
@@ -204,6 +205,11 @@ private fun DocumentStatusBadge(
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
             "Expense"
+        )
+        is FinancialDocumentDto.BillDto -> Triple(
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+            document.status.name
         )
     }
 
@@ -267,4 +273,5 @@ private fun getInvoiceStatusStyle(status: InvoiceStatus): Triple<Color, Color, S
 private fun FinancialDocumentDto.typeIcon(): String = when (this) {
     is FinancialDocumentDto.InvoiceDto -> "Invoice"
     is FinancialDocumentDto.ExpenseDto -> "Expense"
+    is FinancialDocumentDto.BillDto -> "Bill"
 }

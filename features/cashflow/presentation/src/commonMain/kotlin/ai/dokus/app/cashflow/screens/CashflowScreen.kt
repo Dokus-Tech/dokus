@@ -452,13 +452,13 @@ private fun PaginationControls(
             PButton(
                 text = "Previous",
                 variant = PButtonVariant.Outline,
-                enabled = page.offset > 0,
+                isEnabled = page.offset > 0,
                 onClick = onPreviousPage
             )
             PButton(
                 text = "Next",
                 variant = PButtonVariant.Default,
-                enabled = page.hasMore,
+                isEnabled = page.hasMore,
                 onClick = onNextPage
             )
         }
@@ -521,6 +521,7 @@ private fun MobileDocumentCard(
                     val needsAlert = when (document) {
                         is FinancialDocumentDto.InvoiceDto -> document.status == InvoiceStatus.Sent || document.status == InvoiceStatus.Overdue
                         is FinancialDocumentDto.ExpenseDto -> false
+                        is FinancialDocumentDto.BillDto -> false
                     }
                     if (needsAlert) {
                         Box(
@@ -537,6 +538,7 @@ private fun MobileDocumentCard(
                     val documentNumber = when (document) {
                         is FinancialDocumentDto.InvoiceDto -> document.invoiceNumber.toString()
                         is FinancialDocumentDto.ExpenseDto -> "EXP-${document.id.value}"
+                        is FinancialDocumentDto.BillDto -> document.invoiceNumber ?: "BILL-${document.id.value}"
                     }
                     Text(
                         text = documentNumber,
@@ -549,6 +551,7 @@ private fun MobileDocumentCard(
                 val contactName = when (document) {
                     is FinancialDocumentDto.InvoiceDto -> "Name Surname" // TODO: Get from client
                     is FinancialDocumentDto.ExpenseDto -> document.merchant
+                    is FinancialDocumentDto.BillDto -> document.supplierName
                 }
                 Text(
                     text = contactName,
@@ -578,6 +581,7 @@ private fun MobileDocumentCard(
                 type = when (document) {
                     is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
                     is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
+                    is FinancialDocumentDto.BillDto -> CashflowType.CashOut
                 }
             )
         }

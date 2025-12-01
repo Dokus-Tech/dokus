@@ -19,6 +19,7 @@ fun List<FinancialDocumentDto>.needingConfirmation(): List<FinancialDocumentDto>
         when (doc) {
             is FinancialDocumentDto.InvoiceDto -> doc.status == InvoiceStatus.Sent || doc.status == InvoiceStatus.Overdue
             is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a confirmation workflow by default
+            is FinancialDocumentDto.BillDto -> false // Bills don't have a confirmation workflow by default
         }
     }
 }

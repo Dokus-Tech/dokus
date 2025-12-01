@@ -1,6 +1,6 @@
 package ai.dokus.cashflow.backend.routes
 
-import ai.dokus.cashflow.backend.repository.BillRepository
+import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
@@ -18,7 +18,6 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
 
 /**
  * Bill API Routes (Cash-Out: Incoming Supplier Invoices)
@@ -27,8 +26,7 @@ import org.slf4j.LoggerFactory
  * All routes require JWT authentication and tenant context.
  */
 fun Route.billRoutes() {
-    val billRepository by inject<BillRepository>()
-    val logger = LoggerFactory.getLogger("BillRoutes")
+    val billService by inject<BillService>()
 
     route("/api/v1/cashflow/cash-out/bills") {
         authenticateJwt {
@@ -37,15 +35,9 @@ fun Route.billRoutes() {
             post {
                 val tenantId = dokusPrincipal.requireTenantId()
                 val request = call.receive<CreateBillRequest>()
-                logger.info("Creating bill for tenant: $tenantId, supplier: ${request.supplierName}")
 
-                val bill = billRepository.createBill(tenantId, request)
-                    .onSuccess { logger.info("Bill created: ${it.id}") }
-                    .onFailure {
-                        logger.error("Failed to create bill for tenant: $tenantId", it)
-                        throw DokusException.InternalError("Failed to create bill: ${it.message}")
-                    }
-                    .getOrThrow()
+                val bill = billService.createBill(tenantId, request)
+                    .getOrElse { throw DokusException.InternalError("Failed to create bill: ${it.message}") }
 
                 call.respond(HttpStatusCode.Created, bill)
             }
@@ -56,14 +48,8 @@ fun Route.billRoutes() {
                 val billId = call.parameters.billId
                     ?: throw DokusException.BadRequest("Bill ID is required")
 
-                logger.info("Fetching bill: $billId for tenant: $tenantId")
-
-                val bill = billRepository.getBill(billId, tenantId)
-                    .onFailure {
-                        logger.error("Failed to fetch bill: $billId", it)
-                        throw DokusException.InternalError("Failed to fetch bill: ${it.message}")
-                    }
-                    .getOrThrow()
+                val bill = billService.getBill(billId, tenantId)
+                    .getOrElse { throw DokusException.InternalError("Failed to fetch bill: ${it.message}") }
                     ?: throw DokusException.NotFound("Bill not found")
 
                 call.respond(HttpStatusCode.OK, bill)
@@ -86,9 +72,7 @@ fun Route.billRoutes() {
                     throw DokusException.BadRequest("Offset must be non-negative")
                 }
 
-                logger.info("Listing bills for tenant: $tenantId (status=$status, category=$category, limit=$limit, offset=$offset)")
-
-                val bills = billRepository.listBills(
+                val bills = billService.listBills(
                     tenantId = tenantId,
                     status = status,
                     category = category,
@@ -96,13 +80,7 @@ fun Route.billRoutes() {
                     toDate = toDate,
                     limit = limit,
                     offset = offset
-                )
-                    .onSuccess { logger.info("Retrieved ${it.items.size} bills (total=${it.total})") }
-                    .onFailure {
-                        logger.error("Failed to list bills for tenant: $tenantId", it)
-                        throw DokusException.InternalError("Failed to list bills: ${it.message}")
-                    }
-                    .getOrThrow()
+                ).getOrElse { throw DokusException.InternalError("Failed to list bills: ${it.message}") }
 
                 call.respond(HttpStatusCode.OK, bills)
             }
@@ -110,15 +88,9 @@ fun Route.billRoutes() {
             // GET /api/v1/cashflow/cash-out/bills/overdue - List overdue bills
             get("/overdue") {
                 val tenantId = dokusPrincipal.requireTenantId()
-                logger.info("Listing overdue bills for tenant: $tenantId")
 
-                val bills = billRepository.listOverdueBills(tenantId)
-                    .onSuccess { logger.info("Retrieved ${it.size} overdue bills") }
-                    .onFailure {
-                        logger.error("Failed to list overdue bills for tenant: $tenantId", it)
-                        throw DokusException.InternalError("Failed to list overdue bills: ${it.message}")
-                    }
-                    .getOrThrow()
+                val bills = billService.listOverdueBills(tenantId)
+                    .getOrElse { throw DokusException.InternalError("Failed to list overdue bills: ${it.message}") }
 
                 call.respond(HttpStatusCode.OK, bills)
             }
@@ -130,15 +102,9 @@ fun Route.billRoutes() {
                     ?: throw DokusException.BadRequest("Bill ID is required")
 
                 val request = call.receive<CreateBillRequest>()
-                logger.info("Updating bill: $billId")
 
-                val bill = billRepository.updateBill(billId, tenantId, request)
-                    .onSuccess { logger.info("Bill updated: $billId") }
-                    .onFailure {
-                        logger.error("Failed to update bill: $billId", it)
-                        throw DokusException.InternalError("Failed to update bill: ${it.message}")
-                    }
-                    .getOrThrow()
+                val bill = billService.updateBill(billId, tenantId, request)
+                    .getOrElse { throw DokusException.InternalError("Failed to update bill: ${it.message}") }
 
                 call.respond(HttpStatusCode.OK, bill)
             }
@@ -150,22 +116,17 @@ fun Route.billRoutes() {
                     ?: throw DokusException.BadRequest("Bill ID is required")
 
                 val request = call.receive<UpdateBillStatusRequest>()
-                logger.info("Updating bill status: $billId -> ${request.status}")
 
-                val updated = billRepository.updateBillStatus(billId, tenantId, request.status)
-                    .onSuccess { logger.info("Bill status updated: $billId -> ${request.status}") }
-                    .onFailure {
-                        logger.error("Failed to update bill status: $billId", it)
-                        throw DokusException.InternalError("Failed to update bill status: ${it.message}")
-                    }
-                    .getOrThrow()
+                val updated = billService.updateBillStatus(billId, tenantId, request.status)
+                    .getOrElse { throw DokusException.InternalError("Failed to update bill status: ${it.message}") }
 
                 if (!updated) {
                     throw DokusException.NotFound("Bill not found")
                 }
 
                 // Fetch and return updated bill
-                val bill = billRepository.getBill(billId, tenantId).getOrThrow()
+                val bill = billService.getBill(billId, tenantId)
+                    .getOrElse { throw DokusException.InternalError("Failed to fetch bill: ${it.message}") }
                     ?: throw DokusException.NotFound("Bill not found")
 
                 call.respond(HttpStatusCode.OK, bill)
@@ -178,15 +139,9 @@ fun Route.billRoutes() {
                     ?: throw DokusException.BadRequest("Bill ID is required")
 
                 val request = call.receive<MarkBillPaidRequest>()
-                logger.info("Marking bill as paid: $billId")
 
-                val bill = billRepository.markBillPaid(billId, tenantId, request)
-                    .onSuccess { logger.info("Bill marked as paid: $billId") }
-                    .onFailure {
-                        logger.error("Failed to mark bill as paid: $billId", it)
-                        throw DokusException.InternalError("Failed to mark bill as paid: ${it.message}")
-                    }
-                    .getOrThrow()
+                val bill = billService.markBillPaid(billId, tenantId, request)
+                    .getOrElse { throw DokusException.InternalError("Failed to mark bill as paid: ${it.message}") }
 
                 call.respond(HttpStatusCode.OK, bill)
             }
@@ -197,15 +152,8 @@ fun Route.billRoutes() {
                 val billId = call.parameters.billId
                     ?: throw DokusException.BadRequest("Bill ID is required")
 
-                logger.info("Deleting bill: $billId")
-
-                billRepository.deleteBill(billId, tenantId)
-                    .onSuccess { logger.info("Bill deleted: $billId") }
-                    .onFailure {
-                        logger.error("Failed to delete bill: $billId", it)
-                        throw DokusException.InternalError("Failed to delete bill: ${it.message}")
-                    }
-                    .getOrThrow()
+                billService.deleteBill(billId, tenantId)
+                    .getOrElse { throw DokusException.InternalError("Failed to delete bill: ${it.message}") }
 
                 call.respond(HttpStatusCode.NoContent)
             }
