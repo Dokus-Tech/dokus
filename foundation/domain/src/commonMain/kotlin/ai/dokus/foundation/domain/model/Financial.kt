@@ -478,39 +478,5 @@ data class CreatedFromMediaResponse<T>(
     val mediaId: MediaId
 )
 
-// ============================================================================
-// CASHFLOW OVERVIEW MODELS
-// ============================================================================
-
-@Serializable
-data class CashflowOverview(
-    val period: CashflowPeriod,
-    val cashIn: CashInSummary,
-    val cashOut: CashOutSummary,
-    val netCashflow: Money,
-    val currency: Currency = Currency.Eur
-)
-
-@Serializable
-data class CashflowPeriod(
-    val from: LocalDate,
-    val to: LocalDate
-)
-
-@Serializable
-data class CashInSummary(
-    val total: Money,
-    val paid: Money,
-    val pending: Money,
-    val overdue: Money,
-    val invoiceCount: Int
-)
-
-@Serializable
-data class CashOutSummary(
-    val total: Money,
-    val paid: Money,
-    val pending: Money,
-    val expenseCount: Int,
-    val billCount: Int
-)
+// NOTE: CashflowOverview, CashflowPeriod, CashInSummary, CashOutSummary
+// are defined in Cashflow.kt
