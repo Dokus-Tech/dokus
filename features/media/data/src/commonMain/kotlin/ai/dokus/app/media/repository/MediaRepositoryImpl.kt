@@ -1,14 +1,20 @@
 package ai.dokus.app.media.repository
 
 import ai.dokus.app.media.datasource.MediaRemoteDataSource
-import ai.dokus.app.media.domain.MediaRepository
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.MediaStatus
 import ai.dokus.foundation.domain.ids.MediaId
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaProcessingUpdateRequest
 import ai.dokus.foundation.domain.model.MediaUploadRequest
+import ai.dokus.foundation.domain.repository.MediaRepository
 
+/**
+ * Implementation of MediaRepository that delegates to remote data source.
+ *
+ * Implements interface from foundation/domain so it can be injected
+ * anywhere via DI without direct module dependency.
+ */
 class MediaRepositoryImpl(
     private val remoteDataSource: MediaRemoteDataSource
 ) : MediaRepository {

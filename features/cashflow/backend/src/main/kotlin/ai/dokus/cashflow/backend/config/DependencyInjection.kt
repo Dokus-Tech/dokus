@@ -1,18 +1,32 @@
 package ai.dokus.cashflow.backend.config
 
 import ai.dokus.cashflow.backend.database.tables.AttachmentsTable
+import ai.dokus.cashflow.backend.database.tables.BillsTable
 import ai.dokus.cashflow.backend.database.tables.ExpensesTable
 import ai.dokus.cashflow.backend.database.tables.InvoiceItemsTable
 import ai.dokus.cashflow.backend.database.tables.InvoicesTable
 import ai.dokus.cashflow.backend.repository.AttachmentRepository
+import ai.dokus.cashflow.backend.repository.BillRepository
+import ai.dokus.cashflow.backend.repository.CashflowRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
+import ai.dokus.cashflow.backend.service.BillService
+import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.cashflow.backend.service.DocumentStorageService
+import ai.dokus.cashflow.backend.service.ExpenseService
+import ai.dokus.cashflow.backend.service.FromMediaService
+import ai.dokus.cashflow.backend.service.IMediaService
+import ai.dokus.cashflow.backend.service.InvoiceService
+import ai.dokus.cashflow.backend.service.MediaService
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
@@ -21,6 +35,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
         modules(
             coreModule(appConfig),
             databaseModule,
+            repositoryModule,
             serviceModule
         )
     }
@@ -36,6 +51,18 @@ fun coreModule(appConfig: AppBaseConfig) = module {
     single {
         JwtValidator(appConfig.jwt)
     }
+
+    // HTTP Client for inter-service communication
+    single {
+        HttpClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+        }
+    }
 }
 
 /**
@@ -49,7 +76,8 @@ val databaseModule = module {
                     InvoicesTable,
                     InvoiceItemsTable,
                     ExpensesTable,
-                    AttachmentsTable
+                    AttachmentsTable,
+                    BillsTable
                 )
             }
         }
@@ -57,19 +85,43 @@ val databaseModule = module {
 }
 
 /**
- * Service module - business logic services and repositories
+ * Repository module - data access layer
  */
-val serviceModule = module {
-    // Repositories
+val repositoryModule = module {
     single { AttachmentRepository() }
     single { InvoiceRepository() }
     single { ExpenseRepository() }
+    single { BillRepository() }
+    single { CashflowRepository(get(), get()) }
+}
 
-    // Services
+/**
+ * Service module - business logic services
+ */
+val serviceModule = module {
+    // Document storage service
     single {
         DocumentStorageService(
             storageBasePath = "./storage/documents",
             maxFileSizeMb = 10
         )
     }
+
+    // Media service for inter-service communication
+    // Uses MEDIA_SERVICE_URL environment variable or default for local dev
+    // Bound to interface for testability and dependency inversion
+    single<IMediaService> {
+        val mediaServiceBaseUrl = System.getenv("MEDIA_SERVICE_URL") ?: "http://localhost:8002"
+        MediaService(
+            httpClient = get(),
+            mediaServiceBaseUrl = mediaServiceBaseUrl
+        )
+    }
+
+    // Business logic services
+    single { InvoiceService(get()) }
+    single { ExpenseService(get()) }
+    single { BillService(get()) }
+    single { CashflowOverviewService(get(), get(), get()) }
+    single { FromMediaService(get(), get(), get(), get()) }
 }

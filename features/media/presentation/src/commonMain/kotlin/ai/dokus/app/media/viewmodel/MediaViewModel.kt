@@ -1,10 +1,10 @@
 package ai.dokus.app.media.viewmodel
 
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.app.media.domain.usecases.ListMediaUseCase
-import ai.dokus.app.media.domain.usecases.ListPendingMediaUseCase
-import ai.dokus.app.media.domain.usecases.UploadMediaUseCase
 import ai.dokus.foundation.domain.enums.MediaStatus
+import ai.dokus.foundation.domain.usecases.ListMediaUseCase
+import ai.dokus.foundation.domain.usecases.ListPendingMediaUseCase
+import ai.dokus.foundation.domain.usecases.UploadMediaUseCase
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaUploadRequest
 import ai.dokus.foundation.domain.exceptions.DokusException

@@ -3,15 +3,18 @@ package ai.dokus.foundation.domain.model
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Percentage
 import ai.dokus.foundation.domain.VatRate
+import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.PeppolStatus
+import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
+import ai.dokus.foundation.domain.ids.MediaId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.PeppolId
 import kotlinx.datetime.LocalDate
@@ -20,11 +23,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Sealed interface representing a financial document that can be either an Invoice or an Expense.
+ * Sealed interface representing a financial document that can be an Invoice, Expense, or Bill.
  * This abstraction allows unified handling of documents in the cashflow system.
  *
- * Use [InvoiceDto] for outgoing documents (money you expect to receive).
- * Use [ExpenseDto] for incoming documents (money you spent).
+ * Use [InvoiceDto] for outgoing invoices (Cash-In: money you expect to receive).
+ * Use [ExpenseDto] for expenses/receipts (Cash-Out: money you spent).
+ * Use [BillDto] for incoming supplier invoices (Cash-Out: money you need to pay).
  */
 @Serializable
 sealed interface FinancialDocumentDto {
@@ -99,6 +103,40 @@ sealed interface FinancialDocumentDto {
         override val createdAt: LocalDateTime,
         override val updatedAt: LocalDateTime
     ) : FinancialDocumentDto
+
+    /**
+     * Bill DTO - represents an incoming supplier invoice that needs to be paid.
+     * Used for Cash-Out tracking of money owed to suppliers/vendors.
+     */
+    @Serializable
+    @SerialName("Bill")
+    data class BillDto(
+        val id: BillId,
+        override val tenantId: TenantId,
+        val supplierName: String,
+        val supplierVatNumber: String? = null,
+        val invoiceNumber: String? = null,
+        val issueDate: LocalDate,
+        val dueDate: LocalDate,
+        override val amount: Money,
+        val vatAmount: Money? = null,
+        val vatRate: VatRate? = null,
+        val status: BillStatus,
+        val category: ExpenseCategory,
+        val description: String? = null,
+        val documentUrl: String? = null,
+        val paidAt: LocalDateTime? = null,
+        val paidAmount: Money? = null,
+        val paymentMethod: PaymentMethod? = null,
+        val paymentReference: String? = null,
+        val mediaId: MediaId? = null,
+        override val currency: Currency = Currency.Eur,
+        override val notes: String? = null,
+        override val createdAt: LocalDateTime,
+        override val updatedAt: LocalDateTime
+    ) : FinancialDocumentDto {
+        override val date: LocalDate get() = issueDate
+    }
 }
 
 /**
@@ -123,6 +161,7 @@ data class InvoiceItemDto(
 fun FinancialDocumentDto.typeName(): String = when (this) {
     is FinancialDocumentDto.InvoiceDto -> "Invoice"
     is FinancialDocumentDto.ExpenseDto -> "Expense"
+    is FinancialDocumentDto.BillDto -> "Bill"
 }
 
 /**
@@ -134,3 +173,18 @@ fun FinancialDocumentDto.isInvoice(): Boolean = this is FinancialDocumentDto.Inv
  * Extension function to check if document is an expense.
  */
 fun FinancialDocumentDto.isExpense(): Boolean = this is FinancialDocumentDto.ExpenseDto
+
+/**
+ * Extension function to check if document is a bill.
+ */
+fun FinancialDocumentDto.isBill(): Boolean = this is FinancialDocumentDto.BillDto
+
+/**
+ * Extension function to check if document is cash-in (money coming in).
+ */
+fun FinancialDocumentDto.isCashIn(): Boolean = this is FinancialDocumentDto.InvoiceDto
+
+/**
+ * Extension function to check if document is cash-out (money going out).
+ */
+fun FinancialDocumentDto.isCashOut(): Boolean = this is FinancialDocumentDto.ExpenseDto || this is FinancialDocumentDto.BillDto

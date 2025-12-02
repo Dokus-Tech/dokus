@@ -1,8 +1,47 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.*
-import ai.dokus.foundation.domain.enums.*
-import ai.dokus.foundation.domain.ids.*
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.Percentage
+import ai.dokus.foundation.domain.VatRate
+import ai.dokus.foundation.domain.enums.AuditAction
+import ai.dokus.foundation.domain.enums.BankAccountType
+import ai.dokus.foundation.domain.enums.BankProvider
+import ai.dokus.foundation.domain.enums.BillStatus
+import ai.dokus.foundation.domain.enums.Country
+import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.domain.enums.EntityType
+import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.enums.Language
+import ai.dokus.foundation.domain.enums.PaymentMethod
+import ai.dokus.foundation.domain.enums.TenantPlan
+import ai.dokus.foundation.domain.enums.TenantStatus
+import ai.dokus.foundation.domain.enums.TenantType
+import ai.dokus.foundation.domain.enums.UserRole
+import ai.dokus.foundation.domain.enums.VatReturnStatus
+import ai.dokus.foundation.domain.ids.AddressId
+import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.AuditLogId
+import ai.dokus.foundation.domain.ids.BankConnectionId
+import ai.dokus.foundation.domain.ids.BankTransactionId
+import ai.dokus.foundation.domain.ids.Bic
+import ai.dokus.foundation.domain.ids.BillId
+import ai.dokus.foundation.domain.ids.BusinessUserId
+import ai.dokus.foundation.domain.DisplayName
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
+import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ExpenseId
+import ai.dokus.foundation.domain.ids.Iban
+import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.MediaId
+import ai.dokus.foundation.domain.ids.PaymentId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.TransactionId
+import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.ids.VatReturnId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -330,3 +369,114 @@ data class QuarterInfo(
     val year: Int,
     val quarter: Int
 )
+
+// ============================================================================
+// BILL REQUEST/RESPONSE MODELS
+// ============================================================================
+
+@Serializable
+data class CreateBillRequest(
+    val supplierName: String,
+    val supplierVatNumber: String? = null,
+    val invoiceNumber: String? = null,
+    val issueDate: LocalDate,
+    val dueDate: LocalDate,
+    val amount: Money,
+    val vatAmount: Money? = null,
+    val vatRate: VatRate? = null,
+    val category: ExpenseCategory,
+    val description: String? = null,
+    val notes: String? = null,
+    val mediaId: MediaId? = null
+)
+
+@Serializable
+data class UpdateBillStatusRequest(
+    val billId: BillId,
+    val status: BillStatus
+)
+
+@Serializable
+data class MarkBillPaidRequest(
+    val paidAt: LocalDate,
+    val paidAmount: Money,
+    val paymentMethod: PaymentMethod,
+    val paymentReference: String? = null
+)
+
+// ============================================================================
+// FROM-MEDIA CREATION MODELS
+// ============================================================================
+
+/**
+ * Request to create an invoice from processed media extraction.
+ */
+@Serializable
+data class CreateInvoiceFromMediaRequest(
+    val clientId: ClientId,
+    val corrections: InvoiceCorrections? = null
+)
+
+@Serializable
+data class InvoiceCorrections(
+    val invoiceNumber: String? = null,
+    val issueDate: LocalDate? = null,
+    val dueDate: LocalDate? = null,
+    val notes: String? = null
+)
+
+/**
+ * Request to create an expense from processed media extraction.
+ */
+@Serializable
+data class CreateExpenseFromMediaRequest(
+    val corrections: ExpenseCorrections? = null
+)
+
+@Serializable
+data class ExpenseCorrections(
+    val merchant: String? = null,
+    val date: LocalDate? = null,
+    val amount: Money? = null,
+    val vatAmount: Money? = null,
+    val vatRate: VatRate? = null,
+    val category: ExpenseCategory? = null,
+    val isDeductible: Boolean? = null,
+    val deductiblePercentage: Percentage? = null,
+    val notes: String? = null
+)
+
+/**
+ * Request to create a bill from processed media extraction.
+ */
+@Serializable
+data class CreateBillFromMediaRequest(
+    val corrections: BillCorrections? = null
+)
+
+@Serializable
+data class BillCorrections(
+    val supplierName: String? = null,
+    val supplierVatNumber: String? = null,
+    val invoiceNumber: String? = null,
+    val issueDate: LocalDate? = null,
+    val dueDate: LocalDate? = null,
+    val amount: Money? = null,
+    val vatAmount: Money? = null,
+    val vatRate: VatRate? = null,
+    val category: ExpenseCategory? = null,
+    val description: String? = null,
+    val notes: String? = null
+)
+
+/**
+ * Response when creating an entity from media.
+ */
+@Serializable
+data class CreatedFromMediaResponse<T>(
+    val entity: T,
+    val mediaId: MediaId
+)
+
+// NOTE: CashflowOverview, CashflowPeriod, CashInSummary, CashOutSummary
+// are defined in Cashflow.kt
