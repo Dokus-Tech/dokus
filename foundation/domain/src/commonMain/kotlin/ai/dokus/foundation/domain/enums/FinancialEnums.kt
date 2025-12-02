@@ -156,6 +156,29 @@ enum class PeppolStatus(override val dbValue: String) : DbEnum {
     Rejected("REJECTED")
 }
 
+@Serializable
+enum class PeppolTransmissionDirection(override val dbValue: String) : DbEnum {
+    Outbound("OUTBOUND"),  // Sending invoices to customers
+    Inbound("INBOUND")     // Receiving bills from suppliers
+}
+
+@Serializable
+enum class PeppolDocumentType(override val dbValue: String) : DbEnum {
+    Invoice("INVOICE"),
+    CreditNote("CREDIT_NOTE")
+}
+
+@Serializable
+enum class PeppolVatCategory(override val dbValue: String) : DbEnum {
+    Standard("S"),           // Standard VAT rate
+    ZeroRated("Z"),          // Zero rated
+    Exempt("E"),             // VAT exempt
+    ReverseCharge("AE"),     // Reverse charge (EU cross-border)
+    IntraCommSupply("K"),    // Intra-community supply
+    ExportOutsideEU("G"),    // Export outside EU
+    NotSubject("O")          // Not subject to VAT
+}
+
 // ============================================================================
 // EXPENSE ENUMS
 // ============================================================================
