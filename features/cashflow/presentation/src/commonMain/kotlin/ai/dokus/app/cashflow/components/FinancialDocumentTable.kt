@@ -60,31 +60,37 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
     val cashflowType = when (this) {
         is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
         is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
+        is FinancialDocumentDto.BillDto -> CashflowType.CashOut
     }
 
     val contactName = when (this) {
         is FinancialDocumentDto.InvoiceDto -> "Name Surname" // TODO: Get from client
         is FinancialDocumentDto.ExpenseDto -> this.merchant
+        is FinancialDocumentDto.BillDto -> this.supplierName
     }
 
     val contactEmail = when (this) {
         is FinancialDocumentDto.InvoiceDto -> "mailname@email.com" // TODO: Get from client
         is FinancialDocumentDto.ExpenseDto -> ""
+        is FinancialDocumentDto.BillDto -> ""
     }
 
     val documentId = when (this) {
         is FinancialDocumentDto.InvoiceDto -> id.value.toString()
         is FinancialDocumentDto.ExpenseDto -> id.value.toString()
+        is FinancialDocumentDto.BillDto -> id.value.toString()
     }
 
     val documentNumber = when (this) {
         is FinancialDocumentDto.InvoiceDto -> invoiceNumber.toString()
         is FinancialDocumentDto.ExpenseDto -> "EXP-${id.value}"
+        is FinancialDocumentDto.BillDto -> invoiceNumber ?: "BILL-${id.value}"
     }
 
     val hasAlert = when (this) {
         is FinancialDocumentDto.InvoiceDto -> status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
         is FinancialDocumentDto.ExpenseDto -> false // Expenses don't have a status requiring confirmation
+        is FinancialDocumentDto.BillDto -> false // Bills don't have a status requiring confirmation (yet)
     }
 
     // Format amount with comma separator

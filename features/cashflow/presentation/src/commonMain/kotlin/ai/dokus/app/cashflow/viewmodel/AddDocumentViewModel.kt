@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.components.DroppedFile
-import ai.dokus.app.media.domain.usecases.UploadMediaUseCase
 import ai.dokus.app.core.viewmodel.BaseViewModel
+import ai.dokus.foundation.domain.usecases.UploadMediaUseCase
 import ai.dokus.foundation.domain.model.MediaUploadRequest
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch

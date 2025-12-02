@@ -1,17 +1,22 @@
 package ai.dokus.app.cashflow.datasource
 
+import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
+import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
+import ai.dokus.foundation.domain.model.MarkBillPaidRequest
+import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
@@ -52,7 +57,7 @@ interface CashflowRemoteDataSource {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<FinancialDocumentDto.InvoiceDto>>
+    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>
 
     /**
      * List all overdue invoices for a tenant
@@ -135,7 +140,7 @@ interface CashflowRemoteDataSource {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<FinancialDocumentDto.ExpenseDto>>
+    ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>>
 
     /**
      * Update an existing expense
@@ -160,6 +165,65 @@ interface CashflowRemoteDataSource {
         merchant: String,
         description: String? = null
     ): Result<ExpenseCategory>
+
+    // ============================================================================
+    // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
+    // ============================================================================
+
+    /**
+     * Create a new bill (supplier invoice)
+     * POST /api/v1/cashflow/cash-out/bills
+     */
+    suspend fun createBill(request: CreateBillRequest): Result<FinancialDocumentDto.BillDto>
+
+    /**
+     * Get a single bill by ID
+     * GET /api/v1/cashflow/cash-out/bills/{id}
+     */
+    suspend fun getBill(id: BillId): Result<FinancialDocumentDto.BillDto>
+
+    /**
+     * List bills with optional filtering
+     * GET /api/v1/cashflow/cash-out/bills?status={status}&category={category}&fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
+     */
+    suspend fun listBills(
+        status: BillStatus? = null,
+        category: ExpenseCategory? = null,
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<FinancialDocumentDto.BillDto>>
+
+    /**
+     * List all overdue bills
+     * GET /api/v1/cashflow/cash-out/bills/overdue
+     */
+    suspend fun listOverdueBills(): Result<List<FinancialDocumentDto.BillDto>>
+
+    /**
+     * Update an existing bill
+     * PUT /api/v1/cashflow/cash-out/bills/{id}
+     */
+    suspend fun updateBill(
+        billId: BillId,
+        request: CreateBillRequest
+    ): Result<FinancialDocumentDto.BillDto>
+
+    /**
+     * Mark bill as paid
+     * POST /api/v1/cashflow/cash-out/bills/{id}/pay
+     */
+    suspend fun markBillPaid(
+        billId: BillId,
+        request: MarkBillPaidRequest
+    ): Result<FinancialDocumentDto.BillDto>
+
+    /**
+     * Delete a bill
+     * DELETE /api/v1/cashflow/cash-out/bills/{id}
+     */
+    suspend fun deleteBill(billId: BillId): Result<Unit>
 
     // ============================================================================
     // DOCUMENT/ATTACHMENT MANAGEMENT
@@ -228,6 +292,17 @@ interface CashflowRemoteDataSource {
     // ============================================================================
     // STATISTICS & OVERVIEW
     // ============================================================================
+
+    /**
+     * List combined cashflow documents (invoices + expenses) with pagination.
+     * GET /api/v1/cashflow/documents?fromDate={fromDate}&toDate={toDate}&limit={limit}&offset={offset}
+     */
+    suspend fun listCashflowDocuments(
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<FinancialDocumentDto>>
 
     /**
      * Get cashflow overview for a date range

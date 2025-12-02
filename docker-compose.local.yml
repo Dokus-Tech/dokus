@@ -142,6 +142,26 @@ services:
       timeout: 5s
       retries: 10
 
+  # PostgreSQL Database for Peppol Service
+  postgres-peppol-local:
+    image: postgres:17-alpine
+    container_name: dokus-postgres-peppol-local
+    environment:
+      POSTGRES_DB: dokus_peppol
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: localpassword
+    ports:
+      - "15548:5432"
+    volumes:
+      - postgres-peppol-local:/var/lib/postgresql/data
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_peppol"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # Shared Redis
   redis-local:
     image: redis:8-alpine
@@ -443,6 +463,45 @@ services:
       - ./logs-local:/app/logs
       - media-storage-local:/app/storage/media
 
+  # Peppol Service (e-invoicing via Peppol network)
+  peppol-service-local:
+    image: invoid-vision/dokus-peppol:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-peppol-local
+    environment:
+      PORT: 8080
+      ENVIRONMENT: local
+      DB_URL: jdbc:postgresql://postgres-peppol-local:5432/dokus_peppol
+      DB_USERNAME: dev
+      DB_PASSWORD: localpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: local.dokus.tech
+      JWT_AUDIENCE: dokus-api-local
+      PEPPOL_ENCRYPTION_KEY: local-peppol-encryption-key-32chars!
+      RECOMMAND_BASE_URL: https://api.recommand.eu
+      CASHFLOW_SERVICE_BASE_URL: http://cashflow-service-local:8080
+      AUTH_SERVICE_BASE_URL: http://auth-service-local:8080
+      PEPPOL_INBOX_POLL_ENABLED: "true"
+      PEPPOL_INBOX_POLL_INTERVAL_MINUTES: "15"
+      LOG_LEVEL: DEBUG
+    ports:
+      - "7098:8080"
+      - "15014:5005"
+    depends_on:
+      postgres-peppol-local:
+        condition: service_healthy
+      cashflow-service-local:
+        condition: service_healthy
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-local:/app/logs
+
   # pgAdmin for database management (profile: tools)
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -471,6 +530,7 @@ volumes:
   postgres-banking-local:
   postgres-cashflow-local:
   postgres-media-local:
+  postgres-peppol-local:
   redis-data-local:
   rabbitmq-data-local:
   pgadmin-data:

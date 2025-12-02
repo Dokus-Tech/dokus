@@ -45,3 +45,27 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
     override val validOrThrows: VatNumber
         get() = if (isValid) this else throw DokusException.Validation.InvalidVatNumber
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class PeppolTransmissionId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): PeppolTransmissionId = PeppolTransmissionId(Uuid.random())
+        fun parse(value: String): PeppolTransmissionId = PeppolTransmissionId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class PeppolSettingsId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): PeppolSettingsId = PeppolSettingsId(Uuid.random())
+        fun parse(value: String): PeppolSettingsId = PeppolSettingsId(Uuid.parse(value))
+    }
+}

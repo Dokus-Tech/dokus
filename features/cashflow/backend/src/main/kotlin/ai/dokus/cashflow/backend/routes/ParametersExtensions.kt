@@ -1,10 +1,13 @@
 package ai.dokus.cashflow.backend.routes
 
+import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.ids.MediaId
 import io.ktor.http.*
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
@@ -23,6 +26,14 @@ val Parameters.expenseId: ExpenseId?
     get() = (this["expenseId"] ?: this["id"])?.let { ExpenseId(Uuid.parse(it)) }
 
 @OptIn(ExperimentalUuidApi::class)
+val Parameters.billId: BillId?
+    get() = (this["billId"] ?: this["id"])?.let { BillId(Uuid.parse(it)) }
+
+@OptIn(ExperimentalUuidApi::class)
+val Parameters.mediaId: MediaId?
+    get() = (this["mediaId"] ?: this["id"])?.let { MediaId(Uuid.parse(it)) }
+
+@OptIn(ExperimentalUuidApi::class)
 val Parameters.attachmentId: AttachmentId?
     get() = this["id"]?.let { AttachmentId(Uuid.parse(it)) }
 
@@ -30,6 +41,15 @@ val Parameters.invoiceStatus: InvoiceStatus?
     get() = this["status"]?.let {
         try {
             InvoiceStatus.valueOf(it)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+    }
+
+val Parameters.billStatus: BillStatus?
+    get() = this["status"]?.let {
+        try {
+            BillStatus.valueOf(it)
         } catch (e: IllegalArgumentException) {
             null
         }

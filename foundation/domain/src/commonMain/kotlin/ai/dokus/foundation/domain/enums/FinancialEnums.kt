@@ -128,6 +128,16 @@ enum class InvoiceStatus(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
+enum class BillStatus(override val dbValue: String) : DbEnum {
+    Draft("DRAFT"),
+    Pending("PENDING"),
+    Scheduled("SCHEDULED"),
+    Paid("PAID"),
+    Overdue("OVERDUE"),
+    Cancelled("CANCELLED")
+}
+
+@Serializable
 enum class Currency(override val dbValue: String) : DbEnum {
     Eur("EUR"),
     Usd("USD"),
@@ -144,6 +154,29 @@ enum class PeppolStatus(override val dbValue: String) : DbEnum {
     Delivered("DELIVERED"),
     Failed("FAILED"),
     Rejected("REJECTED")
+}
+
+@Serializable
+enum class PeppolTransmissionDirection(override val dbValue: String) : DbEnum {
+    Outbound("OUTBOUND"),  // Sending invoices to customers
+    Inbound("INBOUND")     // Receiving bills from suppliers
+}
+
+@Serializable
+enum class PeppolDocumentType(override val dbValue: String) : DbEnum {
+    Invoice("INVOICE"),
+    CreditNote("CREDIT_NOTE")
+}
+
+@Serializable
+enum class PeppolVatCategory(override val dbValue: String) : DbEnum {
+    Standard("S"),           // Standard VAT rate
+    ZeroRated("Z"),          // Zero rated
+    Exempt("E"),             // VAT exempt
+    ReverseCharge("AE"),     // Reverse charge (EU cross-border)
+    IntraCommSupply("K"),    // Intra-community supply
+    ExportOutsideEU("G"),    // Export outside EU
+    NotSubject("O")          // Not subject to VAT
 }
 
 // ============================================================================
@@ -241,6 +274,13 @@ enum class AuditAction(override val dbValue: String) : DbEnum {
     ExpenseUpdated("EXPENSE_UPDATED"),
     ExpenseDeleted("EXPENSE_DELETED"),
 
+    // Bill actions
+    BillCreated("BILL_CREATED"),
+    BillUpdated("BILL_UPDATED"),
+    BillDeleted("BILL_DELETED"),
+    BillPaid("BILL_PAID"),
+    BillStatusChanged("BILL_STATUS_CHANGED"),
+
     // Client actions
     ClientCreated("CLIENT_CREATED"),
     ClientUpdated("CLIENT_UPDATED"),
@@ -273,6 +313,7 @@ enum class EntityType(override val dbValue: String) : DbEnum {
     InvoiceItem("INVOICE_ITEM"),
     Client("CLIENT"),
     Expense("EXPENSE"),
+    Bill("BILL"),
     Payment("PAYMENT"),
     BankConnection("BANK_CONNECTION"),
     BankTransaction("BANK_TRANSACTION"),
