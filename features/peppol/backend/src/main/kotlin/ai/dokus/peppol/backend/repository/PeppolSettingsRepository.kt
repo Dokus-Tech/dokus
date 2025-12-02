@@ -5,6 +5,7 @@ import ai.dokus.foundation.domain.ids.PeppolSettingsId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
+import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.peppol.backend.database.tables.PeppolSettingsTable
 import kotlinx.datetime.Clock
@@ -17,13 +18,16 @@ import java.util.UUID
 
 /**
  * Repository for Peppol settings.
- * CRITICAL: API credentials should be encrypted before storage.
+ * API credentials are encrypted at rest using AES-256-GCM.
  */
-class PeppolSettingsRepository {
+class PeppolSettingsRepository(
+    private val cryptoService: CredentialCryptoService
+) {
     private val logger = LoggerFactory.getLogger(PeppolSettingsRepository::class.java)
 
     /**
      * Get Peppol settings for a tenant.
+     * Note: This does NOT return API credentials.
      */
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runCatching {
         dbQuery {
@@ -36,6 +40,7 @@ class PeppolSettingsRepository {
 
     /**
      * Get settings with credentials (for internal use only).
+     * Credentials are decrypted before being returned.
      */
     suspend fun getSettingsWithCredentials(tenantId: TenantId): Result<PeppolSettingsWithCredentials?> = runCatching {
         dbQuery {
@@ -48,6 +53,7 @@ class PeppolSettingsRepository {
 
     /**
      * Save (create or update) Peppol settings for a tenant.
+     * Credentials are encrypted before storage.
      */
     suspend fun saveSettings(
         tenantId: TenantId,
@@ -55,6 +61,10 @@ class PeppolSettingsRepository {
     ): Result<PeppolSettingsDto> = runCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = UUID.fromString(tenantId.toString())
+
+        // Encrypt credentials before storage
+        val encryptedApiKey = cryptoService.encrypt(request.apiKey)
+        val encryptedApiSecret = cryptoService.encrypt(request.apiSecret)
 
         dbQuery {
             val existing = PeppolSettingsTable.selectAll()
@@ -65,8 +75,8 @@ class PeppolSettingsRepository {
                 // Update existing
                 PeppolSettingsTable.update({ PeppolSettingsTable.tenantId eq tenantUuid }) {
                     it[companyId] = request.companyId
-                    it[apiKey] = request.apiKey  // TODO: Encrypt
-                    it[apiSecret] = request.apiSecret  // TODO: Encrypt
+                    it[apiKey] = encryptedApiKey
+                    it[apiSecret] = encryptedApiSecret
                     it[peppolId] = request.peppolId
                     it[isEnabled] = request.isEnabled
                     it[testMode] = request.testMode
@@ -84,8 +94,8 @@ class PeppolSettingsRepository {
                     it[id] = newId
                     it[PeppolSettingsTable.tenantId] = tenantUuid
                     it[companyId] = request.companyId
-                    it[apiKey] = request.apiKey  // TODO: Encrypt
-                    it[apiSecret] = request.apiSecret  // TODO: Encrypt
+                    it[apiKey] = encryptedApiKey
+                    it[apiSecret] = encryptedApiSecret
                     it[peppolId] = request.peppolId
                     it[isEnabled] = request.isEnabled
                     it[testMode] = request.testMode
@@ -124,11 +134,16 @@ class PeppolSettingsRepository {
         updatedAt = this[PeppolSettingsTable.updatedAt]
     )
 
-    private fun ResultRow.toDtoWithCredentials(): PeppolSettingsWithCredentials = PeppolSettingsWithCredentials(
-        settings = toDto(),
-        apiKey = this[PeppolSettingsTable.apiKey],  // TODO: Decrypt
-        apiSecret = this[PeppolSettingsTable.apiSecret]  // TODO: Decrypt
-    )
+    private fun ResultRow.toDtoWithCredentials(): PeppolSettingsWithCredentials {
+        val encryptedApiKey = this[PeppolSettingsTable.apiKey]
+        val encryptedApiSecret = this[PeppolSettingsTable.apiSecret]
+
+        return PeppolSettingsWithCredentials(
+            settings = toDto(),
+            apiKey = cryptoService.decrypt(encryptedApiKey),
+            apiSecret = cryptoService.decrypt(encryptedApiSecret)
+        )
+    }
 }
 
 /**

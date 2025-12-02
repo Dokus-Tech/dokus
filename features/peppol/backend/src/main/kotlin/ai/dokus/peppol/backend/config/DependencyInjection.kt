@@ -1,6 +1,8 @@
 package ai.dokus.peppol.backend.config
 
 import ai.dokus.foundation.ktor.config.AppBaseConfig
+import ai.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
+import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.peppol.backend.client.RecommandClient
@@ -23,12 +25,16 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
+    val peppolConfig = PeppolConfig.fromConfig(appConfig.config)
+
     install(Koin) {
         modules(
             coreModule(appConfig),
+            peppolConfigModule(peppolConfig),
+            cryptoModule(peppolConfig),
             databaseModule,
             repositoryModule,
-            clientModule,
+            clientModule(peppolConfig),
             serviceModule
         )
     }
@@ -59,6 +65,29 @@ fun coreModule(appConfig: AppBaseConfig) = module {
 }
 
 /**
+ * Peppol config module - provides Peppol-specific configuration
+ */
+fun peppolConfigModule(peppolConfig: PeppolConfig) = module {
+    single { peppolConfig }
+}
+
+/**
+ * Crypto module - provides credential encryption service
+ */
+fun cryptoModule(peppolConfig: PeppolConfig) = module {
+    single<CredentialCryptoService> {
+        val encryptionKey = peppolConfig.encryptionKey
+
+        require(encryptionKey.length >= 32) {
+            "Encryption key must be at least 32 characters. " +
+                "Set PEPPOL_ENCRYPTION_KEY or ensure JWT_SECRET is at least 32 characters."
+        }
+
+        AesGcmCredentialCryptoService(encryptionKey)
+    }
+}
+
+/**
  * Database module - provides database factory and connection
  */
 val databaseModule = module {
@@ -78,26 +107,24 @@ val databaseModule = module {
  * Repository module - data access layer
  */
 val repositoryModule = module {
-    single { PeppolSettingsRepository() }
+    single { PeppolSettingsRepository(get()) }
     single { PeppolTransmissionRepository() }
 }
 
 /**
  * Client module - external API clients
  */
-val clientModule = module {
+fun clientModule(peppolConfig: PeppolConfig) = module {
     // Recommand API client
     single {
-        val recommandBaseUrl = System.getenv("RECOMMAND_BASE_URL") ?: "https://app.recommand.eu"
-        RecommandClient(get(), recommandBaseUrl)
+        RecommandClient(get(), peppolConfig.recommand.baseUrl)
     }
 
     // Cashflow service client for inter-service communication
     single<ICashflowService> {
-        val cashflowServiceBaseUrl = System.getenv("CASHFLOW_SERVICE_URL") ?: "http://localhost:8000"
         CashflowServiceClient(
             httpClient = get(),
-            cashflowServiceBaseUrl = cashflowServiceBaseUrl
+            cashflowServiceBaseUrl = peppolConfig.cashflowService.baseUrl
         )
     }
 }
