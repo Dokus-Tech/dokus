@@ -19,6 +19,17 @@ import kotlinx.datetime.LocalDate
 import org.slf4j.LoggerFactory
 
 /**
+ * Helper class for parsed address components.
+ * Used internally for parsing free-text addresses into structured parts.
+ */
+private data class ParsedAddressComponents(
+    val street: String?,
+    val city: String?,
+    val postalCode: String?,
+    val country: String?
+)
+
+/**
  * Maps between domain models and Recommand API models.
  */
 class PeppolMapper {
@@ -52,7 +63,7 @@ class PeppolMapper {
                 toRecommandLineItem(item, index + 1)
             },
             note = invoice.notes,
-            buyerReference = null,  // TODO: Add if needed
+            buyerReference = determineBuyerReference(client, invoice),
             paymentMeans = toPaymentMeans(tenantSettings),
             documentCurrencyCode = invoice.currency.dbValue
         )
@@ -82,18 +93,92 @@ class PeppolMapper {
 
     /**
      * Convert tenant settings to Recommand party (seller).
+     * Parses city and postal code from companyAddress if possible.
      */
     private fun toSellerParty(settings: TenantSettings): RecommandParty {
+        val parsedAddress = parseCompanyAddress(settings.companyAddress)
+
         return RecommandParty(
             vatNumber = settings.companyVatNumber?.value,
             name = settings.companyName ?: "Unknown",
-            streetName = settings.companyAddress,
-            cityName = null,  // TODO: Parse from companyAddress
-            postalZone = null,  // TODO: Parse from companyAddress
-            countryCode = "BE",  // Default to Belgium
+            streetName = parsedAddress.street,
+            cityName = parsedAddress.city,
+            postalZone = parsedAddress.postalCode,
+            countryCode = parsedAddress.country ?: "BE",  // Default to Belgium
             contactEmail = null,
             contactName = null
         )
+    }
+
+    /**
+     * Parse a company address string into structured components.
+     * Supports common Belgian/European address formats.
+     */
+    private fun parseCompanyAddress(address: String?): ParsedAddressComponents {
+        if (address.isNullOrBlank()) {
+            return ParsedAddressComponents(null, null, null, null)
+        }
+
+        // Normalize line breaks and multiple spaces
+        val normalized = address.replace("\n", ", ").replace(Regex("\\s+"), " ").trim()
+        val parts = normalized.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+        return when {
+            parts.size >= 3 -> {
+                val (postalCode, city) = parsePostalCodeAndCity(parts[1])
+                ParsedAddressComponents(parts[0], city, postalCode, parseCountryCode(parts.getOrNull(2)))
+            }
+            parts.size == 2 -> {
+                val (postalCode, city) = parsePostalCodeAndCity(parts[1])
+                ParsedAddressComponents(parts[0], city, postalCode, null)
+            }
+            else -> {
+                val (postalCode, city) = parsePostalCodeAndCity(parts[0])
+                if (postalCode != null) {
+                    ParsedAddressComponents(null, city, postalCode, null)
+                } else {
+                    ParsedAddressComponents(parts[0], null, null, null)
+                }
+            }
+        }
+    }
+
+    private fun parsePostalCodeAndCity(text: String): Pair<String?, String?> {
+        val pattern = Regex("^(\\d{4,5}(?:\\s?[A-Z]{2})?)\\s+(.+)$")
+        val match = pattern.find(text.trim())
+        return if (match != null) {
+            Pair(match.groupValues[1], match.groupValues[2])
+        } else {
+            Pair(null, text.takeIf { it.isNotBlank() })
+        }
+    }
+
+    private fun parseCountryCode(country: String?): String? {
+        if (country.isNullOrBlank()) return null
+        val normalized = country.trim().uppercase()
+        return when {
+            normalized.length == 2 -> normalized
+            normalized in listOf("BELGIUM", "BELGIQUE", "BELGIË", "BELGIE") -> "BE"
+            normalized in listOf("NETHERLANDS", "NEDERLAND", "PAYS-BAS") -> "NL"
+            normalized in listOf("FRANCE", "FRANKRIJK") -> "FR"
+            normalized in listOf("GERMANY", "DEUTSCHLAND", "ALLEMAGNE", "DUITSLAND") -> "DE"
+            normalized in listOf("LUXEMBOURG", "LUXEMBURG") -> "LU"
+            else -> country.take(2).uppercase()
+        }
+    }
+
+    /**
+     * Determine the buyer reference for Peppol.
+     * Uses client's company number, VAT number, or invoice reference.
+     */
+    private fun determineBuyerReference(
+        client: ClientDto,
+        invoice: FinancialDocumentDto.InvoiceDto
+    ): String? {
+        // Priority: company number > VAT number > invoice number as fallback
+        return client.companyNumber
+            ?: client.vatNumber?.value
+            ?: invoice.invoiceNumber.value.takeIf { it.length <= 20 }
     }
 
     /**
