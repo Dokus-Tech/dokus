@@ -1,6 +1,6 @@
 package ai.dokus.cashflow.backend.repository
 
-import ai.dokus.cashflow.backend.database.tables.BillsTable
+import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.BillStatus

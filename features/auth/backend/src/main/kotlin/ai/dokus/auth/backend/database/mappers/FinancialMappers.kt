@@ -1,7 +1,7 @@
 package ai.dokus.auth.backend.database.mappers
 
-import ai.dokus.auth.backend.database.tables.TenantMembersTable
-import ai.dokus.auth.backend.database.tables.UsersTable
+import ai.dokus.foundation.database.tables.auth.TenantMembersTable
+import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.ids.TenantId

@@ -1,8 +1,8 @@
 package ai.dokus.banking.backend.config
 
 import ai.dokus.banking.backend.database.services.BankServiceImpl
-import ai.dokus.banking.backend.database.tables.BankConnectionsTable
-import ai.dokus.banking.backend.database.tables.BankTransactionsTable
+import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
+import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig

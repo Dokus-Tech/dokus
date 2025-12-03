@@ -21,6 +21,7 @@ kotlin {
 dependencies {
     implementation(projects.foundation.domain)
     implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.database)
 
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.datetime)

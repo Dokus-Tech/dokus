@@ -1,0 +1,76 @@
+package ai.dokus.foundation.database.tables.cashflow
+
+import ai.dokus.foundation.domain.enums.BillStatus
+import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.enums.PaymentMethod
+import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.date
+import org.jetbrains.exposed.v1.datetime.datetime
+
+/**
+ * Bills table - stores incoming supplier invoices (Cash-Out).
+ *
+ * Bills represent invoices received from suppliers/vendors that need to be paid.
+ * This is different from Expenses which are direct purchases/receipts.
+ *
+ * OWNER: cashflow service
+ * CRITICAL: All queries MUST filter by organization_id for tenant isolation.
+ */
+object BillsTable : UUIDTable("bills") {
+    // Multi-tenancy (CRITICAL)
+    val tenantId = uuid("organization_id")
+
+    // Supplier information
+    val supplierName = varchar("supplier_name", 255)
+    val supplierVatNumber = varchar("supplier_vat_number", 50).nullable()
+
+    // Invoice details
+    val invoiceNumber = varchar("invoice_number", 100).nullable()
+    val issueDate = date("issue_date")
+    val dueDate = date("due_date")
+
+    // Amounts (NUMERIC for exact arithmetic - NO FLOATS!)
+    val amount = decimal("amount", 12, 2)
+    val vatAmount = decimal("vat_amount", 12, 2).nullable()
+    val vatRate = decimal("vat_rate", 5, 4).nullable() // e.g., 0.2100 for 21%
+
+    // Status & Currency
+    val status = dbEnumeration<BillStatus>("status").default(BillStatus.Pending)
+    val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
+
+    // Categorization
+    val category = dbEnumeration<ExpenseCategory>("category")
+    val description = text("description").nullable()
+
+    // Document attachment (references DocumentsTable)
+    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
+
+    // Payment tracking
+    val paidAt = datetime("paid_at").nullable()
+    val paidAmount = decimal("paid_amount", 12, 2).nullable()
+    val paymentMethod = dbEnumeration<PaymentMethod>("payment_method").nullable()
+    val paymentReference = varchar("payment_reference", 255).nullable()
+
+    // Notes
+    val notes = text("notes").nullable()
+
+    // Timestamps
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+    val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
+
+    init {
+        // CRITICAL: Index organization_id for security and performance
+        index(false, tenantId)
+        index(false, status)
+        index(false, dueDate)
+        index(false, supplierName)
+
+        // Composite indexes for common queries
+        index(false, tenantId, status)
+        index(false, tenantId, dueDate)
+        index(false, tenantId, category)
+    }
+}

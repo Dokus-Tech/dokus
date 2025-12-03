@@ -1,8 +1,8 @@
 package ai.dokus.auth.backend.database.mappers
 
-import ai.dokus.auth.backend.database.tables.AddressTable
-import ai.dokus.auth.backend.database.tables.TenantSettingsTable
-import ai.dokus.auth.backend.database.tables.TenantTable
+import ai.dokus.foundation.database.tables.auth.AddressTable
+import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.VatRate

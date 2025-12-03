@@ -1,12 +1,12 @@
 package ai.dokus.cashflow.backend.config
 
-import ai.dokus.cashflow.backend.database.tables.AttachmentsTable
-import ai.dokus.cashflow.backend.database.tables.BillsTable
-import ai.dokus.cashflow.backend.database.tables.DocumentProcessingTable
-import ai.dokus.cashflow.backend.database.tables.DocumentsTable
-import ai.dokus.cashflow.backend.database.tables.ExpensesTable
-import ai.dokus.cashflow.backend.database.tables.InvoiceItemsTable
-import ai.dokus.cashflow.backend.database.tables.InvoicesTable
+import ai.dokus.foundation.database.tables.cashflow.AttachmentsTable
+import ai.dokus.foundation.database.tables.cashflow.BillsTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
+import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
+import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
+import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.BillRepository
 import ai.dokus.cashflow.backend.repository.CashflowRepository

@@ -2,10 +2,10 @@
 
 package ai.dokus.auth.backend.database.repository
 
-import ai.dokus.auth.backend.database.tables.RefreshTokensTable
-import ai.dokus.auth.backend.database.tables.TenantTable
-import ai.dokus.auth.backend.database.tables.TenantMembersTable
-import ai.dokus.auth.backend.database.tables.UsersTable
+import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
+import ai.dokus.foundation.database.tables.auth.TenantTable
+import ai.dokus.foundation.database.tables.auth.TenantMembersTable
+import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType

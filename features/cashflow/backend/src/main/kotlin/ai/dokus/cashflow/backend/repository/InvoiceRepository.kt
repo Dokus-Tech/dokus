@@ -1,7 +1,7 @@
 package ai.dokus.cashflow.backend.repository
 
-import ai.dokus.cashflow.backend.database.tables.InvoiceItemsTable
-import ai.dokus.cashflow.backend.database.tables.InvoicesTable
+import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
+import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Quantity
 import ai.dokus.foundation.domain.VatRate

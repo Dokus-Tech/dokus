@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaExtraction
 import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.media.backend.database.tables.MediaTable
+import ai.dokus.foundation.database.tables.media.MediaTable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder

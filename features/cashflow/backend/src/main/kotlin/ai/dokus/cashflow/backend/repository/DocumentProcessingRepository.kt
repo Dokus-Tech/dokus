@@ -1,7 +1,7 @@
 package ai.dokus.cashflow.backend.repository
 
-import ai.dokus.cashflow.backend.database.tables.DocumentProcessingTable
-import ai.dokus.cashflow.backend.database.tables.DocumentsTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus

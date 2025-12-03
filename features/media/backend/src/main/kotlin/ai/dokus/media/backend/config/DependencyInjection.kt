@@ -10,7 +10,7 @@ import ai.dokus.foundation.messaging.integration.messagingModule
 import ai.dokus.foundation.messaging.messages.MediaProcessingRequestedMessage
 import ai.dokus.foundation.messaging.transport.RabbitMqTransport
 import ai.dokus.foundation.messaging.transport.RabbitMqTransportConfig
-import ai.dokus.media.backend.database.tables.MediaTable
+import ai.dokus.foundation.database.tables.media.MediaTable
 import ai.dokus.media.backend.repository.MediaRepository
 import ai.dokus.media.backend.storage.LocalMediaStorage
 import ai.dokus.media.backend.storage.MediaStorage

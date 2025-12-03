@@ -1,6 +1,6 @@
 package ai.dokus.cashflow.backend.repository
 
-import ai.dokus.cashflow.backend.database.tables.ExpensesTable
+import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Percentage
 import ai.dokus.foundation.domain.VatRate
