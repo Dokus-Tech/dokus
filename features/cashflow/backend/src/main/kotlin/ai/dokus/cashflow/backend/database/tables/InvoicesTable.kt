@@ -47,10 +47,8 @@ object InvoicesTable : UUIDTable("invoices") {
     val peppolSentAt = datetime("peppol_sent_at").nullable()
     val peppolStatus = dbEnumeration<PeppolStatus>("peppol_status").nullable()
 
-    // Document attachment
-    val documentUrl = varchar("document_url", 500).nullable()
-    val documentFilename = varchar("document_filename", 255).nullable()
-    val documentStorageKey = varchar("document_storage_key", 500).nullable()
+    // Document attachment (references DocumentsTable)
+    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
 
     // Payment
     val paymentLink = varchar("payment_link", 500).nullable()

@@ -1,7 +1,10 @@
 package ai.dokus.cashflow.backend.routes
 
+import ai.dokus.cashflow.backend.repository.DocumentRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.ids.DocumentId
+import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
@@ -13,7 +16,6 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
@@ -25,13 +27,18 @@ private const val MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024
 private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")
 
 /**
- * Generic document upload routes.
- * Supports uploading documents to MinIO object storage.
+ * Document upload and retrieval routes.
+ * Documents are stored in MinIO and metadata is persisted in DocumentsTable.
+ *
+ * Endpoints:
+ * - POST /api/v1/documents/upload - Upload a document, returns DocumentDto with id
+ * - GET /api/v1/documents/{id} - Get document by id with fresh presigned download URL
  *
  * Base path: /api/v1/documents
  */
 fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
+    val documentRepository by inject<DocumentRepository>()
     val localStorageService by inject<DocumentStorageService>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
 
@@ -45,7 +52,7 @@ fun Route.documentUploadRoutes() {
              * - file: The document file
              * - prefix: (optional) Storage prefix, e.g., "invoices", "bills", "expenses"
              *
-             * Response: DocumentUploadResponse with URL and storage key
+             * Response: DocumentDto with id and fresh download URL
              */
             post("/upload") {
                 val principal = dokusPrincipal
@@ -114,129 +121,114 @@ fun Route.documentUploadRoutes() {
                 }
 
                 // Upload to MinIO
-                logger.info("Uploading to MinIO: tenant=$tenantId, prefix=$prefix, filename=$filename")
+                logger.info("Uploading to MinIO: tenant=$tenantId, prefix=$prefix")
 
-                try {
-                    val result = minioStorage.uploadDocument(
-                        tenantId = tenantId,
-                        prefix = prefix,
-                        filename = filename!!,
-                        data = fileBytes!!,
-                        contentType = contentType!!
-                    )
+                val result = minioStorage.uploadDocument(
+                    tenantId = tenantId,
+                    prefix = prefix,
+                    filename = filename!!,
+                    data = fileBytes!!,
+                    contentType = contentType!!
+                )
 
-                    logger.info("Document uploaded to MinIO: key=${result.key}, size=${result.sizeBytes}")
+                // Create document record in database
+                val documentId = documentRepository.create(
+                    tenantId = tenantId,
+                    filename = result.filename,
+                    contentType = result.contentType,
+                    sizeBytes = result.sizeBytes,
+                    storageKey = result.key
+                )
 
-                    call.respond(
-                        HttpStatusCode.Created,
-                        DocumentUploadResponse(
-                            url = result.url,
-                            storageKey = result.key,
-                            filename = result.filename,
-                            contentType = result.contentType,
-                            sizeBytes = result.sizeBytes
-                        )
-                    )
-                } catch (e: UnsupportedOperationException) {
-                    // MinIO not configured, fall back to local storage
-                    logger.info("MinIO not configured, using local storage: tenant=$tenantId, prefix=$prefix, filename=$filename")
+                logger.info("Document created: id=$documentId, key=${result.key}, size=${result.sizeBytes}")
 
-                    val storageKey = localStorageService.storeFileLocally(
-                        tenantId = tenantId,
-                        entityType = prefix,
-                        entityId = "uploads",
-                        filename = filename!!,
-                        fileContent = fileBytes!!
-                    ).getOrElse {
-                        logger.error("Failed to store file locally", it)
-                        throw DokusException.InternalError("Failed to store file: ${it.message}")
-                    }
+                // Fetch the created document to return full DTO
+                val document = documentRepository.getById(tenantId, documentId)
+                    ?: throw DokusException.InternalError("Failed to retrieve created document")
 
-                    val downloadUrl = localStorageService.generateDownloadUrl(storageKey)
-
-                    call.respond(
-                        HttpStatusCode.Created,
-                        DocumentUploadResponse(
-                            url = downloadUrl,
-                            storageKey = storageKey,
-                            filename = filename!!,
-                            contentType = contentType!!,
-                            sizeBytes = fileBytes!!.size.toLong()
-                        )
-                    )
-                }
+                // Return with download URL
+                call.respond(
+                    HttpStatusCode.Created,
+                    document.copy(downloadUrl = result.url)
+                )
             }
 
             /**
-             * GET /api/v1/documents/{key}/download-url
-             * Get a presigned download URL for a document.
+             * GET /api/v1/documents/{id}
+             * Get a document by ID with a fresh presigned download URL.
              *
              * Path parameters:
-             * - key: The storage key (URL encoded)
+             * - id: The document ID (UUID)
              *
-             * Response: DocumentDownloadUrlResponse with presigned URL
+             * Response: DocumentDto with fresh downloadUrl
              */
-            get("/{key...}/download-url") {
+            get("/{id}") {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
 
-                // Get the full key from path segments
-                val key = call.parameters.getAll("key")?.joinToString("/")
-                    ?: throw DokusException.BadRequest("Storage key is required")
+                val documentIdStr = call.parameters["id"]
+                    ?: throw DokusException.BadRequest("Document ID is required")
 
-                logger.info("Getting download URL for key (tenant=$tenantId)")
-
-                // Validate key format and tenant ownership
-                // Key format: {prefix}/{tenantId}/{uuid}_{filename}
-                val keyParts = key.split("/")
-                if (keyParts.size < 3) {
-                    logger.warn("Tenant $tenantId attempted to access malformed key")
-                    throw DokusException.NotFound("Document not found")
+                val documentId = try {
+                    DocumentId.parse(documentIdStr)
+                } catch (e: Exception) {
+                    throw DokusException.BadRequest("Invalid document ID format")
                 }
 
-                val keyPrefix = keyParts[0]
-                val keyTenantId = keyParts[1]
+                logger.info("Getting document: id=$documentId, tenant=$tenantId")
 
-                // Verify prefix is allowed
-                if (keyPrefix !in ALLOWED_PREFIXES) {
-                    logger.warn("Tenant $tenantId attempted to access invalid prefix: $keyPrefix")
-                    throw DokusException.NotFound("Document not found")
+                // Fetch document (with tenant isolation)
+                val document = documentRepository.getById(tenantId, documentId)
+                    ?: throw DokusException.NotFound("Document not found")
+
+                // Generate fresh presigned URL
+                val downloadUrl = minioStorage.getDownloadUrl(document.storageKey)
+
+                call.respond(HttpStatusCode.OK, document.copy(downloadUrl = downloadUrl))
+            }
+
+            /**
+             * DELETE /api/v1/documents/{id}
+             * Delete a document by ID.
+             *
+             * Path parameters:
+             * - id: The document ID (UUID)
+             */
+            delete("/{id}") {
+                val principal = dokusPrincipal
+                val tenantId = principal.requireTenantId()
+
+                val documentIdStr = call.parameters["id"]
+                    ?: throw DokusException.BadRequest("Document ID is required")
+
+                val documentId = try {
+                    DocumentId.parse(documentIdStr)
+                } catch (e: Exception) {
+                    throw DokusException.BadRequest("Invalid document ID format")
                 }
 
-                // Verify tenant ownership - must match exactly
-                if (keyTenantId != tenantId.toString()) {
-                    logger.warn("Tenant $tenantId attempted to access document belonging to tenant $keyTenantId")
-                    throw DokusException.NotFound("Document not found")
-                }
+                logger.info("Deleting document: id=$documentId, tenant=$tenantId")
 
+                // Fetch document first to get storage key
+                val document = documentRepository.getById(tenantId, documentId)
+                    ?: throw DokusException.NotFound("Document not found")
+
+                // Delete from MinIO
                 try {
-                    val url = minioStorage.getDownloadUrl(key)
-                    call.respond(HttpStatusCode.OK, DocumentDownloadUrlResponse(url))
-                } catch (e: UnsupportedOperationException) {
-                    val url = localStorageService.generateDownloadUrl(key)
-                    call.respond(HttpStatusCode.OK, DocumentDownloadUrlResponse(url))
+                    minioStorage.deleteDocument(document.storageKey)
+                } catch (e: Exception) {
+                    logger.warn("Failed to delete document from MinIO: ${e.message}")
+                    // Continue with DB deletion even if MinIO delete fails
                 }
+
+                // Delete from database
+                val deleted = documentRepository.delete(tenantId, documentId)
+                if (!deleted) {
+                    throw DokusException.InternalError("Failed to delete document from database")
+                }
+
+                call.respond(HttpStatusCode.NoContent)
             }
         }
     }
 }
-
-/**
- * Response for document upload
- */
-@Serializable
-data class DocumentUploadResponse(
-    val url: String,
-    val storageKey: String,
-    val filename: String,
-    val contentType: String,
-    val sizeBytes: Long
-)
-
-/**
- * Response for document download URL request
- */
-@Serializable
-data class DocumentDownloadUrlResponse(
-    val downloadUrl: String
-)

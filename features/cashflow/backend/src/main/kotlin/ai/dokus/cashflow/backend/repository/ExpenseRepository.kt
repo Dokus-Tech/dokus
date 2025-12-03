@@ -41,8 +41,7 @@ class ExpenseRepository {
                 it[vatRate] = request.vatRate?.let { rate -> java.math.BigDecimal(rate.value) }
                 it[category] = request.category
                 it[description] = request.description
-                it[receiptUrl] = request.receiptUrl
-                it[receiptFilename] = request.receiptFilename
+                it[documentId] = request.documentId?.let { docId -> UUID.fromString(docId.toString()) }
                 it[isDeductible] = request.isDeductible ?: true
                 it[deductiblePercentage] = request.deductiblePercentage?.let { pct -> java.math.BigDecimal(pct.value) } ?: java.math.BigDecimal("100.00")
                 it[paymentMethod] = request.paymentMethod
@@ -65,8 +64,7 @@ class ExpenseRepository {
                     vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                     category = row[ExpensesTable.category],
                     description = row[ExpensesTable.description],
-                    receiptUrl = row[ExpensesTable.receiptUrl],
-                    receiptFilename = row[ExpensesTable.receiptFilename],
+                    documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
                     isDeductible = row[ExpensesTable.isDeductible],
                     deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                     paymentMethod = row[ExpensesTable.paymentMethod],
@@ -102,8 +100,7 @@ class ExpenseRepository {
                     vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                     category = row[ExpensesTable.category],
                     description = row[ExpensesTable.description],
-                    receiptUrl = row[ExpensesTable.receiptUrl],
-                    receiptFilename = row[ExpensesTable.receiptFilename],
+                    documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
                     isDeductible = row[ExpensesTable.isDeductible],
                     deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                     paymentMethod = row[ExpensesTable.paymentMethod],
@@ -160,8 +157,7 @@ class ExpenseRepository {
                         vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                         category = row[ExpensesTable.category],
                         description = row[ExpensesTable.description],
-                        receiptUrl = row[ExpensesTable.receiptUrl],
-                        receiptFilename = row[ExpensesTable.receiptFilename],
+                        documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
                         isDeductible = row[ExpensesTable.isDeductible],
                         deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                         paymentMethod = row[ExpensesTable.paymentMethod],
@@ -214,8 +210,7 @@ class ExpenseRepository {
                 it[vatRate] = request.vatRate?.let { rate -> java.math.BigDecimal(rate.value) }
                 it[category] = request.category
                 it[description] = request.description
-                it[receiptUrl] = request.receiptUrl
-                it[receiptFilename] = request.receiptFilename
+                it[documentId] = request.documentId?.let { docId -> UUID.fromString(docId.toString()) }
                 it[isDeductible] = request.isDeductible ?: true
                 it[deductiblePercentage] = request.deductiblePercentage?.let { pct -> java.math.BigDecimal(pct.value) } ?: java.math.BigDecimal("100.00")
                 it[paymentMethod] = request.paymentMethod
@@ -238,8 +233,7 @@ class ExpenseRepository {
                     vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                     category = row[ExpensesTable.category],
                     description = row[ExpensesTable.description],
-                    receiptUrl = row[ExpensesTable.receiptUrl],
-                    receiptFilename = row[ExpensesTable.receiptFilename],
+                    documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
                     isDeductible = row[ExpensesTable.isDeductible],
                     deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                     paymentMethod = row[ExpensesTable.paymentMethod],

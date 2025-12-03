@@ -2,8 +2,8 @@ package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.components.DroppedFile
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.app.cashflow.datasource.DocumentUploadResult
 import ai.dokus.app.core.viewmodel.BaseViewModel
+import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -18,7 +18,7 @@ class AddDocumentViewModel : BaseViewModel<AddDocumentViewModel.State>(State.Idl
         data object Idle : State
         data object Uploading : State
         data class Error(val message: String) : State
-        data class Success(val uploadedCount: Int, val uploads: List<DocumentUploadResult> = emptyList()) : State
+        data class Success(val uploadedCount: Int, val uploads: List<DocumentDto> = emptyList()) : State
     }
 
     fun uploadFiles(files: List<DroppedFile>) = scope.launch {

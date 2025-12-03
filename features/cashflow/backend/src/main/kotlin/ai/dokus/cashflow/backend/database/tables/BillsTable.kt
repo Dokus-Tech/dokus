@@ -44,9 +44,8 @@ object BillsTable : UUIDTable("bills") {
     val category = dbEnumeration<ExpenseCategory>("category")
     val description = text("description").nullable()
 
-    // Document reference (linked media)
-    val documentUrl = varchar("document_url", 500).nullable()
-    val mediaId = uuid("media_id").nullable()
+    // Document attachment (references DocumentsTable)
+    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
 
     // Payment tracking
     val paidAt = datetime("paid_at").nullable()

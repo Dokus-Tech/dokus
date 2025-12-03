@@ -27,9 +27,8 @@ object ExpensesTable : UUIDTable("expenses") {
     val category = dbEnumeration<ExpenseCategory>("category")
     val description = text("description").nullable()
 
-    // Receipt/document
-    val receiptUrl = varchar("receipt_url", 500).nullable()
-    val receiptFilename = varchar("receipt_filename", 255).nullable()
+    // Document attachment (references DocumentsTable)
+    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
 
     // Tax deduction
     val isDeductible = bool("is_deductible").default(true)

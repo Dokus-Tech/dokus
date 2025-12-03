@@ -5,9 +5,11 @@ import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
+import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
@@ -390,7 +392,7 @@ internal class CashflowRemoteDataSourceImpl(
         filename: String,
         contentType: String,
         prefix: String
-    ): Result<DocumentUploadResult> {
+    ): Result<DocumentDto> {
         return runCatching {
             httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
@@ -409,6 +411,18 @@ internal class CashflowRemoteDataSourceImpl(
                     append("prefix", prefix)
                 }
             ).body()
+        }
+    }
+
+    override suspend fun getDocument(documentId: DocumentId): Result<DocumentDto> {
+        return runCatching {
+            httpClient.get("/api/v1/documents/$documentId").body()
+        }
+    }
+
+    override suspend fun deleteDocument(documentId: DocumentId): Result<Unit> {
+        return runCatching {
+            httpClient.delete("/api/v1/documents/$documentId").body()
         }
     }
 
