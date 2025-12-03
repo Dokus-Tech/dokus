@@ -273,7 +273,7 @@ class PeppolMapper {
             category = category,
             description = document.note,
             notes = "Received via Peppol from $senderPeppolId",
-            mediaId = null  // Will be linked later if document has attachments
+            documentId = null  // Will be linked later if document has attachments
         )
     }
 
