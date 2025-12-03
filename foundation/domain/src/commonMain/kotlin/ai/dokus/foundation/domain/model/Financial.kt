@@ -35,7 +35,7 @@ import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.MediaId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.PaymentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.TransactionId
@@ -335,8 +335,7 @@ data class CreateExpenseRequest(
     val vatRate: VatRate? = null,
     val category: ExpenseCategory,
     val description: String? = null,
-    val receiptUrl: String? = null,
-    val receiptFilename: String? = null,
+    val documentId: DocumentId? = null,
     val isDeductible: Boolean? = null,
     val deductiblePercentage: Percentage? = null,
     val isRecurring: Boolean? = null,
@@ -387,7 +386,7 @@ data class CreateBillRequest(
     val category: ExpenseCategory,
     val description: String? = null,
     val notes: String? = null,
-    val mediaId: MediaId? = null
+    val documentId: DocumentId? = null
 )
 
 @Serializable
@@ -470,12 +469,12 @@ data class BillCorrections(
 )
 
 /**
- * Response when creating an entity from media.
+ * Response when creating an entity from a document.
  */
 @Serializable
-data class CreatedFromMediaResponse<T>(
+data class CreatedFromDocumentResponse<T>(
     val entity: T,
-    val mediaId: MediaId
+    val documentId: DocumentId
 )
 
 // NOTE: CashflowOverview, CashflowPeriod, CashInSummary, CashOutSummary

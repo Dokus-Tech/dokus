@@ -2,12 +2,14 @@ package ai.dokus.cashflow.backend.config
 
 import ai.dokus.cashflow.backend.database.tables.AttachmentsTable
 import ai.dokus.cashflow.backend.database.tables.BillsTable
+import ai.dokus.cashflow.backend.database.tables.DocumentsTable
 import ai.dokus.cashflow.backend.database.tables.ExpensesTable
 import ai.dokus.cashflow.backend.database.tables.InvoiceItemsTable
 import ai.dokus.cashflow.backend.database.tables.InvoicesTable
 import ai.dokus.cashflow.backend.repository.AttachmentRepository
 import ai.dokus.cashflow.backend.repository.BillRepository
 import ai.dokus.cashflow.backend.repository.CashflowRepository
+import ai.dokus.cashflow.backend.repository.DocumentRepository
 import ai.dokus.cashflow.backend.repository.ExpenseRepository
 import ai.dokus.cashflow.backend.repository.InvoiceRepository
 import ai.dokus.cashflow.backend.service.BillService
@@ -79,6 +81,7 @@ val databaseModule = module {
         DatabaseFactory(get(), "cashflow-pool").apply {
             runBlocking {
                 init(
+                    DocumentsTable,  // Must come first - referenced by other tables
                     InvoicesTable,
                     InvoiceItemsTable,
                     ExpensesTable,
@@ -95,6 +98,7 @@ val databaseModule = module {
  */
 val repositoryModule = module {
     single { AttachmentRepository() }
+    single { DocumentRepository() }
     single { InvoiceRepository() }
     single { ExpenseRepository() }
     single { BillRepository() }
