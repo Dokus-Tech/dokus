@@ -27,6 +27,10 @@ import io.ktor.server.routing.routing
  * Attachments:
  * - /api/v1/attachments - Attachment management
  *
+ * Documents:
+ * - /api/v1/documents/upload - Upload documents to MinIO storage
+ * - /api/v1/documents/{key}/download-url - Get presigned download URL
+ *
  * @see invoiceRoutes
  * @see expenseRoutes
  * @see billRoutes
@@ -34,6 +38,7 @@ import io.ktor.server.routing.routing
  * @see cashflowOverviewRoutes
  * @see fromMediaRoutes
  * @see cashflowDocumentRoutes
+ * @see documentUploadRoutes
  */
 fun Application.configureCashflowRoutes() {
     routing {
@@ -57,5 +62,8 @@ fun Application.configureCashflowRoutes() {
 
         // Document routes
         cashflowDocumentRoutes()
+
+        // Document upload routes (MinIO)
+        documentUploadRoutes()
     }
 }

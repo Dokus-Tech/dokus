@@ -122,26 +122,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # PostgreSQL Database for Media Service
-  postgres-media-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-media-local
-    environment:
-      POSTGRES_DB: dokus_media
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "15547:5432"
-    volumes:
-      - postgres-media-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_media"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   # PostgreSQL Database for Peppol Service
   postgres-peppol-local:
     image: postgres:17-alpine
@@ -175,6 +155,27 @@ services:
       - dokus-local-network
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # MinIO Object Storage (S3-compatible)
+  minio-local:
+    image: minio/minio:latest
+    container_name: dokus-minio-local
+    environment:
+      MINIO_ROOT_USER: dokusadmin
+      MINIO_ROOT_PASSWORD: dokusadminpassword
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    volumes:
+      - minio-data-local:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -399,8 +400,11 @@ services:
       RABBITMQ_USERNAME: dokus
       RABBITMQ_PASSWORD: localrabbitpass
       RABBITMQ_VHOST: /dokus
-      STORAGE_TYPE: local
-      LOCAL_STORAGE_PATH: /app/storage/documents
+      # MinIO Storage
+      MINIO_ENDPOINT: http://minio-local:9000
+      MINIO_ACCESS_KEY: dokusadmin
+      MINIO_SECRET_KEY: dokusadminpassword
+      MINIO_BUCKET: dokus-documents
       LOG_LEVEL: DEBUG
     ports:
       - "7092:8080"
@@ -411,6 +415,8 @@ services:
       redis-local:
         condition: service_healthy
       rabbitmq-local:
+        condition: service_healthy
+      minio-local:
         condition: service_healthy
     networks:
       - dokus-local-network
@@ -423,45 +429,6 @@ services:
     volumes:
       - ./logs-local:/app/logs
       - cashflow-storage-local:/app/storage/documents
-
-  # Media Service
-  media-service-local:
-    image: invoid-vision/dokus-media:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-media-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-media-local:5432/dokus_media
-      DB_USERNAME: dev
-      DB_PASSWORD: localpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      RABBITMQ_HOST: rabbitmq-local
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: dokus
-      RABBITMQ_PASSWORD: localrabbitpass
-      RABBITMQ_VHOST: /dokus
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7097:8080"
-      - "15013:5005"
-    depends_on:
-      postgres-media-local:
-        condition: service_healthy
-      rabbitmq-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-      - media-storage-local:/app/storage/media
 
   # Peppol Service (e-invoicing via Peppol network)
   peppol-service-local:
@@ -529,10 +496,9 @@ volumes:
   postgres-audit-local:
   postgres-banking-local:
   postgres-cashflow-local:
-  postgres-media-local:
   postgres-peppol-local:
   redis-data-local:
   rabbitmq-data-local:
+  minio-data-local:
   pgadmin-data:
   cashflow-storage-local:
-  media-storage-local:

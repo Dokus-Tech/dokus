@@ -20,6 +20,19 @@ import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
+
+/**
+ * Result of uploading a document to MinIO storage
+ */
+@Serializable
+data class DocumentUploadResult(
+    val url: String,
+    val storageKey: String,
+    val filename: String,
+    val contentType: String,
+    val sizeBytes: Long
+)
 
 /**
  * Remote data source for cashflow operations
@@ -288,6 +301,30 @@ interface CashflowRemoteDataSource {
      * DELETE /api/v1/attachments/{attachmentId}
      */
     suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit>
+
+    // ============================================================================
+    // GENERIC DOCUMENT UPLOAD (MinIO Storage)
+    // ============================================================================
+
+    /**
+     * Upload a document to MinIO object storage.
+     * POST /api/v1/documents/upload
+     *
+     * This is a generic upload endpoint that stores documents in MinIO
+     * and returns a presigned URL and storage key.
+     *
+     * @param fileContent The file content as ByteArray
+     * @param filename Original filename
+     * @param contentType MIME type (e.g., "application/pdf", "image/jpeg")
+     * @param prefix Storage prefix (e.g., "invoices", "bills", "expenses")
+     * @return DocumentUploadResult with URL and storage key
+     */
+    suspend fun uploadDocument(
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String,
+        prefix: String = "documents"
+    ): Result<DocumentUploadResult>
 
     // ============================================================================
     // STATISTICS & OVERVIEW
