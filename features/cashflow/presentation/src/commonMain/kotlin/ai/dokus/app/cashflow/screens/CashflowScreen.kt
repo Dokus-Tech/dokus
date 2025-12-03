@@ -17,7 +17,7 @@ import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -49,12 +50,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.snapshotFlow
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -66,11 +67,11 @@ internal fun CashflowScreen(
     viewModel: CashflowViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val navController = LocalNavController.current
-    var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(viewModel) {
-        viewModel.loadCashflowPage()
+        viewModel.refresh()
     }
 
     Scaffold(
@@ -79,7 +80,7 @@ internal fun CashflowScreen(
                 searchContent = {
                     PSearchFieldCompact(
                         value = searchQuery,
-                        onValueChange = { searchQuery = it },
+                        onValueChange = viewModel::updateSearchQuery,
                         placeholder = "Search..."
                     )
                 },
@@ -104,7 +105,7 @@ internal fun CashflowScreen(
 
             is DokusState.Success -> {
                 SuccessContent(
-                    page = currentState.data,
+                    paginationState = currentState.data,
                     vatSummaryData = VatSummaryData.empty,
                     contentPadding = contentPadding,
                     onDocumentClick = { document ->
@@ -113,8 +114,7 @@ internal fun CashflowScreen(
                     onMoreClick = { document ->
                         // TODO: Show context menu
                     },
-                    onNextPage = viewModel::loadNextPage,
-                    onPreviousPage = viewModel::loadPreviousPage
+                    onLoadMore = viewModel::loadNextPage
                 )
             }
 
@@ -148,13 +148,12 @@ private fun LoadingContent(
  */
 @Composable
 private fun SuccessContent(
-    page: PaginatedResponse<FinancialDocumentDto>,
+    paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
     contentPadding: PaddingValues,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
-    onNextPage: () -> Unit,
-    onPreviousPage: () -> Unit
+    onLoadMore: () -> Unit
 ) {
     // Use BoxWithConstraints to determine layout based on screen size
     BoxWithConstraints(
@@ -167,22 +166,20 @@ private fun SuccessContent(
         if (isLargeScreen) {
             // Desktop layout: Two columns with table on left, VAT summary on right
             DesktopLayout(
-                page = page,
+                paginationState = paginationState,
                 vatSummaryData = vatSummaryData,
                 onDocumentClick = onDocumentClick,
                 onMoreClick = onMoreClick,
-                onNextPage = onNextPage,
-                onPreviousPage = onPreviousPage
+                onLoadMore = onLoadMore
             )
         } else {
             // Mobile layout: Single column with scrollable content
             MobileLayout(
-                page = page,
+                paginationState = paginationState,
                 vatSummaryData = vatSummaryData,
                 onDocumentClick = onDocumentClick,
                 onMoreClick = onMoreClick,
-                onNextPage = onNextPage,
-                onPreviousPage = onPreviousPage
+                onLoadMore = onLoadMore
             )
         }
     }
@@ -195,13 +192,28 @@ private fun SuccessContent(
  */
 @Composable
 private fun DesktopLayout(
-    page: PaginatedResponse<FinancialDocumentDto>,
+    paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
-    onNextPage: () -> Unit,
-    onPreviousPage: () -> Unit
+    onLoadMore: () -> Unit
 ) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState, paginationState.hasMorePages, paginationState.isLoadingMore) {
+        snapshotFlow {
+            val info = listState.layoutInfo
+            (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
+        }
+            .distinctUntilChanged()
+            .filter { (last, total) ->
+                (last + 1) > (total - 5) &&
+                        paginationState.hasMorePages &&
+                        !paginationState.isLoadingMore
+            }
+            .collect { onLoadMore() }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -213,7 +225,8 @@ private fun DesktopLayout(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            state = listState
         ) {
             // Section title
             item {
@@ -225,7 +238,7 @@ private fun DesktopLayout(
             }
 
             // Documents needing confirmation section
-            val pendingDocuments = page.items.needingConfirmation()
+            val pendingDocuments = paginationState.data.needingConfirmation()
             if (pendingDocuments.isNotEmpty()) {
                 item {
                     Column(
@@ -261,7 +274,7 @@ private fun DesktopLayout(
             }
 
             item {
-                if (page.items.isEmpty()) {
+                if (paginationState.data.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -276,7 +289,7 @@ private fun DesktopLayout(
                     }
                 } else {
                     FinancialDocumentTable(
-                        documents = page.items,
+                        documents = paginationState.data,
                         onDocumentClick = onDocumentClick,
                         onMoreClick = onMoreClick,
                         modifier = Modifier.fillMaxWidth()
@@ -284,12 +297,10 @@ private fun DesktopLayout(
                 }
             }
 
-            item {
-                PaginationControls(
-                    page = page,
-                    onNextPage = onNextPage,
-                    onPreviousPage = onPreviousPage
-                )
+            if (paginationState.isLoadingMore) {
+                item {
+                    LoadingMoreItem()
+                }
             }
 
             // Add some bottom padding
@@ -319,17 +330,33 @@ private fun DesktopLayout(
  */
 @Composable
 private fun MobileLayout(
-    page: PaginatedResponse<FinancialDocumentDto>,
+    paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
-    onNextPage: () -> Unit,
-    onPreviousPage: () -> Unit
+    onLoadMore: () -> Unit
 ) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState, paginationState.hasMorePages, paginationState.isLoadingMore) {
+        snapshotFlow {
+            val info = listState.layoutInfo
+            (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
+        }
+            .distinctUntilChanged()
+            .filter { (last, total) ->
+                (last + 1) > (total - 5) &&
+                        paginationState.hasMorePages &&
+                        !paginationState.isLoadingMore
+            }
+            .collect { onLoadMore() }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        state = listState
     ) {
         // VAT Summary Card at top
         item {
@@ -353,7 +380,7 @@ private fun MobileLayout(
         }
 
         // Documents needing confirmation section
-        val pendingDocuments = page.items.needingConfirmation()
+        val pendingDocuments = paginationState.data.needingConfirmation()
         if (pendingDocuments.isNotEmpty()) {
             item {
                 Column(
@@ -384,7 +411,7 @@ private fun MobileLayout(
             )
         }
 
-        if (page.items.isEmpty()) {
+        if (paginationState.data.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier
@@ -400,7 +427,7 @@ private fun MobileLayout(
                 }
             }
         } else {
-            items(page.items) { document ->
+            items(paginationState.data) { document ->
                 MobileDocumentCard(
                     document = document,
                     onClick = { onDocumentClick(document) }
@@ -408,59 +435,15 @@ private fun MobileLayout(
             }
         }
 
-        item {
-            PaginationControls(
-                page = page,
-                onNextPage = onNextPage,
-                onPreviousPage = onPreviousPage
-            )
+        if (paginationState.isLoadingMore) {
+            item {
+                LoadingMoreItem()
+            }
         }
 
         // Add bottom padding for navigation bar
         item {
             Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-private fun PaginationControls(
-    page: PaginatedResponse<FinancialDocumentDto>,
-    onNextPage: () -> Unit,
-    onPreviousPage: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val start = if (page.total == 0L) 0 else page.offset + 1
-    val end = if (page.total == 0L) 0 else minOf(page.offset + page.items.size, page.total.toInt())
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Showing $start-$end of ${page.total}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            PButton(
-                text = "Previous",
-                variant = PButtonVariant.Outline,
-                isEnabled = page.offset > 0,
-                onClick = onPreviousPage
-            )
-            PButton(
-                text = "Next",
-                variant = PButtonVariant.Default,
-                isEnabled = page.hasMore,
-                onClick = onNextPage
-            )
         }
     }
 }
