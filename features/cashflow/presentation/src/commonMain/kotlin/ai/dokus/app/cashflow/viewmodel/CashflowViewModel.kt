@@ -9,6 +9,7 @@ import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ internal class CashflowViewModel :
         MutableStateFlow(PaginationState<FinancialDocumentDto>(pageSize = PAGE_SIZE))
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    private var searchJob: Job? = null
 
     fun refresh() {
         scope.launch {
@@ -35,11 +37,16 @@ internal class CashflowViewModel :
             paginationState.value = PaginationState(pageSize = PAGE_SIZE)
             loadedDocuments.value = emptyList()
             mutableState.emitLoading()
-            loadPage(page = 0, reset = true)
+            if (_searchQuery.value.isNotEmpty()) {
+                loadSearchResults(_searchQuery.value)
+            } else {
+                loadPage(page = 0, reset = true)
+            }
         }
     }
 
     fun loadNextPage() {
+        if (_searchQuery.value.isNotEmpty()) return
         val current = paginationState.value
         if (current.isLoadingMore || !current.hasMorePages) return
 
@@ -52,14 +59,19 @@ internal class CashflowViewModel :
     }
 
     fun updateSearchQuery(query: String) {
-        _searchQuery.value = query
-        val currentState = mutableState.value
-        if (loadedDocuments.value.isEmpty() &&
-            (currentState is DokusState.Loading || currentState is DokusState.Idle)
-        ) {
-            return
+        val trimmedQuery = query.trim()
+        _searchQuery.value = trimmedQuery
+        searchJob?.cancel()
+        searchJob = scope.launch {
+            paginationState.value = PaginationState(pageSize = PAGE_SIZE)
+            loadedDocuments.value = emptyList()
+            mutableState.emitLoading()
+            if (trimmedQuery.isEmpty()) {
+                loadPage(page = 0, reset = true)
+            } else {
+                loadSearchResults(trimmedQuery)
+            }
         }
-        emitSuccess()
     }
 
     private suspend fun loadPage(page: Int, reset: Boolean) {
@@ -96,6 +108,44 @@ internal class CashflowViewModel :
                 }
             }
         )
+    }
+
+    private suspend fun loadSearchResults(query: String) {
+        val allDocuments = mutableListOf<FinancialDocumentDto>()
+        var offset = 0
+        var hasMore: Boolean
+
+        do {
+            val pageResult = cashflowDataSource.listCashflowDocuments(
+                limit = PAGE_SIZE,
+                offset = offset
+            )
+
+            if (pageResult.isFailure) {
+                val error = pageResult.exceptionOrNull()!!
+                logger.e(error) { "Failed to load cashflow search results" }
+                paginationState.value = paginationState.value.copy(
+                    isLoadingMore = false,
+                    hasMorePages = false
+                )
+                mutableState.emit(error) { loadSearchResults(query) }
+                return
+            }
+
+            val page = pageResult.getOrThrow()
+            allDocuments.addAll(page.items)
+            hasMore = page.hasMore
+            offset += PAGE_SIZE
+        } while (hasMore)
+
+        loadedDocuments.value = allDocuments
+        paginationState.value = paginationState.value.copy(
+            currentPage = allDocuments.size / PAGE_SIZE,
+            isLoadingMore = false,
+            hasMorePages = false,
+            pageSize = PAGE_SIZE
+        )
+        emitSuccess()
     }
 
     private fun emitSuccess() {
