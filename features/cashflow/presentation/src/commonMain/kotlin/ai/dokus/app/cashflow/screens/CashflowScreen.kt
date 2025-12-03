@@ -448,6 +448,19 @@ private fun MobileLayout(
     }
 }
 
+@Composable
+private fun LoadingMoreItem() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
 /**
  * Compact list view for mobile showing document items.
  */
