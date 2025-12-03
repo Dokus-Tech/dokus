@@ -1,13 +1,17 @@
 package ai.dokus.cashflow.backend.routes
 
+import ai.dokus.cashflow.backend.repository.DocumentProcessingRepository
 import ai.dokus.cashflow.backend.repository.DocumentRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.DocumentId
+import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import ai.dokus.foundation.messaging.messages.DocumentProcessingRequestedMessage
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.request.*
@@ -16,6 +20,7 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
@@ -36,9 +41,20 @@ private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses
  *
  * Base path: /api/v1/documents
  */
+/**
+ * Response for document upload including processing info.
+ */
+@Serializable
+data class DocumentUploadResponse(
+    val document: DocumentDto,
+    val processingId: DocumentProcessingId,
+    val processingStatus: String
+)
+
 fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
+    val processingRepository by inject<DocumentProcessingRepository>()
     val localStorageService by inject<DocumentStorageService>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
 
@@ -142,14 +158,38 @@ fun Route.documentUploadRoutes() {
 
                 logger.info("Document created: id=$documentId, key=${result.key}, size=${result.sizeBytes}")
 
+                // Create processing record for AI extraction
+                val processing = processingRepository.create(
+                    documentId = documentId,
+                    tenantId = tenantId
+                )
+
+                logger.info("Processing record created: id=${processing.id}, documentId=$documentId")
+
                 // Fetch the created document to return full DTO
                 val document = documentRepository.getById(tenantId, documentId)
                     ?: throw DokusException.InternalError("Failed to retrieve created document")
 
-                // Return with download URL
+                // TODO: Publish to RabbitMQ for immediate processing
+                // val message = DocumentProcessingRequestedMessage.create(
+                //     documentId = documentId,
+                //     processingId = processing.id,
+                //     tenantId = tenantId,
+                //     storageKey = result.key,
+                //     filename = result.filename,
+                //     mimeType = result.contentType,
+                //     sizeBytes = result.sizeBytes
+                // )
+                // messagePublisher.publish(message)
+
+                // Return with document and processing info
                 call.respond(
                     HttpStatusCode.Created,
-                    document.copy(downloadUrl = result.url)
+                    DocumentUploadResponse(
+                        document = document.copy(downloadUrl = result.url),
+                        processingId = processing.id,
+                        processingStatus = processing.status.name
+                    )
                 )
             }
 

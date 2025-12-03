@@ -29,7 +29,12 @@ import io.ktor.server.routing.routing
  *
  * Documents:
  * - /api/v1/documents/upload - Upload documents to MinIO storage
- * - /api/v1/documents/{key}/download-url - Get presigned download URL
+ * - /api/v1/documents/{id} - Get document by ID with download URL
+ * - /api/v1/documents/processing - List documents by processing status
+ * - /api/v1/documents/{id}/processing - Get processing details
+ * - /api/v1/documents/{id}/confirm - Confirm extraction and create entity
+ * - /api/v1/documents/{id}/reject - Reject extraction
+ * - /api/v1/documents/{id}/reprocess - Trigger re-extraction
  *
  * @see invoiceRoutes
  * @see expenseRoutes
@@ -65,5 +70,8 @@ fun Application.configureCashflowRoutes() {
 
         // Document upload routes (MinIO)
         documentUploadRoutes()
+
+        // Document processing routes (AI extraction)
+        documentProcessingRoutes()
     }
 }
