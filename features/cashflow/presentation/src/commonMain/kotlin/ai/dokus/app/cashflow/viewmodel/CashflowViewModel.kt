@@ -9,11 +9,12 @@ import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -32,6 +33,7 @@ internal class CashflowViewModel :
     private var searchJob: Job? = null
 
     fun refresh() {
+        searchJob?.cancel()
         scope.launch {
             logger.d { "Refreshing cashflow data" }
             paginationState.value = PaginationState(pageSize = PAGE_SIZE)
@@ -110,42 +112,44 @@ internal class CashflowViewModel :
         )
     }
 
-    private suspend fun loadSearchResults(query: String) {
-        val allDocuments = mutableListOf<FinancialDocumentDto>()
-        var offset = 0
-        var hasMore: Boolean
+    private fun loadSearchResults(query: String) {
+        viewModelScope.launch {
+            val allDocuments = mutableListOf<FinancialDocumentDto>()
+            var offset = 0
+            var hasMore: Boolean
 
-        do {
-            val pageResult = cashflowDataSource.listCashflowDocuments(
-                limit = PAGE_SIZE,
-                offset = offset
-            )
-
-            if (pageResult.isFailure) {
-                val error = pageResult.exceptionOrNull()!!
-                logger.e(error) { "Failed to load cashflow search results" }
-                paginationState.value = paginationState.value.copy(
-                    isLoadingMore = false,
-                    hasMorePages = false
+            do {
+                val pageResult = cashflowDataSource.listCashflowDocuments(
+                    limit = PAGE_SIZE,
+                    offset = offset
                 )
-                mutableState.emit(error) { loadSearchResults(query) }
-                return
-            }
 
-            val page = pageResult.getOrThrow()
-            allDocuments.addAll(page.items)
-            hasMore = page.hasMore
-            offset += PAGE_SIZE
-        } while (hasMore)
+                if (pageResult.isFailure) {
+                    val error = pageResult.exceptionOrNull()!!
+                    logger.e(error) { "Failed to load cashflow search results" }
+                    paginationState.value = paginationState.value.copy(
+                        isLoadingMore = false,
+                        hasMorePages = false
+                    )
+                    mutableState.emit(error) { loadSearchResults(query) }
+                    return@launch
+                }
 
-        loadedDocuments.value = allDocuments
-        paginationState.value = paginationState.value.copy(
-            currentPage = allDocuments.size / PAGE_SIZE,
-            isLoadingMore = false,
-            hasMorePages = false,
-            pageSize = PAGE_SIZE
-        )
-        emitSuccess()
+                val page = pageResult.getOrThrow()
+                allDocuments.addAll(page.items)
+                hasMore = page.hasMore
+                offset += PAGE_SIZE
+            } while (hasMore)
+
+            loadedDocuments.value = allDocuments
+            paginationState.value = paginationState.value.copy(
+                currentPage = allDocuments.size / PAGE_SIZE,
+                isLoadingMore = false,
+                hasMorePages = false,
+                pageSize = PAGE_SIZE
+            )
+            emitSuccess()
+        }
     }
 
     private fun emitSuccess() {
