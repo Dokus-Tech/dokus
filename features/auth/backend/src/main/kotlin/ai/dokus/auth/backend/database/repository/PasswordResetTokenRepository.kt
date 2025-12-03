@@ -2,7 +2,7 @@
 
 package ai.dokus.auth.backend.database.repository
 
-import ai.dokus.auth.backend.database.tables.PasswordResetTokensTable
+import ai.dokus.foundation.database.tables.auth.PasswordResetTokensTable
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now

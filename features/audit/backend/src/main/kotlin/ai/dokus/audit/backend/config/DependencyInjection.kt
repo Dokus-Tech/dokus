@@ -1,7 +1,7 @@
 package ai.dokus.audit.backend.config
 
 import ai.dokus.audit.backend.database.services.AuditServiceImpl
-import ai.dokus.audit.backend.database.tables.AuditLogsTable
+import ai.dokus.foundation.database.tables.audit.AuditLogsTable
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig

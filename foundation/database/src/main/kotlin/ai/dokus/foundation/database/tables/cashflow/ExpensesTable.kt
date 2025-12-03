@@ -1,0 +1,63 @@
+package ai.dokus.foundation.database.tables.cashflow
+
+import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.enums.PaymentMethod
+import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.date
+import org.jetbrains.exposed.v1.datetime.datetime
+
+/**
+ * Expenses table - stores all business expenses.
+ *
+ * OWNER: cashflow service
+ * CRITICAL: All queries MUST filter by organization_id
+ */
+object ExpensesTable : UUIDTable("expenses") {
+    // Multi-tenancy (CRITICAL)
+    val tenantId = uuid("organization_id")
+
+    // Expense details
+    val date = date("date")
+    val merchant = varchar("merchant", 255)
+    val amount = decimal("amount", 12, 2)
+    val vatAmount = decimal("vat_amount", 12, 2).nullable()
+    val vatRate = decimal("vat_rate", 5, 4).nullable() // e.g., 0.2100 for 21%
+
+    // Categorization
+    val category = dbEnumeration<ExpenseCategory>("category")
+    val description = text("description").nullable()
+
+    // Document attachment (references DocumentsTable)
+    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
+
+    // Tax deduction
+    val isDeductible = bool("is_deductible").default(true)
+    val deductiblePercentage = decimal("deductible_percentage", 5, 2).default(java.math.BigDecimal("100.00"))
+
+    // Payment
+    val paymentMethod = dbEnumeration<PaymentMethod>("payment_method").nullable()
+
+    // Recurring
+    val isRecurring = bool("is_recurring").default(false)
+
+    // Notes
+    val notes = text("notes").nullable()
+
+    // Timestamps
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+    val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
+
+    init {
+        // CRITICAL: Index organization_id for security and performance
+        index(false, tenantId)
+        index(false, category)
+        index(false, date)
+        index(false, merchant)
+
+        // Composite index for common queries
+        index(false, tenantId, category)
+        index(false, tenantId, date)
+    }
+}

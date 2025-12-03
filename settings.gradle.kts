@@ -41,6 +41,7 @@ include(":foundation:platform")
 include(":foundation:navigation")
 include(":foundation:ktor-common")
 include(":foundation:messaging")
+include(":foundation:database")
 
 include(":features:auth:backend")
 include(":features:auth:presentation")
