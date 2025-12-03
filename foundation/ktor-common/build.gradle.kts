@@ -61,4 +61,7 @@ dependencies {
     implementation(libs.kotlinx.serialization)
 
     implementation(libs.password4j)
+
+    // MinIO object storage
+    implementation(libs.minio)
 }

@@ -65,6 +65,8 @@ sealed interface FinancialDocumentDto {
         val peppolId: PeppolId? = null,
         val peppolSentAt: LocalDateTime? = null,
         val peppolStatus: PeppolStatus? = null,
+        val documentUrl: String? = null,
+        val documentFilename: String? = null,
         val paymentLink: String? = null,
         val paymentLinkExpiresAt: LocalDateTime? = null,
         val paidAt: LocalDateTime? = null,

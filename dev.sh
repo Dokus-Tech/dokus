@@ -97,7 +97,7 @@ PEPPOL_SERVICE_DIR="features/peppol/backend"
 # Format: container:port:dbname
 # Bash 3.2 compatible (no associative arrays)
 
-DB_KEYS="auth payment reporting audit banking cashflow media peppol"
+DB_KEYS="auth payment reporting audit banking cashflow peppol"
 
 # Function to get database config for a given key
 # Returns: service:port:dbname (service name for docker-compose exec)
@@ -110,7 +110,6 @@ get_db_config() {
         reporting) echo "postgres-reporting-local:15544:dokus_reporting" ;;
         audit)     echo "postgres-audit-local:15545:dokus_audit" ;;
         banking)   echo "postgres-banking-local:15546:dokus_banking" ;;
-        media)     echo "postgres-media-local:15547:dokus_media" ;;
         peppol)    echo "postgres-peppol-local:15548:dokus_peppol" ;;
         *) echo "" ;;
     esac
@@ -292,7 +291,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "media" "peppol")
+    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "peppol")
     local total=${#services[@]}
     local current=0
 
@@ -408,7 +407,6 @@ start_services() {
             "Reporting:7094:/health"
             "Audit:7095:/health"
             "Banking:7096:/health"
-            "Media:7097:/health"
             "Peppol:7098:/health"
         )
 
@@ -515,7 +513,6 @@ show_status() {
         "Reporting Service:7094:/health"
         "Audit Service:7095:/health"
         "Banking Service:7096:/health"
-        "Media Service:7097:/health"
         "Peppol Service:7098:/health"
     )
 
@@ -570,9 +567,8 @@ reset_db() {
         "④ Reporting (dokus_reporting)"
         "⑤ Audit (dokus_audit)"
         "⑥ Banking (dokus_banking)"
-        "⑦ Media (dokus_media)"
-        "⑧ Peppol (dokus_peppol)"
-        "⑨ All databases"
+        "⑦ Peppol (dokus_peppol)"
+        "⑧ All databases"
     )
 
     for option in "${options[@]}"; do
@@ -581,7 +577,7 @@ reset_db() {
     echo ""
     echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
     echo ""
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-9]:${NC} "
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-8]:${NC} "
     read choice
     echo ""
 
@@ -592,9 +588,8 @@ reset_db() {
         4) reset_single_db "reporting" ;;
         5) reset_single_db "audit" ;;
         6) reset_single_db "banking" ;;
-        7) reset_single_db "media" ;;
-        8) reset_single_db "peppol" ;;
-        9) reset_all_databases ;;
+        7) reset_single_db "peppol" ;;
+        8) reset_all_databases ;;
         0) print_status info "Operation cancelled"; echo ""; return ;;
         *) print_status error "Invalid choice"; echo ""; return ;;
     esac
@@ -676,8 +671,7 @@ access_db() {
         "④ Reporting (dokus_reporting) - localhost:15544"
         "⑤ Audit (dokus_audit) - localhost:15545"
         "⑥ Banking (dokus_banking) - localhost:15546"
-        "⑦ Media (dokus_media) - localhost:15547"
-        "⑧ Peppol (dokus_peppol) - localhost:15548"
+        "⑦ Peppol (dokus_peppol) - localhost:15548"
     )
 
     for option in "${options[@]}"; do
@@ -686,7 +680,7 @@ access_db() {
     echo ""
     echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
     echo ""
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-8]:${NC} "
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-7]:${NC} "
     read choice
     echo ""
 
@@ -697,8 +691,7 @@ access_db() {
         4) access_single_db "reporting" ;;
         5) access_single_db "audit" ;;
         6) access_single_db "banking" ;;
-        7) access_single_db "media" ;;
-        8) access_single_db "peppol" ;;
+        7) access_single_db "peppol" ;;
         0) print_status info "Operation cancelled"; echo ""; return ;;
         *) print_status error "Invalid choice"; echo ""; return ;;
     esac
@@ -796,9 +789,6 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Media Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15013${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Peppol Service${NC}       ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7098${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15014${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
@@ -816,7 +806,6 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Reporting${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15544${NC} • ${SOFT_GRAY}dokus_reporting${NC}   ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Audit${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15545${NC} • ${SOFT_GRAY}dokus_audit${NC}       ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Banking${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15546${NC} • ${SOFT_GRAY}dokus_banking${NC}     ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Media${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15547${NC} • ${SOFT_GRAY}dokus_media${NC}       ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Peppol${NC}               ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15548${NC} • ${SOFT_GRAY}dokus_peppol${NC}      ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"

@@ -382,6 +382,37 @@ internal class CashflowRemoteDataSourceImpl(
     }
 
     // ============================================================================
+    // GENERIC DOCUMENT UPLOAD (MinIO Storage)
+    // ============================================================================
+
+    override suspend fun uploadDocument(
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String,
+        prefix: String
+    ): Result<DocumentUploadResult> {
+        return runCatching {
+            httpClient.submitFormWithBinaryData(
+                url = "/api/v1/documents/upload",
+                formData = formData {
+                    append(
+                        key = "file",
+                        value = fileContent,
+                        headers = Headers.build {
+                            append(
+                                HttpHeaders.ContentDisposition,
+                                "form-data; name=\"file\"; filename=\"$filename\""
+                            )
+                            append(HttpHeaders.ContentType, contentType)
+                        }
+                    )
+                    append("prefix", prefix)
+                }
+            ).body()
+        }
+    }
+
+    // ============================================================================
     // STATISTICS & OVERVIEW
     // ============================================================================
 
