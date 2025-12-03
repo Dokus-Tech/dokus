@@ -1,0 +1,469 @@
+package ai.dokus.cashflow.backend.routes
+
+import ai.dokus.cashflow.backend.repository.BillRepository
+import ai.dokus.cashflow.backend.repository.DocumentProcessingRepository
+import ai.dokus.cashflow.backend.repository.DocumentRepository
+import ai.dokus.cashflow.backend.repository.ExpenseRepository
+import ai.dokus.cashflow.backend.repository.InvoiceRepository
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.enums.DocumentType
+import ai.dokus.foundation.domain.enums.EntityType
+import ai.dokus.foundation.domain.enums.ProcessingStatus
+import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.DocumentId
+import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import ai.dokus.foundation.domain.model.ConfirmDocumentRequest
+import ai.dokus.foundation.domain.model.ConfirmDocumentResponse
+import ai.dokus.foundation.domain.model.CreateBillRequest
+import ai.dokus.foundation.domain.model.CreateExpenseRequest
+import ai.dokus.foundation.domain.model.CreateInvoiceRequest
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
+import ai.dokus.foundation.domain.model.DocumentProcessingListResponse
+import ai.dokus.foundation.domain.model.ReprocessDocumentRequest
+import ai.dokus.foundation.domain.model.ReprocessDocumentResponse
+import ai.dokus.foundation.ktor.security.authenticateJwt
+import ai.dokus.foundation.ktor.security.dokusPrincipal
+import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
+import java.util.UUID
+
+/**
+ * Document processing routes for querying and managing AI extraction.
+ *
+ * Endpoints:
+ * - GET /api/v1/documents/processing - List documents by processing status
+ * - GET /api/v1/documents/{id}/processing - Get processing details for a document
+ * - POST /api/v1/documents/{id}/confirm - Confirm extraction and create entity
+ * - POST /api/v1/documents/{id}/reject - Reject extraction for manual entry
+ * - POST /api/v1/documents/{id}/reprocess - Trigger re-extraction
+ */
+fun Route.documentProcessingRoutes() {
+    val processingRepository by inject<DocumentProcessingRepository>()
+    val documentRepository by inject<DocumentRepository>()
+    val invoiceRepository by inject<InvoiceRepository>()
+    val expenseRepository by inject<ExpenseRepository>()
+    val billRepository by inject<BillRepository>()
+    val minioStorage by inject<MinioDocumentStorageService>()
+    val logger = LoggerFactory.getLogger("DocumentProcessingRoutes")
+
+    route("/api/v1/documents") {
+        authenticateJwt {
+            /**
+             * GET /api/v1/documents/processing
+             * List documents by processing status with pagination.
+             *
+             * Query parameters:
+             * - status: Processing status filter (PENDING, PROCESSED, FAILED, etc.)
+             *           Can specify multiple: ?status=PROCESSED&status=FAILED
+             * - page: Page number (default 0)
+             * - limit: Items per page (default 20, max 100)
+             *
+             * Response: DocumentProcessingListResponse
+             */
+            get("/processing") {
+                val principal = dokusPrincipal
+                val tenantId = principal.requireTenantId()
+
+                // Parse status filter(s)
+                val statusParams = call.request.queryParameters.getAll("status")
+                val statuses = if (statusParams.isNullOrEmpty()) {
+                    // Default: show documents awaiting review
+                    listOf(ProcessingStatus.Processed)
+                } else {
+                    statusParams.mapNotNull { statusStr ->
+                        try {
+                            ProcessingStatus.valueOf(statusStr.uppercase())
+                        } catch (e: IllegalArgumentException) {
+                            logger.warn("Invalid status parameter: $statusStr")
+                            null
+                        }
+                    }
+                }
+
+                if (statuses.isEmpty()) {
+                    throw DokusException.BadRequest("No valid status values provided")
+                }
+
+                val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 20).coerceIn(1, 100)
+                val offset = page * limit
+
+                logger.info("Listing processing records: tenant=$tenantId, statuses=$statuses, page=$page, limit=$limit")
+
+                val (items, total) = processingRepository.listByStatus(
+                    tenantId = tenantId,
+                    statuses = statuses,
+                    limit = limit,
+                    offset = offset,
+                    includeDocument = true
+                )
+
+                // Add download URLs to documents
+                val itemsWithUrls = items.map { processing ->
+                    processing.document?.let { doc ->
+                        val downloadUrl = try {
+                            minioStorage.getDownloadUrl(doc.storageKey)
+                        } catch (e: Exception) {
+                            logger.warn("Failed to get download URL for ${doc.storageKey}: ${e.message}")
+                            null
+                        }
+                        processing.copy(document = doc.copy(downloadUrl = downloadUrl))
+                    } ?: processing
+                }
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    DocumentProcessingListResponse(
+                        items = itemsWithUrls,
+                        total = total,
+                        page = page,
+                        limit = limit,
+                        hasMore = (page + 1) * limit < total
+                    )
+                )
+            }
+
+            /**
+             * GET /api/v1/documents/{id}/processing
+             * Get processing details for a specific document.
+             *
+             * Path parameters:
+             * - id: Document ID (UUID)
+             *
+             * Response: DocumentProcessingDto
+             */
+            get("/{id}/processing") {
+                val principal = dokusPrincipal
+                val tenantId = principal.requireTenantId()
+
+                val documentIdStr = call.parameters["id"]
+                    ?: throw DokusException.BadRequest("Document ID is required")
+
+                val documentId = try {
+                    DocumentId.parse(documentIdStr)
+                } catch (e: Exception) {
+                    throw DokusException.BadRequest("Invalid document ID format")
+                }
+
+                logger.info("Getting processing for document: $documentId, tenant=$tenantId")
+
+                val processing = processingRepository.getByDocumentId(
+                    documentId = documentId,
+                    tenantId = tenantId,
+                    includeDocument = true
+                ) ?: throw DokusException.NotFound("Processing record not found for document")
+
+                // Add download URL
+                val processingWithUrl = processing.document?.let { doc ->
+                    val downloadUrl = try {
+                        minioStorage.getDownloadUrl(doc.storageKey)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    processing.copy(document = doc.copy(downloadUrl = downloadUrl))
+                } ?: processing
+
+                call.respond(HttpStatusCode.OK, processingWithUrl)
+            }
+
+            /**
+             * POST /api/v1/documents/{id}/confirm
+             * Confirm extracted data and create financial entity.
+             *
+             * Path parameters:
+             * - id: Document ID (UUID)
+             *
+             * Request body: ConfirmDocumentRequest
+             * - entityType: Type of entity to create (Invoice, Bill, Expense)
+             * - corrections: Optional field corrections
+             *
+             * Response: ConfirmDocumentResponse
+             */
+            post("/{id}/confirm") {
+                val principal = dokusPrincipal
+                val tenantId = principal.requireTenantId()
+
+                val documentIdStr = call.parameters["id"]
+                    ?: throw DokusException.BadRequest("Document ID is required")
+
+                val documentId = try {
+                    DocumentId.parse(documentIdStr)
+                } catch (e: Exception) {
+                    throw DokusException.BadRequest("Invalid document ID format")
+                }
+
+                val request = call.receive<ConfirmDocumentRequest>()
+
+                logger.info("Confirming document: $documentId, entityType=${request.entityType}, tenant=$tenantId")
+
+                // Get processing record
+                val processing = processingRepository.getByDocumentId(
+                    documentId = documentId,
+                    tenantId = tenantId,
+                    includeDocument = false
+                ) ?: throw DokusException.NotFound("Processing record not found for document")
+
+                // Verify status allows confirmation
+                if (processing.status != ProcessingStatus.Processed) {
+                    throw DokusException.BadRequest(
+                        "Document cannot be confirmed in status: ${processing.status}. Must be PROCESSED."
+                    )
+                }
+
+                // Get extracted data
+                val extractedData = processing.extractedData
+                    ?: throw DokusException.BadRequest("No extracted data available for confirmation")
+
+                // Create entity based on type
+                val entityId: UUID = when (request.entityType) {
+                    DocumentType.Invoice -> {
+                        val invoiceData = extractedData.invoice
+                            ?: throw DokusException.BadRequest("No invoice data extracted from document")
+
+                        // Client ID is required for invoices
+                        val clientIdStr = request.corrections?.clientId
+                            ?: throw DokusException.BadRequest("Client ID is required for invoice creation")
+
+                        val clientId = try {
+                            ClientId.parse(clientIdStr)
+                        } catch (e: Exception) {
+                            throw DokusException.BadRequest("Invalid client ID format")
+                        }
+
+                        // Create invoice from extracted + corrected data
+                        val createRequest = CreateInvoiceRequest(
+                            clientId = clientId,
+                            items = request.corrections?.items?.map { item ->
+                                ai.dokus.foundation.domain.model.InvoiceItemDto(
+                                    description = item.description ?: "",
+                                    quantity = item.quantity ?: 1.0,
+                                    unitPrice = item.unitPrice ?: Money("0"),
+                                    vatRate = item.vatRate ?: ai.dokus.foundation.domain.VatRate.STANDARD_BE,
+                                    lineTotal = item.lineTotal ?: Money("0"),
+                                    vatAmount = item.vatAmount ?: Money("0")
+                                )
+                            } ?: emptyList(),
+                            issueDate = request.corrections?.date ?: invoiceData.issueDate,
+                            dueDate = request.corrections?.dueDate ?: invoiceData.dueDate,
+                            notes = request.corrections?.notes ?: invoiceData.notes
+                        )
+
+                        val invoice = invoiceRepository.createInvoice(tenantId, createRequest)
+                            .getOrThrow()
+
+                        // Link document to invoice
+                        documentRepository.linkToEntity(
+                            tenantId = tenantId,
+                            documentId = documentId,
+                            entityType = EntityType.Invoice,
+                            entityId = invoice.id.toString()
+                        )
+
+                        UUID.fromString(invoice.id.toString())
+                    }
+
+                    DocumentType.Bill -> {
+                        val billData = extractedData.bill
+                            ?: throw DokusException.BadRequest("No bill data extracted from document")
+
+                        val createRequest = CreateBillRequest(
+                            supplierName = request.corrections?.supplierName ?: billData.supplierName ?: "Unknown",
+                            supplierVatNumber = request.corrections?.supplierVatNumber ?: billData.supplierVatNumber,
+                            invoiceNumber = request.corrections?.invoiceNumber ?: billData.invoiceNumber,
+                            issueDate = request.corrections?.date ?: billData.issueDate
+                                ?: throw DokusException.BadRequest("Issue date is required"),
+                            dueDate = request.corrections?.dueDate ?: billData.dueDate
+                                ?: throw DokusException.BadRequest("Due date is required"),
+                            amount = request.corrections?.amount ?: billData.amount
+                                ?: throw DokusException.BadRequest("Amount is required"),
+                            vatAmount = request.corrections?.vatAmount ?: billData.vatAmount,
+                            vatRate = request.corrections?.vatRate ?: billData.vatRate,
+                            category = request.corrections?.category ?: billData.category
+                                ?: throw DokusException.BadRequest("Category is required"),
+                            description = request.corrections?.description ?: billData.description,
+                            notes = request.corrections?.notes ?: billData.notes,
+                            documentId = documentId
+                        )
+
+                        val bill = billRepository.createBill(tenantId, createRequest)
+                            .getOrThrow()
+
+                        UUID.fromString(bill.id.toString())
+                    }
+
+                    DocumentType.Expense -> {
+                        val expenseData = extractedData.expense
+                            ?: throw DokusException.BadRequest("No expense data extracted from document")
+
+                        val createRequest = CreateExpenseRequest(
+                            date = request.corrections?.date ?: expenseData.date
+                                ?: throw DokusException.BadRequest("Date is required"),
+                            merchant = request.corrections?.merchant ?: expenseData.merchant
+                                ?: throw DokusException.BadRequest("Merchant is required"),
+                            amount = request.corrections?.amount ?: expenseData.amount
+                                ?: throw DokusException.BadRequest("Amount is required"),
+                            vatAmount = request.corrections?.vatAmount ?: expenseData.vatAmount,
+                            vatRate = request.corrections?.vatRate ?: expenseData.vatRate,
+                            category = request.corrections?.category ?: expenseData.category
+                                ?: throw DokusException.BadRequest("Category is required"),
+                            description = request.corrections?.description ?: expenseData.description,
+                            documentId = documentId,
+                            isDeductible = request.corrections?.isDeductible ?: expenseData.isDeductible,
+                            deductiblePercentage = request.corrections?.deductiblePercentage ?: expenseData.deductiblePercentage,
+                            paymentMethod = request.corrections?.paymentMethod ?: expenseData.paymentMethod,
+                            notes = request.corrections?.notes ?: expenseData.notes
+                        )
+
+                        val expense = expenseRepository.createExpense(tenantId, createRequest)
+                            .getOrThrow()
+
+                        UUID.fromString(expense.id.toString())
+                    }
+
+                    DocumentType.Unknown -> {
+                        throw DokusException.BadRequest("Cannot confirm document with unknown type. Please specify entityType.")
+                    }
+                }
+
+                // Mark processing as confirmed
+                val entityType = when (request.entityType) {
+                    DocumentType.Invoice -> EntityType.Invoice
+                    DocumentType.Bill -> EntityType.Bill
+                    DocumentType.Expense -> EntityType.Expense
+                    DocumentType.Unknown -> throw IllegalStateException("Should not reach here")
+                }
+
+                processingRepository.markAsConfirmed(
+                    processingId = processing.id,
+                    tenantId = tenantId,
+                    entityType = entityType,
+                    entityId = entityId
+                )
+
+                logger.info("Document confirmed: $documentId -> ${request.entityType}:$entityId")
+
+                call.respond(
+                    HttpStatusCode.Created,
+                    ConfirmDocumentResponse(
+                        entityId = entityId.toString(),
+                        entityType = request.entityType,
+                        processingId = processing.id.toString()
+                    )
+                )
+            }
+
+            /**
+             * POST /api/v1/documents/{id}/reject
+             * Reject extracted data for manual entry.
+             *
+             * Path parameters:
+             * - id: Document ID (UUID)
+             *
+             * Response: 204 No Content
+             */
+            post("/{id}/reject") {
+                val principal = dokusPrincipal
+                val tenantId = principal.requireTenantId()
+
+                val documentIdStr = call.parameters["id"]
+                    ?: throw DokusException.BadRequest("Document ID is required")
+
+                val documentId = try {
+                    DocumentId.parse(documentIdStr)
+                } catch (e: Exception) {
+                    throw DokusException.BadRequest("Invalid document ID format")
+                }
+
+                logger.info("Rejecting document: $documentId, tenant=$tenantId")
+
+                // Get processing record
+                val processing = processingRepository.getByDocumentId(
+                    documentId = documentId,
+                    tenantId = tenantId,
+                    includeDocument = false
+                ) ?: throw DokusException.NotFound("Processing record not found for document")
+
+                // Mark as rejected
+                processingRepository.markAsRejected(processing.id, tenantId)
+
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            /**
+             * POST /api/v1/documents/{id}/reprocess
+             * Trigger re-extraction of document.
+             *
+             * Path parameters:
+             * - id: Document ID (UUID)
+             *
+             * Request body (optional): ReprocessDocumentRequest
+             * - force: Force reprocessing even if already processed
+             * - preferredProvider: Preferred AI provider to use
+             *
+             * Response: ReprocessDocumentResponse
+             */
+            post("/{id}/reprocess") {
+                val principal = dokusPrincipal
+                val tenantId = principal.requireTenantId()
+
+                val documentIdStr = call.parameters["id"]
+                    ?: throw DokusException.BadRequest("Document ID is required")
+
+                val documentId = try {
+                    DocumentId.parse(documentIdStr)
+                } catch (e: Exception) {
+                    throw DokusException.BadRequest("Invalid document ID format")
+                }
+
+                val request = try {
+                    call.receive<ReprocessDocumentRequest>()
+                } catch (e: Exception) {
+                    ReprocessDocumentRequest()
+                }
+
+                logger.info("Reprocessing document: $documentId, force=${request.force}, tenant=$tenantId")
+
+                // Get processing record
+                val processing = processingRepository.getByDocumentId(
+                    documentId = documentId,
+                    tenantId = tenantId,
+                    includeDocument = false
+                ) ?: throw DokusException.NotFound("Processing record not found for document")
+
+                // Check if reprocessing is allowed
+                val allowedStatuses = if (request.force) {
+                    listOf(ProcessingStatus.Pending, ProcessingStatus.Processed, ProcessingStatus.Failed, ProcessingStatus.Rejected)
+                } else {
+                    listOf(ProcessingStatus.Failed, ProcessingStatus.Rejected)
+                }
+
+                if (processing.status !in allowedStatuses) {
+                    throw DokusException.BadRequest(
+                        "Document cannot be reprocessed in status: ${processing.status}. " +
+                                if (request.force) "Already in final state." else "Use force=true to override."
+                    )
+                }
+
+                // Reset for reprocessing
+                processingRepository.resetForReprocessing(processing.id, tenantId)
+
+                // TODO: Publish to RabbitMQ for immediate reprocessing
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    ReprocessDocumentResponse(
+                        processingId = processing.id,
+                        status = ProcessingStatus.Pending,
+                        message = "Document queued for reprocessing"
+                    )
+                )
+            }
+        }
+    }
+}

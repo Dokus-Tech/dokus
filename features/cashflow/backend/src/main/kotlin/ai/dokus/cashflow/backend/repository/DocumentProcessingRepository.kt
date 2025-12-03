@@ -25,6 +25,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.plus
+import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
@@ -415,13 +417,5 @@ class DocumentProcessingRepository {
             entityId = this[DocumentsTable.entityId],
             uploadedAt = this[DocumentsTable.uploadedAt]
         )
-    }
-
-    // Extension for andWhere when needed
-    private fun org.jetbrains.exposed.v1.core.Query.andWhere(
-        andPart: org.jetbrains.exposed.v1.core.SqlExpressionBuilder.() -> org.jetbrains.exposed.v1.core.Op<Boolean>
-    ) = adjustWhere {
-        val newExpr = org.jetbrains.exposed.v1.core.SqlExpressionBuilder.andPart()
-        if (this == null) newExpr else this and newExpr
     }
 }
