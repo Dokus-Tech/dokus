@@ -93,28 +93,10 @@ AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
 PEPPOL_SERVICE_DIR="features/peppol/backend"
 
-# Database configuration for multi-database architecture
-# Format: container:port:dbname
-# Bash 3.2 compatible (no associative arrays)
-
-DB_KEYS="auth payment reporting audit banking cashflow peppol"
-
-# Function to get database config for a given key
-# Returns: service:port:dbname (service name for docker-compose exec)
-get_db_config() {
-    local key=$1
-    case $key in
-        auth)      echo "postgres-auth-local:15541:dokus_auth" ;;
-        cashflow)  echo "postgres-cashflow-local:15542:dokus_cashflow" ;;
-        payment)   echo "postgres-payment-local:15543:dokus_payment" ;;
-        reporting) echo "postgres-reporting-local:15544:dokus_reporting" ;;
-        audit)     echo "postgres-audit-local:15545:dokus_audit" ;;
-        banking)   echo "postgres-banking-local:15546:dokus_banking" ;;
-        peppol)    echo "postgres-peppol-local:15548:dokus_peppol" ;;
-        *) echo "" ;;
-    esac
-}
-
+# Database configuration - consolidated single database
+DB_CONTAINER="postgres-local"
+DB_PORT="15432"
+DB_NAME="dokus"
 DB_USER="dev"
 DB_PASSWORD="devpassword"
 
@@ -358,21 +340,18 @@ start_services() {
         echo ""
         echo -e "  ${SOFT_CYAN}${BOLD}Waiting for services to initialize...${NC}\n"
 
-        # Wait for all PostgreSQL databases
-        for db_key in $DB_KEYS; do
-            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "PostgreSQL ($db_key)"
-            for i in {1..30}; do
-                if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
-                    echo -e "${SOFT_GREEN}◆ Ready${NC}"
-                    break
-                fi
-                if [ $i -eq 30 ]; then
-                    echo -e "${SOFT_RED}◇ Timeout${NC}"
-                fi
-                echo -n "."
-                sleep 1
-            done
+        # Wait for PostgreSQL database
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "PostgreSQL ($DB_NAME)"
+        for i in {1..30}; do
+            if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+                echo -e "${SOFT_GREEN}◆ Ready${NC}"
+                break
+            fi
+            if [ $i -eq 30 ]; then
+                echo -e "${SOFT_RED}◇ Timeout${NC}"
+            fi
+            echo -n "."
+            sleep 1
         done
 
         # Wait for Redis
@@ -476,16 +455,13 @@ show_status() {
     echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                 ${SOFT_GRAY}│${NC} ${BOLD}Status${NC}           ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Check all PostgreSQL databases
-    for db_key in $DB_KEYS; do
-        IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-        printf "  ${SOFT_GRAY}│${NC} PostgreSQL (%-9s) ${SOFT_GRAY}│${NC} " "$db_key"
-        if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
-            echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
-        else
-            echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
-        fi
-    done
+    # Check PostgreSQL database
+    printf "  ${SOFT_GRAY}│${NC} PostgreSQL ($DB_NAME)     ${SOFT_GRAY}│${NC} "
+    if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+        echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
 
     # Redis
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
@@ -557,50 +533,7 @@ clean_all() {
 reset_db() {
     print_gradient_header "🔄 Database Reset"
 
-    echo ""
-    echo -e "  ${SOFT_CYAN}${BOLD}Select database to reset:${NC}\n"
-
-    local options=(
-        "① Auth (dokus_auth)"
-        "② Cashflow (dokus_cashflow)"
-        "③ Payment (dokus_payment)"
-        "④ Reporting (dokus_reporting)"
-        "⑤ Audit (dokus_audit)"
-        "⑥ Banking (dokus_banking)"
-        "⑦ Peppol (dokus_peppol)"
-        "⑧ All databases"
-    )
-
-    for option in "${options[@]}"; do
-        echo -e "  ${SOFT_CYAN}${option}${NC}"
-    done
-    echo ""
-    echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
-    echo ""
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-8]:${NC} "
-    read choice
-    echo ""
-
-    case $choice in
-        1) reset_single_db "auth" ;;
-        2) reset_single_db "cashflow" ;;
-        3) reset_single_db "payment" ;;
-        4) reset_single_db "reporting" ;;
-        5) reset_single_db "audit" ;;
-        6) reset_single_db "banking" ;;
-        7) reset_single_db "peppol" ;;
-        8) reset_all_databases ;;
-        0) print_status info "Operation cancelled"; echo ""; return ;;
-        *) print_status error "Invalid choice"; echo ""; return ;;
-    esac
-}
-
-# Helper function to reset a single database
-reset_single_db() {
-    local db_key=$1
-    IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-
-    print_status warning "This will reset the $db_key database ($dbname)!"
+    print_status warning "This will reset the database ($DB_NAME) and delete all data!"
     echo ""
     printf "  ${BOLD}${SOFT_RED}Are you sure?${NC} ${DIM_WHITE}(y/N):${NC} "
     read -n 1 -r
@@ -608,49 +541,13 @@ reset_single_db() {
     echo ""
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_status loading "Resetting $db_key database..."
-        docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
-        docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
-        docker volume rm dokus_$container 2>/dev/null || true
-        docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
+        print_status loading "Resetting database..."
+        docker-compose -f $COMPOSE_FILE stop $DB_CONTAINER > /dev/null 2>&1
+        docker-compose -f $COMPOSE_FILE rm -f $DB_CONTAINER > /dev/null 2>&1
+        docker volume rm the-predict_postgres-local 2>/dev/null || true
+        docker-compose -f $COMPOSE_FILE up -d $DB_CONTAINER > /dev/null 2>&1
         echo ""
-        print_status success "$db_key database reset complete"
-    else
-        print_status info "Operation cancelled"
-    fi
-    echo ""
-}
-
-# Helper function to reset all databases
-reset_all_databases() {
-    print_status warning "This will reset ALL databases!"
-    echo ""
-    printf "  ${BOLD}${SOFT_RED}Are you sure?${NC} ${DIM_WHITE}(y/N):${NC} "
-    read -n 1 -r
-    echo ""
-    echo ""
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_status loading "Resetting all databases..."
-        echo ""
-
-        for db_key in $DB_KEYS; do
-            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            print_simple_status building "Resetting $db_key..."
-            docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
-            docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
-            docker volume rm dokus_$container 2>/dev/null || true
-        done
-
-        echo ""
-        print_status loading "Starting all databases..."
-        for db_key in $DB_KEYS; do
-            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
-        done
-
-        echo ""
-        print_status success "All databases reset complete"
+        print_status success "Database reset complete"
     else
         print_status info "Operation cancelled"
     fi
@@ -661,50 +558,9 @@ reset_all_databases() {
 access_db() {
     print_gradient_header "🗄️  Database CLI Access"
 
+    print_status info "Connecting to database ($DB_NAME)..."
     echo ""
-    echo -e "  ${SOFT_CYAN}${BOLD}Select database to access:${NC}\n"
-
-    local options=(
-        "① Auth (dokus_auth) - localhost:15541"
-        "② Cashflow (dokus_cashflow) - localhost:15542"
-        "③ Payment (dokus_payment) - localhost:15543"
-        "④ Reporting (dokus_reporting) - localhost:15544"
-        "⑤ Audit (dokus_audit) - localhost:15545"
-        "⑥ Banking (dokus_banking) - localhost:15546"
-        "⑦ Peppol (dokus_peppol) - localhost:15548"
-    )
-
-    for option in "${options[@]}"; do
-        echo -e "  ${SOFT_CYAN}${option}${NC}"
-    done
-    echo ""
-    echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
-    echo ""
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-7]:${NC} "
-    read choice
-    echo ""
-
-    case $choice in
-        1) access_single_db "auth" ;;
-        2) access_single_db "cashflow" ;;
-        3) access_single_db "payment" ;;
-        4) access_single_db "reporting" ;;
-        5) access_single_db "audit" ;;
-        6) access_single_db "banking" ;;
-        7) access_single_db "peppol" ;;
-        0) print_status info "Operation cancelled"; echo ""; return ;;
-        *) print_status error "Invalid choice"; echo ""; return ;;
-    esac
-}
-
-# Helper function to access a single database
-access_single_db() {
-    local db_key=$1
-    IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-
-    print_status info "Connecting to $db_key database ($dbname)..."
-    echo ""
-    docker-compose -f $COMPOSE_FILE exec $container psql -U $DB_USER -d $dbname
+    docker-compose -f $COMPOSE_FILE exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
 }
 
 # Function to access Redis
@@ -794,23 +650,17 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
-    echo -e "  ${SOFT_CYAN}${BOLD}💾 Database Connections${NC}\n"
+    echo -e "  ${SOFT_CYAN}${BOLD}💾 Database & Services${NC}\n"
 
     # Database table
     echo -e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Database${NC}             ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Auth${NC}                 ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15541${NC} • ${SOFT_GRAY}dokus_auth${NC}        ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Cashflow${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15542${NC} • ${SOFT_GRAY}dokus_cashflow${NC}    ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Payment${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15543${NC} • ${SOFT_GRAY}dokus_payment${NC}     ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Reporting${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15544${NC} • ${SOFT_GRAY}dokus_reporting${NC}   ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Audit${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15545${NC} • ${SOFT_GRAY}dokus_audit${NC}       ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Banking${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15546${NC} • ${SOFT_GRAY}dokus_banking${NC}     ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Peppol${NC}               ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15548${NC} • ${SOFT_GRAY}dokus_peppol${NC}      ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:$DB_PORT${NC} • ${SOFT_GRAY}$DB_NAME${NC}         ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:25672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:25673${NC} • ${SOFT_GRAY}pass: localrabbitpass${NC} ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}      ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then

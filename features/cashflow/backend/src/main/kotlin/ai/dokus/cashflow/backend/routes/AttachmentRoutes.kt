@@ -1,8 +1,8 @@
 package ai.dokus.cashflow.backend.routes
 
-import ai.dokus.cashflow.backend.repository.AttachmentRepository
-import ai.dokus.cashflow.backend.repository.ExpenseRepository
-import ai.dokus.cashflow.backend.repository.InvoiceRepository
+import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
+import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
+import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.exceptions.DokusException

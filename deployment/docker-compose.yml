@@ -1,129 +1,24 @@
 # Dokus Production Docker Compose
-# Pulls pre-built images from registry
+# Consolidated to single PostgreSQL database
 # Run with: docker-compose up -d
 
 services:
-  # PostgreSQL Database for Auth Service
-  postgres-auth:
+  # Single PostgreSQL Database for all services
+  postgres:
     image: postgres:17-alpine
-    container_name: dokus-postgres-auth
+    container_name: dokus-postgres
     environment:
-      POSTGRES_DB: dokus_auth
+      POSTGRES_DB: dokus
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "15441:5432"
+      - "15432:5432"
     volumes:
-      - postgres-auth:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_auth"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Cashflow Service
-  postgres-cashflow:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-cashflow
-    environment:
-      POSTGRES_DB: dokus_cashflow
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15442:5432"
-    volumes:
-      - postgres-cashflow:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_cashflow"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Payment Service
-  postgres-payment:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-payment
-    environment:
-      POSTGRES_DB: dokus_payment
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15443:5432"
-    volumes:
-      - postgres-payment:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_payment"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Reporting Service
-  postgres-reporting:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-reporting
-    environment:
-      POSTGRES_DB: dokus_reporting
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15444:5432"
-    volumes:
-      - postgres-reporting:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_reporting"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Audit Service
-  postgres-audit:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-audit
-    environment:
-      POSTGRES_DB: dokus_audit
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15445:5432"
-    volumes:
-      - postgres-audit:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_audit"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Banking Service
-  postgres-banking:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-banking
-    environment:
-      POSTGRES_DB: dokus_banking
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15446:5432"
-    volumes:
-      - postgres-banking:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_banking"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -198,7 +93,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-auth:5432/dokus_auth
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -250,7 +145,7 @@ services:
     ports:
       - "6091:8080"
     depends_on:
-      postgres-auth:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -273,7 +168,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-cashflow:5432/dokus_cashflow
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -294,7 +189,7 @@ services:
     ports:
       - "6092:8080"
     depends_on:
-      postgres-cashflow:
+      postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -315,7 +210,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-payment:5432/dokus_payment
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -331,7 +226,7 @@ services:
     ports:
       - "6093:8080"
     depends_on:
-      postgres-payment:
+      postgres:
         condition: service_healthy
     networks:
       - dokus-network
@@ -350,7 +245,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-reporting:5432/dokus_reporting
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -366,7 +261,7 @@ services:
     ports:
       - "6094:8080"
     depends_on:
-      postgres-reporting:
+      postgres:
         condition: service_healthy
     networks:
       - dokus-network
@@ -385,7 +280,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-audit:5432/dokus_audit
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -407,7 +302,7 @@ services:
     ports:
       - "6095:8080"
     depends_on:
-      postgres-audit:
+      postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -428,7 +323,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-banking:5432/dokus_banking
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -444,7 +339,7 @@ services:
     ports:
       - "6096:8080"
     depends_on:
-      postgres-banking:
+      postgres:
         condition: service_healthy
     networks:
       - dokus-network
@@ -461,12 +356,7 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-auth:
-  postgres-cashflow:
-  postgres-payment:
-  postgres-reporting:
-  postgres-audit:
-  postgres-banking:
+  postgres-data:
   redis-data:
   rabbitmq-data:
   minio-data:

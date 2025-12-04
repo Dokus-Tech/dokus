@@ -1,7 +1,7 @@
 package ai.dokus.auth.backend.routes
 
-import ai.dokus.auth.backend.database.repository.TenantRepository
-import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.foundation.database.repository.auth.TenantRepository
+import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.TenantId

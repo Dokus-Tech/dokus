@@ -1,19 +1,13 @@
 package ai.dokus.cashflow.backend.config
 
-import ai.dokus.foundation.database.tables.cashflow.AttachmentsTable
-import ai.dokus.foundation.database.tables.cashflow.BillsTable
-import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
-import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
-import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
-import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
-import ai.dokus.cashflow.backend.repository.AttachmentRepository
-import ai.dokus.cashflow.backend.repository.BillRepository
-import ai.dokus.cashflow.backend.repository.CashflowRepository
-import ai.dokus.cashflow.backend.repository.DocumentProcessingRepository
-import ai.dokus.cashflow.backend.repository.DocumentRepository
-import ai.dokus.cashflow.backend.repository.ExpenseRepository
-import ai.dokus.cashflow.backend.repository.InvoiceRepository
+import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
+import ai.dokus.foundation.database.repository.cashflow.BillRepository
+import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
+import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
+import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.cashflow.backend.service.DocumentStorageService
@@ -82,15 +76,8 @@ val databaseModule = module {
     single {
         DatabaseFactory(get(), "cashflow-pool").apply {
             runBlocking {
-                init(
-                    DocumentsTable,  // Must come first - referenced by other tables
-                    DocumentProcessingTable,  // References DocumentsTable
-                    InvoicesTable,
-                    InvoiceItemsTable,
-                    ExpensesTable,
-                    AttachmentsTable,
-                    BillsTable
-                )
+                connect()
+                DatabaseInitializer.initializeAllTables()
             }
         }
     }

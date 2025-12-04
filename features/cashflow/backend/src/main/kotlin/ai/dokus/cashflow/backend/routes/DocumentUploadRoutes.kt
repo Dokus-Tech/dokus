@@ -1,7 +1,7 @@
 package ai.dokus.cashflow.backend.routes
 
-import ai.dokus.cashflow.backend.repository.DocumentProcessingRepository
-import ai.dokus.cashflow.backend.repository.DocumentRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.DocumentId

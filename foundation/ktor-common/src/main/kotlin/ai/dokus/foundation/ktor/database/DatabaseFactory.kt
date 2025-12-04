@@ -21,7 +21,11 @@ class DatabaseFactory(
     private var dataSource: HikariDataSource? = null
     lateinit var database: Database
 
-    suspend fun init(vararg tables: Table): Database {
+    /**
+     * Connect to the database without creating any tables.
+     * Use this when tables will be initialized centrally via DatabaseInitializer.
+     */
+    suspend fun connect(): Database {
         dataSource = createHikariDataSource()
 
         if (appConfig.flyway.enabled) {
@@ -30,8 +34,16 @@ class DatabaseFactory(
 
         database = Database.connect(dataSource!!)
 
-        createTables(*tables)
+        return database
+    }
 
+    /**
+     * Connect and create the specified tables.
+     * @deprecated Use connect() + DatabaseInitializer.initializeAllTables() instead
+     */
+    suspend fun init(vararg tables: Table): Database {
+        connect()
+        createTables(*tables)
         return database
     }
 

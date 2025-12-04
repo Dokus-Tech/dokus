@@ -1,8 +1,8 @@
 package ai.dokus.cashflow.backend.service
 
-import ai.dokus.cashflow.backend.repository.BillRepository
-import ai.dokus.cashflow.backend.repository.ExpenseRepository
-import ai.dokus.cashflow.backend.repository.InvoiceRepository
+import ai.dokus.foundation.database.repository.cashflow.BillRepository
+import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
+import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Percentage
 import ai.dokus.foundation.domain.VatRate

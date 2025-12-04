@@ -1,143 +1,23 @@
 # Development Docker Compose configuration
-# Each service has its own PostgreSQL database
+# Consolidated to single PostgreSQL database
 
 services:
-  # PostgreSQL Database for Auth Service
-  postgres-auth-local:
+  # Single PostgreSQL Database for all services
+  postgres-local:
     image: postgres:17-alpine
-    container_name: dokus-postgres-auth-local
+    container_name: dokus-postgres-local
     environment:
-      POSTGRES_DB: dokus_auth
+      POSTGRES_DB: dokus
       POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
+      POSTGRES_PASSWORD: devpassword
     ports:
-      - "15541:5432"
+      - "15432:5432"
     volumes:
-      - postgres-auth-local:/var/lib/postgresql/data
+      - postgres-local:/var/lib/postgresql/data
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_auth"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Cashflow Service (Invoice + Expense merged)
-  postgres-cashflow-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-cashflow-local
-    environment:
-      POSTGRES_DB: dokus_cashflow
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "15542:5432"
-    volumes:
-      - postgres-cashflow-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_cashflow"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Payment Service
-  postgres-payment-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-payment-local
-    environment:
-      POSTGRES_DB: dokus_payment
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "15543:5432"
-    volumes:
-      - postgres-payment-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_payment"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Reporting Service
-  postgres-reporting-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-reporting-local
-    environment:
-      POSTGRES_DB: dokus_reporting
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "15544:5432"
-    volumes:
-      - postgres-reporting-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_reporting"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Audit Service
-  postgres-audit-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-audit-local
-    environment:
-      POSTGRES_DB: dokus_audit
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "15545:5432"
-    volumes:
-      - postgres-audit-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_audit"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Banking Service
-  postgres-banking-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-banking-local
-    environment:
-      POSTGRES_DB: dokus_banking
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "15546:5432"
-    volumes:
-      - postgres-banking-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_banking"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # PostgreSQL Database for Peppol Service
-  postgres-peppol-local:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-peppol-local
-    environment:
-      POSTGRES_DB: dokus_peppol
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: localpassword
-    ports:
-      - "15548:5432"
-    volumes:
-      - postgres-peppol-local:/var/lib/postgresql/data
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus_peppol"]
+      test: ["CMD-SHELL", "pg_isready -U dev -d dokus"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -150,7 +30,7 @@ services:
       - "16379:6379"
     volumes:
       - redis-data-local:/data
-    command: redis-server --appendonly yes --requirepass localredispass
+    command: redis-server --appendonly yes --requirepass devredispass
     networks:
       - dokus-local-network
     healthcheck:
@@ -210,15 +90,15 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-auth-local:5432/dokus_auth
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
       DB_USERNAME: dev
-      DB_PASSWORD: localpassword
+      DB_PASSWORD: devpassword
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       REDIS_HOST: redis-local
       REDIS_PORT: 6379
-      REDIS_PASSWORD: localredispass
+      REDIS_PASSWORD: devredispass
       RABBITMQ_HOST: rabbitmq-local
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: dokus
@@ -231,7 +111,7 @@ services:
       - "7091:8080"
       - "15007:5005"
     depends_on:
-      postgres-auth-local:
+      postgres-local:
         condition: service_healthy
       redis-local:
         condition: service_healthy
@@ -255,9 +135,9 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-payment-local:5432/dokus_payment
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
       DB_USERNAME: dev
-      DB_PASSWORD: localpassword
+      DB_PASSWORD: devpassword
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
@@ -266,7 +146,7 @@ services:
       - "7093:8080"
       - "15009:5005"
     depends_on:
-      postgres-payment-local:
+      postgres-local:
         condition: service_healthy
     networks:
       - dokus-local-network
@@ -286,9 +166,9 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-reporting-local:5432/dokus_reporting
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
       DB_USERNAME: dev
-      DB_PASSWORD: localpassword
+      DB_PASSWORD: devpassword
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
@@ -297,7 +177,7 @@ services:
       - "7094:8080"
       - "15010:5005"
     depends_on:
-      postgres-reporting-local:
+      postgres-local:
         condition: service_healthy
     networks:
       - dokus-local-network
@@ -310,16 +190,16 @@ services:
     volumes:
       - ./logs-local:/app/logs
 
-  # Audit Service (NEW)
+  # Audit Service
   audit-service-local:
     image: invoid-vision/dokus-audit:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-audit-local
     environment:
       PORT: 8080
       ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-audit-local:5432/dokus_audit
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
       DB_USERNAME: dev
-      DB_PASSWORD: localpassword
+      DB_PASSWORD: devpassword
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
@@ -333,7 +213,7 @@ services:
       - "7095:8080"
       - "15011:5005"
     depends_on:
-      postgres-audit-local:
+      postgres-local:
         condition: service_healthy
       rabbitmq-local:
         condition: service_healthy
@@ -348,16 +228,16 @@ services:
     volumes:
       - ./logs-local:/app/logs
 
-  # Banking Service (NEW)
+  # Banking Service
   banking-service-local:
     image: invoid-vision/dokus-banking:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-banking-local
     environment:
       PORT: 8080
       ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-banking-local:5432/dokus_banking
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
       DB_USERNAME: dev
-      DB_PASSWORD: localpassword
+      DB_PASSWORD: devpassword
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
@@ -366,7 +246,7 @@ services:
       - "7096:8080"
       - "15012:5005"
     depends_on:
-      postgres-banking-local:
+      postgres-local:
         condition: service_healthy
     networks:
       - dokus-local-network
@@ -386,15 +266,15 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-cashflow-local:5432/dokus_cashflow
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
       DB_USERNAME: dev
-      DB_PASSWORD: localpassword
+      DB_PASSWORD: devpassword
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
       REDIS_HOST: redis-local
       REDIS_PORT: 6379
-      REDIS_PASSWORD: localredispass
+      REDIS_PASSWORD: devredispass
       RABBITMQ_HOST: rabbitmq-local
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: dokus
@@ -410,7 +290,7 @@ services:
       - "7092:8080"
       - "15008:5005"
     depends_on:
-      postgres-cashflow-local:
+      postgres-local:
         condition: service_healthy
       redis-local:
         condition: service_healthy
@@ -437,9 +317,9 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-peppol-local:5432/dokus_peppol
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
       DB_USERNAME: dev
-      DB_PASSWORD: localpassword
+      DB_PASSWORD: devpassword
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
@@ -454,7 +334,7 @@ services:
       - "7098:8080"
       - "15014:5005"
     depends_on:
-      postgres-peppol-local:
+      postgres-local:
         condition: service_healthy
       cashflow-service-local:
         condition: service_healthy
@@ -490,13 +370,7 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-auth-local:
-  postgres-payment-local:
-  postgres-reporting-local:
-  postgres-audit-local:
-  postgres-banking-local:
-  postgres-cashflow-local:
-  postgres-peppol-local:
+  postgres-local:
   redis-data-local:
   rabbitmq-data-local:
   minio-data-local:
