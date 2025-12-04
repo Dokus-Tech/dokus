@@ -43,6 +43,7 @@ include(":foundation:ktor-common")
 include(":foundation:messaging")
 include(":foundation:database")
 
+include(":features:ai:backend")
 include(":features:auth:backend")
 include(":features:auth:presentation")
 include(":features:auth:data")

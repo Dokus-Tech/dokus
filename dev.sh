@@ -100,6 +100,11 @@ DB_NAME="dokus"
 DB_USER="dev"
 DB_PASSWORD="devpassword"
 
+# AI/Ollama configuration
+OLLAMA_CONTAINER="ollama-local"
+OLLAMA_PORT="11434"
+OLLAMA_DEFAULT_MODELS=("mistral:7b" "llama3.1:8b")
+
 # Function to capitalize first letter (Bash 3.2 compatible)
 capitalize() {
     local str=$1
@@ -376,6 +381,20 @@ start_services() {
             sleep 1
         done
 
+        # Wait for Ollama (AI)
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama AI Server"
+        for i in {1..60}; do
+            if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+                echo -e "${SOFT_GREEN}◆ Ready${NC}"
+                break
+            fi
+            if [ $i -eq 60 ]; then
+                echo -e "${SOFT_YELLOW}◇ Slow Start${NC}"
+            fi
+            echo -n "."
+            sleep 1
+        done
+
         # Wait for services with proper spacing
         sleep 3
 
@@ -479,6 +498,14 @@ show_status() {
         echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
+    # Ollama AI
+    printf "  ${SOFT_GRAY}│${NC} Ollama AI Server        ${SOFT_GRAY}│${NC} "
+    if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+        echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
+
     echo -e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
     # Services
@@ -567,6 +594,140 @@ access_db() {
 access_redis() {
     print_gradient_header "🗄️  Redis CLI Access"
     docker-compose -f $COMPOSE_FILE exec redis-local redis-cli -a devredispass
+}
+
+# Function to check Ollama status
+ollama_status() {
+    print_gradient_header "🤖 Ollama AI Status"
+
+    # Check if container is running
+    printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama Server"
+    if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
+        echo -e "${SOFT_GREEN}◆ Running${NC}"
+    else
+        echo -e "${SOFT_RED}◇ Not Running${NC}"
+        echo ""
+        print_status warning "Ollama is not running. Start services first."
+        return 1
+    fi
+
+    echo ""
+    echo -e "  ${SOFT_CYAN}${BOLD}Loaded Models:${NC}\n"
+
+    # Get list of models
+    local models=$(curl -s http://localhost:${OLLAMA_PORT}/api/tags 2>/dev/null)
+    if [ -n "$models" ]; then
+        echo "$models" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    models = data.get('models', [])
+    if models:
+        for m in models:
+            name = m.get('name', 'unknown')
+            size = m.get('size', 0)
+            size_gb = size / (1024**3)
+            print(f'    ◆ {name:30s} ({size_gb:.1f} GB)')
+    else:
+        print('    (no models installed)')
+except:
+    print('    (no models installed)')
+" 2>/dev/null || echo -e "    ${DIM_WHITE}(no models installed)${NC}"
+    else
+        echo -e "    ${DIM_WHITE}(no models installed)${NC}"
+    fi
+    echo ""
+}
+
+# Function to pull AI models
+ollama_pull() {
+    print_gradient_header "🤖 Pull AI Models"
+
+    # Check if Ollama is running
+    if ! curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
+        print_status error "Ollama is not running. Start services first with: ./dev.sh start"
+        return 1
+    fi
+
+    echo -e "  ${SOFT_CYAN}${BOLD}Available models to pull:${NC}\n"
+    echo -e "    ${SOFT_CYAN}①${NC}  mistral:7b      ${DIM_WHITE}(Recommended - 4.1GB, fast)${NC}"
+    echo -e "    ${SOFT_CYAN}②${NC}  llama3.1:8b     ${DIM_WHITE}(Alternative - 4.7GB)${NC}"
+    echo -e "    ${SOFT_CYAN}③${NC}  llama3.2:3b     ${DIM_WHITE}(Lightweight - 2.0GB)${NC}"
+    echo -e "    ${SOFT_CYAN}④${NC}  gemma2:9b       ${DIM_WHITE}(Quality - 5.4GB)${NC}"
+    echo -e "    ${SOFT_CYAN}⑤${NC}  All recommended  ${DIM_WHITE}(mistral:7b + llama3.1:8b)${NC}"
+    echo -e "    ${SOFT_CYAN}⓪${NC}  Cancel"
+    echo ""
+
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-5]:${NC} "
+    read choice
+
+    echo ""
+
+    case $choice in
+        1) pull_model "mistral:7b" ;;
+        2) pull_model "llama3.1:8b" ;;
+        3) pull_model "llama3.2:3b" ;;
+        4) pull_model "gemma2:9b" ;;
+        5)
+            pull_model "mistral:7b"
+            pull_model "llama3.1:8b"
+            ;;
+        0) print_status info "Cancelled" && return ;;
+        *) print_status error "Invalid choice" ;;
+    esac
+}
+
+# Helper function to pull a single model
+pull_model() {
+    local model=$1
+    print_status loading "Pulling ${model}... (this may take a while)"
+    echo ""
+
+    # Pull model using Ollama API
+    docker-compose -f $COMPOSE_FILE exec -T $OLLAMA_CONTAINER ollama pull $model
+
+    if [ $? -eq 0 ]; then
+        echo ""
+        print_status success "${model} pulled successfully"
+    else
+        echo ""
+        print_status error "Failed to pull ${model}"
+    fi
+}
+
+# Function to run a quick AI test
+ollama_test() {
+    print_gradient_header "🧪 AI Test"
+
+    if ! curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
+        print_status error "Ollama is not running"
+        return 1
+    fi
+
+    print_status loading "Testing Ollama with a quick prompt..."
+    echo ""
+
+    local response=$(curl -s http://localhost:${OLLAMA_PORT}/api/generate -d '{
+        "model": "mistral:7b",
+        "prompt": "Say hello in one sentence.",
+        "stream": false
+    }' 2>/dev/null)
+
+    if [ -n "$response" ]; then
+        echo "$response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print('  Response:', data.get('response', 'No response'))
+except:
+    print('  (Failed to parse response)')
+" 2>/dev/null
+        echo ""
+        print_status success "AI is responding correctly"
+    else
+        print_status error "No response from AI. Make sure a model is loaded."
+    fi
+    echo ""
 }
 
 # Function to run tests
@@ -661,6 +822,7 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:25672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:25673${NC} • ${SOFT_GRAY}pass: localrabbitpass${NC} ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}      ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC} • ${SOFT_GRAY}API endpoint${NC}     ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
@@ -679,6 +841,8 @@ print_services_info() {
     echo -e "    ${SOFT_GRAY}./dev.sh redis${NC}        ${DIM_WHITE}Access Redis CLI${NC}"
     echo -e "    ${SOFT_GRAY}./dev.sh status${NC}       ${DIM_WHITE}Check service health${NC}"
     echo -e "    ${SOFT_GRAY}./dev.sh test${NC}         ${DIM_WHITE}Run all test suites${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh ai${NC}           ${DIM_WHITE}Check AI/Ollama status${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh ai-pull${NC}      ${DIM_WHITE}Pull AI models${NC}"
     echo ""
 }
 
@@ -794,6 +958,15 @@ main() {
         redis)
             access_redis
             ;;
+        ai)
+            ollama_status
+            ;;
+        ai-pull)
+            ollama_pull
+            ;;
+        ai-test)
+            ollama_test
+            ;;
         test)
             run_tests ${2:-all}
             ;;
@@ -843,6 +1016,12 @@ show_help() {
     echo -e "    ${SOFT_CYAN}redis${NC}              ${DIM_WHITE}Access Redis CLI${NC}"
     echo -e "    ${SOFT_CYAN}reset-db${NC}           ${DIM_WHITE}Reset database (interactive menu)${NC}"
     echo -e "    ${SOFT_CYAN}pgadmin${NC}            ${DIM_WHITE}Start pgAdmin interface${NC}"
+    echo ""
+
+    echo -e "  ${SOFT_ORANGE}${BOLD}AI / Machine Learning${NC}"
+    echo -e "    ${SOFT_CYAN}ai${NC}                 ${DIM_WHITE}Show Ollama AI status and loaded models${NC}"
+    echo -e "    ${SOFT_CYAN}ai-pull${NC}            ${DIM_WHITE}Pull AI models (interactive)${NC}"
+    echo -e "    ${SOFT_CYAN}ai-test${NC}            ${DIM_WHITE}Test AI with a quick prompt${NC}"
     echo ""
 
     echo -e "  ${SOFT_RED}${BOLD}Maintenance${NC}"
