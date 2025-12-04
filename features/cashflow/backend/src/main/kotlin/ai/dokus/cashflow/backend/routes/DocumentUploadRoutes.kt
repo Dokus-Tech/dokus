@@ -8,6 +8,7 @@ import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
+import ai.dokus.foundation.domain.model.DocumentUploadResponse
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
@@ -20,7 +21,6 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
@@ -41,16 +41,6 @@ private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses
  *
  * Base path: /api/v1/documents
  */
-/**
- * Response for document upload including processing info.
- */
-@Serializable
-data class DocumentUploadResponse(
-    val document: DocumentDto,
-    val processingId: DocumentProcessingId,
-    val processingStatus: String
-)
-
 fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
