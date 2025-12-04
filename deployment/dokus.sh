@@ -478,6 +478,7 @@ initial_setup() {
     DB_PASS=$(generate_password)
     REDIS_PASS=$(generate_password)
     RABBITMQ_PASS=$(generate_password)
+    MINIO_PASS=$(generate_password)
     JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64 2>/dev/null || LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 64)
     MONITORING_KEY=$(generate_password)
     ADMIN_KEY=$(generate_password)
@@ -502,6 +503,11 @@ initial_setup() {
     # RabbitMQ
     RABBITMQ_USERNAME=$(prompt_with_default "RabbitMQ username:" "dokus" "RABBITMQ_USERNAME")
     RABBITMQ_PASSWORD=$(prompt_with_default "RabbitMQ password:" "$RABBITMQ_PASS" "RABBITMQ_PASSWORD" "true")
+
+    # MinIO Object Storage
+    MINIO_ROOT_USER=$(prompt_with_default "MinIO root user:" "dokusadmin" "MINIO_ROOT_USER")
+    MINIO_ROOT_PASSWORD=$(prompt_with_default "MinIO root password:" "$MINIO_PASS" "MINIO_ROOT_PASSWORD" "true")
+    MINIO_BUCKET="dokus-documents"
 
     # JWT
     JWT_SECRET_VAL=$(prompt_with_default "JWT secret (64+ chars):" "$JWT_SECRET" "JWT_SECRET" "true")
@@ -571,6 +577,13 @@ RABBITMQ_USERNAME=$RABBITMQ_USERNAME
 RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
 
 # ============================================================================
+# MINIO OBJECT STORAGE
+# ============================================================================
+MINIO_ROOT_USER=$MINIO_ROOT_USER
+MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD
+MINIO_BUCKET=$MINIO_BUCKET
+
+# ============================================================================
 # JWT AUTHENTICATION
 # ============================================================================
 JWT_SECRET=$JWT_SECRET_VAL
@@ -627,6 +640,28 @@ JAEGER_ENDPOINT=$JAEGER_ENDPOINT
 # GEOLOCATION
 # ============================================================================
 GEOIP_ENABLED=$GEOIP_ENABLED
+
+# ============================================================================
+# CORS CONFIGURATION
+# ============================================================================
+CORS_ALLOWED_HOSTS=*
+
+# ============================================================================
+# AI CONFIGURATION (Document Processing)
+# ============================================================================
+AI_DEFAULT_PROVIDER=ollama
+AI_OLLAMA_ENABLED=true
+AI_OLLAMA_MODEL=mistral:7b
+AI_OPENAI_ENABLED=false
+AI_OPENAI_API_KEY=
+AI_OPENAI_MODEL=gpt-4o-mini
+
+# Ollama Performance (adjust for your hardware)
+# Raspberry Pi 4 (4GB): OLLAMA_NUM_PARALLEL=1, OLLAMA_MAX_LOADED_MODELS=1
+# Raspberry Pi 5 (8GB): OLLAMA_NUM_PARALLEL=2, OLLAMA_MAX_LOADED_MODELS=1
+# Server with GPU: OLLAMA_NUM_PARALLEL=4, OLLAMA_MAX_LOADED_MODELS=2
+OLLAMA_NUM_PARALLEL=1
+OLLAMA_MAX_LOADED_MODELS=1
 
 # ============================================================================
 # LOGGING
