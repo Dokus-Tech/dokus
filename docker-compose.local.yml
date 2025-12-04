@@ -88,6 +88,42 @@ services:
       retries: 3
       start_period: 60s
 
+  # Ollama Model Initialization (auto-pulls required models via API)
+  ollama-init-local:
+    image: curlimages/curl:latest
+    container_name: dokus-ollama-init-local
+    depends_on:
+      ollama-local:
+        condition: service_healthy
+    networks:
+      - dokus-local-network
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Checking for mistral:7b model..."
+        MODELS=$$(curl -s http://ollama-local:11434/api/tags | grep -o '"name":"mistral:7b"' || true)
+        if [ -n "$$MODELS" ]; then
+          echo "Model mistral:7b already exists, skipping download"
+        else
+          echo "Pulling mistral:7b model via API (this may take several minutes)..."
+          curl -s http://ollama-local:11434/api/pull -d '{"name": "mistral:7b"}' | while read line; do
+            echo "$$line" | grep -o '"status":"[^"]*"' | head -1 || true
+          done
+          echo "Model mistral:7b pull initiated"
+        fi
+        echo "Waiting for model to be available..."
+        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+          MODELS=$$(curl -s http://ollama-local:11434/api/tags | grep -o '"name":"mistral:7b"' || true)
+          if [ -n "$$MODELS" ]; then
+            echo "Model mistral:7b is ready!"
+            exit 0
+          fi
+          echo "  Waiting... ($$i/20)"
+          sleep 30
+        done
+        echo "Model download may still be in progress"
+    restart: "no"
+
   # RabbitMQ Message Broker
   rabbitmq-local:
     image: rabbitmq:3.13-management-alpine

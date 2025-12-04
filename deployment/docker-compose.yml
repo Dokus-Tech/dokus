@@ -116,6 +116,44 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  # Ollama Model Initialization (auto-pulls required models via API)
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: dokus-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_MODEL=${AI_OLLAMA_MODEL:-mistral:7b}
+    networks:
+      - dokus-network
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Checking for $${OLLAMA_MODEL} model..."
+        MODELS=$$(curl -s http://ollama:11434/api/tags | grep -o "\"name\":\"$${OLLAMA_MODEL}\"" || true)
+        if [ -n "$$MODELS" ]; then
+          echo "Model $${OLLAMA_MODEL} already exists, skipping download"
+        else
+          echo "Pulling $${OLLAMA_MODEL} model via API (this may take several minutes)..."
+          curl -s http://ollama:11434/api/pull -d "{\"name\": \"$${OLLAMA_MODEL}\"}" | while read line; do
+            echo "$$line" | grep -o '"status":"[^"]*"' | head -1 || true
+          done
+          echo "Model $${OLLAMA_MODEL} pull initiated"
+        fi
+        echo "Waiting for model to be available..."
+        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+          MODELS=$$(curl -s http://ollama:11434/api/tags | grep -o "\"name\":\"$${OLLAMA_MODEL}\"" || true)
+          if [ -n "$$MODELS" ]; then
+            echo "Model $${OLLAMA_MODEL} is ready!"
+            exit 0
+          fi
+          echo "  Waiting... ($$i/20)"
+          sleep 30
+        done
+        echo "Model download may still be in progress"
+    restart: "no"
+
   # Auth Service
   auth-service:
     image: 94.111.226.82:5000/dokus-auth:latest
