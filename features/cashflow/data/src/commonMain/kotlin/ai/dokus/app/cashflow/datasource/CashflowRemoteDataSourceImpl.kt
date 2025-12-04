@@ -10,6 +10,7 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.domain.model.DocumentUploadResponse
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
@@ -394,7 +395,7 @@ internal class CashflowRemoteDataSourceImpl(
         prefix: String
     ): Result<DocumentDto> {
         return runCatching {
-            httpClient.submitFormWithBinaryData(
+            val response: DocumentUploadResponse = httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
                 formData = formData {
                     append(
@@ -411,6 +412,7 @@ internal class CashflowRemoteDataSourceImpl(
                     append("prefix", prefix)
                 }
             ).body()
+            response.document
         }
     }
 
