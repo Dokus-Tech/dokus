@@ -7,7 +7,7 @@ import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.services.PaymentService
 import ai.dokus.payment.backend.database.services.PaymentServiceImpl
-import ai.dokus.payment.backend.database.tables.PaymentsTable
+import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module

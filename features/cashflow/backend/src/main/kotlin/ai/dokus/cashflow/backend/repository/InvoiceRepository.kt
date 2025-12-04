@@ -1,12 +1,13 @@
 package ai.dokus.cashflow.backend.repository
 
-import ai.dokus.cashflow.backend.database.tables.InvoiceItemsTable
-import ai.dokus.cashflow.backend.database.tables.InvoicesTable
+import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
+import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Quantity
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceItemId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
@@ -139,6 +140,7 @@ class InvoiceRepository {
                 paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
                 paidAt = row[InvoicesTable.paidAt],
                 paymentMethod = row[InvoicesTable.paymentMethod],
+                documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                 createdAt = row[InvoicesTable.createdAt],
                 updatedAt = row[InvoicesTable.updatedAt]
             )
@@ -201,6 +203,7 @@ class InvoiceRepository {
                 paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
                 paidAt = row[InvoicesTable.paidAt],
                 paymentMethod = row[InvoicesTable.paymentMethod],
+                documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                 createdAt = row[InvoicesTable.createdAt],
                 updatedAt = row[InvoicesTable.updatedAt]
             )
@@ -266,6 +269,7 @@ class InvoiceRepository {
                         paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
                         paidAt = row[InvoicesTable.paidAt],
                         paymentMethod = row[InvoicesTable.paymentMethod],
+                        documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                         createdAt = row[InvoicesTable.createdAt],
                         updatedAt = row[InvoicesTable.updatedAt]
                     )
@@ -323,6 +327,7 @@ class InvoiceRepository {
                             paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
                             paidAt = row[InvoicesTable.paidAt],
                             paymentMethod = row[InvoicesTable.paymentMethod],
+                            documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                             createdAt = row[InvoicesTable.createdAt],
                             updatedAt = row[InvoicesTable.updatedAt]
                         )
@@ -453,6 +458,7 @@ class InvoiceRepository {
                 paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
                 paidAt = row[InvoicesTable.paidAt],
                 paymentMethod = row[InvoicesTable.paymentMethod],
+                documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                 createdAt = row[InvoicesTable.createdAt],
                 updatedAt = row[InvoicesTable.updatedAt]
             )

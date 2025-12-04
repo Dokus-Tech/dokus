@@ -5,7 +5,7 @@ import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.reporting.backend.database.tables.VatReturnsTable
+import ai.dokus.foundation.database.tables.reporting.VatReturnsTable
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module

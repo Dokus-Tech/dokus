@@ -1,129 +1,24 @@
 # Dokus Production Docker Compose
-# Pulls pre-built images from registry
+# Consolidated to single PostgreSQL database
 # Run with: docker-compose up -d
 
 services:
-  # PostgreSQL Database for Auth Service
-  postgres-auth:
+  # Single PostgreSQL Database for all services
+  postgres:
     image: postgres:17-alpine
-    container_name: dokus-postgres-auth
+    container_name: dokus-postgres
     environment:
-      POSTGRES_DB: dokus_auth
+      POSTGRES_DB: dokus
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "15441:5432"
+      - "15432:5432"
     volumes:
-      - postgres-auth:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_auth"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Cashflow Service
-  postgres-cashflow:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-cashflow
-    environment:
-      POSTGRES_DB: dokus_cashflow
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15442:5432"
-    volumes:
-      - postgres-cashflow:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_cashflow"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Payment Service
-  postgres-payment:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-payment
-    environment:
-      POSTGRES_DB: dokus_payment
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15443:5432"
-    volumes:
-      - postgres-payment:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_payment"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Reporting Service
-  postgres-reporting:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-reporting
-    environment:
-      POSTGRES_DB: dokus_reporting
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15444:5432"
-    volumes:
-      - postgres-reporting:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_reporting"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Audit Service
-  postgres-audit:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-audit
-    environment:
-      POSTGRES_DB: dokus_audit
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15445:5432"
-    volumes:
-      - postgres-audit:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_audit"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PostgreSQL Database for Banking Service
-  postgres-banking:
-    image: postgres:17-alpine
-    container_name: dokus-postgres-banking
-    environment:
-      POSTGRES_DB: dokus_banking
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "15446:5432"
-    volumes:
-      - postgres-banking:/var/lib/postgresql/data
-    networks:
-      - dokus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus_banking"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -169,6 +64,96 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # MinIO Object Storage (S3-compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: dokus-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dokusadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Ollama LLM Server for AI inference
+  # Note: For Raspberry Pi, use CPU-only mode. For servers with GPUs, uncomment deploy section.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: dokus-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - dokus-network
+    environment:
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-1}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-1}
+    # GPU support (uncomment for NVIDIA GPUs on non-Pi servers)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # Ollama Model Initialization (auto-pulls required models via API)
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: dokus-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_MODEL=${AI_OLLAMA_MODEL:-mistral:7b}
+    networks:
+      - dokus-network
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Checking for $${OLLAMA_MODEL} model..."
+        MODELS=$$(curl -s http://ollama:11434/api/tags | grep -o "\"name\":\"$${OLLAMA_MODEL}\"" || true)
+        if [ -n "$$MODELS" ]; then
+          echo "Model $${OLLAMA_MODEL} already exists, skipping download"
+        else
+          echo "Pulling $${OLLAMA_MODEL} model via API (this may take several minutes)..."
+          curl -s http://ollama:11434/api/pull -d "{\"name\": \"$${OLLAMA_MODEL}\"}" | while read line; do
+            echo "$$line" | grep -o '"status":"[^"]*"' | head -1 || true
+          done
+          echo "Model $${OLLAMA_MODEL} pull initiated"
+        fi
+        echo "Waiting for model to be available..."
+        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+          MODELS=$$(curl -s http://ollama:11434/api/tags | grep -o "\"name\":\"$${OLLAMA_MODEL}\"" || true)
+          if [ -n "$$MODELS" ]; then
+            echo "Model $${OLLAMA_MODEL} is ready!"
+            exit 0
+          fi
+          echo "  Waiting... ($$i/20)"
+          sleep 30
+        done
+        echo "Model download may still be in progress"
+    restart: "no"
+
   # Auth Service
   auth-service:
     image: 94.111.226.82:5000/dokus-auth:latest
@@ -176,7 +161,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-auth:5432/dokus_auth
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -228,7 +213,7 @@ services:
     ports:
       - "6091:8080"
     depends_on:
-      postgres-auth:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -251,7 +236,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-cashflow:5432/dokus_cashflow
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -262,12 +247,29 @@ services:
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # MinIO Storage
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-dokusadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-dokus-documents}
+      # AI Configuration
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
+      AI_OLLAMA_ENABLED: ${AI_OLLAMA_ENABLED:-true}
+      AI_OLLAMA_URL: http://ollama:11434
+      AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-mistral:7b}
+      AI_OPENAI_ENABLED: ${AI_OPENAI_ENABLED:-false}
+      AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
+      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6092:8080"
     depends_on:
-      postgres-cashflow:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     networks:
       - dokus-network
@@ -286,7 +288,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-payment:5432/dokus_payment
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -302,7 +304,7 @@ services:
     ports:
       - "6093:8080"
     depends_on:
-      postgres-payment:
+      postgres:
         condition: service_healthy
     networks:
       - dokus-network
@@ -321,7 +323,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-reporting:5432/dokus_reporting
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -337,7 +339,7 @@ services:
     ports:
       - "6094:8080"
     depends_on:
-      postgres-reporting:
+      postgres:
         condition: service_healthy
     networks:
       - dokus-network
@@ -356,7 +358,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-audit:5432/dokus_audit
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -378,7 +380,7 @@ services:
     ports:
       - "6095:8080"
     depends_on:
-      postgres-audit:
+      postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -399,7 +401,7 @@ services:
     environment:
       PORT: 8080
       ENVIRONMENT: cloud
-      DB_URL: jdbc:postgresql://postgres-banking:5432/dokus_banking
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
@@ -415,7 +417,7 @@ services:
     ports:
       - "6096:8080"
     depends_on:
-      postgres-banking:
+      postgres:
         condition: service_healthy
     networks:
       - dokus-network
@@ -432,11 +434,8 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-auth:
-  postgres-cashflow:
-  postgres-payment:
-  postgres-reporting:
-  postgres-audit:
-  postgres-banking:
+  postgres-data:
   redis-data:
   rabbitmq-data:
+  minio-data:
+  ollama-models:

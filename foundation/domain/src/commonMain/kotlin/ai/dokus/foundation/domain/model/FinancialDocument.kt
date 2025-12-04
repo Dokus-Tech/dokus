@@ -11,10 +11,10 @@ import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.MediaId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.PeppolId
 import kotlinx.datetime.LocalDate
@@ -65,6 +65,7 @@ sealed interface FinancialDocumentDto {
         val peppolId: PeppolId? = null,
         val peppolSentAt: LocalDateTime? = null,
         val peppolStatus: PeppolStatus? = null,
+        val documentId: DocumentId? = null,
         val paymentLink: String? = null,
         val paymentLinkExpiresAt: LocalDateTime? = null,
         val paidAt: LocalDateTime? = null,
@@ -92,8 +93,7 @@ sealed interface FinancialDocumentDto {
         val vatRate: VatRate? = null,
         val category: ExpenseCategory,
         val description: String? = null,
-        val receiptUrl: String? = null,
-        val receiptFilename: String? = null,
+        val documentId: DocumentId? = null,
         val isDeductible: Boolean = true,
         val deductiblePercentage: Percentage = Percentage.FULL,
         val paymentMethod: PaymentMethod? = null,
@@ -124,12 +124,11 @@ sealed interface FinancialDocumentDto {
         val status: BillStatus,
         val category: ExpenseCategory,
         val description: String? = null,
-        val documentUrl: String? = null,
+        val documentId: DocumentId? = null,
         val paidAt: LocalDateTime? = null,
         val paidAmount: Money? = null,
         val paymentMethod: PaymentMethod? = null,
         val paymentReference: String? = null,
-        val mediaId: MediaId? = null,
         override val currency: Currency = Currency.Eur,
         override val notes: String? = null,
         override val createdAt: LocalDateTime,

@@ -27,6 +27,15 @@ import io.ktor.server.routing.routing
  * Attachments:
  * - /api/v1/attachments - Attachment management
  *
+ * Documents:
+ * - /api/v1/documents/upload - Upload documents to MinIO storage
+ * - /api/v1/documents/{id} - Get document by ID with download URL
+ * - /api/v1/documents/processing - List documents by processing status
+ * - /api/v1/documents/{id}/processing - Get processing details
+ * - /api/v1/documents/{id}/confirm - Confirm extraction and create entity
+ * - /api/v1/documents/{id}/reject - Reject extraction
+ * - /api/v1/documents/{id}/reprocess - Trigger re-extraction
+ *
  * @see invoiceRoutes
  * @see expenseRoutes
  * @see billRoutes
@@ -34,6 +43,7 @@ import io.ktor.server.routing.routing
  * @see cashflowOverviewRoutes
  * @see fromMediaRoutes
  * @see cashflowDocumentRoutes
+ * @see documentUploadRoutes
  */
 fun Application.configureCashflowRoutes() {
     routing {
@@ -57,5 +67,11 @@ fun Application.configureCashflowRoutes() {
 
         // Document routes
         cashflowDocumentRoutes()
+
+        // Document upload routes (MinIO)
+        documentUploadRoutes()
+
+        // Document processing routes (AI extraction)
+        documentProcessingRoutes()
     }
 }

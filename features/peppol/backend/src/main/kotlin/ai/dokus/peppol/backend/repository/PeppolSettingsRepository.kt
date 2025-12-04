@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.peppol.backend.database.tables.PeppolSettingsTable
+import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

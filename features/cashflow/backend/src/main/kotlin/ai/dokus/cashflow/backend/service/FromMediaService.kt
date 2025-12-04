@@ -1,8 +1,8 @@
 package ai.dokus.cashflow.backend.service
 
-import ai.dokus.cashflow.backend.repository.BillRepository
-import ai.dokus.cashflow.backend.repository.ExpenseRepository
-import ai.dokus.cashflow.backend.repository.InvoiceRepository
+import ai.dokus.foundation.database.repository.cashflow.BillRepository
+import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
+import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Percentage
 import ai.dokus.foundation.domain.VatRate
@@ -161,8 +161,7 @@ class FromMediaService(
             vatRate = corrections?.vatRate ?: expenseData.vatRate,
             category = corrections?.category ?: expenseData.category ?: ExpenseCategory.Other,
             description = null,
-            receiptUrl = null,
-            receiptFilename = media.filename,
+            documentId = null, // Document will be linked separately
             isDeductible = corrections?.isDeductible ?: true,
             deductiblePercentage = corrections?.deductiblePercentage ?: Percentage.FULL,
             isRecurring = false,
@@ -230,7 +229,7 @@ class FromMediaService(
             category = corrections?.category ?: billData.category ?: ExpenseCategory.Other,
             description = corrections?.description ?: billData.description,
             notes = corrections?.notes ?: billData.notes,
-            mediaId = mediaId
+            documentId = null // Document will be linked separately
         )
 
         // Create bill

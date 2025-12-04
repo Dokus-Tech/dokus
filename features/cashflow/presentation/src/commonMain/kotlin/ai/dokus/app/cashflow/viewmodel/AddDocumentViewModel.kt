@@ -1,9 +1,9 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.components.DroppedFile
+import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.core.viewmodel.BaseViewModel
-import ai.dokus.foundation.domain.usecases.UploadMediaUseCase
-import ai.dokus.foundation.domain.model.MediaUploadRequest
+import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -11,14 +11,14 @@ import org.koin.core.component.inject
 
 class AddDocumentViewModel : BaseViewModel<AddDocumentViewModel.State>(State.Idle), KoinComponent {
 
-    private val uploadMediaUseCase: UploadMediaUseCase by inject()
+    private val cashflowDataSource: CashflowRemoteDataSource by inject()
     private val logger = Logger.forClass<AddDocumentViewModel>()
 
     sealed interface State {
         data object Idle : State
         data object Uploading : State
         data class Error(val message: String) : State
-        data class Success(val uploadedCount: Int) : State
+        data class Success(val uploadedCount: Int, val uploads: List<DocumentDto> = emptyList()) : State
     }
 
     fun uploadFiles(files: List<DroppedFile>) = scope.launch {
@@ -26,18 +26,16 @@ class AddDocumentViewModel : BaseViewModel<AddDocumentViewModel.State>(State.Idl
         mutableState.value = State.Uploading
 
         val results = files.mapNotNull { file ->
-            runCatching {
-                val request = MediaUploadRequest(
-                    fileContent = file.bytes,
-                    filename = file.name,
-                    contentType = file.mimeType ?: mimeTypeFromName(file.name)
-                )
-                uploadMediaUseCase(request)
-            }.onFailure { logger.e(it) { "Failed to upload ${file.name}" } }.getOrNull()
+            cashflowDataSource.uploadDocument(
+                fileContent = file.bytes,
+                filename = file.name,
+                contentType = file.mimeType ?: mimeTypeFromName(file.name),
+                prefix = "documents"
+            ).onFailure { logger.e(it) { "Failed to upload ${file.name}" } }.getOrNull()
         }
 
         mutableState.value = if (results.isNotEmpty()) {
-            State.Success(results.size)
+            State.Success(results.size, results)
         } else {
             State.Error("Failed to upload documents. Please try again.")
         }

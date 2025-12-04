@@ -93,31 +93,17 @@ AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
 PEPPOL_SERVICE_DIR="features/peppol/backend"
 
-# Database configuration for multi-database architecture
-# Format: container:port:dbname
-# Bash 3.2 compatible (no associative arrays)
-
-DB_KEYS="auth payment reporting audit banking cashflow media peppol"
-
-# Function to get database config for a given key
-# Returns: service:port:dbname (service name for docker-compose exec)
-get_db_config() {
-    local key=$1
-    case $key in
-        auth)      echo "postgres-auth-local:15541:dokus_auth" ;;
-        cashflow)  echo "postgres-cashflow-local:15542:dokus_cashflow" ;;
-        payment)   echo "postgres-payment-local:15543:dokus_payment" ;;
-        reporting) echo "postgres-reporting-local:15544:dokus_reporting" ;;
-        audit)     echo "postgres-audit-local:15545:dokus_audit" ;;
-        banking)   echo "postgres-banking-local:15546:dokus_banking" ;;
-        media)     echo "postgres-media-local:15547:dokus_media" ;;
-        peppol)    echo "postgres-peppol-local:15548:dokus_peppol" ;;
-        *) echo "" ;;
-    esac
-}
-
+# Database configuration - consolidated single database
+DB_CONTAINER="postgres-local"
+DB_PORT="15432"
+DB_NAME="dokus"
 DB_USER="dev"
 DB_PASSWORD="devpassword"
+
+# AI/Ollama configuration
+OLLAMA_CONTAINER="ollama-local"
+OLLAMA_PORT="11434"
+OLLAMA_DEFAULT_MODELS=("mistral:7b" "llama3.1:8b")
 
 # Function to capitalize first letter (Bash 3.2 compatible)
 capitalize() {
@@ -292,7 +278,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "media" "peppol")
+    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "peppol")
     local total=${#services[@]}
     local current=0
 
@@ -359,21 +345,18 @@ start_services() {
         echo ""
         echo -e "  ${SOFT_CYAN}${BOLD}Waiting for services to initialize...${NC}\n"
 
-        # Wait for all PostgreSQL databases
-        for db_key in $DB_KEYS; do
-            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "PostgreSQL ($db_key)"
-            for i in {1..30}; do
-                if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
-                    echo -e "${SOFT_GREEN}◆ Ready${NC}"
-                    break
-                fi
-                if [ $i -eq 30 ]; then
-                    echo -e "${SOFT_RED}◇ Timeout${NC}"
-                fi
-                echo -n "."
-                sleep 1
-            done
+        # Wait for PostgreSQL database
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "PostgreSQL ($DB_NAME)"
+        for i in {1..30}; do
+            if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+                echo -e "${SOFT_GREEN}◆ Ready${NC}"
+                break
+            fi
+            if [ $i -eq 30 ]; then
+                echo -e "${SOFT_RED}◇ Timeout${NC}"
+            fi
+            echo -n "."
+            sleep 1
         done
 
         # Wait for Redis
@@ -398,6 +381,20 @@ start_services() {
             sleep 1
         done
 
+        # Wait for Ollama (AI)
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama AI Server"
+        for i in {1..60}; do
+            if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+                echo -e "${SOFT_GREEN}◆ Ready${NC}"
+                break
+            fi
+            if [ $i -eq 60 ]; then
+                echo -e "${SOFT_YELLOW}◇ Slow Start${NC}"
+            fi
+            echo -n "."
+            sleep 1
+        done
+
         # Wait for services with proper spacing
         sleep 3
 
@@ -408,7 +405,6 @@ start_services() {
             "Reporting:7094:/health"
             "Audit:7095:/health"
             "Banking:7096:/health"
-            "Media:7097:/health"
             "Peppol:7098:/health"
         )
 
@@ -478,16 +474,13 @@ show_status() {
     echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                 ${SOFT_GRAY}│${NC} ${BOLD}Status${NC}           ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Check all PostgreSQL databases
-    for db_key in $DB_KEYS; do
-        IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-        printf "  ${SOFT_GRAY}│${NC} PostgreSQL (%-9s) ${SOFT_GRAY}│${NC} " "$db_key"
-        if docker-compose -f $COMPOSE_FILE exec -T $container pg_isready -U $DB_USER -d $dbname &>/dev/null; then
-            echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
-        else
-            echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
-        fi
-    done
+    # Check PostgreSQL database
+    printf "  ${SOFT_GRAY}│${NC} PostgreSQL ($DB_NAME)     ${SOFT_GRAY}│${NC} "
+    if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+        echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
 
     # Redis
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
@@ -505,6 +498,14 @@ show_status() {
         echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
+    # Ollama AI
+    printf "  ${SOFT_GRAY}│${NC} Ollama AI Server        ${SOFT_GRAY}│${NC} "
+    if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+        echo -e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo -e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
+
     echo -e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
     # Services
@@ -515,7 +516,6 @@ show_status() {
         "Reporting Service:7094:/health"
         "Audit Service:7095:/health"
         "Banking Service:7096:/health"
-        "Media Service:7097:/health"
         "Peppol Service:7098:/health"
     )
 
@@ -560,52 +560,7 @@ clean_all() {
 reset_db() {
     print_gradient_header "🔄 Database Reset"
 
-    echo ""
-    echo -e "  ${SOFT_CYAN}${BOLD}Select database to reset:${NC}\n"
-
-    local options=(
-        "① Auth (dokus_auth)"
-        "② Cashflow (dokus_cashflow)"
-        "③ Payment (dokus_payment)"
-        "④ Reporting (dokus_reporting)"
-        "⑤ Audit (dokus_audit)"
-        "⑥ Banking (dokus_banking)"
-        "⑦ Media (dokus_media)"
-        "⑧ Peppol (dokus_peppol)"
-        "⑨ All databases"
-    )
-
-    for option in "${options[@]}"; do
-        echo -e "  ${SOFT_CYAN}${option}${NC}"
-    done
-    echo ""
-    echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
-    echo ""
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-9]:${NC} "
-    read choice
-    echo ""
-
-    case $choice in
-        1) reset_single_db "auth" ;;
-        2) reset_single_db "cashflow" ;;
-        3) reset_single_db "payment" ;;
-        4) reset_single_db "reporting" ;;
-        5) reset_single_db "audit" ;;
-        6) reset_single_db "banking" ;;
-        7) reset_single_db "media" ;;
-        8) reset_single_db "peppol" ;;
-        9) reset_all_databases ;;
-        0) print_status info "Operation cancelled"; echo ""; return ;;
-        *) print_status error "Invalid choice"; echo ""; return ;;
-    esac
-}
-
-# Helper function to reset a single database
-reset_single_db() {
-    local db_key=$1
-    IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-
-    print_status warning "This will reset the $db_key database ($dbname)!"
+    print_status warning "This will reset the database ($DB_NAME) and delete all data!"
     echo ""
     printf "  ${BOLD}${SOFT_RED}Are you sure?${NC} ${DIM_WHITE}(y/N):${NC} "
     read -n 1 -r
@@ -613,49 +568,13 @@ reset_single_db() {
     echo ""
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_status loading "Resetting $db_key database..."
-        docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
-        docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
-        docker volume rm dokus_$container 2>/dev/null || true
-        docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
+        print_status loading "Resetting database..."
+        docker-compose -f $COMPOSE_FILE stop $DB_CONTAINER > /dev/null 2>&1
+        docker-compose -f $COMPOSE_FILE rm -f $DB_CONTAINER > /dev/null 2>&1
+        docker volume rm the-predict_postgres-local 2>/dev/null || true
+        docker-compose -f $COMPOSE_FILE up -d $DB_CONTAINER > /dev/null 2>&1
         echo ""
-        print_status success "$db_key database reset complete"
-    else
-        print_status info "Operation cancelled"
-    fi
-    echo ""
-}
-
-# Helper function to reset all databases
-reset_all_databases() {
-    print_status warning "This will reset ALL databases!"
-    echo ""
-    printf "  ${BOLD}${SOFT_RED}Are you sure?${NC} ${DIM_WHITE}(y/N):${NC} "
-    read -n 1 -r
-    echo ""
-    echo ""
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_status loading "Resetting all databases..."
-        echo ""
-
-        for db_key in $DB_KEYS; do
-            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            print_simple_status building "Resetting $db_key..."
-            docker-compose -f $COMPOSE_FILE stop $container > /dev/null 2>&1
-            docker-compose -f $COMPOSE_FILE rm -f $container > /dev/null 2>&1
-            docker volume rm dokus_$container 2>/dev/null || true
-        done
-
-        echo ""
-        print_status loading "Starting all databases..."
-        for db_key in $DB_KEYS; do
-            IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-            docker-compose -f $COMPOSE_FILE up -d $container > /dev/null 2>&1
-        done
-
-        echo ""
-        print_status success "All databases reset complete"
+        print_status success "Database reset complete"
     else
         print_status info "Operation cancelled"
     fi
@@ -666,58 +585,149 @@ reset_all_databases() {
 access_db() {
     print_gradient_header "🗄️  Database CLI Access"
 
+    print_status info "Connecting to database ($DB_NAME)..."
     echo ""
-    echo -e "  ${SOFT_CYAN}${BOLD}Select database to access:${NC}\n"
-
-    local options=(
-        "① Auth (dokus_auth) - localhost:15541"
-        "② Cashflow (dokus_cashflow) - localhost:15542"
-        "③ Payment (dokus_payment) - localhost:15543"
-        "④ Reporting (dokus_reporting) - localhost:15544"
-        "⑤ Audit (dokus_audit) - localhost:15545"
-        "⑥ Banking (dokus_banking) - localhost:15546"
-        "⑦ Media (dokus_media) - localhost:15547"
-        "⑧ Peppol (dokus_peppol) - localhost:15548"
-    )
-
-    for option in "${options[@]}"; do
-        echo -e "  ${SOFT_CYAN}${option}${NC}"
-    done
-    echo ""
-    echo -e "  ${SOFT_GRAY}⓪ Cancel${NC}"
-    echo ""
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-8]:${NC} "
-    read choice
-    echo ""
-
-    case $choice in
-        1) access_single_db "auth" ;;
-        2) access_single_db "cashflow" ;;
-        3) access_single_db "payment" ;;
-        4) access_single_db "reporting" ;;
-        5) access_single_db "audit" ;;
-        6) access_single_db "banking" ;;
-        7) access_single_db "media" ;;
-        8) access_single_db "peppol" ;;
-        0) print_status info "Operation cancelled"; echo ""; return ;;
-        *) print_status error "Invalid choice"; echo ""; return ;;
-    esac
-}
-
-# Helper function to access a single database
-access_single_db() {
-    local db_key=$1
-    IFS=':' read -r container port dbname <<< "$(get_db_config $db_key)"
-
-    print_status info "Connecting to $db_key database ($dbname)..."
-    echo ""
-    docker-compose -f $COMPOSE_FILE exec $container psql -U $DB_USER -d $dbname
+    docker-compose -f $COMPOSE_FILE exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
 }
 
 # Function to access Redis
 access_redis() {
     print_gradient_header "🗄️  Redis CLI Access"
     docker-compose -f $COMPOSE_FILE exec redis-local redis-cli -a devredispass
+}
+
+# Function to check Ollama status
+ollama_status() {
+    print_gradient_header "🤖 Ollama AI Status"
+
+    # Check if container is running
+    printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama Server"
+    if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
+        echo -e "${SOFT_GREEN}◆ Running${NC}"
+    else
+        echo -e "${SOFT_RED}◇ Not Running${NC}"
+        echo ""
+        print_status warning "Ollama is not running. Start services first."
+        return 1
+    fi
+
+    echo ""
+    echo -e "  ${SOFT_CYAN}${BOLD}Loaded Models:${NC}\n"
+
+    # Get list of models
+    local models=$(curl -s http://localhost:${OLLAMA_PORT}/api/tags 2>/dev/null)
+    if [ -n "$models" ]; then
+        echo "$models" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    models = data.get('models', [])
+    if models:
+        for m in models:
+            name = m.get('name', 'unknown')
+            size = m.get('size', 0)
+            size_gb = size / (1024**3)
+            print(f'    ◆ {name:30s} ({size_gb:.1f} GB)')
+    else:
+        print('    (no models installed)')
+except:
+    print('    (no models installed)')
+" 2>/dev/null || echo -e "    ${DIM_WHITE}(no models installed)${NC}"
+    else
+        echo -e "    ${DIM_WHITE}(no models installed)${NC}"
+    fi
+    echo ""
+}
+
+# Function to pull AI models
+ollama_pull() {
+    print_gradient_header "🤖 Pull AI Models"
+
+    # Check if Ollama is running
+    if ! curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
+        print_status error "Ollama is not running. Start services first with: ./dev.sh start"
+        return 1
+    fi
+
+    echo -e "  ${SOFT_CYAN}${BOLD}Available models to pull:${NC}\n"
+    echo -e "    ${SOFT_CYAN}①${NC}  mistral:7b      ${DIM_WHITE}(Recommended - 4.1GB, fast)${NC}"
+    echo -e "    ${SOFT_CYAN}②${NC}  llama3.1:8b     ${DIM_WHITE}(Alternative - 4.7GB)${NC}"
+    echo -e "    ${SOFT_CYAN}③${NC}  llama3.2:3b     ${DIM_WHITE}(Lightweight - 2.0GB)${NC}"
+    echo -e "    ${SOFT_CYAN}④${NC}  gemma2:9b       ${DIM_WHITE}(Quality - 5.4GB)${NC}"
+    echo -e "    ${SOFT_CYAN}⑤${NC}  All recommended  ${DIM_WHITE}(mistral:7b + llama3.1:8b)${NC}"
+    echo -e "    ${SOFT_CYAN}⓪${NC}  Cancel"
+    echo ""
+
+    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-5]:${NC} "
+    read choice
+
+    echo ""
+
+    case $choice in
+        1) pull_model "mistral:7b" ;;
+        2) pull_model "llama3.1:8b" ;;
+        3) pull_model "llama3.2:3b" ;;
+        4) pull_model "gemma2:9b" ;;
+        5)
+            pull_model "mistral:7b"
+            pull_model "llama3.1:8b"
+            ;;
+        0) print_status info "Cancelled" && return ;;
+        *) print_status error "Invalid choice" ;;
+    esac
+}
+
+# Helper function to pull a single model
+pull_model() {
+    local model=$1
+    print_status loading "Pulling ${model}... (this may take a while)"
+    echo ""
+
+    # Pull model using Ollama API
+    docker-compose -f $COMPOSE_FILE exec -T $OLLAMA_CONTAINER ollama pull $model
+
+    if [ $? -eq 0 ]; then
+        echo ""
+        print_status success "${model} pulled successfully"
+    else
+        echo ""
+        print_status error "Failed to pull ${model}"
+    fi
+}
+
+# Function to run a quick AI test
+ollama_test() {
+    print_gradient_header "🧪 AI Test"
+
+    if ! curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
+        print_status error "Ollama is not running"
+        return 1
+    fi
+
+    print_status loading "Testing Ollama with a quick prompt..."
+    echo ""
+
+    local response=$(curl -s http://localhost:${OLLAMA_PORT}/api/generate -d '{
+        "model": "mistral:7b",
+        "prompt": "Say hello in one sentence.",
+        "stream": false
+    }' 2>/dev/null)
+
+    if [ -n "$response" ]; then
+        echo "$response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print('  Response:', data.get('response', 'No response'))
+except:
+    print('  (Failed to parse response)')
+" 2>/dev/null
+        echo ""
+        print_status success "AI is responding correctly"
+    else
+        print_status error "No response from AI. Make sure a model is loaded."
+    fi
+    echo ""
 }
 
 # Function to run tests
@@ -796,32 +806,23 @@ print_services_info() {
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Media Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15013${NC}               ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Peppol Service${NC}       ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7098${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15014${NC}               ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
-    echo -e "  ${SOFT_CYAN}${BOLD}💾 Database Connections${NC}\n"
+    echo -e "  ${SOFT_CYAN}${BOLD}💾 Database & Services${NC}\n"
 
     # Database table
     echo -e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Database${NC}             ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Auth${NC}                 ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15541${NC} • ${SOFT_GRAY}dokus_auth${NC}        ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Cashflow${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15542${NC} • ${SOFT_GRAY}dokus_cashflow${NC}    ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Payment${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15543${NC} • ${SOFT_GRAY}dokus_payment${NC}     ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Reporting${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15544${NC} • ${SOFT_GRAY}dokus_reporting${NC}   ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Audit${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15545${NC} • ${SOFT_GRAY}dokus_audit${NC}       ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Banking${NC}              ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15546${NC} • ${SOFT_GRAY}dokus_banking${NC}     ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Media${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15547${NC} • ${SOFT_GRAY}dokus_media${NC}       ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Peppol${NC}               ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:15548${NC} • ${SOFT_GRAY}dokus_peppol${NC}      ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:$DB_PORT${NC} • ${SOFT_GRAY}$DB_NAME${NC}         ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
-    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:5672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:25672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:25673${NC} • ${SOFT_GRAY}pass: localrabbitpass${NC} ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}      ${SOFT_GRAY}│${NC}"
+    echo -e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC} • ${SOFT_GRAY}API endpoint${NC}     ${SOFT_GRAY}│${NC}"
     echo -e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     if docker-compose -f $COMPOSE_FILE ps | grep -q pgadmin; then
@@ -840,6 +841,8 @@ print_services_info() {
     echo -e "    ${SOFT_GRAY}./dev.sh redis${NC}        ${DIM_WHITE}Access Redis CLI${NC}"
     echo -e "    ${SOFT_GRAY}./dev.sh status${NC}       ${DIM_WHITE}Check service health${NC}"
     echo -e "    ${SOFT_GRAY}./dev.sh test${NC}         ${DIM_WHITE}Run all test suites${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh ai${NC}           ${DIM_WHITE}Check AI/Ollama status${NC}"
+    echo -e "    ${SOFT_GRAY}./dev.sh ai-pull${NC}      ${DIM_WHITE}Pull AI models${NC}"
     echo ""
 }
 
@@ -955,6 +958,15 @@ main() {
         redis)
             access_redis
             ;;
+        ai)
+            ollama_status
+            ;;
+        ai-pull)
+            ollama_pull
+            ;;
+        ai-test)
+            ollama_test
+            ;;
         test)
             run_tests ${2:-all}
             ;;
@@ -1004,6 +1016,12 @@ show_help() {
     echo -e "    ${SOFT_CYAN}redis${NC}              ${DIM_WHITE}Access Redis CLI${NC}"
     echo -e "    ${SOFT_CYAN}reset-db${NC}           ${DIM_WHITE}Reset database (interactive menu)${NC}"
     echo -e "    ${SOFT_CYAN}pgadmin${NC}            ${DIM_WHITE}Start pgAdmin interface${NC}"
+    echo ""
+
+    echo -e "  ${SOFT_ORANGE}${BOLD}AI / Machine Learning${NC}"
+    echo -e "    ${SOFT_CYAN}ai${NC}                 ${DIM_WHITE}Show Ollama AI status and loaded models${NC}"
+    echo -e "    ${SOFT_CYAN}ai-pull${NC}            ${DIM_WHITE}Pull AI models (interactive)${NC}"
+    echo -e "    ${SOFT_CYAN}ai-test${NC}            ${DIM_WHITE}Test AI with a quick prompt${NC}"
     echo ""
 
     echo -e "  ${SOFT_RED}${BOLD}Maintenance${NC}"
