@@ -1,15 +1,10 @@
 package ai.dokus.auth.backend.config
 
-import ai.dokus.auth.backend.database.repository.TenantRepository
-import ai.dokus.auth.backend.database.repository.PasswordResetTokenRepository
-import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
-import ai.dokus.auth.backend.database.repository.UserRepository
-import ai.dokus.foundation.database.tables.auth.TenantMembersTable
-import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
-import ai.dokus.foundation.database.tables.auth.TenantTable
-import ai.dokus.foundation.database.tables.auth.PasswordResetTokensTable
-import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
-import ai.dokus.foundation.database.tables.auth.UsersTable
+import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.foundation.database.repository.auth.TenantRepository
+import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
+import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
+import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.auth.backend.services.DisabledEmailService
@@ -36,18 +31,12 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
-    // Database
+    // Database - connect and initialize all tables centrally
     single {
         DatabaseFactory(get(), "auth-pool").apply {
             runBlocking {
-                init(
-                    TenantTable,
-                    TenantSettingsTable,
-                    UsersTable,
-                    TenantMembersTable,
-                    RefreshTokensTable,
-                    PasswordResetTokensTable
-                )
+                connect()
+                DatabaseInitializer.initializeAllTables()
             }
         }
     }

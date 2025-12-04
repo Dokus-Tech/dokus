@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.routes
 
-import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
