@@ -15,7 +15,7 @@ application {
 dependencies {
     implementation(projects.foundation.domain)
     implementation(projects.foundation.ktorCommon)
-    implementation(projects.foundation.domain)
+    implementation(projects.foundation.database)
 
     implementation(libs.kotlinx.serialization)
 

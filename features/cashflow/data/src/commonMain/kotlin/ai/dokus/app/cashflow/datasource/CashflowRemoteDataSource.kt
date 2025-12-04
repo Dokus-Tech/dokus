@@ -5,6 +5,7 @@ import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
@@ -12,6 +13,7 @@ import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
+import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
@@ -288,6 +290,49 @@ interface CashflowRemoteDataSource {
      * DELETE /api/v1/attachments/{attachmentId}
      */
     suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit>
+
+    // ============================================================================
+    // DOCUMENT MANAGEMENT (MinIO Storage)
+    // ============================================================================
+
+    /**
+     * Upload a document to MinIO object storage.
+     * POST /api/v1/documents/upload
+     *
+     * Documents are stored in MinIO and metadata is persisted in the database.
+     * Returns a DocumentDto with the document ID and a fresh presigned download URL.
+     *
+     * @param fileContent The file content as ByteArray
+     * @param filename Original filename
+     * @param contentType MIME type (e.g., "application/pdf", "image/jpeg")
+     * @param prefix Storage prefix (e.g., "invoices", "bills", "expenses")
+     * @return DocumentDto with id and downloadUrl
+     */
+    suspend fun uploadDocument(
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String,
+        prefix: String = "documents"
+    ): Result<DocumentDto>
+
+    /**
+     * Get a document by ID with a fresh presigned download URL.
+     * GET /api/v1/documents/{id}
+     *
+     * Use this to get a fresh download URL for an existing document.
+     *
+     * @param documentId The document ID
+     * @return DocumentDto with fresh downloadUrl
+     */
+    suspend fun getDocument(documentId: DocumentId): Result<DocumentDto>
+
+    /**
+     * Delete a document by ID.
+     * DELETE /api/v1/documents/{id}
+     *
+     * @param documentId The document ID to delete
+     */
+    suspend fun deleteDocument(documentId: DocumentId): Result<Unit>
 
     // ============================================================================
     // STATISTICS & OVERVIEW

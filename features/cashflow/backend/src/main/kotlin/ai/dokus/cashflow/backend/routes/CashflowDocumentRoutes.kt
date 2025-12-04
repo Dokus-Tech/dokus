@@ -1,6 +1,6 @@
 package ai.dokus.cashflow.backend.routes
 
-import ai.dokus.cashflow.backend.repository.CashflowRepository
+import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal

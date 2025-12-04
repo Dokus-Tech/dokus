@@ -10,7 +10,7 @@ import ai.dokus.foundation.domain.ids.PeppolTransmissionId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.PeppolTransmissionDto
 import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.peppol.backend.database.tables.PeppolTransmissionsTable
+import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

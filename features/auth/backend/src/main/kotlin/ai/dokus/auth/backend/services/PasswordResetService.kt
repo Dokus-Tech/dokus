@@ -2,9 +2,9 @@
 
 package ai.dokus.auth.backend.services
 
-import ai.dokus.auth.backend.database.repository.PasswordResetTokenRepository
-import ai.dokus.auth.backend.database.repository.RefreshTokenRepository
-import ai.dokus.auth.backend.database.repository.UserRepository
+import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
+import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
+import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
 import kotlin.uuid.ExperimentalUuidApi

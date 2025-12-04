@@ -5,9 +5,12 @@ import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
+import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.domain.model.DocumentUploadResponse
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
@@ -378,6 +381,50 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit> {
         return runCatching {
             httpClient.delete("/api/v1/attachments/$attachmentId").body()
+        }
+    }
+
+    // ============================================================================
+    // GENERIC DOCUMENT UPLOAD (MinIO Storage)
+    // ============================================================================
+
+    override suspend fun uploadDocument(
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String,
+        prefix: String
+    ): Result<DocumentDto> {
+        return runCatching {
+            val response: DocumentUploadResponse = httpClient.submitFormWithBinaryData(
+                url = "/api/v1/documents/upload",
+                formData = formData {
+                    append(
+                        key = "file",
+                        value = fileContent,
+                        headers = Headers.build {
+                            append(
+                                HttpHeaders.ContentDisposition,
+                                "form-data; name=\"file\"; filename=\"$filename\""
+                            )
+                            append(HttpHeaders.ContentType, contentType)
+                        }
+                    )
+                    append("prefix", prefix)
+                }
+            ).body()
+            response.document
+        }
+    }
+
+    override suspend fun getDocument(documentId: DocumentId): Result<DocumentDto> {
+        return runCatching {
+            httpClient.get("/api/v1/documents/$documentId").body()
+        }
+    }
+
+    override suspend fun deleteDocument(documentId: DocumentId): Result<Unit> {
+        return runCatching {
+            httpClient.delete("/api/v1/documents/$documentId").body()
         }
     }
 

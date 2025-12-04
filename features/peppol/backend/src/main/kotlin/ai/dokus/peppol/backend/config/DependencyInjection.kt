@@ -6,8 +6,8 @@ import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.peppol.backend.client.RecommandClient
-import ai.dokus.peppol.backend.database.tables.PeppolSettingsTable
-import ai.dokus.peppol.backend.database.tables.PeppolTransmissionsTable
+import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
+import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
 import ai.dokus.peppol.backend.mapper.PeppolMapper
 import ai.dokus.peppol.backend.repository.PeppolSettingsRepository
 import ai.dokus.peppol.backend.repository.PeppolTransmissionRepository
