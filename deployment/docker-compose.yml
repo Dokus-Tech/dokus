@@ -69,7 +69,7 @@ services:
     image: minio/minio:latest
     container_name: dokus-minio
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dokusadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
       - "9000:9000"   # API
@@ -80,7 +80,7 @@ services:
     networks:
       - dokus-network
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -179,37 +179,37 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: /dokus
       # Security
-      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS}
-      MONITORING_API_KEY: ${MONITORING_API_KEY}
-      ADMIN_API_KEY: ${ADMIN_API_KEY}
-      INTEGRATION_API_KEY: ${INTEGRATION_API_KEY}
-      REQUEST_SIGNING_ENABLED: ${REQUEST_SIGNING_ENABLED}
-      REQUEST_SIGNING_SECRET: ${REQUEST_SIGNING_SECRET}
-      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE}
+      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS:-*}
+      MONITORING_API_KEY: ${MONITORING_API_KEY:-changeme}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-changeme}
+      INTEGRATION_API_KEY: ${INTEGRATION_API_KEY:-changeme}
+      REQUEST_SIGNING_ENABLED: ${REQUEST_SIGNING_ENABLED:-false}
+      REQUEST_SIGNING_SECRET: ${REQUEST_SIGNING_SECRET:-default-signing-secret}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
       # Email (optional - all set via .env)
-      EMAIL_ENABLED: ${EMAIL_ENABLED}
-      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SMTP_ENABLE_TLS: ${SMTP_ENABLE_TLS}
-      SMTP_ENABLE_AUTH: ${SMTP_ENABLE_AUTH}
-      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS}
-      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
-      EMAIL_REPLY_TO_ADDRESS: ${EMAIL_REPLY_TO_ADDRESS}
-      EMAIL_REPLY_TO_NAME: ${EMAIL_REPLY_TO_NAME}
-      EMAIL_BASE_URL: ${EMAIL_BASE_URL}
-      EMAIL_SUPPORT_ADDRESS: ${EMAIL_SUPPORT_ADDRESS}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_ENABLE_TLS: ${SMTP_ENABLE_TLS:-true}
+      SMTP_ENABLE_AUTH: ${SMTP_ENABLE_AUTH:-true}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@dokus.local}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Dokus}
+      EMAIL_REPLY_TO_ADDRESS: ${EMAIL_REPLY_TO_ADDRESS:-}
+      EMAIL_REPLY_TO_NAME: ${EMAIL_REPLY_TO_NAME:-}
+      EMAIL_BASE_URL: ${EMAIL_BASE_URL:-http://localhost}
+      EMAIL_SUPPORT_ADDRESS: ${EMAIL_SUPPORT_ADDRESS:-}
       # Monitoring (optional - all set via .env)
-      METRICS_ENABLED: ${METRICS_ENABLED}
-      METRICS_PORT: ${METRICS_PORT}
-      TRACING_ENABLED: ${TRACING_ENABLED}
-      JAEGER_ENDPOINT: ${JAEGER_ENDPOINT}
+      METRICS_ENABLED: ${METRICS_ENABLED:-true}
+      METRICS_PORT: ${METRICS_PORT:-7090}
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+      JAEGER_ENDPOINT: ${JAEGER_ENDPOINT:-}
       # GeoIP
-      GEOIP_ENABLED: ${GEOIP_ENABLED}
+      GEOIP_ENABLED: ${GEOIP_ENABLED:-false}
       # Logging
-      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "6091:8080"
     depends_on:
@@ -243,15 +243,15 @@ services:
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
-      CACHE_TYPE: ${CACHE_TYPE:-redis}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_TYPE: ${CACHE_TYPE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # MinIO Storage
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-dokusadmin}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET:-dokus-documents}
+      MINIO_BUCKET: ${MINIO_BUCKET}
       # AI Configuration
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
       AI_OLLAMA_ENABLED: ${AI_OLLAMA_ENABLED:-true}
@@ -295,12 +295,12 @@ services:
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
-      CACHE_TYPE: ${CACHE_TYPE:-redis}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_TYPE: ${CACHE_TYPE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_LEVEL: ${LOG_LEVEL}
     ports:
       - "6093:8080"
     depends_on:
@@ -330,12 +330,12 @@ services:
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
-      CACHE_TYPE: ${CACHE_TYPE:-redis}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_TYPE: ${CACHE_TYPE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_LEVEL: ${LOG_LEVEL}
     ports:
       - "6094:8080"
     depends_on:
@@ -365,9 +365,9 @@ services:
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
-      CACHE_TYPE: ${CACHE_TYPE:-redis}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_TYPE: ${CACHE_TYPE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
@@ -376,7 +376,7 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: /dokus
       # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_LEVEL: ${LOG_LEVEL}
     ports:
       - "6095:8080"
     depends_on:
@@ -408,12 +408,12 @@ services:
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
       # Caching
-      CACHE_TYPE: ${CACHE_TYPE:-redis}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_TYPE: ${CACHE_TYPE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_LEVEL: ${LOG_LEVEL}
     ports:
       - "6096:8080"
     depends_on:
