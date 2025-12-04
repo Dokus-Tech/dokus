@@ -59,7 +59,8 @@ commonsPool2 = "2.12.1"
 javaMail = "1.6.2"
 amqpClient = "5.27.1"
 resilience4j = "2.3.0"
-minio = "8.5.17"
+minio = "8.6.0"
+koog = "0.5.4"
 
 datastore = "1.2.0"
 datastoreCoreJvm = "1.2.0"
@@ -149,6 +150,10 @@ javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javaMail" }
 
 amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqpClient" }
 minio = { module = "io.minio:minio", version.ref = "minio" }
+
+# JetBrains Koog AI Framework
+koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
+
 resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
 resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
 resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }

@@ -17,7 +17,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d dokus"]
+      test: [ "CMD-SHELL", "pg_isready -U dev -d dokus" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -34,7 +34,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -55,10 +55,38 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: [ "CMD", "mc", "ready", "local" ]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Ollama LLM Server for AI inference
+  ollama-local:
+    image: ollama/ollama:latest
+    container_name: dokus-ollama-local
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models-local:/root/.ollama
+    networks:
+      - dokus-local-network
+    # GPU support (uncomment for NVIDIA GPUs)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    environment:
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=2
+    healthcheck:
+      test: [ "CMD", "ollama", "list" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # RabbitMQ Message Broker
   rabbitmq-local:
@@ -78,7 +106,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -120,7 +148,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/metrics"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/metrics" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -151,7 +179,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -182,7 +210,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -220,7 +248,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -251,7 +279,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -285,6 +313,12 @@ services:
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: dokusadminpassword
       MINIO_BUCKET: dokus-documents
+      # AI Configuration (Ollama local)
+      AI_DEFAULT_PROVIDER: ollama
+      AI_OLLAMA_ENABLED: "true"
+      AI_OLLAMA_URL: http://ollama-local:11434
+      AI_OLLAMA_MODEL: mistral:7b
+      AI_OPENAI_ENABLED: "false"
       LOG_LEVEL: DEBUG
     ports:
       - "7092:8080"
@@ -298,10 +332,12 @@ services:
         condition: service_healthy
       minio-local:
         condition: service_healthy
+      ollama-local: # Optional - uncomment when using AI features
+        condition: service_healthy
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -341,7 +377,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -376,3 +412,4 @@ volumes:
   minio-data-local:
   pgadmin-data:
   cashflow-storage-local:
+  ollama-models-local:

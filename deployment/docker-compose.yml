@@ -86,6 +86,36 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Ollama LLM Server for AI inference
+  # Note: For Raspberry Pi, use CPU-only mode. For servers with GPUs, uncomment deploy section.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: dokus-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - dokus-network
+    environment:
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-1}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-1}
+    # GPU support (uncomment for NVIDIA GPUs on non-Pi servers)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
   # Auth Service
   auth-service:
     image: 94.111.226.82:5000/dokus-auth:latest
@@ -184,6 +214,14 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-dokusadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ${MINIO_BUCKET:-dokus-documents}
+      # AI Configuration
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
+      AI_OLLAMA_ENABLED: ${AI_OLLAMA_ENABLED:-true}
+      AI_OLLAMA_URL: http://ollama:11434
+      AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-mistral:7b}
+      AI_OPENAI_ENABLED: ${AI_OPENAI_ENABLED:-false}
+      AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
+      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
@@ -192,6 +230,8 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     networks:
       - dokus-network
@@ -360,3 +400,4 @@ volumes:
   redis-data:
   rabbitmq-data:
   minio-data:
+  ollama-models:
