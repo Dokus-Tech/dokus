@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
  * @param uploadManager The upload manager for handling actions
  * @param modifier Modifier for the list
  * @param contentPadding Padding around the list content
+ * @param scrollable Whether the list should be scrollable. Set to false when inside a scrollable parent.
  */
 @Composable
 fun DocumentUploadList(
@@ -42,15 +43,21 @@ fun DocumentUploadList(
     deletionHandles: Map<String, DocumentDeletionHandle>,
     uploadManager: DocumentUploadManager,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    scrollable: Boolean = false
 ) {
     if (tasks.isEmpty()) {
         EmptyUploadList(modifier = modifier.padding(contentPadding))
     } else {
+        val scrollModifier = if (scrollable) {
+            Modifier.verticalScroll(rememberScrollState())
+        } else {
+            Modifier
+        }
         Column(
             modifier = modifier
                 .padding(contentPadding)
-                .verticalScroll(rememberScrollState()),
+                .then(scrollModifier),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             tasks.forEach { task ->
