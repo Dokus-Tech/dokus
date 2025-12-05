@@ -47,8 +47,8 @@ services:
       MINIO_ROOT_USER: dokusadmin
       MINIO_ROOT_PASSWORD: dokusadminpassword
     ports:
-      - "9000:9000"   # API
-      - "9001:9001"   # Console
+      - "19000:9000"   # API
+      - "19001:9001"   # Console
     volumes:
       - minio-data-local:/data
     command: server /data --console-address ":9001"
