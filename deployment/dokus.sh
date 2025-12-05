@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Dokus Cloud Management Script
+# Dokus Cloud Management Script — Neon Onboarding Edition
 # Supports: macOS, Linux
 # Usage: ./dokus.sh [command]
 #
@@ -10,54 +10,59 @@ set -e
 # Change to script directory
 cd "$(dirname "$0")"
 
-# Check for NO_COLOR environment variable
-if [[ -n "${NO_COLOR}" ]]; then
+# Detect interactive terminal (for subtle animations)
+IS_TTY=false
+if [ -t 1 ]; then
+    IS_TTY=true
+fi
+
+# Cross-platform echo replacement
+echo_e() { printf '%b\n' "$*"; }
+
+# Color palette
+if [[ -n "${NO_COLOR:-}" ]]; then
     USE_COLOR=false
 else
     USE_COLOR=true
 fi
 
-# Modern Pastel Color Palette
-# Using $'...' syntax for proper escape sequence interpretation on macOS
 if [[ "$USE_COLOR" == true ]]; then
-    SOFT_BLUE=$'\033[38;2;130;170;255m'
-    SOFT_GREEN=$'\033[38;2;150;220;180m'
-    SOFT_RED=$'\033[38;2;255;150;150m'
-    SOFT_YELLOW=$'\033[38;2;255;220;150m'
-    SOFT_CYAN=$'\033[38;2;150;220;230m'
-    SOFT_MAGENTA=$'\033[38;2;220;180;255m'
-    SOFT_ORANGE=$'\033[38;2;255;200;150m'
-    SOFT_GRAY=$'\033[38;2;160;160;180m'
-    BRIGHT_WHITE=$'\033[38;2;255;255;255m'
-    DIM_WHITE=$'\033[38;2;200;200;210m'
-    GRADIENT_START=$'\033[38;2;130;170;255m'
-    GRADIENT_MID=$'\033[38;2;180;140;255m'
-    GRADIENT_END=$'\033[38;2;220;180;255m'
+    SOFT_BLUE=$'\033[38;2;0;228;255m'
+    SOFT_GREEN=$'\033[38;2;141;255;185m'
+    SOFT_RED=$'\033[38;2;255;140;140m'
+    SOFT_YELLOW=$'\033[38;2;255;203;112m'
+    SOFT_CYAN=$'\033[38;2;0;255;214m'
+    SOFT_MAGENTA=$'\033[38;2;255;111;210m'
+    SOFT_ORANGE=$'\033[38;2;255;180;140m'
+    SOFT_GRAY=$'\033[38;2;150;165;190m'
+    BRIGHT_WHITE=$'\033[38;2;244;246;255m'
+    DIM_WHITE=$'\033[38;2;190;200;215m'
+    GRADIENT_START=$'\033[38;2;0;240;255m'
+    GRADIENT_MID=$'\033[38;2;191;120;255m'
+    GRADIENT_END=$'\033[38;2;255;120;215m'
     BOLD=$'\033[1m'
     DIM=$'\033[2m'
     NC=$'\033[0m'
 else
-    SOFT_BLUE=''; SOFT_GREEN=''; SOFT_RED=''; SOFT_YELLOW=''; SOFT_CYAN=''
-    SOFT_MAGENTA=''; SOFT_ORANGE=''; SOFT_GRAY=''; BRIGHT_WHITE=''; DIM_WHITE=''
-    GRADIENT_START=''; GRADIENT_MID=''; GRADIENT_END=''; BOLD=''; DIM=''; NC=''
+    SOFT_BLUE=''; SOFT_GREEN=''; SOFT_RED=''; SOFT_YELLOW=''; SOFT_CYAN='';
+    SOFT_MAGENTA=''; SOFT_ORANGE=''; SOFT_GRAY=''; BRIGHT_WHITE=''; DIM_WHITE='';
+    GRADIENT_START=''; GRADIENT_MID=''; GRADIENT_END=''; BOLD=''; DIM=''; NC='';
 fi
 
-# Box Drawing Characters
-BOX_TL="╔"; BOX_TR="╗"; BOX_BL="╚"; BOX_BR="╝"; BOX_H="═"; BOX_V="║"
-ROUND_TL="╭"; ROUND_TR="╮"; ROUND_BL="╰"; ROUND_BR="╯"; ROUND_H="─"; ROUND_V="│"
-
 # Symbols
-SYMBOL_SUCCESS="◆"; SYMBOL_ERROR="◇"; SYMBOL_WARNING="⬡"; SYMBOL_INFO="●"
+SYMBOL_OK="◎"
+SYMBOL_ERR="⨯"
+SYMBOL_WARN="◒"
+SYMBOL_INFO="◦"
+SYMBOL_TASK="▹"
 
 # Configuration
 COMPOSE_FILE="docker-compose.yml"
-
-# Single consolidated database configuration
 DB_CONTAINER="postgres"
 DB_PORT="15432"
 DB_NAME="dokus"
 
-# Get credentials from .env
+# Credentials
 if [ -f .env ]; then
     export $(grep -v '^#' .env | grep -E 'DB_USERNAME|DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_USERNAME|RABBITMQ_PASSWORD' | xargs)
     DB_USER="${DB_USERNAME:-dokus}"
@@ -67,50 +72,105 @@ else
     DB_PASSWORD=""
 fi
 
-# Helper to repeat a string
+# Helpers
 repeat_char() {
     local char=$1
     local count=$2
     local result=""
     for ((i=0; i<count; i++)); do
-        result="${result}${char}"
+        result+="$char"
     done
     echo "$result"
 }
 
-# Print functions
+beam_line() {
+    local width=${1:-66}
+    local colors=("$GRADIENT_START" "$GRADIENT_MID" "$GRADIENT_END")
+    for ((i=0; i<width; i++)); do
+        printf "%b━" "${colors[i % ${#colors[@]}]}"
+    done
+    printf "%b\n" "$NC"
+}
+
+header_pulse() {
+    if [[ "$IS_TTY" != true ]]; then
+        return
+    fi
+    local frames=("▛▜" "▙▟" "▙▟")
+    for frame in "${frames[@]}"; do
+        printf "  ${SOFT_MAGENTA}%s${NC}\r" "$frame"
+        sleep 0.07
+    done
+    printf "  \r"
+}
+
 print_gradient_header() {
     local title=$1
+    local subtitle=${2:-}
     local width=70
-    local padding=$(( (width - ${#title} - 4) / 2 ))
-    local padding_right=$(( width - ${#title} - 4 - padding ))
-    local line=$(repeat_char "═" $width)
-    local spaces=$(printf '%*s' $width "")
-    local pad_left=$(printf '%*s' $padding "")
-    local pad_right=$(printf '%*s' $padding_right "")
 
     echo ""
-    echo "${SOFT_CYAN}╔${line}╗${NC}"
-    echo "${SOFT_CYAN}║${spaces}║${NC}"
-    echo "${SOFT_CYAN}║  ${GRADIENT_START}${pad_left}${BRIGHT_WHITE}${BOLD}${title}${NC}${GRADIENT_END}${pad_right}  ${SOFT_CYAN}║${NC}"
-    echo "${SOFT_CYAN}║${spaces}║${NC}"
-    echo "${SOFT_CYAN}╚${line}╝${NC}"
+    header_pulse
+    echo -n "  "
+    beam_line $width
+    printf "  ${SOFT_MAGENTA}▌${NC} ${BOLD}${BRIGHT_WHITE}%s${NC}\n" "$title"
+    if [ -n "$subtitle" ]; then
+        printf "  ${SOFT_MAGENTA}▌${NC} ${DIM_WHITE}%s${NC}\n" "$subtitle"
+    fi
+    echo -n "  "
+    beam_line $width
     echo ""
 }
 
 print_separator() {
-    echo "${SOFT_GRAY}  ▪ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ▪${NC}"
+    local width=${1:-46}
+    printf "  "
+    for ((i=0; i<width; i++)); do
+        if (( i % 2 == 0 )); then
+            printf "%b╼" "$SOFT_GRAY"
+        else
+            printf "%b╾" "$DIM_WHITE"
+        fi
+    done
+    printf "%b\n" "$NC"
 }
 
 print_status() {
     local status=$1
     local message=$2
     case $status in
-        success) echo "  ${SOFT_GREEN}${SYMBOL_SUCCESS}${NC}  ${message}" ;;
-        error) echo "  ${SOFT_RED}${SYMBOL_ERROR}${NC}  ${message}" ;;
-        warning) echo "  ${SOFT_YELLOW}${SYMBOL_WARNING}${NC}  ${message}" ;;
-        info) echo "  ${SOFT_CYAN}${SYMBOL_INFO}${NC}  ${message}" ;;
+        success)
+            printf "  %b${SYMBOL_OK}%b  %s\n" "$SOFT_GREEN" "$NC" "$message"
+            ;;
+        error)
+            printf "  %b${SYMBOL_ERR}%b  %s\n" "$SOFT_RED" "$NC" "$message"
+            ;;
+        warning)
+            printf "  %b${SYMBOL_WARN}%b  %s\n" "$SOFT_YELLOW" "$NC" "$message"
+            ;;
+        info)
+            printf "  %b${SYMBOL_INFO}%b  %s\n" "$SOFT_CYAN" "$NC" "$message"
+            ;;
+        task)
+            printf "  %b${SYMBOL_TASK}%b  %s\n" "$SOFT_MAGENTA" "$NC" "$message"
+            ;;
     esac
+}
+
+splash_screen() {
+    clear
+    print_gradient_header "Dokus Cloud" "Install. Launch. Observe."
+    local art=(
+"      ╔╦╗╔═╗╦╦ ╦╔═╗  ╔═╗╦  ╔═╗╔╗ ╦ ╦"
+"      ║║║║╣ ║║ ║╚═╗  ║  ║  ║ ║╠╩╗╚╦╝"
+"      ╩ ╩╚═╝╩╚═╝╚═╝  ╚═╝╩═╝╚═╝╚═╝ ╩ "
+    )
+    for line in "${art[@]}"; do
+        printf "  ${SOFT_MAGENTA}%s${NC}\n" "$line"
+        if [[ "$IS_TTY" == true ]]; then sleep 0.04; fi
+    done
+    print_separator 52
+    echo_e "  ${DIM_WHITE}Synth-styled orchestrator for PostgreSQL, Redis, RabbitMQ, MinIO, Ollama, and services.${NC}\n"
 }
 
 # Detect OS
@@ -124,85 +184,77 @@ detect_os() {
     fi
 }
 
-# Check Docker
 check_docker() {
-    if ! docker info > /dev/null 2>&1; then
-        print_status error "Docker is not running. Please start Docker first."
-        exit 1
+    if ! command -v docker &> /dev/null; then
+        print_status error "Docker is not installed."
+        return 1
     fi
+    if ! docker info > /dev/null 2>&1; then
+        print_status error "Docker is not running. Start Docker then retry."
+        return 1
+    fi
+    print_status success "Docker engine is live"
 }
 
-# Check .env file
 check_env() {
     if [ ! -f .env ]; then
-        print_status warning ".env file not found!"
-        echo ""
-        print_status info "Please run the initial setup first (Option 1 in the menu)"
+        print_status warning ".env missing — run the guided setup (option 1)."
         return 1
     fi
     return 0
 }
 
-# Show service status
 show_status() {
-    print_gradient_header "📊 Service Status Dashboard"
+    print_gradient_header "📊 Service Status" "Docker compose + health probes"
 
     docker compose ps
     echo ""
 
     print_separator
     echo ""
-    echo "  ${SOFT_CYAN}${BOLD}Health Status Monitor${NC}"
-    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}Health Monitor${NC}\n"
 
-    # Health status table
-    echo "  ${SOFT_GRAY}┌─────────────────────────┬──────────────────┐${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                 ${SOFT_GRAY}│${NC} ${BOLD}Status${NC}           ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}┌─────────────────────────┬──────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                 ${SOFT_GRAY}│${NC} ${BOLD}Status${NC}           ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Check single PostgreSQL database
-    printf "  ${SOFT_GRAY}│${NC} PostgreSQL (${DB_NAME})      ${SOFT_GRAY}│${NC} "
+    printf "  ${SOFT_GRAY}│${NC} PostgreSQL (${DB_NAME})     ${SOFT_GRAY}│${NC} "
     if docker compose exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
-        echo "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    # Redis
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
     if docker compose exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
-        echo "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    # RabbitMQ
     printf "  ${SOFT_GRAY}│${NC} RabbitMQ Broker         ${SOFT_GRAY}│${NC} "
     if curl -f -s -u ${RABBITMQ_USERNAME:-dokus}:${RABBITMQ_PASSWORD:-localrabbitpass} http://localhost:25673/api/health/checks/alarms &>/dev/null; then
-        echo "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    # MinIO
     printf "  ${SOFT_GRAY}│${NC} MinIO Storage           ${SOFT_GRAY}│${NC} "
     if curl -f -s http://localhost:9000/minio/health/live &>/dev/null; then
-        echo "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    # Ollama
     printf "  ${SOFT_GRAY}│${NC} Ollama AI               ${SOFT_GRAY}│${NC} "
     if curl -f -s http://localhost:11434/api/tags &>/dev/null; then
-        echo "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    echo "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Services
     local services=(
         "Auth Service:6091:/metrics"
         "Cashflow Service:6092:/health"
@@ -216,61 +268,57 @@ show_status() {
         IFS=':' read -r service_name port endpoint <<< "$service_info"
         printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
         if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
-            echo "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+            echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
         else
-            echo "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+            echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
         fi
     done
 
-    echo "  ${SOFT_GRAY}└─────────────────────────┴──────────────────┘${NC}"
+    echo_e "  ${SOFT_GRAY}└─────────────────────────┴──────────────────┘${NC}"
     echo ""
 }
 
-# Show service info
 print_services_info() {
     print_separator
     echo ""
-    echo "  ${SOFT_CYAN}${BOLD}📍 Service Endpoints${NC}"
-    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}📍 Service Endpoints${NC}\n"
 
-    echo "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Endpoints${NC}                               ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6091${NC}               ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC}                    ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6092${NC}               ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6093${NC}               ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6094${NC}               ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6095${NC}               ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6096${NC}               ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
+    echo_e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Endpoints${NC}                               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6091${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6092${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6093${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6094${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6095${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6096${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
-    echo "  ${SOFT_CYAN}${BOLD}💾 Infrastructure Services${NC}"
-    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}💾 Infrastructure Services${NC}\n"
 
-    echo "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:${DB_PORT}${NC} • ${SOFT_GRAY}${DB_NAME}${NC}            ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC}                     ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:25672${NC} • ${SOFT_GRAY}UI: 25673${NC}         ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO Storage${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}     ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC}                     ${SOFT_GRAY}│${NC}"
-    echo "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
+    echo_e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Connection${NC}                              ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:${DB_PORT}${NC} • ${SOFT_GRAY}${DB_NAME}${NC}            ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:25672${NC} • ${SOFT_GRAY}UI: 25673${NC}         ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO Storage${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
     echo ""
     echo "  ${DIM_WHITE}Database User: ${SOFT_CYAN}$DB_USER${NC}"
     echo ""
 }
 
-# Start services
 start_services() {
     if ! check_env; then
         return 1
     fi
 
-    print_gradient_header "🚀 Starting Dokus Cloud Services"
+    print_gradient_header "🚀 Launching Dokus" "Compose stack + health probes"
 
     print_status info "Pulling latest images..."
     docker compose pull -q
@@ -279,13 +327,12 @@ start_services() {
     docker compose up -d
 
     if [ $? -eq 0 ]; then
-        print_status success "All containers started successfully"
+        print_status success "Containers ignited"
         echo ""
-        print_status info "Waiting for services to be ready (this may take 2 minutes)..."
+        print_status info "Stabilizing services (give us a moment)..."
         sleep 10
-
         echo ""
-        print_status success "Services are starting up!"
+        print_status success "Services are starting up"
         echo ""
         print_services_info
     else
@@ -294,7 +341,6 @@ start_services() {
     fi
 }
 
-# Stop services
 stop_services() {
     print_gradient_header "🛑 Stopping Services"
     docker compose down
@@ -303,14 +349,12 @@ stop_services() {
     echo ""
 }
 
-# Restart services
 restart_services() {
     stop_services
     echo ""
     start_services
 }
 
-# Show logs
 show_logs() {
     service=$1
     if [ -z "$service" ]; then
@@ -320,91 +364,75 @@ show_logs() {
     fi
 }
 
-# Access database
 access_db() {
-    print_gradient_header "🗄️  Database CLI Access"
-
-    print_status info "Connecting to PostgreSQL database (${DB_NAME})..."
+    print_gradient_header "🗄️  Database CLI"
+    print_status info "Connecting to PostgreSQL (${DB_NAME})..."
     echo ""
     docker compose exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
 }
 
-# Initial setup function (original wizard)
 initial_setup() {
-    print_gradient_header "🔧 Initial Dokus Cloud Setup"
+    splash_screen
+    print_gradient_header "🔧 Guided Setup" "First-time install wizard"
 
     local OS=$(detect_os)
+    print_status info "Detected OS: $([ "$OS" = "macos" ] && echo "macOS" || echo "Linux")"
 
-    echo "${SOFT_GREEN}✓ Detected: $([ "$OS" = "macos" ] && echo "macOS" || echo "Linux")${NC}"
-
-    # Check if Docker is installed
-    echo ""
-    echo "${SOFT_BLUE}[1/6] Checking Docker installation...${NC}"
-
+    print_status task "Checking Docker installation"
     if ! command -v docker &> /dev/null; then
-        echo "${SOFT_YELLOW}⚠ Docker is not installed${NC}"
-        echo ""
-        read -p "Would you like to install Docker now? (y/n): " -n 1 -r
+        print_status warning "Docker not found"
+        read -p "  Install Docker now? (y/n): " -n 1 -r
         echo
-
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            echo "${SOFT_BLUE}Installing Docker...${NC}"
-
             if [[ "$OS" == "macos" ]]; then
                 if ! command -v brew &> /dev/null; then
-                    echo "${SOFT_YELLOW}Installing Homebrew first...${NC}"
+                    print_status info "Installing Homebrew first..."
                     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
                 fi
                 brew install --cask docker
-                echo "${SOFT_GREEN}✓ Docker installed via Homebrew${NC}"
-                echo "${SOFT_YELLOW}⚠ Please start Docker Desktop from Applications, then run this script again${NC}"
+                print_status success "Docker installed via Homebrew"
+                print_status warning "Start Docker Desktop, then rerun this script"
                 exit 0
             elif [[ "$OS" == "linux" ]]; then
                 curl -fsSL https://get.docker.com -o get-docker.sh
                 sudo sh get-docker.sh
                 sudo usermod -aG docker $USER
                 rm get-docker.sh
-                echo "${SOFT_GREEN}✓ Docker installed${NC}"
-                echo "${SOFT_YELLOW}⚠ Please log out and log back in for group changes to take effect${NC}"
-                echo "${SOFT_YELLOW}⚠ Then run this script again${NC}"
+                print_status success "Docker installed"
+                print_status warning "Log out/in to refresh group membership"
                 exit 0
             fi
         else
-            echo "${SOFT_RED}✗ Docker is required to run Dokus${NC}"
-            echo "Please install Docker manually from: https://docker.com"
+            print_status error "Docker is required to run Dokus"
             exit 1
         fi
-    else
-        echo "${SOFT_GREEN}✓ Docker is installed${NC}"
     fi
 
-    # Check if Docker is running
     if ! docker info &> /dev/null; then
-        echo "${SOFT_RED}✗ Docker is not running${NC}"
+        print_status error "Docker is not running"
         if [[ "$OS" == "macos" ]]; then
-            echo "Please start Docker Desktop and run this script again"
+            echo "  Start Docker Desktop and rerun the script"
         else
-            echo "Please start Docker daemon: sudo systemctl start docker"
+            echo "  Start docker: sudo systemctl start docker"
         fi
         exit 1
     fi
-    echo "${SOFT_GREEN}✓ Docker is running${NC}"
+    print_status success "Docker engine ready"
 
-    # Check if Docker Compose is installed
     if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-        echo "${SOFT_YELLOW}⚠ Docker Compose not found, installing...${NC}"
+        print_status warning "Docker Compose not found, installing..."
         if [[ "$OS" == "macos" ]]; then
             brew install docker-compose
         elif [[ "$OS" == "linux" ]]; then
             sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
         fi
-        echo "${SOFT_GREEN}✓ Docker Compose installed${NC}"
+        print_status success "Docker Compose installed"
     else
-        echo "${SOFT_GREEN}✓ Docker Compose is installed${NC}"
+        print_status success "Docker Compose available"
     fi
 
-    # Function to generate secure password
+    # Generate secure password
     generate_password() {
         if command -v openssl &> /dev/null; then
             openssl rand -base64 32 | tr -d "=+/" | cut -c1-32
@@ -413,7 +441,6 @@ initial_setup() {
         fi
     }
 
-    # Function to prompt for value with default
     prompt_with_default() {
         local prompt="$1"
         local default="$2"
@@ -436,36 +463,28 @@ initial_setup() {
         fi
     }
 
-    # Check for .env file
-    echo ""
-    echo "${SOFT_BLUE}[2/6] Configuring environment...${NC}"
-
+    print_status task "Configuring environment (.env)"
     if [ -f .env ]; then
-        echo "${SOFT_GREEN}✓ .env file exists${NC}"
-        echo ""
-        read -p "Would you like to reconfigure? (y/n): " -n 1 -r
+        print_status info ".env already exists"
+        read -p "  Reconfigure? (y/n): " -n 1 -r
         echo
-
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             cp .env .env.backup
-            echo "${SOFT_YELLOW}⚠ Backed up existing .env to .env.backup${NC}"
+            print_status warning "Backed up to .env.backup"
             rm .env
         else
-            # Skip to next step
+            print_status info "Keeping existing .env"
             echo ""
-            echo "${SOFT_BLUE}[3/6] Configuring Docker registry...${NC}"
+            print_status task "Configuring Docker registry"
             configure_registry
             return
         fi
     fi
 
-    echo "${SOFT_YELLOW}⚠ .env file not found - let's create one!${NC}"
     echo ""
-    echo "${SOFT_BLUE}This wizard will configure your Dokus cloud deployment.${NC}"
-    echo "${SOFT_BLUE}Only critical values need your input - everything else is auto-generated.${NC}"
+    echo "  ${SOFT_BLUE}This wizard will mint fresh credentials and defaults.${NC}"
     echo ""
 
-    # Generate secure defaults
     DB_PASS=$(generate_password)
     REDIS_PASS=$(generate_password)
     RABBITMQ_PASS=$(generate_password)
@@ -476,36 +495,24 @@ initial_setup() {
     INTEGRATION_KEY=$(generate_password)
     REQUEST_SIGNING_SECRET=$(generate_password)
 
-    # Prompt for configuration
-    echo ""
-    echo "${SOFT_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo "${SOFT_GREEN}  Critical Configuration${NC}"
-    echo "${SOFT_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
-    # Database
     DB_USERNAME=$(prompt_with_default "Database username:" "dokus" "DB_USERNAME")
     DB_PASSWORD=$(prompt_with_default "Database password:" "$DB_PASS" "DB_PASSWORD" "true")
 
-    # Redis
     REDIS_HOST="redis"
     REDIS_PORT="6379"
     REDIS_PASSWORD=$(prompt_with_default "Redis password:" "$REDIS_PASS" "REDIS_PASSWORD" "true")
 
-    # RabbitMQ
     RABBITMQ_USERNAME=$(prompt_with_default "RabbitMQ username:" "dokus" "RABBITMQ_USERNAME")
     RABBITMQ_PASSWORD=$(prompt_with_default "RabbitMQ password:" "$RABBITMQ_PASS" "RABBITMQ_PASSWORD" "true")
 
-    # MinIO Object Storage
     MINIO_ROOT_USER=$(prompt_with_default "MinIO root user:" "dokusadmin" "MINIO_ROOT_USER")
     MINIO_ROOT_PASSWORD=$(prompt_with_default "MinIO root password:" "$MINIO_PASS" "MINIO_ROOT_PASSWORD" "true")
     MINIO_BUCKET="dokus-documents"
 
-    # JWT
     JWT_SECRET_VAL=$(prompt_with_default "JWT secret (64+ chars):" "$JWT_SECRET" "JWT_SECRET" "true")
     JWT_ISSUER="https://dokus.tech"
     JWT_AUDIENCE="dokus-api"
 
-    # Auto-generated values
     CACHE_TYPE="redis"
     MONITORING_API_KEY="$MONITORING_KEY"
     ADMIN_API_KEY="$ADMIN_KEY"
@@ -515,7 +522,6 @@ initial_setup() {
     RATE_LIMIT_PER_MINUTE="60"
     LOG_LEVEL="INFO"
 
-    # Optional email configuration (disabled by default)
     EMAIL_ENABLED="false"
     EMAIL_PROVIDER="smtp"
     SMTP_HOST="smtp.example.com"
@@ -531,16 +537,13 @@ initial_setup() {
     EMAIL_BASE_URL="https://dokus.tech"
     EMAIL_SUPPORT_ADDRESS="support@dokus.tech"
 
-    # Optional monitoring (enabled with defaults)
     METRICS_ENABLED="true"
     METRICS_PORT="7090"
     TRACING_ENABLED="false"
     JAEGER_ENDPOINT=""
 
-    # GeoIP (enabled by default)
     GEOIP_ENABLED="true"
 
-    # Create .env file
     cat > .env << EOF
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
@@ -661,110 +664,78 @@ LOG_LEVEL=$LOG_LEVEL
 EOF
 
     echo ""
-    echo "${SOFT_GREEN}✓ Configuration saved to .env${NC}"
+    print_status success ".env minted with fresh credentials"
     echo ""
-    echo "${SOFT_YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo "${SOFT_YELLOW}  Optional Configuration${NC}"
-    echo "${SOFT_YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo "${SOFT_BLUE}The following optional features are available:${NC}"
-    echo ""
-    echo "  ${SOFT_GREEN}✓${NC} Metrics & monitoring (enabled on port $METRICS_PORT)"
-    echo "  ${SOFT_YELLOW}⚠${NC} Email notifications (disabled - edit .env to enable)"
-    echo "  ${SOFT_YELLOW}⚠${NC} Distributed tracing (disabled - edit .env to enable)"
-    echo ""
-    echo "${SOFT_BLUE}To modify any optional settings:${NC}"
-    echo "  1. Edit the .env file: ${SOFT_YELLOW}nano .env${NC}"
-    echo "  2. Update desired values"
-    echo "  3. Restart services: ${SOFT_YELLOW}docker compose restart${NC}"
-    echo ""
-    echo "${SOFT_RED}⚠ SECURITY: Keep your .env file secure - it contains sensitive credentials!${NC}"
+    print_status info "Optional features: metrics enabled by default; email & tracing disabled."
 
-    # Configure Docker registry
     echo ""
-    echo "${SOFT_BLUE}[3/6] Configuring Docker registry...${NC}"
+    print_status task "Configuring Docker registry"
     configure_registry
 
-    # Pull images and start
     echo ""
-    echo "${SOFT_BLUE}[4/6] Pulling latest Docker images...${NC}"
-    echo "This may take a few minutes..."
+    print_status task "Pulling latest Docker images"
     docker compose pull
-    echo "${SOFT_GREEN}✓ Images pulled successfully${NC}"
+    print_status success "Images pulled"
 
     echo ""
-    echo "${SOFT_BLUE}[5/6] Starting Dokus services...${NC}"
+    print_status task "Starting Dokus services"
     docker compose up -d
-    echo "${SOFT_GREEN}✓ Services started${NC}"
+    print_status success "Services started"
 
     echo ""
-    echo "${SOFT_BLUE}[6/6] Waiting for services to be ready...${NC}"
-    echo "This may take up to 2 minutes..."
+    print_status task "Waiting for services to report healthy"
     sleep 10
 
-    MAX_RETRIES=30
-    RETRY_COUNT=0
+    local MAX_RETRIES=30
+    local RETRY_COUNT=0
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         HEALTHY_COUNT=$(docker compose ps | grep -c "healthy" || true)
         if [ $HEALTHY_COUNT -ge 7 ]; then
-            echo "${SOFT_GREEN}✓ All services are healthy${NC}"
+            print_status success "All services are healthy"
             break
         fi
         RETRY_COUNT=$((RETRY_COUNT + 1))
-        echo -n "."
+        printf "."
         sleep 5
     done
-
     echo ""
+
     if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-        echo "${SOFT_YELLOW}⚠ Some services may still be starting${NC}"
-        echo "Run './dokus.sh status' to check service status"
+        print_status warning "Some services may still be starting"
+        echo "  Run './dokus.sh status' to inspect health"
     fi
 
-    # Configure auto-start
     echo ""
-    echo "${SOFT_BLUE}Configure Auto-Start${NC}"
-    read -p "Would you like Dokus to start automatically on system boot? (y/n): " -n 1 -r
+    print_status task "Configure auto-start"
+    read -p "  Auto-start Dokus on boot? (y/n): " -n 1 -r
     echo
-
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         configure_autostart "$OS"
     else
-        echo "Skipping auto-start configuration"
+        print_status info "Skipping auto-start configuration"
     fi
 
-    # Display final status
     echo ""
-    echo "${SOFT_GREEN}════════════════════════════════════════════${NC}"
-    echo "${SOFT_GREEN}✓ Dokus Server is running!${NC}"
-    echo "${SOFT_GREEN}════════════════════════════════════════════${NC}"
-    echo ""
+    print_status success "Dokus server is online"
     print_services_info
 }
 
-# Configure Docker registry
 configure_registry() {
     local OS=$(detect_os)
     local DAEMON_JSON="/etc/docker/daemon.json"
     local REGISTRY="94.111.226.82:5000"
 
     if [[ "$OS" == "macos" ]]; then
-        echo "${SOFT_YELLOW}⚠ On macOS, please configure insecure registry manually:${NC}"
-        echo "  1. Open Docker Desktop"
-        echo "  2. Go to Settings → Docker Engine"
-        echo "  3. Add the following to the JSON config:"
-        echo "     \"insecure-registries\": [\"$REGISTRY\"]"
-        echo "  4. Click 'Apply & Restart'"
-        echo ""
-        read -p "Press Enter after you've configured the registry..."
+        print_status warning "On macOS, configure insecure registry via Docker Desktop:"
+        echo "  Settings → Docker Engine → add: \"insecure-registries\": [\"$REGISTRY\"]"
+        read -p "  Press Enter after configuring the registry..."
     elif [[ "$OS" == "linux" ]]; then
-        if [ -f "$DAEMON_JSON" ]; then
-            if grep -q "$REGISTRY" "$DAEMON_JSON"; then
-                echo "${SOFT_GREEN}✓ Insecure registry already configured${NC}"
-                return
-            fi
+        if [ -f "$DAEMON_JSON" ] && grep -q "$REGISTRY" "$DAEMON_JSON"; then
+            print_status success "Insecure registry already configured"
+            return
         fi
 
-        echo "${SOFT_YELLOW}⚠ Configuring insecure registry (requires sudo)${NC}"
+        print_status warning "Configuring insecure registry (sudo required)"
         if [ -f "$DAEMON_JSON" ]; then
             sudo cp "$DAEMON_JSON" "$DAEMON_JSON.backup"
         fi
@@ -775,11 +746,10 @@ configure_registry() {
 
         sudo systemctl restart docker
         sleep 3
-        echo "${SOFT_GREEN}✓ Docker configured for insecure registry${NC}"
+        print_status success "Docker configured for insecure registry"
     fi
 }
 
-# Configure auto-start
 configure_autostart() {
     local OS=$1
 
@@ -811,14 +781,14 @@ configure_autostart() {
 EOF
 
         launchctl load "$PLIST_FILE"
-        echo "${SOFT_GREEN}✓ Auto-start configured${NC}"
-        echo "To disable: launchctl unload $PLIST_FILE"
+        print_status success "Auto-start configured"
+        echo "  To disable: launchctl unload $PLIST_FILE"
 
     elif [[ "$OS" == "linux" ]]; then
         local SERVICE_FILE="/etc/systemd/system/dokus.service"
         local WORKING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-        echo "${SOFT_YELLOW}Creating systemd service (requires sudo)${NC}"
+        print_status warning "Creating systemd service (sudo required)"
 
         sudo bash -c "cat > $SERVICE_FILE" << EOF
 [Unit]
@@ -840,44 +810,33 @@ EOF
 
         sudo systemctl daemon-reload
         sudo systemctl enable dokus.service
-        echo "${SOFT_GREEN}✓ Auto-start configured${NC}"
-        echo "To disable: sudo systemctl disable dokus.service"
+        print_status success "Auto-start configured"
+        echo "  To disable: sudo systemctl disable dokus.service"
     fi
 }
 
-# Show interactive menu
 show_menu() {
-    clear
-    local line=$(repeat_char "═" 68)
-    echo ""
-    echo "${SOFT_CYAN}╔${line}╗${NC}"
-    echo "${SOFT_CYAN}║                                                                    ║${NC}"
-    echo "${SOFT_CYAN}║              ${GRADIENT_START}${BOLD}☁️  Dokus Cloud Management${NC}${SOFT_CYAN}               ║${NC}"
-    echo "${SOFT_CYAN}║                                                                    ║${NC}"
-    echo "${SOFT_CYAN}╚${line}╝${NC}"
-    echo ""
-    echo "  ${SOFT_CYAN}${BOLD}What would you like to do?${NC}"
+    splash_screen
+    echo_e "  ${SOFT_GRAY}${DIM}Choose a lane:${NC}\n"
+
+    echo_e "  ${SOFT_GREEN}${BOLD}Launchpad${NC}"
+    echo_e "    ${SOFT_CYAN}1${NC}   Guided initial setup"
+    echo_e "    ${SOFT_CYAN}2${NC}   Start services"
+    echo_e "    ${SOFT_CYAN}3${NC}   Stop services"
+    echo_e "    ${SOFT_CYAN}4${NC}   Restart services"
     echo ""
 
-    echo "  ${SOFT_GREEN}${BOLD}Service Management${NC}"
-    echo "    ${SOFT_CYAN}①${NC}  Initial Setup (first time only)"
-    echo "    ${SOFT_CYAN}②${NC}  Start services"
-    echo "    ${SOFT_CYAN}③${NC}  Stop services"
-    echo "    ${SOFT_CYAN}④${NC}  Restart services"
-    echo "    ${SOFT_CYAN}⑤${NC}  Show status"
+    echo_e "  ${SOFT_MAGENTA}${BOLD}Diagnostics${NC}"
+    echo_e "    ${SOFT_CYAN}5${NC}   Status dashboard"
+    echo_e "    ${SOFT_CYAN}6${NC}   View logs"
+    echo_e "    ${SOFT_CYAN}7${NC}   Database console"
     echo ""
 
-    echo "  ${SOFT_MAGENTA}${BOLD}Development Tools${NC}"
-    echo "    ${SOFT_CYAN}⑥${NC}  View logs"
-    echo "    ${SOFT_CYAN}⑦${NC}  Access database"
+    echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    echo "  ${SOFT_GRAY}⓪${NC}  Exit"
-    echo ""
-
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-7]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-7]:${NC} "
     read choice
-
     echo ""
 
     case $choice in
@@ -889,7 +848,7 @@ show_menu() {
         6) show_logs ;;
         7) access_db ;;
         0) echo "  ${SOFT_CYAN}👋 Goodbye!${NC}\n" && exit 0 ;;
-        *) print_status error "Invalid choice" && sleep 2 && show_menu ;;
+        *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac
 
     echo ""
@@ -898,7 +857,6 @@ show_menu() {
     show_menu
 }
 
-# Main function
 main() {
     case ${1:-} in
         setup)
@@ -925,11 +883,9 @@ main() {
             access_db
             ;;
         *)
-            # If no command, show interactive menu
             show_menu
             ;;
     esac
 }
 
-# Run main function
 main "$@"

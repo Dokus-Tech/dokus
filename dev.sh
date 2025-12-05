@@ -5,6 +5,12 @@
 
 set -e  # Exit on error
 
+# Detect interactive terminal (for small animations)
+IS_TTY=false
+if [ -t 1 ]; then
+    IS_TTY=true
+fi
+
 # Cross-platform echo replacement (colors are pre-interpreted with $'...' syntax)
 # This function handles printf %b format strings for backward compatibility
 echo_e() {
@@ -22,19 +28,20 @@ fi
 # Modern Pastel Color Palette (24-bit RGB)
 # Using $'...' syntax for proper escape sequence interpretation on macOS
 if [[ "$USE_COLOR" == true ]]; then
-    SOFT_BLUE=$'\033[38;2;130;170;255m'
-    SOFT_GREEN=$'\033[38;2;150;220;180m'
-    SOFT_RED=$'\033[38;2;255;150;150m'
-    SOFT_YELLOW=$'\033[38;2;255;220;150m'
-    SOFT_CYAN=$'\033[38;2;150;220;230m'
-    SOFT_MAGENTA=$'\033[38;2;220;180;255m'
-    SOFT_ORANGE=$'\033[38;2;255;200;150m'
-    SOFT_GRAY=$'\033[38;2;160;160;180m'
-    BRIGHT_WHITE=$'\033[38;2;255;255;255m'
-    DIM_WHITE=$'\033[38;2;200;200;210m'
-    GRADIENT_START=$'\033[38;2;130;170;255m'
-    GRADIENT_MID=$'\033[38;2;180;140;255m'
-    GRADIENT_END=$'\033[38;2;220;180;255m'
+    # Neon / synthwave palette
+    SOFT_BLUE=$'\033[38;2;0;228;255m'
+    SOFT_GREEN=$'\033[38;2;141;255;185m'
+    SOFT_RED=$'\033[38;2;255;140;140m'
+    SOFT_YELLOW=$'\033[38;2;255;203;112m'
+    SOFT_CYAN=$'\033[38;2;0;255;214m'
+    SOFT_MAGENTA=$'\033[38;2;255;111;210m'
+    SOFT_ORANGE=$'\033[38;2;255;180;140m'
+    SOFT_GRAY=$'\033[38;2;150;165;190m'
+    BRIGHT_WHITE=$'\033[38;2;244;246;255m'
+    DIM_WHITE=$'\033[38;2;190;200;215m'
+    GRADIENT_START=$'\033[38;2;0;240;255m'
+    GRADIENT_MID=$'\033[38;2;191;120;255m'
+    GRADIENT_END=$'\033[38;2;255;120;215m'
     BOLD=$'\033[1m'
     DIM=$'\033[2m'
     NC=$'\033[0m'
@@ -85,13 +92,13 @@ TREE_VERT="│"
 TREE_RIGHT="─"
 
 # Modern Unicode Symbols
-SYMBOL_SUCCESS="◆"
-SYMBOL_ERROR="◇"
-SYMBOL_WARNING="⬡"
-SYMBOL_INFO="●"
-SYMBOL_LOADING="◐"
-SYMBOL_BULLET="▸"
-SYMBOL_SMALL="▪"
+SYMBOL_SUCCESS="◎"
+SYMBOL_ERROR="⨯"
+SYMBOL_WARNING="◒"
+SYMBOL_INFO="◦"
+SYMBOL_LOADING="⟳"
+SYMBOL_BULLET="▹"
+SYMBOL_SMALL="⋄"
 
 # Configuration
 PROJECT_NAME="dokus"
@@ -130,6 +137,29 @@ repeat_char() {
     echo "$result"
 }
 
+# Neon gradient line builder
+beam_line() {
+    local width=${1:-68}
+    local colors=("$GRADIENT_START" "$GRADIENT_MID" "$GRADIENT_END")
+    for ((i=0; i<width; i++)); do
+        printf "%b━" "${colors[i % ${#colors[@]}]}"
+    done
+    printf "%b\n" "$NC"
+}
+
+# Minimal pulse animation for headers (TTY only)
+header_pulse() {
+    if [[ "$IS_TTY" != true ]]; then
+        return
+    fi
+    local frames=("▛▜" "▙▟" "▙▟")
+    for frame in "${frames[@]}"; do
+        printf "  ${SOFT_MAGENTA}%s${NC}\r" "$frame"
+        sleep 0.07
+    done
+    printf "  \r"
+}
+
 # Function to print colored output
 print_color() {
     local color=$1
@@ -140,48 +170,46 @@ print_color() {
 # Function to print a gradient header
 print_gradient_header() {
     local title=$1
-    local width=70
-    local padding=$(( (width - ${#title} - 4) / 2 ))
-    local padding_right=$(( width - ${#title} - 4 - padding ))
-    local line=$(repeat_char "═" $width)
-    local spaces=$(printf '%*s' $width "")
-    local pad_left=$(printf '%*s' $padding "")
-    local pad_right=$(printf '%*s' $padding_right "")
+    local subtitle=${2:-}
+    local width=72
 
     echo ""
-    echo "${SOFT_CYAN}╔${line}╗${NC}"
-    echo "${SOFT_CYAN}║${spaces}║${NC}"
-    echo "${SOFT_CYAN}║  ${GRADIENT_START}${pad_left}${BRIGHT_WHITE}${BOLD}${title}${NC}${GRADIENT_END}${pad_right}  ${SOFT_CYAN}║${NC}"
-    echo "${SOFT_CYAN}║${spaces}║${NC}"
-    echo "${SOFT_CYAN}╚${line}╝${NC}"
+    header_pulse
+    echo -n "  "
+    beam_line $width
+    printf "  ${SOFT_MAGENTA}▌${NC} ${BOLD}${BRIGHT_WHITE}%s${NC}\n" "$title"
+    if [ -n "$subtitle" ]; then
+        printf "  ${SOFT_MAGENTA}▌${NC} ${DIM_WHITE}%s${NC}\n" "$subtitle"
+    fi
+    echo -n "  "
+    beam_line $width
     echo ""
 }
 
 # Function to print a simple rounded box header
 print_rounded_header() {
-    local title=$1
-    local width=70
-    local line=$(repeat_char "─" $width)
-    local title_pad=$(printf '%*s' $(( width - ${#title} - 2 )) "")
-
-    echo ""
-    echo "${SOFT_CYAN}${ROUND_TL}${line}${ROUND_TR}${NC}"
-    echo "${SOFT_CYAN}${ROUND_V}  ${BRIGHT_WHITE}${BOLD}${title}${NC}${title_pad}  ${SOFT_CYAN}${ROUND_V}${NC}"
-    echo "${SOFT_CYAN}${ROUND_BL}${line}${ROUND_BR}${NC}"
-    echo ""
+    print_gradient_header "$@"
 }
 
 # Function to print a section divider
 print_divider() {
-    local char=${1:-─}
-    local width=${2:-70}
-    local line=$(repeat_char "$char" $width)
-    echo "${SOFT_GRAY}${line}${NC}"
+    local width=${2:-72}
+    echo -n "  "
+    beam_line "$width"
 }
 
 # Function to print a decorative separator
 print_separator() {
-    echo "${SOFT_GRAY}  ▪ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ▪${NC}"
+    local width=${1:-44}
+    printf "  "
+    for ((i=0; i<width; i++)); do
+        if (( i % 2 == 0 )); then
+            printf "%b╼" "$SOFT_GRAY"
+        else
+            printf "%b╾" "$DIM_WHITE"
+        fi
+    done
+    printf "%b\n" "$NC"
 }
 
 # Function to print a modern spinner
@@ -220,22 +248,22 @@ print_status() {
     local message=$2
     case $status in
         success)
-            printf "  %b%s%b  %s  %b%b[✓ READY]%b\n" "${SOFT_GREEN}" "${SYMBOL_SUCCESS}" "${NC}" "${message}" "${SOFT_GREEN}" "${BOLD}" "${NC}"
+            printf "  %b◎%b  %s  %b[%s]%b\n" "${SOFT_GREEN}" "${NC}" "${message}" "${SOFT_GREEN}" "READY" "${NC}"
             ;;
         error)
-            printf "  %b%s%b  %s  %b%b[✗ ERROR]%b\n" "${SOFT_RED}" "${SYMBOL_ERROR}" "${NC}" "${message}" "${SOFT_RED}" "${BOLD}" "${NC}"
+            printf "  %b⨯%b  %s  %b[%s]%b\n" "${SOFT_RED}" "${NC}" "${message}" "${SOFT_RED}" "FAULT" "${NC}"
             ;;
         warning)
-            printf "  %b%s%b  %s  %b%b[⚠ WARNING]%b\n" "${SOFT_YELLOW}" "${SYMBOL_WARNING}" "${NC}" "${message}" "${SOFT_YELLOW}" "${BOLD}" "${NC}"
+            printf "  %b◒%b  %s  %b[%s]%b\n" "${SOFT_YELLOW}" "${NC}" "${message}" "${SOFT_YELLOW}" "NOTICE" "${NC}"
             ;;
         info)
-            printf "  %b%s%b  %s\n" "${SOFT_CYAN}" "${SYMBOL_INFO}" "${NC}" "${message}"
+            printf "  %b◦%b  %s\n" "${SOFT_CYAN}" "${NC}" "${message}"
             ;;
         loading)
-            printf "  %b%s%b  %s  %b%b[⟳ LOADING]%b\n" "${SOFT_YELLOW}" "${SYMBOL_LOADING}" "${NC}" "${message}" "${SOFT_YELLOW}" "${BOLD}" "${NC}"
+            printf "  %b⟳%b  %s  %b[%s]%b\n" "${SOFT_ORANGE}" "${NC}" "${message}" "${SOFT_ORANGE}" "BOOT" "${NC}"
             ;;
         building)
-            printf "  %b▸%b  %b%s%b\n" "${SOFT_ORANGE}" "${NC}" "${DIM_WHITE}" "${message}" "${NC}"
+            printf "  %b▹%b  %b%s%b\n" "${SOFT_MAGENTA}" "${NC}" "${DIM_WHITE}" "${message}" "${NC}"
             ;;
         *)
             printf "  %s\n" "${message}"
@@ -249,19 +277,19 @@ print_simple_status() {
     local message=$2
     case $status in
         success)
-            printf "  %b%s%b  %s\n" "${SOFT_GREEN}" "${SYMBOL_SUCCESS}" "${NC}" "${message}"
+            printf "  %b◎%b  %s\n" "${SOFT_GREEN}" "${NC}" "${message}"
             ;;
         error)
-            printf "  %b%s%b  %s\n" "${SOFT_RED}" "${SYMBOL_ERROR}" "${NC}" "${message}"
+            printf "  %b⨯%b  %s\n" "${SOFT_RED}" "${NC}" "${message}"
             ;;
         warning)
-            printf "  %b%s%b  %s\n" "${SOFT_YELLOW}" "${SYMBOL_WARNING}" "${NC}" "${message}"
+            printf "  %b◒%b  %s\n" "${SOFT_YELLOW}" "${NC}" "${message}"
             ;;
         info)
-            printf "  %b%s%b  %s\n" "${SOFT_CYAN}" "${SYMBOL_INFO}" "${NC}" "${message}"
+            printf "  %b◦%b  %s\n" "${SOFT_CYAN}" "${NC}" "${message}"
             ;;
         building)
-            printf "  %b▸%b  %b%s%b\n" "${SOFT_ORANGE}" "${NC}" "${DIM_WHITE}" "${message}" "${NC}"
+            printf "  %b▹%b  %b%s%b\n" "${SOFT_MAGENTA}" "${NC}" "${DIM_WHITE}" "${message}" "${NC}"
             ;;
     esac
 }
@@ -294,7 +322,7 @@ check_requirements() {
     fi
 
     echo ""
-    echo_e "  ${SOFT_GREEN}${SYMBOL_SUCCESS}  ${BOLD}All system requirements met${NC}"
+    echo_e "  ${SOFT_GREEN}◎${NC}  ${BOLD}All system requirements met${NC}"
     echo ""
 }
 
@@ -375,11 +403,11 @@ start_services() {
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "PostgreSQL ($DB_NAME)"
         for i in {1..30}; do
             if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
-                echo_e "${SOFT_GREEN}◆ Ready${NC}"
+                echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
             fi
             if [ $i -eq 30 ]; then
-                echo_e "${SOFT_RED}◇ Timeout${NC}"
+                echo_e "${SOFT_RED}⨯ Timeout${NC}"
             fi
             echo -n "."
             sleep 1
@@ -389,7 +417,7 @@ start_services() {
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Redis Cache"
         for i in {1..30}; do
             if docker-compose -f $COMPOSE_FILE exec -T redis-local redis-cli --pass devredispass ping &>/dev/null; then
-                echo_e "${SOFT_GREEN}◆ Ready${NC}"
+                echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
             fi
             echo -n "."
@@ -400,7 +428,7 @@ start_services() {
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "RabbitMQ Broker"
         for i in {1..30}; do
             if curl -f -s -u dokus:localrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
-                echo_e "${SOFT_GREEN}◆ Ready${NC}"
+                echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
             fi
             echo -n "."
@@ -411,11 +439,11 @@ start_services() {
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama AI Server"
         for i in {1..60}; do
             if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
-                echo_e "${SOFT_GREEN}◆ Ready${NC}"
+                echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
             fi
             if [ $i -eq 60 ]; then
-                echo_e "${SOFT_YELLOW}◇ Slow Start${NC}"
+                echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
             fi
             echo -n "."
             sleep 1
@@ -439,7 +467,7 @@ start_services() {
             printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "${service_name} Service"
             for i in {1..30}; do
                 if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
-                    echo_e "${SOFT_GREEN}◆ Ready${NC}"
+                    echo_e "${SOFT_GREEN}◎ Ready${NC}"
                     break
                 fi
                 echo -n "."
@@ -507,33 +535,33 @@ show_status() {
     # Check PostgreSQL database
     printf "  ${SOFT_GRAY}│${NC} PostgreSQL ($DB_NAME)     ${SOFT_GRAY}│${NC} "
     if docker-compose -f $COMPOSE_FILE exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
-        echo_e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo_e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     # Redis
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
     if docker-compose -f $COMPOSE_FILE exec -T redis-local redis-cli --pass devredispass ping &>/dev/null; then
-        echo_e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo_e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     # RabbitMQ
     printf "  ${SOFT_GRAY}│${NC} RabbitMQ Broker         ${SOFT_GRAY}│${NC} "
     if curl -f -s -u dokus:localrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
-        echo_e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo_e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     # Ollama AI
     printf "  ${SOFT_GRAY}│${NC} Ollama AI Server        ${SOFT_GRAY}│${NC} "
     if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
-        echo_e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo_e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
@@ -553,9 +581,9 @@ show_status() {
         IFS=':' read -r service_name port endpoint <<< "$service_info"
         printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
         if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
-            echo_e "${SOFT_GREEN}◆ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+            echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
         else
-            echo_e "${SOFT_RED}◇ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+            echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
         fi
     done
 
@@ -633,9 +661,9 @@ ollama_status() {
     # Check if container is running
     printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama Server"
     if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
-        echo_e "${SOFT_GREEN}◆ Running${NC}"
+        echo_e "${SOFT_GREEN}◎ Running${NC}"
     else
-        echo_e "${SOFT_RED}◇ Not Running${NC}"
+        echo_e "${SOFT_RED}⨯ Not Running${NC}"
         echo ""
         print_status warning "Ollama is not running. Start services first."
         return 1
@@ -657,7 +685,7 @@ try:
             name = m.get('name', 'unknown')
             size = m.get('size', 0)
             size_gb = size / (1024**3)
-            print(f'    ◆ {name:30s} ({size_gb:.1f} GB)')
+            print(f'    ◎ {name:30s} ({size_gb:.1f} GB)')
     else:
         print('    (no models installed)')
 except:
@@ -1019,103 +1047,83 @@ main() {
 
 # Function to show help
 show_help() {
-    print_gradient_header "🚀 Dokus Development Environment Manager"
+    print_gradient_header "🚀 Dokus Dev Console" "Command palette"
 
-    echo_e "  ${BOLD}Usage:${NC} ./dev.sh [command] [options]\n"
+    echo_e "  ${BOLD}Usage:${NC} ./dev.sh <command> [options]\n"
 
     print_separator
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}Commands:${NC}\n"
-
-    echo_e "  ${SOFT_GREEN}${BOLD}Service Management${NC}"
-    echo_e "    ${SOFT_CYAN}start${NC}              ${DIM_WHITE}Build and start all services${NC}"
-    echo_e "    ${SOFT_CYAN}stop${NC}               ${DIM_WHITE}Stop all services${NC}"
-    echo_e "    ${SOFT_CYAN}restart${NC}            ${DIM_WHITE}Restart all services${NC}"
-    echo_e "    ${SOFT_CYAN}status${NC}             ${DIM_WHITE}Show service status and health${NC}"
-    echo_e "    ${SOFT_CYAN}logs${NC} [service]     ${DIM_WHITE}Show logs (optionally for specific service)${NC}"
+    echo_e "  ${SOFT_GREEN}${BOLD}Stack Control${NC}"
+    echo_e "    ${SOFT_CYAN}start${NC}        ${DIM_WHITE}Build + launch all services${NC}"
+    echo_e "    ${SOFT_CYAN}stop${NC}         ${DIM_WHITE}Shutdown containers${NC}"
+    echo_e "    ${SOFT_CYAN}restart${NC}      ${DIM_WHITE}Rebuild and restart stack${NC}"
+    echo_e "    ${SOFT_CYAN}status${NC}       ${DIM_WHITE}Dashboard with health probes${NC}"
+    echo_e "    ${SOFT_CYAN}logs${NC} [svc]   ${DIM_WHITE}Tail logs (all or target service)${NC}"
     echo ""
 
     echo_e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
-    echo_e "    ${SOFT_CYAN}build${NC}              ${DIM_WHITE}Build all services${NC}"
-    echo_e "    ${SOFT_CYAN}test${NC} [service]     ${DIM_WHITE}Run tests (auth|database|all)${NC}"
-    echo_e "    ${SOFT_CYAN}watch${NC} [service]    ${DIM_WHITE}Watch mode with auto-rebuild${NC}"
+    echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Create service JARs + images${NC}"
+    echo_e "    ${SOFT_CYAN}watch${NC} [svc]  ${DIM_WHITE}Auto rebuild on changes${NC}"
+    echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|audit|banking|peppol|all)${NC}"
     echo ""
 
-    echo_e "  ${SOFT_YELLOW}${BOLD}Database & Cache${NC}"
-    echo_e "    ${SOFT_CYAN}db${NC}                 ${DIM_WHITE}Access PostgreSQL CLI (interactive menu)${NC}"
-    echo_e "    ${SOFT_CYAN}redis${NC}              ${DIM_WHITE}Access Redis CLI${NC}"
-    echo_e "    ${SOFT_CYAN}reset-db${NC}           ${DIM_WHITE}Reset database (interactive menu)${NC}"
-    echo_e "    ${SOFT_CYAN}pgadmin${NC}            ${DIM_WHITE}Start pgAdmin interface${NC}"
+    echo_e "  ${SOFT_YELLOW}${BOLD}Data & Tooling${NC}"
+    echo_e "    ${SOFT_CYAN}db${NC}           ${DIM_WHITE}psql into the local database${NC}"
+    echo_e "    ${SOFT_CYAN}redis${NC}        ${DIM_WHITE}Redis CLI access${NC}"
+    echo_e "    ${SOFT_CYAN}reset-db${NC}     ${DIM_WHITE}Blow away the DB volume${NC}"
+    echo_e "    ${SOFT_CYAN}pgadmin${NC}      ${DIM_WHITE}Launch pgAdmin profile${NC}"
     echo ""
 
-    echo_e "  ${SOFT_ORANGE}${BOLD}AI / Machine Learning${NC}"
-    echo_e "    ${SOFT_CYAN}ai${NC}                 ${DIM_WHITE}Show Ollama AI status and loaded models${NC}"
-    echo_e "    ${SOFT_CYAN}ai-pull${NC}            ${DIM_WHITE}Pull AI models (interactive)${NC}"
-    echo_e "    ${SOFT_CYAN}ai-test${NC}            ${DIM_WHITE}Test AI with a quick prompt${NC}"
+    echo_e "  ${SOFT_ORANGE}${BOLD}AI Mesh${NC}"
+    echo_e "    ${SOFT_CYAN}ai${NC}           ${DIM_WHITE}Ollama status + loaded models${NC}"
+    echo_e "    ${SOFT_CYAN}ai-pull${NC}      ${DIM_WHITE}Guided model download${NC}"
+    echo_e "    ${SOFT_CYAN}ai-test${NC}      ${DIM_WHITE}Send a quick prompt${NC}"
     echo ""
 
     echo_e "  ${SOFT_RED}${BOLD}Maintenance${NC}"
-    echo_e "    ${SOFT_CYAN}clean${NC}              ${DIM_WHITE}Remove all containers and volumes${NC}"
-    echo ""
-
-    echo_e "  ${SOFT_GRAY}${BOLD}Other${NC}"
-    echo_e "    ${SOFT_CYAN}help${NC}               ${DIM_WHITE}Show this help message${NC}"
+    echo_e "    ${SOFT_CYAN}clean${NC}        ${DIM_WHITE}Remove containers and volumes${NC}"
     echo ""
 
     print_separator
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}Examples:${NC}\n"
-
-    echo_e "    ${SOFT_GRAY}./dev.sh start${NC}                   ${DIM_WHITE}Start everything${NC}"
-    echo_e "    ${SOFT_GRAY}./dev.sh logs dokus-auth-local${NC}    ${DIM_WHITE}Show auth service logs${NC}"
-    echo_e "    ${SOFT_GRAY}./dev.sh db${NC}                      ${DIM_WHITE}Access PostgreSQL database (choose from menu)${NC}"
-    echo_e "    ${SOFT_GRAY}./dev.sh test auth${NC}               ${DIM_WHITE}Run auth service tests${NC}"
-    echo_e "    ${SOFT_GRAY}./dev.sh reset-db${NC}                ${DIM_WHITE}Reset database (choose from menu)${NC}"
-    echo_e "    ${SOFT_GRAY}./dev.sh watch all${NC}               ${DIM_WHITE}Watch and auto-rebuild all${NC}"
-    echo ""
-
-    print_separator
-    echo ""
-    echo_e "  ${SOFT_GRAY}${DIM}Set NO_COLOR=1 to disable colors${NC}"
+    echo_e "  ${SOFT_GRAY}${DIM}Tip: run './dev.sh' without args for the animated console.${NC}"
     echo ""
 }
 
 # Function to show interactive menu
 show_menu() {
     clear
-    echo ""
-    echo "${SOFT_CYAN}╔══════════════════════════════════════════════════════════════════════╗${NC}"
-    echo "${SOFT_CYAN}║                                                                      ║${NC}"
-    echo "${SOFT_CYAN}║                  ${BRIGHT_WHITE}${BOLD}🚀 Dokus Development Environment${NC}${SOFT_CYAN}                   ║${NC}"
-    echo "${SOFT_CYAN}║                                                                      ║${NC}"
-    echo "${SOFT_CYAN}╚══════════════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo "  ${SOFT_CYAN}${BOLD}What would you like to do?${NC}"
+    print_gradient_header "Dokus Dev Console" "Neon control deck for the local stack"
+    echo_e "  ${DIM_WHITE}Navigate with numbers, hit Enter to confirm.${NC}\n"
+
+    echo_e "  ${SOFT_GREEN}${BOLD}Launch Deck${NC}"
+    echo_e "    ${SOFT_CYAN}1${NC}   Ignite stack (build + start)"
+    echo_e "    ${SOFT_CYAN}2${NC}   Halt stack"
+    echo_e "    ${SOFT_CYAN}3${NC}   Rebuild + restart"
     echo ""
 
-    echo_e "  ${SOFT_GREEN}${BOLD}Service Management${NC}"
-    echo_e "    ${SOFT_CYAN}①${NC}  Start services"
-    echo_e "    ${SOFT_CYAN}②${NC}  Stop services"
-    echo_e "    ${SOFT_CYAN}③${NC}  Restart services"
-    echo_e "    ${SOFT_CYAN}④${NC}  Show status"
+    echo_e "  ${SOFT_MAGENTA}${BOLD}Diagnostics${NC}"
+    echo_e "    ${SOFT_CYAN}4${NC}   Status dashboard"
+    echo_e "    ${SOFT_CYAN}5${NC}   Live logs"
+    echo_e "    ${SOFT_CYAN}6${NC}   Database console"
+    echo_e "    ${SOFT_CYAN}7${NC}   Redis console"
     echo ""
 
-    echo_e "  ${SOFT_MAGENTA}${BOLD}Development Tools${NC}"
-    echo_e "    ${SOFT_CYAN}⑤${NC}  View logs"
-    echo_e "    ${SOFT_CYAN}⑥${NC}  Access database"
-    echo_e "    ${SOFT_CYAN}⑦${NC}  Access Redis"
-    echo_e "    ${SOFT_CYAN}⑧${NC}  Run all tests"
+    echo_e "  ${SOFT_ORANGE}${BOLD}AI / Tests${NC}"
+    echo_e "    ${SOFT_CYAN}8${NC}   AI status"
+    echo_e "    ${SOFT_CYAN}9${NC}   Pull AI models"
+    echo_e "    ${SOFT_CYAN}10${NC}  Run all tests"
     echo ""
 
     echo_e "  ${SOFT_YELLOW}${BOLD}Utilities${NC}"
-    echo_e "    ${SOFT_CYAN}⑨${NC}  Start pgAdmin"
-    echo_e "    ${SOFT_CYAN}⑩${NC}  Clean everything"
+    echo_e "    ${SOFT_CYAN}11${NC}  Start pgAdmin"
+    echo_e "    ${SOFT_CYAN}12${NC}  Deep clean"
     echo ""
 
-    echo_e "  ${SOFT_GRAY}⓪${NC}  Exit"
+    echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    printf "  ${BOLD}Enter choice ${DIM_WHITE}[0-10]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-12]:${NC} "
     read choice
 
     echo ""
@@ -1128,11 +1136,13 @@ show_menu() {
         5) show_logs ;;
         6) access_db ;;
         7) access_redis ;;
-        8) run_tests all ;;
-        9) start_pgadmin ;;
-        10) clean_all ;;
-        0) echo_e "  ${SOFT_CYAN}👋 Goodbye!${NC}\n" && exit 0 ;;
-        *) print_status error "Invalid choice" && sleep 2 && show_menu ;;
+        8) ollama_status ;;
+        9) ollama_pull ;;
+        10) run_tests all ;;
+        11) start_pgadmin ;;
+        12) clean_all ;;
+        0) echo_e "  ${SOFT_CYAN}👋 See you in the grid.${NC}\n" && exit 0 ;;
+        *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac
 
     echo ""
