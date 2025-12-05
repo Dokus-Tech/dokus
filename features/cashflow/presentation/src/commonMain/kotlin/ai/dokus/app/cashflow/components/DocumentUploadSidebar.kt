@@ -164,16 +164,19 @@ fun DocumentUploadSidebar(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         // Upload zone with drag & drop
+                        var isDragging by remember { mutableStateOf(false) }
+
                         DocumentUploadZone(
-                            onUploadClick = { filePickerLauncher.launch() },
+                            isDragging = isDragging,
+                            onClick = { filePickerLauncher.launch() },
+                            onDragStateChange = { isDragging = it },
+                            onFilesDropped = { files ->
+                                uploadManager.enqueueFiles(files)
+                            },
                             isUploading = tasks.any {
                                 it.status == ai.dokus.app.cashflow.model.UploadStatus.UPLOADING
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .documentDropTarget(scope) { files ->
-                                    uploadManager.enqueueFiles(files)
-                                }
+                            modifier = Modifier.fillMaxWidth()
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))

@@ -6,11 +6,10 @@ import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.foundation.domain.model.DocumentDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
- * A scrollable list of document upload items.
+ * A list of document upload items.
+ *
+ * Uses a regular Column instead of LazyColumn to avoid nesting scrollable containers.
+ * This is acceptable since upload lists are typically small (a few items at a time).
  *
  * Displays all upload tasks with their current state (pending, uploading, failed, uploaded, deleting).
  * Each item is independently managed via [DocumentUploadItem].
@@ -43,15 +45,11 @@ fun DocumentUploadList(
     if (tasks.isEmpty()) {
         EmptyUploadList(modifier = modifier.padding(contentPadding))
     } else {
-        LazyColumn(
-            modifier = modifier,
-            contentPadding = contentPadding,
+        Column(
+            modifier = modifier.padding(contentPadding),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(
-                items = tasks,
-                key = { it.id }
-            ) { task ->
+            tasks.forEach { task ->
                 DocumentUploadItem(
                     taskId = task.id,
                     task = task,

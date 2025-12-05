@@ -5,7 +5,6 @@ import ai.dokus.app.cashflow.components.DocumentUploadList
 import ai.dokus.app.cashflow.components.DocumentUploadZone
 import ai.dokus.app.cashflow.components.DroppedFile
 import ai.dokus.app.cashflow.components.UploadIcon
-import ai.dokus.app.cashflow.components.documentDropTarget
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.local.LocalScreenSize
@@ -70,12 +69,12 @@ internal fun AddDocumentScreen(
     val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
     val deletionHandles by viewModel.deletionHandles.collectAsState()
 
-    val scope = rememberCoroutineScope()
     val platformContext = LocalPlatformContext.current
     val isLarge = LocalScreenSize.current.isLarge
 
     var isQrDialogOpen by remember { mutableStateOf(false) }
 
+    val scope = rememberCoroutineScope()
     val filePickerLauncher = rememberFilePickerLauncher(
         type = FilePickerFileType.Document,
         selectionMode = FilePickerSelectionMode.Multiple
@@ -109,7 +108,6 @@ internal fun AddDocumentScreen(
                 uploadedDocuments = uploadedDocuments,
                 deletionHandles = deletionHandles,
                 viewModel = viewModel,
-                scope = scope,
                 onShowQrCode = { isQrDialogOpen = true }
             )
         } else {
@@ -147,9 +145,10 @@ private fun DesktopLayout(
     uploadedDocuments: Map<String, ai.dokus.foundation.domain.model.DocumentDto>,
     deletionHandles: Map<String, ai.dokus.app.cashflow.model.DocumentDeletionHandle>,
     viewModel: AddDocumentViewModel,
-    scope: kotlinx.coroutines.CoroutineScope,
     onShowQrCode: () -> Unit
 ) {
+    var isDragging by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = { PTopAppBar("Add a new document") },
         containerColor = MaterialTheme.colorScheme.background
@@ -180,11 +179,12 @@ private fun DesktopLayout(
             Spacer(modifier = Modifier.height(24.dp))
 
             DocumentUploadZone(
-                onUploadClick = onUploadFile,
+                isDragging = isDragging,
+                onClick = onUploadFile,
+                onDragStateChange = { isDragging = it },
+                onFilesDropped = { viewModel.uploadFiles(it) },
                 isUploading = isUploading,
-                modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .documentDropTarget(scope) { viewModel.uploadFiles(it) }
+                modifier = Modifier.fillMaxWidth(0.5f)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
