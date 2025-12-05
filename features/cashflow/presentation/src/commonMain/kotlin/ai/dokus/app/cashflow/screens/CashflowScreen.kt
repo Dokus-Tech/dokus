@@ -1,5 +1,7 @@
 package ai.dokus.app.cashflow.screens
 
+import ai.dokus.app.cashflow.components.AppDownloadQrDialog
+import ai.dokus.app.cashflow.components.DocumentUploadSidebar
 import ai.dokus.app.cashflow.components.FinancialDocumentTable
 import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
@@ -61,6 +63,9 @@ import org.koin.compose.viewmodel.koinViewModel
 /**
  * The main cashflow screen showing financial documents table and VAT summary.
  * Responsive layout that adapts to mobile and desktop screen sizes.
+ *
+ * On desktop, clicking "Add new document" opens a sidebar for uploading.
+ * On mobile, it navigates to the AddDocumentScreen.
  */
 @Composable
 internal fun CashflowScreen(
@@ -70,58 +75,96 @@ internal fun CashflowScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val navController = LocalNavController.current
 
+    // Sidebar and dialog state
+    val isSidebarOpen by viewModel.isSidebarOpen.collectAsState()
+    val isQrDialogOpen by viewModel.isQrDialogOpen.collectAsState()
+    val uploadTasks by viewModel.uploadTasks.collectAsState()
+    val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
+    val deletionHandles by viewModel.deletionHandles.collectAsState()
+
+    // Use LocalScreenSize for reliable screen size detection
+    val isLargeScreen = LocalScreenSize.current.isLarge
+
     LaunchedEffect(viewModel) {
         viewModel.refresh()
     }
 
-    Scaffold(
-        topBar = {
-            PTopAppBarSearchAction(
-                searchContent = {
-                    PSearchFieldCompact(
-                        value = searchQuery,
-                        onValueChange = viewModel::updateSearchQuery,
-                        placeholder = "Search..."
-                    )
-                },
-                actions = {
-                    PButton(
-                        text = "Add new document",
-                        variant = PButtonVariant.Outline,
-                        icon = Icons.Default.Add,
-                        iconPosition = PIconPosition.Trailing,
-                        onClick = { navController.navigateTo(CashFlowDestination.AddDocument) }
+    // Main content with sidebar overlay
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                PTopAppBarSearchAction(
+                    searchContent = {
+                        PSearchFieldCompact(
+                            value = searchQuery,
+                            onValueChange = viewModel::updateSearchQuery,
+                            placeholder = "Search..."
+                        )
+                    },
+                    actions = {
+                        PButton(
+                            text = "Add new document",
+                            variant = PButtonVariant.Outline,
+                            icon = Icons.Default.Add,
+                            iconPosition = PIconPosition.Trailing,
+                            onClick = {
+                                if (isLargeScreen) {
+                                    // Desktop: Open sidebar
+                                    viewModel.openSidebar()
+                                } else {
+                                    // Mobile: Navigate to AddDocumentScreen
+                                    navController.navigateTo(CashFlowDestination.AddDocument)
+                                }
+                            }
+                        )
+                    }
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { contentPadding ->
+            // Main content based on state
+            when (val currentState = state) {
+                is DokusState.Loading -> {
+                    LoadingContent(contentPadding)
+                }
+
+                is DokusState.Success -> {
+                    SuccessContent(
+                        paginationState = currentState.data,
+                        vatSummaryData = VatSummaryData.empty,
+                        contentPadding = contentPadding,
+                        onDocumentClick = { document ->
+                            // TODO: Navigate to document detail
+                        },
+                        onMoreClick = { document ->
+                            // TODO: Show context menu
+                        },
+                        onLoadMore = viewModel::loadNextPage
                     )
                 }
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { contentPadding ->
-        // Main content based on state
-        when (val currentState = state) {
-            is DokusState.Loading -> {
-                LoadingContent(contentPadding)
-            }
 
-            is DokusState.Success -> {
-                SuccessContent(
-                    paginationState = currentState.data,
-                    vatSummaryData = VatSummaryData.empty,
-                    contentPadding = contentPadding,
-                    onDocumentClick = { document ->
-                        // TODO: Navigate to document detail
-                    },
-                    onMoreClick = { document ->
-                        // TODO: Show context menu
-                    },
-                    onLoadMore = viewModel::loadNextPage
-                )
-            }
-
-            is DokusState.Error -> {
-                DokusErrorContent(currentState.exception, currentState.retryHandler)
+                is DokusState.Error -> {
+                    DokusErrorContent(currentState.exception, currentState.retryHandler)
+                }
             }
         }
+
+        // Upload sidebar (desktop only)
+        DocumentUploadSidebar(
+            isVisible = isSidebarOpen,
+            onDismiss = viewModel::closeSidebar,
+            tasks = uploadTasks,
+            documents = uploadedDocuments,
+            deletionHandles = deletionHandles,
+            uploadManager = viewModel.provideUploadManager(),
+            onShowQrCode = viewModel::showQrDialog
+        )
+
+        // QR code dialog
+        AppDownloadQrDialog(
+            isVisible = isQrDialogOpen,
+            onDismiss = viewModel::hideQrDialog
+        )
     }
 }
 

@@ -1,11 +1,15 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
+import ai.dokus.app.cashflow.manager.DocumentUploadManager
+import ai.dokus.app.cashflow.model.DocumentDeletionHandle
+import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.state.emit
 import ai.dokus.app.core.state.emitLoading
 import ai.dokus.app.core.viewmodel.BaseViewModel
+import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
@@ -25,12 +29,73 @@ internal class CashflowViewModel :
     private val logger = Logger.forClass<CashflowViewModel>()
     private val cashflowDataSource: CashflowRemoteDataSource by inject()
     private val searchDocuments: SearchCashflowDocumentsUseCase by inject()
+    private val uploadManager: DocumentUploadManager by inject()
+
     private val loadedDocuments = MutableStateFlow<List<FinancialDocumentDto>>(emptyList())
     private val paginationState =
         MutableStateFlow(PaginationState<FinancialDocumentDto>(pageSize = PAGE_SIZE))
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
     private var searchJob: Job? = null
+
+    // Sidebar state for desktop
+    private val _isSidebarOpen = MutableStateFlow(false)
+    val isSidebarOpen: StateFlow<Boolean> = _isSidebarOpen.asStateFlow()
+
+    // QR dialog state
+    private val _isQrDialogOpen = MutableStateFlow(false)
+    val isQrDialogOpen: StateFlow<Boolean> = _isQrDialogOpen.asStateFlow()
+
+    // Upload state exposed from manager
+    val uploadTasks: StateFlow<List<DocumentUploadTask>> = uploadManager.uploadTasks
+    val uploadedDocuments: StateFlow<Map<String, DocumentDto>> = uploadManager.uploadedDocuments
+    val deletionHandles: StateFlow<Map<String, DocumentDeletionHandle>> = uploadManager.deletionHandles
+
+    init {
+        // Set up auto-refresh when uploads complete
+        uploadManager.setOnUploadCompleteCallback {
+            logger.d { "Upload completed, refreshing cashflow documents" }
+            refresh()
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        uploadManager.clearOnUploadCompleteCallback()
+    }
+
+    /**
+     * Opens the upload sidebar (desktop only).
+     */
+    fun openSidebar() {
+        _isSidebarOpen.value = true
+    }
+
+    /**
+     * Closes the upload sidebar.
+     */
+    fun closeSidebar() {
+        _isSidebarOpen.value = false
+    }
+
+    /**
+     * Shows the QR code dialog.
+     */
+    fun showQrDialog() {
+        _isQrDialogOpen.value = true
+    }
+
+    /**
+     * Hides the QR code dialog.
+     */
+    fun hideQrDialog() {
+        _isQrDialogOpen.value = false
+    }
+
+    /**
+     * Returns the upload manager for components that need direct access.
+     */
+    fun provideUploadManager(): DocumentUploadManager = uploadManager
 
     fun refresh() {
         searchJob?.cancel()

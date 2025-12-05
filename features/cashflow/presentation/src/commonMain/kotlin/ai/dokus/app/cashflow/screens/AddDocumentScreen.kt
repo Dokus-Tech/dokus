@@ -1,8 +1,9 @@
 package ai.dokus.app.cashflow.screens
 
+import ai.dokus.app.cashflow.components.AppDownloadQrDialog
+import ai.dokus.app.cashflow.components.DocumentUploadList
 import ai.dokus.app.cashflow.components.DocumentUploadZone
 import ai.dokus.app.cashflow.components.DroppedFile
-import ai.dokus.app.cashflow.components.InvoiceDetailsForm
 import ai.dokus.app.cashflow.components.UploadIcon
 import ai.dokus.app.cashflow.components.documentDropTarget
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
@@ -12,7 +13,7 @@ import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -25,10 +26,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
@@ -39,13 +45,20 @@ import com.mohamedrejeb.calf.io.readByteArray
 import com.mohamedrejeb.calf.picker.FilePickerFileType
 import com.mohamedrejeb.calf.picker.FilePickerSelectionMode
 import com.mohamedrejeb.calf.picker.rememberFilePickerLauncher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Add a document screen for uploading and processing documents/invoices.
- * Displays different layouts for mobile (upload zones) and desktop (form + upload).
+ *
+ * This screen is used on mobile devices. On desktop, the CashflowScreen
+ * shows a sidebar instead of navigating to this screen.
+ *
+ * Features:
+ * - Multiple upload zones (camera and file picker)
+ * - Real-time upload progress tracking
+ * - Upload list with cancel, retry, and delete actions
+ * - QR code dialog for mobile app download
  */
 @Composable
 internal fun AddDocumentScreen(
@@ -53,9 +66,15 @@ internal fun AddDocumentScreen(
 ) {
     val navController = LocalNavController.current
     val state by viewModel.state.collectAsState()
+    val uploadTasks by viewModel.uploadTasks.collectAsState()
+    val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
+    val deletionHandles by viewModel.deletionHandles.collectAsState()
+
     val scope = rememberCoroutineScope()
     val platformContext = LocalPlatformContext.current
     val isLarge = LocalScreenSize.current.isLarge
+
+    var isQrDialogOpen by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
         type = FilePickerFileType.Document,
@@ -80,81 +99,97 @@ internal fun AddDocumentScreen(
                 bottom = contentPadding.calculateBottomPadding()
             )
         )
+
         if (isLarge) {
-            // Desktop layout with top bar
+            // Desktop layout - simplified (sidebar handles most functionality now)
             DesktopLayout(
-                onAddNewDocument = { filePickerLauncher.launch() },
                 onUploadFile = { filePickerLauncher.launch() },
-                isUploading = state is AddDocumentViewModel.State.Uploading,
+                isUploading = state.isUploading,
+                uploadTasks = uploadTasks,
+                uploadedDocuments = uploadedDocuments,
+                deletionHandles = deletionHandles,
                 viewModel = viewModel,
-                scope = scope
+                scope = scope,
+                onShowQrCode = { isQrDialogOpen = true }
             )
         } else {
-            // Mobile layout with simple top bar
+            // Mobile layout with upload zones and upload list
             MobileLayout(
                 onUploadFile = { filePickerLauncher.launch() },
                 onUploadCamera = { /* TODO: Implement camera upload */ },
-                isUploading = state is AddDocumentViewModel.State.Uploading,
+                isUploading = state.isUploading,
+                uploadTasks = uploadTasks,
+                uploadedDocuments = uploadedDocuments,
+                deletionHandles = deletionHandles,
+                viewModel = viewModel,
+                onShowQrCode = { isQrDialogOpen = true }
             )
         }
+
+        // QR code dialog
+        AppDownloadQrDialog(
+            isVisible = isQrDialogOpen,
+            onDismiss = { isQrDialogOpen = false }
+        )
     }
 }
 
 /**
- * Desktop layout with side-by-side upload zone and details form.
+ * Desktop layout with upload zone and upload list.
+ * Note: On desktop, the sidebar in CashflowScreen is the primary upload interface.
+ * This screen is a fallback if navigated to directly.
  */
 @Composable
 private fun DesktopLayout(
-    onAddNewDocument: () -> Unit,
     onUploadFile: () -> Unit,
     isUploading: Boolean,
+    uploadTasks: List<ai.dokus.app.cashflow.model.DocumentUploadTask>,
+    uploadedDocuments: Map<String, ai.dokus.foundation.domain.model.DocumentDto>,
+    deletionHandles: Map<String, ai.dokus.app.cashflow.model.DocumentDeletionHandle>,
     viewModel: AddDocumentViewModel,
-    scope: CoroutineScope
+    scope: kotlinx.coroutines.CoroutineScope,
+    onShowQrCode: () -> Unit
 ) {
     Scaffold(
         topBar = { PTopAppBar("Add a new document") },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .padding(32.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(32.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Left side: Upload zone
-            Column(
+            Text(
+                text = "Upload Documents",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            DocumentUploadZone(
+                onUploadClick = onUploadFile,
+                isUploading = isUploading,
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            ) {
-                Text(
-                    text = "New invoice",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                    .fillMaxWidth(0.5f)
+                    .documentDropTarget(scope) { viewModel.uploadFiles(it) }
+            )
 
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format. Scan/upload your file, and the software will extract the relevant information to fill in the invoice fields. Just double-check the data for accuracy before finalizing.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                DocumentUploadZone(
-                    onUploadClick = onUploadFile,
-                    isUploading = isUploading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .documentDropTarget(scope) { viewModel.uploadFiles(it) }
-                )
-
-                // Show "Don't have the application?" link if needed
-                Spacer(modifier = Modifier.height(12.dp))
+            TextButton(onClick = onShowQrCode) {
                 Text(
                     text = "Don't have the application? Click here",
                     style = MaterialTheme.typography.bodySmall,
@@ -162,28 +197,45 @@ private fun DesktopLayout(
                 )
             }
 
-            // Right side: Details form
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                InvoiceDetailsForm()
+            if (uploadTasks.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Uploads",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth(0.5f)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DocumentUploadList(
+                    tasks = uploadTasks,
+                    documents = uploadedDocuments,
+                    deletionHandles = deletionHandles,
+                    uploadManager = viewModel.provideUploadManager(),
+                    modifier = Modifier.fillMaxWidth(0.5f)
+                )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 /**
- * Mobile layout with stacked upload zones.
+ * Mobile layout with stacked upload zones and upload list.
  */
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun MobileLayout(
     onUploadFile: () -> Unit,
     onUploadCamera: () -> Unit,
     isUploading: Boolean,
+    uploadTasks: List<ai.dokus.app.cashflow.model.DocumentUploadTask>,
+    uploadedDocuments: Map<String, ai.dokus.foundation.domain.model.DocumentDto>,
+    deletionHandles: Map<String, ai.dokus.app.cashflow.model.DocumentDeletionHandle>,
+    viewModel: AddDocumentViewModel,
+    onShowQrCode: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -219,12 +271,43 @@ private fun MobileLayout(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // "Don't have the application?" link
+            TextButton(
+                onClick = onShowQrCode,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = "Don't have the application? Click here",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
             // Help text
             Text(
-                text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format. Scan/upload your file, and the software will extract the relevant information to fill in the invoice fields. Just double-check the data for accuracy before finalizing.",
+                text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format. Scan/upload your file, and the software will extract the relevant information to fill in the invoice fields.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            // Upload list section
+            if (uploadTasks.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Uploads",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                DocumentUploadList(
+                    tasks = uploadTasks,
+                    documents = uploadedDocuments,
+                    deletionHandles = deletionHandles,
+                    uploadManager = viewModel.provideUploadManager(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
         }

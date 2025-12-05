@@ -316,6 +316,27 @@ interface CashflowRemoteDataSource {
     ): Result<DocumentDto>
 
     /**
+     * Upload a document with progress tracking.
+     * POST /api/v1/documents/upload
+     *
+     * Same as [uploadDocument] but with progress callback for UI updates.
+     *
+     * @param fileContent The file content as ByteArray
+     * @param filename Original filename
+     * @param contentType MIME type (e.g., "application/pdf", "image/jpeg")
+     * @param prefix Storage prefix (e.g., "invoices", "bills", "expenses")
+     * @param onProgress Callback with progress from 0.0 to 1.0
+     * @return DocumentDto with id and downloadUrl
+     */
+    suspend fun uploadDocumentWithProgress(
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String,
+        prefix: String = "documents",
+        onProgress: (Float) -> Unit
+    ): Result<DocumentDto>
+
+    /**
      * Get a document by ID with a fresh presigned download URL.
      * GET /api/v1/documents/{id}
      *
