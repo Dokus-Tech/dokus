@@ -1,5 +1,5 @@
 # Dokus Production Docker Compose
-# Consolidated to single PostgreSQL database
+# Consolidated to a single PostgresSQL database
 # Run with: docker-compose up -d
 
 services:
