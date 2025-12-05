@@ -37,8 +37,14 @@ sealed interface DocumentUploadDisplayState {
     val formattedSize: String
         get() = when {
             fileSize < 1024 -> "$fileSize B"
-            fileSize < 1024 * 1024 -> String.format("%.1f KB", fileSize / 1024.0)
-            else -> String.format("%.1f MB", fileSize / (1024.0 * 1024.0))
+            fileSize < 1024 * 1024 -> {
+                val kb = fileSize / 1024.0
+                "${((kb * 10).toInt() / 10.0)} KB"
+            }
+            else -> {
+                val mb = fileSize / (1024.0 * 1024.0)
+                "${((mb * 10).toInt() / 10.0)} MB"
+            }
         }
 
     /**
