@@ -115,7 +115,7 @@ capitalize() {
 print_color() {
     color=$1
     message=$2
-    echo -e "${color}${message}${NC}"
+    printf "%b%b%b\n" "${color}" "${message}" "${NC}"
 }
 
 # Function to print a gradient header
@@ -126,11 +126,11 @@ print_gradient_header() {
     local padding_right=$(( width - ${#title} - 4 - padding ))
 
     echo ""
-    echo -e "${SOFT_CYAN}${BOX_TL}$(printf '%*s' $width | tr ' ' ${BOX_H})${BOX_TR}${NC}"
-    echo -e "${SOFT_CYAN}${BOX_V}$(printf '%*s' $width | tr ' ' ' ')${BOX_V}${NC}"
-    echo -e "${SOFT_CYAN}${BOX_V}  ${GRADIENT_START}$(printf '%*s' $padding)${BRIGHT_WHITE}${BOLD}${title}${NC}${GRADIENT_END}$(printf '%*s' $padding_right)  ${SOFT_CYAN}${BOX_V}${NC}"
-    echo -e "${SOFT_CYAN}${BOX_V}$(printf '%*s' $width | tr ' ' ' ')${BOX_V}${NC}"
-    echo -e "${SOFT_CYAN}${BOX_BL}$(printf '%*s' $width | tr ' ' ${BOX_H})${BOX_BR}${NC}"
+    printf "%b%s%s%s%b\n" "${SOFT_CYAN}" "${BOX_TL}" "$(printf '%*s' $width | tr ' ' "${BOX_H}")" "${BOX_TR}" "${NC}"
+    printf "%b%s%*s%s%b\n" "${SOFT_CYAN}" "${BOX_V}" $width "" "${BOX_V}" "${NC}"
+    printf "%b%s  %b%*s%b%b%s%b%b%*s  %b%s%b\n" "${SOFT_CYAN}" "${BOX_V}" "${GRADIENT_START}" $padding "" "${BRIGHT_WHITE}${BOLD}" "${title}" "${NC}" "${GRADIENT_END}" $padding_right "" "${SOFT_CYAN}" "${BOX_V}" "${NC}"
+    printf "%b%s%*s%s%b\n" "${SOFT_CYAN}" "${BOX_V}" $width "" "${BOX_V}" "${NC}"
+    printf "%b%s%s%s%b\n" "${SOFT_CYAN}" "${BOX_BL}" "$(printf '%*s' $width | tr ' ' "${BOX_H}")" "${BOX_BR}" "${NC}"
     echo ""
 }
 
@@ -142,9 +142,9 @@ print_rounded_header() {
     local padding_right=$(( width - ${#title} - 4 - padding ))
 
     echo ""
-    echo -e "${SOFT_CYAN}${ROUND_TL}$(printf '%*s' $width | tr ' ' ${ROUND_H})${ROUND_TR}${NC}"
-    echo -e "${SOFT_CYAN}${ROUND_V}  ${BRIGHT_WHITE}${BOLD}${title}${NC}$(printf '%*s' $(( width - ${#title} - 2 )) )  ${SOFT_CYAN}${ROUND_V}${NC}"
-    echo -e "${SOFT_CYAN}${ROUND_BL}$(printf '%*s' $width | tr ' ' ${ROUND_H})${ROUND_BR}${NC}"
+    printf "%b%s%s%s%b\n" "${SOFT_CYAN}" "${ROUND_TL}" "$(printf '%*s' $width | tr ' ' "${ROUND_H}")" "${ROUND_TR}" "${NC}"
+    printf "%b%s  %b%b%s%b%*s  %b%s%b\n" "${SOFT_CYAN}" "${ROUND_V}" "${BRIGHT_WHITE}" "${BOLD}" "${title}" "${NC}" $(( width - ${#title} - 2 )) "" "${SOFT_CYAN}" "${ROUND_V}" "${NC}"
+    printf "%b%s%s%s%b\n" "${SOFT_CYAN}" "${ROUND_BL}" "$(printf '%*s' $width | tr ' ' "${ROUND_H}")" "${ROUND_BR}" "${NC}"
     echo ""
 }
 
@@ -152,12 +152,12 @@ print_rounded_header() {
 print_divider() {
     local char=${1:-─}
     local width=${2:-70}
-    echo -e "${SOFT_GRAY}$(printf '%*s' $width | tr ' ' $char)${NC}"
+    printf "%b%s%b\n" "${SOFT_GRAY}" "$(printf '%*s' $width | tr ' ' "$char")" "${NC}"
 }
 
 # Function to print a decorative separator
 print_separator() {
-    echo -e "${SOFT_GRAY}  ▪ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ▪${NC}"
+    printf "%b  ▪ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ▪%b\n" "${SOFT_GRAY}" "${NC}"
 }
 
 # Function to print a modern spinner
