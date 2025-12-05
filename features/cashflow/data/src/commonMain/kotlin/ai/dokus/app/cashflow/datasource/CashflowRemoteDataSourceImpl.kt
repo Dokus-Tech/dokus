@@ -23,6 +23,7 @@ import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.onUpload
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
@@ -412,6 +413,44 @@ internal class CashflowRemoteDataSourceImpl(
                     append("prefix", prefix)
                 }
             ).body()
+            response.document
+        }
+    }
+
+    override suspend fun uploadDocumentWithProgress(
+        fileContent: ByteArray,
+        filename: String,
+        contentType: String,
+        prefix: String,
+        onProgress: (Float) -> Unit
+    ): Result<DocumentDto> {
+        return runCatching {
+            val response: DocumentUploadResponse = httpClient.submitFormWithBinaryData(
+                url = "/api/v1/documents/upload",
+                formData = formData {
+                    append(
+                        key = "file",
+                        value = fileContent,
+                        headers = Headers.build {
+                            append(
+                                HttpHeaders.ContentDisposition,
+                                "form-data; name=\"file\"; filename=\"$filename\""
+                            )
+                            append(HttpHeaders.ContentType, contentType)
+                        }
+                    )
+                    append("prefix", prefix)
+                }
+            ) {
+                onUpload { bytesSentTotal, contentLength ->
+                    val progress = if (contentLength != null && contentLength > 0) {
+                        bytesSentTotal.toFloat() / contentLength.toFloat()
+                    } else {
+                        0f
+                    }
+                    onProgress(progress.coerceIn(0f, 1f))
+                }
+            }.body()
             response.document
         }
     }
