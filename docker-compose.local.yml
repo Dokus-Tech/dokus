@@ -34,7 +34,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      test: [ "CMD", "redis-cli", "-a", "devredispass", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -55,7 +55,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: [ "CMD", "mc", "ready", "local" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 5s
       timeout: 5s
       retries: 10
