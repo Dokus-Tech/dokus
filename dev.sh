@@ -1086,7 +1086,7 @@ show_menu() {
     echo ""
     echo "${SOFT_CYAN}╔══════════════════════════════════════════════════════════════════════╗${NC}"
     echo "${SOFT_CYAN}║                                                                      ║${NC}"
-    echo "${SOFT_CYAN}║               ${BRIGHT_WHITE}${BOLD}🚀 Dokus Development Environment${NC}${SOFT_CYAN}                ║${NC}"
+    echo "${SOFT_CYAN}║                  ${BRIGHT_WHITE}${BOLD}🚀 Dokus Development Environment${NC}${SOFT_CYAN}                   ║${NC}"
     echo "${SOFT_CYAN}║                                                                      ║${NC}"
     echo "${SOFT_CYAN}╚══════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
