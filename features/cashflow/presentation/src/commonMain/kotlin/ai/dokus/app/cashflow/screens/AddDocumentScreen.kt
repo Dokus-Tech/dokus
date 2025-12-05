@@ -3,8 +3,8 @@ package ai.dokus.app.cashflow.screens
 import ai.dokus.app.cashflow.components.AppDownloadQrDialog
 import ai.dokus.app.cashflow.components.DocumentUploadList
 import ai.dokus.app.cashflow.components.DocumentUploadZone
-import ai.dokus.app.cashflow.components.DroppedFile
 import ai.dokus.app.cashflow.components.UploadIcon
+import ai.dokus.app.cashflow.components.rememberDocumentFilePicker
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.local.LocalScreenSize
@@ -12,7 +12,6 @@ import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -31,20 +30,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.mohamedrejeb.calf.core.LocalPlatformContext
-import com.mohamedrejeb.calf.io.getName
-import com.mohamedrejeb.calf.io.readByteArray
-import com.mohamedrejeb.calf.picker.FilePickerFileType
-import com.mohamedrejeb.calf.picker.FilePickerSelectionMode
-import com.mohamedrejeb.calf.picker.rememberFilePickerLauncher
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -69,23 +60,13 @@ internal fun AddDocumentScreen(
     val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
     val deletionHandles by viewModel.deletionHandles.collectAsState()
 
-    val platformContext = LocalPlatformContext.current
     val isLarge = LocalScreenSize.current.isLarge
 
     var isQrDialogOpen by remember { mutableStateOf(false) }
 
-    val scope = rememberCoroutineScope()
-    val filePickerLauncher = rememberFilePickerLauncher(
-        type = FilePickerFileType.Document,
-        selectionMode = FilePickerSelectionMode.Multiple
-    ) { files ->
-        scope.launch {
-            val dropped = files.mapNotNull { file ->
-                val bytes = runCatching { file.readByteArray(platformContext) }.getOrNull()
-                val name = file.getName(platformContext) ?: return@mapNotNull null
-                bytes?.let { DroppedFile(name = name, bytes = it, mimeType = null) }
-            }
-            viewModel.uploadFiles(dropped)
+    val filePickerLauncher = rememberDocumentFilePicker { files ->
+        if (files.isNotEmpty()) {
+            viewModel.uploadFiles(files)
         }
     }
 
