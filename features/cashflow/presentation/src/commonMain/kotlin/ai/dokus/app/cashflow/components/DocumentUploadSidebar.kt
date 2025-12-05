@@ -191,6 +191,7 @@ fun DocumentUploadSidebar(
                             documents = documents,
                             deletionHandles = deletionHandles,
                             uploadManager = uploadManager,
+                            scrollable = true,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
