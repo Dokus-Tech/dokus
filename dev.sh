@@ -119,6 +119,17 @@ capitalize() {
     echo "$(echo ${str:0:1} | tr '[:lower:]' '[:upper:]')${str:1}"
 }
 
+# Helper to repeat a Unicode character (tr doesn't work with multi-byte chars)
+repeat_char() {
+    local char=$1
+    local count=$2
+    local result=""
+    for ((i=0; i<count; i++)); do
+        result="${result}${char}"
+    done
+    echo "$result"
+}
+
 # Function to print colored output
 print_color() {
     local color=$1
@@ -132,17 +143,17 @@ print_gradient_header() {
     local width=70
     local padding=$(( (width - ${#title} - 4) / 2 ))
     local padding_right=$(( width - ${#title} - 4 - padding ))
-    local line=$(printf '%*s' $width | tr ' ' "${BOX_H}")
-    local spaces=$(printf '%*s' $width)
-    local pad_left=$(printf '%*s' $padding)
-    local pad_right=$(printf '%*s' $padding_right)
+    local line=$(repeat_char "═" $width)
+    local spaces=$(printf '%*s' $width "")
+    local pad_left=$(printf '%*s' $padding "")
+    local pad_right=$(printf '%*s' $padding_right "")
 
     echo ""
-    echo "${SOFT_CYAN}${BOX_TL}${line}${BOX_TR}${NC}"
-    echo "${SOFT_CYAN}${BOX_V}${spaces}${BOX_V}${NC}"
-    echo "${SOFT_CYAN}${BOX_V}  ${GRADIENT_START}${pad_left}${BRIGHT_WHITE}${BOLD}${title}${NC}${GRADIENT_END}${pad_right}  ${SOFT_CYAN}${BOX_V}${NC}"
-    echo "${SOFT_CYAN}${BOX_V}${spaces}${BOX_V}${NC}"
-    echo "${SOFT_CYAN}${BOX_BL}${line}${BOX_BR}${NC}"
+    echo "${SOFT_CYAN}╔${line}╗${NC}"
+    echo "${SOFT_CYAN}║${spaces}║${NC}"
+    echo "${SOFT_CYAN}║  ${GRADIENT_START}${pad_left}${BRIGHT_WHITE}${BOLD}${title}${NC}${GRADIENT_END}${pad_right}  ${SOFT_CYAN}║${NC}"
+    echo "${SOFT_CYAN}║${spaces}║${NC}"
+    echo "${SOFT_CYAN}╚${line}╝${NC}"
     echo ""
 }
 
@@ -150,8 +161,8 @@ print_gradient_header() {
 print_rounded_header() {
     local title=$1
     local width=70
-    local line=$(printf '%*s' $width | tr ' ' "${ROUND_H}")
-    local title_pad=$(printf '%*s' $(( width - ${#title} - 2 )))
+    local line=$(repeat_char "─" $width)
+    local title_pad=$(printf '%*s' $(( width - ${#title} - 2 )) "")
 
     echo ""
     echo "${SOFT_CYAN}${ROUND_TL}${line}${ROUND_TR}${NC}"
@@ -164,7 +175,7 @@ print_rounded_header() {
 print_divider() {
     local char=${1:-─}
     local width=${2:-70}
-    local line=$(printf '%*s' $width | tr ' ' "$char")
+    local line=$(repeat_char "$char" $width)
     echo "${SOFT_GRAY}${line}${NC}"
 }
 
@@ -1073,13 +1084,14 @@ show_help() {
 show_menu() {
     clear
     echo ""
-    echo_e "${SOFT_CYAN}${BOX_TL}$(printf '%.0s═' {1..68})${BOX_TR}${NC}"
-    echo_e "${SOFT_CYAN}${BOX_V}                                                                    ${BOX_V}${NC}"
-    echo_e "${SOFT_CYAN}${BOX_V}           ${GRADIENT_START}${BOLD}🚀 Dokus Development Environment${NC}${SOFT_CYAN}              ${BOX_V}${NC}"
-    echo_e "${SOFT_CYAN}${BOX_V}                                                                    ${BOX_V}${NC}"
-    echo_e "${SOFT_CYAN}${BOX_BL}$(printf '%.0s═' {1..68})${BOX_BR}${NC}"
+    echo "${SOFT_CYAN}╔══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo "${SOFT_CYAN}║                                                                      ║${NC}"
+    echo "${SOFT_CYAN}║               ${BRIGHT_WHITE}${BOLD}🚀 Dokus Development Environment${NC}${SOFT_CYAN}                ║${NC}"
+    echo "${SOFT_CYAN}║                                                                      ║${NC}"
+    echo "${SOFT_CYAN}╚══════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}What would you like to do?${NC}\n"
+    echo "  ${SOFT_CYAN}${BOLD}What would you like to do?${NC}"
+    echo ""
 
     echo_e "  ${SOFT_GREEN}${BOLD}Service Management${NC}"
     echo_e "    ${SOFT_CYAN}①${NC}  Start services"
