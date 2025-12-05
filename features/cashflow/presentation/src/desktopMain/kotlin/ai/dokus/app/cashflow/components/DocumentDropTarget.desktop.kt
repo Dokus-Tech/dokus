@@ -2,58 +2,94 @@ package ai.dokus.app.cashflow.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
-import androidx.compose.ui.ExperimentalComposeUiApi
-import java.awt.datatransfer.DataFlavor
-import java.awt.dnd.DnDConstants
-import java.awt.dnd.DropTargetDropEvent
+import androidx.compose.ui.draganddrop.DragData
+import androidx.compose.ui.draganddrop.dragData
 import java.io.File
+import java.net.URI
 import java.nio.file.Files
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
+actual val isDragDropSupported: Boolean = true
+
+/**
+ * JVM/Desktop implementation using Compose Multiplatform drag and drop API.
+ *
+ * Uses DragData.FilesList to receive files dropped from external sources.
+ * Tracks drag state for visual feedback.
+ */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
-actual fun Modifier.documentDropTarget(
-    scope: CoroutineScope,
+@Composable
+actual fun Modifier.fileDropTarget(
+    onDragStateChange: (isDragging: Boolean) -> Unit,
     onFilesDropped: (List<DroppedFile>) -> Unit
-): Modifier = this.dragAndDropTarget(
-    shouldStartDragAndDrop = { true },
-    target = object : DragAndDropTarget {
-        override fun onDrop(event: DragAndDropEvent): Boolean {
-            val native = event.nativeEvent as? DropTargetDropEvent ?: return false
-            native.acceptDrop(DnDConstants.ACTION_COPY)
+): Modifier {
+    val currentOnDragStateChange by rememberUpdatedState(onDragStateChange)
+    val currentOnFilesDropped by rememberUpdatedState(onFilesDropped)
 
-            val transferable = native.transferable ?: return false
-            val files = runCatching {
-                @Suppress("UNCHECKED_CAST")
-                transferable.getTransferData(DataFlavor.javaFileListFlavor) as? List<*>
-            }.getOrNull()?.mapNotNull { it as? File }.orEmpty()
+    val dragAndDropTarget = remember {
+        object : DragAndDropTarget {
+            override fun onStarted(event: DragAndDropEvent) {
+                currentOnDragStateChange(true)
+            }
 
-            if (files.isEmpty()) {
-                native.dropComplete(false)
+            override fun onEntered(event: DragAndDropEvent) {
+                currentOnDragStateChange(true)
+            }
+
+            override fun onExited(event: DragAndDropEvent) {
+                currentOnDragStateChange(false)
+            }
+
+            override fun onEnded(event: DragAndDropEvent) {
+                currentOnDragStateChange(false)
+            }
+
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                currentOnDragStateChange(false)
+
+                val filesList = event.dragData() as? DragData.FilesList
+                if (filesList != null) {
+                    val uris = filesList.readFiles()
+                    val droppedFiles = uris.mapNotNull { uriString ->
+                        try {
+                            val file = File(URI(uriString))
+                            if (file.exists()) {
+                                DroppedFile(
+                                    name = file.name,
+                                    bytes = file.readBytes(),
+                                    mimeType = Files.probeContentType(file.toPath())
+                                )
+                            } else {
+                                null
+                            }
+                        } catch (e: Exception) {
+                            println("[DnD] Error processing file: $uriString - ${e.message}")
+                            null
+                        }
+                    }
+
+                    if (droppedFiles.isNotEmpty()) {
+                        currentOnFilesDropped(droppedFiles)
+                        return true
+                    }
+                }
+
                 return false
             }
-
-            scope.launch(Dispatchers.IO) {
-                val dropped = files.mapNotNull { path ->
-                    runCatching {
-                        DroppedFile(
-                            name = path.name,
-                            bytes = path.readBytes(),
-                            mimeType = Files.probeContentType(path.toPath())
-                        )
-                    }.getOrNull()
-                }
-                if (dropped.isNotEmpty()) {
-                    onFilesDropped(dropped)
-                }
-            }
-
-            native.dropComplete(true)
-            return true
         }
     }
-)
+
+    return this.dragAndDropTarget(
+        shouldStartDragAndDrop = { event ->
+            event.dragData() is DragData.FilesList
+        },
+        target = dragAndDropTarget
+    )
+}
