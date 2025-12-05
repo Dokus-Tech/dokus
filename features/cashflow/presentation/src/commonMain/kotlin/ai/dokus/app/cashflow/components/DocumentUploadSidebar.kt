@@ -160,6 +160,15 @@ fun DocumentUploadSidebar(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        // Instructions
+                        Text(
+                            text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         // "Don't have the application?" link
                         TextButton(
                             onClick = onShowQrCode,

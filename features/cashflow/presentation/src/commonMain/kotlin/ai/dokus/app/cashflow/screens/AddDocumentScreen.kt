@@ -100,8 +100,7 @@ internal fun AddDocumentScreen(
                 uploadTasks = uploadTasks,
                 uploadedDocuments = uploadedDocuments,
                 deletionHandles = deletionHandles,
-                viewModel = viewModel,
-                onShowQrCode = { isQrDialogOpen = true }
+                viewModel = viewModel
             )
         }
 
@@ -215,9 +214,11 @@ private fun MobileLayout(
     uploadTasks: List<ai.dokus.app.cashflow.model.DocumentUploadTask>,
     uploadedDocuments: Map<String, ai.dokus.foundation.domain.model.DocumentDto>,
     deletionHandles: Map<String, ai.dokus.app.cashflow.model.DocumentDeletionHandle>,
-    viewModel: AddDocumentViewModel,
-    onShowQrCode: () -> Unit
+    viewModel: AddDocumentViewModel
 ) {
+    var isCameraDragging by remember { mutableStateOf(false) }
+    var isFileDragging by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             PTopAppBar(
@@ -236,7 +237,10 @@ private fun MobileLayout(
         ) {
             // Camera upload zone
             DocumentUploadZone(
-                onUploadClick = onUploadCamera,
+                isDragging = isCameraDragging,
+                onClick = onUploadCamera,
+                onDragStateChange = { isCameraDragging = it },
+                onFilesDropped = { viewModel.uploadFiles(it) },
                 isUploading = isUploading,
                 title = "Upload with camera",
                 icon = UploadIcon.Camera,
@@ -245,30 +249,14 @@ private fun MobileLayout(
 
             // File upload zone
             DocumentUploadZone(
-                onUploadClick = onUploadFile,
+                isDragging = isFileDragging,
+                onClick = onUploadFile,
+                onDragStateChange = { isFileDragging = it },
+                onFilesDropped = { viewModel.uploadFiles(it) },
                 isUploading = isUploading,
-                title = "Select file or\ndrag it here",
+                title = "Select file",
                 icon = UploadIcon.Document,
                 modifier = Modifier.fillMaxWidth()
-            )
-
-            // "Don't have the application?" link
-            TextButton(
-                onClick = onShowQrCode,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text(
-                    text = "Don't have the application? Click here",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            // Help text
-            Text(
-                text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format. Scan/upload your file, and the software will extract the relevant information to fill in the invoice fields.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             // Upload list section
