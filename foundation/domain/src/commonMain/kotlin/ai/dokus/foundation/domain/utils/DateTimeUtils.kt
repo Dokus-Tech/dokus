@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -14,3 +15,9 @@ fun LocalDateTime.toKotlinxInstant(): Instant {
         kotlinTimeInstant.nanosecondsOfSecond.toLong()
     )
 }
+
+/**
+ * Returns the current time in epoch milliseconds.
+ */
+@OptIn(ExperimentalTime::class)
+fun currentTimeMillis(): Long = Clock.System.now().toEpochMilliseconds()
