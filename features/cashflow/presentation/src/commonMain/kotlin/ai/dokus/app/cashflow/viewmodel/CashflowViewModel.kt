@@ -1,6 +1,8 @@
 package ai.dokus.app.cashflow.viewmodel
 
+import ai.dokus.app.cashflow.components.BusinessHealthData
 import ai.dokus.app.cashflow.components.DocumentSortOption
+import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
@@ -10,6 +12,7 @@ import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.state.emit
 import ai.dokus.app.core.state.emitLoading
+import kotlinx.coroutines.async
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
@@ -71,6 +74,14 @@ internal class CashflowViewModel :
     // Full state for pending documents (includes loading, success, error)
     private val _pendingDocumentsState = MutableStateFlow<DokusState<PaginationState<DocumentProcessingDto>>>(DokusState.idle())
     val pendingDocumentsState: StateFlow<DokusState<PaginationState<DocumentProcessingDto>>> = _pendingDocumentsState.asStateFlow()
+
+    // VAT Summary state (independent loading)
+    private val _vatSummaryState = MutableStateFlow<DokusState<VatSummaryData>>(DokusState.loading())
+    val vatSummaryState: StateFlow<DokusState<VatSummaryData>> = _vatSummaryState.asStateFlow()
+
+    // Business Health state (independent loading)
+    private val _businessHealthState = MutableStateFlow<DokusState<BusinessHealthData>>(DokusState.loading())
+    val businessHealthState: StateFlow<DokusState<BusinessHealthData>> = _businessHealthState.asStateFlow()
 
     init {
         // Set up auto-refresh when uploads complete
@@ -215,15 +226,66 @@ internal class CashflowViewModel :
     fun refresh() {
         searchJob?.cancel()
         scope.launch {
-            logger.d { "Refreshing cashflow data" }
+            logger.d { "Refreshing cashflow data in parallel" }
+
+            // Start all loading states
+            _vatSummaryState.value = DokusState.loading()
+            _businessHealthState.value = DokusState.loading()
             paginationState.value = PaginationState(pageSize = PAGE_SIZE)
             loadedDocuments.value = emptyList()
             mutableState.emitLoading()
-            if (_searchQuery.value.isNotEmpty()) {
-                loadSearchResults(_searchQuery.value)
-            } else {
-                loadPage(page = 0, reset = true)
+
+            // Load all sections in parallel
+            val vatJob = async { loadVatSummary() }
+            val healthJob = async { loadBusinessHealth() }
+            val documentsJob = async {
+                if (_searchQuery.value.isNotEmpty()) {
+                    loadSearchResults(_searchQuery.value)
+                } else {
+                    loadPage(page = 0, reset = true)
+                }
             }
+
+            // Await all jobs (each updates its own state)
+            vatJob.await()
+            healthJob.await()
+            documentsJob.await()
+        }
+    }
+
+    /**
+     * Load VAT summary data.
+     * TODO: Replace with actual API call when endpoint is available.
+     */
+    private suspend fun loadVatSummary() {
+        try {
+            // Placeholder data - replace with API call
+            val data = VatSummaryData.empty
+            _vatSummaryState.value = DokusState.success(data)
+            logger.d { "VAT summary loaded successfully" }
+        } catch (e: Exception) {
+            logger.e(e) { "Failed to load VAT summary" }
+            _vatSummaryState.value = DokusState.error(
+                ai.dokus.foundation.domain.exceptions.DokusException.Unknown(e)
+            ) { scope.launch { loadVatSummary() } }
+        }
+    }
+
+    /**
+     * Load business health data.
+     * TODO: Replace with actual API call when endpoint is available.
+     */
+    private suspend fun loadBusinessHealth() {
+        try {
+            // Placeholder data - replace with API call
+            val data = BusinessHealthData.empty
+            _businessHealthState.value = DokusState.success(data)
+            logger.d { "Business health loaded successfully" }
+        } catch (e: Exception) {
+            logger.e(e) { "Failed to load business health" }
+            _businessHealthState.value = DokusState.error(
+                ai.dokus.foundation.domain.exceptions.DokusException.Unknown(e)
+            ) { scope.launch { loadBusinessHealth() } }
         }
     }
 

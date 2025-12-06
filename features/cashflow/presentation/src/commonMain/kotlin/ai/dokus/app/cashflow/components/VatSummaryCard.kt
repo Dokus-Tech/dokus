@@ -1,12 +1,19 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.core.state.DokusState
+import ai.dokus.foundation.design.components.common.DokusErrorContent
+import ai.dokus.foundation.design.components.common.ShimmerBox
+import ai.dokus.foundation.design.components.common.ShimmerLine
 import ai.dokus.foundation.domain.Money
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,18 +33,14 @@ import androidx.compose.ui.unit.dp
  * - Net amount
  * - Predicted Net amount
  *
- * @param vatAmount The VAT amount to be paid by the end of the quarter
- * @param netAmount The current net amount
- * @param predictedNetAmount The predicted net amount
- * @param quarterInfo Optional text describing the quarter (e.g., "Q4 2024")
+ * Handles loading, success, and error states independently.
+ *
+ * @param state The DokusState containing VAT summary data
  * @param modifier Optional modifier for the card
  */
 @Composable
 fun VatSummaryCard(
-    vatAmount: Money,
-    netAmount: Money,
-    predictedNetAmount: Money,
-    quarterInfo: String? = null,
+    state: DokusState<VatSummaryData>,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -48,7 +51,7 @@ fun VatSummaryCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .border(
@@ -56,29 +59,114 @@ fun VatSummaryCard(
                     color = MaterialTheme.colorScheme.outlineVariant,
                     shape = RoundedCornerShape(12.dp)
                 )
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            // VAT column
-            VatAmountColumn(
-                label = "VAT",
-                sublabel = quarterInfo ?: "(by the end of quarter)",
-                amount = vatAmount
-            )
+            when (state) {
+                is DokusState.Loading, is DokusState.Idle -> {
+                    VatSummaryCardSkeleton()
+                }
 
-            // Net amount column
-            AmountColumn(
-                label = "Net amount",
-                amount = netAmount
-            )
+                is DokusState.Success -> {
+                    VatSummaryCardContent(data = state.data)
+                }
 
-            // Predicted Net amount column
-            AmountColumn(
-                label = "Predicted Net amount",
-                amount = predictedNetAmount
-            )
+                is DokusState.Error -> {
+                    VatSummaryCardError(state = state)
+                }
+            }
         }
+    }
+}
+
+/**
+ * Content displayed when data is loaded successfully.
+ */
+@Composable
+private fun VatSummaryCardContent(
+    data: VatSummaryData,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // VAT column
+        VatAmountColumn(
+            label = "VAT",
+            sublabel = data.quarterInfo ?: "(by the end of quarter)",
+            amount = data.vatAmount
+        )
+
+        // Net amount column
+        AmountColumn(
+            label = "Net amount",
+            amount = data.netAmount
+        )
+
+        // Predicted Net amount column
+        AmountColumn(
+            label = "Predicted Net amount",
+            amount = data.predictedNetAmount
+        )
+    }
+}
+
+/**
+ * Skeleton displayed during loading state.
+ */
+@Composable
+private fun VatSummaryCardSkeleton(
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // VAT column skeleton
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            ShimmerLine(modifier = Modifier.width(140.dp), height = 12.dp)
+            ShimmerLine(modifier = Modifier.width(60.dp), height = 16.dp)
+        }
+
+        // Net amount column skeleton
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            ShimmerLine(modifier = Modifier.width(70.dp), height = 12.dp)
+            ShimmerLine(modifier = Modifier.width(50.dp), height = 16.dp)
+        }
+
+        // Predicted Net amount column skeleton
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            ShimmerLine(modifier = Modifier.width(120.dp), height = 12.dp)
+            ShimmerLine(modifier = Modifier.width(50.dp), height = 16.dp)
+        }
+    }
+}
+
+/**
+ * Error state with inline retry.
+ */
+@Composable
+private fun VatSummaryCardError(
+    state: DokusState.Error<*>,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        DokusErrorContent(
+            exception = state.exception,
+            retryHandler = state.retryHandler,
+            compact = true
+        )
     }
 }
 

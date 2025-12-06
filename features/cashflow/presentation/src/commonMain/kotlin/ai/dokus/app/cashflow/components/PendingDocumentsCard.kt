@@ -6,6 +6,8 @@ import ai.dokus.app.resources.generated.pending_documents_empty
 import ai.dokus.app.resources.generated.pending_documents_need_confirmation
 import ai.dokus.app.resources.generated.pending_documents_title
 import ai.dokus.foundation.design.components.common.DokusErrorContent
+import ai.dokus.foundation.design.components.common.ShimmerBox
+import ai.dokus.foundation.design.components.common.ShimmerLine
 import ai.dokus.foundation.design.extensions.localizedUppercase
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.common.PaginationState
@@ -127,17 +129,62 @@ fun PendingDocumentsCard(
 }
 
 /**
- * Loading state content with a centered progress indicator.
+ * Loading state content with shimmer skeleton rows.
  */
 @Composable
 private fun PendingDocumentsLoadingContent(
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        CircularProgressIndicator()
+        // Show 4 skeleton rows
+        repeat(4) { index ->
+            PendingDocumentItemSkeleton()
+            if (index < 3) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Skeleton for a single pending document item.
+ */
+@Composable
+private fun PendingDocumentItemSkeleton(
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Document name skeleton
+        ShimmerLine(
+            modifier = Modifier.width(180.dp),
+            height = 16.dp
+        )
+
+        Spacer(Modifier.width(16.dp))
+
+        // Badge skeleton
+        ShimmerBox(
+            modifier = Modifier
+                .width(100.dp)
+                .height(22.dp),
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
 
