@@ -5,6 +5,8 @@ import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.Tenant
+import ai.dokus.foundation.domain.model.common.PaginationState
+import ai.dokus.foundation.domain.model.common.PaginationStateCompanion
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,21 +21,33 @@ internal class DashboardViewModel(
     private val mutableCurrentTenantState = MutableStateFlow<DokusState<Tenant?>>(DokusState.idle())
     val currentTenantState = mutableCurrentTenantState.asStateFlow()
 
-    // Pending documents state for mobile dashboard
-    private val _pendingDocumentsState = MutableStateFlow<DokusState<List<MediaDto>>>(DokusState.idle())
-    val pendingDocumentsState: StateFlow<DokusState<List<MediaDto>>> = _pendingDocumentsState.asStateFlow()
-
+    // Pending documents state using PaginationState
+    private val _allPendingDocuments = MutableStateFlow<List<MediaDto>>(emptyList())
     private val _pendingCurrentPage = MutableStateFlow(0)
-    val pendingCurrentPage: StateFlow<Int> = _pendingCurrentPage.asStateFlow()
+    private val _pendingDocumentsLoading = MutableStateFlow(true)
+
+    private val _pendingPaginationState = MutableStateFlow(
+        PaginationState<MediaDto>(pageSize = PENDING_PAGE_SIZE)
+    )
+    val pendingPaginationState: StateFlow<PaginationState<MediaDto>> = _pendingPaginationState.asStateFlow()
+    val isPendingLoading: StateFlow<Boolean> = _pendingDocumentsLoading.asStateFlow()
 
     init {
         // Start watching pending documents
         viewModelScope.launch {
             watchPendingDocuments().collect { state ->
-                _pendingDocumentsState.value = state
-                // Reset to first page when data changes
-                if (state is DokusState.Success) {
-                    _pendingCurrentPage.value = 0
+                _pendingDocumentsLoading.value = state is DokusState.Loading
+                when (state) {
+                    is DokusState.Success -> {
+                        _allPendingDocuments.value = state.data
+                        _pendingCurrentPage.value = 0
+                        updatePendingPaginationState()
+                    }
+                    is DokusState.Error -> {
+                        _allPendingDocuments.value = emptyList()
+                        updatePendingPaginationState()
+                    }
+                    else -> {}
                 }
             }
         }
@@ -56,33 +70,32 @@ internal class DashboardViewModel(
         }
     }
 
-    /**
-     * Refresh pending documents.
-     */
     fun refreshPendingDocuments() {
         watchPendingDocuments.refresh()
     }
 
-    /**
-     * Go to previous page of pending documents.
-     */
     fun pendingDocumentsPreviousPage() {
         if (_pendingCurrentPage.value > 0) {
-            _pendingCurrentPage.value = _pendingCurrentPage.value - 1
+            _pendingCurrentPage.value -= 1
+            updatePendingPaginationState()
         }
     }
 
-    /**
-     * Go to next page of pending documents.
-     */
     fun pendingDocumentsNextPage() {
-        val state = _pendingDocumentsState.value
-        if (state is DokusState.Success) {
-            val totalPages = calculateTotalPages(state.data.size)
-            if (_pendingCurrentPage.value < totalPages - 1) {
-                _pendingCurrentPage.value = _pendingCurrentPage.value + 1
-            }
+        val allDocs = _allPendingDocuments.value
+        val totalPages = calculateTotalPages(allDocs.size)
+        if (_pendingCurrentPage.value < totalPages - 1) {
+            _pendingCurrentPage.value += 1
+            updatePendingPaginationState()
         }
+    }
+
+    private fun updatePendingPaginationState() {
+        _pendingPaginationState.value = PaginationStateCompanion.fromLocalData(
+            allData = _allPendingDocuments.value,
+            currentPage = _pendingCurrentPage.value,
+            pageSize = PENDING_PAGE_SIZE
+        )
     }
 
     private fun calculateTotalPages(totalItems: Int): Int {

@@ -10,6 +10,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ExtractedInvoiceData
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.MediaExtraction
+import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -29,10 +30,13 @@ fun PendingDocumentsCardPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            documents = getSamplePendingDocuments(),
+            paginationState = PaginationState(
+                data = getSamplePendingDocuments(),
+                currentPage = 0,
+                pageSize = 5,
+                hasMorePages = true
+            ),
             isLoading = false,
-            hasPreviousPage = false,
-            hasNextPage = true,
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},
@@ -53,10 +57,13 @@ fun PendingDocumentsCardLoadingPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            documents = emptyList(),
+            paginationState = PaginationState(
+                data = emptyList(),
+                currentPage = 0,
+                pageSize = 5,
+                hasMorePages = false
+            ),
             isLoading = true,
-            hasPreviousPage = false,
-            hasNextPage = false,
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},
@@ -77,10 +84,13 @@ fun PendingDocumentsCardEmptyPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            documents = emptyList(),
+            paginationState = PaginationState(
+                data = emptyList(),
+                currentPage = 0,
+                pageSize = 5,
+                hasMorePages = false
+            ),
             isLoading = false,
-            hasPreviousPage = false,
-            hasNextPage = false,
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},
@@ -101,10 +111,13 @@ fun PendingDocumentsCardWithPaginationPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            documents = getSamplePendingDocuments().take(3),
+            paginationState = PaginationState(
+                data = getSamplePendingDocuments().take(3),
+                currentPage = 1,
+                pageSize = 3,
+                hasMorePages = true
+            ),
             isLoading = false,
-            hasPreviousPage = true,
-            hasNextPage = true,
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},

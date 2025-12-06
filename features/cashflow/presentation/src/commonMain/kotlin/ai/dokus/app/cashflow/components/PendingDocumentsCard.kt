@@ -9,6 +9,9 @@ import ai.dokus.app.resources.generated.pending_documents_title
 import ai.dokus.foundation.design.extensions.localizedUppercase
 import ai.dokus.foundation.domain.enums.MediaDocumentType
 import ai.dokus.foundation.domain.model.MediaDto
+import ai.dokus.foundation.domain.model.common.PaginationState
+import ai.dokus.foundation.domain.model.common.hasNextPage
+import ai.dokus.foundation.domain.model.common.hasPreviousPage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -49,10 +52,8 @@ import org.jetbrains.compose.resources.stringResource
  * - List of pending documents with "Need confirmation" badge
  * - Pagination arrows
  *
- * @param documents List of pending media documents to display on current page
+ * @param paginationState Pagination state containing documents and navigation info
  * @param isLoading Whether the documents are being loaded
- * @param hasPreviousPage Whether there's a previous page
- * @param hasNextPage Whether there's a next page
  * @param onDocumentClick Callback when a document row is clicked
  * @param onPreviousClick Callback when the previous arrow button is clicked
  * @param onNextClick Callback when the next arrow button is clicked
@@ -60,10 +61,8 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun PendingDocumentsCard(
-    documents: List<MediaDto>,
+    paginationState: PaginationState<MediaDto>,
     isLoading: Boolean,
-    hasPreviousPage: Boolean,
-    hasNextPage: Boolean,
     onDocumentClick: (MediaDto) -> Unit,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
@@ -90,7 +89,7 @@ fun PendingDocumentsCard(
             // Title
             Text(
                 text = stringResource(Res.string.pending_documents_title),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -98,106 +97,154 @@ fun PendingDocumentsCard(
 
             if (isLoading) {
                 // Loading state
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (documents.isEmpty()) {
+                PendingDocumentsLoadingContent()
+            } else if (paginationState.data.isEmpty()) {
                 // Empty state
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(Res.string.pending_documents_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                PendingDocumentsEmptyContent()
             } else {
-                // Document items list with stable keys for efficient recomposition
-                @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-                documents.forEachIndexed { index, document ->
-                    key(document.id.value) {
-                        PendingDocumentItem(
-                            document = document,
-                            onClick = { onDocumentClick(document) }
-                        )
-
-                        // Add divider between items (not after the last item)
-                        if (index < documents.size - 1) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.dp)
-                                    .background(MaterialTheme.colorScheme.outlineVariant)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
-                    }
-                }
+                // Document items list
+                PendingDocumentsList(
+                    documents = paginationState.data,
+                    onDocumentClick = onDocumentClick
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Navigation controls
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Previous button
-                    FilledIconButton(
-                        onClick = onPreviousClick,
-                        enabled = hasPreviousPage,
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                            disabledContainerColor = MaterialTheme.colorScheme.surface,
-                            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        ),
-                        modifier = Modifier
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.pending_documents_previous)
-                        )
-                    }
-
-                    // Next button
-                    FilledIconButton(
-                        onClick = onNextClick,
-                        enabled = hasNextPage,
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                            disabledContainerColor = MaterialTheme.colorScheme.surface,
-                            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        ),
-                        modifier = Modifier
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = stringResource(Res.string.pending_documents_next)
-                        )
-                    }
-                }
+                PaginationControls(
+                    hasPreviousPage = paginationState.hasPreviousPage,
+                    hasNextPage = paginationState.hasNextPage,
+                    onPreviousClick = onPreviousClick,
+                    onNextClick = onNextClick
+                )
             }
+        }
+    }
+}
+
+/**
+ * Loading state content with centered progress indicator.
+ */
+@Composable
+private fun PendingDocumentsLoadingContent() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+/**
+ * Empty state content with message.
+ */
+@Composable
+private fun PendingDocumentsEmptyContent() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(Res.string.pending_documents_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * List of pending document items with dividers.
+ */
+@Composable
+private fun PendingDocumentsList(
+    documents: List<MediaDto>,
+    onDocumentClick: (MediaDto) -> Unit
+) {
+    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+    documents.forEachIndexed { index, document ->
+        key(document.id.value) {
+            PendingDocumentItem(
+                document = document,
+                onClick = { onDocumentClick(document) }
+            )
+
+            // Add divider between items (not after the last item)
+            if (index < documents.size - 1) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Pagination controls with previous and next buttons.
+ */
+@Composable
+private fun PaginationControls(
+    hasPreviousPage: Boolean,
+    hasNextPage: Boolean,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Previous button
+        FilledIconButton(
+            onClick = onPreviousClick,
+            enabled = hasPreviousPage,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            ),
+            modifier = Modifier
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(8.dp)
+                )
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(Res.string.pending_documents_previous)
+            )
+        }
+
+        // Next button
+        FilledIconButton(
+            onClick = onNextClick,
+            enabled = hasNextPage,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            ),
+            modifier = Modifier
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(8.dp)
+                )
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = stringResource(Res.string.pending_documents_next)
+            )
         }
     }
 }
@@ -215,7 +262,6 @@ private fun PendingDocumentItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Determine document display name, cached per document
     val documentName = getDocumentDisplayName(document)
 
     Row(
@@ -242,7 +288,6 @@ private fun PendingDocumentItem(
 
 /**
  * Badge showing "Need confirmation" status.
- * Uses MaterialTheme error colors for visual consistency.
  */
 @Composable
 private fun NeedConfirmationBadge(
@@ -261,26 +306,20 @@ private fun NeedConfirmationBadge(
     )
 }
 
-/**
- * Maximum length for document name display to prevent layout issues.
- */
 private const val MAX_DOCUMENT_NAME_LENGTH = 20
 
 /**
  * Get display name for a pending document.
  * Uses extracted invoice number if available, otherwise falls back to filename.
- * Result is remembered to avoid recomputing on every recomposition.
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
 private fun getDocumentDisplayName(document: MediaDto): String {
     val extraction = document.extraction
 
-    // Try to get invoice number from extraction
     val invoiceNumber = extraction?.invoice?.invoiceNumber
         ?: extraction?.bill?.invoiceNumber
 
-    // Get localized type prefix
     val typePrefix = remember(extraction?.documentType) {
         extraction?.documentType ?: if (invoiceNumber != null) {
             MediaDocumentType.Invoice
@@ -293,7 +332,6 @@ private fun getDocumentDisplayName(document: MediaDto): String {
         if (!invoiceNumber.isNullOrBlank()) {
             "$typePrefix $invoiceNumber"
         } else {
-            // Fall back to filename without extension
             val nameWithoutExtension = document.filename
                 .substringBeforeLast(".")
                 .uppercase()
