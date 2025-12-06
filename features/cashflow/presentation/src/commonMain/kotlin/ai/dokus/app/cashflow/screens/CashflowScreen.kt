@@ -288,12 +288,16 @@ private fun SummaryCardsRow(
     onPendingNextPage: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Max),
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Left column: VAT Summary + Business Health stacked vertically
         Column(
-            modifier = Modifier.weight(2f),
+            modifier = Modifier
+                .weight(2f)
+                .fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // VAT Summary Card at top
