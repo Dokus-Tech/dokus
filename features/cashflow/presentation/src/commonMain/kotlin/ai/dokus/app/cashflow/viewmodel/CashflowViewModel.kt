@@ -5,7 +5,9 @@ import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
+import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.core.state.DokusState
+import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.app.core.state.emit
 import ai.dokus.app.core.state.emitLoading
 import ai.dokus.app.core.viewmodel.BaseViewModel
@@ -16,8 +18,10 @@ import ai.dokus.foundation.platform.Logger
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -30,6 +34,7 @@ internal class CashflowViewModel :
     private val cashflowDataSource: CashflowRemoteDataSource by inject()
     private val searchDocuments: SearchCashflowDocumentsUseCase by inject()
     private val uploadManager: DocumentUploadManager by inject()
+    private val watchPendingDocuments: WatchPendingDocumentsUseCase by inject()
 
     private val loadedDocuments = MutableStateFlow<List<FinancialDocumentDto>>(emptyList())
     private val paginationState =
@@ -51,11 +56,29 @@ internal class CashflowViewModel :
     val uploadedDocuments: StateFlow<Map<String, DocumentDto>> = uploadManager.uploadedDocuments
     val deletionHandles: StateFlow<Map<String, DocumentDeletionHandle>> = uploadManager.deletionHandles
 
+    // Pending documents state with local pagination
+    private val _pendingDocumentsState = MutableStateFlow<DokusState<List<MediaDto>>>(DokusState.idle())
+    val pendingDocumentsState: StateFlow<DokusState<List<MediaDto>>> = _pendingDocumentsState.asStateFlow()
+    private val _pendingCurrentPage = MutableStateFlow(0)
+    val pendingCurrentPage: StateFlow<Int> = _pendingCurrentPage.asStateFlow()
+
     init {
         // Set up auto-refresh when uploads complete
         uploadManager.setOnUploadCompleteCallback {
             logger.d { "Upload completed, refreshing cashflow documents" }
             refresh()
+            refreshPendingDocuments()
+        }
+
+        // Start watching pending documents
+        viewModelScope.launch {
+            watchPendingDocuments().collect { state ->
+                _pendingDocumentsState.value = state
+                // Reset to first page when data changes
+                if (state is DokusState.Success) {
+                    _pendingCurrentPage.value = 0
+                }
+            }
         }
     }
 
@@ -96,6 +119,61 @@ internal class CashflowViewModel :
      * Returns the upload manager for components that need direct access.
      */
     fun provideUploadManager(): DocumentUploadManager = uploadManager
+
+    /**
+     * Refresh pending documents.
+     */
+    fun refreshPendingDocuments() {
+        watchPendingDocuments.refresh()
+    }
+
+    /**
+     * Go to previous page of pending documents.
+     */
+    fun pendingDocumentsPreviousPage() {
+        if (_pendingCurrentPage.value > 0) {
+            _pendingCurrentPage.value = _pendingCurrentPage.value - 1
+        }
+    }
+
+    /**
+     * Go to next page of pending documents.
+     */
+    fun pendingDocumentsNextPage() {
+        val state = _pendingDocumentsState.value
+        if (state is DokusState.Success) {
+            val totalPages = calculateTotalPages(state.data.size)
+            if (_pendingCurrentPage.value < totalPages - 1) {
+                _pendingCurrentPage.value = _pendingCurrentPage.value + 1
+            }
+        }
+    }
+
+    /**
+     * Get the current page of pending documents.
+     */
+    fun getCurrentPageDocuments(documents: List<MediaDto>): List<MediaDto> {
+        val start = _pendingCurrentPage.value * PENDING_PAGE_SIZE
+        val end = minOf(start + PENDING_PAGE_SIZE, documents.size)
+        return if (start < documents.size) documents.subList(start, end) else emptyList()
+    }
+
+    /**
+     * Check if there's a previous page for pending documents.
+     */
+    fun hasPreviousPendingPage(): Boolean = _pendingCurrentPage.value > 0
+
+    /**
+     * Check if there's a next page for pending documents.
+     */
+    fun hasNextPendingPage(totalDocuments: Int): Boolean {
+        val totalPages = calculateTotalPages(totalDocuments)
+        return _pendingCurrentPage.value < totalPages - 1
+    }
+
+    private fun calculateTotalPages(totalItems: Int): Int {
+        return if (totalItems == 0) 1 else ((totalItems - 1) / PENDING_PAGE_SIZE) + 1
+    }
 
     fun refresh() {
         searchJob?.cancel()
@@ -229,5 +307,6 @@ internal class CashflowViewModel :
 
     companion object {
         private const val PAGE_SIZE = 20
+        private const val PENDING_PAGE_SIZE = 5
     }
 }
