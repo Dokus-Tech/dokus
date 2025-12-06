@@ -10,6 +10,8 @@ import ai.dokus.app.cashflow.components.PendingDocumentsCard
 import ai.dokus.app.cashflow.components.SortDropdown
 import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
+import ai.dokus.app.cashflow.components.fileDropTarget
+import ai.dokus.app.cashflow.components.isDragDropSupported
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.PButton
@@ -93,7 +95,28 @@ internal fun CashflowScreen(
         viewModel.refresh()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // Screen-level drop target - opens sidebar when user drags files over the screen
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(
+                if (isDragDropSupported && isLargeScreen) {
+                    Modifier.fileDropTarget(
+                        onDragStateChange = { isDragging ->
+                            if (isDragging && !isSidebarOpen) {
+                                viewModel.openSidebar()
+                            }
+                        },
+                        onFilesDropped = { files ->
+                            // Files dropped on screen go to upload manager
+                            viewModel.provideUploadManager().enqueueFiles(files)
+                        }
+                    )
+                } else {
+                    Modifier
+                }
+            )
+    ) {
         Scaffold(
             topBar = {
                 PTopAppBarSearchAction(
