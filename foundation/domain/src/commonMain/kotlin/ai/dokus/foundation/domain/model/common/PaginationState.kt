@@ -9,4 +9,6 @@ data class PaginationState<T : Any>(
     val isLoadingMore: Boolean = false,
     val hasMorePages: Boolean = true,
     val data: List<T> = emptyList()
-)
+) {
+    companion object;
+}

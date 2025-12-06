@@ -1,7 +1,6 @@
 package ai.dokus.app.screens
 
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
-import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.state.isLoading
 import ai.dokus.app.core.state.isSuccess
 import ai.dokus.app.viewmodel.DashboardViewModel
@@ -11,7 +10,6 @@ import ai.dokus.foundation.design.components.PIconPosition
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -37,7 +35,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,21 +46,6 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import org.koin.compose.viewmodel.koinViewModel
-
-/**
- * Number of pending documents to display per page on the dashboard.
- */
-private const val PENDING_PAGE_SIZE = 5
-
-/**
- * Data class holding computed pending documents pagination state for the dashboard.
- */
-private data class DashboardPendingPaginationData(
-    val documents: List<MediaDto>,
-    val isLoading: Boolean,
-    val hasPreviousPage: Boolean,
-    val hasNextPage: Boolean
-)
 
 @Composable
 internal fun DashboardScreen(
@@ -79,29 +61,8 @@ internal fun DashboardScreen(
     val currentTenant = currentTenantState.let { if (it.isSuccess()) it.data else null }
 
     // Pending documents state (for mobile only)
-    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
-    val pendingCurrentPage by viewModel.pendingCurrentPage.collectAsState()
-
-    // Compute pending documents pagination with derivedStateOf for performance
-    val pendingPaginationData by remember(pendingDocumentsState, pendingCurrentPage) {
-        derivedStateOf {
-            val allDocs = (pendingDocumentsState as? DokusState.Success)?.data ?: emptyList()
-            val totalPages = if (allDocs.isEmpty()) 1 else ((allDocs.size - 1) / PENDING_PAGE_SIZE) + 1
-            val start = pendingCurrentPage * PENDING_PAGE_SIZE
-            val end = minOf(start + PENDING_PAGE_SIZE, allDocs.size)
-            val currentDocs = if (start < allDocs.size) {
-                allDocs.subList(start, end)
-            } else {
-                emptyList()
-            }
-            DashboardPendingPaginationData(
-                documents = currentDocs,
-                isLoading = pendingDocumentsState is DokusState.Loading,
-                hasPreviousPage = pendingCurrentPage > 0,
-                hasNextPage = pendingCurrentPage < totalPages - 1
-            )
-        }
-    }
+    val pendingPaginationState by viewModel.pendingPaginationState.collectAsState()
+    val isPendingLoading by viewModel.isPendingLoading.collectAsState()
 
     LaunchedEffect(viewModel) {
         viewModel.refreshTenant()
@@ -170,13 +131,9 @@ internal fun DashboardScreen(
             ) {
                 // Pending documents card - always show (displays empty state when no documents)
                 PendingDocumentsCard(
-                    documents = pendingPaginationData.documents,
-                    isLoading = pendingPaginationData.isLoading,
-                    hasPreviousPage = pendingPaginationData.hasPreviousPage,
-                    hasNextPage = pendingPaginationData.hasNextPage,
-                    onDocumentClick = { media ->
-                        // TODO: Navigate to document edit/confirmation screen
-                    },
+                    paginationState = pendingPaginationState,
+                    isLoading = isPendingLoading,
+                    onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
                     onPreviousClick = viewModel::pendingDocumentsPreviousPage,
                     onNextClick = viewModel::pendingDocumentsNextPage,
                     modifier = Modifier.fillMaxWidth()
