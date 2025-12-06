@@ -28,20 +28,16 @@ interface MediaRemoteDataSource {
     suspend fun getMedia(mediaId: MediaId): Result<MediaDto>
 
     /**
-     * List media items, optionally filtered by processing status
-     * GET /api/v1/media?status={status}&limit={limit}&offset={offset}
+     * List media items, optionally filtered by processing statuses.
+     * Supports filtering by multiple statuses.
+     * GET /api/v1/media?status={status1,status2}&limit={limit}&offset={offset}
+     *
+     * @param statuses Optional list of statuses to filter by (if null or empty, returns all)
+     * @param limit Maximum number of items to return
+     * @param offset Number of items to skip
      */
     suspend fun listMedia(
-        status: MediaStatus? = null,
-        limit: Int = 50,
-        offset: Int = 0
-    ): Result<List<MediaDto>>
-
-    /**
-     * Convenience endpoint to list only pending/processing media items
-     * GET /api/v1/media/pending?limit={limit}&offset={offset}
-     */
-    suspend fun listPendingMedia(
+        statuses: List<MediaStatus>? = null,
         limit: Int = 50,
         offset: Int = 0
     ): Result<List<MediaDto>>

@@ -150,11 +150,26 @@ fun Route.mediaRoutes() {
             }
 
             // GET /api/v1/media - List media with optional filters
+            // Supports multiple statuses via comma-separated values: ?status=Pending,Processing
             get {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
 
-                val status = call.parameters["status"]?.let { MediaStatus.valueOf(it) }
+                // Parse status parameter - supports single value or comma-separated list
+                val statuses = call.parameters["status"]?.let { statusParam ->
+                    statusParam.split(",")
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() }
+                        .map { statusStr ->
+                            try {
+                                MediaStatus.valueOf(statusStr)
+                            } catch (e: IllegalArgumentException) {
+                                throw DokusException.BadRequest("Invalid status: $statusStr")
+                            }
+                        }
+                        .takeIf { it.isNotEmpty() }
+                }
+
                 val limit = call.parameters["limit"]?.toIntOrNull() ?: 50
                 val offset = call.parameters["offset"]?.toIntOrNull() ?: 0
 
@@ -165,38 +180,13 @@ fun Route.mediaRoutes() {
                     throw DokusException.BadRequest("Offset must be non-negative")
                 }
 
-                val records = repository.list(tenantId, status, limit, offset).getOrElse {
+                val records = repository.list(tenantId, statuses, limit, offset).getOrElse {
                     logger.error("Failed to list media for tenant=$tenantId", it)
                     throw DokusException.InternalError("Failed to list media")
                 }
 
                 val enrichedDtos = records.map { enrichRecord(it, storage) }
                 call.respond(HttpStatusCode.OK, enrichedDtos)
-            }
-
-            // GET /api/v1/media/pending - List pending media (convenience endpoint)
-            get("/pending") {
-                val principal = dokusPrincipal
-                val tenantId = principal.requireTenantId()
-
-                val limit = call.parameters["limit"]?.toIntOrNull() ?: 50
-                val offset = call.parameters["offset"]?.toIntOrNull() ?: 0
-
-                if (limit < 1 || limit > 100) {
-                    throw DokusException.BadRequest("Limit must be between 1 and 100")
-                }
-                if (offset < 0) {
-                    throw DokusException.BadRequest("Offset must be non-negative")
-                }
-
-                val pending = repository.list(tenantId, MediaStatus.Pending, limit, offset).getOrThrow()
-                val processing = repository.list(tenantId, MediaStatus.Processing, limit, offset).getOrThrow()
-
-                val combined = (pending + processing)
-                    .sortedByDescending { it.dto.createdAt }
-                    .map { enrichRecord(it, storage) }
-
-                call.respond(HttpStatusCode.OK, combined)
             }
 
             // POST /api/v1/media/{id}/attach - Attach media to an entity

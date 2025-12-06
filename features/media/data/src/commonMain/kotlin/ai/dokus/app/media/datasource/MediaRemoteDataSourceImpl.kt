@@ -61,25 +61,16 @@ internal class MediaRemoteDataSourceImpl(
     }
 
     override suspend fun listMedia(
-        status: MediaStatus?,
+        statuses: List<MediaStatus>?,
         limit: Int,
         offset: Int
     ): Result<List<MediaDto>> {
         return runCatching {
             httpClient.get("/api/v1/media") {
-                status?.let { parameter("status", it.name) }
-                parameter("limit", limit)
-                parameter("offset", offset)
-            }.body()
-        }
-    }
-
-    override suspend fun listPendingMedia(
-        limit: Int,
-        offset: Int
-    ): Result<List<MediaDto>> {
-        return runCatching {
-            httpClient.get("/api/v1/media/pending") {
+                // Send statuses as comma-separated string if provided
+                if (!statuses.isNullOrEmpty()) {
+                    parameter("status", statuses.joinToString(",") { it.name })
+                }
                 parameter("limit", limit)
                 parameter("offset", offset)
             }.body()

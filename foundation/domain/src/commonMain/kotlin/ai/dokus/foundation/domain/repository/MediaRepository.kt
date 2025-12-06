@@ -28,13 +28,13 @@ interface MediaRepository {
 
     /**
      * List media files with optional status filter.
+     * Supports filtering by multiple statuses.
+     *
+     * @param statuses Optional list of statuses to filter by (if null or empty, returns all)
+     * @param limit Maximum number of items to return
+     * @param offset Number of items to skip
      */
-    suspend fun list(status: MediaStatus? = null, limit: Int = 50, offset: Int = 0): List<MediaDto>
-
-    /**
-     * List media files pending processing.
-     */
-    suspend fun listPending(limit: Int = 50, offset: Int = 0): List<MediaDto>
+    suspend fun list(statuses: List<MediaStatus>? = null, limit: Int = 50, offset: Int = 0): List<MediaDto>
 
     /**
      * Attach media to an entity (invoice, expense, bill, etc.)
