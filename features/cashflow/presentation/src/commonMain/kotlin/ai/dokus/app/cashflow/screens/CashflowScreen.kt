@@ -28,9 +28,12 @@ import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -272,6 +275,7 @@ private fun CashflowContent(
  * Top row with summary cards matching Figma layout:
  * Left column: VAT Summary (top) + Business Health (bottom)
  * Right side: Cash flow (pending documents) card
+ * Both columns have matching heights.
  */
 @Composable
 private fun SummaryCardsRow(
@@ -301,21 +305,28 @@ private fun SummaryCardsRow(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Business Health Card below
+            // Business Health Card below - fills remaining space
+            // defaultMinSize ensures it contributes to IntrinsicSize calculation
+            // while weight(1f) allows it to expand to fill available space
             BusinessHealthCard(
                 data = businessHealthData,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 120.dp)
+                    .weight(1f)
             )
         }
 
-        // Right side: Pending Documents Card
+        // Right side: Pending Documents Card - determines the row height
         PendingDocumentsCard(
             paginationState = pendingPaginationState,
             isLoading = isPendingLoading,
             onDocumentClick = onPendingDocumentClick,
             onPreviousClick = onPendingPreviousPage,
             onNextClick = onPendingNextPage,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
         )
     }
 }

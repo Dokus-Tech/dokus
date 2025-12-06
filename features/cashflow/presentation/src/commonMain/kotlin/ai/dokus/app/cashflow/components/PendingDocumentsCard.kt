@@ -18,8 +18,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -78,7 +81,7 @@ fun PendingDocumentsCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outlineVariant,
@@ -96,21 +99,26 @@ fun PendingDocumentsCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (isLoading) {
-                // Loading state
-                PendingDocumentsLoadingContent()
+                // Loading state - expands to fill available space
+                PendingDocumentsLoadingContent(
+                    modifier = Modifier.weight(1f)
+                )
             } else if (paginationState.data.isEmpty()) {
-                // Empty state
-                PendingDocumentsEmptyContent()
+                // Empty state - expands to fill available space
+                PendingDocumentsEmptyContent(
+                    modifier = Modifier.weight(1f)
+                )
             } else {
-                // Document items list
-                PendingDocumentsList(
+                // Document items list - expands to fill available space
+                PendingDocumentsListContent(
                     documents = paginationState.data,
-                    onDocumentClick = onDocumentClick
+                    onDocumentClick = onDocumentClick,
+                    modifier = Modifier.weight(1f)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Navigation controls
+                // Navigation controls pinned at bottom
                 PaginationControls(
                     hasPreviousPage = paginationState.hasPreviousPage,
                     hasNextPage = paginationState.hasNextPage,
@@ -126,11 +134,11 @@ fun PendingDocumentsCard(
  * Loading state content with centered progress indicator.
  */
 @Composable
-private fun PendingDocumentsLoadingContent() {
+private fun PendingDocumentsLoadingContent(
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
+        modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator()
@@ -141,17 +149,36 @@ private fun PendingDocumentsLoadingContent() {
  * Empty state content with message.
  */
 @Composable
-private fun PendingDocumentsEmptyContent() {
+private fun PendingDocumentsEmptyContent(
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
+        modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = stringResource(Res.string.pending_documents_empty),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Content wrapper for the document list that can expand.
+ */
+@Composable
+private fun PendingDocumentsListContent(
+    documents: List<MediaDto>,
+    onDocumentClick: (MediaDto) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        PendingDocumentsList(
+            documents = documents,
+            onDocumentClick = onDocumentClick
         )
     }
 }
