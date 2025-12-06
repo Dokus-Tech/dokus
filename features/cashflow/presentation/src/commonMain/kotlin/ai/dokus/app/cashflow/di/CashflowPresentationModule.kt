@@ -13,7 +13,7 @@ val cashflowViewModelModule = module {
     single { DocumentUploadManager(dataSource = get()) }
 
     factory { SearchCashflowDocumentsUseCase() }
-    factory { WatchPendingDocumentsUseCase(mediaRepository = get()) }
+    factory { WatchPendingDocumentsUseCase(dataSource = get()) }
     viewModel { CashflowViewModel() }
     viewModel { AddDocumentViewModel() }
 }

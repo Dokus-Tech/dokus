@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.usecase
 
+import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.core.state.DokusState
-import ai.dokus.foundation.domain.enums.MediaStatus
+import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.model.MediaDto
-import ai.dokus.foundation.domain.repository.MediaRepository
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -14,24 +14,26 @@ import kotlinx.coroutines.flow.onStart
 /**
  * Use case for watching pending documents with automatic refresh capability.
  *
- * Fetches documents with Pending or Processing status.
+ * Returns documents that are in the AI processing pipeline - from upload
+ * through extraction to ready for user confirmation.
+ *
  * Exposes a Flow of [DokusState] containing all pending documents.
  * Pagination is handled by the consumer (ViewModel).
  */
 class WatchPendingDocumentsUseCase(
-    private val mediaRepository: MediaRepository
+    private val dataSource: CashflowRemoteDataSource
 ) {
     private val refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     /**
      * Watch pending documents as a Flow.
-     * Fetches documents with Pending or Processing status.
+     * Returns documents in all pre-confirmation statuses.
      *
-     * @param limit Maximum number of documents to fetch (default 100, must be positive)
-     * @return Flow of [DokusState] containing all pending documents
+     * @param limit Maximum number of documents to fetch (default 100, max 100)
+     * @return Flow of [DokusState] containing pending documents
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    operator fun invoke(limit: Int = 100): Flow<DokusState<List<MediaDto>>> {
+    operator fun invoke(limit: Int = 100): Flow<DokusState<List<DocumentProcessingDto>>> {
         require(limit > 0) { "Limit must be positive" }
 
         return refreshTrigger
@@ -39,15 +41,18 @@ class WatchPendingDocumentsUseCase(
             .flatMapLatest {
                 flow {
                     emit(DokusState.loading())
-                    try {
-                        val documents = mediaRepository.list(
-                            statuses = PENDING_STATUSES,
-                            limit = limit
-                        )
-                        emit(DokusState.success(documents))
-                    } catch (e: Exception) {
-                        emit(DokusState.error(e.asDokusException) { refresh() })
-                    }
+                    dataSource.listDocumentProcessing(
+                        statuses = PENDING_STATUSES,
+                        page = 0,
+                        limit = limit.coerceAtMost(100)
+                    ).fold(
+                        onSuccess = { response ->
+                            emit(DokusState.success(response.items))
+                        },
+                        onFailure = { e ->
+                            emit(DokusState.error(e.asDokusException) { refresh() })
+                        }
+                    )
                 }
             }
     }
@@ -61,8 +66,14 @@ class WatchPendingDocumentsUseCase(
 
     companion object {
         /**
-         * Statuses considered as "pending" - documents awaiting user confirmation.
+         * All statuses before user confirmation.
+         * Shows the full document processing pipeline.
          */
-        private val PENDING_STATUSES = listOf(MediaStatus.Pending, MediaStatus.Processing)
+        private val PENDING_STATUSES = listOf(
+            ProcessingStatus.Pending,    // Uploaded, waiting for AI
+            ProcessingStatus.Queued,     // Picked up, in queue
+            ProcessingStatus.Processing, // AI working
+            ProcessingStatus.Processed   // Ready for user review
+        )
     }
 }

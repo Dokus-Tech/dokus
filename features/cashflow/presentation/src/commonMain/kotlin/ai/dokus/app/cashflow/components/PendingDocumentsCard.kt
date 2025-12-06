@@ -9,8 +9,8 @@ import ai.dokus.app.resources.generated.pending_documents_previous
 import ai.dokus.app.resources.generated.pending_documents_title
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.extensions.localizedUppercase
-import ai.dokus.foundation.domain.enums.MediaDocumentType
-import ai.dokus.foundation.domain.model.MediaDto
+import ai.dokus.foundation.domain.enums.DocumentType
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.domain.model.common.hasNextPage
 import ai.dokus.foundation.domain.model.common.hasPreviousPage
@@ -20,10 +20,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -66,8 +64,8 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun PendingDocumentsCard(
-    state: DokusState<PaginationState<MediaDto>>,
-    onDocumentClick: (MediaDto) -> Unit,
+    state: DokusState<PaginationState<DocumentProcessingDto>>,
+    onDocumentClick: (DocumentProcessingDto) -> Unit,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -204,8 +202,8 @@ private fun PendingDocumentsErrorContent(
  */
 @Composable
 private fun PendingDocumentsListContent(
-    documents: List<MediaDto>,
-    onDocumentClick: (MediaDto) -> Unit,
+    documents: List<DocumentProcessingDto>,
+    onDocumentClick: (DocumentProcessingDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -223,15 +221,14 @@ private fun PendingDocumentsListContent(
  */
 @Composable
 private fun PendingDocumentsList(
-    documents: List<MediaDto>,
-    onDocumentClick: (MediaDto) -> Unit
+    documents: List<DocumentProcessingDto>,
+    onDocumentClick: (DocumentProcessingDto) -> Unit
 ) {
-    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-    documents.forEachIndexed { index, document ->
-        key(document.id.value) {
+    documents.forEachIndexed { index, processing ->
+        key(processing.id.value) {
             PendingDocumentItem(
-                document = document,
-                onClick = { onDocumentClick(document) }
+                processing = processing,
+                onClick = { onDocumentClick(processing) }
             )
 
             // Add divider between items (not after the last item)
@@ -314,17 +311,17 @@ private fun PaginationControls(
 /**
  * A single pending document item row displaying document name and "Need confirmation" badge.
  *
- * @param document The media document to display
+ * @param processing The document processing record to display
  * @param onClick Callback when the row is clicked
  * @param modifier Optional modifier for the row
  */
 @Composable
 private fun PendingDocumentItem(
-    document: MediaDto,
+    processing: DocumentProcessingDto,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val documentName = getDocumentDisplayName(document)
+    val documentName = getDocumentDisplayName(processing)
 
     Row(
         modifier = modifier
@@ -372,33 +369,38 @@ private const val MAX_DOCUMENT_NAME_LENGTH = 20
 
 /**
  * Get display name for a pending document.
- * Uses extracted invoice number if available, otherwise falls back to filename.
+ * Uses extracted invoice/bill number if available, otherwise falls back to filename.
  */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
-private fun getDocumentDisplayName(document: MediaDto): String {
-    val extraction = document.extraction
+private fun getDocumentDisplayName(processing: DocumentProcessingDto): String {
+    val filename = processing.document?.filename
+    val extractedData = processing.extractedData
 
-    val invoiceNumber = extraction?.invoice?.invoiceNumber
-        ?: extraction?.bill?.invoiceNumber
+    // Try to get invoice/bill number from extracted data
+    val documentNumber = extractedData?.invoice?.invoiceNumber
+        ?: extractedData?.bill?.invoiceNumber
 
-    val typePrefix = remember(extraction?.documentType) {
-        extraction?.documentType ?: if (invoiceNumber != null) {
-            MediaDocumentType.Invoice
-        } else {
-            MediaDocumentType.Unknown
-        }
-    }.localizedUppercase
+    // Get document type prefix
+    val typePrefix = remember(processing.documentType) {
+        (processing.documentType ?: DocumentType.Unknown).localizedUppercase
+    }
 
-    return remember(document.id, typePrefix) {
-        if (!invoiceNumber.isNullOrBlank()) {
-            "$typePrefix $invoiceNumber"
-        } else {
-            val nameWithoutExtension = document.filename
-                .substringBeforeLast(".")
-                .uppercase()
-                .take(MAX_DOCUMENT_NAME_LENGTH)
-            "$typePrefix $nameWithoutExtension"
+    return remember(processing.id, typePrefix, documentNumber, filename) {
+        when {
+            !documentNumber.isNullOrBlank() -> {
+                "$typePrefix $documentNumber"
+            }
+            !filename.isNullOrBlank() -> {
+                val nameWithoutExtension = filename
+                    .substringBeforeLast(".")
+                    .uppercase()
+                    .take(MAX_DOCUMENT_NAME_LENGTH)
+                "$typePrefix $nameWithoutExtension"
+            }
+            else -> {
+                // Fallback to document ID if no filename
+                "$typePrefix ${processing.documentId.value.toString().take(8).uppercase()}"
+            }
         }
     }
 }
