@@ -225,7 +225,7 @@ private fun PendingDocumentsList(
     onDocumentClick: (DocumentProcessingDto) -> Unit
 ) {
     documents.forEachIndexed { index, processing ->
-        key(processing.id.value) {
+        key(processing.id.toString()) {
             PendingDocumentItem(
                 processing = processing,
                 onClick = { onDocumentClick(processing) }
@@ -380,10 +380,8 @@ private fun getDocumentDisplayName(processing: DocumentProcessingDto): String {
     val documentNumber = extractedData?.invoice?.invoiceNumber
         ?: extractedData?.bill?.invoiceNumber
 
-    // Get document type prefix
-    val typePrefix = remember(processing.documentType) {
-        (processing.documentType ?: DocumentType.Unknown).localizedUppercase
-    }
+    // Get document type prefix (localizedUppercase is @Composable, call outside remember)
+    val typePrefix = (processing.documentType ?: DocumentType.Unknown).localizedUppercase
 
     return remember(processing.id, typePrefix, documentNumber, filename) {
         when {
@@ -399,7 +397,7 @@ private fun getDocumentDisplayName(processing: DocumentProcessingDto): String {
             }
             else -> {
                 // Fallback to document ID if no filename
-                "$typePrefix ${processing.documentId.value.toString().take(8).uppercase()}"
+                "$typePrefix ${processing.documentId.toString().take(8).uppercase()}"
             }
         }
     }

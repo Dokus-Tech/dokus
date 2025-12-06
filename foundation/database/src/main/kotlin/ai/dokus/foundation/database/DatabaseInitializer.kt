@@ -17,7 +17,6 @@ import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
-import ai.dokus.foundation.database.tables.media.MediaTable
 import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
@@ -55,7 +54,7 @@ object DatabaseInitializer {
      * Tables are created in dependency order:
      * 1. Auth tables (tenants, users, memberships, tokens)
      * 2. Cashflow tables (documents, invoices, expenses, bills)
-     * 3. Other domain tables (payments, reports, audit, banking, peppol, media)
+     * 3. Other domain tables (payments, reports, audit, banking, peppol)
      *
      * This method is safe to call multiple times - it will only execute once
      * per JVM instance.
@@ -99,10 +98,7 @@ object DatabaseInitializer {
 
                     // ===== Peppol Tables =====
                     PeppolSettingsTable,  // depends on TenantTable
-                    PeppolTransmissionsTable, // depends on TenantTable, InvoicesTable, BillsTable
-
-                    // ===== Media Tables =====
-                    MediaTable            // depends on TenantTable
+                    PeppolTransmissionsTable // depends on TenantTable, InvoicesTable, BillsTable
                 )
             }
 

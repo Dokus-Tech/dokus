@@ -3,7 +3,7 @@ package ai.dokus.app.viewmodel
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.core.state.DokusState
-import ai.dokus.foundation.domain.model.MediaDto
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.domain.model.common.PaginationStateCompanion
@@ -22,15 +22,15 @@ internal class DashboardViewModel(
     val currentTenantState = mutableCurrentTenantState.asStateFlow()
 
     // Pending documents state using PaginationState
-    private val _allPendingDocuments = MutableStateFlow<List<MediaDto>>(emptyList())
+    private val _allPendingDocuments = MutableStateFlow<List<DocumentProcessingDto>>(emptyList())
     private val _pendingCurrentPage = MutableStateFlow(0)
     private val _pendingPaginationState = MutableStateFlow(
-        PaginationState<MediaDto>(pageSize = PENDING_PAGE_SIZE)
+        PaginationState<DocumentProcessingDto>(pageSize = PENDING_PAGE_SIZE)
     )
 
     // Full state for pending documents (includes loading, success, error)
-    private val _pendingDocumentsState = MutableStateFlow<DokusState<PaginationState<MediaDto>>>(DokusState.idle())
-    val pendingDocumentsState: StateFlow<DokusState<PaginationState<MediaDto>>> = _pendingDocumentsState.asStateFlow()
+    private val _pendingDocumentsState = MutableStateFlow<DokusState<PaginationState<DocumentProcessingDto>>>(DokusState.idle())
+    val pendingDocumentsState: StateFlow<DokusState<PaginationState<DocumentProcessingDto>>> = _pendingDocumentsState.asStateFlow()
 
     init {
         // Start watching pending documents

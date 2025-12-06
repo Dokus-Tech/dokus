@@ -512,8 +512,9 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<DocumentProcessingListResponse> {
         return runCatching {
             httpClient.get("/api/v1/documents/processing") {
-                statuses.forEach { status ->
-                    parameter("status", status.name)
+                // Use comma-separated dbValues for cleaner URLs
+                if (statuses.isNotEmpty()) {
+                    parameter("status", statuses.joinToString(",") { it.dbValue })
                 }
                 parameter("page", page)
                 parameter("limit", limit)

@@ -59,8 +59,8 @@ fun Route.documentProcessingRoutes() {
              * List documents by processing status with pagination.
              *
              * Query parameters:
-             * - status: Processing status filter (PENDING, PROCESSED, FAILED, etc.)
-             *           Can specify multiple: ?status=PROCESSED&status=FAILED
+             * - status: Comma-separated processing status filter (PENDING,QUEUED,PROCESSING,PROCESSED)
+             *           Accepts both dbValue (PENDING) and enum name (Pending)
              * - page: Page number (default 0)
              * - limit: Items per page (default 20, max 100)
              *
@@ -70,18 +70,29 @@ fun Route.documentProcessingRoutes() {
                 val principal = dokusPrincipal
                 val tenantId = principal.requireTenantId()
 
-                // Parse status filter(s)
-                val statusParams = call.request.queryParameters.getAll("status")
-                val statuses = if (statusParams.isNullOrEmpty()) {
+                // Parse comma-separated status filter
+                val statusParam = call.request.queryParameters["status"]
+                val statusValues = statusParam
+                    ?.split(",")
+                    ?.map { it.trim() }
+                    ?.filter { it.isNotEmpty() }
+
+                val statuses = if (statusValues.isNullOrEmpty()) {
                     // Default: show documents awaiting review
                     listOf(ProcessingStatus.Processed)
                 } else {
-                    statusParams.mapNotNull { statusStr ->
-                        try {
-                            ProcessingStatus.valueOf(statusStr.uppercase())
-                        } catch (e: IllegalArgumentException) {
-                            logger.warn("Invalid status parameter: $statusStr")
-                            null
+                    statusValues.mapNotNull { statusStr ->
+                        // Try matching by enum name first (case-insensitive)
+                        ProcessingStatus.entries.find {
+                            it.name.equals(statusStr, ignoreCase = true)
+                        } ?: run {
+                            // Then try matching by dbValue
+                            ProcessingStatus.entries.find {
+                                it.dbValue.equals(statusStr, ignoreCase = true)
+                            } ?: run {
+                                logger.warn("Invalid status parameter: $statusStr")
+                                null
+                            }
                         }
                     }
                 }
