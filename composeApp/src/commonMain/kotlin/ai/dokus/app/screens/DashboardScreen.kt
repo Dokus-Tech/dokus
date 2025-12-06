@@ -132,8 +132,7 @@ internal fun DashboardScreen(
                 PendingDocumentsCard(
                     state = pendingDocumentsState,
                     onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
-                    onPreviousClick = viewModel::pendingDocumentsPreviousPage,
-                    onNextClick = viewModel::pendingDocumentsNextPage,
+                    onLoadMore = viewModel::pendingDocumentsLoadMore,
                     modifier = Modifier.fillMaxWidth()
                 )
 

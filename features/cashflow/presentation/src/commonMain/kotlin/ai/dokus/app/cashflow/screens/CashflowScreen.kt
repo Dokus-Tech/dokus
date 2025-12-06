@@ -139,8 +139,7 @@ internal fun CashflowScreen(
                         onMoreClick = { /* TODO: Show context menu */ },
                         onLoadMore = viewModel::loadNextPage,
                         onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
-                        onPendingPreviousPage = viewModel::pendingDocumentsPreviousPage,
-                        onPendingNextPage = viewModel::pendingDocumentsNextPage
+                        onPendingLoadMore = viewModel::pendingDocumentsLoadMore
                     )
                 }
 
@@ -202,8 +201,7 @@ private fun CashflowContent(
     onMoreClick: (FinancialDocumentDto) -> Unit,
     onLoadMore: () -> Unit,
     onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
-    onPendingPreviousPage: () -> Unit,
-    onPendingNextPage: () -> Unit
+    onPendingLoadMore: () -> Unit
 ) {
     val listState = rememberLazyListState()
 
@@ -237,8 +235,7 @@ private fun CashflowContent(
                 businessHealthData = businessHealthData,
                 pendingDocumentsState = pendingDocumentsState,
                 onPendingDocumentClick = onPendingDocumentClick,
-                onPendingPreviousPage = onPendingPreviousPage,
-                onPendingNextPage = onPendingNextPage
+                onPendingLoadMore = onPendingLoadMore
             )
         }
 
@@ -279,8 +276,7 @@ private fun SummaryCardsRow(
     businessHealthData: BusinessHealthData,
     pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
     onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
-    onPendingPreviousPage: () -> Unit,
-    onPendingNextPage: () -> Unit
+    onPendingLoadMore: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -320,8 +316,7 @@ private fun SummaryCardsRow(
         PendingDocumentsCard(
             state = pendingDocumentsState,
             onDocumentClick = onPendingDocumentClick,
-            onPreviousClick = onPendingPreviousPage,
-            onNextClick = onPendingNextPage,
+            onLoadMore = onPendingLoadMore,
             modifier = Modifier
                 .weight(2f)
                 .fillMaxHeight()

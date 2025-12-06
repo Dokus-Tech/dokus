@@ -4,8 +4,6 @@ import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.pending_documents_empty
 import ai.dokus.app.resources.generated.pending_documents_need_confirmation
-import ai.dokus.app.resources.generated.pending_documents_next
-import ai.dokus.app.resources.generated.pending_documents_previous
 import ai.dokus.app.resources.generated.pending_documents_title
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.extensions.localizedUppercase
@@ -23,50 +21,46 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
 
 /**
  * A card component displaying pending documents that need confirmation.
  *
- * Based on the Figma design, this component shows:
- * - Title "Cash flow"
- * - List of pending documents with "Need confirmation" badge
- * - Pagination arrows
- * - Error state with retry button when loading fails
+ * Features lazy loading with infinite scroll - automatically loads more
+ * items when scrolling near the bottom.
  *
  * @param state Full DokusState containing pagination data, loading, or error
  * @param onDocumentClick Callback when a document row is clicked
- * @param onPreviousClick Callback when the previous arrow button is clicked
- * @param onNextClick Callback when the next arrow button is clicked
+ * @param onLoadMore Callback to load more items when reaching the end
  * @param modifier Optional modifier for the card
  */
 @Composable
 fun PendingDocumentsCard(
     state: DokusState<PaginationState<DocumentProcessingDto>>,
     onDocumentClick: (DocumentProcessingDto) -> Unit,
-    onPreviousClick: () -> Unit,
-    onNextClick: () -> Unit,
+    onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -98,14 +92,12 @@ fun PendingDocumentsCard(
 
             when (state) {
                 is DokusState.Loading, is DokusState.Idle -> {
-                    // Loading/Idle state - expands to fill available space
                     PendingDocumentsLoadingContent(
                         modifier = Modifier.weight(1f)
                     )
                 }
 
                 is DokusState.Error -> {
-                    // Error state - shows an error message with retry button
                     PendingDocumentsErrorContent(
                         state = state,
                         modifier = Modifier.weight(1f)
@@ -115,15 +107,16 @@ fun PendingDocumentsCard(
                 is DokusState.Success -> {
                     val paginationState = state.data
                     if (paginationState.data.isEmpty()) {
-                        // Empty state - expands to fill available space
                         PendingDocumentsEmptyContent(
                             modifier = Modifier.weight(1f)
                         )
                     } else {
-                        // Document items list - expands to fill available space
-                        PendingDocumentsListContent(
+                        PendingDocumentsLazyList(
                             documents = paginationState.data,
+                            hasMorePages = paginationState.hasMorePages,
+                            isLoadingMore = paginationState.isLoadingMore,
                             onDocumentClick = onDocumentClick,
+                            onLoadMore = onLoadMore,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -134,7 +127,7 @@ fun PendingDocumentsCard(
 }
 
 /**
- * Loading state content with centered progress indicator.
+ * Loading state content with a centered progress indicator.
  */
 @Composable
 private fun PendingDocumentsLoadingContent(
@@ -149,7 +142,7 @@ private fun PendingDocumentsLoadingContent(
 }
 
 /**
- * Empty state content with message.
+ * Empty state content with a message.
  */
 @Composable
 private fun PendingDocumentsEmptyContent(
@@ -187,41 +180,51 @@ private fun PendingDocumentsErrorContent(
 }
 
 /**
- * Content wrapper for the document list that can expand.
+ * Lazy list of pending documents with infinite scroll.
  */
 @Composable
-private fun PendingDocumentsListContent(
+private fun PendingDocumentsLazyList(
     documents: List<DocumentProcessingDto>,
+    hasMorePages: Boolean,
+    isLoadingMore: Boolean,
     onDocumentClick: (DocumentProcessingDto) -> Unit,
+    onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        PendingDocumentsList(
-            documents = documents,
-            onDocumentClick = onDocumentClick
-        )
-    }
-}
+    val listState = rememberLazyListState()
 
-/**
- * List of pending document items with dividers.
- */
-@Composable
-private fun PendingDocumentsList(
-    documents: List<DocumentProcessingDto>,
-    onDocumentClick: (DocumentProcessingDto) -> Unit
-) {
-    documents.forEachIndexed { index, processing ->
-        key(processing.id.toString()) {
+    // Infinite scroll trigger - load more when near the end
+    LaunchedEffect(listState, hasMorePages, isLoadingMore) {
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val totalItems = layoutInfo.totalItemsCount
+            lastVisibleIndex to totalItems
+        }
+            .distinctUntilChanged()
+            .filter { (lastVisible, total) ->
+                // Load more when within 2 items of the end
+                lastVisible >= total - 2 && hasMorePages && !isLoadingMore
+            }
+            .collect { onLoadMore() }
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
+        itemsIndexed(
+            items = documents,
+            key = { _, doc -> doc.id.toString() }
+        ) { index, processing ->
             PendingDocumentItem(
                 processing = processing,
                 onClick = { onDocumentClick(processing) }
             )
 
-            // Add divider between items (not after the last item)
-            if (index < documents.size - 1) {
+            // Add divider between items (not after the last item unless loading more)
+            if (index < documents.size - 1 || isLoadingMore) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Spacer(
                     modifier = Modifier
@@ -232,77 +235,28 @@ private fun PendingDocumentsList(
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
-    }
-}
 
-/**
- * Pagination controls with previous and next buttons.
- */
-@Composable
-private fun PaginationControls(
-    hasPreviousPage: Boolean,
-    hasNextPage: Boolean,
-    onPreviousClick: () -> Unit,
-    onNextClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Previous button
-        FilledIconButton(
-            onClick = onPreviousClick,
-            enabled = hasPreviousPage,
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-            ),
-            modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(8.dp)
-                )
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.pending_documents_previous)
-            )
-        }
-
-        // Next button
-        FilledIconButton(
-            onClick = onNextClick,
-            enabled = hasNextPage,
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-            ),
-            modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(8.dp)
-                )
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = stringResource(Res.string.pending_documents_next)
-            )
+        // Loading indicator at the bottom
+        if (isLoadingMore) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
         }
     }
 }
 
 /**
- * A single pending document item row displaying document name and "Need confirmation" badge.
- *
- * @param processing The document processing record to display
- * @param onClick Callback when the row is clicked
- * @param modifier Optional modifier for the row
+ * A single pending document item row displaying the document name and "Need confirmation" badge.
  */
 @Composable
 private fun PendingDocumentItem(
@@ -371,7 +325,7 @@ private fun getDocumentDisplayName(processing: DocumentProcessingDto): String {
     val documentNumber = extractedData?.invoice?.invoiceNumber
         ?: extractedData?.bill?.invoiceNumber
 
-    // Get document type prefix (localizedUppercase is @Composable, call outside remember)
+    // Get document type prefix (localizedUppercase is @Composable, call outside remembering)
     val typePrefix = processing.documentType?.localizedUppercase.orEmpty()
 
     return remember(processing.id, typePrefix, documentNumber, filename) {

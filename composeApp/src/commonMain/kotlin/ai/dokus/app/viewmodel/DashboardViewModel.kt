@@ -6,7 +6,6 @@ import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.common.PaginationState
-import ai.dokus.foundation.domain.model.common.PaginationStateCompanion
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,9 +20,9 @@ internal class DashboardViewModel(
     private val mutableCurrentTenantState = MutableStateFlow<DokusState<Tenant?>>(DokusState.idle())
     val currentTenantState = mutableCurrentTenantState.asStateFlow()
 
-    // Pending documents state using PaginationState
+    // Pending documents state using PaginationState (lazy loading)
     private val _allPendingDocuments = MutableStateFlow<List<DocumentProcessingDto>>(emptyList())
-    private val _pendingCurrentPage = MutableStateFlow(0)
+    private val _pendingVisibleCount = MutableStateFlow(PENDING_PAGE_SIZE)
     private val _pendingPaginationState = MutableStateFlow(
         PaginationState<DocumentProcessingDto>(pageSize = PENDING_PAGE_SIZE)
     )
@@ -43,7 +42,7 @@ internal class DashboardViewModel(
 
                     is DokusState.Success -> {
                         _allPendingDocuments.value = state.data
-                        _pendingCurrentPage.value = 0
+                        _pendingVisibleCount.value = PENDING_PAGE_SIZE
                         updatePendingPaginationState()
                         // Wrap pagination state in Success
                         _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
@@ -85,36 +84,36 @@ internal class DashboardViewModel(
         watchPendingDocuments.refresh()
     }
 
-    fun pendingDocumentsPreviousPage() {
-        if (_pendingCurrentPage.value > 0) {
-            _pendingCurrentPage.value -= 1
-            updatePendingPaginationState()
-            // Re-emit success state with updated pagination
-            _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
-        }
-    }
-
-    fun pendingDocumentsNextPage() {
+    /**
+     * Load more pending documents for infinite scroll.
+     * Increases the visible count by PENDING_PAGE_SIZE.
+     */
+    fun pendingDocumentsLoadMore() {
         val allDocs = _allPendingDocuments.value
-        val totalPages = calculateTotalPages(allDocs.size)
-        if (_pendingCurrentPage.value < totalPages - 1) {
-            _pendingCurrentPage.value += 1
-            updatePendingPaginationState()
-            // Re-emit success state with updated pagination
-            _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
-        }
+        val currentVisible = _pendingVisibleCount.value
+
+        // Don't load more if we're already showing all items
+        if (currentVisible >= allDocs.size) return
+
+        // Increase visible count
+        _pendingVisibleCount.value = (currentVisible + PENDING_PAGE_SIZE).coerceAtMost(allDocs.size)
+        updatePendingPaginationState()
+        _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
     }
 
     private fun updatePendingPaginationState() {
-        _pendingPaginationState.value = PaginationStateCompanion.fromLocalData(
-            allData = _allPendingDocuments.value,
-            currentPage = _pendingCurrentPage.value,
-            pageSize = PENDING_PAGE_SIZE
-        )
-    }
+        val allDocs = _allPendingDocuments.value
+        val visibleCount = _pendingVisibleCount.value
+        val visibleDocs = allDocs.take(visibleCount)
+        val hasMore = visibleCount < allDocs.size
 
-    private fun calculateTotalPages(totalItems: Int): Int {
-        return if (totalItems == 0) 1 else ((totalItems - 1) / PENDING_PAGE_SIZE) + 1
+        _pendingPaginationState.value = PaginationState(
+            data = visibleDocs,
+            currentPage = visibleCount / PENDING_PAGE_SIZE,
+            pageSize = PENDING_PAGE_SIZE,
+            hasMorePages = hasMore,
+            isLoadingMore = false
+        )
     }
 
     companion object {

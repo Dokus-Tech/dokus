@@ -41,13 +41,12 @@ fun PendingDocumentsCardPreview(
                 PaginationState(
                     data = getSamplePendingDocuments(),
                     currentPage = 0,
-                    pageSize = 5,
+                    pageSize = 4,
                     hasMorePages = true
                 )
             ),
             onDocumentClick = {},
-            onPreviousClick = {},
-            onNextClick = {},
+            onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
@@ -67,8 +66,7 @@ fun PendingDocumentsCardLoadingPreview(
         PendingDocumentsCard(
             state = DokusState.loading(),
             onDocumentClick = {},
-            onPreviousClick = {},
-            onNextClick = {},
+            onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
@@ -90,13 +88,12 @@ fun PendingDocumentsCardEmptyPreview(
                 PaginationState(
                     data = emptyList(),
                     currentPage = 0,
-                    pageSize = 5,
+                    pageSize = 4,
                     hasMorePages = false
                 )
             ),
             onDocumentClick = {},
-            onPreviousClick = {},
-            onNextClick = {},
+            onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
@@ -119,8 +116,7 @@ fun PendingDocumentsCardErrorPreview(
                 RetryHandler {}
             ),
             onDocumentClick = {},
-            onPreviousClick = {},
-            onNextClick = {},
+            onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
@@ -129,26 +125,25 @@ fun PendingDocumentsCardErrorPreview(
 }
 
 /**
- * Preview for PendingDocumentsCard with pagination enabled.
+ * Preview for PendingDocumentsCard with lazy loading (has more items).
  */
 @Preview
 @Composable
-fun PendingDocumentsCardWithPaginationPreview(
+fun PendingDocumentsCardWithMoreItemsPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
             state = DokusState.success(
                 PaginationState(
-                    data = getSamplePendingDocuments().take(3),
+                    data = getSamplePendingDocuments().take(4),
                     currentPage = 1,
-                    pageSize = 3,
+                    pageSize = 4,
                     hasMorePages = true
                 )
             ),
             onDocumentClick = {},
-            onPreviousClick = {},
-            onNextClick = {},
+            onLoadMore = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
