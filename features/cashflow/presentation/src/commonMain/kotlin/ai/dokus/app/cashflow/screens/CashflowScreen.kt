@@ -18,6 +18,7 @@ import ai.dokus.foundation.design.components.PIconPosition
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.components.common.ShimmerLine
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
@@ -69,7 +70,7 @@ import org.koin.compose.viewmodel.koinViewModel
 internal fun CashflowScreen(
     viewModel: CashflowViewModel = koinViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
+    val documentsState by viewModel.state.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val sortOption by viewModel.sortOption.collectAsState()
     val navController = LocalNavController.current
@@ -81,7 +82,9 @@ internal fun CashflowScreen(
     val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
     val deletionHandles by viewModel.deletionHandles.collectAsState()
 
-    // Pending documents state (includes loading, success with pagination, and error)
+    // Individual section states (each loads independently)
+    val vatSummaryState by viewModel.vatSummaryState.collectAsState()
+    val businessHealthState by viewModel.businessHealthState.collectAsState()
     val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
 
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -120,32 +123,21 @@ internal fun CashflowScreen(
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
-            when (val currentState = state) {
-                is DokusState.Loading -> {
-                    CashflowLoadingContent(contentPadding)
-                }
-
-                is DokusState.Success -> {
-                    CashflowContent(
-                        paginationState = currentState.data,
-                        vatSummaryData = VatSummaryData.empty,
-                        businessHealthData = BusinessHealthData.empty,
-                        pendingDocumentsState = pendingDocumentsState,
-                        sortOption = sortOption,
-                        contentPadding = contentPadding,
-                        onSortOptionSelected = viewModel::updateSortOption,
-                        onDocumentClick = { /* TODO: Navigate to document detail */ },
-                        onMoreClick = { /* TODO: Show context menu */ },
-                        onLoadMore = viewModel::loadNextPage,
-                        onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
-                        onPendingLoadMore = viewModel::pendingDocumentsLoadMore
-                    )
-                }
-
-                is DokusState.Error -> {
-                    DokusErrorContent(currentState.exception, currentState.retryHandler)
-                }
-            }
+            // Always show the screen structure - each section handles its own loading state
+            CashflowContent(
+                documentsState = documentsState,
+                vatSummaryState = vatSummaryState,
+                businessHealthState = businessHealthState,
+                pendingDocumentsState = pendingDocumentsState,
+                sortOption = sortOption,
+                contentPadding = contentPadding,
+                onSortOptionSelected = viewModel::updateSortOption,
+                onDocumentClick = { /* TODO: Navigate to document detail */ },
+                onMoreClick = { /* TODO: Show context menu */ },
+                onLoadMore = viewModel::loadNextPage,
+                onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                onPendingLoadMore = viewModel::pendingDocumentsLoadMore
+            )
         }
 
         // Upload sidebar (desktop only)
@@ -168,30 +160,14 @@ internal fun CashflowScreen(
 }
 
 /**
- * Loading state content.
- */
-@Composable
-private fun CashflowLoadingContent(
-    contentPadding: PaddingValues
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-/**
  * Main cashflow content with Figma-matching layout.
+ * Each section handles its own loading/error state independently.
  */
 @Composable
 private fun CashflowContent(
-    paginationState: PaginationState<FinancialDocumentDto>,
-    vatSummaryData: VatSummaryData,
-    businessHealthData: BusinessHealthData,
+    documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
+    vatSummaryState: DokusState<VatSummaryData>,
+    businessHealthState: DokusState<BusinessHealthData>,
     pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
@@ -204,8 +180,12 @@ private fun CashflowContent(
 ) {
     val listState = rememberLazyListState()
 
+    // Extract pagination state for infinite scroll (if available)
+    val paginationState = (documentsState as? DokusState.Success)?.data
+
     // Infinite scroll trigger
-    LaunchedEffect(listState, paginationState.hasMorePages, paginationState.isLoadingMore) {
+    LaunchedEffect(listState, paginationState?.hasMorePages, paginationState?.isLoadingMore) {
+        if (paginationState == null) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
@@ -227,11 +207,11 @@ private fun CashflowContent(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         state = listState
     ) {
-        // Top row: Summary cards
+        // Top row: Summary cards (each handles its own loading state)
         item {
             SummaryCardsRow(
-                vatSummaryData = vatSummaryData,
-                businessHealthData = businessHealthData,
+                vatSummaryState = vatSummaryState,
+                businessHealthState = businessHealthState,
                 pendingDocumentsState = pendingDocumentsState,
                 onPendingDocumentClick = onPendingDocumentClick,
                 onPendingLoadMore = onPendingLoadMore
@@ -246,11 +226,10 @@ private fun CashflowContent(
             )
         }
 
-        // Documents table
+        // Documents table (handles its own loading/error state)
         item {
-            DocumentsSection(
-                documents = paginationState.data,
-                isLoadingMore = paginationState.isLoadingMore,
+            DocumentsTableSection(
+                state = documentsState,
                 onDocumentClick = onDocumentClick,
                 onMoreClick = onMoreClick
             )
@@ -267,12 +246,12 @@ private fun CashflowContent(
  * Top row with summary cards matching Figma layout:
  * Left column: VAT Summary (top) + Business Health (bottom)
  * Right side: Cash flow (pending documents) card
- * Both columns have matching heights.
+ * Each card handles its own loading/error state independently.
  */
 @Composable
 private fun SummaryCardsRow(
-    vatSummaryData: VatSummaryData,
-    businessHealthData: BusinessHealthData,
+    vatSummaryState: DokusState<VatSummaryData>,
+    businessHealthState: DokusState<BusinessHealthData>,
     pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
     onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
     onPendingLoadMore: () -> Unit
@@ -291,18 +270,15 @@ private fun SummaryCardsRow(
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // VAT Summary Card at top
+            // VAT Summary Card at top (handles its own loading/error)
             VatSummaryCard(
-                vatAmount = vatSummaryData.vatAmount,
-                netAmount = vatSummaryData.netAmount,
-                predictedNetAmount = vatSummaryData.predictedNetAmount,
-                quarterInfo = vatSummaryData.quarterInfo,
+                state = vatSummaryState,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Business Health Card below - fills remaining space
+            // Business Health Card below - fills remaining space (handles its own loading/error)
             BusinessHealthCard(
-                data = businessHealthData,
+                state = businessHealthState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 120.dp)
@@ -310,7 +286,7 @@ private fun SummaryCardsRow(
             )
         }
 
-        // Right side: Pending Documents Card - determines the row height
+        // Right side: Pending Documents Card (handles its own loading/error)
         PendingDocumentsCard(
             state = pendingDocumentsState,
             onDocumentClick = onPendingDocumentClick,
@@ -323,12 +299,11 @@ private fun SummaryCardsRow(
 }
 
 /**
- * Documents section with table and empty state.
+ * Documents table section with its own loading/error handling.
  */
 @Composable
-private fun DocumentsSection(
-    documents: List<FinancialDocumentDto>,
-    isLoadingMore: Boolean,
+private fun DocumentsTableSection(
+    state: DokusState<PaginationState<FinancialDocumentDto>>,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit
 ) {
@@ -336,19 +311,86 @@ private fun DocumentsSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (documents.isEmpty()) {
-            EmptyDocumentsState()
-        } else {
-            FinancialDocumentTable(
-                documents = documents,
-                onDocumentClick = onDocumentClick,
-                onMoreClick = onMoreClick,
-                modifier = Modifier.fillMaxWidth()
-            )
+        when (state) {
+            is DokusState.Loading, is DokusState.Idle -> {
+                // Show loading skeleton for documents table
+                DocumentsTableSkeleton()
+            }
+
+            is DokusState.Success -> {
+                val paginationState = state.data
+                if (paginationState.data.isEmpty()) {
+                    EmptyDocumentsState()
+                } else {
+                    FinancialDocumentTable(
+                        documents = paginationState.data,
+                        onDocumentClick = onDocumentClick,
+                        onMoreClick = onMoreClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                if (paginationState.isLoadingMore) {
+                    LoadingMoreIndicator()
+                }
+            }
+
+            is DokusState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    DokusErrorContent(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Skeleton for documents table during loading.
+ */
+@Composable
+private fun DocumentsTableSkeleton() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Table header skeleton
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            repeat(5) {
+                ShimmerLine(
+                    modifier = Modifier.weight(1f),
+                    height = 14.dp
+                )
+            }
         }
 
-        if (isLoadingMore) {
-            LoadingMoreIndicator()
+        // Table rows skeleton
+        repeat(5) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                repeat(5) {
+                    ShimmerLine(
+                        modifier = Modifier.weight(1f),
+                        height = 16.dp
+                    )
+                }
+            }
         }
     }
 }

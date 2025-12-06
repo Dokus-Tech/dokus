@@ -1,5 +1,10 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.core.state.DokusState
+import ai.dokus.foundation.design.components.common.DokusErrorContent
+import ai.dokus.foundation.design.components.common.ShimmerBox
+import ai.dokus.foundation.design.components.common.ShimmerCircle
+import ai.dokus.foundation.design.components.common.ShimmerLine
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,7 +34,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 /**
@@ -70,12 +75,14 @@ enum class HealthStatus {
  * - Donut chart with predicted vs actual percentages
  * - Legend with predicted and actual values
  *
- * @param data The business health data to display
+ * Handles loading, success, and error states independently.
+ *
+ * @param state The DokusState containing business health data
  * @param modifier Optional modifier for the card
  */
 @Composable
 fun BusinessHealthCard(
-    data: BusinessHealthData,
+    state: DokusState<BusinessHealthData>,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -86,9 +93,9 @@ fun BusinessHealthCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outlineVariant,
@@ -96,53 +103,161 @@ fun BusinessHealthCard(
                 )
                 .padding(24.dp)
         ) {
-            // Title
-            Text(
-                text = "Business health",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            when (state) {
+                is DokusState.Loading, is DokusState.Idle -> {
+                    BusinessHealthCardSkeleton()
+                }
 
-            Spacer(modifier = Modifier.height(4.dp))
+                is DokusState.Success -> {
+                    BusinessHealthCardContent(data = state.data)
+                }
 
-            // Description
-            Text(
-                text = "The status of your current company or business is assessed based on your management of taxes, invoices, and budget.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Chart and legend row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Donut chart
-                DonutChart(
-                    actualPercentage = data.actualPercentage,
-                    status = data.status,
-                    modifier = Modifier.size(120.dp)
-                )
-
-                // Legend
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    LegendItem(
-                        color = MaterialTheme.colorScheme.primary,
-                        label = "Predicted",
-                        value = "${data.predictedPercentage}%"
-                    )
-                    LegendItem(
-                        color = MaterialTheme.colorScheme.tertiary,
-                        label = "Actual",
-                        value = "${data.actualPercentage}%"
-                    )
+                is DokusState.Error -> {
+                    BusinessHealthCardError(state = state)
                 }
             }
+        }
+    }
+}
+
+/**
+ * Content displayed when data is loaded successfully.
+ */
+@Composable
+private fun BusinessHealthCardContent(
+    data: BusinessHealthData,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Title
+        Text(
+            text = "Business health",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Description
+        Text(
+            text = "The status of your current company or business is assessed based on your management of taxes, invoices, and budget.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Chart and legend row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Donut chart
+            DonutChart(
+                actualPercentage = data.actualPercentage,
+                status = data.status,
+                modifier = Modifier.size(120.dp)
+            )
+
+            // Legend
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LegendItem(
+                    color = MaterialTheme.colorScheme.primary,
+                    label = "Predicted",
+                    value = "${data.predictedPercentage}%"
+                )
+                LegendItem(
+                    color = MaterialTheme.colorScheme.tertiary,
+                    label = "Actual",
+                    value = "${data.actualPercentage}%"
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Skeleton displayed during loading state.
+ */
+@Composable
+private fun BusinessHealthCardSkeleton(
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Title skeleton
+        ShimmerLine(modifier = Modifier.width(120.dp), height = 20.dp)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Description skeleton (2 lines)
+        ShimmerLine(modifier = Modifier.fillMaxWidth(), height = 12.dp)
+        Spacer(modifier = Modifier.height(4.dp))
+        ShimmerLine(modifier = Modifier.fillMaxWidth(0.8f), height = 12.dp)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Chart and legend row skeleton
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Donut chart skeleton
+            ShimmerCircle(size = 120.dp)
+
+            // Legend skeleton
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ShimmerCircle(size = 12.dp)
+                    ShimmerLine(modifier = Modifier.width(80.dp), height = 14.dp)
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ShimmerCircle(size = 12.dp)
+                    ShimmerLine(modifier = Modifier.width(70.dp), height = 14.dp)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Error state with inline retry.
+ */
+@Composable
+private fun BusinessHealthCardError(
+    state: DokusState.Error<*>,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Title - always show
+        Text(
+            text = "Business health",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Box(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            DokusErrorContent(
+                exception = state.exception,
+                retryHandler = state.retryHandler,
+                compact = true
+            )
         }
     }
 }

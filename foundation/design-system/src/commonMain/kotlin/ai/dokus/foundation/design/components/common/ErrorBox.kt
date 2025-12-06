@@ -46,7 +46,31 @@ fun DokusErrorContent(
     text: String,
     retryHandler: RetryHandler?,
     title: String? = null,
+    compact: Boolean = false,
     modifier: Modifier = Modifier.fillMaxWidth()
+) {
+    if (compact) {
+        DokusErrorContentCompact(
+            text = text,
+            retryHandler = retryHandler,
+            modifier = modifier
+        )
+    } else {
+        DokusErrorContentFull(
+            text = text,
+            retryHandler = retryHandler,
+            title = title,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun DokusErrorContentFull(
+    text: String,
+    retryHandler: RetryHandler?,
+    title: String?,
+    modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -85,17 +109,55 @@ fun DokusErrorContent(
     }
 }
 
+/**
+ * Compact error content for inline display in cards.
+ * Shows icon, text, and retry button in a horizontal layout.
+ */
+@Composable
+private fun DokusErrorContentCompact(
+    text: String,
+    retryHandler: RetryHandler?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = Icons.Default.ErrorOutline,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        if (retryHandler != null) {
+            POutlinedButton(
+                text = "Retry",
+                onClick = { retryHandler.retry() }
+            )
+        }
+    }
+}
+
 @Composable
 fun DokusErrorContent(
     exception: DokusException,
     retryHandler: RetryHandler?,
     title: String? = null,
+    compact: Boolean = false,
     modifier: Modifier = Modifier.fillMaxWidth()
 ) {
     DokusErrorContent(
         title = title,
         text = exception.localized,
         retryHandler = retryHandler.takeIf { exception.recoverable },
+        compact = compact,
         modifier = modifier
     )
 }
