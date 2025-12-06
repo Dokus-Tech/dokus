@@ -269,7 +269,9 @@ private fun CashflowContent(
 }
 
 /**
- * Top row with three summary cards.
+ * Top row with summary cards matching Figma layout:
+ * Left column: VAT Summary (top) + Business Health (bottom)
+ * Right side: Cash flow (pending documents) card
  */
 @Composable
 private fun SummaryCardsRow(
@@ -285,22 +287,28 @@ private fun SummaryCardsRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // VAT Summary Card (weight 1)
-        VatSummaryCard(
-            vatAmount = vatSummaryData.vatAmount,
-            netAmount = vatSummaryData.netAmount,
-            predictedNetAmount = vatSummaryData.predictedNetAmount,
-            quarterInfo = vatSummaryData.quarterInfo,
-            modifier = Modifier.weight(1f)
-        )
+        // Left column: VAT Summary + Business Health stacked vertically
+        Column(
+            modifier = Modifier.weight(2f),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // VAT Summary Card at top
+            VatSummaryCard(
+                vatAmount = vatSummaryData.vatAmount,
+                netAmount = vatSummaryData.netAmount,
+                predictedNetAmount = vatSummaryData.predictedNetAmount,
+                quarterInfo = vatSummaryData.quarterInfo,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        // Business Health Card (weight 1.5)
-        BusinessHealthCard(
-            data = businessHealthData,
-            modifier = Modifier.weight(1.5f)
-        )
+            // Business Health Card below
+            BusinessHealthCard(
+                data = businessHealthData,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
-        // Pending Documents Card (weight 1)
+        // Right side: Pending Documents Card
         PendingDocumentsCard(
             paginationState = pendingPaginationState,
             isLoading = isPendingLoading,
