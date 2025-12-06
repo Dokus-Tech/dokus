@@ -3,10 +3,12 @@ package ai.dokus.app.cashflow.screens
 import ai.dokus.app.cashflow.components.AppDownloadQrDialog
 import ai.dokus.app.cashflow.components.DocumentUploadSidebar
 import ai.dokus.app.cashflow.components.FinancialDocumentTable
+import ai.dokus.app.cashflow.components.PendingDocumentsCard
 import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.components.needingConfirmation
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
+import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
@@ -52,7 +54,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,6 +86,10 @@ internal fun CashflowScreen(
     val uploadTasks by viewModel.uploadTasks.collectAsState()
     val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
     val deletionHandles by viewModel.deletionHandles.collectAsState()
+
+    // Pending documents state with local pagination
+    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
+    val pendingCurrentPage by viewModel.pendingCurrentPage.collectAsState()
 
     // Use LocalScreenSize for reliable screen size detection
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -130,9 +138,35 @@ internal fun CashflowScreen(
                 }
 
                 is DokusState.Success -> {
+                    // Compute pending documents pagination with derivedStateOf for performance
+                    val pendingPaginationData by remember(pendingDocumentsState, pendingCurrentPage) {
+                        derivedStateOf {
+                            val allDocs = (pendingDocumentsState as? DokusState.Success)?.data ?: emptyList()
+                            val pageSize = PENDING_PAGE_SIZE
+                            val totalPages = if (allDocs.isEmpty()) 1 else ((allDocs.size - 1) / pageSize) + 1
+                            val start = pendingCurrentPage * pageSize
+                            val end = minOf(start + pageSize, allDocs.size)
+                            val currentDocs = if (start < allDocs.size) {
+                                allDocs.subList(start, end)
+                            } else {
+                                emptyList()
+                            }
+                            PendingPaginationData(
+                                documents = currentDocs,
+                                isLoading = pendingDocumentsState is DokusState.Loading,
+                                hasPreviousPage = pendingCurrentPage > 0,
+                                hasNextPage = pendingCurrentPage < totalPages - 1
+                            )
+                        }
+                    }
+
                     SuccessContent(
                         paginationState = currentState.data,
                         vatSummaryData = VatSummaryData.empty,
+                        pendingDocuments = pendingPaginationData.documents,
+                        isPendingLoading = pendingPaginationData.isLoading,
+                        hasPendingPreviousPage = pendingPaginationData.hasPreviousPage,
+                        hasPendingNextPage = pendingPaginationData.hasNextPage,
                         contentPadding = contentPadding,
                         onDocumentClick = { document ->
                             // TODO: Navigate to document detail
@@ -140,7 +174,12 @@ internal fun CashflowScreen(
                         onMoreClick = { document ->
                             // TODO: Show context menu
                         },
-                        onLoadMore = viewModel::loadNextPage
+                        onLoadMore = viewModel::loadNextPage,
+                        onPendingDocumentClick = { media ->
+                            // TODO: Navigate to document edit/confirmation screen
+                        },
+                        onPendingPreviousPage = viewModel::pendingDocumentsPreviousPage,
+                        onPendingNextPage = viewModel::pendingDocumentsNextPage
                     )
                 }
 
@@ -194,10 +233,17 @@ private fun LoadingContent(
 private fun SuccessContent(
     paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
+    pendingDocuments: List<MediaDto>,
+    isPendingLoading: Boolean,
+    hasPendingPreviousPage: Boolean,
+    hasPendingNextPage: Boolean,
     contentPadding: PaddingValues,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onPendingDocumentClick: (MediaDto) -> Unit,
+    onPendingPreviousPage: () -> Unit,
+    onPendingNextPage: () -> Unit
 ) {
     // Use BoxWithConstraints to determine layout based on screen size
     BoxWithConstraints(
@@ -208,13 +254,20 @@ private fun SuccessContent(
         val isLargeScreen = maxWidth >= Breakpoints.LARGE.dp
 
         if (isLargeScreen) {
-            // Desktop layout: Two columns with table on left, VAT summary on right
+            // Desktop layout: Two columns with table on left, VAT summary + pending on right
             DesktopLayout(
                 paginationState = paginationState,
                 vatSummaryData = vatSummaryData,
+                pendingDocuments = pendingDocuments,
+                isPendingLoading = isPendingLoading,
+                hasPendingPreviousPage = hasPendingPreviousPage,
+                hasPendingNextPage = hasPendingNextPage,
                 onDocumentClick = onDocumentClick,
                 onMoreClick = onMoreClick,
-                onLoadMore = onLoadMore
+                onLoadMore = onLoadMore,
+                onPendingDocumentClick = onPendingDocumentClick,
+                onPendingPreviousPage = onPendingPreviousPage,
+                onPendingNextPage = onPendingNextPage
             )
         } else {
             // Mobile layout: Single column with scrollable content
@@ -232,15 +285,22 @@ private fun SuccessContent(
 /**
  * Desktop layout with a two-column structure.
  * Left: Financial documents table
- * Right: VAT summary card (sticky)
+ * Right: VAT summary card + Pending documents card (sticky)
  */
 @Composable
 private fun DesktopLayout(
     paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
+    pendingDocuments: List<MediaDto>,
+    isPendingLoading: Boolean,
+    hasPendingPreviousPage: Boolean,
+    hasPendingNextPage: Boolean,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onPendingDocumentClick: (MediaDto) -> Unit,
+    onPendingPreviousPage: () -> Unit,
+    onPendingNextPage: () -> Unit
 ) {
     val listState = rememberLazyListState()
 
@@ -353,9 +413,10 @@ private fun DesktopLayout(
             }
         }
 
-        // Right column: VAT Summary Card (fixed width)
-        Box(
-            modifier = Modifier.width(360.dp)
+        // Right column: VAT Summary Card + Pending Documents (fixed width)
+        Column(
+            modifier = Modifier.width(360.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             VatSummaryCard(
                 vatAmount = vatSummaryData.vatAmount,
@@ -364,6 +425,20 @@ private fun DesktopLayout(
                 quarterInfo = vatSummaryData.quarterInfo,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // Pending documents card - only show if there are pending documents or loading
+            if (isPendingLoading || pendingDocuments.isNotEmpty()) {
+                PendingDocumentsCard(
+                    documents = pendingDocuments,
+                    isLoading = isPendingLoading,
+                    hasPreviousPage = hasPendingPreviousPage,
+                    hasNextPage = hasPendingNextPage,
+                    onDocumentClick = onPendingDocumentClick,
+                    onPreviousClick = onPendingPreviousPage,
+                    onNextClick = onPendingNextPage,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -627,3 +702,20 @@ private fun MobileDocumentCard(
         }
     }
 }
+
+/**
+ * Number of pending documents to display per page.
+ * Matches the ViewModel's page size for consistency.
+ */
+private const val PENDING_PAGE_SIZE = 5
+
+/**
+ * Data class holding computed pending documents pagination state.
+ * Used with derivedStateOf for efficient recomposition.
+ */
+private data class PendingPaginationData(
+    val documents: List<MediaDto>,
+    val isLoading: Boolean,
+    val hasPreviousPage: Boolean,
+    val hasNextPage: Boolean
+)
