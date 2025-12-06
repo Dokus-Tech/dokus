@@ -13,19 +13,17 @@ import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
-import ai.dokus.foundation.domain.model.ExtractedBillData
+import ai.dokus.foundation.domain.model.ExtractedBillFields
 import ai.dokus.foundation.domain.model.ExtractedDocumentData
-import ai.dokus.foundation.domain.model.ExtractedExpenseData
-import ai.dokus.foundation.domain.model.ExtractedInvoiceData
+import ai.dokus.foundation.domain.model.ExtractedExpenseFields
+import ai.dokus.foundation.domain.model.ExtractedInvoiceFields
 import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
@@ -163,7 +161,8 @@ fun PendingDocumentsCardWithPaginationPreview(
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
-    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    // Use static date for preview stability
+    val now = LocalDateTime(2024, 5, 25, 10, 30, 0, 0)
     val tenantId = TenantId.generate()
 
     return listOf(
@@ -175,7 +174,7 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
             status = ProcessingStatus.Processed,
             documentType = DocumentType.Invoice,
             extractedData = ExtractedDocumentData(
-                invoice = ExtractedInvoiceData(invoiceNumber = "INV-3006-4400")
+                invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4400")
             ),
             confidence = 0.95,
             createdAt = now,
@@ -198,7 +197,7 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
             status = ProcessingStatus.Processing,
             documentType = DocumentType.Bill,
             extractedData = ExtractedDocumentData(
-                bill = ExtractedBillData(
+                bill = ExtractedBillFields(
                     invoiceNumber = "BILL-2024-123",
                     supplierName = "Office Supplies Inc."
                 )
@@ -224,7 +223,7 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
             status = ProcessingStatus.Pending,
             documentType = DocumentType.Expense,
             extractedData = ExtractedDocumentData(
-                expense = ExtractedExpenseData(merchant = "Restaurant ABC")
+                expense = ExtractedExpenseFields(merchant = "Restaurant ABC")
             ),
             confidence = null,
             createdAt = now,
@@ -268,7 +267,7 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
             status = ProcessingStatus.Processed,
             documentType = DocumentType.Invoice,
             extractedData = ExtractedDocumentData(
-                invoice = ExtractedInvoiceData(invoiceNumber = "INV-3006-4401")
+                invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4401")
             ),
             confidence = 0.92,
             createdAt = now,

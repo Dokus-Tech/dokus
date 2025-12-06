@@ -277,8 +277,8 @@ private fun CashflowContent(
 private fun SummaryCardsRow(
     vatSummaryData: VatSummaryData,
     businessHealthData: BusinessHealthData,
-    pendingDocumentsState: DokusState<PaginationState<MediaDto>>,
-    onPendingDocumentClick: (MediaDto) -> Unit,
+    pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
+    onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
     onPendingPreviousPage: () -> Unit,
     onPendingNextPage: () -> Unit
 ) {
