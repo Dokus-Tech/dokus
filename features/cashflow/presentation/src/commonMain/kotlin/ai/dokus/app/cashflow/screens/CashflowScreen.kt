@@ -82,9 +82,8 @@ internal fun CashflowScreen(
     val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
     val deletionHandles by viewModel.deletionHandles.collectAsState()
 
-    // Pending documents state
-    val pendingPaginationState by viewModel.pendingPaginationState.collectAsState()
-    val isPendingLoading by viewModel.isPendingLoading.collectAsState()
+    // Pending documents state (includes loading, success with pagination, and error)
+    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
 
     val isLargeScreen = LocalScreenSize.current.isLarge
 
@@ -132,8 +131,7 @@ internal fun CashflowScreen(
                         paginationState = currentState.data,
                         vatSummaryData = VatSummaryData.empty,
                         businessHealthData = BusinessHealthData.empty,
-                        pendingPaginationState = pendingPaginationState,
-                        isPendingLoading = isPendingLoading,
+                        pendingDocumentsState = pendingDocumentsState,
                         sortOption = sortOption,
                         contentPadding = contentPadding,
                         onSortOptionSelected = viewModel::updateSortOption,
@@ -196,8 +194,7 @@ private fun CashflowContent(
     paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
     businessHealthData: BusinessHealthData,
-    pendingPaginationState: PaginationState<MediaDto>,
-    isPendingLoading: Boolean,
+    pendingDocumentsState: DokusState<PaginationState<MediaDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
     onSortOptionSelected: (DocumentSortOption) -> Unit,
@@ -238,8 +235,7 @@ private fun CashflowContent(
             SummaryCardsRow(
                 vatSummaryData = vatSummaryData,
                 businessHealthData = businessHealthData,
-                pendingPaginationState = pendingPaginationState,
-                isPendingLoading = isPendingLoading,
+                pendingDocumentsState = pendingDocumentsState,
                 onPendingDocumentClick = onPendingDocumentClick,
                 onPendingPreviousPage = onPendingPreviousPage,
                 onPendingNextPage = onPendingNextPage
@@ -281,8 +277,7 @@ private fun CashflowContent(
 private fun SummaryCardsRow(
     vatSummaryData: VatSummaryData,
     businessHealthData: BusinessHealthData,
-    pendingPaginationState: PaginationState<MediaDto>,
-    isPendingLoading: Boolean,
+    pendingDocumentsState: DokusState<PaginationState<MediaDto>>,
     onPendingDocumentClick: (MediaDto) -> Unit,
     onPendingPreviousPage: () -> Unit,
     onPendingNextPage: () -> Unit
@@ -323,8 +318,7 @@ private fun SummaryCardsRow(
 
         // Right side: Pending Documents Card - determines the row height
         PendingDocumentsCard(
-            paginationState = pendingPaginationState,
-            isLoading = isPendingLoading,
+            state = pendingDocumentsState,
             onDocumentClick = onPendingDocumentClick,
             onPreviousClick = onPendingPreviousPage,
             onNextClick = onPendingNextPage,

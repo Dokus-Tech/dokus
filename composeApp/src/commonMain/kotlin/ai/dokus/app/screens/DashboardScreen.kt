@@ -60,9 +60,8 @@ internal fun DashboardScreen(
     val currentTenantState by viewModel.currentTenantState.collectAsState()
     val currentTenant = currentTenantState.let { if (it.isSuccess()) it.data else null }
 
-    // Pending documents state (for mobile only)
-    val pendingPaginationState by viewModel.pendingPaginationState.collectAsState()
-    val isPendingLoading by viewModel.isPendingLoading.collectAsState()
+    // Pending documents state (for mobile only) - includes loading, success, and error states
+    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
 
     LaunchedEffect(viewModel) {
         viewModel.refreshTenant()
@@ -129,10 +128,9 @@ internal fun DashboardScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Pending documents card - always show (displays empty state when no documents)
+                // Pending documents card - always show (displays empty/error state when needed)
                 PendingDocumentsCard(
-                    paginationState = pendingPaginationState,
-                    isLoading = isPendingLoading,
+                    state = pendingDocumentsState,
                     onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
                     onPreviousClick = viewModel::pendingDocumentsPreviousPage,
                     onNextClick = viewModel::pendingDocumentsNextPage,

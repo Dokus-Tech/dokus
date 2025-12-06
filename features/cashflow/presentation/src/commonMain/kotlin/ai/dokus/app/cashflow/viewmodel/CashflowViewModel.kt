@@ -65,14 +65,13 @@ internal class CashflowViewModel :
     // Pending documents state using PaginationState
     private val _allPendingDocuments = MutableStateFlow<List<MediaDto>>(emptyList())
     private val _pendingCurrentPage = MutableStateFlow(0)
-    private val _pendingDocumentsLoading = MutableStateFlow(true)
-
     private val _pendingPaginationState = MutableStateFlow(
         PaginationState<MediaDto>(pageSize = PENDING_PAGE_SIZE)
     )
-    val pendingPaginationState: StateFlow<PaginationState<MediaDto>> = _pendingPaginationState.asStateFlow()
 
-    val isPendingLoading: StateFlow<Boolean> = _pendingDocumentsLoading.asStateFlow()
+    // Full state for pending documents (includes loading, success, error)
+    private val _pendingDocumentsState = MutableStateFlow<DokusState<PaginationState<MediaDto>>>(DokusState.idle())
+    val pendingDocumentsState: StateFlow<DokusState<PaginationState<MediaDto>>> = _pendingDocumentsState.asStateFlow()
 
     init {
         // Set up auto-refresh when uploads complete
@@ -85,20 +84,29 @@ internal class CashflowViewModel :
         // Start watching pending documents
         viewModelScope.launch {
             watchPendingDocuments().collect { state ->
-                _pendingDocumentsLoading.value = state is DokusState.Loading
                 when (state) {
+                    is DokusState.Loading -> {
+                        _pendingDocumentsState.value = DokusState.loading()
+                    }
+
                     is DokusState.Success -> {
                         _allPendingDocuments.value = state.data
                         _pendingCurrentPage.value = 0
                         updatePendingPaginationState()
+                        // Wrap pagination state in Success
+                        _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
                     }
 
                     is DokusState.Error -> {
                         _allPendingDocuments.value = emptyList()
                         updatePendingPaginationState()
+                        // Preserve error with retry handler
+                        _pendingDocumentsState.value = DokusState.error(state.exception, state.retryHandler)
                     }
 
-                    else -> {}
+                    is DokusState.Idle -> {
+                        _pendingDocumentsState.value = DokusState.idle()
+                    }
                 }
             }
         }
@@ -173,6 +181,8 @@ internal class CashflowViewModel :
         if (_pendingCurrentPage.value > 0) {
             _pendingCurrentPage.value -= 1
             updatePendingPaginationState()
+            // Re-emit success state with updated pagination
+            _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
         }
     }
 
@@ -182,6 +192,8 @@ internal class CashflowViewModel :
         if (_pendingCurrentPage.value < totalPages - 1) {
             _pendingCurrentPage.value += 1
             updatePendingPaginationState()
+            // Re-emit success state with updated pagination
+            _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
         }
     }
 
