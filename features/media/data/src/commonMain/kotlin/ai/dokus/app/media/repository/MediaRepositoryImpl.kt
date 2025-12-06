@@ -24,11 +24,8 @@ class MediaRepositoryImpl(
     override suspend fun get(mediaId: MediaId): MediaDto =
         remoteDataSource.getMedia(mediaId).getOrThrow()
 
-    override suspend fun list(status: MediaStatus?, limit: Int, offset: Int): List<MediaDto> =
-        remoteDataSource.listMedia(status, limit, offset).getOrThrow()
-
-    override suspend fun listPending(limit: Int, offset: Int): List<MediaDto> =
-        remoteDataSource.listPendingMedia(limit, offset).getOrThrow()
+    override suspend fun list(statuses: List<MediaStatus>?, limit: Int, offset: Int): List<MediaDto> =
+        remoteDataSource.listMedia(statuses, limit, offset).getOrThrow()
 
     override suspend fun attach(mediaId: MediaId, entityType: EntityType, entityId: String): MediaDto =
         remoteDataSource.attachMedia(mediaId, entityType, entityId).getOrThrow()

@@ -426,19 +426,17 @@ private fun DesktopLayout(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Pending documents card - only show if there are pending documents or loading
-            if (isPendingLoading || pendingDocuments.isNotEmpty()) {
-                PendingDocumentsCard(
-                    documents = pendingDocuments,
-                    isLoading = isPendingLoading,
-                    hasPreviousPage = hasPendingPreviousPage,
-                    hasNextPage = hasPendingNextPage,
-                    onDocumentClick = onPendingDocumentClick,
-                    onPreviousClick = onPendingPreviousPage,
-                    onNextClick = onPendingNextPage,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // Pending documents card - always show (displays empty state when no documents)
+            PendingDocumentsCard(
+                documents = pendingDocuments,
+                isLoading = isPendingLoading,
+                hasPreviousPage = hasPendingPreviousPage,
+                hasNextPage = hasPendingNextPage,
+                onDocumentClick = onPendingDocumentClick,
+                onPreviousClick = onPendingPreviousPage,
+                onNextClick = onPendingNextPage,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

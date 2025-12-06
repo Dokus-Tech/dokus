@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.jdbc.andWhere
@@ -77,9 +78,17 @@ class MediaRepository(
         }
     }
 
+    /**
+     * List media records for a tenant, optionally filtered by statuses.
+     *
+     * @param tenantId The tenant ID to filter by
+     * @param statuses Optional list of statuses to filter by (if null or empty, returns all)
+     * @param limit Maximum number of records to return
+     * @param offset Number of records to skip
+     */
     suspend fun list(
         tenantId: TenantId,
-        status: MediaStatus?,
+        statuses: List<MediaStatus>?,
         limit: Int,
         offset: Int
     ): Result<List<MediaRecord>> = runCatching {
@@ -87,7 +96,11 @@ class MediaRepository(
             val baseQuery = MediaTable.selectAll().where {
                 MediaTable.tenantId eq UUID.fromString(tenantId.toString())
             }
-            val filtered = status?.let { baseQuery.andWhere { MediaTable.status eq it } } ?: baseQuery
+            val filtered = when {
+                statuses.isNullOrEmpty() -> baseQuery
+                statuses.size == 1 -> baseQuery.andWhere { MediaTable.status eq statuses.first() }
+                else -> baseQuery.andWhere { MediaTable.status inList statuses }
+            }
 
             filtered
                 .orderBy(MediaTable.createdAt to SortOrder.DESC)

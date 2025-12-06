@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.core.state.DokusState
+import ai.dokus.foundation.domain.enums.MediaStatus
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.repository.MediaRepository
@@ -8,12 +9,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 
 /**
  * Use case for watching pending documents with automatic refresh capability.
  *
+ * Fetches documents with Pending or Processing status.
  * Exposes a Flow of [DokusState] containing all pending documents.
  * Pagination is handled by the consumer (ViewModel).
  */
@@ -24,6 +25,7 @@ class WatchPendingDocumentsUseCase(
 
     /**
      * Watch pending documents as a Flow.
+     * Fetches documents with Pending or Processing status.
      *
      * @param limit Maximum number of documents to fetch (default 100, must be positive)
      * @return Flow of [DokusState] containing all pending documents
@@ -38,7 +40,10 @@ class WatchPendingDocumentsUseCase(
                 flow {
                     emit(DokusState.loading())
                     try {
-                        val documents = mediaRepository.listPending(limit = limit)
+                        val documents = mediaRepository.list(
+                            statuses = PENDING_STATUSES,
+                            limit = limit
+                        )
                         emit(DokusState.success(documents))
                     } catch (e: Exception) {
                         emit(DokusState.error(e.asDokusException) { refresh() })
@@ -52,5 +57,12 @@ class WatchPendingDocumentsUseCase(
      */
     fun refresh() {
         refreshTrigger.tryEmit(Unit)
+    }
+
+    companion object {
+        /**
+         * Statuses considered as "pending" - documents awaiting user confirmation.
+         */
+        private val PENDING_STATUSES = listOf(MediaStatus.Pending, MediaStatus.Processing)
     }
 }
