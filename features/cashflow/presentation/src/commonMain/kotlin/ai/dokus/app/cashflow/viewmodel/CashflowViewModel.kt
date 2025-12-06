@@ -12,8 +12,8 @@ import ai.dokus.app.core.state.emit
 import ai.dokus.app.core.state.emitLoading
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.domain.model.common.PaginationStateCompanion
 import ai.dokus.foundation.platform.Logger
@@ -63,15 +63,15 @@ internal class CashflowViewModel :
     val deletionHandles: StateFlow<Map<String, DocumentDeletionHandle>> = uploadManager.deletionHandles
 
     // Pending documents state using PaginationState
-    private val _allPendingDocuments = MutableStateFlow<List<MediaDto>>(emptyList())
+    private val _allPendingDocuments = MutableStateFlow<List<DocumentProcessingDto>>(emptyList())
     private val _pendingCurrentPage = MutableStateFlow(0)
     private val _pendingPaginationState = MutableStateFlow(
-        PaginationState<MediaDto>(pageSize = PENDING_PAGE_SIZE)
+        PaginationState<DocumentProcessingDto>(pageSize = PENDING_PAGE_SIZE)
     )
 
     // Full state for pending documents (includes loading, success, error)
-    private val _pendingDocumentsState = MutableStateFlow<DokusState<PaginationState<MediaDto>>>(DokusState.idle())
-    val pendingDocumentsState: StateFlow<DokusState<PaginationState<MediaDto>>> = _pendingDocumentsState.asStateFlow()
+    private val _pendingDocumentsState = MutableStateFlow<DokusState<PaginationState<DocumentProcessingDto>>>(DokusState.idle())
+    val pendingDocumentsState: StateFlow<DokusState<PaginationState<DocumentProcessingDto>>> = _pendingDocumentsState.asStateFlow()
 
     init {
         // Set up auto-refresh when uploads complete

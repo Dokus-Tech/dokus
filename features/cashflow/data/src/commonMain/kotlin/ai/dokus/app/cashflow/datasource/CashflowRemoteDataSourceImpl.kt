@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.datasource
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.DocumentId
@@ -10,6 +11,7 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.domain.model.DocumentProcessingListResponse
 import ai.dokus.foundation.domain.model.DocumentUploadResponse
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CreateBillRequest
@@ -495,6 +497,26 @@ internal class CashflowRemoteDataSourceImpl(
             httpClient.get("/api/v1/cashflow/overview") {
                 parameter("fromDate", fromDate.toString())
                 parameter("toDate", toDate.toString())
+            }.body()
+        }
+    }
+
+    // ============================================================================
+    // DOCUMENT PROCESSING (AI Extraction Pipeline)
+    // ============================================================================
+
+    override suspend fun listDocumentProcessing(
+        statuses: List<ProcessingStatus>,
+        page: Int,
+        limit: Int
+    ): Result<DocumentProcessingListResponse> {
+        return runCatching {
+            httpClient.get("/api/v1/documents/processing") {
+                statuses.forEach { status ->
+                    parameter("status", status.name)
+                }
+                parameter("page", page)
+                parameter("limit", limit)
             }.body()
         }
     }

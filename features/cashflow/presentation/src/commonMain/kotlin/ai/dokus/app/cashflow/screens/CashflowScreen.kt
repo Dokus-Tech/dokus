@@ -19,8 +19,8 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -194,14 +194,14 @@ private fun CashflowContent(
     paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
     businessHealthData: BusinessHealthData,
-    pendingDocumentsState: DokusState<PaginationState<MediaDto>>,
+    pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
     onSortOptionSelected: (DocumentSortOption) -> Unit,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
     onLoadMore: () -> Unit,
-    onPendingDocumentClick: (MediaDto) -> Unit,
+    onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
     onPendingPreviousPage: () -> Unit,
     onPendingNextPage: () -> Unit
 ) {
