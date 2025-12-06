@@ -9,11 +9,8 @@ import ai.dokus.app.resources.generated.pending_documents_previous
 import ai.dokus.app.resources.generated.pending_documents_title
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.extensions.localizedUppercase
-import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.common.PaginationState
-import ai.dokus.foundation.domain.model.common.hasNextPage
-import ai.dokus.foundation.domain.model.common.hasPreviousPage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -44,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 
@@ -106,7 +105,7 @@ fun PendingDocumentsCard(
                 }
 
                 is DokusState.Error -> {
-                    // Error state - shows error message with retry button
+                    // Error state - shows an error message with retry button
                     PendingDocumentsErrorContent(
                         state = state,
                         modifier = Modifier.weight(1f)
@@ -126,16 +125,6 @@ fun PendingDocumentsCard(
                             documents = paginationState.data,
                             onDocumentClick = onDocumentClick,
                             modifier = Modifier.weight(1f)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Navigation controls pinned at bottom
-                        PaginationControls(
-                            hasPreviousPage = paginationState.hasPreviousPage,
-                            hasNextPage = paginationState.hasNextPage,
-                            onPreviousClick = onPreviousClick,
-                            onNextClick = onNextClick
                         )
                     }
                 }
@@ -337,8 +326,12 @@ private fun PendingDocumentItem(
             text = documentName,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
+
+        Spacer(Modifier.width(16.dp))
 
         // "Need confirmation" badge
         NeedConfirmationBadge()
@@ -365,10 +358,8 @@ private fun NeedConfirmationBadge(
     )
 }
 
-private const val MAX_DOCUMENT_NAME_LENGTH = 20
-
 /**
- * Get display name for a pending document.
+ * Get a display name for a pending document.
  * Uses extracted invoice/bill number if available, otherwise falls back to filename.
  */
 @Composable
@@ -381,20 +372,19 @@ private fun getDocumentDisplayName(processing: DocumentProcessingDto): String {
         ?: extractedData?.bill?.invoiceNumber
 
     // Get document type prefix (localizedUppercase is @Composable, call outside remember)
-    val typePrefix = (processing.documentType ?: DocumentType.Unknown).localizedUppercase
+    val typePrefix = processing.documentType?.localizedUppercase.orEmpty()
 
     return remember(processing.id, typePrefix, documentNumber, filename) {
         when {
             !documentNumber.isNullOrBlank() -> {
                 "$typePrefix $documentNumber"
             }
+
             !filename.isNullOrBlank() -> {
-                val nameWithoutExtension = filename
-                    .substringBeforeLast(".")
-                    .uppercase()
-                    .take(MAX_DOCUMENT_NAME_LENGTH)
+                val nameWithoutExtension = filename.substringBeforeLast(".").uppercase()
                 "$typePrefix $nameWithoutExtension"
             }
+
             else -> {
                 // Fallback to document ID if no filename
                 "$typePrefix ${processing.documentId.toString().take(8).uppercase()}"

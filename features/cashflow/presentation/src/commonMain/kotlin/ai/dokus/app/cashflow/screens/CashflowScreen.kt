@@ -291,7 +291,7 @@ private fun SummaryCardsRow(
         // Left column: VAT Summary + Business Health stacked vertically
         Column(
             modifier = Modifier
-                .weight(2f)
+                .weight(3f)
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -323,7 +323,7 @@ private fun SummaryCardsRow(
             onPreviousClick = onPendingPreviousPage,
             onNextClick = onPendingNextPage,
             modifier = Modifier
-                .weight(1f)
+                .weight(2f)
                 .fillMaxHeight()
         )
     }
