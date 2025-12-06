@@ -12,26 +12,24 @@ import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.model.ConfirmDocumentRequest
 import ai.dokus.foundation.domain.model.ConfirmDocumentResponse
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.DocumentProcessingListResponse
 import ai.dokus.foundation.domain.model.ReprocessDocumentRequest
 import ai.dokus.foundation.domain.model.ReprocessDocumentResponse
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
-import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import java.util.*
+import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
  * Document processing routes for querying and managing AI extraction.
@@ -67,8 +65,7 @@ fun Route.documentProcessingRoutes() {
              * Response: DocumentProcessingListResponse
              */
             get("/processing") {
-                val principal = dokusPrincipal
-                val tenantId = principal.requireTenantId()
+                val tenantId = dokusPrincipal.requireTenantId()
 
                 // Parse comma-separated status filter
                 val statusParam = call.request.queryParameters["status"]
@@ -77,29 +74,9 @@ fun Route.documentProcessingRoutes() {
                     ?.map { it.trim() }
                     ?.filter { it.isNotEmpty() }
 
-                val statuses = if (statusValues.isNullOrEmpty()) {
-                    // Default: show documents awaiting review
-                    listOf(ProcessingStatus.Processed)
-                } else {
-                    statusValues.mapNotNull { statusStr ->
-                        // Try matching by enum name first (case-insensitive)
-                        ProcessingStatus.entries.find {
-                            it.name.equals(statusStr, ignoreCase = true)
-                        } ?: run {
-                            // Then try matching by dbValue
-                            ProcessingStatus.entries.find {
-                                it.dbValue.equals(statusStr, ignoreCase = true)
-                            } ?: run {
-                                logger.warn("Invalid status parameter: $statusStr")
-                                null
-                            }
-                        }
-                    }
-                }
+                val statuses = statusValues.orEmpty().map(ProcessingStatus::fromDbValue)
 
-                if (statuses.isEmpty()) {
-                    throw DokusException.BadRequest("No valid status values provided")
-                }
+                if (statuses.isEmpty()) throw DokusException.BadRequest("No valid status values provided")
 
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 20).coerceIn(1, 100)
@@ -288,15 +265,15 @@ fun Route.documentProcessingRoutes() {
                             supplierVatNumber = request.corrections?.supplierVatNumber ?: billData.supplierVatNumber,
                             invoiceNumber = request.corrections?.invoiceNumber ?: billData.invoiceNumber,
                             issueDate = request.corrections?.date ?: billData.issueDate
-                                ?: throw DokusException.BadRequest("Issue date is required"),
+                            ?: throw DokusException.BadRequest("Issue date is required"),
                             dueDate = request.corrections?.dueDate ?: billData.dueDate
-                                ?: throw DokusException.BadRequest("Due date is required"),
+                            ?: throw DokusException.BadRequest("Due date is required"),
                             amount = request.corrections?.amount ?: billData.amount
-                                ?: throw DokusException.BadRequest("Amount is required"),
+                            ?: throw DokusException.BadRequest("Amount is required"),
                             vatAmount = request.corrections?.vatAmount ?: billData.vatAmount,
                             vatRate = request.corrections?.vatRate ?: billData.vatRate,
                             category = request.corrections?.category ?: billData.category
-                                ?: throw DokusException.BadRequest("Category is required"),
+                            ?: throw DokusException.BadRequest("Category is required"),
                             description = request.corrections?.description ?: billData.description,
                             notes = request.corrections?.notes ?: billData.notes,
                             documentId = documentId
@@ -314,19 +291,20 @@ fun Route.documentProcessingRoutes() {
 
                         val createRequest = CreateExpenseRequest(
                             date = request.corrections?.date ?: expenseData.date
-                                ?: throw DokusException.BadRequest("Date is required"),
+                            ?: throw DokusException.BadRequest("Date is required"),
                             merchant = request.corrections?.merchant ?: expenseData.merchant
-                                ?: throw DokusException.BadRequest("Merchant is required"),
+                            ?: throw DokusException.BadRequest("Merchant is required"),
                             amount = request.corrections?.amount ?: expenseData.amount
-                                ?: throw DokusException.BadRequest("Amount is required"),
+                            ?: throw DokusException.BadRequest("Amount is required"),
                             vatAmount = request.corrections?.vatAmount ?: expenseData.vatAmount,
                             vatRate = request.corrections?.vatRate ?: expenseData.vatRate,
                             category = request.corrections?.category ?: expenseData.category
-                                ?: throw DokusException.BadRequest("Category is required"),
+                            ?: throw DokusException.BadRequest("Category is required"),
                             description = request.corrections?.description ?: expenseData.description,
                             documentId = documentId,
                             isDeductible = request.corrections?.isDeductible ?: expenseData.isDeductible,
-                            deductiblePercentage = request.corrections?.deductiblePercentage ?: expenseData.deductiblePercentage,
+                            deductiblePercentage = request.corrections?.deductiblePercentage
+                                ?: expenseData.deductiblePercentage,
                             paymentMethod = request.corrections?.paymentMethod ?: expenseData.paymentMethod,
                             notes = request.corrections?.notes ?: expenseData.notes
                         )
@@ -449,7 +427,12 @@ fun Route.documentProcessingRoutes() {
 
                 // Check if reprocessing is allowed
                 val allowedStatuses = if (request.force) {
-                    listOf(ProcessingStatus.Pending, ProcessingStatus.Processed, ProcessingStatus.Failed, ProcessingStatus.Rejected)
+                    listOf(
+                        ProcessingStatus.Pending,
+                        ProcessingStatus.Processed,
+                        ProcessingStatus.Failed,
+                        ProcessingStatus.Rejected
+                    )
                 } else {
                     listOf(ProcessingStatus.Failed, ProcessingStatus.Rejected)
                 }
