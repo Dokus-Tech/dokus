@@ -3,13 +3,11 @@ package ai.dokus.app.media.di
 import ai.dokus.app.media.domain.usecases.AttachMediaUseCaseImpl
 import ai.dokus.app.media.domain.usecases.GetMediaUseCaseImpl
 import ai.dokus.app.media.domain.usecases.ListMediaUseCaseImpl
-import ai.dokus.app.media.domain.usecases.ListPendingMediaUseCaseImpl
 import ai.dokus.app.media.domain.usecases.UpdateMediaProcessingUseCaseImpl
 import ai.dokus.app.media.domain.usecases.UploadMediaUseCaseImpl
 import ai.dokus.foundation.domain.usecases.AttachMediaUseCase
 import ai.dokus.foundation.domain.usecases.GetMediaUseCase
 import ai.dokus.foundation.domain.usecases.ListMediaUseCase
-import ai.dokus.foundation.domain.usecases.ListPendingMediaUseCase
 import ai.dokus.foundation.domain.usecases.UpdateMediaProcessingUseCase
 import ai.dokus.foundation.domain.usecases.UploadMediaUseCase
 import org.koin.dsl.module
@@ -23,7 +21,6 @@ import org.koin.dsl.module
 val mediaDomainModule = module {
     factory<UploadMediaUseCase> { UploadMediaUseCaseImpl(get()) }
     factory<ListMediaUseCase> { ListMediaUseCaseImpl(get()) }
-    factory<ListPendingMediaUseCase> { ListPendingMediaUseCaseImpl(get()) }
     factory<GetMediaUseCase> { GetMediaUseCaseImpl(get()) }
     factory<AttachMediaUseCase> { AttachMediaUseCaseImpl(get()) }
     factory<UpdateMediaProcessingUseCase> { UpdateMediaProcessingUseCaseImpl(get()) }

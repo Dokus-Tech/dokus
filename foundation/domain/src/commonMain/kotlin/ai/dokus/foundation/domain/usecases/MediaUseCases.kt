@@ -26,14 +26,7 @@ interface GetMediaUseCase {
 
 interface ListMediaUseCase {
     suspend operator fun invoke(
-        status: MediaStatus? = null,
-        limit: Int = 50,
-        offset: Int = 0
-    ): List<MediaDto>
-}
-
-interface ListPendingMediaUseCase {
-    suspend operator fun invoke(
+        statuses: List<MediaStatus>? = null,
         limit: Int = 50,
         offset: Int = 0
     ): List<MediaDto>
