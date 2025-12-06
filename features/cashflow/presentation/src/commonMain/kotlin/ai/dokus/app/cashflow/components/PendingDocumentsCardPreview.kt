@@ -1,10 +1,13 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
+import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.enums.MediaDocumentType
 import ai.dokus.foundation.domain.enums.MediaStatus
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.MediaId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ExtractedInvoiceData
@@ -30,13 +33,14 @@ fun PendingDocumentsCardPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            paginationState = PaginationState(
-                data = getSamplePendingDocuments(),
-                currentPage = 0,
-                pageSize = 5,
-                hasMorePages = true
+            state = DokusState.success(
+                PaginationState(
+                    data = getSamplePendingDocuments(),
+                    currentPage = 0,
+                    pageSize = 5,
+                    hasMorePages = true
+                )
             ),
-            isLoading = false,
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},
@@ -57,13 +61,7 @@ fun PendingDocumentsCardLoadingPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            paginationState = PaginationState(
-                data = emptyList(),
-                currentPage = 0,
-                pageSize = 5,
-                hasMorePages = false
-            ),
-            isLoading = true,
+            state = DokusState.loading(),
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},
@@ -84,13 +82,38 @@ fun PendingDocumentsCardEmptyPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            paginationState = PaginationState(
-                data = emptyList(),
-                currentPage = 0,
-                pageSize = 5,
-                hasMorePages = false
+            state = DokusState.success(
+                PaginationState(
+                    data = emptyList(),
+                    currentPage = 0,
+                    pageSize = 5,
+                    hasMorePages = false
+                )
             ),
-            isLoading = false,
+            onDocumentClick = {},
+            onPreviousClick = {},
+            onNextClick = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        )
+    }
+}
+
+/**
+ * Preview for PendingDocumentsCard in error state.
+ */
+@Preview
+@Composable
+fun PendingDocumentsCardErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PendingDocumentsCard(
+            state = DokusState.error(
+                DokusException.ConnectionError("Connection refused"),
+                RetryHandler {}
+            ),
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},
@@ -111,13 +134,14 @@ fun PendingDocumentsCardWithPaginationPreview(
 ) {
     TestWrapper(parameters) {
         PendingDocumentsCard(
-            paginationState = PaginationState(
-                data = getSamplePendingDocuments().take(3),
-                currentPage = 1,
-                pageSize = 3,
-                hasMorePages = true
+            state = DokusState.success(
+                PaginationState(
+                    data = getSamplePendingDocuments().take(3),
+                    currentPage = 1,
+                    pageSize = 3,
+                    hasMorePages = true
+                )
             ),
-            isLoading = false,
             onDocumentClick = {},
             onPreviousClick = {},
             onNextClick = {},

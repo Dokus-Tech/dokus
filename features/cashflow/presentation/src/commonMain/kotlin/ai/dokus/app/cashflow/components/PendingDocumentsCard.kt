@@ -1,11 +1,13 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.pending_documents_empty
 import ai.dokus.app.resources.generated.pending_documents_need_confirmation
 import ai.dokus.app.resources.generated.pending_documents_next
 import ai.dokus.app.resources.generated.pending_documents_previous
 import ai.dokus.app.resources.generated.pending_documents_title
+import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.extensions.localizedUppercase
 import ai.dokus.foundation.domain.enums.MediaDocumentType
 import ai.dokus.foundation.domain.model.MediaDto
@@ -54,9 +56,9 @@ import org.jetbrains.compose.resources.stringResource
  * - Title "Cash flow"
  * - List of pending documents with "Need confirmation" badge
  * - Pagination arrows
+ * - Error state with retry button when loading fails
  *
- * @param paginationState Pagination state containing documents and navigation info
- * @param isLoading Whether the documents are being loaded
+ * @param state Full DokusState containing pagination data, loading, or error
  * @param onDocumentClick Callback when a document row is clicked
  * @param onPreviousClick Callback when the previous arrow button is clicked
  * @param onNextClick Callback when the next arrow button is clicked
@@ -64,8 +66,7 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun PendingDocumentsCard(
-    paginationState: PaginationState<MediaDto>,
-    isLoading: Boolean,
+    state: DokusState<PaginationState<MediaDto>>,
     onDocumentClick: (MediaDto) -> Unit,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
@@ -98,33 +99,48 @@ fun PendingDocumentsCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (isLoading) {
-                // Loading state - expands to fill available space
-                PendingDocumentsLoadingContent(
-                    modifier = Modifier.weight(1f)
-                )
-            } else if (paginationState.data.isEmpty()) {
-                // Empty state - expands to fill available space
-                PendingDocumentsEmptyContent(
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                // Document items list - expands to fill available space
-                PendingDocumentsListContent(
-                    documents = paginationState.data,
-                    onDocumentClick = onDocumentClick,
-                    modifier = Modifier.weight(1f)
-                )
+            when (state) {
+                is DokusState.Loading, is DokusState.Idle -> {
+                    // Loading/Idle state - expands to fill available space
+                    PendingDocumentsLoadingContent(
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                is DokusState.Error -> {
+                    // Error state - shows error message with retry button
+                    PendingDocumentsErrorContent(
+                        state = state,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-                // Navigation controls pinned at bottom
-                PaginationControls(
-                    hasPreviousPage = paginationState.hasPreviousPage,
-                    hasNextPage = paginationState.hasNextPage,
-                    onPreviousClick = onPreviousClick,
-                    onNextClick = onNextClick
-                )
+                is DokusState.Success -> {
+                    val paginationState = state.data
+                    if (paginationState.data.isEmpty()) {
+                        // Empty state - expands to fill available space
+                        PendingDocumentsEmptyContent(
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        // Document items list - expands to fill available space
+                        PendingDocumentsListContent(
+                            documents = paginationState.data,
+                            onDocumentClick = onDocumentClick,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Navigation controls pinned at bottom
+                        PaginationControls(
+                            hasPreviousPage = paginationState.hasPreviousPage,
+                            hasNextPage = paginationState.hasNextPage,
+                            onPreviousClick = onPreviousClick,
+                            onNextClick = onNextClick
+                        )
+                    }
+                }
             }
         }
     }
@@ -160,6 +176,25 @@ private fun PendingDocumentsEmptyContent(
             text = stringResource(Res.string.pending_documents_empty),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Error state content with error message and retry button.
+ */
+@Composable
+private fun PendingDocumentsErrorContent(
+    state: DokusState.Error<*>,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        DokusErrorContent(
+            exception = state.exception,
+            retryHandler = state.retryHandler
         )
     }
 }
