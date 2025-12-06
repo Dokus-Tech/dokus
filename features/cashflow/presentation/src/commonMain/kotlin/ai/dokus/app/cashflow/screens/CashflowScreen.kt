@@ -8,7 +8,6 @@ import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.components.needingConfirmation
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
-import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
@@ -19,13 +18,14 @@ import ai.dokus.foundation.design.components.common.Breakpoints
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.MediaDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
-import ai.dokus.foundation.design.local.LocalScreenSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -274,9 +274,15 @@ private fun SuccessContent(
             MobileLayout(
                 paginationState = paginationState,
                 vatSummaryData = vatSummaryData,
+                pendingDocuments = pendingDocuments,
+                isPendingLoading = isPendingLoading,
+                hasPendingPreviousPage = hasPendingPreviousPage,
+                hasPendingNextPage = hasPendingNextPage,
                 onDocumentClick = onDocumentClick,
-                onMoreClick = onMoreClick,
-                onLoadMore = onLoadMore
+                onLoadMore = onLoadMore,
+                onPendingDocumentClick = onPendingDocumentClick,
+                onPendingPreviousPage = onPendingPreviousPage,
+                onPendingNextPage = onPendingNextPage
             )
         }
     }
@@ -415,7 +421,7 @@ private fun DesktopLayout(
 
         // Right column: VAT Summary Card + Pending Documents (fixed width)
         Column(
-            modifier = Modifier.width(360.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             VatSummaryCard(
@@ -423,7 +429,7 @@ private fun DesktopLayout(
                 netAmount = vatSummaryData.netAmount,
                 predictedNetAmount = vatSummaryData.predictedNetAmount,
                 quarterInfo = vatSummaryData.quarterInfo,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.weight(2f)
             )
 
             // Pending documents card - always show (displays empty state when no documents)
@@ -435,7 +441,7 @@ private fun DesktopLayout(
                 onDocumentClick = onPendingDocumentClick,
                 onPreviousClick = onPendingPreviousPage,
                 onNextClick = onPendingNextPage,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -443,15 +449,21 @@ private fun DesktopLayout(
 
 /**
  * Mobile layout with single-column scrollable content.
- * Stacks VAT summary above the document table.
+ * Stacks VAT summary and pending documents above the document table.
  */
 @Composable
 private fun MobileLayout(
     paginationState: PaginationState<FinancialDocumentDto>,
     vatSummaryData: VatSummaryData,
+    pendingDocuments: List<MediaDto>,
+    isPendingLoading: Boolean,
+    hasPendingPreviousPage: Boolean,
+    hasPendingNextPage: Boolean,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
-    onMoreClick: (FinancialDocumentDto) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onPendingDocumentClick: (MediaDto) -> Unit,
+    onPendingPreviousPage: () -> Unit,
+    onPendingNextPage: () -> Unit
 ) {
     val listState = rememberLazyListState()
 
@@ -482,6 +494,20 @@ private fun MobileLayout(
                 netAmount = vatSummaryData.netAmount,
                 predictedNetAmount = vatSummaryData.predictedNetAmount,
                 quarterInfo = vatSummaryData.quarterInfo,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Pending documents card - always show (displays empty state when no documents)
+        item {
+            PendingDocumentsCard(
+                documents = pendingDocuments,
+                isLoading = isPendingLoading,
+                hasPreviousPage = hasPendingPreviousPage,
+                hasNextPage = hasPendingNextPage,
+                onDocumentClick = onPendingDocumentClick,
+                onPreviousClick = onPendingPreviousPage,
+                onNextClick = onPendingNextPage,
                 modifier = Modifier.fillMaxWidth()
             )
         }
