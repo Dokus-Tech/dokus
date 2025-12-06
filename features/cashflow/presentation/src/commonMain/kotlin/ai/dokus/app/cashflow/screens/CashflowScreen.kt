@@ -28,7 +28,6 @@ import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -278,10 +277,11 @@ private fun SummaryCardsRow(
     onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
     onPendingLoadMore: () -> Unit
 ) {
+    // Fixed height for the row - LazyColumn doesn't support intrinsic measurements
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Max),
+            .height(340.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Left column: VAT Summary + Business Health stacked vertically
@@ -301,8 +301,6 @@ private fun SummaryCardsRow(
             )
 
             // Business Health Card below - fills remaining space
-            // defaultMinSize ensures it contributes to IntrinsicSize calculation
-            // while weight(1f) allows it to expand to fill available space
             BusinessHealthCard(
                 data = businessHealthData,
                 modifier = Modifier
