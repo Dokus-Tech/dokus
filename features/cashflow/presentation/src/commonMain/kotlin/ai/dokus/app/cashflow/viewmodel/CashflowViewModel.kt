@@ -348,6 +348,6 @@ internal class CashflowViewModel :
 
     companion object {
         private const val PAGE_SIZE = 20
-        private const val PENDING_PAGE_SIZE = 5
+        private const val PENDING_PAGE_SIZE = 4
     }
 }
