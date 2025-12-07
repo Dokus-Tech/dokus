@@ -5,14 +5,22 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
- * Peppol settings per tenant - stores Recommand API credentials.
+ * Peppol settings per tenant - stores provider credentials.
  * CRITICAL: API credentials are encrypted at rest.
+ *
+ * Supports multiple providers (Recommand, Storecove, etc.)
  */
 object PeppolSettingsTable : UUIDTable("peppol_settings") {
     // Multi-tenancy (CRITICAL) - one settings record per tenant
     val tenantId = uuid("tenant_id").uniqueIndex()
 
-    // Recommand API configuration
+    // Provider identification - supports multiple providers
+    val providerId = varchar("provider_id", 50).default("recommand")
+
+    // Provider-specific configuration (JSON) for future extensibility
+    val providerConfig = text("provider_config").nullable()
+
+    // Common API configuration (used by Recommand and similar providers)
     val companyId = varchar("company_id", 255)
     val apiKey = varchar("api_key", 512)  // Encrypted
     val apiSecret = varchar("api_secret", 512)  // Encrypted
@@ -30,5 +38,6 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
 
     init {
         index(false, tenantId)
+        index(false, providerId)
     }
 }

@@ -84,6 +84,9 @@ val DokusException.localized: String
         is DokusException.TenantCreationFailed -> stringResource(Res.string.exception_tenant_creation_failed)
         is DokusException.Unknown -> message ?: stringResource(Res.string.exception_unknown)
 
+        // 501 Not Implemented
+        is DokusException.NotImplemented -> message ?: "This feature is not yet implemented."
+
         // 503 Service Unavailable
         is DokusException.ConnectionError -> stringResource(Res.string.exception_connection_error)
         is DokusException.NotFound -> "TODO"
