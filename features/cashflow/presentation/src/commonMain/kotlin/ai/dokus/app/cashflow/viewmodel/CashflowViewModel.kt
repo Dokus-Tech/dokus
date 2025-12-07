@@ -1,15 +1,21 @@
 package ai.dokus.app.cashflow.viewmodel
 
+import ai.dokus.app.cashflow.components.BusinessHealthData
+import ai.dokus.app.cashflow.components.DocumentSortOption
+import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
+import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.state.emit
 import ai.dokus.app.core.state.emitLoading
+import kotlinx.coroutines.async
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
@@ -30,13 +36,20 @@ internal class CashflowViewModel :
     private val cashflowDataSource: CashflowRemoteDataSource by inject()
     private val searchDocuments: SearchCashflowDocumentsUseCase by inject()
     private val uploadManager: DocumentUploadManager by inject()
+    private val watchPendingDocuments: WatchPendingDocumentsUseCase by inject()
 
+    // Documents state
     private val loadedDocuments = MutableStateFlow<List<FinancialDocumentDto>>(emptyList())
-    private val paginationState =
-        MutableStateFlow(PaginationState<FinancialDocumentDto>(pageSize = PAGE_SIZE))
+    private val paginationState = MutableStateFlow(PaginationState<FinancialDocumentDto>(pageSize = PAGE_SIZE))
+
+    // Search state
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
     private var searchJob: Job? = null
+
+    // Sort state
+    private val _sortOption = MutableStateFlow(DocumentSortOption.Default)
+    val sortOption: StateFlow<DocumentSortOption> = _sortOption.asStateFlow()
 
     // Sidebar state for desktop
     private val _isSidebarOpen = MutableStateFlow(false)
@@ -51,11 +64,61 @@ internal class CashflowViewModel :
     val uploadedDocuments: StateFlow<Map<String, DocumentDto>> = uploadManager.uploadedDocuments
     val deletionHandles: StateFlow<Map<String, DocumentDeletionHandle>> = uploadManager.deletionHandles
 
+    // Pending documents state using PaginationState (lazy loading)
+    private val _allPendingDocuments = MutableStateFlow<List<DocumentProcessingDto>>(emptyList())
+    private val _pendingVisibleCount = MutableStateFlow(PENDING_PAGE_SIZE)
+    private val _pendingPaginationState = MutableStateFlow(
+        PaginationState<DocumentProcessingDto>(pageSize = PENDING_PAGE_SIZE)
+    )
+
+    // Full state for pending documents (includes loading, success, error)
+    private val _pendingDocumentsState = MutableStateFlow<DokusState<PaginationState<DocumentProcessingDto>>>(DokusState.idle())
+    val pendingDocumentsState: StateFlow<DokusState<PaginationState<DocumentProcessingDto>>> = _pendingDocumentsState.asStateFlow()
+
+    // VAT Summary state (independent loading)
+    private val _vatSummaryState = MutableStateFlow<DokusState<VatSummaryData>>(DokusState.loading())
+    val vatSummaryState: StateFlow<DokusState<VatSummaryData>> = _vatSummaryState.asStateFlow()
+
+    // Business Health state (independent loading)
+    private val _businessHealthState = MutableStateFlow<DokusState<BusinessHealthData>>(DokusState.loading())
+    val businessHealthState: StateFlow<DokusState<BusinessHealthData>> = _businessHealthState.asStateFlow()
+
     init {
         // Set up auto-refresh when uploads complete
         uploadManager.setOnUploadCompleteCallback {
             logger.d { "Upload completed, refreshing cashflow documents" }
             refresh()
+            refreshPendingDocuments()
+        }
+
+        // Start watching pending documents
+        viewModelScope.launch {
+            watchPendingDocuments().collect { state ->
+                when (state) {
+                    is DokusState.Loading -> {
+                        _pendingDocumentsState.value = DokusState.loading()
+                    }
+
+                    is DokusState.Success -> {
+                        _allPendingDocuments.value = state.data
+                        _pendingVisibleCount.value = PENDING_PAGE_SIZE
+                        updatePendingPaginationState()
+                        // Wrap pagination state in Success
+                        _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
+                    }
+
+                    is DokusState.Error -> {
+                        _allPendingDocuments.value = emptyList()
+                        updatePendingPaginationState()
+                        // Preserve error with retry handler
+                        _pendingDocumentsState.value = DokusState.error(state.exception, state.retryHandler)
+                    }
+
+                    is DokusState.Idle -> {
+                        _pendingDocumentsState.value = DokusState.idle()
+                    }
+                }
+            }
         }
     }
 
@@ -64,51 +127,165 @@ internal class CashflowViewModel :
         uploadManager.clearOnUploadCompleteCallback()
     }
 
-    /**
-     * Opens the upload sidebar (desktop only).
-     */
+    // region Sidebar & Dialog
+
     fun openSidebar() {
         _isSidebarOpen.value = true
     }
 
-    /**
-     * Closes the upload sidebar.
-     */
     fun closeSidebar() {
         _isSidebarOpen.value = false
     }
 
-    /**
-     * Shows the QR code dialog.
-     */
     fun showQrDialog() {
         _isQrDialogOpen.value = true
     }
 
-    /**
-     * Hides the QR code dialog.
-     */
     fun hideQrDialog() {
         _isQrDialogOpen.value = false
     }
 
-    /**
-     * Returns the upload manager for components that need direct access.
-     */
     fun provideUploadManager(): DocumentUploadManager = uploadManager
+
+    // endregion
+
+    // region Sort
+
+    fun updateSortOption(option: DocumentSortOption) {
+        _sortOption.value = option
+        emitSuccess()
+    }
+
+    private fun sortDocuments(documents: List<FinancialDocumentDto>): List<FinancialDocumentDto> {
+        return when (_sortOption.value) {
+            DocumentSortOption.Default -> documents
+            DocumentSortOption.DateNewest -> documents.sortedByDescending { it.date }
+            DocumentSortOption.DateOldest -> documents.sortedBy { it.date }
+            DocumentSortOption.AmountHighest -> documents.sortedByDescending {
+                it.amount.value.toDoubleOrNull() ?: 0.0
+            }
+
+            DocumentSortOption.AmountLowest -> documents.sortedBy {
+                it.amount.value.toDoubleOrNull() ?: 0.0
+            }
+
+            DocumentSortOption.Type -> documents.sortedBy { document ->
+                when (document) {
+                    is FinancialDocumentDto.InvoiceDto -> 0
+                    is FinancialDocumentDto.ExpenseDto -> 1
+                    is FinancialDocumentDto.BillDto -> 2
+                }
+            }
+        }
+    }
+
+    // endregion
+
+    // region Pending Documents
+
+    fun refreshPendingDocuments() {
+        watchPendingDocuments.refresh()
+    }
+
+    /**
+     * Load more pending documents for infinite scroll.
+     * Increases the visible count by PENDING_PAGE_SIZE.
+     */
+    fun pendingDocumentsLoadMore() {
+        val allDocs = _allPendingDocuments.value
+        val currentVisible = _pendingVisibleCount.value
+
+        // Don't load more if we're already showing all items
+        if (currentVisible >= allDocs.size) return
+
+        // Increase visible count
+        _pendingVisibleCount.value = (currentVisible + PENDING_PAGE_SIZE).coerceAtMost(allDocs.size)
+        updatePendingPaginationState()
+        _pendingDocumentsState.value = DokusState.success(_pendingPaginationState.value)
+    }
+
+    private fun updatePendingPaginationState() {
+        val allDocs = _allPendingDocuments.value
+        val visibleCount = _pendingVisibleCount.value
+        val visibleDocs = allDocs.take(visibleCount)
+        val hasMore = visibleCount < allDocs.size
+
+        _pendingPaginationState.value = PaginationState(
+            data = visibleDocs,
+            currentPage = visibleCount / PENDING_PAGE_SIZE,
+            pageSize = PENDING_PAGE_SIZE,
+            hasMorePages = hasMore,
+            isLoadingMore = false
+        )
+    }
+
+    // endregion
+
+    // region Documents
 
     fun refresh() {
         searchJob?.cancel()
         scope.launch {
-            logger.d { "Refreshing cashflow data" }
+            logger.d { "Refreshing cashflow data in parallel" }
+
+            // Start all loading states
+            _vatSummaryState.value = DokusState.loading()
+            _businessHealthState.value = DokusState.loading()
             paginationState.value = PaginationState(pageSize = PAGE_SIZE)
             loadedDocuments.value = emptyList()
             mutableState.emitLoading()
-            if (_searchQuery.value.isNotEmpty()) {
-                loadSearchResults(_searchQuery.value)
-            } else {
-                loadPage(page = 0, reset = true)
+
+            // Load all sections in parallel
+            val vatJob = async { loadVatSummary() }
+            val healthJob = async { loadBusinessHealth() }
+            val documentsJob = async {
+                if (_searchQuery.value.isNotEmpty()) {
+                    loadSearchResults(_searchQuery.value)
+                } else {
+                    loadPage(page = 0, reset = true)
+                }
             }
+
+            // Await all jobs (each updates its own state)
+            vatJob.await()
+            healthJob.await()
+            documentsJob.await()
+        }
+    }
+
+    /**
+     * Load VAT summary data.
+     * TODO: Replace with actual API call when endpoint is available.
+     */
+    private suspend fun loadVatSummary() {
+        try {
+            // Placeholder data - replace with API call
+            val data = VatSummaryData.empty
+            _vatSummaryState.value = DokusState.success(data)
+            logger.d { "VAT summary loaded successfully" }
+        } catch (e: Exception) {
+            logger.e(e) { "Failed to load VAT summary" }
+            _vatSummaryState.value = DokusState.error(
+                ai.dokus.foundation.domain.exceptions.DokusException.Unknown(e)
+            ) { scope.launch { loadVatSummary() } }
+        }
+    }
+
+    /**
+     * Load business health data.
+     * TODO: Replace with actual API call when endpoint is available.
+     */
+    private suspend fun loadBusinessHealth() {
+        try {
+            // Placeholder data - replace with API call
+            val data = BusinessHealthData.empty
+            _businessHealthState.value = DokusState.success(data)
+            logger.d { "Business health loaded successfully" }
+        } catch (e: Exception) {
+            logger.e(e) { "Failed to load business health" }
+            _businessHealthState.value = DokusState.error(
+                ai.dokus.foundation.domain.exceptions.DokusException.Unknown(e)
+            ) { scope.launch { loadBusinessHealth() } }
         }
     }
 
@@ -219,15 +396,19 @@ internal class CashflowViewModel :
 
     private fun emitSuccess() {
         val filteredDocuments = searchDocuments(loadedDocuments.value, _searchQuery.value)
+        val sortedDocuments = sortDocuments(filteredDocuments)
         val updatedState = paginationState.value.copy(
-            data = filteredDocuments,
+            data = sortedDocuments,
             pageSize = PAGE_SIZE
         )
         paginationState.value = updatedState
         mutableState.value = DokusState.success(updatedState)
     }
 
+    // endregion
+
     companion object {
         private const val PAGE_SIZE = 20
+        private const val PENDING_PAGE_SIZE = 4
     }
 }

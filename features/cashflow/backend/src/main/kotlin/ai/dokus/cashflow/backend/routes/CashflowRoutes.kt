@@ -13,13 +13,10 @@ import io.ktor.server.routing.routing
  *
  * Cash-In (Outgoing Invoices):
  * - /api/v1/invoices - Invoice CRUD operations
- * - /api/v1/cashflow/cash-in/invoices/from-media/{mediaId} - Create invoice from media
  *
  * Cash-Out (Expenses & Bills):
  * - /api/v1/expenses - Expense CRUD operations
  * - /api/v1/cashflow/cash-out/bills - Bill CRUD operations (supplier invoices)
- * - /api/v1/cashflow/cash-out/expenses/from-media/{mediaId} - Create expense from media
- * - /api/v1/cashflow/cash-out/bills/from-media/{mediaId} - Create bill from media
  *
  * Overview:
  * - /api/v1/cashflow/overview - Cashflow overview dashboard data
@@ -41,9 +38,9 @@ import io.ktor.server.routing.routing
  * @see billRoutes
  * @see attachmentRoutes
  * @see cashflowOverviewRoutes
- * @see fromMediaRoutes
  * @see cashflowDocumentRoutes
  * @see documentUploadRoutes
+ * @see documentProcessingRoutes
  */
 fun Application.configureCashflowRoutes() {
     routing {
@@ -61,9 +58,6 @@ fun Application.configureCashflowRoutes() {
 
         // Cashflow overview
         cashflowOverviewRoutes()
-
-        // From-media creation routes
-        fromMediaRoutes()
 
         // Document routes
         cashflowDocumentRoutes()

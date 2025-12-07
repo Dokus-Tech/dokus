@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
  * Each item is independently managed via [DocumentUploadItem].
  *
  * @param tasks List of upload tasks to display
- * @param documents Map of task ID to uploaded document (for completed uploads)
- * @param deletionHandles Map of task ID to deletion handle (for items being deleted)
+ * @param documents Map of task ID to an uploaded document (for completed uploads)
+ * @param deletionHandles Map of task ID to a deletion handle (for items being deleted)
  * @param uploadManager The upload manager for handling actions
  * @param modifier Modifier for the list
  * @param contentPadding Padding around the list content

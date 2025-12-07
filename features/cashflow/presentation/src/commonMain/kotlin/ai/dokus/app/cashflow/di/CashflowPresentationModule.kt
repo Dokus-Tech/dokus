@@ -2,6 +2,7 @@ package ai.dokus.app.cashflow.di
 
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
+import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
 import org.koin.core.module.dsl.viewModel
@@ -12,6 +13,7 @@ val cashflowViewModelModule = module {
     single { DocumentUploadManager(dataSource = get()) }
 
     factory { SearchCashflowDocumentsUseCase() }
+    factory { WatchPendingDocumentsUseCase(dataSource = get()) }
     viewModel { CashflowViewModel() }
     viewModel { AddDocumentViewModel() }
 }

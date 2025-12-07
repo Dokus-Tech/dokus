@@ -5,16 +5,18 @@ import ai.dokus.app.cashflow.components.DocumentUploadList
 import ai.dokus.app.cashflow.components.DocumentUploadZone
 import ai.dokus.app.cashflow.components.UploadIcon
 import ai.dokus.app.cashflow.components.rememberDocumentFilePicker
+import ai.dokus.app.cashflow.manager.DocumentUploadManager
+import ai.dokus.app.cashflow.model.DocumentDeletionHandle
+import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
 import ai.dokus.foundation.design.components.common.PTopAppBar
+import ai.dokus.foundation.design.constrains.padding
 import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.domain.model.DocumentDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -54,61 +56,51 @@ import org.koin.compose.viewmodel.koinViewModel
 internal fun AddDocumentScreen(
     viewModel: AddDocumentViewModel = koinViewModel()
 ) {
-    val navController = LocalNavController.current
     val state by viewModel.state.collectAsState()
     val uploadTasks by viewModel.uploadTasks.collectAsState()
     val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
     val deletionHandles by viewModel.deletionHandles.collectAsState()
 
+    val layoutDirection = LocalLayoutDirection.current
     val isLarge = LocalScreenSize.current.isLarge
 
     var isQrDialogOpen by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberDocumentFilePicker { files ->
-        if (files.isNotEmpty()) {
-            viewModel.uploadFiles(files)
-        }
+        if (files.isNotEmpty()) viewModel.uploadFiles(files)
     }
 
     Scaffold { contentPadding ->
-        Box(
-            modifier = Modifier.padding(
-                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-                top = contentPadding.calculateTopPadding(),
-                bottom = contentPadding.calculateBottomPadding()
-            )
-        )
+        Box(Modifier.padding(contentPadding, layoutDirection)) {
+            if (isLarge) {
+                DesktopLayout(
+                    onUploadFile = { filePickerLauncher.launch() },
+                    isUploading = state.isUploading,
+                    uploadTasks = uploadTasks,
+                    uploadedDocuments = uploadedDocuments,
+                    deletionHandles = deletionHandles,
+                    viewModel = viewModel,
+                    onShowQrCode = { isQrDialogOpen = true }
+                )
+            } else {
+                // Mobile layout with upload zones and upload list
+                MobileLayout(
+                    onUploadFile = { filePickerLauncher.launch() },
+                    onUploadCamera = { /* TODO: Implement camera upload */ },
+                    isUploading = state.isUploading,
+                    uploadTasks = uploadTasks,
+                    uploadedDocuments = uploadedDocuments,
+                    deletionHandles = deletionHandles,
+                    viewModel = viewModel
+                )
+            }
 
-        if (isLarge) {
-            // Desktop layout - simplified (sidebar handles most functionality now)
-            DesktopLayout(
-                onUploadFile = { filePickerLauncher.launch() },
-                isUploading = state.isUploading,
-                uploadTasks = uploadTasks,
-                uploadedDocuments = uploadedDocuments,
-                deletionHandles = deletionHandles,
-                viewModel = viewModel,
-                onShowQrCode = { isQrDialogOpen = true }
-            )
-        } else {
-            // Mobile layout with upload zones and upload list
-            MobileLayout(
-                onUploadFile = { filePickerLauncher.launch() },
-                onUploadCamera = { /* TODO: Implement camera upload */ },
-                isUploading = state.isUploading,
-                uploadTasks = uploadTasks,
-                uploadedDocuments = uploadedDocuments,
-                deletionHandles = deletionHandles,
-                viewModel = viewModel
+            // QR code dialog
+            AppDownloadQrDialog(
+                isVisible = isQrDialogOpen,
+                onDismiss = { isQrDialogOpen = false }
             )
         }
-
-        // QR code dialog
-        AppDownloadQrDialog(
-            isVisible = isQrDialogOpen,
-            onDismiss = { isQrDialogOpen = false }
-        )
     }
 }
 
@@ -121,9 +113,9 @@ internal fun AddDocumentScreen(
 private fun DesktopLayout(
     onUploadFile: () -> Unit,
     isUploading: Boolean,
-    uploadTasks: List<ai.dokus.app.cashflow.model.DocumentUploadTask>,
-    uploadedDocuments: Map<String, ai.dokus.foundation.domain.model.DocumentDto>,
-    deletionHandles: Map<String, ai.dokus.app.cashflow.model.DocumentDeletionHandle>,
+    uploadTasks: List<DocumentUploadTask>,
+    uploadedDocuments: Map<String, DocumentDto>,
+    deletionHandles: Map<String, DocumentDeletionHandle>,
     viewModel: AddDocumentViewModel,
     onShowQrCode: () -> Unit
 ) {
@@ -177,26 +169,14 @@ private fun DesktopLayout(
                 )
             }
 
-            if (uploadTasks.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Uploads",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth(0.5f)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                DocumentUploadList(
-                    tasks = uploadTasks,
-                    documents = uploadedDocuments,
-                    deletionHandles = deletionHandles,
-                    uploadManager = viewModel.provideUploadManager(),
-                    modifier = Modifier.fillMaxWidth(0.5f)
-                )
-            }
+            Uploads(
+                tasks = uploadTasks,
+                documents = uploadedDocuments,
+                deletionHandles = deletionHandles,
+                uploadManager = viewModel.provideUploadManager(),
+                modifierText = Modifier.fillMaxWidth(0.5f),
+                modifierList = Modifier.fillMaxWidth(0.5f)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -211,20 +191,16 @@ private fun MobileLayout(
     onUploadFile: () -> Unit,
     onUploadCamera: () -> Unit,
     isUploading: Boolean,
-    uploadTasks: List<ai.dokus.app.cashflow.model.DocumentUploadTask>,
-    uploadedDocuments: Map<String, ai.dokus.foundation.domain.model.DocumentDto>,
-    deletionHandles: Map<String, ai.dokus.app.cashflow.model.DocumentDeletionHandle>,
+    uploadTasks: List<DocumentUploadTask>,
+    uploadedDocuments: Map<String, DocumentDto>,
+    deletionHandles: Map<String, DocumentDeletionHandle>,
     viewModel: AddDocumentViewModel
 ) {
     var isCameraDragging by remember { mutableStateOf(false) }
     var isFileDragging by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            PTopAppBar(
-                title = "Add a new document",
-            )
-        },
+        topBar = { PTopAppBar("Add a new document") },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Column(
@@ -259,26 +235,47 @@ private fun MobileLayout(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Upload list section
-            if (uploadTasks.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Uploads",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                DocumentUploadList(
-                    tasks = uploadTasks,
-                    documents = uploadedDocuments,
-                    deletionHandles = deletionHandles,
-                    uploadManager = viewModel.provideUploadManager(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            Uploads(
+                tasks = uploadTasks,
+                documents = uploadedDocuments,
+                deletionHandles = deletionHandles,
+                uploadManager = viewModel.provideUploadManager(),
+                modifierList = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+
+@Composable
+private fun Uploads(
+    tasks: List<DocumentUploadTask>,
+    documents: Map<String, DocumentDto>,
+    deletionHandles: Map<String, DocumentDeletionHandle>,
+    uploadManager: DocumentUploadManager,
+    modifierText: Modifier = Modifier,
+    modifierList: Modifier = Modifier,
+) {
+    if (tasks.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Uploads",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = modifierText
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        DocumentUploadList(
+            tasks = tasks,
+            documents = documents,
+            deletionHandles = deletionHandles,
+            uploadManager = uploadManager,
+            modifier = modifierList
+        )
     }
 }

@@ -27,7 +27,11 @@ enum class ProcessingStatus(override val dbValue: String) : DbEnum {
     Confirmed("CONFIRMED"),
 
     /** User rejected extraction, will do manual entry */
-    Rejected("REJECTED")
+    Rejected("REJECTED");
+
+    companion object {
+        fun fromDbValue(value: String): ProcessingStatus = entries.find { it.dbValue == value }!!
+    }
 }
 
 /**
