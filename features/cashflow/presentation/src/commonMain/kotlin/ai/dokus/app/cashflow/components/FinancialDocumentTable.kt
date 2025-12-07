@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.components
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +44,7 @@ import kotlinx.datetime.LocalDate
  * This maps from FinancialDocumentDto domain model to UI-specific structure.
  */
 data class FinancialDocumentRow(
-    val id: String,
+    val id: DocumentId?,
     val invoiceNumber: String,
     val contactName: String,
     val contactEmail: String,
@@ -73,12 +75,6 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
         is FinancialDocumentDto.InvoiceDto -> "mailname@email.com" // TODO: Get from client
         is FinancialDocumentDto.ExpenseDto -> ""
         is FinancialDocumentDto.BillDto -> ""
-    }
-
-    val documentId = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> id.value.toString()
-        is FinancialDocumentDto.ExpenseDto -> id.value.toString()
-        is FinancialDocumentDto.BillDto -> id.value.toString()
     }
 
     val documentNumber = when (this) {
@@ -163,18 +159,20 @@ fun FinancialDocumentTable(
 
             // Document Rows
             documents.forEachIndexed { index, document ->
-                FinancialDocumentTableRow(
-                    row = document.toTableRow(),
-                    onClick = { onDocumentClick(document) },
-                    onMoreClick = { onMoreClick(document) }
-                )
-
-                // Add divider between rows (not after the last item)
-                if (index < documents.size - 1) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        thickness = 1.dp
+                key(document.documentId) {
+                    FinancialDocumentTableRow(
+                        row = document.toTableRow(),
+                        onClick = { onDocumentClick(document) },
+                        onMoreClick = { onMoreClick(document) }
                     )
+
+                    // Add divider between rows (not after the last item)
+                    if (index < documents.size - 1) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            thickness = 1.dp
+                        )
+                    }
                 }
             }
         }
@@ -414,16 +412,18 @@ fun FinancialDocumentList(
                 )
         ) {
             documents.forEachIndexed { index, document ->
-                FinancialDocumentListItem(
-                    row = document.toTableRow(),
-                    onClick = { onDocumentClick(document) }
-                )
-
-                if (index < documents.size - 1) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        thickness = 1.dp
+                key(document.documentId) {
+                    FinancialDocumentListItem(
+                        row = document.toTableRow(),
+                        onClick = { onDocumentClick(document) }
                     )
+
+                    if (index < documents.size - 1) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            thickness = 1.dp
+                        )
+                    }
                 }
             }
         }
