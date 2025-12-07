@@ -36,6 +36,7 @@ fun PTopAppBarSearchAction(
                 searchContent()
             },
             actions = {
+                Spacer(Modifier.width(16.dp))
                 actions()
                 Spacer(Modifier.width(16.dp))
             }
