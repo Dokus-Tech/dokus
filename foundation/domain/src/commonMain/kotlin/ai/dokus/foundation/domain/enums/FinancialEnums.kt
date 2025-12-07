@@ -112,6 +112,17 @@ enum class SubscriptionTier(override val dbValue: String) : DbEnum {
 }
 
 // ============================================================================
+// CLIENT ENUMS
+// ============================================================================
+
+@Serializable
+enum class ClientType(override val dbValue: String) : DbEnum {
+    Individual("INDIVIDUAL"),
+    Business("BUSINESS"),
+    Government("GOVERNMENT")
+}
+
+// ============================================================================
 // INVOICE ENUMS
 // ============================================================================
 

@@ -1,6 +1,7 @@
 package ai.dokus.cashflow.backend.routes
 
 import ai.dokus.cashflow.backend.service.BillService
+import ai.dokus.cashflow.backend.service.ClientService
 import ai.dokus.cashflow.backend.service.InvoiceService
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.domain.enums.PeppolStatus
@@ -41,6 +42,7 @@ fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val invoiceService by inject<InvoiceService>()
     val billService by inject<BillService>()
+    val clientService by inject<ClientService>()
     val tenantRepository by inject<TenantRepository>()
 
     route("/api/v1/peppol") {
@@ -168,12 +170,30 @@ fun Route.peppolRoutes() {
                     val tenantSettings = tenantRepository.getSettings(tenantId)
                         ?: throw DokusException.InternalError("Tenant settings not found")
 
-                    // TODO: Get client from a ClientRepository when it's implemented
-                    // For now, this endpoint returns an error indicating the feature is not fully implemented
-                    throw DokusException.NotImplemented(
-                        "Sending invoices via Peppol requires client data. " +
-                        "This feature is pending ClientRepository integration."
-                    )
+                    // Get client
+                    val client = clientService.getClient(invoice.clientId, tenantId)
+                        .getOrElse { throw DokusException.InternalError("Failed to fetch client: ${it.message}") }
+                        ?: throw DokusException.NotFound("Client not found for invoice")
+
+                    // Verify client has Peppol enabled
+                    if (!client.peppolEnabled || client.peppolId.isNullOrBlank()) {
+                        throw DokusException.BadRequest(
+                            "Client '${client.name}' is not configured for Peppol. " +
+                            "Please enable Peppol and set a valid Peppol ID for this client."
+                        )
+                    }
+
+                    // Send invoice via Peppol
+                    val result = peppolService.sendInvoice(invoice, client, tenantSettings, tenantId)
+                        .getOrElse { throw DokusException.InternalError("Failed to send invoice via Peppol: ${it.message}") }
+
+                    call.respond(HttpStatusCode.OK, SendInvoiceResponse(
+                        success = true,
+                        transmissionId = result.transmissionId.toString(),
+                        status = result.status.name,
+                        externalDocumentId = result.externalDocumentId,
+                        errorMessage = result.errorMessage
+                    ))
                 }
 
                 /**
@@ -196,11 +216,16 @@ fun Route.peppolRoutes() {
                     val tenantSettings = tenantRepository.getSettings(tenantId)
                         ?: throw DokusException.InternalError("Tenant settings not found")
 
-                    // TODO: Get client from a ClientRepository when it's implemented
-                    throw DokusException.NotImplemented(
-                        "Validating invoices for Peppol requires client data. " +
-                        "This feature is pending ClientRepository integration."
-                    )
+                    // Get client
+                    val client = clientService.getClient(invoice.clientId, tenantId)
+                        .getOrElse { throw DokusException.InternalError("Failed to fetch client: ${it.message}") }
+                        ?: throw DokusException.NotFound("Client not found for invoice")
+
+                    // Validate invoice for Peppol
+                    val validationResult = peppolService.validateInvoice(invoice, client, tenantSettings, tenantId)
+                        .getOrElse { throw DokusException.InternalError("Failed to validate invoice: ${it.message}") }
+
+                    call.respond(HttpStatusCode.OK, validationResult)
                 }
             }
 
@@ -212,15 +237,18 @@ fun Route.peppolRoutes() {
              * POST /api/v1/peppol/inbox/poll
              * Poll inbox for new documents.
              *
-             * Note: This endpoint requires createBillFromPeppol in BillService which is not yet implemented.
+             * Polls the Peppol provider's inbox for new documents and creates
+             * corresponding bills in the system.
              */
             post("/inbox/poll") {
-                // TODO: Implement bill creation from Peppol documents
-                // This requires a createBillFromPeppol method in BillService
-                throw DokusException.NotImplemented(
-                    "Polling Peppol inbox requires bill creation from Peppol documents. " +
-                    "This feature is pending BillService.createBillFromPeppol integration."
-                )
+                val tenantId = dokusPrincipal.requireTenantId()
+
+                // Poll inbox with bill creation callback
+                val pollResult = peppolService.pollInbox(tenantId) { createBillRequest, tid ->
+                    billService.createBill(tid, createBillRequest)
+                }.getOrElse { throw DokusException.InternalError("Failed to poll Peppol inbox: ${it.message}") }
+
+                call.respond(HttpStatusCode.OK, pollResult)
             }
 
             // ================================================================
