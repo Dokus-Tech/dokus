@@ -5,13 +5,19 @@ import ai.dokus.app.cashflow.components.BusinessHealthCard
 import ai.dokus.app.cashflow.components.BusinessHealthData
 import ai.dokus.app.cashflow.components.DocumentSortOption
 import ai.dokus.app.cashflow.components.DocumentUploadSidebar
+import ai.dokus.app.cashflow.components.DroppedFile
 import ai.dokus.app.cashflow.components.FinancialDocumentTable
+import ai.dokus.app.cashflow.components.FlyingDocument
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
 import ai.dokus.app.cashflow.components.SortDropdown
+import ai.dokus.app.cashflow.components.SpaceUploadOverlay
 import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.components.fileDropTarget
 import ai.dokus.app.cashflow.components.isDragDropSupported
+import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.mutableStateListOf
+import kotlin.random.Random
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.PButton
@@ -52,6 +58,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,25 +100,53 @@ internal fun CashflowScreen(
 
     val isLargeScreen = LocalScreenSize.current.isLarge
 
+    // Space upload overlay state
+    var isSpaceOverlayVisible by remember { mutableStateOf(false) }
+    var isDraggingOverScreen by remember { mutableStateOf(false) }
+    val flyingDocuments = remember { mutableStateListOf<FlyingDocument>() }
+    var pendingDroppedFiles by remember { mutableStateOf<List<DroppedFile>>(emptyList()) }
+
     LaunchedEffect(viewModel) {
         viewModel.refresh()
     }
 
-    // Screen-level drop target - opens sidebar when user drags files over the screen
+    // Screen-level drop target - shows space overlay when user drags files
     Box(
         modifier = Modifier
             .fillMaxSize()
             .then(
                 if (isDragDropSupported && isLargeScreen) {
                     Modifier.fileDropTarget(
-                        onDragStateChange = { isDragging ->
-                            if (isDragging && !isSidebarOpen) {
-                                viewModel.openSidebar()
+                        onDragStateChange = { dragging ->
+                            isDraggingOverScreen = dragging
+                            if (dragging) {
+                                isSpaceOverlayVisible = true
+                            } else if (flyingDocuments.isEmpty()) {
+                                // Only hide if no flying documents (user cancelled drag)
+                                isSpaceOverlayVisible = false
                             }
                         },
                         onFilesDropped = { files ->
-                            // Files dropped on screen go to upload manager
-                            viewModel.provideUploadManager().enqueueFiles(files)
+                            if (files.isNotEmpty()) {
+                                // Store files for later upload
+                                pendingDroppedFiles = files
+
+                                // Create flying documents from screen center
+                                // (we'll calculate proper positions based on drop location)
+                                flyingDocuments.clear()
+                                val timestamp = kotlin.random.Random.nextLong()
+                                files.forEachIndexed { index, file ->
+                                    flyingDocuments.add(
+                                        FlyingDocument(
+                                            id = "${file.name}_${timestamp}_$index",
+                                            name = file.name,
+                                            startX = 0.5f, // Will be set relative to screen
+                                            startY = 0.8f, // Start from bottom area
+                                            targetAngle = Random.nextFloat() * 360f
+                                        )
+                                    )
+                                }
+                            }
                         }
                     )
                 } else {
@@ -179,6 +216,29 @@ internal fun CashflowScreen(
             isVisible = isQrDialogOpen,
             onDismiss = viewModel::hideQrDialog
         )
+
+        // Space upload overlay (futuristic drag-and-drop effect)
+        if (isDragDropSupported && isLargeScreen) {
+            SpaceUploadOverlay(
+                isVisible = isSpaceOverlayVisible,
+                isDragging = isDraggingOverScreen,
+                flyingDocuments = flyingDocuments.toList(),
+                onAnimationComplete = {
+                    // Upload the files after animation
+                    if (pendingDroppedFiles.isNotEmpty()) {
+                        viewModel.provideUploadManager().enqueueFiles(pendingDroppedFiles)
+                        pendingDroppedFiles = emptyList()
+                    }
+
+                    // Clear flying documents and hide overlay
+                    flyingDocuments.clear()
+                    isSpaceOverlayVisible = false
+
+                    // Open sidebar to show uploaded files
+                    viewModel.openSidebar()
+                }
+            )
+        }
     }
 }
 
