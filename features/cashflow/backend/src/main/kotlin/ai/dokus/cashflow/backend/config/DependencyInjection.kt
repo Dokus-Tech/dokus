@@ -5,6 +5,7 @@ import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
+import ai.dokus.foundation.database.repository.cashflow.ClientRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
@@ -13,6 +14,7 @@ import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
+import ai.dokus.cashflow.backend.service.ClientService
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.cashflow.backend.service.ExpenseService
 import ai.dokus.cashflow.backend.service.InvoiceService
@@ -108,6 +110,7 @@ val repositoryModule = module {
     single { InvoiceRepository() }
     single { ExpenseRepository() }
     single { BillRepository() }
+    single { ClientRepository() }
     single { CashflowRepository(get(), get()) }
     single { TenantRepository() }
     single { PeppolSettingsRepository(get()) }
@@ -179,6 +182,7 @@ val serviceModule = module {
     single { InvoiceService(get()) }
     single { ExpenseService(get()) }
     single { BillService(get()) }
+    single { ClientService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
 }
 
