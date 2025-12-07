@@ -41,4 +41,18 @@
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">CTRL</string>
+
+    <!-- Document Types -->
+    <string name="document_type_invoice">Invoice</string>
+    <string name="document_type_expense">Expense</string>
+    <string name="document_type_bill">Bill</string>
+    <string name="document_type_document">Document</string>
+    <string name="document_type_unknown">Unknown</string>
+
+    <!-- Pending Documents -->
+    <string name="pending_documents_title">Cash flow</string>
+    <string name="pending_documents_empty">No pending documents</string>
+    <string name="pending_documents_need_confirmation">Need confirmation</string>
+    <string name="pending_documents_previous">Previous</string>
+    <string name="pending_documents_next">Next</string>
 </resources>

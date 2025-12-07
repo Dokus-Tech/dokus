@@ -12,10 +12,7 @@ import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.cashflow.backend.service.ExpenseService
-import ai.dokus.cashflow.backend.service.FromMediaService
-import ai.dokus.cashflow.backend.service.IMediaService
 import ai.dokus.cashflow.backend.service.InvoiceService
-import ai.dokus.cashflow.backend.service.MediaService
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.config.MinioConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
@@ -157,21 +154,9 @@ val serviceModule = module {
         )
     }
 
-    // Media service for inter-service communication
-    // Uses MEDIA_SERVICE_URL environment variable or default for local dev
-    // Bound to interface for testability and dependency inversion
-    single<IMediaService> {
-        val mediaServiceBaseUrl = System.getenv("MEDIA_SERVICE_URL") ?: "http://localhost:8002"
-        MediaService(
-            httpClient = get(),
-            mediaServiceBaseUrl = mediaServiceBaseUrl
-        )
-    }
-
     // Business logic services
     single { InvoiceService(get()) }
     single { ExpenseService(get()) }
     single { BillService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
-    single { FromMediaService(get(), get(), get(), get()) }
 }

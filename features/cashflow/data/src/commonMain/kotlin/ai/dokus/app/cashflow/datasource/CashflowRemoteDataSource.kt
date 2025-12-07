@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.datasource
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.DocumentId
@@ -14,6 +15,7 @@ import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.domain.model.DocumentProcessingListResponse
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
@@ -378,6 +380,29 @@ interface CashflowRemoteDataSource {
         fromDate: LocalDate,
         toDate: LocalDate
     ): Result<CashflowOverview>
+
+    // ============================================================================
+    // DOCUMENT PROCESSING (AI Extraction Pipeline)
+    // ============================================================================
+
+    /**
+     * List documents by processing status for pending documents view.
+     * GET /api/v1/documents/processing?status={status}&page={page}&limit={limit}
+     *
+     * This endpoint returns documents that have been uploaded and are in the AI
+     * processing pipeline. Use this to show documents awaiting user confirmation.
+     *
+     * @param statuses Filter by processing status (PENDING, QUEUED, PROCESSING, PROCESSED, etc.)
+     *                 Can specify multiple statuses.
+     * @param page Page number (0-indexed)
+     * @param limit Items per page (max 100)
+     * @return Paginated list of documents with processing status and extracted data
+     */
+    suspend fun listDocumentProcessing(
+        statuses: List<ProcessingStatus>,
+        page: Int = 0,
+        limit: Int = 20
+    ): Result<DocumentProcessingListResponse>
 
     companion object {
         internal fun create(httpClient: HttpClient): CashflowRemoteDataSource {

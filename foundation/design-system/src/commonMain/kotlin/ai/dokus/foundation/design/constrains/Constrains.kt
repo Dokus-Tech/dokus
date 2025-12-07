@@ -2,12 +2,16 @@ package ai.dokus.foundation.design.constrains
 
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
 object Constrains {
@@ -54,6 +58,14 @@ fun Modifier.withExtraTopPaddingMobile(): Modifier {
     if (LocalScreenSize.isLarge) return this
     return then(Modifier.padding(top = 16.dp))
 }
+
+@Stable
+fun Modifier.padding(innerPadding: PaddingValues, layoutDirection: LayoutDirection): Modifier = padding(
+    bottom = innerPadding.calculateBottomPadding(),
+    start = innerPadding.calculateStartPadding(layoutDirection),
+    end = innerPadding.calculateEndPadding(layoutDirection),
+    top = innerPadding.calculateTopPadding(),
+)
 
 @Composable
 fun ContentPaddingVertical() {

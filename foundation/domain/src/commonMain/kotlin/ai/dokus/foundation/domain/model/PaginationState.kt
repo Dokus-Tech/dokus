@@ -1,7 +1,7 @@
-package ai.dokus.foundation.domain.model.common
+package ai.dokus.foundation.domain.model
 
 /**
- * Generic pagination state holder for infinite scroll flows.
+ * Keeps track of pagination state
  */
 data class PaginationState<T : Any>(
     val currentPage: Int = 0,
@@ -9,6 +9,4 @@ data class PaginationState<T : Any>(
     val isLoadingMore: Boolean = false,
     val hasMorePages: Boolean = true,
     val data: List<T> = emptyList()
-) {
-    companion object;
-}
+)

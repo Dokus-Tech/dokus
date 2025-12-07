@@ -1,5 +1,6 @@
 package ai.dokus.app.screens
 
+import ai.dokus.app.cashflow.components.PendingDocumentsCard
 import ai.dokus.app.core.state.isLoading
 import ai.dokus.app.core.state.isSuccess
 import ai.dokus.app.viewmodel.DashboardViewModel
@@ -18,9 +19,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material3.Icon
@@ -53,6 +59,9 @@ internal fun DashboardScreen(
 
     val currentTenantState by viewModel.currentTenantState.collectAsState()
     val currentTenant = currentTenantState.let { if (it.isSuccess()) it.data else null }
+
+    // Pending documents state (for mobile only) - includes loading, success, and error states
+    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
 
     LaunchedEffect(viewModel) {
         viewModel.refreshTenant()
@@ -108,7 +117,30 @@ internal fun DashboardScreen(
                 }
             )
         }
-    ) { _ ->
-        // Content goes here
+    ) { contentPadding ->
+        // Mobile dashboard content
+        if (!isLargeScreen) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Pending documents card - always show (displays empty/error state when needed)
+                PendingDocumentsCard(
+                    state = pendingDocumentsState,
+                    onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
+                    onLoadMore = viewModel::pendingDocumentsLoadMore,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Other dashboard widgets can be added here
+            }
+        } else {
+            // Desktop dashboard content (pending documents shown in Cashflow screen)
+            // Other desktop-specific content can be added here
+        }
     }
 }

@@ -1,50 +1,55 @@
 package ai.dokus.app.cashflow.screens
 
 import ai.dokus.app.cashflow.components.AppDownloadQrDialog
+import ai.dokus.app.cashflow.components.BusinessHealthCard
+import ai.dokus.app.cashflow.components.BusinessHealthData
+import ai.dokus.app.cashflow.components.DocumentSortOption
 import ai.dokus.app.cashflow.components.DocumentUploadSidebar
+import ai.dokus.app.cashflow.components.DroppedFile
 import ai.dokus.app.cashflow.components.FinancialDocumentTable
+import ai.dokus.app.cashflow.components.FlyingDocument
+import ai.dokus.app.cashflow.components.PendingDocumentsCard
+import ai.dokus.app.cashflow.components.SortDropdown
+import ai.dokus.app.cashflow.components.SpaceUploadOverlay
 import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
-import ai.dokus.app.cashflow.components.needingConfirmation
+import ai.dokus.app.cashflow.components.fileDropTarget
+import ai.dokus.app.cashflow.components.isDragDropSupported
+import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.mutableStateListOf
+import kotlin.random.Random
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
 import ai.dokus.app.core.state.DokusState
-import ai.dokus.foundation.design.components.CashflowType
-import ai.dokus.foundation.design.components.CashflowTypeBadge
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
-import ai.dokus.foundation.design.components.common.Breakpoints
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
-import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.design.components.common.ShimmerLine
+import ai.dokus.foundation.design.local.LocalScreenSize
+import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
-import ai.dokus.foundation.design.local.LocalScreenSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -53,6 +58,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,18 +70,20 @@ import kotlinx.coroutines.flow.filter
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * The main cashflow screen showing financial documents table and VAT summary.
- * Responsive layout that adapts to mobile and desktop screen sizes.
+ * The main cashflow screen showing financial documents table with summary cards.
  *
- * On desktop, clicking "Add new document" opens a sidebar for uploading.
- * On mobile, it navigates to the AddDocumentScreen.
+ * Desktop layout matching Figma design:
+ * - Top row: VAT Summary | Business Health | Pending Documents
+ * - Sort dropdown
+ * - Full-width documents table
  */
 @Composable
 internal fun CashflowScreen(
     viewModel: CashflowViewModel = koinViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
+    val documentsState by viewModel.state.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val sortOption by viewModel.sortOption.collectAsState()
     val navController = LocalNavController.current
 
     // Sidebar and dialog state
@@ -83,15 +93,67 @@ internal fun CashflowScreen(
     val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
     val deletionHandles by viewModel.deletionHandles.collectAsState()
 
-    // Use LocalScreenSize for reliable screen size detection
+    // Individual section states (each loads independently)
+    val vatSummaryState by viewModel.vatSummaryState.collectAsState()
+    val businessHealthState by viewModel.businessHealthState.collectAsState()
+    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
+
     val isLargeScreen = LocalScreenSize.current.isLarge
+
+    // Space upload overlay state
+    var isSpaceOverlayVisible by remember { mutableStateOf(false) }
+    var isDraggingOverScreen by remember { mutableStateOf(false) }
+    val flyingDocuments = remember { mutableStateListOf<FlyingDocument>() }
+    var pendingDroppedFiles by remember { mutableStateOf<List<DroppedFile>>(emptyList()) }
 
     LaunchedEffect(viewModel) {
         viewModel.refresh()
     }
 
-    // Main content with sidebar overlay
-    Box(modifier = Modifier.fillMaxSize()) {
+    // Screen-level drop target - shows space overlay when user drags files
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(
+                if (isDragDropSupported && isLargeScreen) {
+                    Modifier.fileDropTarget(
+                        onDragStateChange = { dragging ->
+                            isDraggingOverScreen = dragging
+                            if (dragging) {
+                                isSpaceOverlayVisible = true
+                            } else if (flyingDocuments.isEmpty()) {
+                                // Only hide if no flying documents (user cancelled drag)
+                                isSpaceOverlayVisible = false
+                            }
+                        },
+                        onFilesDropped = { files ->
+                            if (files.isNotEmpty()) {
+                                // Store files for later upload
+                                pendingDroppedFiles = files
+
+                                // Create flying documents from screen center
+                                // (we'll calculate proper positions based on drop location)
+                                flyingDocuments.clear()
+                                val timestamp = kotlin.random.Random.nextLong()
+                                files.forEachIndexed { index, file ->
+                                    flyingDocuments.add(
+                                        FlyingDocument(
+                                            id = "${file.name}_${timestamp}_$index",
+                                            name = file.name,
+                                            startX = 0.5f, // Will be set relative to screen
+                                            startY = 0.8f, // Start from bottom area
+                                            targetAngle = Random.nextFloat() * 360f
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    )
+                } else {
+                    Modifier
+                }
+            )
+    ) {
         Scaffold(
             topBar = {
                 PTopAppBarSearchAction(
@@ -110,10 +172,8 @@ internal fun CashflowScreen(
                             iconPosition = PIconPosition.Trailing,
                             onClick = {
                                 if (isLargeScreen) {
-                                    // Desktop: Open sidebar
                                     viewModel.openSidebar()
                                 } else {
-                                    // Mobile: Navigate to AddDocumentScreen
                                     navController.navigateTo(CashFlowDestination.AddDocument)
                                 }
                             }
@@ -123,31 +183,21 @@ internal fun CashflowScreen(
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
-            // Main content based on state
-            when (val currentState = state) {
-                is DokusState.Loading -> {
-                    LoadingContent(contentPadding)
-                }
-
-                is DokusState.Success -> {
-                    SuccessContent(
-                        paginationState = currentState.data,
-                        vatSummaryData = VatSummaryData.empty,
-                        contentPadding = contentPadding,
-                        onDocumentClick = { document ->
-                            // TODO: Navigate to document detail
-                        },
-                        onMoreClick = { document ->
-                            // TODO: Show context menu
-                        },
-                        onLoadMore = viewModel::loadNextPage
-                    )
-                }
-
-                is DokusState.Error -> {
-                    DokusErrorContent(currentState.exception, currentState.retryHandler)
-                }
-            }
+            // Always show the screen structure - each section handles its own loading state
+            CashflowContent(
+                documentsState = documentsState,
+                vatSummaryState = vatSummaryState,
+                businessHealthState = businessHealthState,
+                pendingDocumentsState = pendingDocumentsState,
+                sortOption = sortOption,
+                contentPadding = contentPadding,
+                onSortOptionSelected = viewModel::updateSortOption,
+                onDocumentClick = { /* TODO: Navigate to document detail */ },
+                onMoreClick = { /* TODO: Show context menu */ },
+                onLoadMore = viewModel::loadNextPage,
+                onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                onPendingLoadMore = viewModel::pendingDocumentsLoadMore
+            )
         }
 
         // Upload sidebar (desktop only)
@@ -166,223 +216,59 @@ internal fun CashflowScreen(
             isVisible = isQrDialogOpen,
             onDismiss = viewModel::hideQrDialog
         )
+
+        // Space upload overlay (futuristic drag-and-drop effect)
+        if (isDragDropSupported && isLargeScreen) {
+            SpaceUploadOverlay(
+                isVisible = isSpaceOverlayVisible,
+                isDragging = isDraggingOverScreen,
+                flyingDocuments = flyingDocuments.toList(),
+                onAnimationComplete = {
+                    // Upload the files after animation
+                    if (pendingDroppedFiles.isNotEmpty()) {
+                        viewModel.provideUploadManager().enqueueFiles(pendingDroppedFiles)
+                        pendingDroppedFiles = emptyList()
+                    }
+
+                    // Clear flying documents and hide overlay
+                    flyingDocuments.clear()
+                    isSpaceOverlayVisible = false
+
+                    // Open sidebar to show uploaded files
+                    viewModel.openSidebar()
+                }
+            )
+        }
     }
 }
 
 /**
- * Loading state content with a centered progress indicator.
+ * Main cashflow content with Figma-matching layout.
+ * Each section handles its own loading/error state independently.
  */
 @Composable
-private fun LoadingContent(
-    contentPadding: PaddingValues
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-/**
- * Success state content with responsive layout for financial documents and VAT summary.
- * Adapts layout based on screen width.
- */
-@Composable
-private fun SuccessContent(
-    paginationState: PaginationState<FinancialDocumentDto>,
-    vatSummaryData: VatSummaryData,
+private fun CashflowContent(
+    documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
+    vatSummaryState: DokusState<VatSummaryData>,
+    businessHealthState: DokusState<BusinessHealthData>,
+    pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
+    sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
+    onSortOptionSelected: (DocumentSortOption) -> Unit,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
-    onLoadMore: () -> Unit
-) {
-    // Use BoxWithConstraints to determine layout based on screen size
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding)
-    ) {
-        val isLargeScreen = maxWidth >= Breakpoints.LARGE.dp
-
-        if (isLargeScreen) {
-            // Desktop layout: Two columns with table on left, VAT summary on right
-            DesktopLayout(
-                paginationState = paginationState,
-                vatSummaryData = vatSummaryData,
-                onDocumentClick = onDocumentClick,
-                onMoreClick = onMoreClick,
-                onLoadMore = onLoadMore
-            )
-        } else {
-            // Mobile layout: Single column with scrollable content
-            MobileLayout(
-                paginationState = paginationState,
-                vatSummaryData = vatSummaryData,
-                onDocumentClick = onDocumentClick,
-                onMoreClick = onMoreClick,
-                onLoadMore = onLoadMore
-            )
-        }
-    }
-}
-
-/**
- * Desktop layout with a two-column structure.
- * Left: Financial documents table
- * Right: VAT summary card (sticky)
- */
-@Composable
-private fun DesktopLayout(
-    paginationState: PaginationState<FinancialDocumentDto>,
-    vatSummaryData: VatSummaryData,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
-    onMoreClick: (FinancialDocumentDto) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
+    onPendingLoadMore: () -> Unit
 ) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(listState, paginationState.hasMorePages, paginationState.isLoadingMore) {
-        snapshotFlow {
-            val info = listState.layoutInfo
-            (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
-        }
-            .distinctUntilChanged()
-            .filter { (last, total) ->
-                (last + 1) > (total - 5) &&
-                        paginationState.hasMorePages &&
-                        !paginationState.isLoadingMore
-            }
-            .collect { onLoadMore() }
-    }
+    // Extract pagination state for infinite scroll (if available)
+    val paginationState = (documentsState as? DokusState.Success)?.data
 
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        // Left column: Financial documents table
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            state = listState
-        ) {
-            // Section title
-            item {
-                Text(
-                    text = "Financial Documents",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            // Documents needing confirmation section
-            val pendingDocuments = paginationState.data.needingConfirmation()
-            if (pendingDocuments.isNotEmpty()) {
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Needs Confirmation",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        FinancialDocumentTable(
-                            documents = pendingDocuments,
-                            onDocumentClick = onDocumentClick,
-                            onMoreClick = onMoreClick,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-
-            // All documents section
-            item {
-                Text(
-                    text = "All Documents",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            item {
-                if (paginationState.data.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 48.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No financial documents yet",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    FinancialDocumentTable(
-                        documents = paginationState.data,
-                        onDocumentClick = onDocumentClick,
-                        onMoreClick = onMoreClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-
-            if (paginationState.isLoadingMore) {
-                item {
-                    LoadingMoreItem()
-                }
-            }
-
-            // Add some bottom padding
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
-
-        // Right column: VAT Summary Card (fixed width)
-        Box(
-            modifier = Modifier.width(360.dp)
-        ) {
-            VatSummaryCard(
-                vatAmount = vatSummaryData.vatAmount,
-                netAmount = vatSummaryData.netAmount,
-                predictedNetAmount = vatSummaryData.predictedNetAmount,
-                quarterInfo = vatSummaryData.quarterInfo,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-/**
- * Mobile layout with single-column scrollable content.
- * Stacks VAT summary above the document table.
- */
-@Composable
-private fun MobileLayout(
-    paginationState: PaginationState<FinancialDocumentDto>,
-    vatSummaryData: VatSummaryData,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
-    onMoreClick: (FinancialDocumentDto) -> Unit,
-    onLoadMore: () -> Unit
-) {
-    val listState = rememberLazyListState()
-
-    LaunchedEffect(listState, paginationState.hasMorePages, paginationState.isLoadingMore) {
+    // Infinite scroll trigger
+    LaunchedEffect(listState, paginationState?.hasMorePages, paginationState?.isLoadingMore) {
+        if (paginationState == null) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
@@ -397,103 +283,225 @@ private fun MobileLayout(
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+        contentPadding = PaddingValues(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
         state = listState
     ) {
-        // VAT Summary Card at top
+        // Top row: Summary cards (each handles its own loading state)
         item {
-            VatSummaryCard(
-                vatAmount = vatSummaryData.vatAmount,
-                netAmount = vatSummaryData.netAmount,
-                predictedNetAmount = vatSummaryData.predictedNetAmount,
-                quarterInfo = vatSummaryData.quarterInfo,
-                modifier = Modifier.fillMaxWidth()
+            SummaryCardsRow(
+                vatSummaryState = vatSummaryState,
+                businessHealthState = businessHealthState,
+                pendingDocumentsState = pendingDocumentsState,
+                onPendingDocumentClick = onPendingDocumentClick,
+                onPendingLoadMore = onPendingLoadMore
             )
         }
 
-        // Section title
+        // Sort dropdown row
         item {
-            Text(
-                text = "Financial Documents",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(vertical = 8.dp)
+            SortDropdown(
+                selectedOption = sortOption,
+                onOptionSelected = onSortOptionSelected
             )
         }
 
-        // Documents needing confirmation section
-        val pendingDocuments = paginationState.data.needingConfirmation()
-        if (pendingDocuments.isNotEmpty()) {
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Needs Confirmation",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    // On mobile, show a more compact list view
-                    MobileDocumentList(
-                        documents = pendingDocuments,
-                        onDocumentClick = onDocumentClick
-                    )
-                }
-            }
-        }
-
-        // All documents section
+        // Documents table (handles its own loading/error state)
         item {
-            Text(
-                text = "All Documents",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 8.dp)
+            DocumentsTableSection(
+                state = documentsState,
+                onDocumentClick = onDocumentClick,
+                onMoreClick = onMoreClick
             )
         }
 
-        if (paginationState.data.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No financial documents yet",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            items(paginationState.data) { document ->
-                MobileDocumentCard(
-                    document = document,
-                    onClick = { onDocumentClick(document) }
-                )
-            }
-        }
-
-        if (paginationState.isLoadingMore) {
-            item {
-                LoadingMoreItem()
-            }
-        }
-
-        // Add bottom padding for navigation bar
+        // Bottom padding
         item {
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
+/**
+ * Top row with summary cards matching Figma layout:
+ * Left column: VAT Summary (top) + Business Health (bottom)
+ * Right side: Cash flow (pending documents) card
+ * Each card handles its own loading/error state independently.
+ */
 @Composable
-private fun LoadingMoreItem() {
+private fun SummaryCardsRow(
+    vatSummaryState: DokusState<VatSummaryData>,
+    businessHealthState: DokusState<BusinessHealthData>,
+    pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
+    onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
+    onPendingLoadMore: () -> Unit
+) {
+    // Fixed height for the row - LazyColumn doesn't support intrinsic measurements
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(340.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Left column: VAT Summary + Business Health stacked vertically
+        Column(
+            modifier = Modifier
+                .weight(3f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // VAT Summary Card at top (handles its own loading/error)
+            VatSummaryCard(
+                state = vatSummaryState,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Business Health Card below - fills remaining space (handles its own loading/error)
+            BusinessHealthCard(
+                state = businessHealthState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 120.dp)
+                    .weight(1f)
+            )
+        }
+
+        // Right side: Pending Documents Card (handles its own loading/error)
+        PendingDocumentsCard(
+            state = pendingDocumentsState,
+            onDocumentClick = onPendingDocumentClick,
+            onLoadMore = onPendingLoadMore,
+            modifier = Modifier
+                .weight(2f)
+                .fillMaxHeight()
+        )
+    }
+}
+
+/**
+ * Documents table section with its own loading/error handling.
+ */
+@Composable
+private fun DocumentsTableSection(
+    state: DokusState<PaginationState<FinancialDocumentDto>>,
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    onMoreClick: (FinancialDocumentDto) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        when (state) {
+            is DokusState.Loading, is DokusState.Idle -> {
+                // Show loading skeleton for documents table
+                DocumentsTableSkeleton()
+            }
+
+            is DokusState.Success -> {
+                val paginationState = state.data
+                if (paginationState.data.isEmpty()) {
+                    EmptyDocumentsState()
+                } else {
+                    FinancialDocumentTable(
+                        documents = paginationState.data,
+                        onDocumentClick = onDocumentClick,
+                        onMoreClick = onMoreClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                if (paginationState.isLoadingMore) {
+                    LoadingMoreIndicator()
+                }
+            }
+
+            is DokusState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    DokusErrorContent(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Skeleton for documents table during loading.
+ */
+@Composable
+private fun DocumentsTableSkeleton() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Table header skeleton
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            repeat(5) {
+                ShimmerLine(
+                    modifier = Modifier.weight(1f),
+                    height = 14.dp
+                )
+            }
+        }
+
+        // Table rows skeleton
+        repeat(5) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                repeat(5) {
+                    ShimmerLine(
+                        modifier = Modifier.weight(1f),
+                        height = 16.dp
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Empty state when no documents exist.
+ */
+@Composable
+private fun EmptyDocumentsState() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "No financial documents yet",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Loading indicator for infinite scroll.
+ */
+@Composable
+private fun LoadingMoreIndicator() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -502,128 +510,5 @@ private fun LoadingMoreItem() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         CircularProgressIndicator()
-    }
-}
-
-/**
- * Compact list view for mobile showing document items.
- */
-@Composable
-private fun MobileDocumentList(
-    documents: List<FinancialDocumentDto>,
-    onDocumentClick: (FinancialDocumentDto) -> Unit
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        documents.forEach { document ->
-            MobileDocumentCard(
-                document = document,
-                onClick = { onDocumentClick(document) }
-            )
-        }
-    }
-}
-
-/**
- * Compact card for mobile showing a single document.
- */
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-@Composable
-private fun MobileDocumentCard(
-    document: FinancialDocumentDto,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Left side: Document info
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Alert indicator if needed
-                    val needsAlert = when (document) {
-                        is FinancialDocumentDto.InvoiceDto -> document.status == InvoiceStatus.Sent || document.status == InvoiceStatus.Overdue
-                        is FinancialDocumentDto.ExpenseDto -> false
-                        is FinancialDocumentDto.BillDto -> false
-                    }
-                    if (needsAlert) {
-                        Box(
-                            modifier = Modifier
-                                .width(6.dp)
-                                .height(6.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.error,
-                                    shape = CircleShape
-                                )
-                        )
-                    }
-
-                    val documentNumber = when (document) {
-                        is FinancialDocumentDto.InvoiceDto -> document.invoiceNumber.toString()
-                        is FinancialDocumentDto.ExpenseDto -> "EXP-${document.id.value}"
-                        is FinancialDocumentDto.BillDto -> document.invoiceNumber ?: "BILL-${document.id.value}"
-                    }
-                    Text(
-                        text = documentNumber,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                // Contact/merchant name
-                val contactName = when (document) {
-                    is FinancialDocumentDto.InvoiceDto -> "Name Surname" // TODO: Get from client
-                    is FinancialDocumentDto.ExpenseDto -> document.merchant
-                    is FinancialDocumentDto.BillDto -> document.supplierName
-                }
-                Text(
-                    text = contactName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // Amount and date
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "€${document.amount.value}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = document.date.toString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Right side: Type badge
-            CashflowTypeBadge(
-                type = when (document) {
-                    is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
-                    is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
-                    is FinancialDocumentDto.BillDto -> CashflowType.CashOut
-                }
-            )
-        }
     }
 }
