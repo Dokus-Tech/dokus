@@ -381,3 +381,120 @@ private fun FinancialDocumentTableRow(
         }
     }
 }
+
+/**
+ * Mobile-friendly list component for displaying financial documents.
+ * Shows simplified rows with Invoice #, Amount, and Type.
+ *
+ * @param documents List of financial documents to display
+ * @param onDocumentClick Callback when a document row is clicked
+ * @param modifier Optional modifier for the list
+ */
+@Composable
+fun FinancialDocumentList(
+    documents: List<FinancialDocumentDto>,
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(12.dp)
+                )
+        ) {
+            documents.forEachIndexed { index, document ->
+                FinancialDocumentListItem(
+                    row = document.toTableRow(),
+                    onClick = { onDocumentClick(document) }
+                )
+
+                if (index < documents.size - 1) {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 1.dp
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Mobile-friendly list item showing simplified document info.
+ * Displays: Invoice # | Amount | Type badge
+ */
+@Composable
+private fun FinancialDocumentListItem(
+    row: FinancialDocumentRow,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Left side: Invoice number with optional alert
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            if (row.hasAlert) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error)
+                )
+            }
+
+            Text(
+                text = row.invoiceNumber,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Amount
+        Text(
+            text = row.amount,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Type badge
+        CashflowTypeBadge(type = row.cashflowType)
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Chevron
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = "View details",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
