@@ -15,8 +15,8 @@ import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.PeppolId
+import ai.dokus.foundation.domain.ids.TenantId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
@@ -32,6 +32,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface FinancialDocumentDto {
+    val documentId: DocumentId?
     val tenantId: TenantId
     val date: LocalDate
     val amount: Money
@@ -65,7 +66,7 @@ sealed interface FinancialDocumentDto {
         val peppolId: PeppolId? = null,
         val peppolSentAt: LocalDateTime? = null,
         val peppolStatus: PeppolStatus? = null,
-        val documentId: DocumentId? = null,
+        override val documentId: DocumentId? = null,
         val paymentLink: String? = null,
         val paymentLinkExpiresAt: LocalDateTime? = null,
         val paidAt: LocalDateTime? = null,
@@ -93,7 +94,7 @@ sealed interface FinancialDocumentDto {
         val vatRate: VatRate? = null,
         val category: ExpenseCategory,
         val description: String? = null,
-        val documentId: DocumentId? = null,
+        override val documentId: DocumentId? = null,
         val isDeductible: Boolean = true,
         val deductiblePercentage: Percentage = Percentage.FULL,
         val paymentMethod: PaymentMethod? = null,
@@ -124,7 +125,7 @@ sealed interface FinancialDocumentDto {
         val status: BillStatus,
         val category: ExpenseCategory,
         val description: String? = null,
-        val documentId: DocumentId? = null,
+        override val documentId: DocumentId? = null,
         val paidAt: LocalDateTime? = null,
         val paidAmount: Money? = null,
         val paymentMethod: PaymentMethod? = null,
@@ -186,4 +187,5 @@ fun FinancialDocumentDto.isCashIn(): Boolean = this is FinancialDocumentDto.Invo
 /**
  * Extension function to check if document is cash-out (money going out).
  */
-fun FinancialDocumentDto.isCashOut(): Boolean = this is FinancialDocumentDto.ExpenseDto || this is FinancialDocumentDto.BillDto
+fun FinancialDocumentDto.isCashOut(): Boolean =
+    this is FinancialDocumentDto.ExpenseDto || this is FinancialDocumentDto.BillDto

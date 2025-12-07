@@ -27,6 +27,7 @@ internal object AppMainModule : AppModule {
             iconRes = Res.drawable.chart_bar_trend_up,
             destination = HomeDestination.Dashboard,
             priority = HomeItemPriority.High,
+            showTopBar = false
         ),
         HomeItem(
             titleRes = Res.string.home_settings,
