@@ -6,6 +6,7 @@ import ai.dokus.app.cashflow.components.BusinessHealthData
 import ai.dokus.app.cashflow.components.DocumentSortOption
 import ai.dokus.app.cashflow.components.DocumentUploadSidebar
 import ai.dokus.app.cashflow.components.DroppedFile
+import ai.dokus.app.cashflow.components.FinancialDocumentList
 import ai.dokus.app.cashflow.components.FinancialDocumentTable
 import ai.dokus.app.cashflow.components.FlyingDocument
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
@@ -15,7 +16,11 @@ import ai.dokus.app.cashflow.components.VatSummaryCard
 import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.components.fileDropTarget
 import ai.dokus.app.cashflow.components.isDragDropSupported
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.runtime.mutableStateListOf
 import kotlin.random.Random
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
@@ -45,12 +50,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -60,11 +69,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Search
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.koin.compose.viewmodel.koinViewModel
@@ -100,6 +112,10 @@ internal fun CashflowScreen(
 
     val isLargeScreen = LocalScreenSize.current.isLarge
 
+    // Search expansion state for mobile
+    var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
+    val searchExpanded = isLargeScreen || isSearchExpanded
+
     // Space upload overlay state
     var isSpaceOverlayVisible by remember { mutableStateOf(false) }
     var isDraggingOverScreen by remember { mutableStateOf(false) }
@@ -108,6 +124,11 @@ internal fun CashflowScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.refresh()
+    }
+
+    // Reset mobile search expansion when rotating to large screen (desktop)
+    LaunchedEffect(isLargeScreen) {
+        if (isLargeScreen) isSearchExpanded = false
     }
 
     // Screen-level drop target - shows space overlay when user drags files
@@ -158,11 +179,37 @@ internal fun CashflowScreen(
             topBar = {
                 PTopAppBarSearchAction(
                     searchContent = {
-                        PSearchFieldCompact(
-                            value = searchQuery,
-                            onValueChange = viewModel::updateSearchQuery,
-                            placeholder = "Search..."
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Show search icon button on mobile when search is collapsed
+                            if (!isLargeScreen && !searchExpanded) {
+                                IconButton(
+                                    onClick = { isSearchExpanded = true },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = FeatherIcons.Search,
+                                        contentDescription = "Search"
+                                    )
+                                }
+                            }
+
+                            // Animated search field
+                            AnimatedVisibility(
+                                visible = searchExpanded,
+                                enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+                                exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
+                            ) {
+                                PSearchFieldCompact(
+                                    value = searchQuery,
+                                    onValueChange = viewModel::updateSearchQuery,
+                                    placeholder = "Search...",
+                                    modifier = if (isLargeScreen) Modifier else Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
                     },
                     actions = {
                         PButton(
@@ -183,21 +230,33 @@ internal fun CashflowScreen(
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
-            // Always show the screen structure - each section handles its own loading state
-            CashflowContent(
-                documentsState = documentsState,
-                vatSummaryState = vatSummaryState,
-                businessHealthState = businessHealthState,
-                pendingDocumentsState = pendingDocumentsState,
-                sortOption = sortOption,
-                contentPadding = contentPadding,
-                onSortOptionSelected = viewModel::updateSortOption,
-                onDocumentClick = { /* TODO: Navigate to document detail */ },
-                onMoreClick = { /* TODO: Show context menu */ },
-                onLoadMore = viewModel::loadNextPage,
-                onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
-                onPendingLoadMore = viewModel::pendingDocumentsLoadMore
-            )
+            if (isLargeScreen) {
+                // Desktop layout with summary cards
+                DesktopCashflowContent(
+                    documentsState = documentsState,
+                    vatSummaryState = vatSummaryState,
+                    businessHealthState = businessHealthState,
+                    pendingDocumentsState = pendingDocumentsState,
+                    sortOption = sortOption,
+                    contentPadding = contentPadding,
+                    onSortOptionSelected = viewModel::updateSortOption,
+                    onDocumentClick = { /* TODO: Navigate to document detail */ },
+                    onMoreClick = { /* TODO: Show context menu */ },
+                    onLoadMore = viewModel::loadNextPage,
+                    onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                    onPendingLoadMore = viewModel::pendingDocumentsLoadMore
+                )
+            } else {
+                // Mobile layout - only documents list
+                MobileCashflowContent(
+                    documentsState = documentsState,
+                    sortOption = sortOption,
+                    contentPadding = contentPadding,
+                    onSortOptionSelected = viewModel::updateSortOption,
+                    onDocumentClick = { /* TODO: Navigate to document detail */ },
+                    onLoadMore = viewModel::loadNextPage
+                )
+            }
         }
 
         // Upload sidebar (desktop only)
@@ -243,11 +302,12 @@ internal fun CashflowScreen(
 }
 
 /**
- * Main cashflow content with Figma-matching layout.
+ * Desktop cashflow content with Figma-matching layout.
+ * Shows summary cards (VAT, Business Health, Pending Documents) + documents table.
  * Each section handles its own loading/error state independently.
  */
 @Composable
-private fun CashflowContent(
+private fun DesktopCashflowContent(
     documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
     vatSummaryState: DokusState<VatSummaryData>,
     businessHealthState: DokusState<BusinessHealthData>,
@@ -321,6 +381,158 @@ private fun CashflowContent(
         // Bottom padding
         item {
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+/**
+ * Mobile cashflow content showing only documents list.
+ * No summary cards - those are displayed in the Dashboard on mobile.
+ */
+@Composable
+private fun MobileCashflowContent(
+    documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
+    sortOption: DocumentSortOption,
+    contentPadding: PaddingValues,
+    onSortOptionSelected: (DocumentSortOption) -> Unit,
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    onLoadMore: () -> Unit
+) {
+    val listState = rememberLazyListState()
+
+    // Extract pagination state for infinite scroll
+    val paginationState = (documentsState as? DokusState.Success)?.data
+
+    // Infinite scroll trigger
+    LaunchedEffect(listState, paginationState?.hasMorePages, paginationState?.isLoadingMore) {
+        if (paginationState == null) return@LaunchedEffect
+        snapshotFlow {
+            val info = listState.layoutInfo
+            (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
+        }
+            .distinctUntilChanged()
+            .filter { (last, total) ->
+                (last + 1) > (total - 5) &&
+                        paginationState.hasMorePages &&
+                        !paginationState.isLoadingMore
+            }
+            .collect { onLoadMore() }
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        state = listState
+    ) {
+        // Sort dropdown
+        item {
+            SortDropdown(
+                selectedOption = sortOption,
+                onOptionSelected = onSortOptionSelected
+            )
+        }
+
+        // Documents list section
+        item {
+            MobileDocumentsSection(
+                state = documentsState,
+                onDocumentClick = onDocumentClick
+            )
+        }
+
+        // Bottom padding
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+/**
+ * Mobile documents list section with its own loading/error handling.
+ */
+@Composable
+private fun MobileDocumentsSection(
+    state: DokusState<PaginationState<FinancialDocumentDto>>,
+    onDocumentClick: (FinancialDocumentDto) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        when (state) {
+            is DokusState.Loading, is DokusState.Idle -> {
+                MobileDocumentsListSkeleton()
+            }
+
+            is DokusState.Success -> {
+                val paginationState = state.data
+                if (paginationState.data.isEmpty()) {
+                    EmptyDocumentsState()
+                } else {
+                    FinancialDocumentList(
+                        documents = paginationState.data,
+                        onDocumentClick = onDocumentClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                if (paginationState.isLoadingMore) {
+                    LoadingMoreIndicator()
+                }
+            }
+
+            is DokusState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    DokusErrorContent(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Skeleton for mobile documents list during loading.
+ */
+@Composable
+private fun MobileDocumentsListSkeleton() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        repeat(6) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShimmerLine(
+                    modifier = Modifier.weight(1f),
+                    height = 16.dp
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                ShimmerLine(
+                    modifier = Modifier.width(60.dp),
+                    height = 16.dp
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                ShimmerLine(
+                    modifier = Modifier.width(70.dp),
+                    height = 22.dp
+                )
+            }
         }
     }
 }

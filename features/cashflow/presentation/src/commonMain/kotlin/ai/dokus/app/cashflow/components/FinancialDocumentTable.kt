@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.components
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +44,7 @@ import kotlinx.datetime.LocalDate
  * This maps from FinancialDocumentDto domain model to UI-specific structure.
  */
 data class FinancialDocumentRow(
-    val id: String,
+    val id: DocumentId?,
     val invoiceNumber: String,
     val contactName: String,
     val contactEmail: String,
@@ -73,12 +75,6 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
         is FinancialDocumentDto.InvoiceDto -> "mailname@email.com" // TODO: Get from client
         is FinancialDocumentDto.ExpenseDto -> ""
         is FinancialDocumentDto.BillDto -> ""
-    }
-
-    val documentId = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> id.value.toString()
-        is FinancialDocumentDto.ExpenseDto -> id.value.toString()
-        is FinancialDocumentDto.BillDto -> id.value.toString()
     }
 
     val documentNumber = when (this) {
@@ -163,18 +159,20 @@ fun FinancialDocumentTable(
 
             // Document Rows
             documents.forEachIndexed { index, document ->
-                FinancialDocumentTableRow(
-                    row = document.toTableRow(),
-                    onClick = { onDocumentClick(document) },
-                    onMoreClick = { onMoreClick(document) }
-                )
-
-                // Add divider between rows (not after the last item)
-                if (index < documents.size - 1) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        thickness = 1.dp
+                key(document.documentId) {
+                    FinancialDocumentTableRow(
+                        row = document.toTableRow(),
+                        onClick = { onDocumentClick(document) },
+                        onMoreClick = { onMoreClick(document) }
                     )
+
+                    // Add divider between rows (not after the last item)
+                    if (index < documents.size - 1) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            thickness = 1.dp
+                        )
+                    }
                 }
             }
         }
@@ -379,5 +377,124 @@ private fun FinancialDocumentTableRow(
                 )
             }
         }
+    }
+}
+
+/**
+ * Mobile-friendly list component for displaying financial documents.
+ * Shows simplified rows with Invoice #, Amount, and Type.
+ *
+ * @param documents List of financial documents to display
+ * @param onDocumentClick Callback when a document row is clicked
+ * @param modifier Optional modifier for the list
+ */
+@Composable
+fun FinancialDocumentList(
+    documents: List<FinancialDocumentDto>,
+    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(12.dp)
+                )
+        ) {
+            documents.forEachIndexed { index, document ->
+                key(document.documentId) {
+                    FinancialDocumentListItem(
+                        row = document.toTableRow(),
+                        onClick = { onDocumentClick(document) }
+                    )
+
+                    if (index < documents.size - 1) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            thickness = 1.dp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Mobile-friendly list item showing simplified document info.
+ * Displays: Invoice # | Amount | Type badge
+ */
+@Composable
+private fun FinancialDocumentListItem(
+    row: FinancialDocumentRow,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Left side: Invoice number with optional alert
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            if (row.hasAlert) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error)
+                )
+            }
+
+            Text(
+                text = row.invoiceNumber,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Amount
+        Text(
+            text = row.amount,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Type badge
+        CashflowTypeBadge(type = row.cashflowType)
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Chevron
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = "View details",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
