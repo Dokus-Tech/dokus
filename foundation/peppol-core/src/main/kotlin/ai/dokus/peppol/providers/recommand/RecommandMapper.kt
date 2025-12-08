@@ -1,0 +1,242 @@
+package ai.dokus.peppol.providers.recommand
+
+import ai.dokus.foundation.domain.model.RecommandDocumentsResponse
+import ai.dokus.foundation.domain.model.RecommandInboxDocument
+import ai.dokus.foundation.domain.model.RecommandInvoiceDocument
+import ai.dokus.foundation.domain.model.RecommandLineItem
+import ai.dokus.foundation.domain.model.RecommandParty
+import ai.dokus.foundation.domain.model.RecommandPaymentMeans
+import ai.dokus.foundation.domain.model.RecommandReceivedDocument
+import ai.dokus.foundation.domain.model.RecommandSendRequest
+import ai.dokus.foundation.domain.model.RecommandSendResponse
+import ai.dokus.foundation.domain.model.RecommandVerifyResponse
+import ai.dokus.peppol.model.PeppolDirection
+import ai.dokus.peppol.model.PeppolDocumentList
+import ai.dokus.peppol.model.PeppolDocumentSummary
+import ai.dokus.peppol.model.PeppolError
+import ai.dokus.peppol.model.PeppolInboxItem
+import ai.dokus.peppol.model.PeppolMonetaryTotals
+import ai.dokus.peppol.model.PeppolParty
+import ai.dokus.peppol.model.PeppolReceivedDocument
+import ai.dokus.peppol.model.PeppolReceivedLineItem
+import ai.dokus.peppol.model.PeppolSendRequest
+import ai.dokus.peppol.model.PeppolSendResponse
+import ai.dokus.peppol.model.PeppolTaxSubtotal
+import ai.dokus.peppol.model.PeppolTaxTotal
+import ai.dokus.peppol.model.PeppolVerifyResponse
+
+/**
+ * Maps between provider-agnostic Peppol models and Recommand-specific models.
+ */
+object RecommandMapper {
+
+    // ========================================================================
+    // SEND REQUEST MAPPING
+    // ========================================================================
+
+    /**
+     * Convert generic Peppol send request to Recommand-specific format.
+     */
+    fun toRecommandRequest(request: PeppolSendRequest): RecommandSendRequest {
+        val invoice = request.invoice
+
+        return RecommandSendRequest(
+            recipient = request.recipientPeppolId,
+            documentType = "invoice",
+            document = RecommandInvoiceDocument(
+                invoiceNumber = invoice.invoiceNumber,
+                issueDate = invoice.issueDate.toString(),
+                dueDate = invoice.dueDate.toString(),
+                buyer = toRecommandParty(invoice.buyer),
+                seller = toRecommandParty(invoice.seller),
+                lineItems = invoice.lineItems.map { toRecommandLineItem(it) },
+                note = invoice.note,
+                buyerReference = invoice.buyer.companyNumber ?: invoice.buyer.vatNumber,
+                paymentMeans = invoice.paymentInfo?.let {
+                    RecommandPaymentMeans(
+                        iban = it.iban,
+                        bic = it.bic,
+                        paymentMeansCode = it.paymentMeansCode,
+                        paymentId = it.paymentId
+                    )
+                },
+                documentCurrencyCode = invoice.currencyCode
+            )
+        )
+    }
+
+    private fun toRecommandParty(party: PeppolParty): RecommandParty {
+        return RecommandParty(
+            vatNumber = party.vatNumber,
+            name = party.name,
+            streetName = party.streetName,
+            cityName = party.cityName,
+            postalZone = party.postalZone,
+            countryCode = party.countryCode,
+            contactEmail = party.contactEmail,
+            contactName = party.contactName
+        )
+    }
+
+    private fun toRecommandLineItem(item: ai.dokus.peppol.model.PeppolLineItem): RecommandLineItem {
+        return RecommandLineItem(
+            id = item.id,
+            name = item.name,
+            description = item.description,
+            quantity = item.quantity,
+            unitCode = item.unitCode,
+            unitPrice = item.unitPrice,
+            lineTotal = item.lineTotal,
+            taxCategory = item.taxCategory,
+            taxPercent = item.taxPercent
+        )
+    }
+
+    // ========================================================================
+    // SEND RESPONSE MAPPING
+    // ========================================================================
+
+    /**
+     * Convert Recommand response to generic Peppol format.
+     */
+    fun fromRecommandResponse(response: RecommandSendResponse): PeppolSendResponse {
+        return PeppolSendResponse(
+            success = response.success,
+            externalDocumentId = response.documentId,
+            errorMessage = if (!response.success) {
+                response.errors?.joinToString("; ") { it.message } ?: response.message
+            } else null,
+            errors = response.errors?.map {
+                PeppolError(
+                    code = it.code,
+                    message = it.message,
+                    field = it.field
+                )
+            } ?: emptyList()
+        )
+    }
+
+    // ========================================================================
+    // VERIFY RESPONSE MAPPING
+    // ========================================================================
+
+    fun fromRecommandVerifyResponse(response: RecommandVerifyResponse): PeppolVerifyResponse {
+        return PeppolVerifyResponse(
+            registered = response.registered,
+            participantId = response.participantId,
+            name = response.name,
+            documentTypes = response.documentTypes ?: emptyList()
+        )
+    }
+
+    // ========================================================================
+    // INBOX MAPPING
+    // ========================================================================
+
+    fun fromRecommandInboxItem(item: RecommandInboxDocument): PeppolInboxItem {
+        return PeppolInboxItem(
+            id = item.id,
+            documentType = item.documentType,
+            senderPeppolId = item.sender,
+            receiverPeppolId = item.receiver,
+            receivedAt = item.receivedAt,
+            isRead = item.isRead
+        )
+    }
+
+    fun fromRecommandDocument(
+        item: RecommandInboxDocument,
+        document: RecommandReceivedDocument
+    ): PeppolReceivedDocument {
+        return PeppolReceivedDocument(
+            id = item.id,
+            documentType = item.documentType,
+            senderPeppolId = item.sender,
+            invoiceNumber = document.invoiceNumber,
+            issueDate = document.issueDate,
+            dueDate = document.dueDate,
+            seller = document.seller?.let { fromRecommandParty(it) },
+            buyer = document.buyer?.let { fromRecommandParty(it) },
+            lineItems = document.lineItems?.map { fromRecommandReceivedLineItem(it) },
+            totals = document.legalMonetaryTotal?.let {
+                PeppolMonetaryTotals(
+                    lineExtensionAmount = it.lineExtensionAmount,
+                    taxExclusiveAmount = it.taxExclusiveAmount,
+                    taxInclusiveAmount = it.taxInclusiveAmount,
+                    payableAmount = it.payableAmount
+                )
+            },
+            taxTotal = document.taxTotal?.let {
+                PeppolTaxTotal(
+                    taxAmount = it.taxAmount,
+                    taxSubtotals = it.taxSubtotals?.map { sub ->
+                        PeppolTaxSubtotal(
+                            taxableAmount = sub.taxableAmount,
+                            taxAmount = sub.taxAmount,
+                            taxCategory = sub.taxCategory,
+                            taxPercent = sub.taxPercent
+                        )
+                    }
+                )
+            },
+            note = document.note,
+            currencyCode = document.documentCurrencyCode
+        )
+    }
+
+    private fun fromRecommandParty(party: RecommandParty): PeppolParty {
+        return PeppolParty(
+            name = party.name,
+            vatNumber = party.vatNumber,
+            streetName = party.streetName,
+            cityName = party.cityName,
+            postalZone = party.postalZone,
+            countryCode = party.countryCode,
+            contactEmail = party.contactEmail,
+            contactName = party.contactName
+        )
+    }
+
+    private fun fromRecommandReceivedLineItem(
+        item: ai.dokus.foundation.domain.model.RecommandReceivedLineItem
+    ): PeppolReceivedLineItem {
+        return PeppolReceivedLineItem(
+            id = item.id,
+            name = item.name,
+            description = item.description,
+            quantity = item.quantity,
+            unitCode = item.unitCode,
+            unitPrice = item.unitPrice,
+            lineTotal = item.lineExtensionAmount,
+            taxCategory = item.taxCategory,
+            taxPercent = item.taxPercent
+        )
+    }
+
+    // ========================================================================
+    // DOCUMENT LIST MAPPING
+    // ========================================================================
+
+    fun fromRecommandDocumentsResponse(response: RecommandDocumentsResponse): PeppolDocumentList {
+        return PeppolDocumentList(
+            documents = response.documents.map { doc ->
+                PeppolDocumentSummary(
+                    id = doc.id,
+                    documentType = doc.documentType,
+                    direction = when (doc.direction.lowercase()) {
+                        "sent", "outbound" -> PeppolDirection.OUTBOUND
+                        else -> PeppolDirection.INBOUND
+                    },
+                    counterpartyPeppolId = doc.counterparty,
+                    status = doc.status,
+                    createdAt = doc.createdAt,
+                    invoiceNumber = doc.invoiceNumber,
+                    totalAmount = doc.totalAmount,
+                    currency = doc.currency
+                )
+            },
+            total = response.total,
+            hasMore = response.hasMore
+        )
+    }
+}

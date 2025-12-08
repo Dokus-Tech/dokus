@@ -42,6 +42,7 @@ include(":foundation:navigation")
 include(":foundation:ktor-common")
 include(":foundation:messaging")
 include(":foundation:database")
+include(":foundation:peppol-core")
 
 include(":features:ai:backend")
 include(":features:auth:backend")
