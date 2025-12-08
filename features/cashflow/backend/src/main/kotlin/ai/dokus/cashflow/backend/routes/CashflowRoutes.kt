@@ -67,5 +67,8 @@ fun Application.configureCashflowRoutes() {
 
         // Document processing routes (AI extraction)
         documentProcessingRoutes()
+
+        // Peppol e-invoicing routes
+        peppolRoutes()
     }
 }

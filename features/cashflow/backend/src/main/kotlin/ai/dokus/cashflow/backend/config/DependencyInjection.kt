@@ -1,6 +1,7 @@
 package ai.dokus.cashflow.backend.config
 
 import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
@@ -8,6 +9,8 @@ import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingReposi
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
+import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
+import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.cashflow.backend.service.DocumentStorageService
@@ -15,11 +18,18 @@ import ai.dokus.cashflow.backend.service.ExpenseService
 import ai.dokus.cashflow.backend.service.InvoiceService
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.config.MinioConfig
+import ai.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
+import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.storage.MinioStorage
 import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import ai.dokus.peppol.config.PeppolModuleConfig
+import ai.dokus.peppol.mapper.PeppolMapper
+import ai.dokus.peppol.provider.PeppolProviderFactory
+import ai.dokus.peppol.service.PeppolService
+import ai.dokus.peppol.validator.PeppolValidator
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -37,7 +47,8 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             databaseModule,
             repositoryModule,
             storageModule(appConfig),
-            serviceModule
+            serviceModule,
+            peppolModule()
         )
     }
 }
@@ -63,6 +74,13 @@ fun coreModule(appConfig: AppBaseConfig) = module {
                 })
             }
         }
+    }
+
+    // Credential encryption service (used by Peppol settings)
+    single<CredentialCryptoService> {
+        val encryptionKey = System.getenv("ENCRYPTION_KEY")
+            ?: appConfig.jwt.secret // Fall back to JWT secret if ENCRYPTION_KEY not set
+        AesGcmCredentialCryptoService(encryptionKey)
     }
 }
 
@@ -91,6 +109,9 @@ val repositoryModule = module {
     single { ExpenseRepository() }
     single { BillRepository() }
     single { CashflowRepository(get(), get()) }
+    single { TenantRepository() }
+    single { PeppolSettingsRepository(get()) }
+    single { PeppolTransmissionRepository() }
 }
 
 /**
@@ -159,4 +180,40 @@ val serviceModule = module {
     single { ExpenseService(get()) }
     single { BillService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
+}
+
+/**
+ * Peppol module - e-invoicing services
+ */
+fun peppolModule() = module {
+    val logger = LoggerFactory.getLogger("PeppolModule")
+
+    // Peppol module configuration
+    single {
+        PeppolModuleConfig.fromEnvironment().also {
+            logger.info("Peppol module configured: defaultProvider=${it.defaultProvider}, pollingEnabled=${it.pollingEnabled}")
+        }
+    }
+
+    // Provider factory - creates provider instances based on provider ID
+    single {
+        PeppolProviderFactory(get(), get<PeppolModuleConfig>())
+    }
+
+    // Peppol mapper - converts domain models to Peppol format
+    single { PeppolMapper() }
+
+    // Peppol validator - validates invoices for Peppol compliance
+    single { PeppolValidator() }
+
+    // Main Peppol service - orchestrates all Peppol operations
+    single {
+        PeppolService(
+            settingsRepository = get(),
+            transmissionRepository = get(),
+            providerFactory = get(),
+            mapper = get(),
+            validator = get()
+        )
+    }
 }
