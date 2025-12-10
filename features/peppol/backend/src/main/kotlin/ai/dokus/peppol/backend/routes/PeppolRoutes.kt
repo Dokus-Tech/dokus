@@ -4,14 +4,9 @@ import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.PeppolTransmissionId
-import ai.dokus.foundation.domain.model.ClientDto
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
-import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
-import ai.dokus.peppol.backend.service.ICashflowService
 import ai.dokus.peppol.backend.service.PeppolService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -36,7 +31,6 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
-    val cashflowService by inject<ICashflowService>()
 
     route("/api/v1/peppol") {
         authenticateJwt {
@@ -110,17 +104,16 @@ fun Route.peppolRoutes() {
 
                     val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
-                    // Fetch invoice and client from cashflow service
-                    val invoice = cashflowService.getInvoice(invoiceId, tenantId)
+                    // Fetch invoice and client via peppolService (uses repositories directly)
+                    val invoice = peppolService.getInvoice(invoiceId, tenantId)
                         .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                         ?: throw DokusException.NotFound("Invoice not found")
 
-                    val client = cashflowService.getClient(invoice.clientId, tenantId)
+                    val client = peppolService.getClient(invoice.clientId, tenantId)
                         .getOrElse { throw DokusException.InternalError("Failed to fetch client: ${it.message}") }
                         ?: throw DokusException.NotFound("Client not found")
 
-                    val tenantSettings = cashflowService.getTenantSettings(tenantId)
-                        .getOrElse { throw DokusException.InternalError("Failed to fetch tenant settings: ${it.message}") }
+                    val tenantSettings = peppolService.getTenantSettings(tenantId)
                         ?: throw DokusException.NotFound("Tenant settings not found")
 
                     // Send via Peppol
@@ -158,17 +151,16 @@ fun Route.peppolRoutes() {
 
                     val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
-                    // Fetch invoice and client
-                    val invoice = cashflowService.getInvoice(invoiceId, tenantId)
+                    // Fetch invoice and client via peppolService (uses repositories directly)
+                    val invoice = peppolService.getInvoice(invoiceId, tenantId)
                         .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                         ?: throw DokusException.NotFound("Invoice not found")
 
-                    val client = cashflowService.getClient(invoice.clientId, tenantId)
+                    val client = peppolService.getClient(invoice.clientId, tenantId)
                         .getOrElse { throw DokusException.InternalError("Failed to fetch client: ${it.message}") }
                         ?: throw DokusException.NotFound("Client not found")
 
-                    val tenantSettings = cashflowService.getTenantSettings(tenantId)
-                        .getOrElse { throw DokusException.InternalError("Failed to fetch tenant settings: ${it.message}") }
+                    val tenantSettings = peppolService.getTenantSettings(tenantId)
                         ?: throw DokusException.NotFound("Tenant settings not found")
 
                     // Validate
@@ -187,9 +179,8 @@ fun Route.peppolRoutes() {
             post("/inbox/poll") {
                 val tenantId = dokusPrincipal.requireTenantId()
 
-                val result = peppolService.pollInbox(tenantId) { request, tid ->
-                    cashflowService.createBill(request, tid)
-                }.getOrElse { throw DokusException.InternalError("Failed to poll inbox: ${it.message}") }
+                val result = peppolService.pollInbox(tenantId)
+                    .getOrElse { throw DokusException.InternalError("Failed to poll inbox: ${it.message}") }
 
                 call.respond(HttpStatusCode.OK, result)
             }

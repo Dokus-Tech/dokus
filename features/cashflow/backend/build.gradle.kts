@@ -23,6 +23,7 @@ dependencies {
     implementation(projects.foundation.ktorCommon)
     implementation(projects.foundation.messaging)
     implementation(projects.foundation.database)
+    implementation(projects.foundation.peppolCore)
 
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.datetime)

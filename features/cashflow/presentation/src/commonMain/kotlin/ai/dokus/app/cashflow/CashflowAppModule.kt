@@ -11,13 +11,20 @@ import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.AppPresentationModuleDi
 import ai.dokus.app.core.DashboardWidget
 import ai.dokus.app.core.ModuleSettingsGroup
+import ai.dokus.app.core.ModuleSettingsSection
+import ai.dokus.app.core.SettingsPriority
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cashflow
 import ai.dokus.app.resources.generated.cashflow_title
+import ai.dokus.app.resources.generated.settings_group_workspace
+import ai.dokus.app.resources.generated.settings_peppol
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.HomeDestination
+import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 
 /**
  * Cashflow module registration for dependency injection.
@@ -37,7 +44,19 @@ object CashflowAppModule : AppModule {
             showTopBar = false
         )
     )
-    override val settingsGroups: List<ModuleSettingsGroup> = emptyList()
+    override val settingsGroups: List<ModuleSettingsGroup> = listOf(
+        ModuleSettingsGroup(
+            title = Res.string.settings_group_workspace,
+            priority = SettingsPriority.Medium,
+            sections = listOf(
+                ModuleSettingsSection(
+                    title = Res.string.settings_peppol,
+                    icon = Icons.Default.Email,
+                    destination = SettingsDestination.PeppolSettings
+                )
+            )
+        )
+    )
     override val dashboardWidgets: List<DashboardWidget> = emptyList()
 
     override val presentationDi: AppPresentationModuleDi = object : AppPresentationModuleDi {

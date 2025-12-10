@@ -17,6 +17,10 @@ dependencies {
     implementation(projects.foundation.domain)
     implementation(projects.foundation.ktorCommon)
 
+    // DI - Koin (with BOM for version management)
+    api(platform(libs.koin.bom))
+    api(libs.koin.core)
+
     // Serialization
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.datetime)

@@ -3,15 +3,21 @@ package ai.dokus.app.cashflow.datasource
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
+import ai.dokus.foundation.domain.enums.PeppolStatus
+import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
+import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
+import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ClientStats
 import ai.dokus.foundation.domain.model.CreateBillRequest
+import ai.dokus.foundation.domain.model.CreateClientRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.DocumentDto
@@ -21,7 +27,15 @@ import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.PeppolInboxPollResponse
+import ai.dokus.foundation.domain.model.PeppolSettingsDto
+import ai.dokus.foundation.domain.model.PeppolTransmissionDto
+import ai.dokus.foundation.domain.model.PeppolValidationResult
+import ai.dokus.foundation.domain.model.PeppolVerifyResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
+import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
+import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
+import ai.dokus.foundation.domain.model.UpdateClientRequest
 import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
 
@@ -403,6 +417,163 @@ interface CashflowRemoteDataSource {
         page: Int = 0,
         limit: Int = 20
     ): Result<DocumentProcessingListResponse>
+
+    // ============================================================================
+    // CLIENT MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Create a new client
+     * POST /api/v1/clients
+     */
+    suspend fun createClient(request: CreateClientRequest): Result<ClientDto>
+
+    /**
+     * Get a client by ID
+     * GET /api/v1/clients/{clientId}
+     */
+    suspend fun getClient(clientId: ClientId): Result<ClientDto>
+
+    /**
+     * List clients with optional filters
+     * GET /api/v1/clients?search={search}&activeOnly={activeOnly}&peppolEnabled={peppolEnabled}&limit={limit}&offset={offset}
+     *
+     * @param search Search by name, email, or VAT number
+     * @param activeOnly Filter by active status
+     * @param peppolEnabled Filter by Peppol enabled status
+     */
+    suspend fun listClients(
+        search: String? = null,
+        activeOnly: Boolean? = null,
+        peppolEnabled: Boolean? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<ClientDto>>
+
+    /**
+     * Update a client
+     * PUT /api/v1/clients/{clientId}
+     */
+    suspend fun updateClient(
+        clientId: ClientId,
+        request: UpdateClientRequest
+    ): Result<ClientDto>
+
+    /**
+     * Delete a client
+     * DELETE /api/v1/clients/{clientId}
+     */
+    suspend fun deleteClient(clientId: ClientId): Result<Unit>
+
+    /**
+     * Update a client's Peppol settings
+     * PATCH /api/v1/clients/{clientId}/peppol
+     */
+    suspend fun updateClientPeppol(
+        clientId: ClientId,
+        peppolId: String?,
+        peppolEnabled: Boolean
+    ): Result<ClientDto>
+
+    /**
+     * List all Peppol-enabled clients
+     * GET /api/v1/clients/peppol-enabled
+     */
+    suspend fun listPeppolEnabledClients(): Result<List<ClientDto>>
+
+    /**
+     * Get client statistics for dashboard
+     * GET /api/v1/clients/stats
+     */
+    suspend fun getClientStats(): Result<ClientStats>
+
+    // ============================================================================
+    // PEPPOL E-INVOICING
+    // ============================================================================
+
+    // ----- Settings -----
+
+    /**
+     * Get available Peppol providers
+     * GET /api/v1/peppol/providers
+     */
+    suspend fun getPeppolProviders(): Result<List<String>>
+
+    /**
+     * Get Peppol settings for current tenant
+     * GET /api/v1/peppol/settings
+     * Returns null if not configured
+     */
+    suspend fun getPeppolSettings(): Result<PeppolSettingsDto?>
+
+    /**
+     * Save Peppol settings
+     * PUT /api/v1/peppol/settings
+     */
+    suspend fun savePeppolSettings(request: SavePeppolSettingsRequest): Result<PeppolSettingsDto>
+
+    /**
+     * Delete Peppol settings
+     * DELETE /api/v1/peppol/settings
+     */
+    suspend fun deletePeppolSettings(): Result<Unit>
+
+    /**
+     * Test Peppol connection with current credentials
+     * POST /api/v1/peppol/settings/test
+     */
+    suspend fun testPeppolConnection(): Result<Boolean>
+
+    // ----- Verification & Validation -----
+
+    /**
+     * Verify if a recipient is registered on the Peppol network
+     * POST /api/v1/peppol/verify
+     */
+    suspend fun verifyPeppolRecipient(peppolId: String): Result<PeppolVerifyResponse>
+
+    /**
+     * Validate an invoice for Peppol compliance without sending
+     * POST /api/v1/peppol/send/validate/{invoiceId}
+     */
+    suspend fun validateInvoiceForPeppol(invoiceId: InvoiceId): Result<PeppolValidationResult>
+
+    // ----- Sending -----
+
+    /**
+     * Send an invoice via Peppol
+     * POST /api/v1/peppol/send/invoice/{invoiceId}
+     */
+    suspend fun sendInvoiceViaPeppol(invoiceId: InvoiceId): Result<SendInvoiceViaPeppolResponse>
+
+    // ----- Inbox -----
+
+    /**
+     * Poll Peppol inbox for new documents
+     * POST /api/v1/peppol/inbox/poll
+     *
+     * Creates bills for received invoices
+     */
+    suspend fun pollPeppolInbox(): Result<PeppolInboxPollResponse>
+
+    // ----- Transmission History -----
+
+    /**
+     * List Peppol transmissions with optional filters
+     * GET /api/v1/peppol/transmissions?direction={direction}&status={status}&limit={limit}&offset={offset}
+     */
+    suspend fun listPeppolTransmissions(
+        direction: PeppolTransmissionDirection? = null,
+        status: PeppolStatus? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<List<PeppolTransmissionDto>>
+
+    /**
+     * Get Peppol transmission for a specific invoice
+     * GET /api/v1/peppol/transmissions/invoice/{invoiceId}
+     */
+    suspend fun getPeppolTransmissionForInvoice(invoiceId: InvoiceId): Result<PeppolTransmissionDto?>
 
     companion object {
         internal fun create(httpClient: HttpClient): CashflowRemoteDataSource {

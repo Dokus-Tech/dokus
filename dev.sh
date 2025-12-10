@@ -106,7 +106,6 @@ COMPOSE_FILE="docker-compose.local.yml"
 AUTH_SERVICE_DIR="features/auth/backend"
 AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
-PEPPOL_SERVICE_DIR="features/peppol/backend"
 
 # Database configuration - consolidated single database
 DB_CONTAINER="postgres-local"
@@ -330,7 +329,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "peppol")
+    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow")
     local total=${#services[@]}
     local current=0
 
@@ -459,7 +458,6 @@ start_services() {
             "Reporting:7094:/health"
             "Audit:7095:/health"
             "Banking:7096:/health"
-            "Peppol:7098:/health"
         )
 
         for service_info in "${services[@]}"; do
@@ -574,7 +572,6 @@ show_status() {
         "Reporting Service:7094:/health"
         "Audit Service:7095:/health"
         "Banking Service:7096:/health"
-        "Peppol Service:7098:/health"
     )
 
     for service_info in "${services[@]}"; do
@@ -795,9 +792,9 @@ run_tests() {
     if [ "$service" = "all" ]; then
         print_gradient_header "🧪 Running All Test Suites"
         if [ -f "./gradlew" ]; then
-            ./gradlew :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:peppol:backend:test
+            ./gradlew :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test
         else
-            gradle :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:peppol:backend:test
+            gradle :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test
         fi
     elif [ "$service" = "auth" ]; then
         print_gradient_header "🧪 Running Auth Service Tests"
@@ -820,15 +817,15 @@ run_tests() {
         else
             gradle :features:banking:backend:test
         fi
-    elif [ "$service" = "peppol" ]; then
-        print_gradient_header "🧪 Running Peppol Service Tests"
+    elif [ "$service" = "cashflow" ]; then
+        print_gradient_header "🧪 Running Cashflow Service Tests"
         if [ -f "./gradlew" ]; then
-            ./gradlew :features:peppol:backend:test
+            ./gradlew :features:cashflow:backend:test
         else
-            gradle :features:peppol:backend:test
+            gradle :features:cashflow:backend:test
         fi
     else
-        print_status error "Invalid service type. Use 'all', 'auth', 'audit', 'banking', or 'peppol'"
+        print_status error "Invalid service type. Use 'all', 'auth', 'audit', 'banking', or 'cashflow'"
         exit 1
     fi
     echo ""
@@ -863,9 +860,6 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Peppol Service${NC}       ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7098${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15014${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
@@ -1064,7 +1058,7 @@ show_help() {
     echo_e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
     echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Create service JARs + images${NC}"
     echo_e "    ${SOFT_CYAN}watch${NC} [svc]  ${DIM_WHITE}Auto rebuild on changes${NC}"
-    echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|audit|banking|peppol|all)${NC}"
+    echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|audit|banking|cashflow|all)${NC}"
     echo ""
 
     echo_e "  ${SOFT_YELLOW}${BOLD}Data & Tooling${NC}"

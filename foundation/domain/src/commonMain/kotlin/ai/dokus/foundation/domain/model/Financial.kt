@@ -16,6 +16,7 @@ import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
+import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.enums.VatReturnStatus
@@ -34,6 +35,7 @@ import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.Iban
+import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.PaymentId
@@ -140,6 +142,69 @@ data class UserInTenant(
     val tenantId: TenantId,
     val role: UserRole,
     val membershipActive: Boolean = true
+)
+
+// ============================================================================
+// TEAM MANAGEMENT
+// ============================================================================
+
+/**
+ * Team member with display information for the team list.
+ */
+@Serializable
+data class TeamMember(
+    val userId: UserId,
+    val email: Email,
+    val firstName: Name?,
+    val lastName: Name?,
+    val role: UserRole,
+    val joinedAt: LocalDateTime,
+    val lastActiveAt: LocalDateTime?
+) {
+    val fullName: String
+        get() = listOfNotNull(firstName?.value, lastName?.value)
+            .joinToString(" ")
+            .ifEmpty { email.value }
+}
+
+/**
+ * Invitation to join a tenant workspace.
+ */
+@Serializable
+data class TenantInvitation(
+    val id: InvitationId,
+    val tenantId: TenantId,
+    val email: Email,
+    val role: UserRole,
+    val invitedByName: String,
+    val status: InvitationStatus,
+    val expiresAt: LocalDateTime,
+    val createdAt: LocalDateTime
+)
+
+/**
+ * Request DTO for creating a team invitation.
+ */
+@Serializable
+data class CreateInvitationRequest(
+    val email: Email,
+    val role: UserRole
+)
+
+/**
+ * Request DTO for updating a team member's role.
+ */
+@Serializable
+data class UpdateMemberRoleRequest(
+    val role: UserRole
+)
+
+/**
+ * Request DTO for transferring workspace ownership.
+ */
+@Serializable
+data class TransferOwnershipRequest(
+    val newOwnerId: UserId
 )
 
 // ============================================================================

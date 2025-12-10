@@ -2,6 +2,8 @@ package ai.dokus.cashflow.backend.service
 
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.BillStatistics
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.ids.BillId
@@ -10,6 +12,7 @@ import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.peppol.model.PeppolReceivedDocument
 import kotlinx.datetime.LocalDate
 import org.slf4j.LoggerFactory
 
@@ -154,5 +157,156 @@ class BillService(
         logger.debug("Getting bill statistics for tenant: $tenantId (from=$fromDate, to=$toDate)")
         return billRepository.getBillStatistics(tenantId, fromDate, toDate)
             .onFailure { logger.error("Failed to get bill statistics for tenant: $tenantId", it) }
+    }
+
+    /**
+     * Create a bill from a received Peppol document.
+     *
+     * This method converts a Peppol document received via inbox polling
+     * into a Bill record in the system.
+     */
+    suspend fun createBillFromPeppol(
+        tenantId: TenantId,
+        peppolDocument: PeppolReceivedDocument
+    ): Result<FinancialDocumentDto.BillDto> {
+        logger.info("Creating bill from Peppol document: ${peppolDocument.id} for tenant: $tenantId")
+
+        // Parse dates from string format
+        val issueDate = peppolDocument.issueDate?.let { parseDate(it) }
+            ?: LocalDate.fromEpochDays(0) // Fallback if no issue date
+        val dueDate = peppolDocument.dueDate?.let { parseDate(it) }
+            ?: issueDate // Default due date to issue date if not specified
+
+        // Extract amounts
+        val totalAmount = peppolDocument.totals?.payableAmount
+            ?: peppolDocument.totals?.taxInclusiveAmount
+            ?: peppolDocument.lineItems?.sumOf { it.lineTotal ?: 0.0 }
+            ?: 0.0
+
+        val taxAmount = peppolDocument.taxTotal?.taxAmount
+
+        // Determine VAT rate from tax breakdown
+        val vatRate = peppolDocument.taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent
+
+        // Build create request
+        val request = CreateBillRequest(
+            supplierName = peppolDocument.seller?.name ?: "Unknown Supplier",
+            supplierVatNumber = peppolDocument.seller?.vatNumber,
+            invoiceNumber = peppolDocument.invoiceNumber ?: peppolDocument.id,
+            issueDate = issueDate,
+            dueDate = dueDate,
+            amount = Money(totalAmount.toString()),
+            vatAmount = taxAmount?.let { Money(it.toString()) },
+            vatRate = vatRate?.let { VatRate(it.toString()) },
+            category = categorizeSupplier(peppolDocument.seller?.name),
+            description = buildDescription(peppolDocument),
+            notes = buildNotes(peppolDocument)
+        )
+
+        return billRepository.createBill(tenantId, request)
+            .onSuccess { logger.info("Bill created from Peppol document: ${it.id}") }
+            .onFailure { logger.error("Failed to create bill from Peppol document: ${peppolDocument.id}", it) }
+    }
+
+    /**
+     * Parse date string to LocalDate.
+     * Supports ISO format (YYYY-MM-DD) and common variants.
+     */
+    private fun parseDate(dateString: String): LocalDate? {
+        return try {
+            // Try ISO format first
+            LocalDate.parse(dateString.take(10))
+        } catch (e: Exception) {
+            logger.warn("Failed to parse date: $dateString", e)
+            null
+        }
+    }
+
+    /**
+     * Categorize a bill based on supplier name.
+     * Simple heuristic - can be improved with ML or user preferences.
+     */
+    private fun categorizeSupplier(supplierName: String?): ExpenseCategory {
+        if (supplierName == null) return ExpenseCategory.Other
+
+        val lowerName = supplierName.lowercase()
+        return when {
+            lowerName.contains("telecom") || lowerName.contains("mobile") ||
+            lowerName.contains("proximus") || lowerName.contains("orange") ||
+            lowerName.contains("telenet") -> ExpenseCategory.Telecommunications
+
+            lowerName.contains("electric") || lowerName.contains("gas") ||
+            lowerName.contains("water") || lowerName.contains("engie") ||
+            lowerName.contains("luminus") -> ExpenseCategory.Utilities
+
+            lowerName.contains("software") || lowerName.contains("cloud") ||
+            lowerName.contains("microsoft") || lowerName.contains("google") ||
+            lowerName.contains("aws") || lowerName.contains("adobe") -> ExpenseCategory.Software
+
+            lowerName.contains("insurance") || lowerName.contains("axa") ||
+            lowerName.contains("ethias") -> ExpenseCategory.Insurance
+
+            lowerName.contains("office") || lowerName.contains("staples") ||
+            lowerName.contains("bol.com") -> ExpenseCategory.OfficeSupplies
+
+            lowerName.contains("accountant") || lowerName.contains("lawyer") ||
+            lowerName.contains("consultant") || lowerName.contains("fiduciary") -> ExpenseCategory.ProfessionalServices
+
+            lowerName.contains("rent") || lowerName.contains("lease") ||
+            lowerName.contains("immobili") -> ExpenseCategory.Rent
+
+            lowerName.contains("fuel") || lowerName.contains("garage") ||
+            lowerName.contains("toyota") || lowerName.contains("volkswagen") -> ExpenseCategory.Vehicle
+
+            lowerName.contains("hotel") || lowerName.contains("airline") ||
+            lowerName.contains("train") || lowerName.contains("sncb") ||
+            lowerName.contains("nmbs") -> ExpenseCategory.Travel
+
+            else -> ExpenseCategory.Other
+        }
+    }
+
+    /**
+     * Build description from Peppol document.
+     */
+    private fun buildDescription(doc: PeppolReceivedDocument): String {
+        val parts = mutableListOf<String>()
+
+        // Add document type
+        parts.add("Peppol ${doc.documentType}")
+
+        // Add line item summary if available
+        doc.lineItems?.let { items ->
+            if (items.isNotEmpty()) {
+                val itemCount = items.size
+                parts.add("($itemCount line items)")
+            }
+        }
+
+        return parts.joinToString(" ")
+    }
+
+    /**
+     * Build notes from Peppol document metadata.
+     */
+    private fun buildNotes(doc: PeppolReceivedDocument): String {
+        val parts = mutableListOf<String>()
+
+        // Add Peppol document ID
+        parts.add("Peppol Document ID: ${doc.id}")
+
+        // Add sender Peppol ID
+        parts.add("Sender Peppol ID: ${doc.senderPeppolId}")
+
+        // Add note if present
+        doc.note?.let { parts.add("Note: $it") }
+
+        // Add seller details
+        doc.seller?.let { seller ->
+            seller.companyNumber?.let { parts.add("Company Number: $it") }
+            seller.contactEmail?.let { parts.add("Contact Email: $it") }
+        }
+
+        return parts.joinToString("\n")
     }
 }

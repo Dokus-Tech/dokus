@@ -355,6 +355,11 @@ services:
       AI_OLLAMA_URL: http://ollama-local:11434
       AI_OLLAMA_MODEL: mistral:7b
       AI_OPENAI_ENABLED: "false"
+      # Peppol Configuration (integrated into cashflow service)
+      ENCRYPTION_KEY: local-peppol-encryption-key-32chars!
+      PEPPOL_DEFAULT_PROVIDER: recommand
+      PEPPOL_INBOX_POLL_ENABLED: "true"
+      PEPPOL_INBOX_POLL_INTERVAL_MINUTES: "10"
       LOG_LEVEL: DEBUG
     ports:
       - "7092:8080"
@@ -381,45 +386,6 @@ services:
     volumes:
       - ./logs-local:/app/logs
       - cashflow-storage-local:/app/storage/documents
-
-  # Peppol Service (e-invoicing via Peppol network)
-  peppol-service-local:
-    image: invoid-vision/dokus-peppol:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-peppol-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      PEPPOL_ENCRYPTION_KEY: local-peppol-encryption-key-32chars!
-      RECOMMAND_BASE_URL: https://api.recommand.eu
-      CASHFLOW_SERVICE_BASE_URL: http://cashflow-service-local:8080
-      AUTH_SERVICE_BASE_URL: http://auth-service-local:8080
-      PEPPOL_INBOX_POLL_ENABLED: "true"
-      PEPPOL_INBOX_POLL_INTERVAL_MINUTES: "15"
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7098:8080"
-      - "15014:5005"
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-      cashflow-service-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
 
   # pgAdmin for database management (profile: tools)
   pgadmin:

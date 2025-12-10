@@ -1,0 +1,59 @@
+<resources>
+    <!-- 400 Validation Errors -->
+    <string name="exception_validation_error">Error de validación</string>
+    <string name="exception_invalid_email">Dirección de correo electrónico no válida</string>
+    <string name="exception_weak_password">La contraseña no cumple los requisitos de seguridad</string>
+    <string name="exception_password_do_not_match">Las contraseñas no coinciden</string>
+    <string name="exception_invalid_first_name">Nombre no válido</string>
+    <string name="exception_invalid_last_name">Apellido no válido</string>
+    <string name="exception_invalid_tax_number">Número de identificación fiscal no válido</string>
+    <string name="exception_invalid_workspace_name">Nombre del espacio de trabajo no válido</string>
+    <string name="exception_invalid_vat_number">Número de IVA no válido</string>
+    <string name="exception_invalid_iban">IBAN no válido</string>
+    <string name="exception_invalid_bic">Código BIC/SWIFT no válido</string>
+    <string name="exception_invalid_peppol_id">ID de Peppol no válido</string>
+    <string name="exception_invalid_invoice_number">Número de factura no válido</string>
+    <string name="exception_invalid_money">Importe monetario no válido</string>
+    <string name="exception_invalid_vat_rate">Tasa de IVA no válida</string>
+    <string name="exception_invalid_percentage">Valor porcentual no válido</string>
+    <string name="exception_invalid_quantity">Cantidad no válida</string>
+    <string name="exception_invalid_street_name">Nombre de calle no válido</string>
+    <string name="exception_invalid_city">Ciudad no válida</string>
+    <string name="exception_invalid_postal_code">Código postal no válido</string>
+    <string name="exception_invalid_country">País no válido</string>
+
+    <!-- 401 Authentication Errors -->
+    <string name="exception_not_authenticated">Inicia sesión para continuar</string>
+    <string name="exception_invalid_credentials">Correo electrónico o contraseña no válidos</string>
+    <string name="exception_token_expired">El token de autenticación ha expirado</string>
+    <string name="exception_token_invalid">Token de autenticación no válido</string>
+    <string name="exception_refresh_token_expired">El token de actualización ha expirado. Inicia sesión de nuevo.</string>
+    <string name="exception_refresh_token_revoked">El token de actualización ha sido revocado. Inicia sesión de nuevo.</string>
+    <string name="exception_session_expired">Tu sesión ha expirado. Inicia sesión de nuevo.</string>
+    <string name="exception_session_invalid">Sesión no válida. Inicia sesión de nuevo.</string>
+    <string name="exception_password_reset_token_expired">El token de restablecimiento de contraseña ha expirado. Solicita uno nuevo.</string>
+    <string name="exception_password_reset_token_invalid">Token de restablecimiento de contraseña no válido. Solicita uno nuevo.</string>
+    <string name="exception_email_verification_token_expired">El token de verificación de correo ha expirado. Solicita uno nuevo.</string>
+    <string name="exception_email_verification_token_invalid">Token de verificación de correo no válido. Solicita uno nuevo.</string>
+
+    <!-- 403 Authorization Errors -->
+    <string name="exception_not_authorized">No tienes permiso para acceder a este recurso</string>
+    <string name="exception_account_inactive">Tu cuenta está inactiva. Contacta con soporte.</string>
+    <string name="exception_account_locked">Tu cuenta ha sido bloqueada. Contacta con soporte para desbloquearla.</string>
+    <string name="exception_email_not_verified">Verifica tu dirección de correo electrónico para continuar</string>
+    <string name="exception_email_already_verified">La dirección de correo electrónico ya ha sido verificada</string>
+
+    <!-- 409 Conflict Errors -->
+    <string name="exception_user_already_exists">Ya existe un usuario con este correo electrónico</string>
+
+    <!-- 429 Rate Limiting Errors -->
+    <string name="exception_too_many_login_attempts">Demasiados intentos de inicio de sesión. Inténtalo más tarde.</string>
+
+    <!-- 500 Server Errors -->
+    <string name="exception_internal_error">Se produjo un error interno. Inténtalo más tarde.</string>
+    <string name="exception_tenant_creation_failed">Error al crear el espacio de trabajo. Inténtalo de nuevo.</string>
+    <string name="exception_unknown">Se produjo un error desconocido</string>
+
+    <!-- 503 Service Unavailable -->
+    <string name="exception_connection_error">Error de conexión. Inténtalo más tarde.</string>
+</resources>

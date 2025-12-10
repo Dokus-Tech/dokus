@@ -30,18 +30,7 @@ import org.slf4j.LoggerFactory
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
-
-/**
- * Helper function to convert kotlinx.datetime.LocalDateTime to kotlinx.datetime.Instant
- */
-@OptIn(ExperimentalTime::class)
-private fun LocalDateTime.toKotlinxInstant(): Instant {
-    val kotlinTimeInstant = toInstant(TimeZone.UTC)
-    return Instant.fromEpochSeconds(
-        kotlinTimeInstant.epochSeconds,
-        kotlinTimeInstant.nanosecondsOfSecond.toLong()
-    )
-}
+import ai.dokus.foundation.database.utils.toKotlinxInstant
 
 @OptIn(ExperimentalUuidApi::class)
 class UserRepository(

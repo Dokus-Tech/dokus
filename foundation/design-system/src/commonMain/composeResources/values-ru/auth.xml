@@ -1,0 +1,18 @@
+<resources>
+    <!-- Login Screen -->
+    <string name="auth_login_subtitle">Войдите в свой аккаунт</string>
+    <string name="auth_email_label">Электронная почта</string>
+    <string name="auth_password_label">Пароль</string>
+    <string name="auth_forgot_password">Забыли пароль?</string>
+    <string name="auth_sign_in_button">Войти</string>
+    <string name="auth_no_account_prefix">Нет аккаунта? </string>
+    <string name="auth_sign_up_link">Зарегистрироваться</string>
+
+    <!-- Register Screen -->
+    <string name="auth_register_title">Создать аккаунт</string>
+    <string name="auth_first_name_label">Имя</string>
+    <string name="auth_last_name_label">Фамилия</string>
+    <string name="auth_register_button">Зарегистрироваться</string>
+    <string name="auth_has_account_prefix">Уже есть аккаунт? </string>
+    <string name="auth_login_link">Войти</string>
+</resources>
