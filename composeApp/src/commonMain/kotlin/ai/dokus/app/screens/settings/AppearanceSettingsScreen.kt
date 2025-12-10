@@ -8,8 +8,8 @@ import ai.dokus.app.resources.generated.appearance_theme_light
 import ai.dokus.app.resources.generated.appearance_theme_system
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,13 +37,11 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Appearance settings screen.
- * Currently displays UI structure only - theme switching not yet implemented.
+ * Appearance settings screen with top bar.
+ * For mobile navigation flow.
  */
 @Composable
 fun AppearanceSettingsScreen() {
-    var selectedTheme by remember { mutableStateOf(ThemeMode.System) }
-
     Scaffold(
         topBar = {
             PTopAppBar(
@@ -51,29 +49,46 @@ fun AppearanceSettingsScreen() {
             )
         }
     ) { contentPadding ->
-        Column(
-            modifier = Modifier
-                .padding(contentPadding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .withContentPaddingForScrollable()
-        ) {
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(Res.string.appearance_theme),
-                        style = MaterialTheme.typography.titleMedium
+        AppearanceSettingsContent(
+            modifier = Modifier.padding(contentPadding)
+        )
+    }
+}
+
+/**
+ * Appearance settings content without scaffold.
+ * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
+ * Currently displays UI structure only - theme switching not yet implemented.
+ */
+@Composable
+fun AppearanceSettingsContent(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    var selectedTheme by remember { mutableStateOf(ThemeMode.System) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
+            .withContentPaddingForScrollable()
+    ) {
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(Res.string.appearance_theme),
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                ThemeMode.entries.forEach { mode ->
+                    ThemeOptionRow(
+                        themeMode = mode,
+                        isSelected = selectedTheme == mode,
+                        onClick = { selectedTheme = mode }
                     )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    ThemeMode.entries.forEach { mode ->
-                        ThemeOptionRow(
-                            themeMode = mode,
-                            isSelected = selectedTheme == mode,
-                            onClick = { selectedTheme = mode }
-                        )
-                    }
                 }
             }
         }
