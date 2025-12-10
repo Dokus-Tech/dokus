@@ -21,6 +21,7 @@ import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,13 +47,34 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 /**
- * Profile settings screen.
- * Displays user profile information (read-only for now).
- * Profile editing will be available when backend supports it.
+ * Profile settings screen with top bar and navigation.
+ * For mobile navigation flow.
  */
 @Composable
 fun ProfileSettingsScreen() {
-    val logger = remember { Logger.withTag("ProfileSettingsScreen") }
+    Scaffold(
+        topBar = {
+            PTopAppBar(
+                title = stringResource(Res.string.profile_settings_title)
+            )
+        }
+    ) { contentPadding ->
+        ProfileSettingsContent(
+            modifier = Modifier.padding(contentPadding)
+        )
+    }
+}
+
+/**
+ * Profile settings content without scaffold.
+ * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
+ */
+@Composable
+fun ProfileSettingsContent(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    val logger = remember { Logger.withTag("ProfileSettingsContent") }
     val accountDataSource: AccountRemoteDataSource = koinInject()
 
     var userState by remember { mutableStateOf<DokusState<User>>(DokusState.idle()) }
@@ -73,112 +95,104 @@ fun ProfileSettingsScreen() {
         )
     }
 
-    Scaffold(
-        topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.profile_settings_title)
-            )
+    when {
+        userState.isLoading() -> {
+            Box(
+                modifier = modifier.fillMaxSize().padding(contentPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
-    ) { contentPadding ->
-        when {
-            userState.isLoading() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(contentPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            userState.isSuccess() -> {
-                val user = (userState as DokusState.Success).data
-                Column(
-                    modifier = Modifier
-                        .padding(contentPadding)
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .withContentPaddingForScrollable(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Personal Information Section
-                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = stringResource(Res.string.profile_personal_info),
-                                style = MaterialTheme.typography.titleMedium
-                            )
+        userState.isSuccess() -> {
+            val user = (userState as DokusState.Success).data
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(contentPadding)
+                    .withContentPaddingForScrollable(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Personal Information Section
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(Res.string.profile_personal_info),
+                            style = MaterialTheme.typography.titleMedium
+                        )
 
-                            Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                            // Email
-                            ProfileField(
-                                label = stringResource(Res.string.profile_email),
-                                value = user.email.value
-                            )
+                        // Email
+                        ProfileField(
+                            label = stringResource(Res.string.profile_email),
+                            value = user.email.value
+                        )
 
-                            Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
 
-                            // First Name
-                            ProfileField(
-                                label = stringResource(Res.string.profile_first_name),
-                                value = user.firstName?.value ?: "-"
-                            )
+                        // First Name
+                        ProfileField(
+                            label = stringResource(Res.string.profile_first_name),
+                            value = user.firstName?.value ?: "-"
+                        )
 
-                            Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
 
-                            // Last Name
-                            ProfileField(
-                                label = stringResource(Res.string.profile_last_name),
-                                value = user.lastName?.value ?: "-"
-                            )
+                        // Last Name
+                        ProfileField(
+                            label = stringResource(Res.string.profile_last_name),
+                            value = user.lastName?.value ?: "-"
+                        )
 
-                            Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                            Text(
-                                text = "Profile editing coming soon",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = "Profile editing coming soon",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
+                }
 
-                    // Danger Zone
-                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = stringResource(Res.string.profile_danger_zone),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
+                // Danger Zone
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(Res.string.profile_danger_zone),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
 
-                            Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
 
-                            Text(
-                                text = stringResource(Res.string.profile_deactivate_warning),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Text(
+                            text = stringResource(Res.string.profile_deactivate_warning),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-                            Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
 
-                            POutlinedButton(
-                                text = stringResource(Res.string.profile_deactivate_account),
-                                onClick = { /* TODO: Implement deactivation dialog */ },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                        POutlinedButton(
+                            text = stringResource(Res.string.profile_deactivate_account),
+                            onClick = { /* TODO: Implement deactivation dialog */ },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
+                }
 
-                    Spacer(Modifier.height(16.dp))
-                }
+                Spacer(Modifier.height(16.dp))
             }
-            else -> {
-                // Error state
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(contentPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Failed to load profile")
-                }
+        }
+        else -> {
+            // Error state
+            Box(
+                modifier = modifier.fillMaxSize().padding(contentPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Failed to load profile")
             }
         }
     }
