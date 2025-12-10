@@ -14,6 +14,7 @@ import ai.dokus.auth.backend.services.EmailVerificationService
 import ai.dokus.auth.backend.services.PasswordResetService
 import ai.dokus.auth.backend.services.RateLimitService
 import ai.dokus.auth.backend.services.SmtpEmailService
+import ai.dokus.auth.backend.services.TeamService
 import ai.dokus.foundation.ktor.DokusRabbitMq
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -89,6 +90,9 @@ private val appModule = module {
 
     // Authentication service
     single { AuthService(get(), get(), get(), get(), get(), get()) }
+
+    // Team management service
+    single { TeamService(get(), get(), get()) }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {

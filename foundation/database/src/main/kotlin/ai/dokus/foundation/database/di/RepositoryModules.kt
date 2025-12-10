@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.di
 
 import ai.dokus.foundation.database.repository.audit.AuditRepository
+import ai.dokus.foundation.database.repository.auth.InvitationRepository
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.TenantRepository
@@ -31,6 +32,7 @@ val repositoryModuleAuth = module {
     single { UserRepository(get()) }
     single { RefreshTokenRepository() }
     single { PasswordResetTokenRepository() }
+    single { InvitationRepository() }
 }
 
 /**
