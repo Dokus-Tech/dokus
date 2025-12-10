@@ -1,7 +1,7 @@
 package ai.dokus.auth.backend.config
 
 import ai.dokus.foundation.database.DatabaseInitializer
-import ai.dokus.foundation.database.repository.auth.TenantRepository
+import ai.dokus.foundation.database.di.repositoryModuleAuth
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
@@ -43,12 +43,6 @@ private val appModule = module {
 
     // Password crypto service
     single<PasswordCryptoService> { PasswordCryptoService4j() }
-
-    // Repositories (data access layer)
-    single<TenantRepository> { TenantRepository() }
-    single<UserRepository> { UserRepository(get()) }
-    single<RefreshTokenRepository> { RefreshTokenRepository() }
-    single<PasswordResetTokenRepository> { PasswordResetTokenRepository() }
 
     // JWT token generation
     single {
@@ -116,6 +110,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     install(Koin) {
         modules(
             coreModule,
+            repositoryModuleAuth,
             appModule,
             redisModule(appConfig, RedisNamespace.Auth),
             messagingModule(rabbitmqConfig, "auth")

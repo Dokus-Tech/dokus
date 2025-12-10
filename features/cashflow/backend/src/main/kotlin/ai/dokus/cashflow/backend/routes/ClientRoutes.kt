@@ -103,7 +103,8 @@ fun Route.clientRoutes() {
                     searchQuery = searchQuery,
                     limit = limit,
                     offset = offset
-                ).getOrElse { throw DokusException.InternalError("Failed to list clients: ${it.message}") }
+                )
+                    .getOrElse { throw DokusException.InternalError("Failed to list clients: ${it.message}") }
 
                 call.respond(HttpStatusCode.OK, clients)
             }
@@ -239,30 +240,6 @@ fun Route.clientRoutes() {
         }
     }
 
-    // ================================================================
-    // INTERNAL ROUTES (for cross-service communication)
-    // ================================================================
-
-    route("/api/v1/internal/clients") {
-        authenticateJwt {
-            /**
-             * GET /api/v1/internal/clients/{clientId}
-             * Internal endpoint for other services to fetch client data.
-             * Used by Peppol service for invoice sending.
-             */
-            get("/{clientId}") {
-                val tenantId = dokusPrincipal.requireTenantId()
-                val clientId = call.parameters.clientId
-                    ?: throw DokusException.BadRequest("Client ID is required")
-
-                val client = clientService.getClient(clientId, tenantId)
-                    .getOrElse { throw DokusException.InternalError("Failed to fetch client: ${it.message}") }
-                    ?: throw DokusException.NotFound("Client not found")
-
-                call.respond(HttpStatusCode.OK, client)
-            }
-        }
-    }
 }
 
 // ================================================================

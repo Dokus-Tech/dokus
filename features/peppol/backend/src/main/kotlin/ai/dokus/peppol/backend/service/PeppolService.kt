@@ -1,8 +1,15 @@
 package ai.dokus.peppol.backend.service
 
+import ai.dokus.foundation.database.repository.auth.TenantRepository
+import ai.dokus.foundation.database.repository.cashflow.BillRepository
+import ai.dokus.foundation.database.repository.cashflow.ClientRepository
+import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
+import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
+import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.foundation.domain.enums.PeppolDocumentType
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
+import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -20,8 +27,6 @@ import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.peppol.backend.client.RecommandClient
 import ai.dokus.peppol.backend.mapper.PeppolMapper
-import ai.dokus.peppol.backend.repository.PeppolSettingsRepository
-import ai.dokus.peppol.backend.repository.PeppolTransmissionRepository
 import ai.dokus.peppol.backend.validator.PeppolValidator
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -38,16 +43,54 @@ import org.slf4j.LoggerFactory
  * - Inbound: Polling and processing received documents
  * - Settings: Managing tenant Peppol credentials
  * - Validation: Validating documents against Peppol standards
+ *
+ * Now uses repositories directly instead of inter-service HTTP calls.
  */
 class PeppolService(
     private val settingsRepository: PeppolSettingsRepository,
     private val transmissionRepository: PeppolTransmissionRepository,
+    private val clientRepository: ClientRepository,
+    private val invoiceRepository: InvoiceRepository,
+    private val billRepository: BillRepository,
+    private val tenantRepository: TenantRepository,
     private val recommandClient: RecommandClient,
     private val mapper: PeppolMapper,
     private val validator: PeppolValidator
 ) {
     private val logger = LoggerFactory.getLogger(PeppolService::class.java)
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+
+    // ========================================================================
+    // DATA ACCESS - Direct repository access
+    // ========================================================================
+
+    /**
+     * Get an invoice by ID.
+     */
+    suspend fun getInvoice(invoiceId: InvoiceId, tenantId: TenantId): Result<FinancialDocumentDto.InvoiceDto?> {
+        return invoiceRepository.getInvoice(invoiceId, tenantId)
+    }
+
+    /**
+     * Get a client by ID.
+     */
+    suspend fun getClient(clientId: ClientId, tenantId: TenantId): Result<ClientDto?> {
+        return clientRepository.getClient(clientId, tenantId)
+    }
+
+    /**
+     * Get tenant settings.
+     */
+    suspend fun getTenantSettings(tenantId: TenantId): TenantSettings? {
+        return tenantRepository.getSettings(tenantId)
+    }
+
+    /**
+     * Create a bill from a Peppol document.
+     */
+    suspend fun createBill(request: CreateBillRequest, tenantId: TenantId): Result<FinancialDocumentDto.BillDto> {
+        return billRepository.createBill(tenantId, request)
+    }
 
     // ========================================================================
     // SETTINGS MANAGEMENT
@@ -82,6 +125,25 @@ class PeppolService(
         return settingsRepository.deleteSettings(tenantId)
             .onSuccess { logger.info("Peppol settings deleted for tenant: $tenantId") }
             .onFailure { logger.error("Failed to delete Peppol settings for tenant: $tenantId", it) }
+    }
+
+    /**
+     * Test connection with current credentials.
+     */
+    suspend fun testConnection(tenantId: TenantId): Result<Boolean> {
+        logger.debug("Testing Peppol connection for tenant: $tenantId")
+        return runCatching {
+            val credentials = settingsRepository.getSettingsWithCredentials(tenantId).getOrThrow()
+                ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
+
+            // Test by verifying our own Peppol ID
+            recommandClient.verifyRecipient(
+                companyId = credentials.settings.companyId,
+                apiKey = credentials.apiKey,
+                apiSecret = credentials.apiSecret,
+                participantId = credentials.settings.peppolId.value
+            ).isSuccess
+        }
     }
 
     // ========================================================================
@@ -231,15 +293,12 @@ class PeppolService(
 
     /**
      * Poll the Peppol inbox for new documents.
+     * Creates bills directly using billRepository instead of callback.
      *
      * @param tenantId The tenant ID
-     * @param createBillCallback Callback to create a bill from received document
      * @return Poll response with processed documents
      */
-    suspend fun pollInbox(
-        tenantId: TenantId,
-        createBillCallback: suspend (CreateBillRequest, TenantId) -> Result<FinancialDocumentDto.BillDto>
-    ): Result<PeppolInboxPollResponse> {
+    suspend fun pollInbox(tenantId: TenantId): Result<PeppolInboxPollResponse> {
         logger.info("Polling Peppol inbox for tenant: $tenantId")
 
         return runCatching {
@@ -287,8 +346,8 @@ class PeppolService(
                         mapper.toCreateBillRequest(it, inboxDoc.sender)
                     } ?: throw IllegalStateException("Document content is missing")
 
-                    // Create bill via callback
-                    val bill = createBillCallback(createBillRequest, tenantId).getOrThrow()
+                    // Create bill directly using repository
+                    val bill = billRepository.createBill(tenantId, createBillRequest).getOrThrow()
 
                     // Link bill to transmission
                     transmissionRepository.linkBillToTransmission(
@@ -372,5 +431,12 @@ class PeppolService(
     ): Result<PeppolTransmissionDto?> {
         logger.debug("Getting Peppol transmission for invoice: $invoiceId")
         return transmissionRepository.getTransmissionByInvoiceId(invoiceId, tenantId)
+    }
+
+    /**
+     * Get list of available providers.
+     */
+    fun getAvailableProviders(): List<String> {
+        return listOf("recommand")
     }
 }
