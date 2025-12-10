@@ -24,18 +24,7 @@ import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
-
-/**
- * Helper function to convert kotlinx.datetime.LocalDateTime to kotlinx.datetime.Instant
- */
-@OptIn(kotlin.time.ExperimentalTime::class)
-private fun kotlinx.datetime.LocalDateTime.toKotlinxInstant(): Instant {
-    val kotlinTimeInstant = this.toInstant(TimeZone.UTC)
-    return Instant.fromEpochSeconds(
-        kotlinTimeInstant.epochSeconds,
-        kotlinTimeInstant.nanosecondsOfSecond.toLong()
-    )
-}
+import ai.dokus.foundation.database.utils.toKotlinxInstant
 
 /**
  * Information about a refresh token
