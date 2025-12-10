@@ -1,0 +1,89 @@
+<resources>
+    <!-- Settings Groups -->
+    <string name="settings_group_account">Аккаунт</string>
+    <string name="settings_group_workspace">Рабочее пространство</string>
+    <string name="settings_group_app">Приложение</string>
+
+    <!-- Settings Sections -->
+    <string name="settings_profile">Профиль</string>
+    <string name="settings_workspace_details">Данные компании</string>
+    <string name="settings_team">Участники команды</string>
+    <string name="settings_peppol">Электронные счета Peppol</string>
+    <string name="settings_appearance">Оформление</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_select_prompt">Выберите настройку для изменения</string>
+    <string name="settings_select_hint">Выберите из вариантов слева</string>
+    <string name="settings_saved_successfully">Настройки успешно сохранены</string>
+
+    <!-- Workspace Picker -->
+    <string name="settings_current_workspace">Текущее рабочее пространство</string>
+    <string name="settings_switch_workspace">Сменить рабочее пространство</string>
+    <string name="settings_select_workspace">Выбрать рабочее пространство</string>
+
+    <!-- Profile Settings -->
+    <string name="profile_settings_title">Профиль</string>
+    <string name="profile_personal_info">Личная информация</string>
+    <string name="profile_first_name">Имя</string>
+    <string name="profile_last_name">Фамилия</string>
+    <string name="profile_email">Электронная почта</string>
+    <string name="profile_change_password">Изменить пароль</string>
+    <string name="profile_current_password">Текущий пароль</string>
+    <string name="profile_new_password">Новый пароль</string>
+    <string name="profile_confirm_password">Подтвердить пароль</string>
+    <string name="profile_danger_zone">Опасная зона</string>
+    <string name="profile_deactivate_account">Деактивировать аккаунт</string>
+    <string name="profile_deactivate_warning">Деактивация аккаунта удалит доступ ко всем рабочим пространствам.</string>
+    <string name="profile_password_changed">Пароль успешно изменён</string>
+    <string name="profile_logout">Выйти</string>
+    <string name="profile_logout_description">Выйти с этого устройства</string>
+    <string name="profile_editing_coming_soon">Редактирование профиля скоро будет доступно</string>
+    <string name="profile_load_failed">Не удалось загрузить профиль</string>
+
+    <!-- Workspace Settings -->
+    <string name="workspace_settings_title">Данные компании</string>
+    <string name="workspace_company_info">Информация о компании</string>
+    <string name="workspace_company_name">Название компании</string>
+    <string name="workspace_legal_name">Юридическое название</string>
+    <string name="workspace_vat_number">Номер НДС</string>
+    <string name="workspace_banking">Банковские реквизиты</string>
+    <string name="workspace_iban">IBAN</string>
+    <string name="workspace_bic">BIC</string>
+    <string name="workspace_address">Адрес</string>
+    <string name="workspace_invoice_settings">Настройки счетов</string>
+    <string name="workspace_invoice_prefix">Префикс счёта</string>
+    <string name="workspace_payment_terms">Срок оплаты по умолчанию (дни)</string>
+    <string name="workspace_create_title">Создайте рабочее пространство</string>
+    <string name="workspace_create_button">Создать рабочее пространство</string>
+    <string name="workspace_display_name">Отображаемое имя</string>
+    <string name="workspace_select_title">Выберите рабочее пространство</string>
+
+    <!-- Peppol Settings -->
+    <string name="peppol_settings_title">Электронные счета Peppol</string>
+    <string name="peppol_connection_status">Статус подключения</string>
+    <string name="peppol_connected">Подключено</string>
+    <string name="peppol_not_configured">Не настроено</string>
+    <string name="peppol_credentials">Учётные данные</string>
+    <string name="peppol_company_id">ID компании</string>
+    <string name="peppol_participant_id">ID участника Peppol</string>
+    <string name="peppol_api_key">API ключ</string>
+    <string name="peppol_api_secret">API секрет</string>
+    <string name="peppol_configuration">Конфигурация</string>
+    <string name="peppol_enabled">Включить Peppol</string>
+    <string name="peppol_test_mode">Тестовый режим</string>
+    <string name="peppol_test_connection">Проверить подключение</string>
+    <string name="peppol_delete_settings">Удалить настройки Peppol</string>
+    <string name="peppol_key_placeholder">Оставьте пустым, чтобы сохранить существующий ключ</string>
+    <string name="peppol_secret_placeholder">Оставьте пустым, чтобы сохранить существующий секрет</string>
+    <string name="peppol_testing_connection">Проверка подключения...</string>
+    <string name="peppol_connection_successful">Подключение успешно!</string>
+    <string name="peppol_delete_warning">Удаление настроек Peppol отключит возможности электронного выставления счетов.</string>
+
+    <!-- Appearance Settings -->
+    <string name="appearance_settings_title">Оформление</string>
+    <string name="appearance_theme">Тема</string>
+    <string name="appearance_theme_light">Светлая</string>
+    <string name="appearance_theme_dark">Тёмная</string>
+    <string name="appearance_theme_system">Системная</string>
+    <string name="appearance_language">Язык</string>
+</resources>

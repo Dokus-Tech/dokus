@@ -1,0 +1,39 @@
+<resources>
+    <!-- Team Settings -->
+    <string name="team_settings_title">Teammitglieder</string>
+    <string name="team_members">Teammitglieder</string>
+    <string name="team_pending_invitations">Ausstehende Einladungen</string>
+    <string name="team_invite_member">Mitglied einladen</string>
+    <string name="team_invite_email">E-Mail-Adresse</string>
+    <string name="team_invite_role">Rolle</string>
+    <string name="team_send_invitation">Einladung senden</string>
+    <string name="team_cancel_invitation">Einladung abbrechen</string>
+    <string name="team_change_role">Rolle ändern</string>
+    <string name="team_remove_member">Mitglied entfernen</string>
+    <string name="team_transfer_ownership">Eigentum übertragen</string>
+    <string name="team_owner_badge">Eigentümer</string>
+    <string name="team_joined">Beigetreten am</string>
+    <string name="team_last_active">Zuletzt aktiv</string>
+    <string name="team_expires">Läuft ab am</string>
+    <string name="team_invited_by">Eingeladen von</string>
+    <string name="team_no_members">Noch keine Teammitglieder</string>
+    <string name="team_no_invitations">Keine ausstehenden Einladungen</string>
+    <string name="team_invite_success">Einladung erfolgreich gesendet</string>
+    <string name="team_remove_confirm">Sind Sie sicher, dass Sie dieses Mitglied entfernen möchten?</string>
+    <string name="team_transfer_confirm">Sind Sie sicher, dass Sie das Eigentum übertragen möchten? Sie werden zum Admin.</string>
+    <string name="team_only_owner_can_manage">Nur der Arbeitsbereich-Eigentümer kann Teammitglieder verwalten</string>
+    <string name="team_load_members_failed">Teammitglieder konnten nicht geladen werden</string>
+    <string name="team_load_invitations_failed">Einladungen konnten nicht geladen werden</string>
+
+    <!-- Role names and descriptions -->
+    <string name="role_owner">Eigentümer</string>
+    <string name="role_admin">Administrator</string>
+    <string name="role_accountant">Buchhalter</string>
+    <string name="role_editor">Bearbeiter</string>
+    <string name="role_viewer">Betrachter</string>
+    <string name="role_owner_desc">Vollzugriff einschließlich Teamverwaltung</string>
+    <string name="role_admin_desc">Vollzugriff außer Teamverwaltung</string>
+    <string name="role_accountant_desc">Rechnungen, Kunden, Berichte und Exporte</string>
+    <string name="role_editor_desc">Rechnungen und Kunden erstellen und bearbeiten</string>
+    <string name="role_viewer_desc">Nur-Lese-Zugriff auf Rechnungen und Berichte</string>
+</resources>

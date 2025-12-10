@@ -1,0 +1,94 @@
+<resources>
+    <!-- Cashflow Screen -->
+    <string name="cashflow_title">Kasstroom</string>
+    <string name="cashflow_card_title">Kasstroom</string>
+    <string name="cashflow_add_document">Nieuw document toevoegen</string>
+    <string name="cashflow_no_documents">Nog geen financiële documenten</string>
+    <string name="cashflow_search">Zoeken</string>
+    <string name="cashflow_search_placeholder">Zoeken...</string>
+
+    <!-- Document Types -->
+    <string name="document_type_invoice">Factuur</string>
+    <string name="document_type_expense">Uitgave</string>
+    <string name="document_type_bill">Inkoopfactuur</string>
+    <string name="document_type_document">Document</string>
+    <string name="document_type_unknown">Onbekend</string>
+
+    <!-- Pending Documents -->
+    <string name="pending_documents_title">Kasstroom</string>
+    <string name="pending_documents_empty">Geen openstaande documenten</string>
+    <string name="pending_documents_need_confirmation">Bevestiging nodig</string>
+    <string name="pending_documents_previous">Vorige</string>
+    <string name="pending_documents_next">Volgende</string>
+
+    <!-- Document Table -->
+    <string name="document_table_invoice">Factuur</string>
+    <string name="document_table_contact">Contact</string>
+    <string name="document_table_amount">Bedrag</string>
+    <string name="document_table_date">Datum</string>
+    <string name="document_table_more_options">Meer opties</string>
+    <string name="document_table_view_details">Details bekijken</string>
+
+    <!-- Invoice Details Form -->
+    <string name="invoice_details">Details</string>
+    <string name="invoice_name">Factuurnaam</string>
+    <string name="invoice_total_amount">Totaalbedrag</string>
+    <string name="invoice_vat">BTW</string>
+    <string name="invoice_category">Categorie</string>
+    <string name="invoice_issue_date">Uitgiftedatum</string>
+    <string name="invoice_due_date">Vervaldatum</string>
+    <string name="invoice_due_prefix">Vervalt:</string>
+    <string name="invoice_client">Klant</string>
+    <string name="invoice_recurrent_expense">Terugkerende uitgave</string>
+    <string name="invoice_items">Items</string>
+    <string name="invoice_no_items">Geen items toegevoegd</string>
+
+    <!-- Cash Flow Direction -->
+    <string name="cashflow_direction">Kasstroom</string>
+    <string name="cashflow_cash_in">Inkomend</string>
+    <string name="cashflow_cash_out">Uitgaand</string>
+
+    <!-- Yes/No -->
+    <string name="answer_yes">Ja</string>
+    <string name="answer_no">Nee</string>
+
+    <!-- Business Health Card -->
+    <string name="business_health_title">Bedrijfsgezondheid</string>
+    <string name="business_health_predicted">Voorspeld</string>
+    <string name="business_health_actual">Werkelijk</string>
+
+    <!-- VAT Summary Card -->
+    <string name="vat_summary_title">BTW</string>
+    <string name="vat_net_amount">Nettobedrag</string>
+    <string name="vat_predicted_net_amount">Voorspeld nettobedrag</string>
+
+    <!-- Document Upload -->
+    <string name="upload_documents_title">Documenten uploaden</string>
+    <string name="upload_add_document">Document toevoegen</string>
+    <string name="upload_drag_hint">of sleep bestanden hierheen</string>
+    <string name="upload_instructions">Om een afbeelding te importeren of een document te scannen voor uw factuur, zorg ervoor dat het bestand duidelijk is en in een compatibel formaat.</string>
+    <string name="upload_no_app_hint">Heeft u de applicatie niet? Klik hier</string>
+    <string name="upload_uploads_title">Uploads</string>
+    <string name="upload_no_documents">Geen documenten worden geüpload</string>
+    <string name="upload_release_to_upload">Loslaten om te uploaden</string>
+    <string name="upload_documents_absorbed">Documenten worden geabsorbeerd</string>
+
+    <!-- Upload Item Actions -->
+    <string name="upload_action_cancel">Annuleren</string>
+    <string name="upload_action_retry">Opnieuw proberen</string>
+    <string name="upload_action_remove">Verwijderen</string>
+    <string name="upload_action_delete">Verwijderen</string>
+    <string name="upload_action_undo">Verwijderen ongedaan maken</string>
+    <string name="upload_action_close">Sluiten</string>
+    <string name="upload_status_failed">Mislukt</string>
+    <string name="upload_status_uploaded">Geüpload</string>
+
+    <!-- App Download Dialog -->
+    <string name="app_download_title">Download de Dokus App</string>
+    <string name="app_download_description">Scan deze QR-code met uw telefoon om de Dokus mobiele app te downloaden.</string>
+    <string name="app_download_platforms">Beschikbaar op iOS en Android</string>
+    <string name="app_download_qr_code">QR-code</string>
+
+    <!-- Sort Dropdown -->
+    <string name="sort_expand">Sorteeropties uitvouwen</string>
+</resources>

@@ -1,0 +1,36 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">D[#]kus</string>
+    <string name="app_slogan">Donde la soberanía encuentra la inteligencia.</string>
+    <string name="brand_motto">Inteligencia. Autonomía. Silencio.</string>
+    <string name="copyright">©2025 Dokus</string>
+
+    <!-- Core - Splash -->
+    <string name="bootstrap_state_initializing">Inicializando aplicación...</string>
+    <string name="bootstrap_state_authenticating">Verificando autenticación...</string>
+    <string name="bootstrap_state_app_version_check">Verificando versión de la aplicación...</string>
+    <string name="bootstrap_state_checking_account_status">Verificando estado de la cuenta...</string>
+
+    <!-- Home -->
+    <string name="home_dashboard">Panel de control</string>
+    <string name="media_title">Medios</string>
+    <string name="home_settings">Configuración</string>
+
+    <!-- Device Types -->
+    <string name="device_type_ios">iOS</string>
+    <string name="device_type_android">Android</string>
+    <string name="device_type_web">Web</string>
+    <string name="device_type_desktop">Computadora</string>
+    <string name="device_type_tablet">Tableta</string>
+
+    <!-- Dashboard - Feature -->
+    <string name="feature_auth">Autenticación</string>
+
+    <!-- Slogan Screen -->
+    <string name="slogan_line_2">Creado para quienes construyen el mañana.</string>
+    <string name="slogan_line_3">Confiado por quienes poseen el hoy.</string>
+
+    <!-- Keyboard Modifiers -->
+    <string name="key_cmd">CMD</string>
+    <string name="key_ctrl">CTRL</string>
+</resources>
