@@ -70,7 +70,17 @@ enum class UserRole(override val dbValue: String) : DbEnum {
 
     companion object {
         val all = listOf(Owner, Admin, Accountant, Editor, Viewer)
+        /** Roles that can be assigned to new members (excludes Owner) */
+        val assignable = listOf(Admin, Accountant, Editor, Viewer)
     }
+}
+
+@Serializable
+enum class InvitationStatus(override val dbValue: String) : DbEnum {
+    Pending("PENDING"),
+    Accepted("ACCEPTED"),
+    Expired("EXPIRED"),
+    Cancelled("CANCELLED")
 }
 
 @Serializable

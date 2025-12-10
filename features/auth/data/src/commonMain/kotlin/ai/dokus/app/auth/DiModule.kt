@@ -5,6 +5,8 @@ import ai.dokus.app.auth.datasource.AccountRemoteDataSource
 import ai.dokus.app.auth.datasource.AccountRemoteDataSourceImpl
 import ai.dokus.app.auth.datasource.IdentityRemoteDataSource
 import ai.dokus.app.auth.datasource.IdentityRemoteDataSourceImpl
+import ai.dokus.app.auth.datasource.TeamRemoteDataSource
+import ai.dokus.app.auth.datasource.TeamRemoteDataSourceImpl
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.datasource.TenantRemoteDataSourceImpl
 import ai.dokus.app.auth.manager.AuthManagerImpl
@@ -88,6 +90,13 @@ val authNetworkModule = module {
     // TenantRemoteDataSource (authenticated)
     single<TenantRemoteDataSource> {
         TenantRemoteDataSourceImpl(
+            httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
+        )
+    }
+
+    // TeamRemoteDataSource (authenticated)
+    single<TeamRemoteDataSource> {
+        TeamRemoteDataSourceImpl(
             httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
         )
     }
