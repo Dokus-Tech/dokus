@@ -23,7 +23,7 @@ import ai.dokus.foundation.navigation.destinations.NavigationDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +38,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -51,7 +50,6 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,7 +60,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
@@ -104,19 +101,15 @@ private fun SettingsSplitPaneLayout(
         mutableStateOf(allSections.firstOrNull())
     }
 
-    Scaffold { contentPadding ->
-        Row(
-            modifier = Modifier
-                .padding(contentPadding)
-                .fillMaxSize()
-        ) {
-            // Left Navigation Panel (320dp fixed width per UX specs)
+    Surface {
+        Row(Modifier.fillMaxSize()) {
+            // Left Navigation Panel - matches HomeScreen's RailNavigationLayout pattern
             Surface(
                 modifier = Modifier
-                    .width(320.dp)
-                    .fillMaxHeight(),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                tonalElevation = 1.dp
+                    .fillMaxHeight()
+                    .width(280.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
             ) {
                 SettingsNavigationPanel(
                     viewModel = viewModel,
@@ -126,18 +119,12 @@ private fun SettingsSplitPaneLayout(
                 )
             }
 
-            // Divider between panes
-            VerticalDivider(
-                modifier = Modifier.fillMaxHeight(),
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
             // Right Content Panel (fills remaining space)
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
+                    .fillMaxSize()
+                    .padding(start = 8.dp),
+                contentAlignment = Alignment.TopStart
             ) {
                 selectedSection?.let { section ->
                     SettingsContentPane(section = section)
