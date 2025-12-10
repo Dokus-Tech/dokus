@@ -282,6 +282,26 @@ data class RecommandDocumentSummary(
 )
 
 // ============================================================================
+// VERIFICATION MODELS
+// ============================================================================
+
+/**
+ * Response when verifying a Peppol recipient.
+ * Provider-agnostic model for recipient verification.
+ */
+@Serializable
+data class PeppolVerifyResponse(
+    /** Whether the recipient is registered on the Peppol network */
+    val registered: Boolean,
+    /** The verified Peppol participant ID */
+    val participantId: String? = null,
+    /** Organization/company name if available */
+    val name: String? = null,
+    /** Supported document types (e.g., "invoice", "creditnote") */
+    val documentTypes: List<String> = emptyList()
+)
+
+// ============================================================================
 // VALIDATION MODELS
 // ============================================================================
 

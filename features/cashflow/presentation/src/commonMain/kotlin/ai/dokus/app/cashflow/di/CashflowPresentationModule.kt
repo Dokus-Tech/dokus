@@ -5,6 +5,9 @@ import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
+import ai.dokus.app.cashflow.viewmodel.ClientViewModel
+import ai.dokus.app.cashflow.viewmodel.PeppolSendViewModel
+import ai.dokus.app.cashflow.viewmodel.PeppolSettingsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -16,6 +19,9 @@ val cashflowViewModelModule = module {
     factory { WatchPendingDocumentsUseCase(dataSource = get()) }
     viewModel { CashflowViewModel() }
     viewModel { AddDocumentViewModel() }
+    viewModel { ClientViewModel() }
+    viewModel { PeppolSettingsViewModel() }
+    viewModel { PeppolSendViewModel() }
 }
 
 val cashflowPresentationModule = module {
