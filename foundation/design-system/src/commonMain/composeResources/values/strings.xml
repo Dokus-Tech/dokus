@@ -4,9 +4,6 @@
     <string name="app_slogan">Where sovereignty meets intelligence.</string>
     <string name="brand_motto">Intelligence. Autonomy. Silence.</string>
     <string name="copyright">©2025 Dokus</string>
-    <string name="back">Back</string>
-    <string name="approve">Approve</string>
-    <string name="reject">Reject</string>
 
     <!-- Core - Splash -->
     <string name="bootstrap_state_initializing">Initializing application...</string>
@@ -16,7 +13,6 @@
 
     <!-- Home -->
     <string name="home_dashboard">Dashboard</string>
-    <string name="cashflow_title">Cashflow</string>
     <string name="media_title">Media</string>
     <string name="home_settings">Settings</string>
 
@@ -26,10 +22,6 @@
     <string name="device_type_web">Web</string>
     <string name="device_type_desktop">Computer</string>
     <string name="device_type_tablet">Tablet</string>
-
-    <!-- Under Development -->
-    <string name="under_development_title">Building Something Reliable</string>
-    <string name="under_development_subtitle">This feature is being carefully developed.\nBuilt to serve your needs.</string>
 
     <!-- Dashboard - Feature -->
     <string name="feature_auth">Authentication</string>
@@ -41,18 +33,4 @@
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">CTRL</string>
-
-    <!-- Document Types -->
-    <string name="document_type_invoice">Invoice</string>
-    <string name="document_type_expense">Expense</string>
-    <string name="document_type_bill">Bill</string>
-    <string name="document_type_document">Document</string>
-    <string name="document_type_unknown">Unknown</string>
-
-    <!-- Pending Documents -->
-    <string name="pending_documents_title">Cash flow</string>
-    <string name="pending_documents_empty">No pending documents</string>
-    <string name="pending_documents_need_confirmation">Need confirmation</string>
-    <string name="pending_documents_previous">Previous</string>
-    <string name="pending_documents_next">Next</string>
 </resources>

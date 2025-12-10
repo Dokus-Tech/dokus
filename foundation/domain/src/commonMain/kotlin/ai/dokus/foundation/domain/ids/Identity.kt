@@ -75,3 +75,17 @@ value class SessionId(val value: Uuid) {
         fun generate(): SessionId = SessionId(Uuid.random().toString())
     }
 }
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class InvitationId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): InvitationId = InvitationId(Uuid.random())
+        fun parse(value: String): InvitationId = InvitationId(Uuid.parse(value))
+    }
+}

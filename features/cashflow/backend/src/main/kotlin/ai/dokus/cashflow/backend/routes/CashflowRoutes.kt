@@ -11,6 +11,9 @@ import io.ktor.server.routing.routing
  *
  * Routes registered:
  *
+ * Clients:
+ * - /api/v1/clients - Client CRUD operations
+ *
  * Cash-In (Outgoing Invoices):
  * - /api/v1/invoices - Invoice CRUD operations
  *
@@ -33,6 +36,10 @@ import io.ktor.server.routing.routing
  * - /api/v1/documents/{id}/reject - Reject extraction
  * - /api/v1/documents/{id}/reprocess - Trigger re-extraction
  *
+ * Peppol:
+ * - /api/v1/peppol - Peppol e-invoicing operations
+ *
+ * @see clientRoutes
  * @see invoiceRoutes
  * @see expenseRoutes
  * @see billRoutes
@@ -41,9 +48,13 @@ import io.ktor.server.routing.routing
  * @see cashflowDocumentRoutes
  * @see documentUploadRoutes
  * @see documentProcessingRoutes
+ * @see peppolRoutes
  */
 fun Application.configureCashflowRoutes() {
     routing {
+        // Client routes
+        clientRoutes()
+
         // Invoice routes (Cash-In)
         invoiceRoutes()
 
@@ -67,5 +78,8 @@ fun Application.configureCashflowRoutes() {
 
         // Document processing routes (AI extraction)
         documentProcessingRoutes()
+
+        // Peppol e-invoicing routes
+        peppolRoutes()
     }
 }

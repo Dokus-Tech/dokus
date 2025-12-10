@@ -12,6 +12,7 @@ import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
 import ai.dokus.foundation.database.tables.cashflow.AttachmentsTable
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
+import ai.dokus.foundation.database.tables.cashflow.ClientsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
@@ -77,7 +78,8 @@ object DatabaseInitializer {
                     // ===== Cashflow Tables (create in dependency order) =====
                     DocumentsTable,       // base document table
                     DocumentProcessingTable, // depends on DocumentsTable
-                    InvoicesTable,        // depends on TenantTable, DocumentsTable
+                    ClientsTable,         // depends on TenantTable (clients before invoices)
+                    InvoicesTable,        // depends on TenantTable, DocumentsTable, ClientsTable
                     InvoiceItemsTable,    // depends on InvoicesTable
                     ExpensesTable,        // depends on TenantTable, DocumentsTable
                     AttachmentsTable,     // depends on TenantTable

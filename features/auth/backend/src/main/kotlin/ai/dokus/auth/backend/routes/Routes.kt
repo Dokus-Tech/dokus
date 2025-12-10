@@ -10,6 +10,7 @@ import io.ktor.server.routing.*
  * - /api/v1/identity - Unauthenticated identity operations (login, register, etc.)
  * - /api/v1/account - Authenticated account operations (me, logout, etc.)
  * - /api/v1/tenants - Tenant management operations
+ * - /api/v1/team - Team management operations (members, invitations)
  *
  * Usage in Application.kt:
  * ```kotlin
@@ -26,5 +27,6 @@ fun Application.configureRoutes() {
         // Authenticated routes
         accountRoutes()
         tenantRoutes()
+        teamRoutes()
     }
 }

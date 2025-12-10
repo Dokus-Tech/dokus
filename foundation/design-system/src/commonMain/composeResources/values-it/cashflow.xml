@@ -1,0 +1,94 @@
+<resources>
+    <!-- Cashflow Screen -->
+    <string name="cashflow_title">Flusso di cassa</string>
+    <string name="cashflow_card_title">Flusso di cassa</string>
+    <string name="cashflow_add_document">Aggiungi nuovo documento</string>
+    <string name="cashflow_no_documents">Nessun documento finanziario</string>
+    <string name="cashflow_search">Cerca</string>
+    <string name="cashflow_search_placeholder">Cerca...</string>
+
+    <!-- Document Types -->
+    <string name="document_type_invoice">Fattura</string>
+    <string name="document_type_expense">Spesa</string>
+    <string name="document_type_bill">Fattura fornitore</string>
+    <string name="document_type_document">Documento</string>
+    <string name="document_type_unknown">Sconosciuto</string>
+
+    <!-- Pending Documents -->
+    <string name="pending_documents_title">Flusso di cassa</string>
+    <string name="pending_documents_empty">Nessun documento in sospeso</string>
+    <string name="pending_documents_need_confirmation">Conferma necessaria</string>
+    <string name="pending_documents_previous">Precedente</string>
+    <string name="pending_documents_next">Successivo</string>
+
+    <!-- Document Table -->
+    <string name="document_table_invoice">Fattura</string>
+    <string name="document_table_contact">Contatto</string>
+    <string name="document_table_amount">Importo</string>
+    <string name="document_table_date">Data</string>
+    <string name="document_table_more_options">Altre opzioni</string>
+    <string name="document_table_view_details">Visualizza dettagli</string>
+
+    <!-- Invoice Details Form -->
+    <string name="invoice_details">Dettagli</string>
+    <string name="invoice_name">Nome fattura</string>
+    <string name="invoice_total_amount">Importo totale</string>
+    <string name="invoice_vat">IVA</string>
+    <string name="invoice_category">Categoria</string>
+    <string name="invoice_issue_date">Data emissione</string>
+    <string name="invoice_due_date">Data scadenza</string>
+    <string name="invoice_due_prefix">Scadenza:</string>
+    <string name="invoice_client">Cliente</string>
+    <string name="invoice_recurrent_expense">Spesa ricorrente</string>
+    <string name="invoice_items">Voci</string>
+    <string name="invoice_no_items">Nessuna voce aggiunta</string>
+
+    <!-- Cash Flow Direction -->
+    <string name="cashflow_direction">Flusso di cassa</string>
+    <string name="cashflow_cash_in">Entrata</string>
+    <string name="cashflow_cash_out">Uscita</string>
+
+    <!-- Yes/No -->
+    <string name="answer_yes">Sì</string>
+    <string name="answer_no">No</string>
+
+    <!-- Business Health Card -->
+    <string name="business_health_title">Salute aziendale</string>
+    <string name="business_health_predicted">Previsto</string>
+    <string name="business_health_actual">Effettivo</string>
+
+    <!-- VAT Summary Card -->
+    <string name="vat_summary_title">IVA</string>
+    <string name="vat_net_amount">Importo netto</string>
+    <string name="vat_predicted_net_amount">Importo netto previsto</string>
+
+    <!-- Document Upload -->
+    <string name="upload_documents_title">Carica documenti</string>
+    <string name="upload_add_document">Aggiungi documento</string>
+    <string name="upload_drag_hint">o trascina i file qui</string>
+    <string name="upload_instructions">Per importare un\'immagine o scansionare un documento per la fattura, assicurati che il file sia chiaro e in un formato compatibile.</string>
+    <string name="upload_no_app_hint">Non hai l\'applicazione? Clicca qui</string>
+    <string name="upload_uploads_title">Caricamenti</string>
+    <string name="upload_no_documents">Nessun documento in caricamento</string>
+    <string name="upload_release_to_upload">Rilascia per caricare</string>
+    <string name="upload_documents_absorbed">I documenti verranno elaborati</string>
+
+    <!-- Upload Item Actions -->
+    <string name="upload_action_cancel">Annulla</string>
+    <string name="upload_action_retry">Riprova</string>
+    <string name="upload_action_remove">Rimuovi</string>
+    <string name="upload_action_delete">Elimina</string>
+    <string name="upload_action_undo">Annulla eliminazione</string>
+    <string name="upload_action_close">Chiudi</string>
+    <string name="upload_status_failed">Fallito</string>
+    <string name="upload_status_uploaded">Caricato</string>
+
+    <!-- App Download Dialog -->
+    <string name="app_download_title">Scarica l\'app Dokus</string>
+    <string name="app_download_description">Scansiona questo codice QR con il telefono per scaricare l\'app mobile Dokus.</string>
+    <string name="app_download_platforms">Disponibile su iOS e Android</string>
+    <string name="app_download_qr_code">Codice QR</string>
+
+    <!-- Sort Dropdown -->
+    <string name="sort_expand">Espandi opzioni di ordinamento</string>
+</resources>

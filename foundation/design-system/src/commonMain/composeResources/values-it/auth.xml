@@ -1,0 +1,18 @@
+<resources>
+    <!-- Login Screen -->
+    <string name="auth_login_subtitle">Accedi al tuo account</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_forgot_password">Password dimenticata?</string>
+    <string name="auth_sign_in_button">Accedi</string>
+    <string name="auth_no_account_prefix">Non hai un account? </string>
+    <string name="auth_sign_up_link">Registrati</string>
+
+    <!-- Register Screen -->
+    <string name="auth_register_title">Crea Account</string>
+    <string name="auth_first_name_label">Nome</string>
+    <string name="auth_last_name_label">Cognome</string>
+    <string name="auth_register_button">Registrati</string>
+    <string name="auth_has_account_prefix">Hai già un account? </string>
+    <string name="auth_login_link">Accedi</string>
+</resources>

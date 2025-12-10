@@ -517,6 +517,22 @@ sealed class DokusException(
         }
     }
 
+    // 501 Not Implemented
+    @Serializable
+    @SerialName("DokusException.NotImplemented")
+    data class NotImplemented(
+        override val message: String? = "This feature is not yet implemented.",
+    ) : DokusException(
+        httpStatusCode = HTTP_STATUS,
+        errorCode = ERROR_CODE,
+        recoverable = false,
+    ) {
+        companion object {
+            const val HTTP_STATUS = 501
+            const val ERROR_CODE = "NOT_IMPLEMENTED"
+        }
+    }
+
     // 503 Service Unavailable
     @Serializable
     @SerialName("DokusException.ConnectionError")

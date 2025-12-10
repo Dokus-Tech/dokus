@@ -6,9 +6,9 @@ import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
-import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
@@ -25,7 +25,7 @@ class DatabaseFactory(
      * Connect to the database without creating any tables.
      * Use this when tables will be initialized centrally via DatabaseInitializer.
      */
-    suspend fun connect(): Database {
+    fun connect(): Database {
         dataSource = createHikariDataSource()
 
         if (appConfig.flyway.enabled) {

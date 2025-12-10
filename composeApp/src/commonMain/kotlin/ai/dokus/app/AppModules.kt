@@ -30,7 +30,9 @@ val List<AppModule>.homeItems: List<HomeItem>
     get() = flatMap { it.homeItems }.sortedBy { it.priority }
 
 val List<AppModule>.settingsGroups: List<ModuleSettingsGroup>
-    get() = flatMap { it.settingsGroups }
+    get() = flatMap { it.settingsGroups }.sortedBy { it.priority.order }
 
 val List<AppModule>.settingsGroupsCombined: Map<StringResource, List<ModuleSettingsGroup>>
-    get() = flatMap { it.settingsGroups }.groupBy { it.title }
+    get() = flatMap { it.settingsGroups }
+        .groupBy { it.title }
+        .mapValues { (_, groups) -> groups.sortedBy { it.priority.order } }
