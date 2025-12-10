@@ -13,7 +13,6 @@ import io.ktor.server.routing.routing
  *
  * Clients:
  * - /api/v1/clients - Client CRUD operations
- * - /api/v1/internal/clients - Internal client API for cross-service calls
  *
  * Cash-In (Outgoing Invoices):
  * - /api/v1/invoices - Invoice CRUD operations

@@ -1,18 +1,14 @@
 package ai.dokus.peppol.backend.config
 
+import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.foundation.database.di.repositoryModules
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
 import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.peppol.backend.client.RecommandClient
-import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
-import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
 import ai.dokus.peppol.backend.mapper.PeppolMapper
-import ai.dokus.peppol.backend.repository.PeppolSettingsRepository
-import ai.dokus.peppol.backend.repository.PeppolTransmissionRepository
-import ai.dokus.peppol.backend.service.CashflowServiceClient
-import ai.dokus.peppol.backend.service.ICashflowService
 import ai.dokus.peppol.backend.service.PeppolService
 import ai.dokus.peppol.backend.validator.PeppolValidator
 import io.ktor.client.HttpClient
@@ -33,7 +29,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             peppolConfigModule(peppolConfig),
             cryptoModule(peppolConfig),
             databaseModule,
-            repositoryModule,
+            repositoryModules,
             clientModule(peppolConfig),
             serviceModule
         )
@@ -94,21 +90,11 @@ val databaseModule = module {
     single {
         DatabaseFactory(get(), "peppol-pool").apply {
             runBlocking {
-                init(
-                    PeppolSettingsTable,
-                    PeppolTransmissionsTable
-                )
+                connect()
+                DatabaseInitializer.initializeAllTables()
             }
         }
     }
-}
-
-/**
- * Repository module - data access layer
- */
-val repositoryModule = module {
-    single { PeppolSettingsRepository(get()) }
-    single { PeppolTransmissionRepository() }
 }
 
 /**
@@ -118,14 +104,6 @@ fun clientModule(peppolConfig: PeppolConfig) = module {
     // Recommand API client
     single {
         RecommandClient(get(), peppolConfig.recommand.baseUrl)
-    }
-
-    // Cashflow service client for inter-service communication
-    single<ICashflowService> {
-        CashflowServiceClient(
-            httpClient = get(),
-            cashflowServiceBaseUrl = peppolConfig.cashflowService.baseUrl
-        )
     }
 }
 
@@ -139,11 +117,15 @@ val serviceModule = module {
     // Validator
     single { PeppolValidator() }
 
-    // Main Peppol service
+    // Main Peppol service - now uses repositories directly instead of HTTP calls
     single {
         PeppolService(
             settingsRepository = get(),
             transmissionRepository = get(),
+            clientRepository = get(),
+            invoiceRepository = get(),
+            billRepository = get(),
+            tenantRepository = get(),
             recommandClient = get(),
             mapper = get(),
             validator = get()

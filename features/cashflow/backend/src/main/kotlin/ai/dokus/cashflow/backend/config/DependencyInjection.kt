@@ -1,17 +1,7 @@
 package ai.dokus.cashflow.backend.config
 
 import ai.dokus.foundation.database.DatabaseInitializer
-import ai.dokus.foundation.database.repository.auth.TenantRepository
-import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
-import ai.dokus.foundation.database.repository.cashflow.BillRepository
-import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
-import ai.dokus.foundation.database.repository.cashflow.ClientRepository
-import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
-import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
-import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
-import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
-import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
+import ai.dokus.foundation.database.di.repositoryModules
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.cashflow.backend.service.ClientService
@@ -47,7 +37,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
         modules(
             coreModule(appConfig),
             databaseModule,
-            repositoryModule,
+            repositoryModules,
             storageModule(appConfig),
             serviceModule,
             peppolModule()
@@ -100,22 +90,6 @@ val databaseModule = module {
     }
 }
 
-/**
- * Repository module - data access layer
- */
-val repositoryModule = module {
-    single { AttachmentRepository() }
-    single { DocumentRepository() }
-    single { DocumentProcessingRepository() }
-    single { InvoiceRepository() }
-    single { ExpenseRepository() }
-    single { BillRepository() }
-    single { ClientRepository() }
-    single { CashflowRepository(get(), get()) }
-    single { TenantRepository() }
-    single { PeppolSettingsRepository(get()) }
-    single { PeppolTransmissionRepository() }
-}
 
 /**
  * Storage module - object storage configuration
