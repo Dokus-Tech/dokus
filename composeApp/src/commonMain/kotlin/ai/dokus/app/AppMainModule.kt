@@ -6,16 +6,28 @@ import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.AppPresentationModuleDi
 import ai.dokus.app.core.DashboardWidget
 import ai.dokus.app.core.ModuleSettingsGroup
+import ai.dokus.app.core.ModuleSettingsSection
+import ai.dokus.app.core.SettingsPriority
 import ai.dokus.app.navigation.AppNavigationProvider
 import ai.dokus.app.navigation.HomeNavigationProvider
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.chart_bar_trend_up
 import ai.dokus.app.resources.generated.home_dashboard
 import ai.dokus.app.resources.generated.home_settings
+import ai.dokus.app.resources.generated.settings_appearance
+import ai.dokus.app.resources.generated.settings_group_app
+import ai.dokus.app.resources.generated.settings_group_workspace
+import ai.dokus.app.resources.generated.settings_team
+import ai.dokus.app.resources.generated.settings_workspace_details
 import ai.dokus.app.resources.generated.user
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.destinations.HomeDestination
+import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Palette
 
 internal object AppMainModule : AppModule {
     // Presentation layer
@@ -37,7 +49,35 @@ internal object AppMainModule : AppModule {
             priority = HomeItemPriority.Low,
         ),
     )
-    override val settingsGroups: List<ModuleSettingsGroup> = emptyList()
+    override val settingsGroups: List<ModuleSettingsGroup> = listOf(
+        ModuleSettingsGroup(
+            title = Res.string.settings_group_workspace,
+            priority = SettingsPriority.Medium,
+            sections = listOf(
+                ModuleSettingsSection(
+                    title = Res.string.settings_workspace_details,
+                    icon = Icons.Default.Business,
+                    destination = SettingsDestination.WorkspaceSettings
+                ),
+                ModuleSettingsSection(
+                    title = Res.string.settings_team,
+                    icon = Icons.Default.Group,
+                    destination = SettingsDestination.TeamSettings
+                )
+            )
+        ),
+        ModuleSettingsGroup(
+            title = Res.string.settings_group_app,
+            priority = SettingsPriority.Low,
+            sections = listOf(
+                ModuleSettingsSection(
+                    title = Res.string.settings_appearance,
+                    icon = Icons.Default.Palette,
+                    destination = SettingsDestination.AppearanceSettings
+                )
+            )
+        )
+    )
     override val dashboardWidgets: List<DashboardWidget> = emptyList()
 
     override val presentationDi: AppPresentationModuleDi = object : AppPresentationModuleDi {

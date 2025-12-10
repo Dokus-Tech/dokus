@@ -55,4 +55,83 @@
     <string name="pending_documents_need_confirmation">Need confirmation</string>
     <string name="pending_documents_previous">Previous</string>
     <string name="pending_documents_next">Next</string>
+
+    <!-- Settings Groups -->
+    <string name="settings_group_account">Account</string>
+    <string name="settings_group_workspace">Workspace</string>
+    <string name="settings_group_app">App</string>
+
+    <!-- Settings Sections -->
+    <string name="settings_profile">Profile</string>
+    <string name="settings_workspace_details">Company Details</string>
+    <string name="settings_team">Team Members</string>
+    <string name="settings_peppol">Peppol E-Invoicing</string>
+    <string name="settings_appearance">Appearance</string>
+
+    <!-- Workspace Picker -->
+    <string name="settings_current_workspace">Current Workspace</string>
+    <string name="settings_switch_workspace">Switch Workspace</string>
+    <string name="settings_select_workspace">Select Workspace</string>
+
+    <!-- Profile Settings -->
+    <string name="profile_settings_title">Profile</string>
+    <string name="profile_personal_info">Personal Information</string>
+    <string name="profile_first_name">First Name</string>
+    <string name="profile_last_name">Last Name</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_change_password">Change Password</string>
+    <string name="profile_current_password">Current Password</string>
+    <string name="profile_new_password">New Password</string>
+    <string name="profile_confirm_password">Confirm Password</string>
+    <string name="profile_danger_zone">Danger Zone</string>
+    <string name="profile_deactivate_account">Deactivate Account</string>
+    <string name="profile_deactivate_warning">Deactivating your account will remove access to all workspaces.</string>
+    <string name="profile_password_changed">Password changed successfully</string>
+
+    <!-- Workspace Settings -->
+    <string name="workspace_settings_title">Company Details</string>
+    <string name="workspace_company_info">Company Information</string>
+    <string name="workspace_company_name">Company Name</string>
+    <string name="workspace_legal_name">Legal Name</string>
+    <string name="workspace_vat_number">VAT Number</string>
+    <string name="workspace_banking">Banking Details</string>
+    <string name="workspace_iban">IBAN</string>
+    <string name="workspace_bic">BIC</string>
+    <string name="workspace_address">Address</string>
+    <string name="workspace_invoice_settings">Invoice Settings</string>
+    <string name="workspace_invoice_prefix">Invoice Prefix</string>
+    <string name="workspace_payment_terms">Default Payment Terms (days)</string>
+
+    <!-- Peppol Settings -->
+    <string name="peppol_settings_title">Peppol E-Invoicing</string>
+    <string name="peppol_connection_status">Connection Status</string>
+    <string name="peppol_connected">Connected</string>
+    <string name="peppol_not_configured">Not Configured</string>
+    <string name="peppol_credentials">Credentials</string>
+    <string name="peppol_company_id">Company ID</string>
+    <string name="peppol_participant_id">Peppol Participant ID</string>
+    <string name="peppol_api_key">API Key</string>
+    <string name="peppol_api_secret">API Secret</string>
+    <string name="peppol_configuration">Configuration</string>
+    <string name="peppol_enabled">Enable Peppol</string>
+    <string name="peppol_test_mode">Test Mode</string>
+    <string name="peppol_test_connection">Test Connection</string>
+    <string name="peppol_delete_settings">Delete Peppol Settings</string>
+
+    <!-- Appearance Settings -->
+    <string name="appearance_settings_title">Appearance</string>
+    <string name="appearance_theme">Theme</string>
+    <string name="appearance_theme_light">Light</string>
+    <string name="appearance_theme_dark">Dark</string>
+    <string name="appearance_theme_system">System</string>
+    <string name="appearance_language">Language</string>
+
+    <!-- Team Settings (placeholder) -->
+    <string name="team_settings_title">Team Members</string>
+    <string name="team_coming_soon">Team management coming soon</string>
+
+    <!-- Common -->
+    <string name="save_changes">Save Changes</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
 </resources>

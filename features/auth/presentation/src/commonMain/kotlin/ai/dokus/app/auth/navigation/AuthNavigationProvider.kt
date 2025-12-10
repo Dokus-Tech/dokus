@@ -26,5 +26,8 @@ internal object AuthNavigationProvider : NavigationProvider {
         composable<AuthDestination.WorkspaceSelect> {
             WorkspaceSelectScreen()
         }
+        composable<AuthDestination.ProfileSettings> {
+            ProfileSettingsScreen()
+        }
     }
 }

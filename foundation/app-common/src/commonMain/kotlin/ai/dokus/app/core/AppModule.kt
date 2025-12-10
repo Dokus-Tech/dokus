@@ -16,10 +16,20 @@ import org.koin.core.module.Module
  */
 interface AppModule : AppPresentationModule, AppDataModule, AppDomainModule
 
+/**
+ * Priority for settings groups, determining display order.
+ */
+enum class SettingsPriority(val order: Int) {
+    High(0),
+    Medium(1),
+    Low(2)
+}
+
 @Immutable
 data class ModuleSettingsGroup(
     val title: StringResource,
-    val sections: List<ModuleSettingsSection>
+    val sections: List<ModuleSettingsSection>,
+    val priority: SettingsPriority = SettingsPriority.Medium
 )
 
 @Immutable
