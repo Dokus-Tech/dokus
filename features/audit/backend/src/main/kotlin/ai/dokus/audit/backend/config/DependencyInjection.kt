@@ -1,30 +1,27 @@
 package ai.dokus.audit.backend.config
 
-import ai.dokus.audit.backend.database.services.AuditServiceImpl
-import ai.dokus.foundation.database.tables.audit.AuditLogsTable
+import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.foundation.database.di.repositoryModuleAudit
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.foundation.ktor.services.AuditService
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
-    // Database
+    // Database - connect and initialize all tables centrally
     single {
         DatabaseFactory(get(), "audit-pool").apply {
             runBlocking {
-                init(AuditLogsTable)
+                connect()
+                DatabaseInitializer.initializeAllTables()
             }
         }
     }
-
-    // Local database services
-    single<AuditService> { AuditServiceImpl() }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
@@ -38,6 +35,11 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
     }
 
     install(Koin) {
-        modules(coreModule, appModule, redisModule(appConfig, RedisNamespace.Audit))
+        modules(
+            coreModule,
+            repositoryModuleAudit,
+            appModule,
+            redisModule(appConfig, RedisNamespace.Audit)
+        )
     }
 }
