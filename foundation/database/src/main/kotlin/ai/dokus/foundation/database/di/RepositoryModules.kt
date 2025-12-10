@@ -1,9 +1,11 @@
 package ai.dokus.foundation.database.di
 
+import ai.dokus.foundation.database.repository.audit.AuditRepository
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
+import ai.dokus.foundation.database.repository.banking.BankingRepository
 import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
@@ -12,8 +14,11 @@ import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingReposi
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
+import ai.dokus.foundation.database.repository.payment.PaymentRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
+import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
+import ai.dokus.foundation.database.repository.reporting.ReportingRepository
 import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import org.koin.dsl.module
 
@@ -56,6 +61,46 @@ val repositoryModulePeppol = module {
 }
 
 /**
+ * Processor repositories module.
+ * Provides repositories for document processing operations.
+ */
+val repositoryModuleProcessor = module {
+    single { ProcessorDocumentProcessingRepository() }
+}
+
+/**
+ * Audit repositories module.
+ * Provides repositories for audit logging.
+ */
+val repositoryModuleAudit = module {
+    single { AuditRepository() }
+}
+
+/**
+ * Banking repositories module.
+ * Provides repositories for bank connections and transactions.
+ */
+val repositoryModuleBanking = module {
+    single { BankingRepository() }
+}
+
+/**
+ * Payment repositories module.
+ * Provides repositories for payment records.
+ */
+val repositoryModulePayment = module {
+    single { PaymentRepository() }
+}
+
+/**
+ * Reporting repositories module.
+ * Provides repositories for VAT returns and reporting.
+ */
+val repositoryModuleReporting = module {
+    single { ReportingRepository() }
+}
+
+/**
  * Combined repository module including all domain repositories.
  *
  * Usage:
@@ -75,6 +120,11 @@ val repositoryModules = module {
     includes(
         repositoryModuleAuth,
         repositoryModuleCashflow,
-        repositoryModulePeppol
+        repositoryModulePeppol,
+        repositoryModuleProcessor,
+        repositoryModuleAudit,
+        repositoryModuleBanking,
+        repositoryModulePayment,
+        repositoryModuleReporting
     )
 }

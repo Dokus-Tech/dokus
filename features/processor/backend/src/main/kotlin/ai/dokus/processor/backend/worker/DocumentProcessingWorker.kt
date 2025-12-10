@@ -1,10 +1,11 @@
 package ai.dokus.processor.backend.worker
 
+import ai.dokus.foundation.database.repository.processor.ProcessingItem
+import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
 import ai.dokus.foundation.ktor.storage.DocumentStorageService
 import ai.dokus.processor.backend.extraction.AIExtractionProvider
 import ai.dokus.processor.backend.extraction.ExtractionException
 import ai.dokus.processor.backend.extraction.ExtractionProviderFactory
-import ai.dokus.processor.backend.repository.ProcessorDocumentProcessingRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -235,16 +236,4 @@ data class WorkerConfig(
     val pollingInterval: Long = 5000L,
     val batchSize: Int = 10,
     val maxAttempts: Int = 3
-)
-
-/**
- * Simplified processing item for worker operations.
- */
-data class ProcessingItem(
-    val processingId: String,
-    val documentId: String,
-    val storageKey: String,
-    val filename: String,
-    val contentType: String,
-    val attempts: Int
 )

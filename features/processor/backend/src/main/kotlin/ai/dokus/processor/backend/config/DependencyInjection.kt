@@ -1,5 +1,6 @@
 package ai.dokus.processor.backend.config
 
+import ai.dokus.foundation.database.di.repositoryModuleProcessor
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.config.MinioConfig
 import ai.dokus.foundation.ktor.storage.DocumentStorageService
@@ -7,7 +8,6 @@ import ai.dokus.foundation.ktor.storage.MinioStorage
 import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.processor.backend.extraction.AIConfig
 import ai.dokus.processor.backend.extraction.ExtractionProviderFactory
-import ai.dokus.processor.backend.repository.ProcessorDocumentProcessingRepository
 import ai.dokus.processor.backend.worker.DocumentProcessingWorker
 import ai.dokus.processor.backend.worker.WorkerConfig
 import com.typesafe.config.ConfigFactory
@@ -20,7 +20,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.serialization.json.Json
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
@@ -36,7 +35,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             httpClientModule(),
             storageModule(appConfig),
             extractionModule(processorConfig),
-            repositoryModule(),
+            repositoryModuleProcessor,
             workerModule(processorConfig)
         )
     }
@@ -98,10 +97,6 @@ private fun extractionModule(config: ProcessorConfig) = module {
         )
     }
     single { ExtractionProviderFactory(get(), get()) }
-}
-
-private fun repositoryModule() = module {
-    singleOf(::ProcessorDocumentProcessingRepository)
 }
 
 private fun workerModule(config: ProcessorConfig) = module {
