@@ -11,8 +11,15 @@ import ai.dokus.app.resources.generated.profile_deactivate_warning
 import ai.dokus.app.resources.generated.profile_email
 import ai.dokus.app.resources.generated.profile_first_name
 import ai.dokus.app.resources.generated.profile_last_name
+import ai.dokus.app.resources.generated.profile_logout
+import ai.dokus.app.resources.generated.profile_logout_description
 import ai.dokus.app.resources.generated.profile_personal_info
 import ai.dokus.app.resources.generated.profile_settings_title
+import ai.dokus.app.auth.usecases.LogoutUseCase
+import ai.dokus.foundation.navigation.destinations.AuthDestination
+import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.navigation.navigateTo
+import kotlinx.coroutines.launch
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
@@ -39,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,8 +84,12 @@ fun ProfileSettingsContent(
 ) {
     val logger = remember { Logger.withTag("ProfileSettingsContent") }
     val accountDataSource: AccountRemoteDataSource = koinInject()
+    val logoutUseCase: LogoutUseCase = koinInject()
+    val navController = LocalNavController.current
+    val scope = rememberCoroutineScope()
 
     var userState by remember { mutableStateOf<DokusState<User>>(DokusState.idle()) }
+    var isLoggingOut by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         logger.d { "Loading user profile" }
@@ -95,25 +107,28 @@ fun ProfileSettingsContent(
         )
     }
 
-    when {
-        userState.isLoading() -> {
-            Box(
-                modifier = modifier.fillMaxSize().padding(contentPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
+            .withContentPaddingForScrollable(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Profile content based on state
+        when {
+            userState.isLoading() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        }
-        userState.isSuccess() -> {
-            val user = (userState as DokusState.Success).data
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(contentPadding)
-                    .withContentPaddingForScrollable(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            userState.isSuccess() -> {
+                val user = (userState as DokusState.Success).data
                 // Personal Information Section
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -156,7 +171,7 @@ fun ProfileSettingsContent(
                     }
                 }
 
-                // Danger Zone
+                // Danger Zone (only show when profile loaded)
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -182,19 +197,69 @@ fun ProfileSettingsContent(
                         )
                     }
                 }
+            }
+            else -> {
+                // Error state - show error message
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Failed to load profile",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+        }
 
-                Spacer(Modifier.height(16.dp))
+        // Logout Section - ALWAYS visible regardless of profile state
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(Res.string.profile_logout),
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(Res.string.profile_logout_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                POutlinedButton(
+                    text = if (isLoggingOut) "Logging out..." else stringResource(Res.string.profile_logout),
+                    enabled = !isLoggingOut,
+                    onClick = {
+                        scope.launch {
+                            isLoggingOut = true
+                            logger.d { "Logging out user" }
+                            logoutUseCase().fold(
+                                onSuccess = {
+                                    logger.i { "Logout successful" }
+                                    navController.navigateTo(AuthDestination.Login) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                },
+                                onFailure = { error ->
+                                    logger.e(error) { "Logout failed" }
+                                    isLoggingOut = false
+                                }
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
-        else -> {
-            // Error state
-            Box(
-                modifier = modifier.fillMaxSize().padding(contentPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Failed to load profile")
-            }
-        }
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 
