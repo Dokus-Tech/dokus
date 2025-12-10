@@ -6,12 +6,14 @@ import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.core.database.LocalDatabaseCleaner
 import ai.dokus.app.local.DefaultLocalDatabaseCleaner
+import ai.dokus.app.auth.datasource.TeamRemoteDataSource
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.viewmodel.AppVersionCheckViewModel
 import ai.dokus.app.viewmodel.BootstrapViewModel
 import ai.dokus.app.viewmodel.DashboardViewModel
 import ai.dokus.app.viewmodel.HomeViewModel
 import ai.dokus.app.viewmodel.SettingsViewModel
+import ai.dokus.app.viewmodel.TeamSettingsViewModel
 import ai.dokus.app.viewmodel.WorkspaceSettingsViewModel
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.flags.FeatureFlagService
@@ -31,6 +33,7 @@ internal val diModuleApp = module {
     viewModel { HomeViewModel(SavedStateHandle.createHandle(null, null)) }
     viewModel { SettingsViewModel(get<GetCurrentTenantUseCase>()) }
     viewModel { WorkspaceSettingsViewModel(get<GetCurrentTenantUseCase>(), get<TenantRemoteDataSource>()) }
+    viewModel { TeamSettingsViewModel(get<TeamRemoteDataSource>()) }
 
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
     single<LocalDatabaseCleaner> {

@@ -164,10 +164,6 @@
     <string name="appearance_theme_system">System</string>
     <string name="appearance_language">Language</string>
 
-    <!-- Team Settings (placeholder) -->
-    <string name="team_settings_title">Team Members</string>
-    <string name="team_coming_soon">Team management coming soon</string>
-
     <!-- Common -->
     <string name="save_changes">Save Changes</string>
     <string name="cancel">Cancel</string>
