@@ -1,18 +1,15 @@
 <resources>
     <!-- General -->
     <string name="app_name">D[#]kus</string>
-    <string name="app_slogan">Waar soevereiniteit en intelligentie samenkomen.</string>
+    <string name="app_slogan">Waar soevereiniteit intelligentie ontmoet.</string>
     <string name="brand_motto">Intelligentie. Autonomie. Stilte.</string>
     <string name="copyright">©2025 Dokus</string>
-    <string name="back">Terug</string>
-    <string name="approve">Goedkeuren</string>
-    <string name="reject">Afwijzen</string>
 
     <!-- Core - Splash -->
-    <string name="bootstrap_state_initializing">Applicatie wordt geïnitialiseerd...</string>
-    <string name="bootstrap_state_authenticating">Authenticatie wordt geverifieerd...</string>
-    <string name="bootstrap_state_app_version_check">Applicatieversie wordt geverifieerd...</string>
-    <string name="bootstrap_state_checking_account_status">Accountstatus wordt geverifieerd...</string>
+    <string name="bootstrap_state_initializing">Applicatie initialiseren...</string>
+    <string name="bootstrap_state_authenticating">Authenticatie verifiëren...</string>
+    <string name="bootstrap_state_app_version_check">Applicatieversie verifiëren...</string>
+    <string name="bootstrap_state_checking_account_status">Accountstatus verifiëren...</string>
 
     <!-- Home -->
     <string name="home_dashboard">Dashboard</string>
@@ -26,16 +23,12 @@
     <string name="device_type_desktop">Computer</string>
     <string name="device_type_tablet">Tablet</string>
 
-    <!-- Under Development -->
-    <string name="under_development_title">Iets betrouwbaars bouwen</string>
-    <string name="under_development_subtitle">Deze functie wordt zorgvuldig ontwikkeld.\nGebouwd om aan uw behoeften te voldoen.</string>
-
     <!-- Dashboard - Feature -->
     <string name="feature_auth">Authenticatie</string>
 
     <!-- Slogan Screen -->
-    <string name="slogan_line_2">Gemaakt voor degenen die morgen bouwen.</string>
-    <string name="slogan_line_3">Vertrouwd door degenen die vandaag bezitten.</string>
+    <string name="slogan_line_2">Gemaakt voor wie morgen bouwt.</string>
+    <string name="slogan_line_3">Vertrouwd door wie vandaag bezit.</string>
 
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>

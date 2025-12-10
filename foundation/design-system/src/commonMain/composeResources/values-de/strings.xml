@@ -4,9 +4,6 @@
     <string name="app_slogan">Wo Souveränität auf Intelligenz trifft.</string>
     <string name="brand_motto">Intelligenz. Autonomie. Stille.</string>
     <string name="copyright">©2025 Dokus</string>
-    <string name="back">Zurück</string>
-    <string name="approve">Genehmigen</string>
-    <string name="reject">Ablehnen</string>
 
     <!-- Core - Splash -->
     <string name="bootstrap_state_initializing">Anwendung wird initialisiert...</string>
@@ -26,16 +23,12 @@
     <string name="device_type_desktop">Computer</string>
     <string name="device_type_tablet">Tablet</string>
 
-    <!-- Under Development -->
-    <string name="under_development_title">Etwas Zuverlässiges wird gebaut</string>
-    <string name="under_development_subtitle">Diese Funktion wird sorgfältig entwickelt.\nGebaut, um Ihre Bedürfnisse zu erfüllen.</string>
-
     <!-- Dashboard - Feature -->
     <string name="feature_auth">Authentifizierung</string>
 
     <!-- Slogan Screen -->
-    <string name="slogan_line_2">Geschaffen für diejenigen, die das Morgen bauen.</string>
-    <string name="slogan_line_3">Vertraut von denen, die das Heute besitzen.</string>
+    <string name="slogan_line_2">Geschaffen für die, die morgen bauen.</string>
+    <string name="slogan_line_3">Vertraut von denen, die heute besitzen.</string>
 
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>

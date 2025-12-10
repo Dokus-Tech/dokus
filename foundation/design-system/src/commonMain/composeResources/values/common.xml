@@ -1,0 +1,38 @@
+<resources>
+    <!-- Common Actions -->
+    <string name="action_back">Back</string>
+    <string name="action_save">Save</string>
+    <string name="action_save_changes">Save Changes</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_approve">Approve</string>
+    <string name="action_reject">Reject</string>
+    <string name="action_search">Search</string>
+    <string name="action_or">or</string>
+
+    <!-- Legacy aliases for backward compatibility -->
+    <string name="back">Back</string>
+    <string name="approve">Approve</string>
+    <string name="reject">Reject</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+
+    <!-- Common States -->
+    <string name="state_loading">Loading...</string>
+    <string name="state_error">An error occurred</string>
+    <string name="state_empty">No data available</string>
+    <string name="state_retry">Retry</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Building Something Reliable</string>
+    <string name="under_development_subtitle">This feature is being carefully developed.\nBuilt to serve your needs.</string>
+
+    <!-- Registration Success -->
+    <string name="registration_success_message">You have successfully registered, and now you can continue to explore all the exciting features we have to offer.</string>
+
+    <!-- Server Connection -->
+    <string name="connect_to_server">Connect to server</string>
+</resources>

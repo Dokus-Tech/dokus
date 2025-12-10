@@ -1,0 +1,89 @@
+<resources>
+    <!-- Settings Groups -->
+    <string name="settings_group_account">Cuenta</string>
+    <string name="settings_group_workspace">Espacio de trabajo</string>
+    <string name="settings_group_app">Aplicación</string>
+
+    <!-- Settings Sections -->
+    <string name="settings_profile">Perfil</string>
+    <string name="settings_workspace_details">Datos de la empresa</string>
+    <string name="settings_team">Miembros del equipo</string>
+    <string name="settings_peppol">Facturación electrónica Peppol</string>
+    <string name="settings_appearance">Apariencia</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_select_prompt">Selecciona una configuración</string>
+    <string name="settings_select_hint">Elige de las opciones de la izquierda</string>
+    <string name="settings_saved_successfully">Configuración guardada correctamente</string>
+
+    <!-- Workspace Picker -->
+    <string name="settings_current_workspace">Espacio de trabajo actual</string>
+    <string name="settings_switch_workspace">Cambiar espacio de trabajo</string>
+    <string name="settings_select_workspace">Seleccionar espacio de trabajo</string>
+
+    <!-- Profile Settings -->
+    <string name="profile_settings_title">Perfil</string>
+    <string name="profile_personal_info">Información personal</string>
+    <string name="profile_first_name">Nombre</string>
+    <string name="profile_last_name">Apellido</string>
+    <string name="profile_email">Correo electrónico</string>
+    <string name="profile_change_password">Cambiar contraseña</string>
+    <string name="profile_current_password">Contraseña actual</string>
+    <string name="profile_new_password">Nueva contraseña</string>
+    <string name="profile_confirm_password">Confirmar contraseña</string>
+    <string name="profile_danger_zone">Zona de peligro</string>
+    <string name="profile_deactivate_account">Desactivar cuenta</string>
+    <string name="profile_deactivate_warning">Desactivar tu cuenta eliminará el acceso a todos los espacios de trabajo.</string>
+    <string name="profile_password_changed">Contraseña cambiada correctamente</string>
+    <string name="profile_logout">Cerrar sesión</string>
+    <string name="profile_logout_description">Cerrar sesión en este dispositivo</string>
+    <string name="profile_editing_coming_soon">Edición de perfil próximamente</string>
+    <string name="profile_load_failed">No se pudo cargar el perfil</string>
+
+    <!-- Workspace Settings -->
+    <string name="workspace_settings_title">Datos de la empresa</string>
+    <string name="workspace_company_info">Información de la empresa</string>
+    <string name="workspace_company_name">Nombre de la empresa</string>
+    <string name="workspace_legal_name">Razón social</string>
+    <string name="workspace_vat_number">Número de IVA</string>
+    <string name="workspace_banking">Datos bancarios</string>
+    <string name="workspace_iban">IBAN</string>
+    <string name="workspace_bic">BIC</string>
+    <string name="workspace_address">Dirección</string>
+    <string name="workspace_invoice_settings">Configuración de factura</string>
+    <string name="workspace_invoice_prefix">Prefijo de factura</string>
+    <string name="workspace_payment_terms">Términos de pago predeterminados (días)</string>
+    <string name="workspace_create_title">Crea tu espacio de trabajo</string>
+    <string name="workspace_create_button">Crear espacio de trabajo</string>
+    <string name="workspace_display_name">Nombre para mostrar</string>
+    <string name="workspace_select_title">Selecciona tu espacio de trabajo</string>
+
+    <!-- Peppol Settings -->
+    <string name="peppol_settings_title">Facturación electrónica Peppol</string>
+    <string name="peppol_connection_status">Estado de conexión</string>
+    <string name="peppol_connected">Conectado</string>
+    <string name="peppol_not_configured">No configurado</string>
+    <string name="peppol_credentials">Credenciales</string>
+    <string name="peppol_company_id">ID de empresa</string>
+    <string name="peppol_participant_id">ID de participante Peppol</string>
+    <string name="peppol_api_key">Clave API</string>
+    <string name="peppol_api_secret">Secreto API</string>
+    <string name="peppol_configuration">Configuración</string>
+    <string name="peppol_enabled">Habilitar Peppol</string>
+    <string name="peppol_test_mode">Modo de prueba</string>
+    <string name="peppol_test_connection">Probar conexión</string>
+    <string name="peppol_delete_settings">Eliminar configuración de Peppol</string>
+    <string name="peppol_key_placeholder">Dejar vacío para mantener la clave existente</string>
+    <string name="peppol_secret_placeholder">Dejar vacío para mantener el secreto existente</string>
+    <string name="peppol_testing_connection">Probando conexión...</string>
+    <string name="peppol_connection_successful">¡Conexión exitosa!</string>
+    <string name="peppol_delete_warning">Eliminar la configuración de Peppol deshabilitará las capacidades de facturación electrónica.</string>
+
+    <!-- Appearance Settings -->
+    <string name="appearance_settings_title">Apariencia</string>
+    <string name="appearance_theme">Tema</string>
+    <string name="appearance_theme_light">Claro</string>
+    <string name="appearance_theme_dark">Oscuro</string>
+    <string name="appearance_theme_system">Sistema</string>
+    <string name="appearance_language">Idioma</string>
+</resources>

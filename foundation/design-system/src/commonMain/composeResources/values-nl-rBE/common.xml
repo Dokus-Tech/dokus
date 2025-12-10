@@ -1,0 +1,37 @@
+<resources>
+    <!-- Common Actions -->
+    <string name="action_back">Terug</string>
+    <string name="action_save">Opslaan</string>
+    <string name="action_save_changes">Wijzigingen opslaan</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="action_confirm">Bevestigen</string>
+    <string name="action_continue">Doorgaan</string>
+    <string name="action_approve">Goedkeuren</string>
+    <string name="action_reject">Afwijzen</string>
+    <string name="action_search">Zoeken</string>
+    <string name="action_or">of</string>
+
+    <!-- Common States -->
+    <string name="state_loading">Laden...</string>
+    <string name="state_error">Er is een fout opgetreden</string>
+    <string name="state_empty">Geen gegevens beschikbaar</string>
+    <string name="state_retry">Opnieuw proberen</string>
+
+    <!-- Under Development -->
+    <string name="under_development_title">Iets betrouwbaars bouwen</string>
+    <string name="under_development_subtitle">Deze functie wordt zorgvuldig ontwikkeld.\nGemaakt om aan uw behoeften te voldoen.</string>
+
+    <!-- Registration Success -->
+    <string name="registration_success_message">U bent succesvol geregistreerd en kunt nu alle spannende functies verkennen die we te bieden hebben.</string>
+
+    <!-- Server Connection -->
+    <string name="connect_to_server">Verbinden met server</string>
+    <!-- Legacy aliases for backward compatibility -->
+    <string name="back">Terug</string>
+    <string name="approve">Goedkeuren</string>
+    <string name="reject">Afwijzen</string>
+    <string name="save_changes">Wijzigingen opslaan</string>
+    <string name="cancel">Annuleren</string>
+    <string name="delete">Verwijderen</string>
+</resources>

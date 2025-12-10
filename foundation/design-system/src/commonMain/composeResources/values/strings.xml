@@ -4,9 +4,6 @@
     <string name="app_slogan">Where sovereignty meets intelligence.</string>
     <string name="brand_motto">Intelligence. Autonomy. Silence.</string>
     <string name="copyright">©2025 Dokus</string>
-    <string name="back">Back</string>
-    <string name="approve">Approve</string>
-    <string name="reject">Reject</string>
 
     <!-- Core - Splash -->
     <string name="bootstrap_state_initializing">Initializing application...</string>
@@ -16,7 +13,6 @@
 
     <!-- Home -->
     <string name="home_dashboard">Dashboard</string>
-    <string name="cashflow_title">Cashflow</string>
     <string name="media_title">Media</string>
     <string name="home_settings">Settings</string>
 
@@ -26,10 +22,6 @@
     <string name="device_type_web">Web</string>
     <string name="device_type_desktop">Computer</string>
     <string name="device_type_tablet">Tablet</string>
-
-    <!-- Under Development -->
-    <string name="under_development_title">Building Something Reliable</string>
-    <string name="under_development_subtitle">This feature is being carefully developed.\nBuilt to serve your needs.</string>
 
     <!-- Dashboard - Feature -->
     <string name="feature_auth">Authentication</string>
@@ -41,131 +33,4 @@
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">CTRL</string>
-
-    <!-- Document Types -->
-    <string name="document_type_invoice">Invoice</string>
-    <string name="document_type_expense">Expense</string>
-    <string name="document_type_bill">Bill</string>
-    <string name="document_type_document">Document</string>
-    <string name="document_type_unknown">Unknown</string>
-
-    <!-- Pending Documents -->
-    <string name="pending_documents_title">Cash flow</string>
-    <string name="pending_documents_empty">No pending documents</string>
-    <string name="pending_documents_need_confirmation">Need confirmation</string>
-    <string name="pending_documents_previous">Previous</string>
-    <string name="pending_documents_next">Next</string>
-
-    <!-- Settings Groups -->
-    <string name="settings_group_account">Account</string>
-    <string name="settings_group_workspace">Workspace</string>
-    <string name="settings_group_app">App</string>
-
-    <!-- Settings Sections -->
-    <string name="settings_profile">Profile</string>
-    <string name="settings_workspace_details">Company Details</string>
-    <string name="settings_team">Team Members</string>
-    <string name="settings_peppol">Peppol E-Invoicing</string>
-    <string name="settings_appearance">Appearance</string>
-
-    <!-- Workspace Picker -->
-    <string name="settings_current_workspace">Current Workspace</string>
-    <string name="settings_switch_workspace">Switch Workspace</string>
-    <string name="settings_select_workspace">Select Workspace</string>
-
-    <!-- Profile Settings -->
-    <string name="profile_settings_title">Profile</string>
-    <string name="profile_personal_info">Personal Information</string>
-    <string name="profile_first_name">First Name</string>
-    <string name="profile_last_name">Last Name</string>
-    <string name="profile_email">Email</string>
-    <string name="profile_change_password">Change Password</string>
-    <string name="profile_current_password">Current Password</string>
-    <string name="profile_new_password">New Password</string>
-    <string name="profile_confirm_password">Confirm Password</string>
-    <string name="profile_danger_zone">Danger Zone</string>
-    <string name="profile_deactivate_account">Deactivate Account</string>
-    <string name="profile_deactivate_warning">Deactivating your account will remove access to all workspaces.</string>
-    <string name="profile_password_changed">Password changed successfully</string>
-    <string name="profile_logout">Log Out</string>
-    <string name="profile_logout_description">Sign out from this device</string>
-
-    <!-- Team Settings -->
-    <string name="team_settings_title">Team Members</string>
-    <string name="team_members">Team Members</string>
-    <string name="team_pending_invitations">Pending Invitations</string>
-    <string name="team_invite_member">Invite Member</string>
-    <string name="team_invite_email">Email address</string>
-    <string name="team_invite_role">Role</string>
-    <string name="team_send_invitation">Send Invitation</string>
-    <string name="team_cancel_invitation">Cancel Invitation</string>
-    <string name="team_change_role">Change Role</string>
-    <string name="team_remove_member">Remove Member</string>
-    <string name="team_transfer_ownership">Transfer Ownership</string>
-    <string name="team_owner_badge">Owner</string>
-    <string name="team_joined">Joined</string>
-    <string name="team_last_active">Last active</string>
-    <string name="team_expires">Expires</string>
-    <string name="team_invited_by">Invited by</string>
-    <string name="team_no_members">No team members yet</string>
-    <string name="team_no_invitations">No pending invitations</string>
-    <string name="team_invite_success">Invitation sent successfully</string>
-    <string name="team_remove_confirm">Are you sure you want to remove this member?</string>
-    <string name="team_transfer_confirm">Are you sure you want to transfer ownership? You will become an Admin.</string>
-    <string name="team_only_owner_can_manage">Only the workspace Owner can manage team members</string>
-
-    <!-- Role names and descriptions -->
-    <string name="role_owner">Owner</string>
-    <string name="role_admin">Admin</string>
-    <string name="role_accountant">Accountant</string>
-    <string name="role_editor">Editor</string>
-    <string name="role_viewer">Viewer</string>
-    <string name="role_owner_desc">Full access including team management</string>
-    <string name="role_admin_desc">Full access except team management</string>
-    <string name="role_accountant_desc">Invoices, clients, reports, and exports</string>
-    <string name="role_editor_desc">Create and edit invoices and clients</string>
-    <string name="role_viewer_desc">View-only access to invoices and reports</string>
-
-    <!-- Workspace Settings -->
-    <string name="workspace_settings_title">Company Details</string>
-    <string name="workspace_company_info">Company Information</string>
-    <string name="workspace_company_name">Company Name</string>
-    <string name="workspace_legal_name">Legal Name</string>
-    <string name="workspace_vat_number">VAT Number</string>
-    <string name="workspace_banking">Banking Details</string>
-    <string name="workspace_iban">IBAN</string>
-    <string name="workspace_bic">BIC</string>
-    <string name="workspace_address">Address</string>
-    <string name="workspace_invoice_settings">Invoice Settings</string>
-    <string name="workspace_invoice_prefix">Invoice Prefix</string>
-    <string name="workspace_payment_terms">Default Payment Terms (days)</string>
-
-    <!-- Peppol Settings -->
-    <string name="peppol_settings_title">Peppol E-Invoicing</string>
-    <string name="peppol_connection_status">Connection Status</string>
-    <string name="peppol_connected">Connected</string>
-    <string name="peppol_not_configured">Not Configured</string>
-    <string name="peppol_credentials">Credentials</string>
-    <string name="peppol_company_id">Company ID</string>
-    <string name="peppol_participant_id">Peppol Participant ID</string>
-    <string name="peppol_api_key">API Key</string>
-    <string name="peppol_api_secret">API Secret</string>
-    <string name="peppol_configuration">Configuration</string>
-    <string name="peppol_enabled">Enable Peppol</string>
-    <string name="peppol_test_mode">Test Mode</string>
-    <string name="peppol_test_connection">Test Connection</string>
-    <string name="peppol_delete_settings">Delete Peppol Settings</string>
-
-    <!-- Appearance Settings -->
-    <string name="appearance_settings_title">Appearance</string>
-    <string name="appearance_theme">Theme</string>
-    <string name="appearance_theme_light">Light</string>
-    <string name="appearance_theme_dark">Dark</string>
-    <string name="appearance_theme_system">System</string>
-    <string name="appearance_language">Language</string>
-
-    <!-- Common -->
-    <string name="save_changes">Save Changes</string>
-    <string name="cancel">Cancel</string>
-    <string name="delete">Delete</string>
 </resources>
