@@ -15,6 +15,7 @@ import ai.dokus.app.viewmodel.HomeViewModel
 import ai.dokus.app.viewmodel.SettingsViewModel
 import ai.dokus.app.viewmodel.TeamSettingsViewModel
 import ai.dokus.app.viewmodel.WorkspaceSettingsViewModel
+import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.flags.FeatureFlagService
 import androidx.lifecycle.SavedStateHandle
@@ -22,6 +23,9 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 internal val diModuleApp = module {
+    // Theme management (singleton)
+    single { ThemeManager() }
+
     viewModel<BootstrapViewModel> {
         BootstrapViewModel(
             get<AuthInitializer>(),
