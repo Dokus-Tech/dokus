@@ -32,6 +32,9 @@ class Persistence(settings: Settings) {
     var email: String? by SettingsDelegate(settings, "email")
     var selectedWorkspace: String? by SettingsDelegate(settings, "selected_workspace")
     var jwtToken: String? by SettingsDelegate(settings, "user_token")
+
+    // Appearance preferences
+    var themeModePreference: String? by SettingsDelegate(settings, "theme_mode")
 }
 
 private val settings: Settings = Settings()

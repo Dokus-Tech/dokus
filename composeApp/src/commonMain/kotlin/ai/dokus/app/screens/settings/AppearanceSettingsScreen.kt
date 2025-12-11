@@ -8,6 +8,8 @@ import ai.dokus.app.resources.generated.appearance_theme_light
 import ai.dokus.app.resources.generated.appearance_theme_system
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.design.local.LocalThemeManager
+import ai.dokus.foundation.design.style.ThemeMode
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,10 +27,8 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -58,14 +58,14 @@ fun AppearanceSettingsScreen() {
 /**
  * Appearance settings content without scaffold.
  * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
- * Currently displays UI structure only - theme switching not yet implemented.
  */
 @Composable
 fun AppearanceSettingsContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    var selectedTheme by remember { mutableStateOf(ThemeMode.System) }
+    val themeManager = LocalThemeManager.current
+    val currentTheme by themeManager.themeMode.collectAsState()
 
     Column(
         modifier = modifier
@@ -83,11 +83,11 @@ fun AppearanceSettingsContent(
 
                 Spacer(Modifier.height(12.dp))
 
-                ThemeMode.entries.forEach { mode ->
+                ThemeOption.entries.forEach { option ->
                     ThemeOptionRow(
-                        themeMode = mode,
-                        isSelected = selectedTheme == mode,
-                        onClick = { selectedTheme = mode }
+                        option = option,
+                        isSelected = currentTheme == option.themeMode,
+                        onClick = { themeManager.setThemeMode(option.themeMode) }
                     )
                 }
             }
@@ -97,7 +97,7 @@ fun AppearanceSettingsContent(
 
 @Composable
 private fun ThemeOptionRow(
-    themeMode: ThemeMode,
+    option: ThemeOption,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -117,15 +117,21 @@ private fun ThemeOptionRow(
             onClick = null // Handled by selectable modifier
         )
         Text(
-            text = stringResource(themeMode.labelRes),
+            text = stringResource(option.labelRes),
             modifier = Modifier.padding(start = 8.dp),
             style = MaterialTheme.typography.bodyLarge
         )
     }
 }
 
-private enum class ThemeMode(val labelRes: StringResource) {
-    Light(Res.string.appearance_theme_light),
-    Dark(Res.string.appearance_theme_dark),
-    System(Res.string.appearance_theme_system)
+/**
+ * UI options for theme selection, mapped to [ThemeMode] values.
+ */
+private enum class ThemeOption(
+    val themeMode: ThemeMode,
+    val labelRes: StringResource
+) {
+    Light(ThemeMode.LIGHT, Res.string.appearance_theme_light),
+    Dark(ThemeMode.DARK, Res.string.appearance_theme_dark),
+    System(ThemeMode.SYSTEM, Res.string.appearance_theme_system)
 }
