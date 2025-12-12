@@ -2,6 +2,7 @@
 
 package ai.dokus.auth.backend.database.repository
 
+import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.tables.auth.TenantMembersTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.auth.UsersTable

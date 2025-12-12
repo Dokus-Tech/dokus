@@ -2,6 +2,7 @@
 
 package ai.dokus.auth.backend.database.repository
 
+import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.auth.TenantMembersTable
