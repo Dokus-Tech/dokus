@@ -6,12 +6,15 @@ import ai.dokus.app.local.AppModulesProvided
 import ai.dokus.app.local.KoinProvided
 import ai.dokus.app.navigation.DokusNavHost
 import ai.dokus.foundation.design.local.ScreenSizeProvided
+import ai.dokus.foundation.design.local.ThemeManagerProvided
+import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.design.style.Themed
 import ai.dokus.foundation.navigation.local.NavControllerProvided
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import org.koin.compose.koinInject
 
 @Composable
 fun App(
@@ -24,15 +27,18 @@ fun App(
 
     AppModulesProvided(modules) {
         KoinProvided(diModules) {
-            Themed {
-                AppModulesInitializer(modules) {
-                    ScreenSizeProvided {
-                        NavControllerProvided(navController) {
-                            DokusNavHost(
-                                navController = navController,
-                                navigationProvider = navigationProviders,
-                                onNavHostReady = onNavHostReady
-                            )
+            val themeManager = koinInject<ThemeManager>()
+            ThemeManagerProvided(themeManager) {
+                Themed {
+                    AppModulesInitializer(modules) {
+                        ScreenSizeProvided {
+                            NavControllerProvided(navController) {
+                                DokusNavHost(
+                                    navController = navController,
+                                    navigationProvider = navigationProviders,
+                                    onNavHostReady = onNavHostReady
+                                )
+                            }
                         }
                     }
                 }
