@@ -1,11 +1,15 @@
 package ai.dokus.foundation.design.tooling
 
 import ai.dokus.foundation.design.local.ScreenSizeProvided
+import ai.dokus.foundation.design.local.ThemeManagerProvided
+import ai.dokus.foundation.design.style.ThemeManager
+import ai.dokus.foundation.design.style.ThemeMode
 import ai.dokus.foundation.design.style.Themed
 import ai.dokus.foundation.domain.enums.Language
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalInspectionMode
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 
@@ -39,13 +43,22 @@ class PreviewParametersProvider : PreviewParameterProvider<PreviewParameters> {
 
 @Composable
 fun TestWrapper(parameters: PreviewParameters, content: @Composable () -> Unit) {
+    // Create a ThemeManager with explicit mode for previews
+    val themeManager = remember(parameters.isDarkMode) {
+        ThemeManager().apply {
+            setThemeMode(if (parameters.isDarkMode) ThemeMode.DARK else ThemeMode.LIGHT)
+        }
+    }
+
     CompositionLocalProvider(
         LocalInspectionMode provides true,
     ) {
-        Themed(useDarkTheme = parameters.isDarkMode) {
-            ScreenSizeProvided {
-                Surface {
-                    content()
+        ThemeManagerProvided(themeManager) {
+            Themed {
+                ScreenSizeProvided {
+                    Surface {
+                        content()
+                    }
                 }
             }
         }
