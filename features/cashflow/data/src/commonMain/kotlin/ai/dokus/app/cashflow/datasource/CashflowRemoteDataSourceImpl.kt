@@ -8,16 +8,12 @@ import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
-import ai.dokus.foundation.domain.model.ClientDto
-import ai.dokus.foundation.domain.model.ClientStats
 import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.CreateClientRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.DocumentDto
@@ -36,7 +32,6 @@ import ai.dokus.foundation.domain.model.PeppolVerifyResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
-import ai.dokus.foundation.domain.model.UpdateClientRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
