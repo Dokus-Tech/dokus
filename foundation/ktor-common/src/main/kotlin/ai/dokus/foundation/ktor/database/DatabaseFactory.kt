@@ -9,6 +9,7 @@ import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
@@ -104,7 +105,18 @@ class DatabaseFactory(
     }
 }
 
-suspend fun <T> dbQuery(block: () -> T): T =
-    withContext(Dispatchers.IO) {
-        transaction { block() }
+suspend fun <T> dbQuery(block: () -> T): T = withContext(Dispatchers.IO) {
+    transaction {
+        TenantContextHolder.currentTenantId()?.let { tenant ->
+            TransactionManager.current().exec("set local app.tenant_id = '$tenant'")
+        }
+        block()
     }
+}
+
+/**
+ * Run a DB query with an explicit tenant context for RLS/guards.
+ * This will set `app.tenant_id` for the current transaction.
+ */
+suspend fun <T> dbQuery(tenantId: String, block: () -> T): T =
+    withTenantContext(tenantId) { dbQuery(block) }

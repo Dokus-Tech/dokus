@@ -16,14 +16,14 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object TenantInvitationsTable : UUIDTable("tenant_invitations") {
     // References
-    val tenantId = reference("tenant_id", TenantTable, onDelete = ReferenceOption.CASCADE)
-    val invitedBy = reference("invited_by", UsersTable, onDelete = ReferenceOption.CASCADE)
+    val tenantId = reference("tenant_id", TenantTable, onDelete = ReferenceOption.CASCADE).index()
+    val invitedBy = reference("invited_by", UsersTable, onDelete = ReferenceOption.CASCADE).index()
 
     // Core fields
-    val email = varchar("email", 255)
+    val email = varchar("email", 255).index()
     val role = dbEnumeration<UserRole>("role")
     val token = varchar("token", 255).uniqueIndex()
-    val status = dbEnumeration<InvitationStatus>("status").default(InvitationStatus.Pending)
+    val status = dbEnumeration<InvitationStatus>("status").default(InvitationStatus.Pending).index()
 
     // Expiration (30 days from creation)
     val expiresAt = datetime("expires_at")
@@ -37,16 +37,6 @@ object TenantInvitationsTable : UUIDTable("tenant_invitations") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // Index all foreign keys for query performance
-        index(false, tenantId)
-        index(false, invitedBy)
-
-        // Index for email lookups
-        index(false, email)
-
-        // Index for status filtering
-        index(false, status)
-
         // Composite indexes for common queries
         index(false, tenantId, status)
         index(false, email, status)

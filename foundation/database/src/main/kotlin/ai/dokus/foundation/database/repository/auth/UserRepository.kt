@@ -15,9 +15,7 @@ import ai.dokus.foundation.domain.model.UserInTenant
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
 import org.jetbrains.exposed.v1.core.and

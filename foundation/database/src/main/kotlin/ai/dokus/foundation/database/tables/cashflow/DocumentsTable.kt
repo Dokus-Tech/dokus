@@ -1,7 +1,9 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -22,7 +24,10 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object DocumentsTable : UUIDTable("documents") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id")
+    val tenantId = uuid("organization_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
+    ).index()
 
     // File metadata
     val filename = varchar("filename", 255)
@@ -30,7 +35,7 @@ object DocumentsTable : UUIDTable("documents") {
     val sizeBytes = long("size_bytes")
 
     // Storage reference (MinIO key)
-    val storageKey = varchar("storage_key", 500)
+    val storageKey = varchar("storage_key", 500).index()
 
     // Optional link to entity (null until attached)
     val entityType = dbEnumeration<EntityType>("entity_type").nullable()
@@ -40,13 +45,9 @@ object DocumentsTable : UUIDTable("documents") {
     val uploadedAt = datetime("uploaded_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index organization_id for security and performance
-        index(false, tenantId)
-
         // Index for fetching documents by entity
         index(false, tenantId, entityType, entityId)
 
-        // Index for looking up by storage key (for cleanup operations)
-        index(false, storageKey)
+        uniqueIndex(tenantId, storageKey)
     }
 }

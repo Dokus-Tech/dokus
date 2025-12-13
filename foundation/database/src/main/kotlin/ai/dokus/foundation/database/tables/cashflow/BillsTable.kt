@@ -1,10 +1,12 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
@@ -21,16 +23,19 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object BillsTable : UUIDTable("bills") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id")
+    val tenantId = uuid("organization_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
+    ).index()
 
     // Supplier information
-    val supplierName = varchar("supplier_name", 255)
+    val supplierName = varchar("supplier_name", 255).index()
     val supplierVatNumber = varchar("supplier_vat_number", 50).nullable()
 
     // Invoice details
     val invoiceNumber = varchar("invoice_number", 100).nullable()
     val issueDate = date("issue_date")
-    val dueDate = date("due_date")
+    val dueDate = date("due_date").index()
 
     // Amounts (NUMERIC for exact arithmetic - NO FLOATS!)
     val amount = decimal("amount", 12, 2)
@@ -38,7 +43,7 @@ object BillsTable : UUIDTable("bills") {
     val vatRate = decimal("vat_rate", 5, 4).nullable() // e.g., 0.2100 for 21%
 
     // Status & Currency
-    val status = dbEnumeration<BillStatus>("status").default(BillStatus.Pending)
+    val status = dbEnumeration<BillStatus>("status").default(BillStatus.Pending).index()
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // Categorization
@@ -62,15 +67,12 @@ object BillsTable : UUIDTable("bills") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index organization_id for security and performance
-        index(false, tenantId)
-        index(false, status)
-        index(false, dueDate)
-        index(false, supplierName)
-
         // Composite indexes for common queries
         index(false, tenantId, status)
         index(false, tenantId, dueDate)
         index(false, tenantId, category)
+
+        // Avoid duplicate supplier invoice numbers per tenant when provided
+        uniqueIndex(tenantId, invoiceNumber)
     }
 }

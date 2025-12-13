@@ -1,9 +1,11 @@
 package ai.dokus.foundation.database.tables.banking
 
-import ai.dokus.foundation.ktor.database.dbEnumeration
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -13,7 +15,10 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Encrypted access tokens for transaction syncing
  */
 object BankConnectionsTable : UUIDTable("bank_connections") {
-    val tenantId = uuid("tenant_id")
+    val tenantId = uuid("tenant_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
+    ).index()
 
     val provider = dbEnumeration<BankProvider>("provider")
     val institutionId = varchar("institution_id", 255)
@@ -33,7 +38,8 @@ object BankConnectionsTable : UUIDTable("bank_connections") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
         index(false, tenantId, isActive)
+        // Prevent duplicate external accounts per tenant/provider
+        uniqueIndex(tenantId, provider, accountId)
     }
 }
