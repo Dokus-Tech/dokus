@@ -54,7 +54,7 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
         FinancialDocumentDto.InvoiceDto(
             id = InvoiceId.generate(),
             tenantId = TenantId.generate(),
-            clientId = ClientId.generate(),
+            contactId = ClientId.generate(),
             invoiceNumber = InvoiceNumber("INV-3006-4400"),
             issueDate = date,
             dueDate = date,
