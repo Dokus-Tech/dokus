@@ -56,8 +56,6 @@ include(":features:cashflow:presentation")
 include(":features:contacts:backend")
 include(":features:contacts:presentation")
 include(":features:payment:backend")
-include(":features:reporting:backend")
-include(":features:audit:backend")
 include(":features:banking:backend")
 include(":features:processor:backend")
 
