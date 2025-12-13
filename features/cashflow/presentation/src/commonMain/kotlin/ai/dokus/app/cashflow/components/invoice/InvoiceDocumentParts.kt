@@ -145,3 +145,36 @@ internal fun InvoiceTotalRow(
         )
     }
 }
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+@Preview
+@Composable
+internal fun InvoiceDocumentHeaderPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            InvoiceStatus.entries.forEach { status ->
+                InvoiceDocumentHeader(status = status)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+internal fun InvoiceTotalsSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        InvoiceTotalsSection(
+            subtotal = "€4,600.00",
+            vatAmount = "€966.00",
+            total = "€5,566.00",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
