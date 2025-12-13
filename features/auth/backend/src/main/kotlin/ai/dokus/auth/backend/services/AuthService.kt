@@ -18,6 +18,8 @@ import ai.dokus.foundation.domain.model.TenantMembership
 import ai.dokus.foundation.domain.model.auth.TenantScope
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.security.JwtGenerator
 import kotlin.time.Duration.Companion.days
@@ -327,6 +329,39 @@ class AuthService(
     } catch (e: Exception) {
         logger.error("Account deactivation error for user: ${userId.value}", e)
         Result.failure(DokusException.InternalError(e.message ?: "Account deactivation failed"))
+    }
+
+    suspend fun updateProfile(userId: UserId, request: UpdateProfileRequest): Result<User> = try {
+        logger.info("Profile update request for user: ${userId.value}")
+
+        val user = userRepository.findById(userId)
+            ?: run {
+                logger.warn("Profile update failed - user not found: ${userId.value}")
+                throw DokusException.NotFound("User account not found")
+            }
+
+        if (!user.isActive) {
+            logger.warn("Profile update attempt for inactive user: ${userId.value}")
+            throw DokusException.AccountInactive("Account is deactivated")
+        }
+
+        userRepository.updateProfile(
+            userId = userId,
+            firstName = request.firstName?.value,
+            lastName = request.lastName?.value
+        )
+
+        val updatedUser = userRepository.findById(userId)
+            ?: throw DokusException.InternalError("Failed to fetch updated user")
+
+        logger.info("Profile updated successfully for user: ${userId.value}")
+        Result.success(updatedUser)
+    } catch (e: DokusException) {
+        logger.error("Profile update failed: ${e.errorCode} for user: ${userId.value}", e)
+        Result.failure(e)
+    } catch (e: Exception) {
+        logger.error("Profile update error for user: ${userId.value}", e)
+        Result.failure(DokusException.InternalError(e.message ?: "Profile update failed"))
     }
 
     private fun resolveTenantScope(
