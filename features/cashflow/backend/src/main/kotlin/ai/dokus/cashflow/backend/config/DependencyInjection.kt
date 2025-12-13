@@ -1,6 +1,6 @@
 package ai.dokus.cashflow.backend.config
 
-import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.cashflow.backend.database.CashflowTables
 import ai.dokus.foundation.database.di.repositoryModules
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
@@ -83,7 +83,7 @@ val databaseModule = module {
         DatabaseFactory(get(), "cashflow-pool").apply {
             runBlocking {
                 connect()
-                DatabaseInitializer.initializeAllTables()
+                CashflowTables.initialize()
             }
         }
     }

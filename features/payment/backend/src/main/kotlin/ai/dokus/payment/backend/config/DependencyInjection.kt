@@ -1,6 +1,6 @@
 package ai.dokus.payment.backend.config
 
-import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.payment.backend.database.PaymentTables
 import ai.dokus.foundation.database.di.repositoryModulePayment
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -13,12 +13,12 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
-    // Database - connect and initialize all tables centrally
+    // Database - connect and initialize payment-owned tables only
     single {
         DatabaseFactory(get(), "payment-pool").apply {
             runBlocking {
                 connect()
-                DatabaseInitializer.initializeAllTables()
+                PaymentTables.initialize()
             }
         }
     }
