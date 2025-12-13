@@ -9,7 +9,9 @@ import ai.dokus.foundation.domain.routes.Account
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.patch
 import io.ktor.client.plugins.resources.post
+import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -30,7 +32,7 @@ internal class AccountRemoteDataSourceImpl(
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> {
         return runCatching {
-            httpClient.post(Account.SelectTenant()) {
+            httpClient.put(Account.ActiveTenant()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("tenantId" to tenantId))
             }.body()
@@ -48,7 +50,7 @@ internal class AccountRemoteDataSourceImpl(
 
     override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
         return runCatching {
-            httpClient.post(Account.Deactivate()) {
+            httpClient.patch(Account.Me()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -57,7 +59,7 @@ internal class AccountRemoteDataSourceImpl(
 
     override suspend fun resendVerificationEmail(): Result<Unit> {
         return runCatching {
-            httpClient.post(Account.ResendVerification()) {
+            httpClient.post(Account.EmailVerifications()) {
                 contentType(ContentType.Application.Json)
             }
         }

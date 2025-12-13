@@ -64,7 +64,7 @@ fun Route.contactRoutes() {
             val contacts = contactService.listContacts(
                 tenantId = tenantId,
                 contactType = route.type,
-                isActive = route.activeOnly,
+                isActive = route.active,
                 peppolEnabled = route.peppolEnabled,
                 searchQuery = route.search,
                 limit = route.limit,
@@ -102,26 +102,13 @@ fun Route.contactRoutes() {
         }
 
         /**
-         * GET /api/v1/contacts/peppol-enabled
-         * List all Peppol-enabled contacts.
-         */
-        get<Contacts.PeppolEnabled> {
-            val tenantId = dokusPrincipal.requireTenantId()
-
-            val contacts = contactService.listPeppolEnabledContacts(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to list Peppol-enabled contacts: ${it.message}") }
-
-            call.respond(HttpStatusCode.OK, contacts)
-        }
-
-        /**
          * GET /api/v1/contacts/customers
          * List customers only (ContactType.Customer or ContactType.Both).
          */
         get<Contacts.Customers> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
-            val contacts = contactService.listCustomers(tenantId, route.activeOnly, route.limit, route.offset)
+            val contacts = contactService.listCustomers(tenantId, route.active, route.limit, route.offset)
                 .getOrElse { throw DokusException.InternalError("Failed to list customers: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, contacts)
@@ -134,17 +121,17 @@ fun Route.contactRoutes() {
         get<Contacts.Vendors> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
-            val contacts = contactService.listVendors(tenantId, route.activeOnly, route.limit, route.offset)
+            val contacts = contactService.listVendors(tenantId, route.active, route.limit, route.offset)
                 .getOrElse { throw DokusException.InternalError("Failed to list vendors: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, contacts)
         }
 
         /**
-         * GET /api/v1/contacts/stats
+         * GET /api/v1/contacts/summary
          * Get contact statistics for dashboard.
          */
-        get<Contacts.Stats> {
+        get<Contacts.Summary> {
             val tenantId = dokusPrincipal.requireTenantId()
 
             val stats = contactService.getContactStats(tenantId)
@@ -195,46 +182,6 @@ fun Route.contactRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to delete contact: ${it.message}") }
 
             call.respond(HttpStatusCode.NoContent)
-        }
-
-        // ================================================================
-        // STATUS MANAGEMENT
-        // ================================================================
-
-        /**
-         * POST /api/v1/contacts/{id}/deactivate
-         * Deactivate a contact (soft delete).
-         */
-        post<Contacts.Id.Deactivate> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
-            val contactId = ContactId.parse(route.parent.id)
-
-            val success = contactService.deactivateContact(contactId, tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to deactivate contact: ${it.message}") }
-
-            if (!success) {
-                throw DokusException.NotFound("Contact not found")
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf("message" to "Contact deactivated"))
-        }
-
-        /**
-         * POST /api/v1/contacts/{id}/reactivate
-         * Reactivate a deactivated contact.
-         */
-        post<Contacts.Id.Reactivate> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
-            val contactId = ContactId.parse(route.parent.id)
-
-            val success = contactService.reactivateContact(contactId, tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to reactivate contact: ${it.message}") }
-
-            if (!success) {
-                throw DokusException.NotFound("Contact not found")
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf("message" to "Contact reactivated"))
         }
 
         // ================================================================

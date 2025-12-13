@@ -238,8 +238,8 @@ fun Route.attachmentRoutes() {
         // Attachment Operations
         // ================================================================
 
-        // GET /api/v1/attachments/{id}/download-url - Get attachment download URL
-        get<Attachments.Id.DownloadUrl> { route ->
+        // GET /api/v1/attachments/{id}/url - Get attachment download URL
+        get<Attachments.Id.Url> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val attachmentId = AttachmentId(Uuid.parse(route.parent.id))
 

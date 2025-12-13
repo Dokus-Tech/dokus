@@ -1,6 +1,5 @@
 package ai.dokus.app.auth.datasource
 
-import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.model.Tenant
@@ -61,15 +60,7 @@ internal class TenantRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getNextInvoiceNumber(): Result<InvoiceNumber> {
-        return runCatching {
-            httpClient.get(Tenants.NextInvoiceNumber()).body()
-        }
-    }
-
-    override suspend fun hasFreelancerTenant(): Result<Boolean> {
-        return runCatching {
-            httpClient.get(Tenants.HasFreelancer()).body()
-        }
-    }
+    // Note: getNextInvoiceNumber and hasFreelancerTenant were removed as they
+    // were RPC-style endpoints. These should be computed client-side or included
+    // in existing resource responses.
 }

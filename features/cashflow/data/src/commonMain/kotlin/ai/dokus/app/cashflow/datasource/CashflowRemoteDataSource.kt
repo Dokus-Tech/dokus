@@ -107,25 +107,13 @@ interface CashflowRemoteDataSource {
 
     /**
      * Send invoice via email
-     * POST /api/v1/invoices/{id}/send-email
+     * POST /api/v1/invoices/{id}/emails
      */
     suspend fun sendInvoiceEmail(
         invoiceId: InvoiceId,
         recipientEmail: String? = null,
         message: String? = null
     ): Result<Unit>
-
-    /**
-     * Mark invoice as sent
-     * POST /api/v1/invoices/{id}/mark-sent
-     */
-    suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit>
-
-    /**
-     * Calculate invoice totals from line items
-     * POST /api/v1/invoices/calculate-totals
-     */
-    suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): Result<InvoiceTotals>
 
     // ============================================================================
     // EXPENSE MANAGEMENT
@@ -169,15 +157,6 @@ interface CashflowRemoteDataSource {
      * DELETE /api/v1/expenses/{id}
      */
     suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit>
-
-    /**
-     * Automatically categorize an expense based on merchant and description
-     * POST /api/v1/expenses/categorize
-     */
-    suspend fun categorizeExpense(
-        merchant: String,
-        description: String? = null
-    ): Result<ExpenseCategory>
 
     // ============================================================================
     // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
@@ -225,7 +204,7 @@ interface CashflowRemoteDataSource {
 
     /**
      * Mark bill as paid
-     * POST /api/v1/cashflow/cash-out/bills/{id}/pay
+     * POST /api/v1/bills/{id}/payments
      */
     suspend fun markBillPaid(
         billId: BillId,

@@ -332,36 +332,8 @@ fun Route.documentProcessingRoutes() {
         }
 
         /**
-         * POST /api/v1/documents/{id}/reject
-         * Reject extracted data for manual entry.
-         *
-         * Path parameters:
-         * - id: Document ID (UUID)
-         *
-         * Response: 204 No Content
-         */
-        post<Documents.Id.Reject> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
-            val documentId = DocumentId.parse(route.parent.id)
-
-            logger.info("Rejecting document: $documentId, tenant=$tenantId")
-
-            // Get processing record
-            val processing = processingRepository.getByDocumentId(
-                documentId = documentId,
-                tenantId = tenantId,
-                includeDocument = false
-            ) ?: throw DokusException.NotFound("Processing record not found for document")
-
-            // Mark as rejected
-            processingRepository.markAsRejected(processing.id, tenantId)
-
-            call.respond(HttpStatusCode.NoContent)
-        }
-
-        /**
-         * POST /api/v1/documents/{id}/reprocess
-         * Trigger re-extraction of document.
+         * POST /api/v1/documents/{id}/processing-jobs
+         * Trigger re-extraction of document (creates a new processing job).
          *
          * Path parameters:
          * - id: Document ID (UUID)
@@ -372,7 +344,7 @@ fun Route.documentProcessingRoutes() {
          *
          * Response: ReprocessDocumentResponse
          */
-        post<Documents.Id.Reprocess> { route ->
+        post<Documents.Id.ProcessingJobs> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 

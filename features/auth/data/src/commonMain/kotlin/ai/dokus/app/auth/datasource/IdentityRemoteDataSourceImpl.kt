@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
 import ai.dokus.foundation.domain.routes.Identity
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.resources.patch
 import io.ktor.client.plugins.resources.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -51,7 +52,7 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun requestPasswordReset(email: Email): Result<Unit> {
         return runCatching {
-            httpClient.post(Identity.RequestPasswordReset()) {
+            httpClient.post(Identity.PasswordResets()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("email" to email))
             }
@@ -60,7 +61,10 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
         return runCatching {
-            httpClient.post(Identity.ResetPassword(token = resetToken)) {
+            httpClient.patch(Identity.PasswordResets.ByToken(
+                parent = Identity.PasswordResets(),
+                token = resetToken
+            )) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -69,7 +73,10 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun verifyEmail(token: String): Result<Unit> {
         return runCatching {
-            httpClient.post(Identity.VerifyEmail(token = token)) {
+            httpClient.patch(Identity.EmailVerifications.ByToken(
+                parent = Identity.EmailVerifications(),
+                token = token
+            )) {
                 contentType(ContentType.Application.Json)
             }
         }
