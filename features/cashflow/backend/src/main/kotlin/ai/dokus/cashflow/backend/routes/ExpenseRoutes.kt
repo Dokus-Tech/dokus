@@ -3,119 +3,111 @@ package ai.dokus.cashflow.backend.routes
 import ai.dokus.cashflow.backend.service.ExpenseService
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
+import ai.dokus.foundation.domain.routes.Expenses
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
+import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
 import org.koin.ktor.ext.inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
- * Expense API Routes
+ * Expense API Routes using Ktor Type-Safe Routing
  * Base path: /api/v1/expenses
  *
  * All routes require JWT authentication and tenant context.
  */
+@OptIn(ExperimentalUuidApi::class)
 fun Route.expenseRoutes() {
     val expenseService by inject<ExpenseService>()
 
-    route("/api/v1/expenses") {
-        authenticateJwt {
+    authenticateJwt {
+        // GET /api/v1/expenses - List expenses with query params
+        get<Expenses> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
 
-            // POST /api/v1/expenses - Create expense
-            post {
-                val tenantId = dokusPrincipal.requireTenantId()
-                val request = call.receive<CreateExpenseRequest>()
-
-                val expense = expenseService.createExpense(tenantId, request)
-                    .getOrElse { throw DokusException.InternalError("Failed to create expense: ${it.message}") }
-
-                call.respond(HttpStatusCode.Created, expense)
+            if (route.limit < 1 || route.limit > 200) {
+                throw DokusException.BadRequest("Limit must be between 1 and 200")
+            }
+            if (route.offset < 0) {
+                throw DokusException.BadRequest("Offset must be non-negative")
             }
 
-            // GET /api/v1/expenses/{id} - Get expense by ID
-            get("/{expenseId}") {
-                val tenantId = dokusPrincipal.requireTenantId()
-                val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.BadRequest()
+            val expenses = expenseService.listExpenses(
+                tenantId = tenantId,
+                category = route.category,
+                fromDate = route.fromDate,
+                toDate = route.toDate,
+                limit = route.limit,
+                offset = route.offset
+            ).getOrElse { throw DokusException.InternalError("Failed to list expenses: ${it.message}") }
 
-                val expense = expenseService.getExpense(expenseId, tenantId)
-                    .getOrElse { throw DokusException.InternalError("Failed to fetch expense: ${it.message}") }
-                    ?: throw DokusException.NotFound("Expense not found")
+            call.respond(HttpStatusCode.OK, expenses)
+        }
 
-                call.respond(HttpStatusCode.OK, expense)
-            }
+        // POST /api/v1/expenses - Create expense
+        post<Expenses> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val request = call.receive<CreateExpenseRequest>()
 
-            // GET /api/v1/expenses - List expenses with query params
-            get {
-                val tenantId = dokusPrincipal.requireTenantId()
-                val category = call.parameters.expenseCategory
-                val fromDate = call.parameters.fromDate
-                val toDate = call.parameters.toDate
-                val limit = call.parameters.limit
-                val offset = call.parameters.offset
+            val expense = expenseService.createExpense(tenantId, request)
+                .getOrElse { throw DokusException.InternalError("Failed to create expense: ${it.message}") }
 
-                if (limit < 1 || limit > 200) {
-                    throw DokusException.BadRequest("Limit must be between 1 and 200")
-                }
-                if (offset < 0) {
-                    throw DokusException.BadRequest("Offset must be non-negative")
-                }
+            call.respond(HttpStatusCode.Created, expense)
+        }
 
-                val expenses = expenseService.listExpenses(
-                    tenantId = tenantId,
-                    category = category,
-                    fromDate = fromDate,
-                    toDate = toDate,
-                    limit = limit,
-                    offset = offset
-                ).getOrElse { throw DokusException.InternalError("Failed to list expenses: ${it.message}") }
+        // POST /api/v1/expenses/categorize - Categorize expense
+        post<Expenses.Categorize> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val request = call.receive<CategorizeExpenseRequest>()
 
-                call.respond(HttpStatusCode.OK, expenses)
-            }
+            val category = expenseService.categorizeExpense(request.merchant, request.description)
 
-            // PUT /api/v1/expenses/{id} - Update expense
-            put("/{expenseId}") {
-                val tenantId = dokusPrincipal.requireTenantId()
-                val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.BadRequest()
+            call.respond(HttpStatusCode.OK, CategorizeExpenseResponse(category))
+        }
 
-                val request = call.receive<CreateExpenseRequest>()
+        // GET /api/v1/expenses/{id} - Get expense by ID
+        get<Expenses.Id> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val expenseId = ExpenseId(Uuid.parse(route.id))
 
-                val expense = expenseService.updateExpense(expenseId, tenantId, request)
-                    .getOrElse { throw DokusException.InternalError("Failed to update expense: ${it.message}") }
+            val expense = expenseService.getExpense(expenseId, tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to fetch expense: ${it.message}") }
+                ?: throw DokusException.NotFound("Expense not found")
 
-                call.respond(HttpStatusCode.OK, expense)
-            }
+            call.respond(HttpStatusCode.OK, expense)
+        }
 
-            // DELETE /api/v1/expenses/{id} - Delete expense
-            delete("/{expenseId}") {
-                val tenantId = dokusPrincipal.requireTenantId()
-                val expenseId = call.parameters.expenseId
-                    ?: throw DokusException.BadRequest()
+        // PUT /api/v1/expenses/{id} - Update expense
+        put<Expenses.Id> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val expenseId = ExpenseId(Uuid.parse(route.id))
+            val request = call.receive<CreateExpenseRequest>()
 
-                expenseService.deleteExpense(expenseId, tenantId)
-                    .getOrElse { throw DokusException.InternalError("Failed to delete expense: ${it.message}") }
+            val expense = expenseService.updateExpense(expenseId, tenantId, request)
+                .getOrElse { throw DokusException.InternalError("Failed to update expense: ${it.message}") }
 
-                call.respond(HttpStatusCode.NoContent)
-            }
+            call.respond(HttpStatusCode.OK, expense)
+        }
 
-            // POST /api/v1/expenses/categorize - Categorize expense
-            post("/categorize") {
-                val tenantId = dokusPrincipal.requireTenantId()
-                val request = call.receive<CategorizeExpenseRequest>()
+        // DELETE /api/v1/expenses/{id} - Delete expense
+        delete<Expenses.Id> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val expenseId = ExpenseId(Uuid.parse(route.id))
 
-                val category = expenseService.categorizeExpense(request.merchant, request.description)
+            expenseService.deleteExpense(expenseId, tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to delete expense: ${it.message}") }
 
-                call.respond(HttpStatusCode.OK, CategorizeExpenseResponse(category))
-            }
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }
