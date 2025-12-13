@@ -177,7 +177,7 @@ jobs:
     with:
       run-ios: true
       run-macos: true
-      include-dmg: true
+      include-dmg: false
     secrets: inherit
 
   # Create deployment package for releases
