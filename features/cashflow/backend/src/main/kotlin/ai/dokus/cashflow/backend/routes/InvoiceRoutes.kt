@@ -81,21 +81,6 @@ fun Route.invoiceRoutes() {
             call.respond(HttpStatusCode.OK, invoices)
         }
 
-        // POST /api/v1/invoices/calculate-totals - Calculate invoice totals
-        post<Invoices.CalculateTotals> {
-            val tenantId = dokusPrincipal.requireTenantId()
-            val items = call.receive<CalculateTotalsRequest>().items
-
-            // TODO: Implement totals calculation via InvoiceService
-            val totals = InvoiceTotals(
-                subtotal = Money.ZERO,
-                vatAmount = Money.ZERO,
-                total = Money.ZERO
-            )
-
-            call.respond(HttpStatusCode.OK, totals)
-        }
-
         // GET /api/v1/invoices/{id} - Get invoice by ID
         get<Invoices.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
@@ -155,23 +140,14 @@ fun Route.invoiceRoutes() {
             throw DokusException.InternalError("Payment recording not yet implemented")
         }
 
-        // POST /api/v1/invoices/{id}/send-email - Send invoice via email
-        post<Invoices.Id.SendEmail> { route ->
+        // POST /api/v1/invoices/{id}/emails - Send invoice via email
+        post<Invoices.Id.Emails> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
             val request = call.receiveNullable<SendInvoiceEmailRequest>()
 
             // TODO: Implement email sending via EmailService when available
             throw DokusException.InternalError("Email sending not yet implemented")
-        }
-
-        // POST /api/v1/invoices/{id}/mark-sent - Mark invoice as sent
-        post<Invoices.Id.MarkSent> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
-            val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
-
-            // TODO: Implement mark as sent via InvoiceService when available
-            throw DokusException.InternalError("Mark as sent not yet implemented")
         }
     }
 }

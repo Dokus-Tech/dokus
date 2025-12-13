@@ -24,7 +24,7 @@ import kotlin.uuid.Uuid
 
 /**
  * Bill API Routes using Ktor Type-Safe Routing (Cash-Out: Incoming Supplier Invoices)
- * Base path: /api/v1/cashflow/cash-out/bills
+ * Base path: /api/v1/bills
  *
  * All routes require JWT authentication and tenant context.
  */
@@ -33,7 +33,7 @@ fun Route.billRoutes() {
     val billService by inject<BillService>()
 
     authenticateJwt {
-        // GET /api/v1/cashflow/cash-out/bills - List bills with query params
+        // GET /api/v1/bills - List bills with query params
         get<Bills> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
@@ -57,7 +57,7 @@ fun Route.billRoutes() {
             call.respond(HttpStatusCode.OK, bills)
         }
 
-        // POST /api/v1/cashflow/cash-out/bills - Create bill
+        // POST /api/v1/bills - Create bill
         post<Bills> {
             val tenantId = dokusPrincipal.requireTenantId()
             val request = call.receive<CreateBillRequest>()
@@ -68,7 +68,7 @@ fun Route.billRoutes() {
             call.respond(HttpStatusCode.Created, bill)
         }
 
-        // GET /api/v1/cashflow/cash-out/bills/overdue - List overdue bills
+        // GET /api/v1/bills/overdue - List overdue bills
         get<Bills.Overdue> {
             val tenantId = dokusPrincipal.requireTenantId()
 
@@ -78,7 +78,7 @@ fun Route.billRoutes() {
             call.respond(HttpStatusCode.OK, bills)
         }
 
-        // GET /api/v1/cashflow/cash-out/bills/{id} - Get bill by ID
+        // GET /api/v1/bills/{id} - Get bill by ID
         get<Bills.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val billId = BillId(Uuid.parse(route.id))
@@ -90,7 +90,7 @@ fun Route.billRoutes() {
             call.respond(HttpStatusCode.OK, bill)
         }
 
-        // PUT /api/v1/cashflow/cash-out/bills/{id} - Update bill
+        // PUT /api/v1/bills/{id} - Update bill
         put<Bills.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val billId = BillId(Uuid.parse(route.id))
@@ -102,7 +102,7 @@ fun Route.billRoutes() {
             call.respond(HttpStatusCode.OK, bill)
         }
 
-        // DELETE /api/v1/cashflow/cash-out/bills/{id} - Delete bill
+        // DELETE /api/v1/bills/{id} - Delete bill
         delete<Bills.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val billId = BillId(Uuid.parse(route.id))
@@ -113,7 +113,7 @@ fun Route.billRoutes() {
             call.respond(HttpStatusCode.NoContent)
         }
 
-        // PATCH /api/v1/cashflow/cash-out/bills/{id}/status - Update bill status
+        // PATCH /api/v1/bills/{id}/status - Update bill status
         patch<Bills.Id.Status> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val billId = BillId(Uuid.parse(route.parent.id))
@@ -134,8 +134,8 @@ fun Route.billRoutes() {
             call.respond(HttpStatusCode.OK, bill)
         }
 
-        // POST /api/v1/cashflow/cash-out/bills/{id}/pay - Mark bill as paid
-        post<Bills.Id.Pay> { route ->
+        // POST /api/v1/bills/{id}/payments - Record payment for bill
+        post<Bills.Id.Payments> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val billId = BillId(Uuid.parse(route.parent.id))
             val request = call.receive<MarkBillPaidRequest>()
