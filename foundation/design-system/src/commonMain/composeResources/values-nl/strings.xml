@@ -35,28 +35,28 @@
     <string name="key_ctrl">CTRL</string>
 
     <!-- Invoice - General -->
-    <string name="invoice_title">FACTUUR</string>
-    <string name="invoice_preview">VOORBEELD</string>
+    <string name="invoice_title">Factuur</string>
+    <string name="invoice_preview">Voorbeeld</string>
 
     <!-- Invoice Status -->
-    <string name="invoice_status_draft">CONCEPT</string>
-    <string name="invoice_status_sent">VERZONDEN</string>
-    <string name="invoice_status_viewed">BEKEKEN</string>
-    <string name="invoice_status_partial">GEDEELTELIJK</string>
-    <string name="invoice_status_paid">BETAALD</string>
-    <string name="invoice_status_overdue">ACHTERSTALLIG</string>
-    <string name="invoice_status_cancelled">GEANNULEERD</string>
-    <string name="invoice_status_refunded">TERUGBETAALD</string>
+    <string name="invoice_status_draft">Concept</string>
+    <string name="invoice_status_sent">Verzonden</string>
+    <string name="invoice_status_viewed">Bekeken</string>
+    <string name="invoice_status_partial">Gedeeltelijk</string>
+    <string name="invoice_status_paid">Betaald</string>
+    <string name="invoice_status_overdue">Achterstallig</string>
+    <string name="invoice_status_cancelled">Geannuleerd</string>
+    <string name="invoice_status_refunded">Terugbetaald</string>
 
     <!-- Invoice - Sections -->
-    <string name="invoice_bill_to">FACTUREREN AAN</string>
-    <string name="invoice_issue_date">FACTUURDATUM</string>
-    <string name="invoice_due_date">VERVALDATUM</string>
-    <string name="invoice_description">OMSCHRIJVING</string>
-    <string name="invoice_qty">AANT</string>
-    <string name="invoice_price">PRIJS</string>
-    <string name="invoice_amount">BEDRAG</string>
-    <string name="invoice_total">TOTAAL</string>
+    <string name="invoice_bill_to">Factureren aan</string>
+    <string name="invoice_issue_date">Factuurdatum</string>
+    <string name="invoice_due_date">Vervaldatum</string>
+    <string name="invoice_description">Omschrijving</string>
+    <string name="invoice_qty">Aant</string>
+    <string name="invoice_price">Prijs</string>
+    <string name="invoice_amount">Bedrag</string>
+    <string name="invoice_total">Totaal</string>
     <string name="invoice_subtotal">Subtotaal</string>
     <string name="invoice_vat">BTW</string>
 

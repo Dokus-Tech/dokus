@@ -91,4 +91,67 @@
 
     <!-- Sort Dropdown -->
     <string name="sort_expand">Развернуть параметры сортировки</string>
+
+    <!-- Invoice Creation - General -->
+    <string name="invoice_title">Счёт</string>
+    <string name="invoice_preview">Предпросмотр</string>
+
+    <!-- Invoice Status -->
+    <string name="invoice_status_draft">Черновик</string>
+    <string name="invoice_status_sent">Отправлен</string>
+    <string name="invoice_status_viewed">Просмотрен</string>
+    <string name="invoice_status_partial">Частично</string>
+    <string name="invoice_status_paid">Оплачен</string>
+    <string name="invoice_status_overdue">Просрочен</string>
+    <string name="invoice_status_cancelled">Отменён</string>
+    <string name="invoice_status_refunded">Возвращён</string>
+
+    <!-- Invoice Creation - Sections -->
+    <string name="invoice_bill_to">Получатель</string>
+    <string name="invoice_description">Описание</string>
+    <string name="invoice_qty">Кол-во</string>
+    <string name="invoice_price">Цена</string>
+    <string name="invoice_amount">Сумма</string>
+    <string name="invoice_total">Итого</string>
+    <string name="invoice_subtotal">Подытог</string>
+
+    <!-- Invoice Creation - Actions & UI -->
+    <string name="invoice_select_client">Выбрать клиента</string>
+    <string name="invoice_click_to_select_client">Нажмите для выбора клиента</string>
+    <string name="invoice_click_to_change">Нажмите для изменения</string>
+    <string name="invoice_line_items">Позиции счёта</string>
+    <string name="invoice_add_line_item">Добавить позицию</string>
+    <string name="invoice_item_number">Позиция %1$d</string>
+    <string name="invoice_line_total">Сумма позиции: %1$s</string>
+    <string name="invoice_vat_rate">Ставка НДС</string>
+    <string name="invoice_remove">Удалить</string>
+    <string name="invoice_save_as_draft">Сохранить как черновик</string>
+    <string name="invoice_vat_with_rate">НДС (%1$d%%): %2$s</string>
+
+    <!-- Invoice Creation - Send Options -->
+    <string name="invoice_send_options">Параметры отправки</string>
+    <string name="invoice_choose_delivery_method">Выберите способ доставки</string>
+    <string name="invoice_send_coming_soon_message">Функции отправки скоро появятся. Пока сохраните счёт как черновик.</string>
+    <string name="invoice_summary">Сводка по счёту</string>
+    <string name="invoice_line_items_count">%1$d позиция(й)</string>
+    <string name="invoice_coming_soon">Скоро</string>
+    <string name="invoice_not_selected">Не выбрано</string>
+    <string name="invoice_not_set">Не установлено</string>
+
+    <!-- Delivery Methods -->
+    <string name="delivery_export_pdf">Экспорт в PDF</string>
+    <string name="delivery_send_peppol">Отправить через Peppol</string>
+    <string name="delivery_send_email">Отправить по эл. почте</string>
+    <string name="delivery_pdf_description">Скачать счёт в формате PDF</string>
+    <string name="delivery_peppol_description">Отправить э-счёт напрямую клиенту</string>
+    <string name="delivery_peppol_warning">У клиента не настроен Peppol ID</string>
+    <string name="delivery_email_description">Отправить PDF-счёт по эл. почте</string>
+
+    <!-- Peppol Warnings -->
+    <string name="peppol_id_missing">Отсутствует Peppol ID</string>
+    <string name="peppol_belgian_client_warning">Этому бельгийскому клиенту нужен Peppol ID для э-счетов (обязательно с 2026)</string>
+    <string name="peppol_belgian_client_warning_short">Бельгийский клиент без Peppol ID - э-счета обязательны с 2026</string>
+
+    <!-- Errors -->
+    <string name="error_failed_to_load_clients">Не удалось загрузить клиентов</string>
 </resources>

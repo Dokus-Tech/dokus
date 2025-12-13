@@ -35,28 +35,28 @@
     <string name="key_ctrl">CTRL</string>
 
     <!-- Invoice - General -->
-    <string name="invoice_title">СЧЁТ</string>
-    <string name="invoice_preview">ПРЕДПРОСМОТР</string>
+    <string name="invoice_title">Счёт</string>
+    <string name="invoice_preview">Предпросмотр</string>
 
     <!-- Invoice Status -->
-    <string name="invoice_status_draft">ЧЕРНОВИК</string>
-    <string name="invoice_status_sent">ОТПРАВЛЕН</string>
-    <string name="invoice_status_viewed">ПРОСМОТРЕН</string>
-    <string name="invoice_status_partial">ЧАСТИЧНО</string>
-    <string name="invoice_status_paid">ОПЛАЧЕН</string>
-    <string name="invoice_status_overdue">ПРОСРОЧЕН</string>
-    <string name="invoice_status_cancelled">ОТМЕНЁН</string>
-    <string name="invoice_status_refunded">ВОЗВРАЩЁН</string>
+    <string name="invoice_status_draft">Черновик</string>
+    <string name="invoice_status_sent">Отправлен</string>
+    <string name="invoice_status_viewed">Просмотрен</string>
+    <string name="invoice_status_partial">Частично</string>
+    <string name="invoice_status_paid">Оплачен</string>
+    <string name="invoice_status_overdue">Просрочен</string>
+    <string name="invoice_status_cancelled">Отменён</string>
+    <string name="invoice_status_refunded">Возвращён</string>
 
     <!-- Invoice - Sections -->
-    <string name="invoice_bill_to">ПОЛУЧАТЕЛЬ</string>
-    <string name="invoice_issue_date">ДАТА ВЫСТАВЛЕНИЯ</string>
-    <string name="invoice_due_date">СРОК ОПЛАТЫ</string>
-    <string name="invoice_description">ОПИСАНИЕ</string>
-    <string name="invoice_qty">КОЛ-ВО</string>
-    <string name="invoice_price">ЦЕНА</string>
-    <string name="invoice_amount">СУММА</string>
-    <string name="invoice_total">ИТОГО</string>
+    <string name="invoice_bill_to">Получатель</string>
+    <string name="invoice_issue_date">Дата выставления</string>
+    <string name="invoice_due_date">Срок оплаты</string>
+    <string name="invoice_description">Описание</string>
+    <string name="invoice_qty">Кол-во</string>
+    <string name="invoice_price">Цена</string>
+    <string name="invoice_amount">Сумма</string>
+    <string name="invoice_total">Итого</string>
     <string name="invoice_subtotal">Подытог</string>
     <string name="invoice_vat">НДС</string>
 
