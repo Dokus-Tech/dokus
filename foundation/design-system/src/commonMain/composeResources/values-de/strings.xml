@@ -33,4 +33,74 @@
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">STRG</string>
+
+    <!-- Invoice - General -->
+    <string name="invoice_title">RECHNUNG</string>
+    <string name="invoice_preview">VORSCHAU</string>
+
+    <!-- Invoice Status -->
+    <string name="invoice_status_draft">ENTWURF</string>
+    <string name="invoice_status_sent">GESENDET</string>
+    <string name="invoice_status_viewed">ANGESEHEN</string>
+    <string name="invoice_status_partial">TEILWEISE</string>
+    <string name="invoice_status_paid">BEZAHLT</string>
+    <string name="invoice_status_overdue">ÜBERFÄLLIG</string>
+    <string name="invoice_status_cancelled">STORNIERT</string>
+    <string name="invoice_status_refunded">ERSTATTET</string>
+
+    <!-- Invoice - Sections -->
+    <string name="invoice_bill_to">RECHNUNGSEMPFÄNGER</string>
+    <string name="invoice_issue_date">RECHNUNGSDATUM</string>
+    <string name="invoice_due_date">FÄLLIGKEITSDATUM</string>
+    <string name="invoice_description">BESCHREIBUNG</string>
+    <string name="invoice_qty">MENGE</string>
+    <string name="invoice_price">PREIS</string>
+    <string name="invoice_amount">BETRAG</string>
+    <string name="invoice_total">GESAMT</string>
+    <string name="invoice_subtotal">Zwischensumme</string>
+    <string name="invoice_vat">MwSt</string>
+
+    <!-- Invoice - Actions & UI -->
+    <string name="invoice_select_client">Kunde auswählen</string>
+    <string name="invoice_client">Kunde</string>
+    <string name="invoice_click_to_select_client">Klicken Sie, um einen Kunden auszuwählen</string>
+    <string name="invoice_click_to_change">Klicken zum Ändern</string>
+    <string name="invoice_no_items">Noch keine Artikel hinzugefügt</string>
+    <string name="invoice_line_items">Rechnungspositionen</string>
+    <string name="invoice_add_line_item">Position hinzufügen</string>
+    <string name="invoice_item_number">Artikel %1$d</string>
+    <string name="invoice_line_total">Positionssumme: %1$s</string>
+    <string name="invoice_vat_rate">MwSt-Satz</string>
+    <string name="invoice_remove">Entfernen</string>
+    <string name="invoice_details">Rechnungsdetails</string>
+    <string name="invoice_save_as_draft">Als Entwurf speichern</string>
+    <string name="invoice_vat_with_rate">MwSt (%1$d%%): %2$s</string>
+
+    <!-- Invoice - Send Options -->
+    <string name="invoice_send_options">Versandoptionen</string>
+    <string name="invoice_choose_delivery_method">Versandmethode wählen</string>
+    <string name="invoice_send_coming_soon_message">Versandfunktionen kommen bald. Speichern Sie Ihre Rechnung vorerst als Entwurf.</string>
+    <string name="invoice_summary">Rechnungsübersicht</string>
+    <string name="invoice_items">Artikel</string>
+    <string name="invoice_line_items_count">%1$d Position(en)</string>
+    <string name="invoice_coming_soon">Demnächst verfügbar</string>
+    <string name="invoice_not_selected">Nicht ausgewählt</string>
+    <string name="invoice_not_set">Nicht festgelegt</string>
+
+    <!-- Delivery Methods -->
+    <string name="delivery_export_pdf">Als PDF exportieren</string>
+    <string name="delivery_send_peppol">Über Peppol senden</string>
+    <string name="delivery_send_email">Per E-Mail senden</string>
+    <string name="delivery_pdf_description">Rechnung als PDF herunterladen</string>
+    <string name="delivery_peppol_description">E-Rechnung direkt an Kunden senden</string>
+    <string name="delivery_peppol_warning">Kunde hat keine Peppol ID konfiguriert</string>
+    <string name="delivery_email_description">PDF-Rechnung per E-Mail senden</string>
+
+    <!-- Peppol Warnings -->
+    <string name="peppol_id_missing">Peppol ID fehlt</string>
+    <string name="peppol_belgian_client_warning">Dieser belgische Kunde benötigt eine Peppol ID für die E-Rechnungsstellung (ab 2026 verpflichtend)</string>
+    <string name="peppol_belgian_client_warning_short">Belgischer Kunde ohne Peppol ID - E-Rechnung ab 2026 verpflichtend</string>
+
+    <!-- Errors -->
+    <string name="error_failed_to_load_clients">Kunden konnten nicht geladen werden</string>
 </resources>
