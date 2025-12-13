@@ -91,4 +91,67 @@
 
     <!-- Sort Dropdown -->
     <string name="sort_expand">Sortieroptionen erweitern</string>
+
+    <!-- Invoice Creation - General -->
+    <string name="invoice_title">Rechnung</string>
+    <string name="invoice_preview">Vorschau</string>
+
+    <!-- Invoice Status -->
+    <string name="invoice_status_draft">Entwurf</string>
+    <string name="invoice_status_sent">Gesendet</string>
+    <string name="invoice_status_viewed">Angesehen</string>
+    <string name="invoice_status_partial">Teilweise</string>
+    <string name="invoice_status_paid">Bezahlt</string>
+    <string name="invoice_status_overdue">Überfällig</string>
+    <string name="invoice_status_cancelled">Storniert</string>
+    <string name="invoice_status_refunded">Erstattet</string>
+
+    <!-- Invoice Creation - Sections -->
+    <string name="invoice_bill_to">Rechnungsempfänger</string>
+    <string name="invoice_description">Beschreibung</string>
+    <string name="invoice_qty">Menge</string>
+    <string name="invoice_price">Preis</string>
+    <string name="invoice_amount">Betrag</string>
+    <string name="invoice_total">Gesamt</string>
+    <string name="invoice_subtotal">Zwischensumme</string>
+
+    <!-- Invoice Creation - Actions & UI -->
+    <string name="invoice_select_client">Kunde auswählen</string>
+    <string name="invoice_click_to_select_client">Klicken Sie, um einen Kunden auszuwählen</string>
+    <string name="invoice_click_to_change">Klicken zum Ändern</string>
+    <string name="invoice_line_items">Rechnungspositionen</string>
+    <string name="invoice_add_line_item">Position hinzufügen</string>
+    <string name="invoice_item_number">Artikel %1$d</string>
+    <string name="invoice_line_total">Positionssumme: %1$s</string>
+    <string name="invoice_vat_rate">MwSt-Satz</string>
+    <string name="invoice_remove">Entfernen</string>
+    <string name="invoice_save_as_draft">Als Entwurf speichern</string>
+    <string name="invoice_vat_with_rate">MwSt (%1$d%%): %2$s</string>
+
+    <!-- Invoice Creation - Send Options -->
+    <string name="invoice_send_options">Versandoptionen</string>
+    <string name="invoice_choose_delivery_method">Versandmethode wählen</string>
+    <string name="invoice_send_coming_soon_message">Versandfunktionen kommen bald. Speichern Sie Ihre Rechnung vorerst als Entwurf.</string>
+    <string name="invoice_summary">Rechnungsübersicht</string>
+    <string name="invoice_line_items_count">%1$d Position(en)</string>
+    <string name="invoice_coming_soon">Demnächst verfügbar</string>
+    <string name="invoice_not_selected">Nicht ausgewählt</string>
+    <string name="invoice_not_set">Nicht festgelegt</string>
+
+    <!-- Delivery Methods -->
+    <string name="delivery_export_pdf">Als PDF exportieren</string>
+    <string name="delivery_send_peppol">Über Peppol senden</string>
+    <string name="delivery_send_email">Per E-Mail senden</string>
+    <string name="delivery_pdf_description">Rechnung als PDF herunterladen</string>
+    <string name="delivery_peppol_description">E-Rechnung direkt an Kunden senden</string>
+    <string name="delivery_peppol_warning">Kunde hat keine Peppol ID konfiguriert</string>
+    <string name="delivery_email_description">PDF-Rechnung per E-Mail senden</string>
+
+    <!-- Peppol Warnings -->
+    <string name="peppol_id_missing">Peppol ID fehlt</string>
+    <string name="peppol_belgian_client_warning">Dieser belgische Kunde benötigt eine Peppol ID für die E-Rechnungsstellung (ab 2026 verpflichtend)</string>
+    <string name="peppol_belgian_client_warning_short">Belgischer Kunde ohne Peppol ID - E-Rechnung ab 2026 verpflichtend</string>
+
+    <!-- Errors -->
+    <string name="error_failed_to_load_clients">Kunden konnten nicht geladen werden</string>
 </resources>

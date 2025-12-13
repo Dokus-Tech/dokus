@@ -35,28 +35,28 @@
     <string name="key_ctrl">CTRL</string>
 
     <!-- Invoice - General -->
-    <string name="invoice_title">FACTURA</string>
-    <string name="invoice_preview">VISTA PREVIA</string>
+    <string name="invoice_title">Factura</string>
+    <string name="invoice_preview">Vista previa</string>
 
     <!-- Invoice Status -->
-    <string name="invoice_status_draft">BORRADOR</string>
-    <string name="invoice_status_sent">ENVIADA</string>
-    <string name="invoice_status_viewed">VISTA</string>
-    <string name="invoice_status_partial">PARCIAL</string>
-    <string name="invoice_status_paid">PAGADA</string>
-    <string name="invoice_status_overdue">VENCIDA</string>
-    <string name="invoice_status_cancelled">CANCELADA</string>
-    <string name="invoice_status_refunded">REEMBOLSADA</string>
+    <string name="invoice_status_draft">Borrador</string>
+    <string name="invoice_status_sent">Enviada</string>
+    <string name="invoice_status_viewed">Vista</string>
+    <string name="invoice_status_partial">Parcial</string>
+    <string name="invoice_status_paid">Pagada</string>
+    <string name="invoice_status_overdue">Vencida</string>
+    <string name="invoice_status_cancelled">Cancelada</string>
+    <string name="invoice_status_refunded">Reembolsada</string>
 
     <!-- Invoice - Sections -->
-    <string name="invoice_bill_to">FACTURAR A</string>
-    <string name="invoice_issue_date">FECHA EMISIÓN</string>
-    <string name="invoice_due_date">FECHA VENCIMIENTO</string>
-    <string name="invoice_description">DESCRIPCIÓN</string>
-    <string name="invoice_qty">CANT</string>
-    <string name="invoice_price">PRECIO</string>
-    <string name="invoice_amount">IMPORTE</string>
-    <string name="invoice_total">TOTAL</string>
+    <string name="invoice_bill_to">Facturar a</string>
+    <string name="invoice_issue_date">Fecha emisión</string>
+    <string name="invoice_due_date">Fecha vencimiento</string>
+    <string name="invoice_description">Descripción</string>
+    <string name="invoice_qty">Cant</string>
+    <string name="invoice_price">Precio</string>
+    <string name="invoice_amount">Importe</string>
+    <string name="invoice_total">Total</string>
     <string name="invoice_subtotal">Subtotal</string>
     <string name="invoice_vat">IVA</string>
 

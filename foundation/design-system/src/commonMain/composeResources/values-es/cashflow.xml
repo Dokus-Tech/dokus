@@ -91,4 +91,67 @@
 
     <!-- Sort Dropdown -->
     <string name="sort_expand">Expandir opciones de ordenación</string>
+
+    <!-- Invoice Creation - General -->
+    <string name="invoice_title">Factura</string>
+    <string name="invoice_preview">Vista previa</string>
+
+    <!-- Invoice Status -->
+    <string name="invoice_status_draft">Borrador</string>
+    <string name="invoice_status_sent">Enviada</string>
+    <string name="invoice_status_viewed">Vista</string>
+    <string name="invoice_status_partial">Parcial</string>
+    <string name="invoice_status_paid">Pagada</string>
+    <string name="invoice_status_overdue">Vencida</string>
+    <string name="invoice_status_cancelled">Cancelada</string>
+    <string name="invoice_status_refunded">Reembolsada</string>
+
+    <!-- Invoice Creation - Sections -->
+    <string name="invoice_bill_to">Facturar a</string>
+    <string name="invoice_description">Descripción</string>
+    <string name="invoice_qty">Cant</string>
+    <string name="invoice_price">Precio</string>
+    <string name="invoice_amount">Importe</string>
+    <string name="invoice_total">Total</string>
+    <string name="invoice_subtotal">Subtotal</string>
+
+    <!-- Invoice Creation - Actions & UI -->
+    <string name="invoice_select_client">Seleccionar cliente</string>
+    <string name="invoice_click_to_select_client">Haga clic para seleccionar un cliente</string>
+    <string name="invoice_click_to_change">Haga clic para cambiar</string>
+    <string name="invoice_line_items">Líneas de factura</string>
+    <string name="invoice_add_line_item">Añadir línea</string>
+    <string name="invoice_item_number">Artículo %1$d</string>
+    <string name="invoice_line_total">Total línea: %1$s</string>
+    <string name="invoice_vat_rate">Tipo de IVA</string>
+    <string name="invoice_remove">Eliminar</string>
+    <string name="invoice_save_as_draft">Guardar como borrador</string>
+    <string name="invoice_vat_with_rate">IVA (%1$d%%): %2$s</string>
+
+    <!-- Invoice Creation - Send Options -->
+    <string name="invoice_send_options">Opciones de envío</string>
+    <string name="invoice_choose_delivery_method">Elegir método de entrega</string>
+    <string name="invoice_send_coming_soon_message">Las funciones de envío estarán disponibles pronto. Por ahora, guarde su factura como borrador.</string>
+    <string name="invoice_summary">Resumen de factura</string>
+    <string name="invoice_line_items_count">%1$d línea(s)</string>
+    <string name="invoice_coming_soon">Próximamente</string>
+    <string name="invoice_not_selected">No seleccionado</string>
+    <string name="invoice_not_set">No establecido</string>
+
+    <!-- Delivery Methods -->
+    <string name="delivery_export_pdf">Exportar como PDF</string>
+    <string name="delivery_send_peppol">Enviar vía Peppol</string>
+    <string name="delivery_send_email">Enviar por correo</string>
+    <string name="delivery_pdf_description">Descargar factura como PDF</string>
+    <string name="delivery_peppol_description">Enviar e-factura directamente al cliente</string>
+    <string name="delivery_peppol_warning">El cliente no tiene ID Peppol configurado</string>
+    <string name="delivery_email_description">Enviar factura PDF por correo</string>
+
+    <!-- Peppol Warnings -->
+    <string name="peppol_id_missing">Falta ID Peppol</string>
+    <string name="peppol_belgian_client_warning">Este cliente belga necesita un ID Peppol para facturación electrónica (obligatorio desde 2026)</string>
+    <string name="peppol_belgian_client_warning_short">Cliente belga sin ID Peppol - factura electrónica obligatoria desde 2026</string>
+
+    <!-- Errors -->
+    <string name="error_failed_to_load_clients">Error al cargar clientes</string>
 </resources>
