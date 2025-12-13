@@ -1,9 +1,11 @@
 package ai.dokus.foundation.database.tables.peppol
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.PeppolDocumentType
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -14,7 +16,10 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("tenant_id")
+    val tenantId = uuid("tenant_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
+    )
 
     // Transmission details
     val direction = dbEnumeration<PeppolTransmissionDirection>("direction")
@@ -22,11 +27,17 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val status = dbEnumeration<PeppolStatus>("status").default(PeppolStatus.Pending)
 
     // Local document references
-    val invoiceId = uuid("invoice_id").nullable()  // For outbound
-    val billId = uuid("bill_id").nullable()  // For inbound
+    val invoiceId = uuid("invoice_id").references(
+        ai.dokus.foundation.database.tables.cashflow.InvoicesTable.id,
+        onDelete = ReferenceOption.SET_NULL
+    ).nullable().index()  // For outbound
+    val billId = uuid("bill_id").references(
+        ai.dokus.foundation.database.tables.cashflow.BillsTable.id,
+        onDelete = ReferenceOption.SET_NULL
+    ).nullable().index()  // For inbound
 
     // External references
-    val externalDocumentId = varchar("external_document_id", 255).nullable()
+    val externalDocumentId = varchar("external_document_id", 255).nullable().index()
 
     // Peppol IDs
     val recipientPeppolId = varchar("recipient_peppol_id", 255).nullable()  // For outbound
@@ -45,15 +56,8 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index tenant_id for security and performance
-        index(false, tenantId)
-        index(false, tenantId, direction)
-        index(false, tenantId, status)
-        index(false, invoiceId)
-        index(false, billId)
-        index(false, externalDocumentId)
-
         // Composite index for common queries
         index(false, tenantId, direction, status)
+        uniqueIndex(tenantId, externalDocumentId)
     }
 }

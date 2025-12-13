@@ -566,22 +566,37 @@ show_status() {
 
     # Services
     local services=(
-        "Auth Service:7091:/metrics"
-        "Cashflow Service:7092:/health"
-        "Payment Service:7093:/health"
-        "Reporting Service:7094:/health"
-        "Audit Service:7095:/health"
-        "Banking Service:7096:/health"
+        "Auth Service:auth-service-local:7091:/metrics"
+        "Cashflow Service:cashflow-service-local:7092:/health"
+        "Payment Service:payment-service-local:7093:/health"
+        "Reporting Service:reporting-service-local:7094:/health"
+        "Audit Service:audit-service-local:7095:/health"
+        "Banking Service:banking-service-local:7096:/health"
     )
 
-    for service_info in "${services[@]}"; do
-        IFS=':' read -r service_name port endpoint <<< "$service_info"
-        printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
-        if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
-            echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
-        else
-            echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    check_service() {
+        local name=$1
+        local container=$2
+        local port=$3
+        local endpoint=$4
+
+        # If container is not running, surface that clearly
+        if ! docker-compose -f $COMPOSE_FILE ps -q "$container" | grep -q .; then
+            printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_RED}⨯ NOT RUNNING${NC}   ${SOFT_GRAY}│${NC}\n" "$name"
+            return
         fi
+
+        # Health probe
+        if curl -f -s "http://localhost:${port}${endpoint}" > /dev/null 2>&1; then
+            printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}\n" "$name"
+        else
+            printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}\n" "$name"
+        fi
+    }
+
+    for service_info in "${services[@]}"; do
+        IFS=':' read -r service_name container port endpoint <<< "$service_info"
+        check_service "$service_name" "$container" "$port" "$endpoint"
     done
 
     echo_e "  ${SOFT_GRAY}└─────────────────────────┴──────────────────┘${NC}"

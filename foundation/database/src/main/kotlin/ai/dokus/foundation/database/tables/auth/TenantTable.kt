@@ -23,7 +23,7 @@ object TenantTable : UUIDTable("tenants") {
 
     // Subscription
     val plan = dbEnumeration<TenantPlan>("plan")
-    val status = dbEnumeration<TenantStatus>("status").default(TenantStatus.Active)
+    val status = dbEnumeration<TenantStatus>("status").default(TenantStatus.Active).index()
     val trialEndsAt = datetime("trial_ends_at").nullable()
     val subscriptionStartedAt = datetime("subscription_started_at").nullable()
 
@@ -38,6 +38,5 @@ object TenantTable : UUIDTable("tenants") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, status)
     }
 }

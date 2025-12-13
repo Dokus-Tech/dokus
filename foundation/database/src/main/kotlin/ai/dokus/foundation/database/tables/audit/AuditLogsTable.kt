@@ -12,10 +12,16 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Immutable records with 7-year retention for financial records
  */
 object AuditLogsTable : UUIDTable("audit_logs") {
-    val tenantId = uuid("tenant_id")
-    val userId = uuid("user_id").nullable()
+    val tenantId = uuid("tenant_id").references(
+        ai.dokus.foundation.database.tables.auth.TenantTable.id,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
+    val userId = uuid("user_id").references(
+        ai.dokus.foundation.database.tables.auth.UsersTable.id,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
+    ).nullable().index()
 
-    val action = dbEnumeration<AuditAction>("action")
+    val action = dbEnumeration<AuditAction>("action").index()
     val entityType = dbEnumeration<EntityType>("entity_type")
     val entityId = varchar("entity_id", 255)
 
@@ -32,7 +38,5 @@ object AuditLogsTable : UUIDTable("audit_logs") {
     init {
         index(false, tenantId, createdAt)
         index(false, entityType, entityId)
-        index(false, userId)
-        index(false, action)
     }
 }
