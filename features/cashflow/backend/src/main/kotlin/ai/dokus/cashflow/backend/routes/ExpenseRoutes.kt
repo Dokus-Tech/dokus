@@ -65,16 +65,6 @@ fun Route.expenseRoutes() {
             call.respond(HttpStatusCode.Created, expense)
         }
 
-        // POST /api/v1/expenses/categorize - Categorize expense
-        post<Expenses.Categorize> {
-            val tenantId = dokusPrincipal.requireTenantId()
-            val request = call.receive<CategorizeExpenseRequest>()
-
-            val category = expenseService.categorizeExpense(request.merchant, request.description)
-
-            call.respond(HttpStatusCode.OK, CategorizeExpenseResponse(category))
-        }
-
         // GET /api/v1/expenses/{id} - Get expense by ID
         get<Expenses.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
