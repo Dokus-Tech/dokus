@@ -153,7 +153,7 @@ jobs:
       - name: 🔑 Configure App Store Connect API key
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "${{ secrets.ASC_API_KEY_PRIVATE_KEY }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
+          echo "${{ secrets.ASC_API_KEY_PRIVATE_KEY }}" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
 
       - name: 🔐 Import iOS distribution certificate
@@ -167,7 +167,7 @@ jobs:
         if: ${{ secrets.IOS_PROFILE_APP_STORE != '' }}
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "${{ secrets.IOS_PROFILE_APP_STORE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/Dokus_iOS.mobileprovision
+          echo "${{ secrets.IOS_PROFILE_APP_STORE }}" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/Dokus_iOS.mobileprovision
 
       - name: 📝 Update Info.plist versions
         run: |
@@ -245,6 +245,7 @@ jobs:
             --apiIssuer "${{ secrets.ASC_API_KEY_ISSUER_ID }}"
 
       - name: 📤 Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa-${{ env.VERSION_NAME }}
@@ -255,6 +256,7 @@ jobs:
           retention-days: 14
 
       - name: ✅ iOS release summary
+        if: always()
         run: |
           IPA_PATH=$(find build/export -name "*.ipa" -maxdepth 2 | head -1)
           IPA_SIZE=$( [ -f "$IPA_PATH" ] && ls -lh "$IPA_PATH" | awk '{print $5}' || echo "n/a")
@@ -308,7 +310,7 @@ jobs:
       - name: 🔑 Configure App Store Connect API key
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "${{ secrets.ASC_API_KEY_PRIVATE_KEY }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
+          echo "${{ secrets.ASC_API_KEY_PRIVATE_KEY }}" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
 
       - name: 🔐 Import macOS distribution certificate
@@ -322,7 +324,7 @@ jobs:
         if: ${{ secrets.MAC_PROFILE_APP_STORE != '' }}
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "${{ secrets.MAC_PROFILE_APP_STORE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/Dokus_MacOS.provisionprofile
+          echo "${{ secrets.MAC_PROFILE_APP_STORE }}" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/Dokus_MacOS.provisionprofile
 
       - name: 🏗️ Build macOS App Store pkg
         run: |
@@ -357,6 +359,7 @@ jobs:
             --apiIssuer "${{ secrets.ASC_API_KEY_ISSUER_ID }}"
 
       - name: 📤 Upload pkg artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: macos-pkg-${{ env.VERSION_NAME }}
@@ -364,15 +367,22 @@ jobs:
           retention-days: 14
 
       - name: ✅ macOS release summary
+        if: always()
         run: |
-          PKG_SIZE=$(ls -lh "${{ steps.pkg.outputs.path }}" | awk '{print $5}')
+          PKG_PATH="${{ steps.pkg.outputs.path }}"
+          if [ -f "$PKG_PATH" ]; then
+            PKG_SIZE=$(ls -lh "$PKG_PATH" | awk '{print $5}')
+          else
+            PKG_SIZE="n/a"
+            PKG_PATH="n/a"
+          fi
           echo "# macOS Upload" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| Version | $VERSION_NAME |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | $BUILD_NUMBER |" >> $GITHUB_STEP_SUMMARY
-          echo "| PKG | ${{ steps.pkg.outputs.name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PKG | ${PKG_PATH##*/} |" >> $GITHUB_STEP_SUMMARY
           echo "| Size | $PKG_SIZE |" >> $GITHUB_STEP_SUMMARY
 
   dmg:
