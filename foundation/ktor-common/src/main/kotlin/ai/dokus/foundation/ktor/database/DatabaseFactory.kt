@@ -98,22 +98,21 @@ class DatabaseFactory(
         }
     }
 
-fun close() {
+    fun close() {
         logger.info("Closing database connections...")
         dataSource?.close()
         logger.info("Database connections closed")
     }
 }
 
-suspend fun <T> dbQuery(block: () -> T): T =
-    withContext(Dispatchers.IO) {
-        transaction {
-            TenantContextHolder.currentTenantId()?.let { tenant ->
-                TransactionManager.current().exec("set local app.tenant_id = '$tenant'")
-            }
-            block()
+suspend fun <T> dbQuery(block: () -> T): T = withContext(Dispatchers.IO) {
+    transaction {
+        TenantContextHolder.currentTenantId()?.let { tenant ->
+            TransactionManager.current().exec("set local app.tenant_id = '$tenant'")
         }
+        block()
     }
+}
 
 /**
  * Run a DB query with an explicit tenant context for RLS/guards.

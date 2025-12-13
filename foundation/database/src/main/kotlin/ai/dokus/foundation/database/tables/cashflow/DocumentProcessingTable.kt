@@ -83,9 +83,6 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
         // For background job: find pending/failed documents to process
         index(false, status, processingAttempts)
 
-        // For looking up processing by document
-        index(false, documentId)
-
         // For cleanup: find old unconfirmed documents
         index(false, tenantId, confirmedAt)
     }

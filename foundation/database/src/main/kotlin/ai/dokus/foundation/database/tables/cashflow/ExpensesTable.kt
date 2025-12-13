@@ -21,17 +21,17 @@ object ExpensesTable : UUIDTable("expenses") {
     val tenantId = uuid("organization_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // Expense details
-    val date = date("date")
-    val merchant = varchar("merchant", 255)
+    val date = date("date").index()
+    val merchant = varchar("merchant", 255).index()
     val amount = decimal("amount", 12, 2)
     val vatAmount = decimal("vat_amount", 12, 2).nullable()
     val vatRate = decimal("vat_rate", 5, 4).nullable() // e.g., 0.2100 for 21%
 
     // Categorization
-    val category = dbEnumeration<ExpenseCategory>("category")
+    val category = dbEnumeration<ExpenseCategory>("category").index()
     val description = text("description").nullable()
 
     // Document attachment (references DocumentsTable)
@@ -55,12 +55,6 @@ object ExpensesTable : UUIDTable("expenses") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index organization_id for security and performance
-        index(false, tenantId)
-        index(false, category)
-        index(false, date)
-        index(false, merchant)
-
         // Composite index for common queries
         index(false, tenantId, category)
         index(false, tenantId, date)

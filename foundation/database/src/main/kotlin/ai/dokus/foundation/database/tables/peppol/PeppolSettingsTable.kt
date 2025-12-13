@@ -20,7 +20,7 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
     )
 
     // Provider identification - supports multiple providers
-    val providerId = varchar("provider_id", 50).default("recommand")
+    val providerId = varchar("provider_id", 50).default("recommand").index()
 
     // Provider-specific configuration (JSON) for future extensibility
     val providerConfig = text("provider_config").nullable()
@@ -42,8 +42,6 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
-        index(false, providerId)
         uniqueIndex(tenantId, providerId)
     }
 }

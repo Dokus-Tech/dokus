@@ -3,7 +3,6 @@ package ai.dokus.foundation.database.repository.auth
 import ai.dokus.foundation.database.tables.auth.TenantInvitationsTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.InvitationId
@@ -13,7 +12,6 @@ import ai.dokus.foundation.domain.model.TenantInvitation
 import ai.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
