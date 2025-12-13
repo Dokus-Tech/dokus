@@ -30,6 +30,10 @@ sealed interface HomeDestination : NavigationDestination {
     data object OperationCommunications : HomeDestination
 
     @Serializable
+    @SerialName("contacts")
+    data object Contacts : HomeDestination
+
+    @Serializable
     @SerialName("settings")
     data object Settings : HomeDestination
 
