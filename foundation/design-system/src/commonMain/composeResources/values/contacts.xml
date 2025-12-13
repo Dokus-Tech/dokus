@@ -1,0 +1,8 @@
+<resources>
+    <!-- Contacts Screen -->
+    <string name="contacts_title">Contacts</string>
+    <string name="contacts_empty">No contacts yet</string>
+    <string name="contacts_empty_description">Add your first contact to get started</string>
+    <string name="contacts_add">Add Contact</string>
+    <string name="contacts_search">Search contacts...</string>
+</resources>
