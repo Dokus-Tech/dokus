@@ -199,7 +199,7 @@ private fun DesktopLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(32.dp),
+            .padding(horizontal = 32.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Left column: Interactive invoice
@@ -209,6 +209,7 @@ private fun DesktopLayout(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
             SectionTitle(
                 text = "Create Invoice",
                 onBackPress = onBackPress
@@ -218,7 +219,6 @@ private fun DesktopLayout(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(8.dp))
             invoiceContent()
         }
 
@@ -229,7 +229,9 @@ private fun DesktopLayout(
                 .widthIn(min = 320.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
             sendOptionsContent()
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
