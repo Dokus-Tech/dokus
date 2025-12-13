@@ -8,7 +8,7 @@ import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
@@ -86,7 +86,7 @@ enum class InvoiceCreationStep {
  * State representing the invoice creation form data.
  */
 data class CreateInvoiceFormState(
-    val selectedClient: ClientDto? = null,
+    val selectedClient: ContactDto? = null,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
     val notes: String = "",
@@ -195,9 +195,9 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     private val logger = Logger.forClass<CreateInvoiceViewModel>()
     private val dataSource: CashflowRemoteDataSource by inject()
 
-    // Clients state for selection
-    private val _clientsState = MutableStateFlow<DokusState<List<ClientDto>>>(DokusState.idle())
-    val clientsState: StateFlow<DokusState<List<ClientDto>>> = _clientsState.asStateFlow()
+    // Clients state for selection (now contacts)
+    private val _clientsState = MutableStateFlow<DokusState<List<ContactDto>>>(DokusState.idle())
+    val clientsState: StateFlow<DokusState<List<ContactDto>>> = _clientsState.asStateFlow()
 
     // UI state (interaction state) - must be initialized before _formState
     private val _uiState = MutableStateFlow(CreateInvoiceUiState())
@@ -257,7 +257,7 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     /**
      * Get filtered clients based on search query.
      */
-    fun getFilteredClients(): List<ClientDto> {
+    fun getFilteredClients(): List<ContactDto> {
         val clients = (_clientsState.value as? DokusState.Success)?.data ?: return emptyList()
         val query = _uiState.value.clientSearchQuery.trim().lowercase()
         if (query.isBlank()) return clients
@@ -285,7 +285,7 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
         _uiState.update { it.copy(isClientPanelOpen = false, clientSearchQuery = "") }
     }
 
-    fun selectClientAndClose(client: ClientDto) {
+    fun selectClientAndClose(client: ContactDto) {
         _formState.update { it.copy(selectedClient = client, errors = it.errors - "client") }
         closeClientPanel()
     }
@@ -392,7 +392,7 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     // FORM STATE UPDATES
     // ========================================================================
 
-    fun selectClient(client: ClientDto?) {
+    fun selectClient(client: ContactDto?) {
         _formState.update { it.copy(selectedClient = client, errors = it.errors - "client") }
     }
 
