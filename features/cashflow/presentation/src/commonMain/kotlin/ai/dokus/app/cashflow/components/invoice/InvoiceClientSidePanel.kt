@@ -62,11 +62,11 @@ import androidx.compose.ui.unit.dp
 fun InvoiceClientSidePanel(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    clientsState: DokusState<List<ClientDto>>,
-    selectedClient: ClientDto?,
+    clientsState: DokusState<List<ContactDto>>,
+    selectedClient: ContactDto?,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onSelectClient: (ClientDto) -> Unit,
+    onSelectClient: (ContactDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -271,7 +271,7 @@ private fun ClientSidePanelHeader(
 
 @Composable
 private fun ClientListItem(
-    client: ClientDto,
+    client: ContactDto,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
