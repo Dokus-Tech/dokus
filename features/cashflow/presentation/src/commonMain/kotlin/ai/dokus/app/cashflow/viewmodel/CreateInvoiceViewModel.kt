@@ -199,13 +199,13 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     private val _clientsState = MutableStateFlow<DokusState<List<ClientDto>>>(DokusState.idle())
     val clientsState: StateFlow<DokusState<List<ClientDto>>> = _clientsState.asStateFlow()
 
+    // UI state (interaction state) - must be initialized before _formState
+    private val _uiState = MutableStateFlow(CreateInvoiceUiState())
+    val uiState: StateFlow<CreateInvoiceUiState> = _uiState.asStateFlow()
+
     // Form state (invoice data)
     private val _formState = MutableStateFlow(createInitialFormState())
     val formState: StateFlow<CreateInvoiceFormState> = _formState.asStateFlow()
-
-    // UI state (interaction state)
-    private val _uiState = MutableStateFlow(CreateInvoiceUiState())
-    val uiState: StateFlow<CreateInvoiceUiState> = _uiState.asStateFlow()
 
     // Created invoice ID (for navigation after save)
     private val _createdInvoiceId = MutableStateFlow<InvoiceId?>(null)
@@ -215,14 +215,13 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     private fun createInitialFormState(): CreateInvoiceFormState {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val firstItem = InvoiceLineItem()
+        // Set first item as expanded by default
+        _uiState.update { ui -> ui.copy(expandedItemId = firstItem.id) }
         return CreateInvoiceFormState(
             issueDate = today,
             dueDate = today.plus(30, DateTimeUnit.DAY),
             items = listOf(firstItem)
-        ).also {
-            // First item is expanded by default
-            _uiState.update { ui -> ui.copy(expandedItemId = firstItem.id) }
-        }
+        )
     }
 
     init {

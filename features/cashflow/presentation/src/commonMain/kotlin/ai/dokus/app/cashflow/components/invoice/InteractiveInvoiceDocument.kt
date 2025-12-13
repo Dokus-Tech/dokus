@@ -6,13 +6,16 @@ import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -22,10 +25,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
+
+// A4 aspect ratio: 210mm × 297mm = 1:√2 ≈ 0.707
+private const val A4_ASPECT_RATIO = 0.707f
 
 /**
  * Interactive invoice document that looks like a real invoice.
@@ -50,17 +57,32 @@ fun InteractiveInvoiceDocument(
     onUpdateItemVatRate: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    // A4-like proportions with slightly wider width for better readability
+    // Original A4 at 72 DPI: 595 x 842, we use a wider 680dp
+    val maxPaperWidth = 680.dp
+
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.TopCenter
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        // Calculate paper width - use available width but cap at A4 max
+        val paperWidth = minOf(maxWidth, maxPaperWidth)
+        // Calculate minimum height based on A4 ratio (content can exceed this)
+        val minPaperHeight = paperWidth / A4_ASPECT_RATIO
+
+        Card(
+            modifier = Modifier
+                .widthIn(max = paperWidth)
+                .heightIn(min = minPaperHeight),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            shape = MaterialTheme.shapes.medium,
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
             // Invoice header
             InvoiceDocumentHeader()
 
@@ -113,6 +135,7 @@ fun InteractiveInvoiceDocument(
                     total = formState.total
                 )
             }
+        }
         }
     }
 }
