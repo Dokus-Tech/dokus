@@ -2,10 +2,15 @@ package ai.dokus.foundation.domain.model
 
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
+import ai.dokus.foundation.domain.enums.PaymentMeansCode
+import ai.dokus.foundation.domain.enums.PeppolCurrency
 import ai.dokus.foundation.domain.enums.PeppolDocumentType
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.enums.PeppolVatCategory
+import ai.dokus.foundation.domain.enums.RecommandDirection
+import ai.dokus.foundation.domain.enums.RecommandDocumentStatus
+import ai.dokus.foundation.domain.enums.UnitCode
 import ai.dokus.foundation.domain.ids.BillId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.PeppolId
@@ -100,11 +105,27 @@ data class PeppolTransmissionDto(
  */
 @Serializable
 data class RecommandSendRequest(
-    val recipient: String,  // Peppol ID format: "scheme:identifier"
-    val documentType: String,  // "invoice" or "xml"
+    /** Peppol ID format: "scheme:identifier" (e.g., "0208:BE0123456789") */
+    val recipient: String,
+    /** Document type to send */
+    val documentType: RecommandSendDocumentType,
+    /** Invoice document in simplified JSON format */
     val document: RecommandInvoiceDocument? = null,
-    val doctypeId: String? = null  // Required when documentType is "xml"
+    /** Required when documentType is XML - the UBL document type ID */
+    val doctypeId: String? = null
 )
+
+/**
+ * Document types for sending via Recommand API.
+ */
+@Serializable
+enum class RecommandSendDocumentType {
+    @SerialName("invoice") Invoice,
+    @SerialName("creditNote") CreditNote,
+    @SerialName("selfBillingInvoice") SelfBillingInvoice,
+    @SerialName("selfBillingCreditNote") SelfBillingCreditNote,
+    @SerialName("xml") Xml
+}
 
 /**
  * Recommand API: Invoice document in simplified JSON format.
@@ -113,14 +134,19 @@ data class RecommandSendRequest(
 @Serializable
 data class RecommandInvoiceDocument(
     val invoiceNumber: String,
-    val issueDate: String,  // ISO format: YYYY-MM-DD
+    /** ISO format: YYYY-MM-DD */
+    val issueDate: String,
+    /** ISO format: YYYY-MM-DD */
     val dueDate: String,
     val buyer: RecommandParty,
-    val seller: RecommandParty? = null,  // Optional - uses company profile if not provided
+    /** Optional - uses company profile if not provided */
+    val seller: RecommandParty? = null,
     val lineItems: List<RecommandLineItem>,
     val note: String? = null,
+    /** Purchase order reference or buyer reference */
     val buyerReference: String? = null,
     val paymentMeans: RecommandPaymentMeans? = null,
+    /** ISO 4217 currency code */
     val documentCurrencyCode: String = "EUR"
 )
 
@@ -131,6 +157,7 @@ data class RecommandParty(
     val streetName: String? = null,
     val cityName: String? = null,
     val postalZone: String? = null,
+    /** ISO 3166-1 alpha-2 country code */
     val countryCode: String? = null,
     val contactEmail: String? = null,
     val contactName: String? = null
@@ -138,14 +165,18 @@ data class RecommandParty(
 
 @Serializable
 data class RecommandLineItem(
+    /** Line item ID (usually sequential: "1", "2", etc.) */
     val id: String,
     val name: String,
     val description: String? = null,
     val quantity: Double,
-    val unitCode: String = "C62",  // Default: "unit", HUR=hours, DAY=days
+    /** UNCL5305 unit code (default: C62 = "unit") */
+    val unitCode: String = UnitCode.Each.code,
     val unitPrice: Double,
     val lineTotal: Double,
-    val taxCategory: String,  // S, Z, E, AE, K, G, O
+    /** UNCL5305 tax category code (S, Z, E, AE, K, G, O, etc.) */
+    val taxCategory: String,
+    /** VAT percentage (e.g., 21.0 for 21%) */
     val taxPercent: Double
 )
 
@@ -153,8 +184,10 @@ data class RecommandLineItem(
 data class RecommandPaymentMeans(
     val iban: String? = null,
     val bic: String? = null,
-    val paymentMeansCode: String = "30",  // 30 = Credit transfer
-    val paymentId: String? = null  // Structured reference
+    /** UNCL4461 payment means code (default: 30 = Credit transfer) */
+    val paymentMeansCode: String = PaymentMeansCode.CreditTransfer.code,
+    /** Structured payment reference (e.g., Belgian OGM/VCS) */
+    val paymentId: String? = null
 )
 
 /**
@@ -259,26 +292,36 @@ data class RecommandVerifyResponse(
 )
 
 /**
+ * Recommand API: Mark document as read request.
+ */
+@Serializable
+data class RecommandMarkAsReadRequest(
+    val read: Boolean
+)
+
+/**
  * Recommand API: List documents response.
  */
 @Serializable
 data class RecommandDocumentsResponse(
-    val documents: List<RecommandDocumentSummary>,
-    val total: Int,
-    val hasMore: Boolean
+    val data: List<RecommandDocumentSummary> = emptyList(),
+    val total: Int = 0,
+    @SerialName("has_more")
+    val hasMore: Boolean = false
 )
 
 @Serializable
 data class RecommandDocumentSummary(
     val id: String,
-    val documentType: String,
-    val direction: String,
+    @SerialName("documentType")
+    val documentType: PeppolDocumentType,
+    val direction: RecommandDirection,
     val counterparty: String,  // Peppol ID
-    val status: String,
-    val createdAt: String,
+    val status: RecommandDocumentStatus,
+    val createdAt: String,  // ISO timestamp
     val invoiceNumber: String? = null,
     val totalAmount: Double? = null,
-    val currency: String? = null
+    val currency: PeppolCurrency? = null
 )
 
 // ============================================================================

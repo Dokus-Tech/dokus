@@ -40,7 +40,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             repositoryModules,
             storageModule(appConfig),
             serviceModule,
-            peppolModule()
+            peppolModule(appConfig)
         )
     }
 }
@@ -163,13 +163,13 @@ val serviceModule = module {
 /**
  * Peppol module - e-invoicing services
  */
-fun peppolModule() = module {
+fun peppolModule(appConfig: AppBaseConfig) = module {
     val logger = LoggerFactory.getLogger("PeppolModule")
 
-    // Peppol module configuration
+    // Peppol module configuration from HOCON
     single {
-        PeppolModuleConfig.fromEnvironment().also {
-            logger.info("Peppol module configured: defaultProvider=${it.defaultProvider}, pollingEnabled=${it.pollingEnabled}")
+        PeppolModuleConfig.fromConfig(appConfig.config).also {
+            logger.info("Peppol module configured: defaultProvider=${it.defaultProvider}, pollingEnabled=${it.inbox.pollingEnabled}")
         }
     }
 

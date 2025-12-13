@@ -57,7 +57,6 @@ include(":features:payment:backend")
 include(":features:reporting:backend")
 include(":features:audit:backend")
 include(":features:banking:backend")
-include(":features:peppol:backend")
 include(":features:processor:backend")
 
 include(":foundation:domain")

@@ -77,6 +77,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
+import compose.icons.feathericons.UploadCloud
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.koin.compose.viewmodel.koinViewModel
@@ -212,19 +213,38 @@ internal fun CashflowScreen(
                         }
                     },
                     actions = {
-                        PButton(
-                            text = "Add new document",
-                            variant = PButtonVariant.Outline,
-                            icon = Icons.Default.Add,
-                            iconPosition = PIconPosition.Trailing,
-                            onClick = {
-                                if (isLargeScreen) {
-                                    viewModel.openSidebar()
-                                } else {
-                                    navController.navigateTo(CashFlowDestination.AddDocument)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Upload icon button (secondary action - drag & drop is primary)
+                            IconButton(
+                                onClick = {
+                                    if (isLargeScreen) {
+                                        viewModel.openSidebar()
+                                    } else {
+                                        navController.navigateTo(CashFlowDestination.AddDocument)
+                                    }
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = FeatherIcons.UploadCloud,
+                                    contentDescription = "Upload document",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
                             }
-                        )
+
+                            // Create Invoice button (primary action)
+                            PButton(
+                                text = "Create Invoice",
+                                variant = PButtonVariant.Outline,
+                                icon = Icons.Default.Add,
+                                iconPosition = PIconPosition.Trailing,
+                                onClick = {
+                                    navController.navigateTo(CashFlowDestination.CreateInvoice)
+                                }
+                            )
+                        }
                     }
                 )
             },

@@ -1,5 +1,6 @@
 package ai.dokus.peppol.providers.recommand
 
+import ai.dokus.foundation.domain.enums.PeppolDocumentType.Companion.toApiValue
 import ai.dokus.foundation.domain.model.RecommandDocumentsResponse
 import ai.dokus.foundation.domain.model.RecommandInboxDocument
 import ai.dokus.foundation.domain.model.RecommandInvoiceDocument
@@ -7,12 +8,14 @@ import ai.dokus.foundation.domain.model.RecommandLineItem
 import ai.dokus.foundation.domain.model.RecommandParty
 import ai.dokus.foundation.domain.model.RecommandPaymentMeans
 import ai.dokus.foundation.domain.model.RecommandReceivedDocument
+import ai.dokus.foundation.domain.model.RecommandSendDocumentType
 import ai.dokus.foundation.domain.model.RecommandSendRequest
 import ai.dokus.foundation.domain.model.RecommandSendResponse
 import ai.dokus.foundation.domain.model.RecommandVerifyResponse
 import ai.dokus.peppol.model.PeppolDirection
 import ai.dokus.peppol.model.PeppolDocumentList
 import ai.dokus.peppol.model.PeppolDocumentSummary
+import ai.dokus.peppol.model.PeppolDocumentType
 import ai.dokus.peppol.model.PeppolError
 import ai.dokus.peppol.model.PeppolInboxItem
 import ai.dokus.peppol.model.PeppolMonetaryTotals
@@ -42,7 +45,7 @@ object RecommandMapper {
 
         return RecommandSendRequest(
             recipient = request.recipientPeppolId,
-            documentType = "invoice",
+            documentType = toRecommandDocumentType(request.documentType),
             document = RecommandInvoiceDocument(
                 invoiceNumber = invoice.invoiceNumber,
                 issueDate = invoice.issueDate.toString(),
@@ -219,24 +222,40 @@ object RecommandMapper {
 
     fun fromRecommandDocumentsResponse(response: RecommandDocumentsResponse): PeppolDocumentList {
         return PeppolDocumentList(
-            documents = response.documents.map { doc ->
+            documents = response.data.map { doc ->
                 PeppolDocumentSummary(
                     id = doc.id,
-                    documentType = doc.documentType,
-                    direction = when (doc.direction.lowercase()) {
-                        "sent", "outbound" -> PeppolDirection.OUTBOUND
-                        else -> PeppolDirection.INBOUND
+                    documentType = doc.documentType.toApiValue(),
+                    direction = when (doc.direction) {
+                        ai.dokus.foundation.domain.enums.RecommandDirection.Outgoing -> PeppolDirection.OUTBOUND
+                        ai.dokus.foundation.domain.enums.RecommandDirection.Incoming -> PeppolDirection.INBOUND
                     },
                     counterpartyPeppolId = doc.counterparty,
-                    status = doc.status,
+                    status = doc.status.toPeppolStatus().name,
                     createdAt = doc.createdAt,
                     invoiceNumber = doc.invoiceNumber,
                     totalAmount = doc.totalAmount,
-                    currency = doc.currency
+                    currency = doc.currency?.code
                 )
             },
             total = response.total,
             hasMore = response.hasMore
         )
+    }
+
+    // ========================================================================
+    // DOCUMENT TYPE MAPPING
+    // ========================================================================
+
+    /**
+     * Map provider-agnostic document type to Recommand-specific enum.
+     */
+    private fun toRecommandDocumentType(type: PeppolDocumentType): RecommandSendDocumentType {
+        return when (type) {
+            PeppolDocumentType.INVOICE -> RecommandSendDocumentType.Invoice
+            PeppolDocumentType.CREDIT_NOTE -> RecommandSendDocumentType.CreditNote
+            PeppolDocumentType.DEBIT_NOTE -> RecommandSendDocumentType.Invoice // Debit notes sent as invoice
+            PeppolDocumentType.ORDER -> RecommandSendDocumentType.Xml // Orders require UBL XML
+        }
     }
 }

@@ -6,5 +6,9 @@ import kotlinx.serialization.Serializable
 sealed interface CashFlowDestination : NavigationDestination {
     @Serializable
     @SerialName("cashflow/add_document")
-    data object AddDocument : HomeDestination
+    data object AddDocument : CashFlowDestination
+
+    @Serializable
+    @SerialName("cashflow/create_invoice")
+    data object CreateInvoice : CashFlowDestination
 }

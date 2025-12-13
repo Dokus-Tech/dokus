@@ -20,7 +20,7 @@ class PeppolProviderFactory(
     init {
         // Register default providers
         registerProvider("recommand") {
-            RecommandProvider(httpClient, config.recommandBaseUrl)
+            RecommandProvider(httpClient, config.recommand.baseUrl)
         }
     }
 
