@@ -2,6 +2,9 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.foundation.design.components.PDashedDivider
 import ai.dokus.foundation.design.extensions.localized
+import ai.dokus.foundation.design.tooling.PreviewParameters
+import ai.dokus.foundation.design.tooling.PreviewParametersProvider
+import ai.dokus.foundation.design.tooling.TestWrapper
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
 /**
  * Invoice header with INVOICE title and status badge.
