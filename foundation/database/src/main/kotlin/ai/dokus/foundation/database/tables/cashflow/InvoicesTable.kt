@@ -18,10 +18,16 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object InvoicesTable : UUIDTable("invoices") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = reference("organization_id", ai.dokus.foundation.database.tables.auth.TenantTable)
+    val tenantId = uuid("organization_id").references(
+        ai.dokus.foundation.database.tables.auth.TenantTable.id,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     // Client reference
-    val clientId = reference("client_id", ClientsTable, onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE)
+    val clientId = uuid("client_id").references(
+        ClientsTable.id,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     // Invoice identification
     val invoiceNumber = varchar("invoice_number", 50)

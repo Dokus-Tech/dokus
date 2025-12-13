@@ -32,9 +32,8 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
         .uniqueIndex()
 
     // Multi-tenancy (denormalized for query performance)
-    val tenantId = reference(
-        name = "tenant_id",
-        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+    val tenantId = uuid("tenant_id").references(
+        ai.dokus.foundation.database.tables.auth.TenantTable.id,
         onDelete = ReferenceOption.CASCADE
     )
 

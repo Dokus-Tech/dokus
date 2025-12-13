@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.jdbc.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -97,12 +98,29 @@ class DatabaseFactory(
         }
     }
 
-    fun close() {
+fun close() {
         logger.info("Closing database connections...")
         dataSource?.close()
         logger.info("Database connections closed")
     }
 }
+
+suspend fun <T> dbQuery(block: () -> T): T =
+    withContext(Dispatchers.IO) {
+        transaction {
+            TenantContextHolder.currentTenantId()?.let { tenant ->
+                TransactionManager.current().exec("set local app.tenant_id = '$tenant'")
+            }
+            block()
+        }
+    }
+
+/**
+ * Run a DB query with an explicit tenant context for RLS/guards.
+ * This will set `app.tenant_id` for the current transaction.
+ */
+suspend fun <T> dbQuery(tenantId: String, block: () -> T): T =
+    withTenantContext(tenantId) { dbQuery(block) }
 
 suspend fun <T> dbQuery(block: () -> T): T =
     withContext(Dispatchers.IO) {

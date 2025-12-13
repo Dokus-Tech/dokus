@@ -21,9 +21,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object BillsTable : UUIDTable("bills") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = reference(
-        name = "organization_id",
-        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+    val tenantId = uuid("organization_id").references(
+        ai.dokus.foundation.database.tables.auth.TenantTable.id,
         onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
     )
 
