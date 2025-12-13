@@ -1,7 +1,14 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
+import ai.dokus.app.cashflow.viewmodel.DeliveryMethodOption
 import ai.dokus.app.cashflow.viewmodel.InvoiceDeliveryMethod
+import ai.dokus.app.cashflow.viewmodel.deliveryMethod
+import ai.dokus.app.cashflow.viewmodel.iconized
+import ai.dokus.app.cashflow.viewmodel.isComingSoon
+import ai.dokus.app.cashflow.viewmodel.isEnabled
+import ai.dokus.app.cashflow.viewmodel.localized
+import ai.dokus.app.cashflow.viewmodel.localizedDescription
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import androidx.compose.foundation.background
@@ -18,11 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,7 +40,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
@@ -84,40 +86,13 @@ fun InvoiceSendOptionsPanel(
             }
 
             // Delivery method options
-            DeliveryMethodOption(
-                icon = Icons.Default.PictureAsPdf,
-                title = "Export as PDF",
-                description = "Download invoice as PDF file",
-                isSelected = selectedMethod == InvoiceDeliveryMethod.PDF_EXPORT,
-                isEnabled = true,
-                comingSoon = false,
-                onClick = { onMethodSelected(InvoiceDeliveryMethod.PDF_EXPORT) }
-            )
-
-            DeliveryMethodOption(
-                icon = Icons.AutoMirrored.Filled.Send,
-                title = "Send via Peppol",
-                description = if (formState.showPeppolWarning) {
-                    "Client does not have Peppol ID configured"
-                } else {
-                    "Send e-invoice directly to client"
-                },
-                isSelected = selectedMethod == InvoiceDeliveryMethod.PEPPOL,
-                isEnabled = false,
-                comingSoon = true,
-                hasWarning = formState.showPeppolWarning,
-                onClick = { onMethodSelected(InvoiceDeliveryMethod.PEPPOL) }
-            )
-
-            DeliveryMethodOption(
-                icon = Icons.Default.Email,
-                title = "Send via Email",
-                description = "Send PDF invoice by email",
-                isSelected = selectedMethod == InvoiceDeliveryMethod.EMAIL,
-                isEnabled = false,
-                comingSoon = true,
-                onClick = { onMethodSelected(InvoiceDeliveryMethod.EMAIL) }
-            )
+            DeliveryMethodOption.all(showPeppolWarning = formState.showPeppolWarning).forEach { option ->
+                DeliveryMethodOptionRow(
+                    option = option,
+                    isSelected = selectedMethod == option.deliveryMethod,
+                    onClick = { onMethodSelected(option.deliveryMethod) }
+                )
+            }
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -184,19 +159,15 @@ private fun PeppolWarningBanner(
 }
 
 @Composable
-private fun DeliveryMethodOption(
-    icon: ImageVector,
-    title: String,
-    description: String,
+private fun DeliveryMethodOptionRow(
+    option: DeliveryMethodOption,
     isSelected: Boolean,
-    isEnabled: Boolean,
-    comingSoon: Boolean,
-    hasWarning: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val enabled = option.isEnabled
 
     Row(
         modifier = modifier
@@ -204,14 +175,14 @@ private fun DeliveryMethodOption(
             .clip(MaterialTheme.shapes.small)
             .background(
                 when {
-                    isSelected && isEnabled -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    isHovered && isEnabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    isSelected && enabled -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    isHovered && enabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                     else -> MaterialTheme.colorScheme.surface
                 }
             )
             .border(
                 width = 1.dp,
-                color = if (isSelected && isEnabled) {
+                color = if (isSelected && enabled) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.outlineVariant
@@ -219,7 +190,7 @@ private fun DeliveryMethodOption(
                 shape = MaterialTheme.shapes.small
             )
             .then(
-                if (isEnabled) {
+                if (enabled) {
                     Modifier
                         .clickable(
                             interactionSource = interactionSource,
@@ -237,14 +208,14 @@ private fun DeliveryMethodOption(
     ) {
         RadioButton(
             selected = isSelected,
-            onClick = if (isEnabled) onClick else null,
-            enabled = isEnabled
+            onClick = if (enabled) onClick else null,
+            enabled = enabled
         )
 
         Icon(
-            imageVector = icon,
+            imageVector = option.iconized,
             contentDescription = null,
-            tint = if (isEnabled) {
+            tint = if (enabled) {
                 MaterialTheme.colorScheme.onSurface
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -258,21 +229,21 @@ private fun DeliveryMethodOption(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = title,
+                    text = option.localized,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = if (isEnabled) {
+                    color = if (enabled) {
                         MaterialTheme.colorScheme.onSurface
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     }
                 )
 
-                if (comingSoon) {
+                if (option.isComingSoon) {
                     ComingSoonBadge()
                 }
 
-                if (hasWarning) {
+                if (option.hasWarning) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
@@ -283,9 +254,9 @@ private fun DeliveryMethodOption(
             }
 
             Text(
-                text = description,
+                text = option.localizedDescription,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (hasWarning) {
+                color = if (option.hasWarning) {
                     MaterialTheme.colorScheme.error
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant

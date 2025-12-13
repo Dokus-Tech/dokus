@@ -156,7 +156,6 @@ val serviceModule = module {
     single { InvoiceService(get()) }
     single { ExpenseService(get()) }
     single { BillService(get()) }
-    single { ClientService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
 }
 
