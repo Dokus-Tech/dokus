@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -11,6 +12,21 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
 }
+
+// Shared versioning derived from version.properties (major/minor) + build number
+val versionProperties = Properties().apply {
+    val propsFile = rootProject.file("version.properties")
+    if (propsFile.exists()) {
+        load(propsFile.inputStream())
+    }
+}
+val versionMajor = versionProperties.getProperty("major", "1")
+val versionMinor = versionProperties.getProperty("minor", "0")
+val versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
+val versionNameDefault = "$versionMajor.$versionMinor.$versionCode"
+val versionNameOverride = project.findProperty("versionName") as String?
+val versionName = versionNameOverride ?: versionNameDefault
+val appleBundleId = project.findProperty("appleBundleId") as String? ?: "vision.invoid.dokus"
 
 kotlin {
     jvmToolchain(17)
@@ -30,8 +46,8 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            binaryOption("bundleId", "vision.invoid.dokus")
-            binaryOption("bundleVersion", "1")
+            binaryOption("bundleId", appleBundleId)
+            binaryOption("bundleVersion", versionCode.toString())
 
             linkerOpts("-lsqlite3")
         }
@@ -123,8 +139,8 @@ android {
         applicationId = "vision.invoid.dokus"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = this@build.gradle.kts.versionCode
+        versionName = this@build.gradle.kts.versionName
     }
     packaging {
         resources {
