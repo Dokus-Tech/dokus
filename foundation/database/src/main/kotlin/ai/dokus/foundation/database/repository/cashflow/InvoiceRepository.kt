@@ -5,7 +5,7 @@ import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
@@ -60,7 +60,7 @@ class InvoiceRepository {
             // Insert invoice
             val invoiceId = InvoicesTable.insertAndGetId {
                 it[InvoicesTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[clientId] = UUID.fromString(request.clientId.toString())
+                it[contactId] = UUID.fromString(request.contactId.toString())
                 it[InvoicesTable.invoiceNumber] = invoiceNumber
                 val today = kotlinx.datetime.Clock.System.now()
                     .toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
@@ -118,7 +118,7 @@ class InvoiceRepository {
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
-                clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
+                contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
                 dueDate = row[InvoicesTable.dueDate],
@@ -181,7 +181,7 @@ class InvoiceRepository {
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
-                clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
+                contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
                 dueDate = row[InvoicesTable.dueDate],
@@ -247,7 +247,7 @@ class InvoiceRepository {
                     FinancialDocumentDto.InvoiceDto(
                         id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                         tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
-                        clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
+                        contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                         invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                         issueDate = row[InvoicesTable.issueDate],
                         dueDate = row[InvoicesTable.dueDate],
@@ -305,7 +305,7 @@ class InvoiceRepository {
                         FinancialDocumentDto.InvoiceDto(
                             id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                             tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
-                            clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
+                            contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                             invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                             issueDate = row[InvoicesTable.issueDate],
                             dueDate = row[InvoicesTable.dueDate],
@@ -378,7 +378,7 @@ class InvoiceRepository {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
                         (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }) {
-                it[clientId] = UUID.fromString(request.clientId.toString())
+                it[contactId] = UUID.fromString(request.contactId.toString())
                 it[subtotalAmount] =
                     request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) }
                 it[vatAmount] =
@@ -436,7 +436,7 @@ class InvoiceRepository {
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
                 tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
-                clientId = ClientId.parse(row[InvoicesTable.clientId].toString()),
+                contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
                 dueDate = row[InvoicesTable.dueDate],

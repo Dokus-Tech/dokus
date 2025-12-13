@@ -329,7 +329,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow")
+    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "contacts")
     local total=${#services[@]}
     local current=0
 
@@ -458,6 +458,7 @@ start_services() {
             "Reporting:7094:/health"
             "Audit:7095:/health"
             "Banking:7096:/health"
+            "Contacts:7097:/health"
         )
 
         for service_info in "${services[@]}"; do
@@ -572,6 +573,7 @@ show_status() {
         "Reporting Service:reporting-service-local:7094:/health"
         "Audit Service:audit-service-local:7095:/health"
         "Banking Service:banking-service-local:7096:/health"
+        "Contacts Service:contacts-service-local:7097:/health"
     )
 
     check_service() {
@@ -807,9 +809,9 @@ run_tests() {
     if [ "$service" = "all" ]; then
         print_gradient_header "🧪 Running All Test Suites"
         if [ -f "./gradlew" ]; then
-            ./gradlew :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test
+            ./gradlew :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test :features:contacts:backend:test
         else
-            gradle :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test
+            gradle :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test :features:contacts:backend:test
         fi
     elif [ "$service" = "auth" ]; then
         print_gradient_header "🧪 Running Auth Service Tests"
@@ -839,8 +841,15 @@ run_tests() {
         else
             gradle :features:cashflow:backend:test
         fi
+    elif [ "$service" = "contacts" ]; then
+        print_gradient_header "🧪 Running Contacts Service Tests"
+        if [ -f "./gradlew" ]; then
+            ./gradlew :features:contacts:backend:test
+        else
+            gradle :features:contacts:backend:test
+        fi
     else
-        print_status error "Invalid service type. Use 'all', 'auth', 'audit', 'banking', or 'cashflow'"
+        print_status error "Invalid service type. Use 'all', 'auth', 'audit', 'banking', 'cashflow', or 'contacts'"
         exit 1
     fi
     echo ""
@@ -875,6 +884,9 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15013${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""

@@ -1,6 +1,6 @@
 package ai.dokus.foundation.ktor.services
 
-import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.TenantId
@@ -79,7 +79,7 @@ interface InvoiceService {
      *
      * @param tenantId The tenant's unique identifier
      * @param status Filter by status (optional)
-     * @param clientId Filter by client (optional)
+     * @param contactId Filter by contact (optional)
      * @param fromDate Filter invoices issued on or after this date (optional)
      * @param toDate Filter invoices issued on or before this date (optional)
      * @param limit Maximum number of results (optional)
@@ -89,7 +89,7 @@ interface InvoiceService {
     suspend fun listByTenant(
         tenantId: TenantId,
         status: InvoiceStatus? = null,
-        clientId: ClientId? = null,
+        contactId: ContactId? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int? = null,
@@ -97,13 +97,13 @@ interface InvoiceService {
     ): List<FinancialDocumentDto.InvoiceDto>
 
     /**
-     * Lists invoices for a specific client
+     * Lists invoices for a specific contact
      *
-     * @param clientId The client's unique identifier
+     * @param contactId The contact's unique identifier
      * @param status Filter by status (optional)
      * @return List of invoices
      */
-    suspend fun listByClient(clientId: ClientId, status: InvoiceStatus? = null): List<FinancialDocumentDto.InvoiceDto>
+    suspend fun listByContact(contactId: ContactId, status: InvoiceStatus? = null): List<FinancialDocumentDto.InvoiceDto>
 
     /**
      * Lists overdue invoices for a tenant
@@ -131,13 +131,13 @@ interface InvoiceService {
     suspend fun recordPayment(request: RecordPaymentRequest)
 
     /**
-     * Sends an invoice via email to the client
+     * Sends an invoice via email to the contact
      *
      * @param invoiceId The invoice's unique identifier
-     * @param recipientEmail The recipient's email (optional, defaults to client email)
+     * @param recipientEmail The recipient's email (optional, defaults to contact email)
      * @param ccEmails Additional CC recipients (optional)
      * @param message Custom message to include in email (optional)
-     * @throws IllegalArgumentException if invoice not found or client has no email
+     * @throws IllegalArgumentException if invoice not found or contact has no email
      */
     suspend fun sendViaEmail(
         invoiceId: InvoiceId,
@@ -151,7 +151,7 @@ interface InvoiceService {
      * Required for Belgian B2B invoices from 2026
      *
      * @param invoiceId The invoice's unique identifier
-     * @throws IllegalArgumentException if invoice not found or client not Peppol-enabled
+     * @throws IllegalArgumentException if invoice not found or contact not Peppol-enabled
      */
     suspend fun sendViaPeppol(invoiceId: InvoiceId)
 

@@ -11,9 +11,6 @@ import io.ktor.server.routing.routing
  *
  * Routes registered:
  *
- * Clients:
- * - /api/v1/clients - Client CRUD operations
- *
  * Cash-In (Outgoing Invoices):
  * - /api/v1/invoices - Invoice CRUD operations
  *
@@ -39,7 +36,8 @@ import io.ktor.server.routing.routing
  * Peppol:
  * - /api/v1/peppol - Peppol e-invoicing operations
  *
- * @see clientRoutes
+ * Note: Contact management is handled by the separate contacts microservice.
+ *
  * @see invoiceRoutes
  * @see expenseRoutes
  * @see billRoutes
@@ -52,9 +50,6 @@ import io.ktor.server.routing.routing
  */
 fun Application.configureCashflowRoutes() {
     routing {
-        // Client routes
-        clientRoutes()
-
         // Invoice routes (Cash-In)
         invoiceRoutes()
 

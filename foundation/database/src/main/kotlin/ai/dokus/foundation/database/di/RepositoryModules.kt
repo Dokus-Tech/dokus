@@ -10,8 +10,9 @@ import ai.dokus.foundation.database.repository.banking.BankingRepository
 import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
-import ai.dokus.foundation.database.repository.cashflow.ClientRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
+import ai.dokus.foundation.database.repository.contacts.ContactNoteRepository
+import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
@@ -46,7 +47,6 @@ val repositoryModuleCashflow = module {
     single { InvoiceRepository() }
     single { ExpenseRepository() }
     single { BillRepository() }
-    single { ClientRepository() }
     single { CashflowRepository(get(), get()) }
 }
 
@@ -103,6 +103,15 @@ val repositoryModuleReporting = module {
 }
 
 /**
+ * Contacts repositories module.
+ * Provides repositories for unified contact management (customers AND vendors).
+ */
+val repositoryModuleContacts = module {
+    single { ContactRepository() }
+    single { ContactNoteRepository() }
+}
+
+/**
  * Combined repository module including all domain repositories.
  *
  * Usage:
@@ -127,6 +136,7 @@ val repositoryModules = module {
         repositoryModuleAudit,
         repositoryModuleBanking,
         repositoryModulePayment,
-        repositoryModuleReporting
+        repositoryModuleReporting,
+        repositoryModuleContacts
     )
 }

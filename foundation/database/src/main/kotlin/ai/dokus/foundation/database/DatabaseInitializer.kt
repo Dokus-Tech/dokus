@@ -12,8 +12,9 @@ import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
 import ai.dokus.foundation.database.tables.cashflow.AttachmentsTable
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
-import ai.dokus.foundation.database.tables.cashflow.ClientsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.contacts.ContactNotesTable
+import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
@@ -30,21 +31,26 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Centralized database initializer for all Dokus tables.
  *
- * This initializer creates all tables in the correct order, respecting
- * foreign key dependencies. It uses an atomic flag to ensure tables
- * are only created once, even with concurrent startup of multiple services.
+ * @deprecated Use service-specific table initializers instead:
+ * - AuthTables.initialize() - auth service
+ * - CashflowTables.initialize() - cashflow service
+ * - ContactsTables.initialize() - contacts service
+ * - PaymentTables.initialize() - payment service
+ * - ReportingTables.initialize() - reporting service
+ * - AuditTables.initialize() - audit service
+ * - BankingTables.initialize() - banking service
  *
- * Table creation is idempotent - SchemaUtils.create() only creates tables
- * if they don't already exist.
+ * This centralizer should only be used for:
+ * - Testing scenarios that need all tables at once
+ * - Development/migration scripts
  *
- * Usage:
- * ```kotlin
- * // In your service's DI configuration, after connecting to the database:
- * runBlocking {
- *     DatabaseInitializer.initializeAllTables()
- * }
- * ```
+ * In production, each microservice creates only its own tables to avoid
+ * race conditions during concurrent startup.
  */
+@Deprecated(
+    message = "Use service-specific table initializers (e.g., AuthTables.initialize()) instead",
+    level = DeprecationLevel.WARNING
+)
 object DatabaseInitializer {
     private val logger = LoggerFactory.getLogger(DatabaseInitializer::class.java)
     private val initialized = AtomicBoolean(false)
@@ -78,8 +84,12 @@ object DatabaseInitializer {
                     // ===== Cashflow Tables (create in dependency order) =====
                     DocumentsTable,       // base document table
                     DocumentProcessingTable, // depends on DocumentsTable
-                    ClientsTable,         // depends on TenantTable (clients before invoices)
-                    InvoicesTable,        // depends on TenantTable, DocumentsTable, ClientsTable
+
+                    // ===== Contacts Tables =====
+                    ContactsTable,        // depends on TenantTable (unified contacts - customers AND vendors)
+                    ContactNotesTable,    // depends on TenantTable, ContactsTable, UsersTable
+
+                    InvoicesTable,        // depends on TenantTable, DocumentsTable, ContactsTable
                     InvoiceItemsTable,    // depends on InvoicesTable
                     ExpensesTable,        // depends on TenantTable, DocumentsTable
                     AttachmentsTable,     // depends on TenantTable

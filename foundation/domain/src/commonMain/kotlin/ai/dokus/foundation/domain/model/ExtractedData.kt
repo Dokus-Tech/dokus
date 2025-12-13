@@ -196,7 +196,7 @@ data class DocumentCorrections(
     val notes: String? = null,
 
     // Invoice-specific
-    val clientId: String? = null,  // UUID string of existing client
+    val contactId: String? = null,  // UUID string of existing contact (customer)
     val invoiceNumber: String? = null,
     val items: List<ExtractedLineItem>? = null,
 
