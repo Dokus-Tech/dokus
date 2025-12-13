@@ -3,7 +3,6 @@ package ai.dokus.app.cashflow.screens
 import ai.dokus.app.cashflow.components.invoice.InvoiceFormCard
 import ai.dokus.app.cashflow.components.invoice.InvoiceSummaryCard
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceViewModel
-import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
@@ -56,9 +55,6 @@ internal fun CreateInvoiceScreen(
     }
 
     Scaffold(
-        topBar = {
-            PTopAppBar(title = "Create Invoice")
-        },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         if (isLargeScreen) {
