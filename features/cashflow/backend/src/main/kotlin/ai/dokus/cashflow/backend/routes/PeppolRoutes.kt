@@ -1,9 +1,9 @@
 package ai.dokus.cashflow.backend.routes
 
 import ai.dokus.cashflow.backend.service.BillService
-import ai.dokus.cashflow.backend.service.ClientService
 import ai.dokus.cashflow.backend.service.InvoiceService
 import ai.dokus.foundation.database.repository.auth.TenantRepository
+import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.exceptions.DokusException
@@ -42,7 +42,7 @@ fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val invoiceService by inject<InvoiceService>()
     val billService by inject<BillService>()
-    val clientService by inject<ClientService>()
+    val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
 
     route("/api/v1/peppol") {
@@ -151,8 +151,7 @@ fun Route.peppolRoutes() {
                  * POST /api/v1/peppol/send/invoice/{invoiceId}
                  * Send an invoice via Peppol.
                  *
-                 * Note: This endpoint requires client data which is not yet fully integrated.
-                 * The invoice must have a clientId that matches a client with a valid peppolId.
+                 * The invoice must have a contactId that matches a contact with a valid peppolId.
                  */
                 post("/invoice/{invoiceId}") {
                     val tenantId = dokusPrincipal.requireTenantId()
@@ -170,21 +169,21 @@ fun Route.peppolRoutes() {
                     val tenantSettings = tenantRepository.getSettings(tenantId)
                         ?: throw DokusException.InternalError("Tenant settings not found")
 
-                    // Get client
-                    val client = clientService.getClient(invoice.clientId, tenantId)
-                        .getOrElse { throw DokusException.InternalError("Failed to fetch client: ${it.message}") }
-                        ?: throw DokusException.NotFound("Client not found for invoice")
+                    // Get contact (customer)
+                    val contact = contactRepository.getContact(invoice.contactId, tenantId)
+                        .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
+                        ?: throw DokusException.NotFound("Contact not found for invoice")
 
-                    // Verify client has Peppol enabled
-                    if (!client.peppolEnabled || client.peppolId.isNullOrBlank()) {
+                    // Verify contact has Peppol enabled
+                    if (!contact.peppolEnabled || contact.peppolId.isNullOrBlank()) {
                         throw DokusException.BadRequest(
-                            "Client '${client.name}' is not configured for Peppol. " +
-                            "Please enable Peppol and set a valid Peppol ID for this client."
+                            "Contact '${contact.name.value}' is not configured for Peppol. " +
+                            "Please enable Peppol and set a valid Peppol ID for this contact."
                         )
                     }
 
                     // Send invoice via Peppol
-                    val result = peppolService.sendInvoice(invoice, client, tenantSettings, tenantId)
+                    val result = peppolService.sendInvoice(invoice, contact, tenantSettings, tenantId)
                         .getOrElse { throw DokusException.InternalError("Failed to send invoice via Peppol: ${it.message}") }
 
                     call.respond(HttpStatusCode.OK, SendInvoiceResponse(
@@ -216,13 +215,13 @@ fun Route.peppolRoutes() {
                     val tenantSettings = tenantRepository.getSettings(tenantId)
                         ?: throw DokusException.InternalError("Tenant settings not found")
 
-                    // Get client
-                    val client = clientService.getClient(invoice.clientId, tenantId)
-                        .getOrElse { throw DokusException.InternalError("Failed to fetch client: ${it.message}") }
-                        ?: throw DokusException.NotFound("Client not found for invoice")
+                    // Get contact (customer)
+                    val contact = contactRepository.getContact(invoice.contactId, tenantId)
+                        .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
+                        ?: throw DokusException.NotFound("Contact not found for invoice")
 
                     // Validate invoice for Peppol
-                    val validationResult = peppolService.validateInvoice(invoice, client, tenantSettings, tenantId)
+                    val validationResult = peppolService.validateInvoice(invoice, contact, tenantSettings, tenantId)
                         .getOrElse { throw DokusException.InternalError("Failed to validate invoice: ${it.message}") }
 
                     call.respond(HttpStatusCode.OK, validationResult)
