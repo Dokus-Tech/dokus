@@ -167,6 +167,8 @@ compose.desktop {
     application {
         mainClass = "ai.dokus.app.MainKt"
         val macAppStore = (project.findProperty("compose.desktop.mac.appStore") as String?)?.toBoolean() ?: false
+        val macSigningEnabled = (project.findProperty("mac.signing.enabled") as String?)?.toBoolean() ?: false
+        val macSigningIdentity = project.findProperty("mac.signing.identity") as String?
 
         buildTypes {
             release {
@@ -193,6 +195,12 @@ compose.desktop {
                 bundleID = appleBundleId
                 copyright = "Invoid Vision 2025"
                 description = "Dokus financial document management"
+                signing {
+                    sign.set(macSigningEnabled)
+                    if (macSigningIdentity != null) {
+                        identity.set(macSigningIdentity)
+                    }
+                }
             }
 
             windows {

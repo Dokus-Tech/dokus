@@ -13,6 +13,17 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      MAC_DEV_ID_CERT_P12:
+        required: false
+      MAC_DEV_ID_CERT_PASSWORD:
+        required: false
+      ASC_API_KEY_ID:
+        required: false
+      ASC_API_KEY_ISSUER_ID:
+        required: false
+      ASC_API_KEY_PRIVATE_KEY:
+        required: false
 
 jobs:
   build:
@@ -29,22 +40,74 @@ jobs:
       - name: 🔧 Setup environment
         uses: ./.github/actions/job-set-up
 
-      - name: 📊 Generate version information
+      - name: 🧮 Generate version information
         id: version
         run: |
-          # Use git commit count as version code
+          if [ ! -f version.properties ]; then
+            echo "version.properties not found" >&2
+            exit 1
+          fi
+
+          MAJOR=$(grep '^major=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          MINOR=$(grep '^minor=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
           VERSION_CODE=$(git rev-list --count HEAD)
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/\//-/g')
-          VERSION_NAME="${BRANCH_NAME}-${SHORT_SHA}"
+          VERSION_NAME="${MAJOR}.${MINOR}.${VERSION_CODE}"
 
           echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "minor=$MINOR" >> $GITHUB_OUTPUT
 
           echo "📦 Version Code: $VERSION_CODE"
           echo "📦 Version Name: $VERSION_NAME"
-          echo "📦 Branch: $BRANCH_NAME"
+
+      - name: ✅ Validate signing/notary secrets (release only)
+        if: inputs.build-type == 'release'
+        env:
+          MAC_DEV_ID_CERT_P12: ${{ secrets.MAC_DEV_ID_CERT_P12 }}
+          MAC_DEV_ID_CERT_PASSWORD: ${{ secrets.MAC_DEV_ID_CERT_PASSWORD }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_KEY_ISSUER_ID: ${{ secrets.ASC_API_KEY_ISSUER_ID }}
+          ASC_API_KEY_PRIVATE_KEY: ${{ secrets.ASC_API_KEY_PRIVATE_KEY }}
+        run: |
+          missing=0
+          for var in MAC_DEV_ID_CERT_P12 MAC_DEV_ID_CERT_PASSWORD ASC_API_KEY_ID ASC_API_KEY_ISSUER_ID ASC_API_KEY_PRIVATE_KEY; do
+            if [ -z "${!var}" ]; then
+              echo "Missing secret: $var"
+              missing=1
+            fi
+          done
+          if [ $missing -ne 0 ]; then
+            echo "Required macOS signing/notary secrets are missing." >&2
+            exit 1
+          fi
+
+      - name: 🔐 Import Developer ID Application certificate
+        if: inputs.build-type == 'release'
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.MAC_DEV_ID_CERT_P12 }}
+          p12-password: ${{ secrets.MAC_DEV_ID_CERT_PASSWORD }}
+
+      - name: 🔑 Configure App Store Connect API key (for notarization)
+        if: inputs.build-type == 'release'
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.ASC_API_KEY_PRIVATE_KEY }}" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
+
+      - name: 🔍 Resolve signing identity
+        if: inputs.build-type == 'release'
+        id: signing
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"//;s/"//')
+          if [ -z "$IDENTITY" ]; then
+            echo "No Developer ID Application identity found" >&2
+            security find-identity -v -p codesigning
+            exit 1
+          fi
+          echo "identity=$IDENTITY" >> $GITHUB_OUTPUT
+          echo "Using identity: $IDENTITY"
 
       - name: 🏗️ Build Debug DMG
         if: inputs.build-type == 'debug'
@@ -66,7 +129,10 @@ jobs:
             --stacktrace \
             --build-cache \
             -PversionCode=${{ steps.version.outputs.version-code }} \
-            -PversionName=${{ steps.version.outputs.version-name }}
+            -PversionName=${{ steps.version.outputs.version-name }} \
+            -Pmac.signing.enabled=true \
+            -Pmac.signing.identity="${{ steps.signing.outputs.identity }}" \
+            -PappleBundleId=vision.invoid.dokus
 
       - name: 🔍 Find build artifacts
         id: artifacts
@@ -112,6 +178,21 @@ jobs:
 
           echo "📦 Renamed DMG: $DMG_NAME"
 
+      - name: 📨 Notarize DMG (release only)
+        if: inputs.build-type == 'release'
+        run: |
+          DMG_PATH="${{ steps.rename.outputs.dmg-path }}"
+          xcrun notarytool submit "$DMG_PATH" \
+            --key ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8 \
+            --key-id "${{ secrets.ASC_API_KEY_ID }}" \
+            --issuer "${{ secrets.ASC_API_KEY_ISSUER_ID }}" \
+            --wait
+
+      - name: 📌 Staple notarization (release only)
+        if: inputs.build-type == 'release'
+        run: |
+          xcrun stapler staple "${{ steps.rename.outputs.dmg-path }}"
+
       - name: 📊 DMG Info
         run: |
           DMG_PATH="${{ steps.rename.outputs.dmg-path }}"
@@ -135,6 +216,24 @@ jobs:
           path: ${{ steps.rename.outputs.dmg-path }}
           retention-days: 30
           compression-level: 0  # DMGs are already compressed
+
+      - name: 🚀 Create/Update GitHub Release (main only)
+        if: inputs.build-type == 'release' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_NAME: ${{ steps.version.outputs.version-name }}
+          DMG_PATH: ${{ steps.rename.outputs.dmg-path }}
+        run: |
+          TAG="v${VERSION_NAME}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists, uploading DMG"
+            gh release upload "$TAG" "$DMG_PATH" --clobber
+          else
+            echo "Creating release $TAG"
+            gh release create "$TAG" "$DMG_PATH" \
+              --title "Dokus macOS ${VERSION_NAME}" \
+              --notes "Signed and notarized macOS DMG (Developer ID)."
+          fi
 
       - name: ✅ Build completed
         run: |

@@ -165,6 +165,7 @@ jobs:
     with:
       build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
       create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    secrets: inherit
 
   release-apple:
     name: 🚀 Release Apple (iOS & macOS)
