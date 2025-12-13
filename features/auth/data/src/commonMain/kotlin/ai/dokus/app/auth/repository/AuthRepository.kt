@@ -23,6 +23,8 @@ import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
+import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 
@@ -163,6 +165,24 @@ class AuthRepository(
         return accountDataSource.getCurrentUser()
             .onFailure { error ->
                 logger.e(error) { "Failed to get current user" }
+            }
+    }
+
+    /**
+     * Update user profile (first name, last name).
+     */
+    suspend fun updateProfile(firstName: Name?, lastName: Name?): Result<User> {
+        logger.d { "Updating user profile" }
+        val request = UpdateProfileRequest(
+            firstName = firstName,
+            lastName = lastName
+        )
+        return accountDataSource.updateProfile(request)
+            .onSuccess {
+                logger.i { "Profile updated successfully" }
+            }
+            .onFailure { error ->
+                logger.e(error) { "Profile update failed" }
             }
     }
 

@@ -5,6 +5,7 @@ import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
 import ai.dokus.foundation.domain.routes.Account
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -48,9 +49,18 @@ internal class AccountRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun updateProfile(request: UpdateProfileRequest): Result<User> {
+        return runCatching {
+            httpClient.patch(Account.Profile()) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
     override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
         return runCatching {
-            httpClient.patch(Account.Me()) {
+            httpClient.post(Account.Deactivate()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }

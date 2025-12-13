@@ -6,6 +6,7 @@ import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.SelectTenantRequest
+import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
 import ai.dokus.foundation.domain.routes.Account
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
@@ -45,10 +46,21 @@ fun Route.accountRoutes() {
         }
 
         /**
-         * PATCH /api/v1/account/me
-         * Update current user (including deactivation via status field)
+         * PATCH /api/v1/account/profile
+         * Update user profile (first name, last name)
          */
-        patch<Account.Me> {
+        patch<Account.Profile> {
+            val principal = dokusPrincipal
+            val request = call.receive<UpdateProfileRequest>()
+            val user = authService.updateProfile(principal.userId, request).getOrThrow()
+            call.respond(HttpStatusCode.OK, user)
+        }
+
+        /**
+         * POST /api/v1/account/deactivate
+         * Deactivate user account
+         */
+        post<Account.Deactivate> {
             val principal = dokusPrincipal
             val request = call.receive<DeactivateUserRequest>()
             authService.deactivateAccount(principal.userId, request.reason).getOrThrow()

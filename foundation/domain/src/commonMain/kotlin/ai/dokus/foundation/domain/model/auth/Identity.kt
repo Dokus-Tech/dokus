@@ -61,6 +61,15 @@ data class DeactivateUserRequest(
 )
 
 /**
+ * Request to update user profile (first name, last name)
+ */
+@Serializable
+data class UpdateProfileRequest(
+    val firstName: Name? = null,
+    val lastName: Name? = null
+)
+
+/**
  * Request to select/switch to a different tenant
  */
 @Serializable

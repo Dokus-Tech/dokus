@@ -39,6 +39,11 @@
     <string name="profile_logout_description">Uitloggen op dit apparaat</string>
     <string name="profile_editing_coming_soon">Profielbewerking binnenkort beschikbaar</string>
     <string name="profile_load_failed">Profiel laden mislukt</string>
+    <string name="profile_edit">Bewerken</string>
+    <string name="profile_save">Opslaan</string>
+    <string name="profile_cancel">Annuleren</string>
+    <string name="profile_save_success">Profiel bijgewerkt</string>
+    <string name="profile_save_error">Profiel bijwerken mislukt</string>
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Bedrijfsgegevens</string>
