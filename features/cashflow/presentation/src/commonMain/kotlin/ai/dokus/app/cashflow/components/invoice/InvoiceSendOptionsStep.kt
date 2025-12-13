@@ -1,7 +1,14 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
+import ai.dokus.app.cashflow.viewmodel.DeliveryMethodOption
 import ai.dokus.app.cashflow.viewmodel.InvoiceDeliveryMethod
+import ai.dokus.app.cashflow.viewmodel.deliveryMethod
+import ai.dokus.app.cashflow.viewmodel.iconized
+import ai.dokus.app.cashflow.viewmodel.isComingSoon
+import ai.dokus.app.cashflow.viewmodel.isEnabled
+import ai.dokus.app.cashflow.viewmodel.localized
+import ai.dokus.app.cashflow.viewmodel.localizedDescription
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import androidx.compose.foundation.background
@@ -21,9 +28,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,7 +41,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -100,40 +103,13 @@ fun InvoiceSendOptionsStep(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        MobileDeliveryMethodOption(
-            icon = Icons.Default.PictureAsPdf,
-            title = "Export as PDF",
-            description = "Download invoice as PDF file",
-            isSelected = selectedMethod == InvoiceDeliveryMethod.PDF_EXPORT,
-            isEnabled = true,
-            comingSoon = false,
-            onClick = { onMethodSelected(InvoiceDeliveryMethod.PDF_EXPORT) }
-        )
-
-        MobileDeliveryMethodOption(
-            icon = Icons.AutoMirrored.Filled.Send,
-            title = "Send via Peppol",
-            description = if (formState.showPeppolWarning) {
-                "Client does not have Peppol ID configured"
-            } else {
-                "Send e-invoice directly to client"
-            },
-            isSelected = selectedMethod == InvoiceDeliveryMethod.PEPPOL,
-            isEnabled = false,
-            comingSoon = true,
-            hasWarning = formState.showPeppolWarning,
-            onClick = { onMethodSelected(InvoiceDeliveryMethod.PEPPOL) }
-        )
-
-        MobileDeliveryMethodOption(
-            icon = Icons.Default.Email,
-            title = "Send via Email",
-            description = "Send PDF invoice by email",
-            isSelected = selectedMethod == InvoiceDeliveryMethod.EMAIL,
-            isEnabled = false,
-            comingSoon = true,
-            onClick = { onMethodSelected(InvoiceDeliveryMethod.EMAIL) }
-        )
+        DeliveryMethodOption.all(showPeppolWarning = formState.showPeppolWarning).forEach { option ->
+            MobileDeliveryMethodOptionRow(
+                option = option,
+                isSelected = selectedMethod == option.deliveryMethod,
+                onClick = { onMethodSelected(option.deliveryMethod) }
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -287,30 +263,27 @@ private fun MobilePeppolWarningBanner(
 }
 
 @Composable
-private fun MobileDeliveryMethodOption(
-    icon: ImageVector,
-    title: String,
-    description: String,
+private fun MobileDeliveryMethodOptionRow(
+    option: DeliveryMethodOption,
     isSelected: Boolean,
-    isEnabled: Boolean,
-    comingSoon: Boolean,
-    hasWarning: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val enabled = option.isEnabled
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .background(
                 when {
-                    isSelected && isEnabled -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    isSelected && enabled -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                     else -> MaterialTheme.colorScheme.surface
                 }
             )
             .border(
                 width = 1.dp,
-                color = if (isSelected && isEnabled) {
+                color = if (isSelected && enabled) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.outlineVariant
@@ -318,7 +291,7 @@ private fun MobileDeliveryMethodOption(
                 shape = MaterialTheme.shapes.medium
             )
             .then(
-                if (isEnabled) {
+                if (enabled) {
                     Modifier.clickable(onClick = onClick)
                 } else {
                     Modifier
@@ -330,14 +303,14 @@ private fun MobileDeliveryMethodOption(
     ) {
         RadioButton(
             selected = isSelected,
-            onClick = if (isEnabled) onClick else null,
-            enabled = isEnabled
+            onClick = if (enabled) onClick else null,
+            enabled = enabled
         )
 
         Icon(
-            imageVector = icon,
+            imageVector = option.iconized,
             contentDescription = null,
-            tint = if (isEnabled) {
+            tint = if (enabled) {
                 MaterialTheme.colorScheme.onSurface
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -351,21 +324,21 @@ private fun MobileDeliveryMethodOption(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = title,
+                    text = option.localized,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    color = if (isEnabled) {
+                    color = if (enabled) {
                         MaterialTheme.colorScheme.onSurface
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     }
                 )
 
-                if (comingSoon) {
+                if (option.isComingSoon) {
                     MobileComingSoonBadge()
                 }
 
-                if (hasWarning) {
+                if (option.hasWarning) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
@@ -376,9 +349,9 @@ private fun MobileDeliveryMethodOption(
             }
 
             Text(
-                text = description,
+                text = option.localizedDescription,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (hasWarning) {
+                color = if (option.hasWarning) {
                     MaterialTheme.colorScheme.error
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
