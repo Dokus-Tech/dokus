@@ -1,6 +1,8 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.foundation.design.components.PDashedDivider
+import ai.dokus.foundation.design.extensions.localized
+import ai.dokus.foundation.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,12 +25,17 @@ import androidx.compose.ui.unit.sp
 /**
  * Invoice header with INVOICE title and status badge.
  * Used in the interactive invoice document.
+ *
+ * @param status The invoice status to display. Pass null for preview mode.
+ * @param modifier Modifier for the header
  */
 @Composable
 internal fun InvoiceDocumentHeader(
-    statusText: String = "DRAFT",
+    status: InvoiceStatus? = InvoiceStatus.Draft,
     modifier: Modifier = Modifier
 ) {
+    val displayText = status?.localized ?: "PREVIEW"
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -48,7 +55,7 @@ internal fun InvoiceDocumentHeader(
                 letterSpacing = 2.sp
             )
             Text(
-                text = statusText,
+                text = displayText,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                 letterSpacing = 1.sp

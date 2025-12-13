@@ -47,7 +47,7 @@ fun InvoiceSummaryCard(
             modifier = Modifier.fillMaxWidth()
         ) {
             // Invoice header
-            InvoiceDocumentHeader(statusText = "PREVIEW")
+            InvoiceDocumentHeader(status = null)
 
             // Invoice content
             Column(
