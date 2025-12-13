@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
+import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -143,29 +146,68 @@ fun InvoiceSummaryCard(
                     }
                 }
 
-                // Items count
+                // Divider before items
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Line Items Table Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Items",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "DESCRIPTION",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.weight(2f)
                     )
                     Text(
-                        text = "${formState.items.count { it.isValid }} item(s)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "QTY",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.sp,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.weight(0.5f)
+                    )
+                    Text(
+                        text = "PRICE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.sp,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "AMOUNT",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.sp,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
-                // Divider
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
+                // Line Items
+                val validItems = formState.items.filter { it.description.isNotBlank() || it.unitPriceDouble > 0 }
+                if (validItems.isEmpty()) {
+                    Text(
+                        text = "No items added yet",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                } else {
+                    validItems.forEach { item ->
+                        InvoiceLineItemRow(item = item)
+                    }
+                }
+
+                // Divider after items
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 // Totals section
                 Column(
@@ -173,31 +215,17 @@ fun InvoiceSummaryCard(
                 ) {
                     InvoiceTotalRow(
                         label = "Subtotal",
-                        value = formState.subtotal,
-                        isHighlighted = false
+                        value = formState.subtotal
                     )
                     InvoiceTotalRow(
                         label = "VAT",
-                        value = formState.vatAmount,
-                        isHighlighted = false
+                        value = formState.vatAmount
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     // Dashed divider effect
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        repeat(30) {
-                            Box(
-                                modifier = Modifier
-                                    .width(6.dp)
-                                    .height(1.dp)
-                                    .background(MaterialTheme.colorScheme.outlineVariant)
-                            )
-                        }
-                    }
+                    DashedDivider()
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -232,10 +260,54 @@ fun InvoiceSummaryCard(
 }
 
 @Composable
+private fun InvoiceLineItemRow(
+    item: InvoiceLineItem,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = item.description.ifBlank { "-" },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(2f)
+        )
+        Text(
+            text = item.quantity.toString(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(0.5f)
+        )
+        Text(
+            text = if (item.unitPriceDouble > 0) "€${formatDecimal(item.unitPriceDouble)}" else "-",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = if (item.lineTotalDouble > 0) "€${formatDecimal(item.lineTotalDouble)}" else "-",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
 private fun InvoiceTotalRow(
     label: String,
     value: String,
-    isHighlighted: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -250,17 +322,37 @@ private fun InvoiceTotalRow(
         )
         Text(
             text = value,
-            style = if (isHighlighted) {
-                MaterialTheme.typography.titleMedium
-            } else {
-                MaterialTheme.typography.bodyMedium
-            },
-            fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
-            color = if (isHighlighted) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            }
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
+}
+
+@Composable
+private fun DashedDivider(
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        repeat(30) {
+            Box(
+                modifier = Modifier
+                    .width(6.dp)
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+        }
+    }
+}
+
+/**
+ * Format a double to 2 decimal places.
+ */
+private fun formatDecimal(value: Double): String {
+    val rounded = kotlin.math.round(value * 100) / 100
+    val intPart = rounded.toLong()
+    val decPart = ((kotlin.math.abs(rounded - intPart) * 100) + 0.5).toInt()
+    return "$intPart.${decPart.toString().padStart(2, '0')}"
 }
