@@ -7,6 +7,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -62,4 +63,8 @@ fun HttpClientConfig<*>.withLogging(logLevel: LogLevel = LogLevel.ALL) {
         logger = Logger.SIMPLE
         level = logLevel
     }
+}
+
+fun HttpClientConfig<*>.withResources() {
+    install(Resources)
 }

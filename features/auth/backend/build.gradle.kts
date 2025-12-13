@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.ktor.server.rate.limit)
     implementation(libs.ktor.server.openapi)
     implementation(libs.ktor.server.swagger)
+    implementation(libs.ktor.server.resources)
 
     // Database - Exposed
     implementation(libs.exposed.core)

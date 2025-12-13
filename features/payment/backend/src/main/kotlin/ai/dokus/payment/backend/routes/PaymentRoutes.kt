@@ -1,84 +1,69 @@
 package ai.dokus.payment.backend.routes
 
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.PaymentId
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
-import ai.dokus.foundation.ktor.services.PaymentService
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import org.koin.ktor.ext.inject
+import ai.dokus.foundation.domain.routes.Payments
+import ai.dokus.foundation.ktor.security.authenticateJwt
+import ai.dokus.foundation.ktor.security.dokusPrincipal
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.resources.get
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
 import org.slf4j.LoggerFactory
 
-@OptIn(ExperimentalUuidApi::class)
+/**
+ * Payment routes using Ktor Type-Safe Routing.
+ * Base path: /api/v1/payments
+ *
+ * All routes require JWT authentication and tenant context.
+ *
+ * Note: This is a stub implementation. Payment functionality to be implemented.
+ */
 fun Route.paymentRoutes() {
     val logger = LoggerFactory.getLogger("PaymentRoutes")
-    val paymentService by inject<PaymentService>()
 
-    route("/api/payments") {
-        // List payments
-        get {
-            val tenantIdStr = call.request.queryParameters["tenantId"] ?: "00000000-0000-0000-0000-000000000001"
-            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+    authenticateJwt {
+        // GET /api/v1/payments - List payments
+        get<Payments> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            logger.info("Listing payments for tenant: $tenantId")
 
-            try {
-                val tenantId = TenantId(Uuid.parse(tenantIdStr))
-                val payments = paymentService.listByTenant(
-                    tenantId = tenantId,
-                    limit = limit,
-                    offset = offset
-                )
-                call.respond(HttpStatusCode.OK, payments)
-            } catch (e: Exception) {
-                logger.error("Error listing payments", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Failed to list payments")))
-            }
+            // TODO: Implement payment listing
+            call.respond(HttpStatusCode.OK, emptyList<Any>())
         }
 
-        // Get payment by ID
-        get("/{id}") {
-            val paymentIdStr = call.parameters["id"]
+        // GET /api/v1/payments/pending - List pending payments
+        get<Payments.Pending> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            logger.info("Listing pending payments for tenant: $tenantId")
 
-            if (paymentIdStr.isNullOrBlank()) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Payment ID is required"))
-                return@get
-            }
-
-            try {
-                val paymentId = PaymentId(Uuid.parse(paymentIdStr))
-                val payment = paymentService.findById(paymentId)
-                if (payment != null) {
-                    call.respond(HttpStatusCode.OK, payment)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Payment not found"))
-                }
-            } catch (e: Exception) {
-                logger.error("Error getting payment", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Failed to get payment")))
-            }
+            // TODO: Implement pending payments listing
+            call.respond(HttpStatusCode.OK, emptyList<Any>())
         }
 
-        // Create payment
-        post {
-            call.respond(HttpStatusCode.NotImplemented, mapOf("message" to "Create payment endpoint - coming soon"))
+        // GET /api/v1/payments/overdue - List overdue payments
+        get<Payments.Overdue> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            logger.info("Listing overdue payments for tenant: $tenantId")
+
+            // TODO: Implement overdue payments listing
+            call.respond(HttpStatusCode.OK, emptyList<Any>())
         }
 
-        // Update payment
-        put("/{id}") {
-            call.respond(HttpStatusCode.NotImplemented, mapOf("message" to "Update payment endpoint - coming soon"))
+        // GET /api/v1/payments/{id} - Get payment by ID
+        get<Payments.Id> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            logger.info("Getting payment ${route.id} for tenant: $tenantId")
+
+            // TODO: Implement payment retrieval
+            call.respond(HttpStatusCode.NotFound, mapOf("message" to "Payment not found"))
         }
 
-        // Delete payment
-        delete("/{id}") {
-            call.respond(HttpStatusCode.NotImplemented, mapOf("message" to "Delete payment endpoint - coming soon"))
-        }
+        // GET /api/v1/payments/{id}/refunds - List refunds for payment
+        get<Payments.Id.Refunds> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            logger.info("Listing refunds for payment ${route.parent.id}, tenant: $tenantId")
 
-        // Process payment with Mollie
-        post("/{id}/process") {
-            call.respond(HttpStatusCode.NotImplemented, mapOf("message" to "Process payment endpoint - coming soon"))
+            // TODO: Implement refunds listing
+            call.respond(HttpStatusCode.OK, emptyList<Any>())
         }
     }
 }

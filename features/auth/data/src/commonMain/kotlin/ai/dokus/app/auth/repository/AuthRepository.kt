@@ -144,9 +144,13 @@ class AuthRepository(
 
     /**
      * Check if the current user already has a freelancer tenant.
+     * Implemented by listing all tenants and filtering for freelancer type.
      */
     suspend fun hasFreelancerTenant(): Result<Boolean> {
-        return tenantDataSource.hasFreelancerTenant()
+        return tenantDataSource.listMyTenants()
+            .map { tenants ->
+                tenants.any { it.type == TenantType.Freelancer }
+            }
             .onFailure { error ->
                 logger.e(error) { "Failed to check freelancer tenant status" }
             }
