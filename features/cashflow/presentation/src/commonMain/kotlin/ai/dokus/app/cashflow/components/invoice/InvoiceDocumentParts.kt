@@ -1,7 +1,12 @@
 package ai.dokus.app.cashflow.components.invoice
 
+import ai.dokus.foundation.design.Res
 import ai.dokus.foundation.design.components.PDashedDivider
 import ai.dokus.foundation.design.extensions.localized
+import ai.dokus.foundation.design.invoice_subtotal
+import ai.dokus.foundation.design.invoice_title
+import ai.dokus.foundation.design.invoice_total
+import ai.dokus.foundation.design.invoice_vat
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
@@ -24,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
@@ -51,7 +57,7 @@ internal fun InvoiceDocumentHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "INVOICE",
+                text = stringResource(Res.string.invoice_title).uppercase(),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary,

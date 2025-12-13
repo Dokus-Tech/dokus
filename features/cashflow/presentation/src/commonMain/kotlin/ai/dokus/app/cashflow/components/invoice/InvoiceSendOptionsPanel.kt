@@ -9,8 +9,21 @@ import ai.dokus.app.cashflow.viewmodel.isComingSoon
 import ai.dokus.app.cashflow.viewmodel.isEnabled
 import ai.dokus.app.cashflow.viewmodel.localized
 import ai.dokus.app.cashflow.viewmodel.localizedDescription
+import ai.dokus.foundation.design.Res
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
+import ai.dokus.foundation.design.invoice_client
+import ai.dokus.foundation.design.invoice_coming_soon
+import ai.dokus.foundation.design.invoice_items
+import ai.dokus.foundation.design.invoice_line_items_count
+import ai.dokus.foundation.design.invoice_not_selected
+import ai.dokus.foundation.design.invoice_save_as_draft
+import ai.dokus.foundation.design.invoice_send_coming_soon_message
+import ai.dokus.foundation.design.invoice_send_options
+import ai.dokus.foundation.design.invoice_summary
+import ai.dokus.foundation.design.invoice_total
+import ai.dokus.foundation.design.peppol_belgian_client_warning
+import ai.dokus.foundation.design.peppol_id_missing
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
@@ -48,6 +61,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
@@ -79,7 +93,7 @@ fun InvoiceSendOptionsPanel(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Send Options",
+                text = stringResource(Res.string.invoice_send_options),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -111,7 +125,7 @@ fun InvoiceSendOptionsPanel(
 
             // Save as Draft button
             PButton(
-                text = "Save as Draft",
+                text = stringResource(Res.string.invoice_save_as_draft),
                 variant = PButtonVariant.Default,
                 onClick = onSaveAsDraft,
                 isEnabled = formState.isValid && !isSaving,
@@ -120,7 +134,7 @@ fun InvoiceSendOptionsPanel(
 
             // Info text
             Text(
-                text = "Sending features are coming soon. For now, save your invoice as a draft.",
+                text = stringResource(Res.string.invoice_send_coming_soon_message),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -149,13 +163,13 @@ private fun PeppolWarningBanner(
         )
         Column {
             Text(
-                text = "Peppol ID Missing",
+                text = stringResource(Res.string.peppol_id_missing),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.error
             )
             Text(
-                text = "This Belgian client needs a Peppol ID for e-invoicing (mandatory from 2026)",
+                text = stringResource(Res.string.peppol_belgian_client_warning),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -282,7 +296,7 @@ private fun ComingSoonBadge(
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "Coming soon",
+            text = stringResource(Res.string.invoice_coming_soon),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onTertiaryContainer,
             letterSpacing = 0.5.sp
@@ -295,12 +309,13 @@ private fun InvoiceMiniSummary(
     formState: CreateInvoiceFormState,
     modifier: Modifier = Modifier
 ) {
+    val itemCount = formState.items.count { it.isValid }
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "Invoice Summary",
+            text = stringResource(Res.string.invoice_summary),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -310,12 +325,12 @@ private fun InvoiceMiniSummary(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Client",
+                text = stringResource(Res.string.invoice_client),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = formState.selectedClient?.name?.value ?: "Not selected",
+                text = formState.selectedClient?.name?.value ?: stringResource(Res.string.invoice_not_selected),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -326,12 +341,12 @@ private fun InvoiceMiniSummary(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Items",
+                text = stringResource(Res.string.invoice_items),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "${formState.items.count { it.isValid }} line item(s)",
+                text = stringResource(Res.string.invoice_line_items_count, itemCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -342,7 +357,7 @@ private fun InvoiceMiniSummary(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Total",
+                text = stringResource(Res.string.invoice_total),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
