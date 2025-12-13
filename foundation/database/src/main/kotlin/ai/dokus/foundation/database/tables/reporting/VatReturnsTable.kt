@@ -17,7 +17,7 @@ object VatReturnsTable : UUIDTable("vat_returns") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     val periodStart = date("period_start")
     val periodEnd = date("period_end")
@@ -38,7 +38,6 @@ object VatReturnsTable : UUIDTable("vat_returns") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
         index(false, tenantId, quarterYear, quarter)
         uniqueIndex(tenantId, quarterYear, quarter)
     }

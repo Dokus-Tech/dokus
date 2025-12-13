@@ -3,6 +3,7 @@ package ai.dokus.foundation.ktor.security
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
+import ai.dokus.foundation.ktor.database.withTenantContext
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -64,7 +65,9 @@ suspend fun requireAuthenticatedTenantId(): TenantId {
  * @return The result of the block
  */
 suspend fun <T> withAuthContext(authInfo: AuthenticationInfo, block: suspend () -> T): T {
-    return withContext(AuthContext(authInfo)) {
-        block()
+    return withTenantContext(authInfo.tenantId?.toString()) {
+        withContext(AuthContext(authInfo)) {
+            block()
+        }
     }
 }

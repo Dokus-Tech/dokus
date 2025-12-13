@@ -30,14 +30,14 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val invoiceId = uuid("invoice_id").references(
         ai.dokus.foundation.database.tables.cashflow.InvoicesTable.id,
         onDelete = ReferenceOption.SET_NULL
-    ).nullable()  // For outbound
+    ).nullable().index()  // For outbound
     val billId = uuid("bill_id").references(
         ai.dokus.foundation.database.tables.cashflow.BillsTable.id,
         onDelete = ReferenceOption.SET_NULL
-    ).nullable()  // For inbound
+    ).nullable().index()  // For inbound
 
     // External references
-    val externalDocumentId = varchar("external_document_id", 255).nullable()
+    val externalDocumentId = varchar("external_document_id", 255).nullable().index()
 
     // Peppol IDs
     val recipientPeppolId = varchar("recipient_peppol_id", 255).nullable()  // For outbound
@@ -56,14 +56,6 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index tenant_id for security and performance
-        index(false, tenantId)
-        index(false, tenantId, direction)
-        index(false, tenantId, status)
-        index(false, invoiceId)
-        index(false, billId)
-        index(false, externalDocumentId)
-
         // Composite index for common queries
         index(false, tenantId, direction, status)
         uniqueIndex(tenantId, externalDocumentId)
