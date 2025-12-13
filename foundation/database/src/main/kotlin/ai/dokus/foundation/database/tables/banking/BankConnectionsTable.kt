@@ -13,9 +13,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Encrypted access tokens for transaction syncing
  */
 object BankConnectionsTable : UUIDTable("bank_connections") {
-    val tenantId = reference(
-        name = "tenant_id",
-        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+    val tenantId = uuid("tenant_id").references(
+        ai.dokus.foundation.database.tables.auth.TenantTable.id,
         onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
     )
 
