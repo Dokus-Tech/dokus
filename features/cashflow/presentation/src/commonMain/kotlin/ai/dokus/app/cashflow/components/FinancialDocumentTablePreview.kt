@@ -3,13 +3,13 @@ package ai.dokus.app.cashflow.components
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
+import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
