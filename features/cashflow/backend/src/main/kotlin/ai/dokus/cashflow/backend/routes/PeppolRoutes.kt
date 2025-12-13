@@ -106,10 +106,10 @@ fun Route.peppolRoutes() {
         }
 
         /**
-         * POST /api/v1/peppol/settings/test
+         * POST /api/v1/peppol/settings/connection-tests
          * Test connection with current credentials.
          */
-        post<Peppol.Settings.Test> {
+        post<Peppol.Settings.ConnectionTests> {
             val tenantId = dokusPrincipal.requireTenantId()
 
             val success = peppolService.testConnection(tenantId)
@@ -123,10 +123,10 @@ fun Route.peppolRoutes() {
         // ================================================================
 
         /**
-         * POST /api/v1/peppol/verify
+         * POST /api/v1/peppol/recipient-validations
          * Verify if a recipient is registered on the Peppol network.
          */
-        post<Peppol.Verify> {
+        post<Peppol.RecipientValidations> {
             val tenantId = dokusPrincipal.requireTenantId()
             val request = call.receive<VerifyRecipientRequest>()
 
@@ -141,14 +141,16 @@ fun Route.peppolRoutes() {
         // ================================================================
 
         /**
-         * POST /api/v1/peppol/send/invoice/{invoiceId}
-         * Send an invoice via Peppol.
+         * POST /api/v1/peppol/transmissions
+         * Send an invoice via Peppol (creates a transmission).
          *
          * The invoice must have a contactId that matches a contact with a valid peppolId.
          */
-        post<Peppol.Send.Invoice> { route ->
+        post<Peppol.Transmissions> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
-            val invoiceId = InvoiceId(Uuid.parse(route.invoiceId))
+            val invoiceIdStr = route.invoiceId
+                ?: throw DokusException.BadRequest("invoiceId query parameter is required")
+            val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
             // Fetch invoice
             val invoice = invoiceService.getInvoice(invoiceId, tenantId)
@@ -186,12 +188,14 @@ fun Route.peppolRoutes() {
         }
 
         /**
-         * POST /api/v1/peppol/send/validate/{invoiceId}
+         * POST /api/v1/peppol/invoice-validations
          * Validate an invoice for Peppol without sending.
          */
-        post<Peppol.Send.Validate> { route ->
+        post<Peppol.InvoiceValidations> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
-            val invoiceId = InvoiceId(Uuid.parse(route.invoiceId))
+            val invoiceIdStr = route.invoiceId
+                ?: throw DokusException.BadRequest("invoiceId query parameter is required")
+            val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
             // Fetch invoice
             val invoice = invoiceService.getInvoice(invoiceId, tenantId)
@@ -219,13 +223,13 @@ fun Route.peppolRoutes() {
         // ================================================================
 
         /**
-         * POST /api/v1/peppol/inbox/poll
+         * POST /api/v1/peppol/inbox/syncs
          * Poll inbox for new documents.
          *
          * Polls the Peppol provider's inbox for new documents and creates
          * corresponding bills in the system.
          */
-        post<Peppol.Inbox.Poll> {
+        post<Peppol.Inbox.Syncs> {
             val tenantId = dokusPrincipal.requireTenantId()
 
             // Poll inbox with bill creation callback
@@ -263,18 +267,17 @@ fun Route.peppolRoutes() {
         }
 
         /**
-         * GET /api/v1/peppol/transmissions/invoice/{invoiceId}
-         * Get transmission for a specific invoice.
+         * GET /api/v1/peppol/transmissions/{id}
+         * Get transmission by ID.
          */
-        get<Peppol.Transmissions.ByInvoice> { route ->
+        get<Peppol.Transmissions.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
-            val invoiceId = InvoiceId(Uuid.parse(route.invoiceId))
 
-            val transmission = peppolService.getTransmissionByInvoiceId(invoiceId, tenantId)
+            val transmission = peppolService.getTransmissionById(route.id, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to get transmission: ${it.message}") }
 
             if (transmission == null) {
-                call.respond(HttpStatusCode.NotFound, mapOf("message" to "No Peppol transmission found for this invoice"))
+                call.respond(HttpStatusCode.NotFound, mapOf("message" to "Peppol transmission not found"))
             } else {
                 call.respond(HttpStatusCode.OK, transmission)
             }
