@@ -22,10 +22,10 @@ val versionProperties = Properties().apply {
 }
 val versionMajor = versionProperties.getProperty("major", "1")
 val versionMinor = versionProperties.getProperty("minor", "0")
-val versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
-val versionNameDefault = "$versionMajor.$versionMinor.$versionCode"
+val versionCodeResolved = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
+val versionNameDefault = "$versionMajor.$versionMinor.$versionCodeResolved"
 val versionNameOverride = project.findProperty("versionName") as String?
-val versionName = versionNameOverride ?: versionNameDefault
+val versionNameResolved = versionNameOverride ?: versionNameDefault
 val appleBundleId = project.findProperty("appleBundleId") as String? ?: "vision.invoid.dokus"
 
 kotlin {
@@ -47,7 +47,7 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             binaryOption("bundleId", appleBundleId)
-            binaryOption("bundleVersion", versionCode.toString())
+            binaryOption("bundleVersion", versionCodeResolved.toString())
 
             linkerOpts("-lsqlite3")
         }
@@ -139,8 +139,8 @@ android {
         applicationId = "vision.invoid.dokus"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = this@build.gradle.kts.versionCode
-        versionName = this@build.gradle.kts.versionName
+        versionCode = versionCodeResolved
+        versionName = versionNameResolved
     }
     packaging {
         resources {
@@ -166,6 +166,7 @@ compose.desktop {
 
     application {
         mainClass = "ai.dokus.app.MainKt"
+        val macAppStore = (project.findProperty("compose.desktop.mac.appStore") as String?)?.toBoolean() ?: false
 
         buildTypes {
             release {
@@ -183,13 +184,13 @@ compose.desktop {
             modules("java.sql")  // Required for SQLDelight/JDBC
 
             packageName = "Dokus"
-            packageVersion = "1.0.0"
+            packageVersion = versionNameResolved
             vendor = "Invoid Vision"
 
             macOS {
                 dockName = "D[#]kus"
-                appStore = false
-                bundleID = "vision.invoid.dokus"
+                appStore = macAppStore
+                bundleID = appleBundleId
                 copyright = "Invoid Vision 2025"
                 description = "Dokus financial document management"
             }
