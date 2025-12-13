@@ -32,17 +32,23 @@ import ai.dokus.foundation.domain.model.PeppolVerifyResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
+import ai.dokus.foundation.domain.routes.Attachments
+import ai.dokus.foundation.domain.routes.Bills
+import ai.dokus.foundation.domain.routes.Cashflow
+import ai.dokus.foundation.domain.routes.Documents
+import ai.dokus.foundation.domain.routes.Expenses
+import ai.dokus.foundation.domain.routes.Invoices
+import ai.dokus.foundation.domain.routes.Peppol
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
-import io.ktor.client.request.delete
+import io.ktor.client.plugins.resources.delete
+import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.patch
+import io.ktor.client.plugins.resources.post
+import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.request.patch
-import io.ktor.client.request.post
-import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
@@ -51,8 +57,8 @@ import io.ktor.http.contentType
 import kotlinx.datetime.LocalDate
 
 /**
- * HTTP-based implementation of CashflowRemoteDataSource
- * Uses Ktor HttpClient to communicate with the cashflow management API
+ * HTTP-based implementation of CashflowRemoteDataSource.
+ * Uses Ktor HttpClient with type-safe routing to communicate with the cashflow management API.
  */
 internal class CashflowRemoteDataSourceImpl(
     private val httpClient: HttpClient
@@ -64,7 +70,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun createInvoice(request: CreateInvoiceRequest): Result<FinancialDocumentDto.InvoiceDto> {
         return runCatching {
-            httpClient.post("/api/v1/invoices") {
+            httpClient.post(Invoices()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -73,7 +79,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getInvoice(id: InvoiceId): Result<FinancialDocumentDto.InvoiceDto> {
         return runCatching {
-            httpClient.get("/api/v1/invoices/$id").body()
+            httpClient.get(Invoices.Id(id = id.toString())).body()
         }
     }
 
@@ -85,19 +91,19 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
         return runCatching {
-            httpClient.get("/api/v1/invoices") {
-                status?.let { parameter("status", it.name) }
-                fromDate?.let { parameter("fromDate", it.toString()) }
-                toDate?.let { parameter("toDate", it.toString()) }
-                parameter("limit", limit)
-                parameter("offset", offset)
-            }.body()
+            httpClient.get(Invoices(
+                status = status,
+                fromDate = fromDate,
+                toDate = toDate,
+                limit = limit,
+                offset = offset
+            )).body()
         }
     }
 
     override suspend fun listOverdueInvoices(): Result<List<FinancialDocumentDto.InvoiceDto>> {
         return runCatching {
-            httpClient.get("/api/v1/invoices/overdue").body()
+            httpClient.get(Invoices.Overdue()).body()
         }
     }
 
@@ -106,7 +112,8 @@ internal class CashflowRemoteDataSourceImpl(
         status: InvoiceStatus
     ): Result<Unit> {
         return runCatching {
-            httpClient.patch("/api/v1/invoices/$invoiceId/status") {
+            val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
+            httpClient.patch(Invoices.Id.Status(parent = invoiceIdRoute)) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("status" to status.name))
             }.body()
@@ -118,7 +125,7 @@ internal class CashflowRemoteDataSourceImpl(
         request: CreateInvoiceRequest
     ): Result<FinancialDocumentDto.InvoiceDto> {
         return runCatching {
-            httpClient.put("/api/v1/invoices/$invoiceId") {
+            httpClient.put(Invoices.Id(id = invoiceId.toString())) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -127,13 +134,14 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun deleteInvoice(invoiceId: InvoiceId): Result<Unit> {
         return runCatching {
-            httpClient.delete("/api/v1/invoices/$invoiceId").body()
+            httpClient.delete(Invoices.Id(id = invoiceId.toString())).body()
         }
     }
 
     override suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/invoices/${request.invoiceId}/payments") {
+            val invoiceIdRoute = Invoices.Id(id = request.invoiceId.toString())
+            httpClient.post(Invoices.Id.Payments(parent = invoiceIdRoute)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -146,7 +154,8 @@ internal class CashflowRemoteDataSourceImpl(
         message: String?
     ): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/invoices/$invoiceId/send-email") {
+            val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
+            httpClient.post(Invoices.Id.SendEmail(parent = invoiceIdRoute)) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf(
                     "recipientEmail" to recipientEmail,
@@ -158,13 +167,14 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/invoices/$invoiceId/mark-sent").body()
+            val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
+            httpClient.post(Invoices.Id.MarkSent(parent = invoiceIdRoute)).body()
         }
     }
 
     override suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): Result<InvoiceTotals> {
         return runCatching {
-            httpClient.post("/api/v1/invoices/calculate-totals") {
+            httpClient.post(Invoices.CalculateTotals()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("items" to items))
             }.body()
@@ -177,7 +187,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun createExpense(request: CreateExpenseRequest): Result<FinancialDocumentDto.ExpenseDto> {
         return runCatching {
-            httpClient.post("/api/v1/expenses") {
+            httpClient.post(Expenses()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -186,7 +196,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getExpense(id: ExpenseId): Result<FinancialDocumentDto.ExpenseDto> {
         return runCatching {
-            httpClient.get("/api/v1/expenses/$id").body()
+            httpClient.get(Expenses.Id(id = id.toString())).body()
         }
     }
 
@@ -198,13 +208,13 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>> {
         return runCatching {
-            httpClient.get("/api/v1/expenses") {
-                category?.let { parameter("category", it.name) }
-                fromDate?.let { parameter("fromDate", it.toString()) }
-                toDate?.let { parameter("toDate", it.toString()) }
-                parameter("limit", limit)
-                parameter("offset", offset)
-            }.body()
+            httpClient.get(Expenses(
+                category = category,
+                fromDate = fromDate,
+                toDate = toDate,
+                limit = limit,
+                offset = offset
+            )).body()
         }
     }
 
@@ -213,7 +223,7 @@ internal class CashflowRemoteDataSourceImpl(
         request: CreateExpenseRequest
     ): Result<FinancialDocumentDto.ExpenseDto> {
         return runCatching {
-            httpClient.put("/api/v1/expenses/$expenseId") {
+            httpClient.put(Expenses.Id(id = expenseId.toString())) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -222,7 +232,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun deleteExpense(expenseId: ExpenseId): Result<Unit> {
         return runCatching {
-            httpClient.delete("/api/v1/expenses/$expenseId").body()
+            httpClient.delete(Expenses.Id(id = expenseId.toString())).body()
         }
     }
 
@@ -231,7 +241,7 @@ internal class CashflowRemoteDataSourceImpl(
         description: String?
     ): Result<ExpenseCategory> {
         return runCatching {
-            httpClient.post("/api/v1/expenses/categorize") {
+            httpClient.post(Expenses.Categorize()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf(
                     "merchant" to merchant,
@@ -247,7 +257,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun createBill(request: CreateBillRequest): Result<FinancialDocumentDto.BillDto> {
         return runCatching {
-            httpClient.post("/api/v1/cashflow/cash-out/bills") {
+            httpClient.post(Bills()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -256,7 +266,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getBill(id: BillId): Result<FinancialDocumentDto.BillDto> {
         return runCatching {
-            httpClient.get("/api/v1/cashflow/cash-out/bills/$id").body()
+            httpClient.get(Bills.Id(id = id.toString())).body()
         }
     }
 
@@ -269,20 +279,20 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto.BillDto>> {
         return runCatching {
-            httpClient.get("/api/v1/cashflow/cash-out/bills") {
-                status?.let { parameter("status", it.name) }
-                category?.let { parameter("category", it.name) }
-                fromDate?.let { parameter("fromDate", it.toString()) }
-                toDate?.let { parameter("toDate", it.toString()) }
-                parameter("limit", limit)
-                parameter("offset", offset)
-            }.body()
+            httpClient.get(Bills(
+                status = status,
+                category = category,
+                fromDate = fromDate,
+                toDate = toDate,
+                limit = limit,
+                offset = offset
+            )).body()
         }
     }
 
     override suspend fun listOverdueBills(): Result<List<FinancialDocumentDto.BillDto>> {
         return runCatching {
-            httpClient.get("/api/v1/cashflow/cash-out/bills/overdue").body()
+            httpClient.get(Bills.Overdue()).body()
         }
     }
 
@@ -291,7 +301,7 @@ internal class CashflowRemoteDataSourceImpl(
         request: CreateBillRequest
     ): Result<FinancialDocumentDto.BillDto> {
         return runCatching {
-            httpClient.put("/api/v1/cashflow/cash-out/bills/$billId") {
+            httpClient.put(Bills.Id(id = billId.toString())) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -303,7 +313,8 @@ internal class CashflowRemoteDataSourceImpl(
         request: MarkBillPaidRequest
     ): Result<FinancialDocumentDto.BillDto> {
         return runCatching {
-            httpClient.post("/api/v1/cashflow/cash-out/bills/$billId/pay") {
+            val billIdRoute = Bills.Id(id = billId.toString())
+            httpClient.post(Bills.Id.Pay(parent = billIdRoute)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -312,7 +323,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun deleteBill(billId: BillId): Result<Unit> {
         return runCatching {
-            httpClient.delete("/api/v1/cashflow/cash-out/bills/$billId").body()
+            httpClient.delete(Bills.Id(id = billId.toString())).body()
         }
     }
 
@@ -327,6 +338,7 @@ internal class CashflowRemoteDataSourceImpl(
         contentType: String
     ): Result<AttachmentId> {
         return runCatching {
+            val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
             httpClient.submitFormWithBinaryData(
                 url = "/api/v1/invoices/$invoiceId/attachments",
                 formData = formData {
@@ -374,25 +386,28 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getInvoiceAttachments(invoiceId: InvoiceId): Result<List<AttachmentDto>> {
         return runCatching {
-            httpClient.get("/api/v1/invoices/$invoiceId/attachments").body()
+            val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
+            httpClient.get(Invoices.Id.Attachments(parent = invoiceIdRoute)).body()
         }
     }
 
     override suspend fun getExpenseAttachments(expenseId: ExpenseId): Result<List<AttachmentDto>> {
         return runCatching {
-            httpClient.get("/api/v1/expenses/$expenseId/attachments").body()
+            val expenseIdRoute = Expenses.Id(id = expenseId.toString())
+            httpClient.get(Expenses.Id.Attachments(parent = expenseIdRoute)).body()
         }
     }
 
     override suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): Result<String> {
         return runCatching {
-            httpClient.get("/api/v1/attachments/$attachmentId/download-url").body()
+            val attachmentIdRoute = Attachments.Id(id = attachmentId.toString())
+            httpClient.get(Attachments.Id.DownloadUrl(parent = attachmentIdRoute)).body()
         }
     }
 
     override suspend fun deleteAttachment(attachmentId: AttachmentId): Result<Unit> {
         return runCatching {
-            httpClient.delete("/api/v1/attachments/$attachmentId").body()
+            httpClient.delete(Attachments.Id(id = attachmentId.toString())).body()
         }
     }
 
@@ -468,13 +483,13 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getDocument(documentId: DocumentId): Result<DocumentDto> {
         return runCatching {
-            httpClient.get("/api/v1/documents/$documentId").body()
+            httpClient.get(Documents.Id(id = documentId.toString())).body()
         }
     }
 
     override suspend fun deleteDocument(documentId: DocumentId): Result<Unit> {
         return runCatching {
-            httpClient.delete("/api/v1/documents/$documentId").body()
+            httpClient.delete(Documents.Id(id = documentId.toString())).body()
         }
     }
 
@@ -489,12 +504,12 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto>> {
         return runCatching {
-            httpClient.get("/api/v1/cashflow/documents") {
-                fromDate?.let { parameter("fromDate", it.toString()) }
-                toDate?.let { parameter("toDate", it.toString()) }
-                parameter("limit", limit)
-                parameter("offset", offset)
-            }.body()
+            httpClient.get(Cashflow.Documents(
+                fromDate = fromDate,
+                toDate = toDate,
+                limit = limit,
+                offset = offset
+            )).body()
         }
     }
 
@@ -503,10 +518,10 @@ internal class CashflowRemoteDataSourceImpl(
         toDate: LocalDate
     ): Result<CashflowOverview> {
         return runCatching {
-            httpClient.get("/api/v1/cashflow/overview") {
-                parameter("fromDate", fromDate.toString())
-                parameter("toDate", toDate.toString())
-            }.body()
+            httpClient.get(Cashflow.Overview(
+                fromDate = fromDate,
+                toDate = toDate
+            )).body()
         }
     }
 
@@ -520,14 +535,15 @@ internal class CashflowRemoteDataSourceImpl(
         limit: Int
     ): Result<DocumentProcessingListResponse> {
         return runCatching {
-            httpClient.get("/api/v1/documents/processing") {
-                // Use comma-separated dbValues for cleaner URLs
-                if (statuses.isNotEmpty()) {
-                    parameter("status", statuses.joinToString(",") { it.dbValue })
-                }
-                parameter("page", page)
-                parameter("limit", limit)
-            }.body()
+            // Use comma-separated dbValues for cleaner URLs
+            val statusParam = if (statuses.isNotEmpty()) {
+                statuses.joinToString(",") { it.dbValue }
+            } else null
+            httpClient.get(Documents.Processing(
+                status = statusParam,
+                page = page,
+                limit = limit
+            )).body()
         }
     }
 
@@ -537,14 +553,14 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getPeppolProviders(): Result<List<String>> {
         return runCatching {
-            val response: ProvidersResponse = httpClient.get("/api/v1/peppol/providers").body()
+            val response: ProvidersResponse = httpClient.get(Peppol.Providers()).body()
             response.providers
         }
     }
 
     override suspend fun getPeppolSettings(): Result<PeppolSettingsDto?> {
         return runCatching {
-            val response = httpClient.get("/api/v1/peppol/settings")
+            val response = httpClient.get(Peppol.Settings())
             if (response.status.value == 404) {
                 null
             } else {
@@ -555,7 +571,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun savePeppolSettings(request: SavePeppolSettingsRequest): Result<PeppolSettingsDto> {
         return runCatching {
-            httpClient.put("/api/v1/peppol/settings") {
+            httpClient.put(Peppol.Settings()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -564,20 +580,21 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun deletePeppolSettings(): Result<Unit> {
         return runCatching {
-            httpClient.delete("/api/v1/peppol/settings").body()
+            httpClient.delete(Peppol.Settings()).body()
         }
     }
 
     override suspend fun testPeppolConnection(): Result<Boolean> {
         return runCatching {
-            val response: TestConnectionResponse = httpClient.post("/api/v1/peppol/settings/test").body()
+            val settingsRoute = Peppol.Settings()
+            val response: TestConnectionResponse = httpClient.post(Peppol.Settings.Test(parent = settingsRoute)).body()
             response.success
         }
     }
 
     override suspend fun verifyPeppolRecipient(peppolId: String): Result<PeppolVerifyResponse> {
         return runCatching {
-            httpClient.post("/api/v1/peppol/verify") {
+            httpClient.post(Peppol.Verify()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("peppolId" to peppolId))
             }.body()
@@ -586,19 +603,22 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun validateInvoiceForPeppol(invoiceId: InvoiceId): Result<PeppolValidationResult> {
         return runCatching {
-            httpClient.post("/api/v1/peppol/send/validate/$invoiceId").body()
+            val sendRoute = Peppol.Send()
+            httpClient.post(Peppol.Send.Validate(parent = sendRoute, invoiceId = invoiceId.toString())).body()
         }
     }
 
     override suspend fun sendInvoiceViaPeppol(invoiceId: InvoiceId): Result<SendInvoiceViaPeppolResponse> {
         return runCatching {
-            httpClient.post("/api/v1/peppol/send/invoice/$invoiceId").body()
+            val sendRoute = Peppol.Send()
+            httpClient.post(Peppol.Send.Invoice(parent = sendRoute, invoiceId = invoiceId.toString())).body()
         }
     }
 
     override suspend fun pollPeppolInbox(): Result<PeppolInboxPollResponse> {
         return runCatching {
-            httpClient.post("/api/v1/peppol/inbox/poll").body()
+            val inboxRoute = Peppol.Inbox()
+            httpClient.post(Peppol.Inbox.Poll(parent = inboxRoute)).body()
         }
     }
 
@@ -609,18 +629,22 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<List<PeppolTransmissionDto>> {
         return runCatching {
-            httpClient.get("/api/v1/peppol/transmissions") {
-                direction?.let { parameter("direction", it.name) }
-                status?.let { parameter("status", it.name) }
-                parameter("limit", limit)
-                parameter("offset", offset)
-            }.body()
+            httpClient.get(Peppol.Transmissions(
+                direction = direction,
+                status = status,
+                limit = limit,
+                offset = offset
+            )).body()
         }
     }
 
     override suspend fun getPeppolTransmissionForInvoice(invoiceId: InvoiceId): Result<PeppolTransmissionDto?> {
         return runCatching {
-            val response = httpClient.get("/api/v1/peppol/transmissions/invoice/$invoiceId")
+            val transmissionsRoute = Peppol.Transmissions()
+            val response = httpClient.get(Peppol.Transmissions.ByInvoice(
+                parent = transmissionsRoute,
+                invoiceId = invoiceId.toString()
+            ))
             if (response.status.value == 404) {
                 null
             } else {
