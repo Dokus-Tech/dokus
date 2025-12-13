@@ -7,85 +7,74 @@ import kotlinx.serialization.Serializable
 /**
  * Type-safe route definitions for Contact API.
  * Base path: /api/v1/contacts
+ *
+ * SECURITY: All operations are scoped to the authenticated user's tenant via JWT.
  */
 @Serializable
 @Resource("/api/v1/contacts")
 class Contacts(
     val search: String? = null,
     val type: ContactType? = null,
-    val activeOnly: Boolean? = null,
+    val active: Boolean? = null,
     val peppolEnabled: Boolean? = null,
     val limit: Int = 50,
     val offset: Int = 0
 ) {
     /**
-     * GET /api/v1/contacts/peppol-enabled - List Peppol-enabled contacts
-     */
-    @Serializable
-    @Resource("peppol-enabled")
-    class PeppolEnabled(val parent: Contacts = Contacts())
-
-    /**
-     * GET /api/v1/contacts/customers - List customers only
+     * GET /api/v1/contacts/customers - List customer contacts
      */
     @Serializable
     @Resource("customers")
     class Customers(
         val parent: Contacts = Contacts(),
-        val activeOnly: Boolean = true,
+        val active: Boolean = true,
         val limit: Int = 50,
         val offset: Int = 0
     )
 
     /**
-     * GET /api/v1/contacts/vendors - List vendors only
+     * GET /api/v1/contacts/vendors - List vendor contacts
      */
     @Serializable
     @Resource("vendors")
     class Vendors(
         val parent: Contacts = Contacts(),
-        val activeOnly: Boolean = true,
+        val active: Boolean = true,
         val limit: Int = 50,
         val offset: Int = 0
     )
 
     /**
-     * GET /api/v1/contacts/stats - Get contact statistics
+     * GET /api/v1/contacts/summary - Contact statistics/summary
      */
     @Serializable
-    @Resource("stats")
-    class Stats(val parent: Contacts = Contacts())
+    @Resource("summary")
+    class Summary(val parent: Contacts = Contacts())
 
     /**
      * /api/v1/contacts/{id} - Single contact operations
+     * GET - Retrieve contact
+     * PUT - Replace contact
+     * PATCH - Partial update (including active status for activation/deactivation)
+     * DELETE - Delete contact
      */
     @Serializable
     @Resource("{id}")
     class Id(val parent: Contacts = Contacts(), val id: String) {
 
         /**
-         * POST /api/v1/contacts/{id}/deactivate
-         */
-        @Serializable
-        @Resource("deactivate")
-        class Deactivate(val parent: Id)
-
-        /**
-         * POST /api/v1/contacts/{id}/reactivate
-         */
-        @Serializable
-        @Resource("reactivate")
-        class Reactivate(val parent: Id)
-
-        /**
-         * PATCH /api/v1/contacts/{id}/peppol
+         * GET/PUT /api/v1/contacts/{id}/peppol
+         * GET - Get Peppol configuration for contact
+         * PUT - Update Peppol configuration
          */
         @Serializable
         @Resource("peppol")
         class Peppol(val parent: Id)
 
         /**
-         * GET/POST /api/v1/contacts/{id}/notes - Notes operations
+         * GET/POST /api/v1/contacts/{id}/notes
+         * GET - List notes for contact
+         * POST - Create new note
          */
         @Serializable
         @Resource("notes")
@@ -95,7 +84,7 @@ class Contacts(
             val offset: Int = 0
         ) {
             /**
-             * PUT/DELETE /api/v1/contacts/{id}/notes/{noteId}
+             * GET/PUT/DELETE /api/v1/contacts/{id}/notes/{noteId}
              */
             @Serializable
             @Resource("{noteId}")

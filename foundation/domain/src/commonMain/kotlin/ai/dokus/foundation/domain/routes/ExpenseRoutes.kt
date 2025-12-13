@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 /**
  * Type-safe route definitions for Expense API.
  * Base path: /api/v1/expenses
+ *
+ * SECURITY: All operations are scoped to the authenticated user's tenant via JWT.
  */
 @Serializable
 @Resource("/api/v1/expenses")
@@ -19,14 +21,11 @@ class Expenses(
     val offset: Int = 0
 ) {
     /**
-     * POST /api/v1/expenses/categorize - Auto-categorize expense
-     */
-    @Serializable
-    @Resource("categorize")
-    class Categorize(val parent: Expenses = Expenses())
-
-    /**
      * /api/v1/expenses/{id} - Single expense operations
+     * GET - Retrieve expense
+     * PUT - Replace expense
+     * PATCH - Partial update (including category)
+     * DELETE - Delete expense
      */
     @Serializable
     @Resource("{id}")
@@ -34,6 +33,8 @@ class Expenses(
 
         /**
          * GET/POST /api/v1/expenses/{id}/attachments
+         * GET - List receipts/attachments
+         * POST - Upload receipt
          */
         @Serializable
         @Resource("attachments")

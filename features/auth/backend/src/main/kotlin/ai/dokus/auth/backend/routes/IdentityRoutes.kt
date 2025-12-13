@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
 import ai.dokus.foundation.domain.routes.Identity
 import io.ktor.http.*
 import io.ktor.server.request.*
+import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -56,11 +57,11 @@ fun Route.identityRoutes() {
     }
 
     /**
-     * POST /api/v1/identity/request-password-reset
-     * Request password reset email
+     * POST /api/v1/identity/password-resets
+     * Request password reset email (creates a password reset request)
      */
-    post<Identity.RequestPasswordReset> {
-        val payload = call.receive<RequestPasswordReset>()
+    post<Identity.PasswordResets> {
+        val payload = call.receive<PasswordResetRequest>()
         val email = payload.email.value
 
         authService.requestPasswordReset(email).getOrThrow()
@@ -68,26 +69,26 @@ fun Route.identityRoutes() {
     }
 
     /**
-     * POST /api/v1/identity/reset-password/{token}
-     * Confirm password reset with token and new password
+     * PATCH /api/v1/identity/password-resets/{token}
+     * Complete password reset with token and new password
      */
-    post<Identity.ResetPassword> { route ->
+    patch<Identity.PasswordResets.ByToken> { route ->
         val request = call.receive<ResetPasswordRequest>()
         authService.resetPassword(route.token, request.newPassword).getOrThrow()
         call.respond(HttpStatusCode.NoContent)
     }
 
     /**
-     * POST /api/v1/identity/verify-email/{token}
+     * PATCH /api/v1/identity/email-verifications/{token}
      * Verify email address with token
      */
-    post<Identity.VerifyEmail> { route ->
+    patch<Identity.EmailVerifications.ByToken> { route ->
         authService.verifyEmail(route.token).getOrThrow()
         call.respond(HttpStatusCode.NoContent)
     }
 }
 
 @kotlinx.serialization.Serializable
-private data class RequestPasswordReset(
+private data class PasswordResetRequest(
     val email: Email
 )

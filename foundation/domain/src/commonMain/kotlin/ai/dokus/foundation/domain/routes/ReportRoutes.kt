@@ -7,6 +7,8 @@ import kotlinx.serialization.Serializable
 /**
  * Type-safe route definitions for Reporting API.
  * Base path: /api/v1/reports
+ *
+ * SECURITY: All operations are scoped to the authenticated user's tenant via JWT.
  */
 @Serializable
 @Resource("/api/v1/reports")
@@ -60,7 +62,7 @@ class Reports {
      */
     @Serializable
     @Resource("expenses")
-    class Expenses(
+    class ExpensesReport(
         val parent: Reports = Reports(),
         val fromDate: LocalDate? = null,
         val toDate: LocalDate? = null,

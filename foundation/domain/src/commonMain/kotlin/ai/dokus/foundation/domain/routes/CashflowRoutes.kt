@@ -7,6 +7,8 @@ import kotlinx.serialization.Serializable
 /**
  * Type-safe route definitions for Cashflow Overview API.
  * Base path: /api/v1/cashflow
+ *
+ * SECURITY: All operations are scoped to the authenticated user's tenant via JWT.
  */
 @Serializable
 @Resource("/api/v1/cashflow")
@@ -27,7 +29,7 @@ class Cashflow {
      */
     @Serializable
     @Resource("documents")
-    class Documents(
+    class CashflowDocuments(
         val parent: Cashflow = Cashflow(),
         val fromDate: LocalDate? = null,
         val toDate: LocalDate? = null,

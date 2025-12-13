@@ -113,18 +113,18 @@ fun Route.teamRoutes() {
         // ================================================================
 
         /**
-         * POST /api/v1/team/transfer-ownership
+         * PUT /api/v1/team/owner
          * Transfer workspace ownership to another member.
          * Requires Owner role.
          */
-        post<Team.TransferOwnership> {
+        put<Team.Owner> {
             val principal = dokusPrincipal
             val tenantId = principal.requireTenantId()
 
             // Verify owner role
             if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
                 call.respond(HttpStatusCode.Forbidden, "Only the workspace Owner can transfer ownership")
-                return@post
+                return@put
             }
 
             val request = call.receive<TransferOwnershipRequest>()
