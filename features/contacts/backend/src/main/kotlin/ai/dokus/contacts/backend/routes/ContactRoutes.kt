@@ -303,7 +303,7 @@ fun Route.contactRoutes() {
          * PUT /api/v1/contacts/{id}/notes/{noteId}
          * Update a note.
          */
-        put<Contacts.Id.Notes.NoteId> { route ->
+        put<Contacts.Id.Notes.ById> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val noteId = ContactNoteId.parse(route.noteId)
             val request = call.receive<UpdateContactNoteRequest>()
@@ -318,7 +318,7 @@ fun Route.contactRoutes() {
          * DELETE /api/v1/contacts/{id}/notes/{noteId}
          * Delete a note.
          */
-        delete<Contacts.Id.Notes.NoteId> { route ->
+        delete<Contacts.Id.Notes.ById> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val noteId = ContactNoteId.parse(route.noteId)
 
