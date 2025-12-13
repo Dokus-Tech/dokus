@@ -4,7 +4,6 @@ import ai.dokus.foundation.database.DatabaseInitializer
 import ai.dokus.foundation.database.di.repositoryModules
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
-import ai.dokus.cashflow.backend.service.ClientService
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.cashflow.backend.service.ExpenseService
 import ai.dokus.cashflow.backend.service.InvoiceService
