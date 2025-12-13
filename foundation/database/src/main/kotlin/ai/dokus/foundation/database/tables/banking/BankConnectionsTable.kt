@@ -13,7 +13,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Encrypted access tokens for transaction syncing
  */
 object BankConnectionsTable : UUIDTable("bank_connections") {
-    val tenantId = uuid("tenant_id")
+    val tenantId = reference(
+        name = "tenant_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     val provider = dbEnumeration<BankProvider>("provider")
     val institutionId = varchar("institution_id", 255)
@@ -35,5 +39,7 @@ object BankConnectionsTable : UUIDTable("bank_connections") {
     init {
         index(false, tenantId)
         index(false, tenantId, isActive)
+        // Prevent duplicate external accounts per tenant/provider
+        uniqueIndex(tenantId, provider, accountId)
     }
 }

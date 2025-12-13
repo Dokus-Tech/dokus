@@ -12,7 +12,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object PeppolSettingsTable : UUIDTable("peppol_settings") {
     // Multi-tenancy (CRITICAL) - one settings record per tenant
-    val tenantId = uuid("tenant_id").uniqueIndex()
+    val tenantId = reference(
+        name = "tenant_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     // Provider identification - supports multiple providers
     val providerId = varchar("provider_id", 50).default("recommand")
@@ -39,5 +43,6 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
     init {
         index(false, tenantId)
         index(false, providerId)
+        uniqueIndex(tenantId, providerId)
     }
 }

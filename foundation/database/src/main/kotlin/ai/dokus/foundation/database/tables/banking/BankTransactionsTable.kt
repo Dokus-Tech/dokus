@@ -10,8 +10,16 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Links to expenses or invoices for reconciliation
  */
 object BankTransactionsTable : UUIDTable("bank_transactions") {
-    val bankConnectionId = uuid("bank_connection_id")
-    val tenantId = uuid("tenant_id")
+    val bankConnectionId = reference(
+        name = "bank_connection_id",
+        foreign = BankConnectionsTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
+    val tenantId = reference(
+        name = "tenant_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     val externalId = varchar("external_id", 255)
     val date = date("date")
@@ -23,8 +31,16 @@ object BankTransactionsTable : UUIDTable("bank_transactions") {
     val isPending = bool("is_pending").default(false)
 
     // Reconciliation
-    val expenseId = uuid("expense_id").nullable()
-    val invoiceId = uuid("invoice_id").nullable()
+    val expenseId = reference(
+        name = "expense_id",
+        foreign = ai.dokus.foundation.database.tables.cashflow.ExpensesTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
+    ).nullable()
+    val invoiceId = reference(
+        name = "invoice_id",
+        foreign = ai.dokus.foundation.database.tables.cashflow.InvoicesTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
+    ).nullable()
     val isReconciled = bool("is_reconciled").default(false)
 
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
