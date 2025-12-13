@@ -91,4 +91,67 @@
 
     <!-- Sort Dropdown -->
     <string name="sort_expand">Expand sort options</string>
+
+    <!-- Invoice Creation - General -->
+    <string name="invoice_title">Invoice</string>
+    <string name="invoice_preview">Preview</string>
+
+    <!-- Invoice Status -->
+    <string name="invoice_status_draft">Draft</string>
+    <string name="invoice_status_sent">Sent</string>
+    <string name="invoice_status_viewed">Viewed</string>
+    <string name="invoice_status_partial">Partial</string>
+    <string name="invoice_status_paid">Paid</string>
+    <string name="invoice_status_overdue">Overdue</string>
+    <string name="invoice_status_cancelled">Cancelled</string>
+    <string name="invoice_status_refunded">Refunded</string>
+
+    <!-- Invoice Creation - Sections -->
+    <string name="invoice_bill_to">Bill to</string>
+    <string name="invoice_description">Description</string>
+    <string name="invoice_qty">Qty</string>
+    <string name="invoice_price">Price</string>
+    <string name="invoice_amount">Amount</string>
+    <string name="invoice_total">Total</string>
+    <string name="invoice_subtotal">Subtotal</string>
+
+    <!-- Invoice Creation - Actions & UI -->
+    <string name="invoice_select_client">Select Client</string>
+    <string name="invoice_click_to_select_client">Click to select a client</string>
+    <string name="invoice_click_to_change">Click to change</string>
+    <string name="invoice_line_items">Line Items</string>
+    <string name="invoice_add_line_item">Add Line Item</string>
+    <string name="invoice_item_number">Item %1$d</string>
+    <string name="invoice_line_total">Line Total: %1$s</string>
+    <string name="invoice_vat_rate">VAT Rate</string>
+    <string name="invoice_remove">Remove</string>
+    <string name="invoice_save_as_draft">Save as Draft</string>
+    <string name="invoice_vat_with_rate">VAT (%1$d%%): %2$s</string>
+
+    <!-- Invoice Creation - Send Options -->
+    <string name="invoice_send_options">Send Options</string>
+    <string name="invoice_choose_delivery_method">Choose delivery method</string>
+    <string name="invoice_send_coming_soon_message">Sending features are coming soon. For now, save your invoice as a draft.</string>
+    <string name="invoice_summary">Invoice Summary</string>
+    <string name="invoice_line_items_count">%1$d line item(s)</string>
+    <string name="invoice_coming_soon">Coming soon</string>
+    <string name="invoice_not_selected">Not selected</string>
+    <string name="invoice_not_set">Not set</string>
+
+    <!-- Delivery Methods -->
+    <string name="delivery_export_pdf">Export as PDF</string>
+    <string name="delivery_send_peppol">Send via Peppol</string>
+    <string name="delivery_send_email">Send via Email</string>
+    <string name="delivery_pdf_description">Download invoice as PDF file</string>
+    <string name="delivery_peppol_description">Send e-invoice directly to client</string>
+    <string name="delivery_peppol_warning">Client does not have Peppol ID configured</string>
+    <string name="delivery_email_description">Send PDF invoice by email</string>
+
+    <!-- Peppol Warnings -->
+    <string name="peppol_id_missing">Peppol ID Missing</string>
+    <string name="peppol_belgian_client_warning">This Belgian client needs a Peppol ID for e-invoicing (mandatory from 2026)</string>
+    <string name="peppol_belgian_client_warning_short">Belgian client without Peppol ID - e-invoicing required from 2026</string>
+
+    <!-- Errors -->
+    <string name="error_failed_to_load_clients">Failed to load clients</string>
 </resources>

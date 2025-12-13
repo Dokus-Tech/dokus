@@ -5,7 +5,7 @@ import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun InvoiceFormCard(
     formState: CreateInvoiceFormState,
-    clientsState: DokusState<List<ClientDto>>,
+    clientsState: DokusState<List<ContactDto>>,
     saveState: DokusState<*>,
-    onSelectClient: (ClientDto?) -> Unit,
+    onSelectClient: (ContactDto?) -> Unit,
     onUpdateNotes: (String) -> Unit,
     onAddLineItem: () -> Unit,
     onRemoveLineItem: (String) -> Unit,

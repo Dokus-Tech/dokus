@@ -2,16 +2,29 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_amount
+import ai.dokus.app.resources.generated.invoice_bill_to
+import ai.dokus.app.resources.generated.invoice_description
+import ai.dokus.app.resources.generated.invoice_due_date
+import ai.dokus.app.resources.generated.invoice_issue_date
+import ai.dokus.app.resources.generated.invoice_no_items
+import ai.dokus.app.resources.generated.invoice_price
+import ai.dokus.app.resources.generated.invoice_qty
+import ai.dokus.app.resources.generated.invoice_select_client
+import ai.dokus.app.resources.generated.invoice_subtotal
+import ai.dokus.app.resources.generated.invoice_total
+import ai.dokus.app.resources.generated.invoice_vat
+import ai.dokus.foundation.design.components.PDashedDivider
+import ai.dokus.foundation.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -26,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Displays an invoice preview that looks like a real paper invoice.
@@ -47,33 +61,8 @@ fun InvoiceSummaryCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Invoice header with accent color
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "INVOICE",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        letterSpacing = 2.sp
-                    )
-                    Text(
-                        text = "PREVIEW",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                        letterSpacing = 1.sp
-                    )
-                }
-            }
+            // Invoice header
+            InvoiceDocumentHeader(status = InvoiceStatus.Draft)
 
             // Invoice content
             Column(
@@ -87,14 +76,14 @@ fun InvoiceSummaryCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "BILL TO",
+                        text = stringResource(Res.string.invoice_bill_to).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 1.sp
                     )
                     Text(
-                        text = formState.selectedClient?.name?.value ?: "Select a client",
+                        text = formState.selectedClient?.name?.value ?: stringResource(Res.string.invoice_select_client),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = if (formState.selectedClient != null) {
@@ -115,7 +104,7 @@ fun InvoiceSummaryCard(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "ISSUE DATE",
+                            text = stringResource(Res.string.invoice_issue_date).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium,
@@ -132,7 +121,7 @@ fun InvoiceSummaryCard(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "DUE DATE",
+                            text = stringResource(Res.string.invoice_due_date).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium,
@@ -155,7 +144,7 @@ fun InvoiceSummaryCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "DESCRIPTION",
+                        text = stringResource(Res.string.invoice_description).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
@@ -163,7 +152,7 @@ fun InvoiceSummaryCard(
                         modifier = Modifier.weight(2f)
                     )
                     Text(
-                        text = "QTY",
+                        text = stringResource(Res.string.invoice_qty).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
@@ -172,7 +161,7 @@ fun InvoiceSummaryCard(
                         modifier = Modifier.weight(0.5f)
                     )
                     Text(
-                        text = "PRICE",
+                        text = stringResource(Res.string.invoice_price).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
@@ -181,7 +170,7 @@ fun InvoiceSummaryCard(
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = "AMOUNT",
+                        text = stringResource(Res.string.invoice_amount).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
@@ -195,7 +184,7 @@ fun InvoiceSummaryCard(
                 val validItems = formState.items.filter { it.description.isNotBlank() || it.unitPriceDouble > 0 }
                 if (validItems.isEmpty()) {
                     Text(
-                        text = "No items added yet",
+                        text = stringResource(Res.string.invoice_no_items),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -214,18 +203,18 @@ fun InvoiceSummaryCard(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     InvoiceTotalRow(
-                        label = "Subtotal",
+                        label = stringResource(Res.string.invoice_subtotal),
                         value = formState.subtotal
                     )
                     InvoiceTotalRow(
-                        label = "VAT",
+                        label = stringResource(Res.string.invoice_vat),
                         value = formState.vatAmount
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     // Dashed divider effect
-                    DashedDivider()
+                    PDashedDivider()
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -240,7 +229,7 @@ fun InvoiceSummaryCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "TOTAL",
+                            text = stringResource(Res.string.invoice_total).uppercase(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -301,49 +290,6 @@ private fun InvoiceLineItemRow(
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
-    }
-}
-
-@Composable
-private fun InvoiceTotalRow(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-private fun DashedDivider(
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        repeat(30) {
-            Box(
-                modifier = Modifier
-                    .width(6.dp)
-                    .height(1.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-        }
     }
 }
 
