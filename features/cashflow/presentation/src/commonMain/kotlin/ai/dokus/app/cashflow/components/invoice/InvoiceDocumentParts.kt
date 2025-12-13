@@ -26,16 +26,14 @@ import androidx.compose.ui.unit.sp
  * Invoice header with INVOICE title and status badge.
  * Used in the interactive invoice document.
  *
- * @param status The invoice status to display. Pass null for preview mode.
+ * @param status The invoice status to display
  * @param modifier Modifier for the header
  */
 @Composable
 internal fun InvoiceDocumentHeader(
-    status: InvoiceStatus? = InvoiceStatus.Draft,
+    status: InvoiceStatus = InvoiceStatus.Draft,
     modifier: Modifier = Modifier
 ) {
-    val displayText = status?.localized ?: "PREVIEW"
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -55,7 +53,7 @@ internal fun InvoiceDocumentHeader(
                 letterSpacing = 2.sp
             )
             Text(
-                text = displayText,
+                text = status.localized,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                 letterSpacing = 1.sp

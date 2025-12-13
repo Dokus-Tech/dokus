@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.components.invoice
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
 import ai.dokus.foundation.design.components.PDashedDivider
+import ai.dokus.foundation.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,7 +48,7 @@ fun InvoiceSummaryCard(
             modifier = Modifier.fillMaxWidth()
         ) {
             // Invoice header
-            InvoiceDocumentHeader(status = null)
+            InvoiceDocumentHeader(status = InvoiceStatus.Draft)
 
             // Invoice content
             Column(
