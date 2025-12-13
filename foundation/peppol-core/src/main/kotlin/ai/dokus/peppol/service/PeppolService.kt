@@ -1,6 +1,7 @@
 package ai.dokus.peppol.service
 
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
+import ai.dokus.foundation.database.repository.peppol.PeppolSettingsWithCredentials
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.foundation.domain.enums.PeppolDocumentType
 import ai.dokus.foundation.domain.enums.PeppolStatus
@@ -28,7 +29,6 @@ import ai.dokus.peppol.validator.PeppolValidator
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
@@ -83,7 +83,12 @@ class PeppolService(
         logger.info("Deleting Peppol settings for tenant: $tenantId")
         return settingsRepository.deleteSettings(tenantId)
             .onSuccess { logger.info("Peppol settings deleted for tenant: $tenantId") }
-            .onFailure { logger.error("Failed to delete Peppol settings for tenant: $tenantId", it) }
+            .onFailure {
+                logger.error(
+                    "Failed to delete Peppol settings for tenant: $tenantId",
+                    it
+                )
+            }
     }
 
     /**
@@ -241,7 +246,8 @@ class PeppolService(
             for (inboxItem in inboxItems) {
                 try {
                     // Validate incoming document
-                    val validationResult = validator.validateIncoming(inboxItem.id, inboxItem.senderPeppolId)
+                    val validationResult =
+                        validator.validateIncoming(inboxItem.id, inboxItem.senderPeppolId)
                     if (!validationResult.isValid) {
                         logger.warn("Skipping invalid incoming document ${inboxItem.id}: ${validationResult.errors}")
                         continue
@@ -259,7 +265,8 @@ class PeppolService(
                     ).getOrThrow()
 
                     // Convert to bill request
-                    val createBillRequest = mapper.toCreateBillRequest(fullDocument, inboxItem.senderPeppolId)
+                    val createBillRequest =
+                        mapper.toCreateBillRequest(fullDocument, inboxItem.senderPeppolId)
 
                     // Create bill via callback
                     val bill = createBillCallback(createBillRequest, tenantId).getOrThrow()
@@ -282,7 +289,8 @@ class PeppolService(
                     ).getOrThrow()
 
                     // Mark as read in provider
-                    provider.markAsRead(inboxItem.id).getOrNull()  // Ignore errors on marking as read
+                    provider.markAsRead(inboxItem.id)
+                        .getOrNull()  // Ignore errors on marking as read
 
                     processedDocuments.add(
                         ProcessedPeppolDocument(
@@ -367,7 +375,7 @@ class PeppolService(
     /**
      * Create a provider from decrypted credentials.
      */
-    private fun createProvider(credentials: ai.dokus.foundation.database.repository.peppol.PeppolSettingsWithCredentials): PeppolProvider {
+    private fun createProvider(credentials: PeppolSettingsWithCredentials): PeppolProvider {
         // For now, we only support Recommand
         // In the future, we can read provider_id from settings
         val recommandCredentials = RecommandCredentials(
