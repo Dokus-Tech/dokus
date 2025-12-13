@@ -3,7 +3,6 @@ package ai.dokus.app.cashflow.components.invoice
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.DeliveryMethodOption
 import ai.dokus.app.cashflow.viewmodel.InvoiceDeliveryMethod
-import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
 import ai.dokus.app.cashflow.viewmodel.deliveryMethod
 import ai.dokus.app.cashflow.viewmodel.iconized
 import ai.dokus.app.cashflow.viewmodel.isComingSoon
@@ -15,9 +14,6 @@ import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
-import ai.dokus.foundation.domain.ids.ClientId
-import ai.dokus.foundation.domain.model.ClientDto
-import ai.dokus.foundation.domain.model.ClientName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,7 +48,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
@@ -366,35 +361,6 @@ private fun InvoiceMiniSummary(
 // Previews
 // =============================================================================
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-private fun getSampleFormState() = CreateInvoiceFormState(
-    selectedClient = ClientDto(
-        id = ClientId.generate(),
-        name = ClientName("Acme Corporation"),
-        email = "billing@acme.com",
-        vatNumber = "BE0123456789",
-        peppolId = "0208:0123456789",
-        isPeppolEnabled = true,
-        street = "123 Business Street",
-        city = "Brussels",
-        postalCode = "1000",
-        country = "Belgium",
-        phone = null,
-        notes = null
-    ),
-    issueDate = LocalDate(2024, 12, 13),
-    dueDate = LocalDate(2025, 1, 13),
-    items = listOf(
-        InvoiceLineItem(
-            id = "1",
-            description = "Web Development",
-            quantity = 40.0,
-            unitPrice = "85.00",
-            vatRatePercent = 21
-        )
-    )
-)
-
 @Preview
 @Composable
 fun InvoiceSendOptionsPanelPreview(
@@ -402,7 +368,7 @@ fun InvoiceSendOptionsPanelPreview(
 ) {
     TestWrapper(parameters) {
         InvoiceSendOptionsPanel(
-            formState = getSampleFormState(),
+            formState = Mocks.sampleFormState,
             selectedMethod = InvoiceDeliveryMethod.PDF_EXPORT,
             onMethodSelected = {},
             onSaveAsDraft = {},

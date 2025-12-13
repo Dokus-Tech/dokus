@@ -5,7 +5,7 @@ import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

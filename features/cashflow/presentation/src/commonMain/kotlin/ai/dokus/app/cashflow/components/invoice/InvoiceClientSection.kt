@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun InvoiceClientSection(
-    client: ClientDto?,
+    client: ContactDto?,
     showPeppolWarning: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
