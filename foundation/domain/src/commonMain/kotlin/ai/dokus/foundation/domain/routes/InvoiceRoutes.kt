@@ -9,8 +9,8 @@ import kotlinx.serialization.Serializable
  * Type-safe route definitions for Invoice API.
  * Base path: /api/v1/invoices
  *
- * Uses Ktor Resources nested class pattern where child classes
- * reference their parent for path inheritance.
+ * SECURITY: All operations are scoped to the authenticated user's tenant via JWT.
+ * Tenant filtering is enforced server-side on every query.
  */
 @Serializable
 @Resource("/api/v1/invoices")
@@ -29,49 +29,47 @@ class Invoices(
     class Overdue(val parent: Invoices = Invoices())
 
     /**
-     * POST /api/v1/invoices/calculate-totals - Calculate invoice totals
-     */
-    @Serializable
-    @Resource("calculate-totals")
-    class CalculateTotals(val parent: Invoices = Invoices())
-
-    /**
      * /api/v1/invoices/{id} - Single invoice operations
+     * GET - Retrieve invoice
+     * PUT - Replace invoice
+     * PATCH - Partial update
+     * DELETE - Delete invoice
      */
     @Serializable
     @Resource("{id}")
     class Id(val parent: Invoices = Invoices(), val id: String) {
 
         /**
-         * PATCH /api/v1/invoices/{id}/status - Update invoice status
+         * GET/PATCH /api/v1/invoices/{id}/status
+         * GET - Get current status
+         * PATCH - Update status (e.g., DRAFT -> SENT, mark as sent)
          */
         @Serializable
         @Resource("status")
         class Status(val parent: Id)
 
         /**
-         * POST /api/v1/invoices/{id}/payments - Record payment
+         * GET/POST /api/v1/invoices/{id}/payments
+         * GET - List payments for this invoice
+         * POST - Record a new payment
          */
         @Serializable
         @Resource("payments")
         class Payments(val parent: Id)
 
         /**
-         * POST /api/v1/invoices/{id}/send-email - Send invoice via email
+         * GET/POST /api/v1/invoices/{id}/emails
+         * GET - List sent emails for this invoice
+         * POST - Send invoice via email (creates email delivery record)
          */
         @Serializable
-        @Resource("send-email")
-        class SendEmail(val parent: Id)
+        @Resource("emails")
+        class Emails(val parent: Id)
 
         /**
-         * POST /api/v1/invoices/{id}/mark-sent - Mark invoice as sent
-         */
-        @Serializable
-        @Resource("mark-sent")
-        class MarkSent(val parent: Id)
-
-        /**
-         * GET/POST /api/v1/invoices/{id}/attachments - List or upload attachments
+         * GET/POST /api/v1/invoices/{id}/attachments
+         * GET - List attachments
+         * POST - Upload attachment
          */
         @Serializable
         @Resource("attachments")
