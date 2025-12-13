@@ -5,17 +5,18 @@ import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.routes.Account
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.client.request.post
+import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 /**
  * HTTP implementation of AccountRemoteDataSource.
- * Uses authenticated Ktor HttpClient to communicate with the account service.
+ * Uses authenticated Ktor HttpClient with type-safe routing to communicate with the account service.
  */
 internal class AccountRemoteDataSourceImpl(
     private val httpClient: HttpClient,
@@ -23,13 +24,13 @@ internal class AccountRemoteDataSourceImpl(
 
     override suspend fun getCurrentUser(): Result<User> {
         return runCatching {
-            httpClient.get("/api/v1/account/me").body()
+            httpClient.get(Account.Me()).body()
         }
     }
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> {
         return runCatching {
-            httpClient.post("/api/v1/account/select-tenant") {
+            httpClient.post(Account.SelectTenant()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("tenantId" to tenantId))
             }.body()
@@ -38,7 +39,7 @@ internal class AccountRemoteDataSourceImpl(
 
     override suspend fun logout(request: LogoutRequest): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/account/logout") {
+            httpClient.post(Account.Logout()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -47,7 +48,7 @@ internal class AccountRemoteDataSourceImpl(
 
     override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/account/deactivate") {
+            httpClient.post(Account.Deactivate()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -56,7 +57,7 @@ internal class AccountRemoteDataSourceImpl(
 
     override suspend fun resendVerificationEmail(): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/account/resend-verification") {
+            httpClient.post(Account.ResendVerification()) {
                 contentType(ContentType.Application.Json)
             }
         }
