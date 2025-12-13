@@ -1,11 +1,20 @@
 package ai.dokus.app.cashflow.viewmodel
 
+import ai.dokus.foundation.design.Res
+import ai.dokus.foundation.design.delivery_email_description
+import ai.dokus.foundation.design.delivery_export_pdf
+import ai.dokus.foundation.design.delivery_pdf_description
+import ai.dokus.foundation.design.delivery_peppol_description
+import ai.dokus.foundation.design.delivery_peppol_warning
+import ai.dokus.foundation.design.delivery_send_email
+import ai.dokus.foundation.design.delivery_send_peppol
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Sealed interface representing available delivery method options for invoices.
@@ -57,9 +66,9 @@ sealed interface DeliveryMethodOption {
  */
 val DeliveryMethodOption.localized: String
     @Composable get() = when (this) {
-        is DeliveryMethodOption.PdfExport -> "Export as PDF"
-        is DeliveryMethodOption.Peppol -> "Send via Peppol"
-        is DeliveryMethodOption.Email -> "Send via Email"
+        is DeliveryMethodOption.PdfExport -> stringResource(Res.string.delivery_export_pdf)
+        is DeliveryMethodOption.Peppol -> stringResource(Res.string.delivery_send_peppol)
+        is DeliveryMethodOption.Email -> stringResource(Res.string.delivery_send_email)
     }
 
 /**
@@ -78,13 +87,13 @@ val DeliveryMethodOption.iconized: ImageVector
  */
 val DeliveryMethodOption.localizedDescription: String
     @Composable get() = when (this) {
-        is DeliveryMethodOption.PdfExport -> "Download invoice as PDF file"
+        is DeliveryMethodOption.PdfExport -> stringResource(Res.string.delivery_pdf_description)
         is DeliveryMethodOption.Peppol -> if (hasWarning) {
-            "Client does not have Peppol ID configured"
+            stringResource(Res.string.delivery_peppol_warning)
         } else {
-            "Send e-invoice directly to client"
+            stringResource(Res.string.delivery_peppol_description)
         }
-        is DeliveryMethodOption.Email -> "Send PDF invoice by email"
+        is DeliveryMethodOption.Email -> stringResource(Res.string.delivery_email_description)
     }
 
 /**
