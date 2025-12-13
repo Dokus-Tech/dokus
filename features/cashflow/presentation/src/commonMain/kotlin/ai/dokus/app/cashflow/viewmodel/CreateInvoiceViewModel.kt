@@ -234,23 +234,14 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
 
     fun loadClients() {
         scope.launch {
-            logger.d { "Loading clients for invoice creation" }
+            logger.d { "Loading contacts for invoice creation" }
             _clientsState.value = DokusState.loading()
 
-            dataSource.listClients(
-                activeOnly = true,
-                limit = 100,
-                offset = 0
-            ).fold(
-                onSuccess = { response ->
-                    logger.d { "Loaded ${response.items.size} clients" }
-                    _clientsState.value = DokusState.success(response.items)
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load clients" }
-                    _clientsState.value = DokusState.error(error) { loadClients() }
-                }
-            )
+            // TODO: Replace with contacts data source when available
+            // Contacts are now managed by the contacts microservice
+            // For now, return empty list until contacts data layer is implemented
+            logger.w { "Contacts data source not yet implemented - returning empty list" }
+            _clientsState.value = DokusState.success(emptyList())
         }
     }
 
@@ -481,7 +472,7 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
             mutableState.emitLoading()
 
             val request = CreateInvoiceRequest(
-                clientId = form.selectedClient!!.id,
+                contactId = form.selectedClient!!.id,
                 items = form.items.filter { it.isValid }.mapIndexed { index, item ->
                     InvoiceItemDto(
                         description = item.description,
