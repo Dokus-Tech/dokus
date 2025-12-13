@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.screens
 import ai.dokus.app.cashflow.components.invoice.InvoiceFormCard
 import ai.dokus.app.cashflow.components.invoice.InvoiceSummaryCard
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceViewModel
+import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +24,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -60,21 +60,15 @@ internal fun CreateInvoiceScreen(
         if (isLargeScreen) {
             DesktopLayout(
                 contentPadding = contentPadding,
+                onBackPress = { navController.popBackStack() },
                 descriptionContent = {
-                    Text(
-                        text = "Create a new invoice",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
                     Text(
                         text = "Fill in the details to create an invoice for your client. You can save it as a draft or send it directly via Peppol.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     InvoiceSummaryCard(formState = formState)
                 },
@@ -98,14 +92,8 @@ internal fun CreateInvoiceScreen(
         } else {
             MobileLayout(
                 contentPadding = contentPadding,
+                onBackPress = { navController.popBackStack() },
                 content = {
-                    Text(
-                        text = "Create a new invoice",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
                     Text(
                         text = "Fill in the details to create an invoice for your client.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -139,6 +127,7 @@ internal fun CreateInvoiceScreen(
 @Composable
 private fun DesktopLayout(
     contentPadding: PaddingValues,
+    onBackPress: () -> Unit,
     descriptionContent: @Composable () -> Unit,
     formContent: @Composable () -> Unit
 ) {
@@ -156,6 +145,10 @@ private fun DesktopLayout(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            SectionTitle(
+                text = "Create a new invoice",
+                onBackPress = onBackPress
+            )
             descriptionContent()
         }
 
@@ -173,6 +166,7 @@ private fun DesktopLayout(
 @Composable
 private fun MobileLayout(
     contentPadding: PaddingValues,
+    onBackPress: () -> Unit,
     content: @Composable () -> Unit
 ) {
     Column(
@@ -183,6 +177,10 @@ private fun MobileLayout(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        SectionTitle(
+            text = "Create a new invoice",
+            onBackPress = onBackPress
+        )
         content()
     }
 }
