@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.components.invoice
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.DeliveryMethodOption
 import ai.dokus.app.cashflow.viewmodel.InvoiceDeliveryMethod
+import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
 import ai.dokus.app.cashflow.viewmodel.deliveryMethod
 import ai.dokus.app.cashflow.viewmodel.iconized
 import ai.dokus.app.cashflow.viewmodel.isComingSoon
@@ -11,6 +12,12 @@ import ai.dokus.app.cashflow.viewmodel.localized
 import ai.dokus.app.cashflow.viewmodel.localizedDescription
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
+import ai.dokus.foundation.design.tooling.PreviewParameters
+import ai.dokus.foundation.design.tooling.PreviewParametersProvider
+import ai.dokus.foundation.design.tooling.TestWrapper
+import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ClientName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,6 +52,9 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
 /**
  * Side panel for send options in the invoice creation flow (desktop).
