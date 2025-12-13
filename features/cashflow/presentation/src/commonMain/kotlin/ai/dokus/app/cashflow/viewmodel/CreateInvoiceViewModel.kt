@@ -16,6 +16,7 @@ import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -23,16 +24,66 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import kotlin.math.absoluteValue
+import kotlin.math.round
+import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import kotlin.math.absoluteValue
-import kotlin.math.round
-import kotlin.random.Random
+
+// ============================================================================
+// DELIVERY METHOD
+// ============================================================================
 
 /**
- * State representing the invoice creation form.
+ * Available delivery methods for sending invoices.
+ */
+enum class InvoiceDeliveryMethod {
+    PDF_EXPORT,
+    PEPPOL,
+    EMAIL
+}
+
+// ============================================================================
+// UI STATE
+// ============================================================================
+
+/**
+ * UI state for the interactive invoice editor.
+ * Separate from form data to keep concerns isolated.
+ */
+data class CreateInvoiceUiState(
+    val expandedItemId: String? = null,
+    val isClientPanelOpen: Boolean = false,
+    val clientSearchQuery: String = "",
+    val selectedDeliveryMethod: InvoiceDeliveryMethod = InvoiceDeliveryMethod.PDF_EXPORT,
+    val isDatePickerOpen: DatePickerTarget? = null,
+    val currentStep: InvoiceCreationStep = InvoiceCreationStep.EDIT_INVOICE
+)
+
+/**
+ * Which date picker is currently open.
+ */
+enum class DatePickerTarget {
+    ISSUE_DATE,
+    DUE_DATE
+}
+
+/**
+ * Steps in the invoice creation flow (for mobile).
+ */
+enum class InvoiceCreationStep {
+    EDIT_INVOICE,
+    SEND_OPTIONS
+}
+
+// ============================================================================
+// FORM STATE
+// ============================================================================
+
+/**
+ * State representing the invoice creation form data.
  */
 data class CreateInvoiceFormState(
     val selectedClient: ClientDto? = null,
@@ -64,6 +115,25 @@ data class CreateInvoiceFormState(
 
     val isValid: Boolean
         get() = selectedClient != null && items.any { it.isValid }
+
+    /**
+     * Check if selected client is Belgian (for Peppol validation).
+     */
+    val isClientBelgian: Boolean
+        get() = selectedClient?.country?.equals("BE", ignoreCase = true) == true ||
+                selectedClient?.country?.equals("Belgium", ignoreCase = true) == true
+
+    /**
+     * Check if selected client has Peppol ID configured.
+     */
+    val clientHasPeppolId: Boolean
+        get() = selectedClient?.peppolId != null
+
+    /**
+     * Show Peppol warning for Belgian clients without Peppol ID.
+     */
+    val showPeppolWarning: Boolean
+        get() = isClientBelgian && !clientHasPeppolId && selectedClient != null
 }
 
 /**
@@ -93,13 +163,16 @@ data class InvoiceLineItem(
 
     val isValid: Boolean
         get() = description.isNotBlank() && quantity > 0 && unitPriceDouble > 0
+
+    val isEmpty: Boolean
+        get() = description.isBlank() && unitPrice.isBlank()
 }
 
 /**
  * Format a double value as money (e.g., "€123.45").
  * Multiplatform-compatible formatting.
  */
-private fun formatMoney(value: Double): String {
+internal fun formatMoney(value: Double): String {
     val rounded = round(value * 100) / 100
     val isNegative = rounded < 0
     val absValue = rounded.absoluteValue
@@ -109,22 +182,30 @@ private fun formatMoney(value: Double): String {
     return "$sign€$intPart.${decPart.toString().padStart(2, '0')}"
 }
 
+// ============================================================================
+// VIEW MODEL
+// ============================================================================
+
 /**
  * ViewModel for creating a new invoice.
- * Handles form state, client selection, line items, and API calls.
+ * Handles form state, UI state, client selection, line items, and API calls.
  */
 class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.InvoiceDto>>(DokusState.idle()), KoinComponent {
 
     private val logger = Logger.forClass<CreateInvoiceViewModel>()
     private val dataSource: CashflowRemoteDataSource by inject()
 
-    // Clients state for selection dropdown
+    // Clients state for selection
     private val _clientsState = MutableStateFlow<DokusState<List<ClientDto>>>(DokusState.idle())
     val clientsState: StateFlow<DokusState<List<ClientDto>>> = _clientsState.asStateFlow()
 
-    // Form state
+    // Form state (invoice data)
     private val _formState = MutableStateFlow(createInitialFormState())
     val formState: StateFlow<CreateInvoiceFormState> = _formState.asStateFlow()
+
+    // UI state (interaction state)
+    private val _uiState = MutableStateFlow(CreateInvoiceUiState())
+    val uiState: StateFlow<CreateInvoiceUiState> = _uiState.asStateFlow()
 
     // Created invoice ID (for navigation after save)
     private val _createdInvoiceId = MutableStateFlow<InvoiceId?>(null)
@@ -133,10 +214,15 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     @OptIn(ExperimentalTime::class)
     private fun createInitialFormState(): CreateInvoiceFormState {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val firstItem = InvoiceLineItem()
         return CreateInvoiceFormState(
             issueDate = today,
-            dueDate = today.plus(30, DateTimeUnit.DAY)
-        )
+            dueDate = today.plus(30, DateTimeUnit.DAY),
+            items = listOf(firstItem)
+        ).also {
+            // First item is expanded by default
+            _uiState.update { ui -> ui.copy(expandedItemId = firstItem.id) }
+        }
     }
 
     init {
@@ -144,13 +230,9 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     }
 
     // ========================================================================
-    // CLIENT LOADING
+    // CLIENT LOADING & FILTERING
     // ========================================================================
 
-    /**
-     * Load clients for the selection dropdown.
-     * Only loads active clients.
-     */
     fun loadClients() {
         scope.launch {
             logger.d { "Loading clients for invoice creation" }
@@ -173,32 +255,99 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
         }
     }
 
+    /**
+     * Get filtered clients based on search query.
+     */
+    fun getFilteredClients(): List<ClientDto> {
+        val clients = (_clientsState.value as? DokusState.Success)?.data ?: return emptyList()
+        val query = _uiState.value.clientSearchQuery.trim().lowercase()
+        if (query.isBlank()) return clients
+
+        return clients.filter { client ->
+            client.name.value.lowercase().contains(query) ||
+            client.email?.value?.lowercase()?.contains(query) == true ||
+            client.vatNumber?.value?.lowercase()?.contains(query) == true
+        }
+    }
+
+    fun updateClientSearchQuery(query: String) {
+        _uiState.update { it.copy(clientSearchQuery = query) }
+    }
+
     // ========================================================================
-    // FORM STATE UPDATES
+    // CLIENT PANEL
     // ========================================================================
 
-    fun selectClient(client: ClientDto?) {
+    fun openClientPanel() {
+        _uiState.update { it.copy(isClientPanelOpen = true, clientSearchQuery = "") }
+    }
+
+    fun closeClientPanel() {
+        _uiState.update { it.copy(isClientPanelOpen = false, clientSearchQuery = "") }
+    }
+
+    fun selectClientAndClose(client: ClientDto) {
         _formState.update { it.copy(selectedClient = client, errors = it.errors - "client") }
+        closeClientPanel()
     }
 
-    fun updateIssueDate(date: LocalDate) {
-        _formState.update { it.copy(issueDate = date) }
+    // ========================================================================
+    // DATE PICKERS
+    // ========================================================================
+
+    fun openIssueDatePicker() {
+        _uiState.update { it.copy(isDatePickerOpen = DatePickerTarget.ISSUE_DATE) }
     }
 
-    fun updateDueDate(date: LocalDate) {
-        _formState.update { it.copy(dueDate = date) }
+    fun openDueDatePicker() {
+        _uiState.update { it.copy(isDatePickerOpen = DatePickerTarget.DUE_DATE) }
     }
 
-    fun updateNotes(notes: String) {
-        _formState.update { it.copy(notes = notes) }
+    fun closeDatePicker() {
+        _uiState.update { it.copy(isDatePickerOpen = null) }
+    }
+
+    fun selectDate(date: LocalDate) {
+        val target = _uiState.value.isDatePickerOpen ?: return
+        when (target) {
+            DatePickerTarget.ISSUE_DATE -> _formState.update { it.copy(issueDate = date) }
+            DatePickerTarget.DUE_DATE -> _formState.update { it.copy(dueDate = date) }
+        }
+        closeDatePicker()
+    }
+
+    // ========================================================================
+    // LINE ITEMS - EXPAND/COLLAPSE
+    // ========================================================================
+
+    fun expandItem(itemId: String) {
+        _uiState.update { it.copy(expandedItemId = itemId) }
+    }
+
+    fun collapseItem() {
+        _uiState.update { it.copy(expandedItemId = null) }
+    }
+
+    fun toggleItemExpanded(itemId: String) {
+        _uiState.update {
+            if (it.expandedItemId == itemId) {
+                it.copy(expandedItemId = null)
+            } else {
+                it.copy(expandedItemId = itemId)
+            }
+        }
     }
 
     // ========================================================================
     // LINE ITEMS MANAGEMENT
     // ========================================================================
 
-    fun addLineItem() {
-        _formState.update { it.copy(items = it.items + InvoiceLineItem()) }
+    fun addLineItem(): String {
+        val newItem = InvoiceLineItem()
+        _formState.update { it.copy(items = it.items + newItem) }
+        // Expand the new item
+        _uiState.update { it.copy(expandedItemId = newItem.id) }
+        return newItem.id
     }
 
     fun removeLineItem(itemId: String) {
@@ -206,6 +355,10 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
             val newItems = state.items.filter { it.id != itemId }
             // Ensure at least one item exists
             state.copy(items = if (newItems.isEmpty()) listOf(InvoiceLineItem()) else newItems)
+        }
+        // If removed item was expanded, collapse
+        if (_uiState.value.expandedItemId == itemId) {
+            _uiState.update { it.copy(expandedItemId = _formState.value.items.firstOrNull()?.id) }
         }
     }
 
@@ -234,6 +387,54 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
 
     fun updateItemVatRate(itemId: String, vatRatePercent: Int) {
         updateLineItem(itemId) { it.copy(vatRatePercent = vatRatePercent) }
+    }
+
+    // ========================================================================
+    // FORM STATE UPDATES
+    // ========================================================================
+
+    fun selectClient(client: ClientDto?) {
+        _formState.update { it.copy(selectedClient = client, errors = it.errors - "client") }
+    }
+
+    fun updateIssueDate(date: LocalDate) {
+        _formState.update { it.copy(issueDate = date) }
+    }
+
+    fun updateDueDate(date: LocalDate) {
+        _formState.update { it.copy(dueDate = date) }
+    }
+
+    fun updateNotes(notes: String) {
+        _formState.update { it.copy(notes = notes) }
+    }
+
+    // ========================================================================
+    // DELIVERY METHOD
+    // ========================================================================
+
+    fun selectDeliveryMethod(method: InvoiceDeliveryMethod) {
+        _uiState.update { it.copy(selectedDeliveryMethod = method) }
+    }
+
+    /**
+     * Check if Peppol delivery is available for current client.
+     */
+    fun isPeppolAvailable(): Boolean {
+        val form = _formState.value
+        return form.selectedClient != null && form.clientHasPeppolId
+    }
+
+    // ========================================================================
+    // MOBILE NAVIGATION
+    // ========================================================================
+
+    fun goToSendOptions() {
+        _uiState.update { it.copy(currentStep = InvoiceCreationStep.SEND_OPTIONS) }
+    }
+
+    fun goBackToEditInvoice() {
+        _uiState.update { it.copy(currentStep = InvoiceCreationStep.EDIT_INVOICE) }
     }
 
     // ========================================================================
@@ -324,8 +525,16 @@ class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocumentDto.Inv
     /**
      * Reset the form to initial state.
      */
+    @OptIn(ExperimentalTime::class)
     fun resetForm() {
-        _formState.value = createInitialFormState()
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val firstItem = InvoiceLineItem()
+        _formState.value = CreateInvoiceFormState(
+            issueDate = today,
+            dueDate = today.plus(30, DateTimeUnit.DAY),
+            items = listOf(firstItem)
+        )
+        _uiState.value = CreateInvoiceUiState(expandedItemId = firstItem.id)
         _createdInvoiceId.value = null
         mutableState.value = DokusState.idle()
     }
