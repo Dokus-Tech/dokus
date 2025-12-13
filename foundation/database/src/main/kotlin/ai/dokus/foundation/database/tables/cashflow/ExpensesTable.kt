@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
+import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.ktor.database.dbEnumeration
@@ -36,6 +37,9 @@ object ExpensesTable : UUIDTable("expenses") {
 
     // Document attachment (references DocumentsTable)
     val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
+
+    // Contact (vendor) reference
+    val contactId = uuid("contact_id").references(ContactsTable.id).nullable().index()
 
     // Tax deduction
     val isDeductible = bool("is_deductible").default(true)

@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
+import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.ExpenseCategory
@@ -52,6 +53,9 @@ object BillsTable : UUIDTable("bills") {
 
     // Document attachment (references DocumentsTable)
     val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
+
+    // Contact (vendor) reference
+    val contactId = uuid("contact_id").references(ContactsTable.id).nullable().index()
 
     // Payment tracking
     val paidAt = datetime("paid_at").nullable()
