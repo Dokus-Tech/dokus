@@ -63,11 +63,25 @@ jobs:
           echo "Building Kotlin/WASM production bundle..."
           ./gradlew :composeApp:wasmJsBrowserProductionWebpack -x test
 
-      - name: 📊 Show build size
+      - name: 📊 Verify build output
         run: |
+          echo "📊 Verifying build output..."
+          if [ ! -d "composeApp/build/dist/wasmJs/productionExecutable" ]; then
+            echo "❌ Build output directory not found!"
+            echo "Checking available directories..."
+            find composeApp/build -type d -name "*wasm*" 2>/dev/null || echo "No wasm directories found"
+            find composeApp/build -type d -name "*dist*" 2>/dev/null || echo "No dist directories found"
+            exit 1
+          fi
           echo "📊 Build output size:"
-          du -sh composeApp/build/dist/wasmJs/productionExecutable/ || echo "Build directory not found"
-          ls -la composeApp/build/dist/wasmJs/productionExecutable/ || echo "No files found"
+          du -sh composeApp/build/dist/wasmJs/productionExecutable/
+          echo "📊 Build output contents:"
+          ls -la composeApp/build/dist/wasmJs/productionExecutable/
+          if [ ! -f "composeApp/build/dist/wasmJs/productionExecutable/index.html" ]; then
+            echo "❌ index.html not found in build output!"
+            exit 1
+          fi
+          echo "✅ Build output verified"
 
       - name: 📦 Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -75,6 +89,7 @@ jobs:
           name: wasm-bundle
           path: composeApp/build/dist/wasmJs/productionExecutable/
           retention-days: 1
+          if-no-files-found: error
 
   # Build and push Docker image
   build-docker:
