@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.metrics.micrometer)
+    implementation(libs.ktor.server.resources)
 
     // Ktor Client (for AI API calls)
     implementation(libs.ktor.client.core)

@@ -36,6 +36,7 @@ kotlin {
         commonMain.dependencies {
             api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization)
+            api(libs.ktor.resources)  // Type-safe routing definitions
 
             implementation(libs.ktor.client.core)
 

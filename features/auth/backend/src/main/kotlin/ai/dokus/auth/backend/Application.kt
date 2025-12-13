@@ -13,6 +13,8 @@ import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
 import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.resources.Resources
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import org.slf4j.LoggerFactory
@@ -52,6 +54,7 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureDatabase()
 
     // Ktor plugins
+    install(Resources)
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)

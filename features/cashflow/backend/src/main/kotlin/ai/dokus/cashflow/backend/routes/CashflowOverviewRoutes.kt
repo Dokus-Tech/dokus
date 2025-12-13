@@ -2,17 +2,17 @@ package ai.dokus.cashflow.backend.routes
 
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.routes.Cashflow
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.route
 import org.koin.ktor.ext.inject
 
 /**
- * Cashflow Overview API Routes
+ * Cashflow Overview API Routes using Ktor Type-Safe Routing
  * Base path: /api/v1/cashflow
  *
  * All routes require JWT authentication and tenant context.
@@ -20,25 +20,18 @@ import org.koin.ktor.ext.inject
 fun Route.cashflowOverviewRoutes() {
     val cashflowOverviewService by inject<CashflowOverviewService>()
 
-    route("/api/v1/cashflow") {
-        authenticateJwt {
+    authenticateJwt {
+        // GET /api/v1/cashflow/overview - Get cashflow overview
+        get<Cashflow.Overview> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
 
-            // GET /api/v1/cashflow/overview - Get cashflow overview
-            get("/overview") {
-                val tenantId = dokusPrincipal.requireTenantId()
+            val overview = cashflowOverviewService.getCashflowOverview(
+                tenantId = tenantId,
+                fromDate = route.fromDate,
+                toDate = route.toDate
+            ).getOrElse { throw DokusException.InternalError("Failed to calculate overview: ${it.message}") }
 
-                // Parse period or default to current month
-                val fromDate = call.parameters.fromDate
-                val toDate = call.parameters.toDate
-
-                val overview = cashflowOverviewService.getCashflowOverview(
-                    tenantId = tenantId,
-                    fromDate = fromDate,
-                    toDate = toDate
-                ).getOrElse { throw DokusException.InternalError("Failed to calculate overview: ${it.message}") }
-
-                call.respond(HttpStatusCode.OK, overview)
-            }
+            call.respond(HttpStatusCode.OK, overview)
         }
     }
 }

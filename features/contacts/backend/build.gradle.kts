@@ -37,6 +37,7 @@ dependencies {
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.metrics.micrometer)
     implementation(libs.ktor.server.rate.limit)
+    implementation(libs.ktor.server.resources)
 
     // Database - Exposed
     implementation(libs.exposed.core)
