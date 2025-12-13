@@ -18,13 +18,13 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object InvoicesTable : UUIDTable("invoices") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id")
+    val tenantId = reference("organization_id", ai.dokus.foundation.database.tables.auth.TenantTable)
 
     // Client reference
-    val clientId = uuid("client_id")
+    val clientId = reference("client_id", ClientsTable, onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE)
 
     // Invoice identification
-    val invoiceNumber = varchar("invoice_number", 50).uniqueIndex()
+    val invoiceNumber = varchar("invoice_number", 50)
 
     // Dates
     val issueDate = date("issue_date")
@@ -73,5 +73,7 @@ object InvoicesTable : UUIDTable("invoices") {
         // Composite index for common queries
         index(false, tenantId, status)
         index(false, tenantId, clientId)
+        // Per-tenant uniqueness for invoice numbers
+        uniqueIndex(tenantId, invoiceNumber)
     }
 }

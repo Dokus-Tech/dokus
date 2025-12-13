@@ -16,7 +16,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object ExpensesTable : UUIDTable("expenses") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id")
+    val tenantId = reference(
+        name = "organization_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     // Expense details
     val date = date("date")

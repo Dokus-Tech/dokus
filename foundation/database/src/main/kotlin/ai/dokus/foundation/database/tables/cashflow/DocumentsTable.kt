@@ -22,7 +22,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object DocumentsTable : UUIDTable("documents") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id")
+    val tenantId = reference(
+        name = "organization_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     // File metadata
     val filename = varchar("filename", 255)
@@ -48,5 +52,6 @@ object DocumentsTable : UUIDTable("documents") {
 
         // Index for looking up by storage key (for cleanup operations)
         index(false, storageKey)
+        uniqueIndex(tenantId, storageKey)
     }
 }

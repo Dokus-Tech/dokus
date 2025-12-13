@@ -15,7 +15,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object AttachmentsTable : UUIDTable("attachments") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id")
+    val tenantId = reference(
+        name = "organization_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     // Generic entity reference (can attach to invoices, expenses, etc.)
     val entityType = dbEnumeration<EntityType>("entity_type")
@@ -41,5 +45,6 @@ object AttachmentsTable : UUIDTable("attachments") {
 
         // Composite index for retrieving all attachments for an entity
         index(false, tenantId, entityType, entityId)
+        uniqueIndex(tenantId, s3Key)
     }
 }

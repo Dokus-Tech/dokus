@@ -21,7 +21,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object BillsTable : UUIDTable("bills") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id")
+    val tenantId = reference(
+        name = "organization_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     // Supplier information
     val supplierName = varchar("supplier_name", 255)
@@ -72,5 +76,8 @@ object BillsTable : UUIDTable("bills") {
         index(false, tenantId, status)
         index(false, tenantId, dueDate)
         index(false, tenantId, category)
+
+        // Avoid duplicate supplier invoice numbers per tenant when provided
+        uniqueIndex(tenantId, invoiceNumber)
     }
 }
