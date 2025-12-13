@@ -4,7 +4,7 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.contacts_empty
 import ai.dokus.app.resources.generated.contacts_empty_description
 import ai.dokus.app.resources.generated.contacts_title
-import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.components.common.PTopAppBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,13 +27,8 @@ import org.jetbrains.compose.resources.stringResource
 internal fun ContactsScreen() {
     Scaffold(
         topBar = {
-            PTopAppBarSearchAction(
+            PTopAppBar(
                 title = stringResource(Res.string.contacts_title),
-                showSearch = false,
-                searchQuery = "",
-                onSearchQueryChange = {},
-                onSearchActiveChange = {},
-                actions = {}
             )
         }
     ) { paddingValues ->
