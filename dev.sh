@@ -332,7 +332,7 @@ build_app() {
     local total=${#services[@]}
     local current=0
 
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 1: Building JAR files${NC}\n"
+    echo_e "  ${SOFT_CYAN}${BOLD}Phase 1: Building Backend JAR files${NC}\n"
 
     for service in "${services[@]}"; do
         current=$((current + 1))
@@ -797,6 +797,84 @@ except:
     echo ""
 }
 
+# Function to build web WASM app
+build_web() {
+    print_gradient_header "🌐 Building Web Application"
+
+    echo_e "  ${SOFT_CYAN}${BOLD}Phase 1: Building WASM bundle${NC}\n"
+
+    print_simple_status building "Compiling Kotlin/WASM..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :composeApp:wasmJsBrowserProductionWebpack -q 2>&1 | while read line; do
+            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
+                echo "  $line"
+            fi
+        done
+    else
+        gradle :composeApp:wasmJsBrowserProductionWebpack -q 2>&1 | while read line; do
+            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
+                echo "  $line"
+            fi
+        done
+    fi
+
+    if [ $? -ne 0 ]; then
+        print_status error "Web build failed"
+        exit 1
+    fi
+    print_simple_status success "WASM bundle compiled"
+
+    echo ""
+    print_separator
+    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}Phase 2: Building Docker image${NC}\n"
+
+    print_simple_status building "Building nginx container..."
+    docker build -f composeApp/Dockerfile -t invoid-vision/dokus-web:dev-latest . -q > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "Web Docker image build failed"
+        exit 1
+    fi
+    print_simple_status success "Web image ready"
+
+    echo ""
+    echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}Web application built successfully${NC}"
+    echo ""
+}
+
+# Function to start web service
+start_web() {
+    print_gradient_header "🌐 Starting Web Application"
+
+    # Check if web image exists
+    if ! docker images | grep -q "invoid-vision/dokus-web"; then
+        print_status warning "Web image not found, building first..."
+        build_web
+    fi
+
+    # Start web service
+    print_status loading "Starting web container..."
+    docker-compose -f $COMPOSE_FILE up -d web-local
+
+    echo ""
+    printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Web Application"
+    for i in {1..30}; do
+        if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
+            echo_e "${SOFT_GREEN}◎ Ready${NC}"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
+        fi
+        echo -n "."
+        sleep 1
+    done
+
+    echo ""
+    print_status success "Web app available at http://localhost:8080"
+    echo ""
+}
+
 # Function to run tests
 run_tests() {
     service=${1:-all}
@@ -869,6 +947,9 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15013${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web App (WASM)${NC}       ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:8080${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}./dev.sh web${NC} ${SOFT_GRAY}to build${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
 
     echo ""
@@ -1016,6 +1097,18 @@ main() {
         ai-test)
             ollama_test
             ;;
+        web)
+            check_requirements
+            build_web
+            start_web
+            ;;
+        web-build)
+            check_requirements
+            build_web
+            ;;
+        web-start)
+            start_web
+            ;;
         test)
             run_tests ${2:-all}
             ;;
@@ -1054,6 +1147,9 @@ show_help() {
 
     echo_e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
     echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Create service JARs + images${NC}"
+    echo_e "    ${SOFT_CYAN}web${NC}          ${DIM_WHITE}Build + start web WASM app${NC}"
+    echo_e "    ${SOFT_CYAN}web-build${NC}    ${DIM_WHITE}Build web WASM + Docker image only${NC}"
+    echo_e "    ${SOFT_CYAN}web-start${NC}    ${DIM_WHITE}Start web container (needs prior build)${NC}"
     echo_e "    ${SOFT_CYAN}watch${NC} [svc]  ${DIM_WHITE}Auto rebuild on changes${NC}"
     echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|banking|cashflow|contacts|all)${NC}"
     echo ""
