@@ -12,7 +12,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Belgian quarterly VAT returns
  */
 object VatReturnsTable : UUIDTable("vat_returns") {
-    val tenantId = uuid("tenant_id")
+    val tenantId = reference(
+        name = "tenant_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    )
 
     val periodStart = date("period_start")
     val periodEnd = date("period_end")
