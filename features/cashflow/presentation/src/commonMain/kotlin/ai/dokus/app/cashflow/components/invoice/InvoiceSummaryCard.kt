@@ -2,16 +2,15 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
+import ai.dokus.foundation.design.components.PDashedDivider
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -47,33 +46,8 @@ fun InvoiceSummaryCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Invoice header with accent color
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "INVOICE",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        letterSpacing = 2.sp
-                    )
-                    Text(
-                        text = "PREVIEW",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                        letterSpacing = 1.sp
-                    )
-                }
-            }
+            // Invoice header
+            InvoiceDocumentHeader(statusText = "PREVIEW")
 
             // Invoice content
             Column(
@@ -225,7 +199,7 @@ fun InvoiceSummaryCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     // Dashed divider effect
-                    DashedDivider()
+                    PDashedDivider()
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -301,49 +275,6 @@ private fun InvoiceLineItemRow(
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
-    }
-}
-
-@Composable
-private fun InvoiceTotalRow(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-private fun DashedDivider(
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        repeat(30) {
-            Box(
-                modifier = Modifier
-                    .width(6.dp)
-                    .height(1.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-        }
     }
 }
 

@@ -89,8 +89,8 @@ fun InvoiceSendOptionsPanel(
                 title = "Export as PDF",
                 description = "Download invoice as PDF file",
                 isSelected = selectedMethod == InvoiceDeliveryMethod.PDF_EXPORT,
-                isEnabled = false,
-                comingSoon = true,
+                isEnabled = true,
+                comingSoon = false,
                 onClick = { onMethodSelected(InvoiceDeliveryMethod.PDF_EXPORT) }
             )
 
