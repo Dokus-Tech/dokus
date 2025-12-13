@@ -5,7 +5,7 @@ import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.MediaId
@@ -19,8 +19,8 @@ import kotlin.uuid.Uuid
  */
 
 @OptIn(ExperimentalUuidApi::class)
-val Parameters.clientId: ClientId?
-    get() = (this["clientId"] ?: this["id"])?.let { ClientId(Uuid.parse(it)) }
+val Parameters.contactId: ContactId?
+    get() = (this["contactId"] ?: this["id"])?.let { ContactId(Uuid.parse(it)) }
 
 @OptIn(ExperimentalUuidApi::class)
 val Parameters.invoiceId: InvoiceId?

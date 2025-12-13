@@ -10,7 +10,6 @@ import ai.dokus.foundation.database.repository.banking.BankingRepository
 import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
-import ai.dokus.foundation.database.repository.cashflow.ClientRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
 import ai.dokus.foundation.database.repository.contacts.ContactNoteRepository
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
@@ -48,7 +47,6 @@ val repositoryModuleCashflow = module {
     single { InvoiceRepository() }
     single { ExpenseRepository() }
     single { BillRepository() }
-    single { ClientRepository() }
     single { CashflowRepository(get(), get()) }
 }
 

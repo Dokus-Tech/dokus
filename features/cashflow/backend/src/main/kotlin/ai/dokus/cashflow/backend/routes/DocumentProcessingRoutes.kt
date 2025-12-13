@@ -10,7 +10,7 @@ import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.model.ConfirmDocumentRequest
 import ai.dokus.foundation.domain.model.ConfirmDocumentResponse
@@ -214,19 +214,19 @@ fun Route.documentProcessingRoutes() {
                         val invoiceData = extractedData.invoice
                             ?: throw DokusException.BadRequest("No invoice data extracted from document")
 
-                        // Client ID is required for invoices
-                        val clientIdStr = request.corrections?.clientId
-                            ?: throw DokusException.BadRequest("Client ID is required for invoice creation")
+                        // Contact ID is required for invoices
+                        val contactIdStr = request.corrections?.contactId
+                            ?: throw DokusException.BadRequest("Contact ID is required for invoice creation")
 
-                        val clientId = try {
-                            ClientId.parse(clientIdStr)
+                        val contactId = try {
+                            ContactId.parse(contactIdStr)
                         } catch (e: Exception) {
-                            throw DokusException.BadRequest("Invalid client ID format")
+                            throw DokusException.BadRequest("Invalid contact ID format")
                         }
 
                         // Create invoice from extracted + corrected data
                         val createRequest = CreateInvoiceRequest(
-                            clientId = clientId,
+                            contactId = contactId,
                             items = request.corrections?.items?.map { item ->
                                 ai.dokus.foundation.domain.model.InvoiceItemDto(
                                     description = item.description ?: "",

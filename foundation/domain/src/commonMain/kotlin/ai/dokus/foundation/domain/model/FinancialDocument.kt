@@ -10,7 +10,7 @@ import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
@@ -50,7 +50,7 @@ sealed interface FinancialDocumentDto {
     data class InvoiceDto(
         val id: InvoiceId,
         override val tenantId: TenantId,
-        val clientId: ClientId,
+        val contactId: ContactId,
         val invoiceNumber: InvoiceNumber,
         val issueDate: LocalDate,
         val dueDate: LocalDate,
@@ -95,6 +95,7 @@ sealed interface FinancialDocumentDto {
         val category: ExpenseCategory,
         val description: String? = null,
         override val documentId: DocumentId? = null,
+        val contactId: ContactId? = null, // Optional vendor reference
         val isDeductible: Boolean = true,
         val deductiblePercentage: Percentage = Percentage.FULL,
         val paymentMethod: PaymentMethod? = null,
@@ -126,6 +127,7 @@ sealed interface FinancialDocumentDto {
         val category: ExpenseCategory,
         val description: String? = null,
         override val documentId: DocumentId? = null,
+        val contactId: ContactId? = null, // Optional vendor reference
         val paidAt: LocalDateTime? = null,
         val paidAmount: Money? = null,
         val paymentMethod: PaymentMethod? = null,
