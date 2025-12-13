@@ -26,6 +26,7 @@ import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.get
+import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -152,19 +153,20 @@ fun Route.documentProcessingRoutes() {
         }
 
         /**
-         * POST /api/v1/documents/{id}/confirm
-         * Confirm extracted data and create financial entity.
+         * PATCH /api/v1/documents/{id}/status
+         * Update document status (confirm or reject).
          *
          * Path parameters:
          * - id: Document ID (UUID)
          *
-         * Request body: ConfirmDocumentRequest
-         * - entityType: Type of entity to create (Invoice, Bill, Expense)
-         * - corrections: Optional field corrections
+         * Request body: ConfirmDocumentRequest (for confirm) or UpdateStatusRequest (for reject)
+         * - entityType: Type of entity to create (Invoice, Bill, Expense) - for confirm
+         * - corrections: Optional field corrections - for confirm
+         * - status: "rejected" - for reject
          *
-         * Response: ConfirmDocumentResponse
+         * Response: ConfirmDocumentResponse (for confirm) or 204 No Content (for reject)
          */
-        post<Documents.Id.Confirm> { route ->
+        patch<Documents.Id.Status> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
