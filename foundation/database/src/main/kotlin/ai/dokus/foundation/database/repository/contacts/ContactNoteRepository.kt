@@ -216,7 +216,7 @@ class ContactNoteRepository {
             contactId = ContactId.parse(row[ContactNotesTable.contactId].toString()),
             tenantId = TenantId.parse(row[ContactNotesTable.tenantId].toString()),
             content = row[ContactNotesTable.content],
-            authorId = row[ContactNotesTable.authorId]?.let { UserId.parse(it.toString()) },
+            authorId = row[ContactNotesTable.authorId]?.let { UserId(it.toString()) },
             authorName = row[ContactNotesTable.authorName],
             createdAt = row[ContactNotesTable.createdAt],
             updatedAt = row[ContactNotesTable.updatedAt]

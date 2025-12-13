@@ -32,7 +32,7 @@ import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.ids.ClientId
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.InvitationId
@@ -207,35 +207,8 @@ data class TransferOwnershipRequest(
     val newOwnerId: UserId
 )
 
-// ============================================================================
-// CLIENTS
-// ============================================================================
-
-@Serializable
-data class ClientDto(
-    val id: ClientId,
-    val tenantId: TenantId,
-    val name: Name,
-    val email: Email? = null,
-    val vatNumber: VatNumber? = null,
-    val addressLine1: String? = null,
-    val addressLine2: String? = null,
-    val city: String? = null,
-    val postalCode: String? = null,
-    val country: String? = null,
-    val contactPerson: String? = null,
-    val phone: String? = null,
-    val companyNumber: String? = null,
-    val defaultPaymentTerms: Int = 30,
-    val defaultVatRate: VatRate? = null,
-    val peppolId: String? = null, // Peppol participant ID for e-invoicing (Belgium 2026)
-    val peppolEnabled: Boolean = false,
-    val tags: String? = null,
-    val notes: String? = null,
-    val isActive: Boolean = true,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
+// NOTE: ClientDto has been replaced by ContactDto in Contact.kt
+// Use ContactDto from Contact.kt for all customer/vendor operations
 
 // NOTE: Invoice and Expense classes have been consolidated into FinancialDocumentDto
 // Use InvoiceDto and ExpenseDto from FinancialDocument.kt
@@ -368,7 +341,7 @@ data class CreateTenantRequest(
 
 @Serializable
 data class CreateInvoiceRequest(
-    val clientId: ClientId,
+    val contactId: ContactId,
     val items: List<InvoiceItemDto>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
@@ -477,7 +450,7 @@ data class MarkBillPaidRequest(
  */
 @Serializable
 data class CreateInvoiceFromMediaRequest(
-    val clientId: ClientId,
+    val contactId: ContactId,
     val corrections: InvoiceCorrections? = null
 )
 

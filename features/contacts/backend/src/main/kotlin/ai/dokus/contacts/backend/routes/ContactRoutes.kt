@@ -60,12 +60,13 @@ fun Route.contactRoutes() {
                     .getOrElse { throw DokusException.InternalError("Failed to create contact: ${it.message}") }
 
                 // Create initial note if provided
-                if (!request.initialNote.isNullOrBlank()) {
+                val initialNote = request.initialNote
+                if (!initialNote.isNullOrBlank()) {
                     val principal = dokusPrincipal
                     contactNoteService.createNote(
                         tenantId = tenantId,
                         contactId = contact.id,
-                        content = request.initialNote,
+                        content = initialNote,
                         authorId = principal.userId,
                         authorName = principal.email
                     )
