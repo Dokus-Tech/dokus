@@ -134,6 +134,21 @@ enum class ClientType(override val dbValue: String) : DbEnum {
 }
 
 // ============================================================================
+// CONTACT ENUMS
+// ============================================================================
+
+/**
+ * Contact type for unified contacts management.
+ * A contact can be a customer (receives invoices), vendor (sends bills), or both.
+ */
+@Serializable
+enum class ContactType(override val dbValue: String) : DbEnum {
+    Customer("CUSTOMER"),  // Receives invoices (revenue)
+    Vendor("VENDOR"),      // Sends bills/expenses (costs)
+    Both("BOTH")           // Can be both customer and vendor
+}
+
+// ============================================================================
 // INVOICE ENUMS
 // ============================================================================
 
@@ -470,10 +485,18 @@ enum class AuditAction(override val dbValue: String) : DbEnum {
     BillPaid("BILL_PAID"),
     BillStatusChanged("BILL_STATUS_CHANGED"),
 
-    // Client actions
+    // Client actions (legacy)
     ClientCreated("CLIENT_CREATED"),
     ClientUpdated("CLIENT_UPDATED"),
     ClientDeleted("CLIENT_DELETED"),
+
+    // Contact actions
+    ContactCreated("CONTACT_CREATED"),
+    ContactUpdated("CONTACT_UPDATED"),
+    ContactDeleted("CONTACT_DELETED"),
+    ContactNoteCreated("CONTACT_NOTE_CREATED"),
+    ContactNoteUpdated("CONTACT_NOTE_UPDATED"),
+    ContactNoteDeleted("CONTACT_NOTE_DELETED"),
 
     // User actions
     UserLogin("USER_LOGIN"),
@@ -501,6 +524,8 @@ enum class EntityType(override val dbValue: String) : DbEnum {
     Invoice("INVOICE"),
     InvoiceItem("INVOICE_ITEM"),
     Client("CLIENT"),
+    Contact("CONTACT"),
+    ContactNote("CONTACT_NOTE"),
     Expense("EXPENSE"),
     Bill("BILL"),
     Payment("PAYMENT"),

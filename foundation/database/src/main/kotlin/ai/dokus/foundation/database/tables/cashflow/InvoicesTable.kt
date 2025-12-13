@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
+import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.PaymentMethod
@@ -25,9 +26,9 @@ object InvoicesTable : UUIDTable("invoices") {
         onDelete = ReferenceOption.CASCADE
     ).index()
 
-    // Client reference
-    val clientId = uuid("client_id").references(
-        ClientsTable.id,
+    // Contact (customer) reference
+    val contactId = uuid("contact_id").references(
+        ContactsTable.id,
         onDelete = ReferenceOption.CASCADE
     ).index()
 
@@ -73,7 +74,7 @@ object InvoicesTable : UUIDTable("invoices") {
     init {
         // Composite index for common queries
         index(false, tenantId, status)
-        index(false, tenantId, clientId)
+        index(false, tenantId, contactId)
         // Per-tenant uniqueness for invoice numbers
         uniqueIndex(tenantId, invoiceNumber)
     }
