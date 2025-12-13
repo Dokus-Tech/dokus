@@ -1,6 +1,6 @@
 package ai.dokus.reporting.backend.config
 
-import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.reporting.backend.database.ReportingTables
 import ai.dokus.foundation.database.di.repositoryModuleReporting
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -13,12 +13,12 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
-    // Database - connect and initialize all tables centrally
+    // Database - connect and initialize reporting-owned tables only
     single {
         DatabaseFactory(get(), "reporting-pool").apply {
             runBlocking {
                 connect()
-                DatabaseInitializer.initializeAllTables()
+                ReportingTables.initialize()
             }
         }
     }

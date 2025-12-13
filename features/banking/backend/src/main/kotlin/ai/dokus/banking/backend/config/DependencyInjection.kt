@@ -1,6 +1,6 @@
 package ai.dokus.banking.backend.config
 
-import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.banking.backend.database.BankingTables
 import ai.dokus.foundation.database.di.repositoryModuleBanking
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
@@ -13,12 +13,12 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
-    // Database - connect and initialize all tables centrally
+    // Database - connect and initialize banking-owned tables only
     single {
         DatabaseFactory(get(), "banking-pool").apply {
             runBlocking {
                 connect()
-                DatabaseInitializer.initializeAllTables()
+                BankingTables.initialize()
             }
         }
     }

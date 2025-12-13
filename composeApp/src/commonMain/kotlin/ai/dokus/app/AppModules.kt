@@ -2,6 +2,7 @@ package ai.dokus.app
 
 import ai.dokus.app.auth.AuthAppModule
 import ai.dokus.app.cashflow.CashflowAppModule
+import ai.dokus.app.contacts.ContactsAppModule
 import ai.dokus.app.core.AppModule
 import ai.dokus.app.core.ModuleSettingsGroup
 import ai.dokus.app.core.diModules
@@ -14,6 +15,7 @@ private val baseAppModules = listOf<AppModule>(
     AppMainModule,
     AuthAppModule,
     CashflowAppModule,
+    ContactsAppModule,
 )
 
 private val conditionalModules = emptyList<AppModule>()

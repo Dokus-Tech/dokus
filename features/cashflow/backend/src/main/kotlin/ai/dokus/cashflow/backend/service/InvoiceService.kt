@@ -29,7 +29,7 @@ class InvoiceService(
         tenantId: TenantId,
         request: CreateInvoiceRequest
     ): Result<FinancialDocumentDto.InvoiceDto> {
-        logger.info("Creating invoice for tenant: $tenantId, client: ${request.clientId}")
+        logger.info("Creating invoice for tenant: $tenantId, contact: ${request.contactId}")
         return invoiceRepository.createInvoice(tenantId, request)
             .onSuccess { logger.info("Invoice created: ${it.id}") }
             .onFailure { logger.error("Failed to create invoice for tenant: $tenantId", it) }

@@ -3,7 +3,7 @@ package ai.dokus.peppol.mapper
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
@@ -33,12 +33,12 @@ class PeppolMapper {
      */
     fun toSendRequest(
         invoice: FinancialDocumentDto.InvoiceDto,
-        client: ClientDto,
+        contact: ContactDto,
         tenantSettings: TenantSettings,
         peppolSettings: PeppolSettingsDto
     ): PeppolSendRequest {
-        val recipientPeppolId = client.peppolId
-            ?: throw IllegalArgumentException("Client must have a Peppol ID to send via Peppol")
+        val recipientPeppolId = contact.peppolId
+            ?: throw IllegalArgumentException("Contact must have a Peppol ID to send via Peppol")
 
         return PeppolSendRequest(
             recipientPeppolId = recipientPeppolId,
@@ -48,7 +48,7 @@ class PeppolMapper {
                 issueDate = invoice.issueDate,
                 dueDate = invoice.dueDate,
                 seller = toSellerParty(tenantSettings),
-                buyer = toBuyerParty(client),
+                buyer = toBuyerParty(contact),
                 lineItems = invoice.items.mapIndexed { index, item ->
                     toLineItem(item, index + 1)
                 },
@@ -60,19 +60,19 @@ class PeppolMapper {
     }
 
     /**
-     * Convert client to Peppol buyer party.
+     * Convert contact to Peppol buyer party.
      */
-    private fun toBuyerParty(client: ClientDto): PeppolParty {
+    private fun toBuyerParty(contact: ContactDto): PeppolParty {
         return PeppolParty(
-            name = client.name.value,
-            vatNumber = client.vatNumber?.value,
-            streetName = client.addressLine1,
-            cityName = client.city,
-            postalZone = client.postalCode,
-            countryCode = client.country,
-            contactEmail = client.email?.value,
-            contactName = client.contactPerson,
-            companyNumber = client.companyNumber
+            name = contact.name.value,
+            vatNumber = contact.vatNumber?.value,
+            streetName = contact.addressLine1,
+            cityName = contact.city,
+            postalZone = contact.postalCode,
+            countryCode = contact.country,
+            contactEmail = contact.email?.value,
+            contactName = contact.contactPerson,
+            companyNumber = contact.companyNumber
         )
     }
 

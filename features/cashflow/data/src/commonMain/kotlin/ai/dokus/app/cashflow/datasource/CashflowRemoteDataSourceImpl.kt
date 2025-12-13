@@ -8,16 +8,12 @@ import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
-import ai.dokus.foundation.domain.model.ClientDto
-import ai.dokus.foundation.domain.model.ClientStats
 import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.CreateClientRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.DocumentDto
@@ -36,7 +32,6 @@ import ai.dokus.foundation.domain.model.PeppolVerifyResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
-import ai.dokus.foundation.domain.model.UpdateClientRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
@@ -533,89 +528,6 @@ internal class CashflowRemoteDataSourceImpl(
                 parameter("page", page)
                 parameter("limit", limit)
             }.body()
-        }
-    }
-
-    // ============================================================================
-    // CLIENT MANAGEMENT
-    // ============================================================================
-
-    override suspend fun createClient(request: CreateClientRequest): Result<ClientDto> {
-        return runCatching {
-            httpClient.post("/api/v1/clients") {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
-    override suspend fun getClient(clientId: ClientId): Result<ClientDto> {
-        return runCatching {
-            httpClient.get("/api/v1/clients/$clientId").body()
-        }
-    }
-
-    override suspend fun listClients(
-        search: String?,
-        activeOnly: Boolean?,
-        peppolEnabled: Boolean?,
-        limit: Int,
-        offset: Int
-    ): Result<PaginatedResponse<ClientDto>> {
-        return runCatching {
-            httpClient.get("/api/v1/clients") {
-                search?.let { parameter("search", it) }
-                activeOnly?.let { parameter("activeOnly", it) }
-                peppolEnabled?.let { parameter("peppolEnabled", it) }
-                parameter("limit", limit)
-                parameter("offset", offset)
-            }.body()
-        }
-    }
-
-    override suspend fun updateClient(
-        clientId: ClientId,
-        request: UpdateClientRequest
-    ): Result<ClientDto> {
-        return runCatching {
-            httpClient.put("/api/v1/clients/$clientId") {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body()
-        }
-    }
-
-    override suspend fun deleteClient(clientId: ClientId): Result<Unit> {
-        return runCatching {
-            httpClient.delete("/api/v1/clients/$clientId").body()
-        }
-    }
-
-    override suspend fun updateClientPeppol(
-        clientId: ClientId,
-        peppolId: String?,
-        peppolEnabled: Boolean
-    ): Result<ClientDto> {
-        return runCatching {
-            httpClient.patch("/api/v1/clients/$clientId/peppol") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "peppolId" to peppolId,
-                    "peppolEnabled" to peppolEnabled
-                ))
-            }.body()
-        }
-    }
-
-    override suspend fun listPeppolEnabledClients(): Result<List<ClientDto>> {
-        return runCatching {
-            httpClient.get("/api/v1/clients/peppol-enabled").body()
-        }
-    }
-
-    override suspend fun getClientStats(): Result<ClientStats> {
-        return runCatching {
-            httpClient.get("/api/v1/clients/stats").body()
         }
     }
 

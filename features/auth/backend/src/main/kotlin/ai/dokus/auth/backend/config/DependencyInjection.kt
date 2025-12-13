@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.config
 
-import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.auth.backend.database.AuthTables
 import ai.dokus.foundation.database.di.repositoryModuleAuth
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
@@ -32,12 +32,12 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
 private val appModule = module {
-    // Database - connect and initialize all tables centrally
+    // Database - connect and initialize auth-owned tables only
     single {
         DatabaseFactory(get(), "auth-pool").apply {
             runBlocking {
                 connect()
-                DatabaseInitializer.initializeAllTables()
+                AuthTables.initialize()
             }
         }
     }

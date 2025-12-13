@@ -429,6 +429,41 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  # Contacts Service
+  contacts-service:
+    image: 94.111.226.82:5000/dokus-contacts:latest
+    container_name: dokus-contacts
+    environment:
+      PORT: 8080
+      ENVIRONMENT: cloud
+      DB_URL: jdbc:postgresql://postgres:5432/dokus
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL}
+    ports:
+      - "6097:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
 networks:
   dokus-network:
     driver: bridge

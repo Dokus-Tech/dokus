@@ -1,6 +1,6 @@
 package ai.dokus.peppol.validator
 
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.PeppolValidationError
@@ -24,7 +24,7 @@ class PeppolValidator {
      */
     fun validateForSending(
         invoice: FinancialDocumentDto.InvoiceDto,
-        client: ClientDto,
+        contact: ContactDto,
         tenantSettings: TenantSettings,
         peppolSettings: PeppolSettingsDto
     ): PeppolValidationResult {
@@ -55,18 +55,18 @@ class PeppolValidator {
         }
 
         // Recipient Validation
-        val clientPeppolId = client.peppolId
-        if (clientPeppolId.isNullOrBlank()) {
+        val contactPeppolId = contact.peppolId
+        if (contactPeppolId.isNullOrBlank()) {
             errors.add(PeppolValidationError(
                 code = "MISSING_RECIPIENT_PEPPOL_ID",
-                message = "Client does not have a Peppol ID configured",
-                field = "client.peppolId"
+                message = "Contact does not have a Peppol ID configured",
+                field = "contact.peppolId"
             ))
-        } else if (!isValidPeppolId(clientPeppolId)) {
+        } else if (!isValidPeppolId(contactPeppolId)) {
             errors.add(PeppolValidationError(
                 code = "INVALID_RECIPIENT_PEPPOL_ID",
-                message = "Client Peppol ID format is invalid. Expected format: scheme:identifier",
-                field = "client.peppolId"
+                message = "Contact Peppol ID format is invalid. Expected format: scheme:identifier",
+                field = "contact.peppolId"
             ))
         }
 
@@ -95,12 +95,12 @@ class PeppolValidator {
             ))
         }
 
-        // Buyer (Client) Validation
-        if (client.name.value.isBlank()) {
+        // Buyer (Contact) Validation
+        if (contact.name.value.isBlank()) {
             errors.add(PeppolValidationError(
                 code = "MISSING_BUYER_NAME",
-                message = "Client name is required",
-                field = "client.name"
+                message = "Contact name is required",
+                field = "contact.name"
             ))
         }
 
