@@ -12,6 +12,9 @@ dependencies {
     implementation(projects.foundation.database)
     implementation(projects.foundation.ktorCommon)
 
+    // Configuration (HOCON)
+    implementation("com.typesafe:config:1.4.3")
+
     // Kotlin
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.datetime)
