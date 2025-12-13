@@ -46,10 +46,12 @@ class RecommandProvider(
 ) : PeppolProvider {
 
     private val logger = LoggerFactory.getLogger(RecommandProvider::class.java)
+
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
         encodeDefaults = true
+        prettyPrint = false
     }
 
     override val providerId = "recommand"
