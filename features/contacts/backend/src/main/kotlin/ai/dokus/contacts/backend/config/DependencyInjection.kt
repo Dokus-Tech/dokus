@@ -2,7 +2,7 @@ package ai.dokus.contacts.backend.config
 
 import ai.dokus.contacts.backend.service.ContactNoteService
 import ai.dokus.contacts.backend.service.ContactService
-import ai.dokus.foundation.database.DatabaseInitializer
+import ai.dokus.contacts.backend.database.ContactsTables
 import ai.dokus.foundation.database.di.repositoryModuleContacts
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.database.DatabaseFactory
@@ -43,7 +43,7 @@ val databaseModule = module {
         DatabaseFactory(get(), "contacts-pool").apply {
             runBlocking {
                 connect()
-                DatabaseInitializer.initializeAllTables()
+                ContactsTables.initialize()
             }
         }
     }
