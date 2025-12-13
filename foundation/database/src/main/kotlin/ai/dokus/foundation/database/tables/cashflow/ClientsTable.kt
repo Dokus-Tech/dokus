@@ -1,7 +1,9 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -15,8 +17,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
 object ClientsTable : UUIDTable("clients") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("tenant_id").references(
-        ai.dokus.foundation.database.tables.auth.TenantTable.id,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
     ).index()
 
     // Client identification

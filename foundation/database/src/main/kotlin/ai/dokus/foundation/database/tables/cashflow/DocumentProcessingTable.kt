@@ -1,5 +1,6 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
@@ -33,7 +34,7 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
 
     // Multi-tenancy (denormalized for query performance)
     val tenantId = uuid("tenant_id").references(
-        ai.dokus.foundation.database.tables.auth.TenantTable.id,
+        TenantTable.id,
         onDelete = ReferenceOption.CASCADE
     )
 

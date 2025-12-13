@@ -12,14 +12,12 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Immutable records with 7-year retention for financial records
  */
 object AuditLogsTable : UUIDTable("audit_logs") {
-    val tenantId = reference(
-        name = "tenant_id",
-        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+    val tenantId = uuid("tenant_id").references(
+        ai.dokus.foundation.database.tables.auth.TenantTable.id,
         onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
     )
-    val userId = reference(
-        name = "user_id",
-        foreign = ai.dokus.foundation.database.tables.auth.UsersTable,
+    val userId = uuid("user_id").references(
+        ai.dokus.foundation.database.tables.auth.UsersTable.id,
         onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
     ).nullable()
 

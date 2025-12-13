@@ -1,5 +1,7 @@
 package ai.dokus.foundation.database.tables.peppol
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -12,10 +14,9 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object PeppolSettingsTable : UUIDTable("peppol_settings") {
     // Multi-tenancy (CRITICAL) - one settings record per tenant
-    val tenantId = reference(
-        name = "tenant_id",
-        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    val tenantId = uuid("tenant_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
     )
 
     // Provider identification - supports multiple providers

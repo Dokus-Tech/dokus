@@ -1,5 +1,8 @@
 package ai.dokus.foundation.database.tables.banking
 
+import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
+import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
@@ -10,15 +13,13 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Links to expenses or invoices for reconciliation
  */
 object BankTransactionsTable : UUIDTable("bank_transactions") {
-    val bankConnectionId = reference(
-        name = "bank_connection_id",
-        foreign = BankConnectionsTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    val bankConnectionId = uuid("bank_connection_id").references(
+        BankConnectionsTable.id,
+        onDelete = ReferenceOption.CASCADE
     )
-    val tenantId = reference(
-        name = "tenant_id",
-        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    val tenantId = uuid("tenant_id").references(
+        ai.dokus.foundation.database.tables.auth.TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
     )
 
     val externalId = varchar("external_id", 255)
@@ -31,15 +32,13 @@ object BankTransactionsTable : UUIDTable("bank_transactions") {
     val isPending = bool("is_pending").default(false)
 
     // Reconciliation
-    val expenseId = reference(
-        name = "expense_id",
-        foreign = ai.dokus.foundation.database.tables.cashflow.ExpensesTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
+    val expenseId = uuid("expense_id").references(
+        ExpensesTable.id,
+        onDelete = ReferenceOption.SET_NULL
     ).nullable()
-    val invoiceId = reference(
-        name = "invoice_id",
-        foreign = ai.dokus.foundation.database.tables.cashflow.InvoicesTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
+    val invoiceId = uuid("invoice_id").references(
+        InvoicesTable.id,
+        onDelete = ReferenceOption.SET_NULL
     ).nullable()
     val isReconciled = bool("is_reconciled").default(false)
 

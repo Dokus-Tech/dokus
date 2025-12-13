@@ -1,10 +1,12 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.date
@@ -22,8 +24,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
 object BillsTable : UUIDTable("bills") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("organization_id").references(
-        ai.dokus.foundation.database.tables.auth.TenantTable.id,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
     )
 
     // Supplier information
