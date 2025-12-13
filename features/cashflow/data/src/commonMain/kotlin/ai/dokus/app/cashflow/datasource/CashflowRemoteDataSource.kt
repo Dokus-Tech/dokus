@@ -8,16 +8,12 @@ import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.AttachmentDto
 import ai.dokus.foundation.domain.model.CashflowOverview
-import ai.dokus.foundation.domain.model.ClientDto
-import ai.dokus.foundation.domain.model.ClientStats
 import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.CreateClientRequest
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.DocumentDto
@@ -35,7 +31,6 @@ import ai.dokus.foundation.domain.model.PeppolVerifyResponse
 import ai.dokus.foundation.domain.model.RecordPaymentRequest
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
-import ai.dokus.foundation.domain.model.UpdateClientRequest
 import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
 
@@ -417,75 +412,6 @@ interface CashflowRemoteDataSource {
         page: Int = 0,
         limit: Int = 20
     ): Result<DocumentProcessingListResponse>
-
-    // ============================================================================
-    // CLIENT MANAGEMENT
-    // ============================================================================
-
-    /**
-     * Create a new client
-     * POST /api/v1/clients
-     */
-    suspend fun createClient(request: CreateClientRequest): Result<ClientDto>
-
-    /**
-     * Get a client by ID
-     * GET /api/v1/clients/{clientId}
-     */
-    suspend fun getClient(clientId: ClientId): Result<ClientDto>
-
-    /**
-     * List clients with optional filters
-     * GET /api/v1/clients?search={search}&activeOnly={activeOnly}&peppolEnabled={peppolEnabled}&limit={limit}&offset={offset}
-     *
-     * @param search Search by name, email, or VAT number
-     * @param activeOnly Filter by active status
-     * @param peppolEnabled Filter by Peppol enabled status
-     */
-    suspend fun listClients(
-        search: String? = null,
-        activeOnly: Boolean? = null,
-        peppolEnabled: Boolean? = null,
-        limit: Int = 50,
-        offset: Int = 0
-    ): Result<PaginatedResponse<ClientDto>>
-
-    /**
-     * Update a client
-     * PUT /api/v1/clients/{clientId}
-     */
-    suspend fun updateClient(
-        clientId: ClientId,
-        request: UpdateClientRequest
-    ): Result<ClientDto>
-
-    /**
-     * Delete a client
-     * DELETE /api/v1/clients/{clientId}
-     */
-    suspend fun deleteClient(clientId: ClientId): Result<Unit>
-
-    /**
-     * Update a client's Peppol settings
-     * PATCH /api/v1/clients/{clientId}/peppol
-     */
-    suspend fun updateClientPeppol(
-        clientId: ClientId,
-        peppolId: String?,
-        peppolEnabled: Boolean
-    ): Result<ClientDto>
-
-    /**
-     * List all Peppol-enabled clients
-     * GET /api/v1/clients/peppol-enabled
-     */
-    suspend fun listPeppolEnabledClients(): Result<List<ClientDto>>
-
-    /**
-     * Get client statistics for dashboard
-     * GET /api/v1/clients/stats
-     */
-    suspend fun getClientStats(): Result<ClientStats>
 
     // ============================================================================
     // PEPPOL E-INVOICING
