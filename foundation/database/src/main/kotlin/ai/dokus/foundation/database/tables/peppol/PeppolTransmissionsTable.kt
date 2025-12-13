@@ -1,9 +1,11 @@
 package ai.dokus.foundation.database.tables.peppol
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.PeppolDocumentType
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -14,10 +16,9 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = reference(
-        name = "tenant_id",
-        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    val tenantId = uuid("tenant_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
     )
 
     // Transmission details
@@ -26,15 +27,13 @@ object PeppolTransmissionsTable : UUIDTable("peppol_transmissions") {
     val status = dbEnumeration<PeppolStatus>("status").default(PeppolStatus.Pending)
 
     // Local document references
-    val invoiceId = reference(
-        name = "invoice_id",
-        foreign = ai.dokus.foundation.database.tables.cashflow.InvoicesTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
+    val invoiceId = uuid("invoice_id").references(
+        ai.dokus.foundation.database.tables.cashflow.InvoicesTable.id,
+        onDelete = ReferenceOption.SET_NULL
     ).nullable()  // For outbound
-    val billId = reference(
-        name = "bill_id",
-        foreign = ai.dokus.foundation.database.tables.cashflow.BillsTable,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
+    val billId = uuid("bill_id").references(
+        ai.dokus.foundation.database.tables.cashflow.BillsTable.id,
+        onDelete = ReferenceOption.SET_NULL
     ).nullable()  // For inbound
 
     // External references

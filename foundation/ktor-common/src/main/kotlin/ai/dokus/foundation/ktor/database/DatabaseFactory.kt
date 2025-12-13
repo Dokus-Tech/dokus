@@ -7,9 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.Table
-import org.jetbrains.exposed.v1.jdbc.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
@@ -121,8 +121,3 @@ suspend fun <T> dbQuery(block: () -> T): T =
  */
 suspend fun <T> dbQuery(tenantId: String, block: () -> T): T =
     withTenantContext(tenantId) { dbQuery(block) }
-
-suspend fun <T> dbQuery(block: () -> T): T =
-    withContext(Dispatchers.IO) {
-        transaction { block() }
-    }

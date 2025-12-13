@@ -1,9 +1,11 @@
 package ai.dokus.foundation.database.tables.banking
 
-import ai.dokus.foundation.ktor.database.dbEnumeration
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.enums.Currency
+import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -14,8 +16,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object BankConnectionsTable : UUIDTable("bank_connections") {
     val tenantId = uuid("tenant_id").references(
-        ai.dokus.foundation.database.tables.auth.TenantTable.id,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
     )
 
     val provider = dbEnumeration<BankProvider>("provider")

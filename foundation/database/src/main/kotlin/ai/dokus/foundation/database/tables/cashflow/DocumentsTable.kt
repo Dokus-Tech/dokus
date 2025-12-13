@@ -1,7 +1,9 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -23,8 +25,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
 object DocumentsTable : UUIDTable("documents") {
     // Multi-tenancy (CRITICAL)
     val tenantId = uuid("organization_id").references(
-        ai.dokus.foundation.database.tables.auth.TenantTable.id,
-        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
     )
 
     // File metadata
