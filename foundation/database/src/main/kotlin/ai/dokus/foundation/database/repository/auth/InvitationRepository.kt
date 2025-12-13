@@ -16,6 +16,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
@@ -94,7 +95,7 @@ class InvitationRepository {
         tenantId: TenantId
     ): TenantInvitation? = dbQuery {
         TenantInvitationsTable
-            .innerJoin(UsersTable)
+            .join(UsersTable, JoinType.INNER, TenantInvitationsTable.invitedBy, UsersTable.id)
             .selectAll()
             .where {
                 (TenantInvitationsTable.id eq id.value.toJavaUuid()) and
@@ -110,7 +111,7 @@ class InvitationRepository {
      */
     suspend fun findByToken(token: String): TenantInvitation? = dbQuery {
         TenantInvitationsTable
-            .innerJoin(UsersTable)
+            .join(UsersTable, JoinType.INNER, TenantInvitationsTable.invitedBy, UsersTable.id)
             .selectAll()
             .where { TenantInvitationsTable.token eq token }
             .singleOrNull()
@@ -123,7 +124,7 @@ class InvitationRepository {
      */
     suspend fun findPendingByEmail(email: Email): TenantInvitation? = dbQuery {
         TenantInvitationsTable
-            .innerJoin(UsersTable)
+            .join(UsersTable, JoinType.INNER, TenantInvitationsTable.invitedBy, UsersTable.id)
             .selectAll()
             .where {
                 (TenantInvitationsTable.email eq email.value) and
@@ -148,7 +149,7 @@ class InvitationRepository {
         }
 
         TenantInvitationsTable
-            .innerJoin(UsersTable)
+            .join(UsersTable, JoinType.INNER, TenantInvitationsTable.invitedBy, UsersTable.id)
             .selectAll()
             .where { condition }
             .orderBy(TenantInvitationsTable.createdAt)
