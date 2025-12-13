@@ -166,6 +166,20 @@ jobs:
       build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
       create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
 
+  release-apple:
+    name: 🚀 Release Apple (iOS & macOS)
+    needs: [test]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped')
+    uses: ./.github/workflows/release-apple.yml
+    with:
+      run-ios: true
+      run-macos: true
+      include-dmg: true
+    secrets: inherit
+
   # Create deployment package for releases
   create-deployment-package:
     name: 📦 Create Deployment Package
@@ -394,4 +408,3 @@ jobs:
         run: |
           echo "✅ Release ${{ steps.version.outputs.version-tag }} created successfully!"
           echo "🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version-tag }}"
-
