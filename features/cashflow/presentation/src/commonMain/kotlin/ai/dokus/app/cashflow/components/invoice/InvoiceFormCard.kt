@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun InvoiceFormCard(
     formState: CreateInvoiceFormState,
-    clientsState: DokusState<List<ClientDto>>,
+    clientsState: DokusState<List<ContactDto>>,
     saveState: DokusState<*>,
-    onSelectClient: (ClientDto?) -> Unit,
+    onSelectClient: (ContactDto?) -> Unit,
     onUpdateNotes: (String) -> Unit,
     onAddLineItem: () -> Unit,
     onRemoveLineItem: (String) -> Unit,
