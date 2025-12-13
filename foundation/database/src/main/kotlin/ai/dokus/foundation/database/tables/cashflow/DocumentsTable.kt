@@ -27,7 +27,7 @@ object DocumentsTable : UUIDTable("documents") {
     val tenantId = uuid("organization_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // File metadata
     val filename = varchar("filename", 255)
@@ -35,7 +35,7 @@ object DocumentsTable : UUIDTable("documents") {
     val sizeBytes = long("size_bytes")
 
     // Storage reference (MinIO key)
-    val storageKey = varchar("storage_key", 500)
+    val storageKey = varchar("storage_key", 500).index()
 
     // Optional link to entity (null until attached)
     val entityType = dbEnumeration<EntityType>("entity_type").nullable()
@@ -45,14 +45,9 @@ object DocumentsTable : UUIDTable("documents") {
     val uploadedAt = datetime("uploaded_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index organization_id for security and performance
-        index(false, tenantId)
-
         // Index for fetching documents by entity
         index(false, tenantId, entityType, entityId)
 
-        // Index for looking up by storage key (for cleanup operations)
-        index(false, storageKey)
         uniqueIndex(tenantId, storageKey)
     }
 }
