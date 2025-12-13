@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.core.state.DokusState
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun InvoiceClientSelector(
-    selectedClient: ClientDto?,
-    clientsState: DokusState<List<ClientDto>>,
-    onSelectClient: (ClientDto?) -> Unit,
+    selectedClient: ContactDto?,
+    clientsState: DokusState<List<ContactDto>>,
+    onSelectClient: (ContactDto?) -> Unit,
     error: String?,
     modifier: Modifier = Modifier
 ) {

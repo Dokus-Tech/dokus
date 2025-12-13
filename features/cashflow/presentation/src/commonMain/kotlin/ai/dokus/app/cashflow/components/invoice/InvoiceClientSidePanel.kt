@@ -4,7 +4,7 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.domain.model.ClientDto
+import ai.dokus.foundation.domain.model.ContactDto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
