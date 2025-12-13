@@ -269,11 +269,13 @@ fun Route.peppolRoutes() {
         /**
          * GET /api/v1/peppol/transmissions/{id}
          * Get transmission by ID.
+         * Note: Currently uses invoiceId from Transmissions.Id route
          */
         get<Peppol.Transmissions.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
+            val invoiceId = InvoiceId(Uuid.parse(route.id))
 
-            val transmission = peppolService.getTransmissionById(route.id, tenantId)
+            val transmission = peppolService.getTransmissionByInvoiceId(invoiceId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to get transmission: ${it.message}") }
 
             if (transmission == null) {

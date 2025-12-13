@@ -24,7 +24,7 @@ fun Route.cashflowDocumentRoutes() {
 
     authenticateJwt {
         // GET /api/v1/cashflow/documents - List cashflow documents
-        get<Cashflow.Documents> { route ->
+        get<Cashflow.CashflowDocuments> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
             if (route.limit < 1 || route.limit > 200) {

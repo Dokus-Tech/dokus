@@ -1,7 +1,6 @@
 package ai.dokus.app.auth.datasource
 
 import ai.dokus.foundation.domain.model.CreateTenantRequest
-import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
@@ -43,16 +42,4 @@ interface TenantRemoteDataSource {
      * @return Result indicating success or failure
      */
     suspend fun updateTenantSettings(settings: TenantSettings): Result<Unit>
-
-    /**
-     * Get the next available invoice number for the current tenant.
-     * @return Result containing the next InvoiceNumber
-     */
-    suspend fun getNextInvoiceNumber(): Result<InvoiceNumber>
-
-    /**
-     * Check if the current user has a freelancer tenant.
-     * @return Result containing boolean indicating freelancer tenant existence
-     */
-    suspend fun hasFreelancerTenant(): Result<Boolean>
 }

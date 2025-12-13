@@ -143,16 +143,6 @@ class AuthRepository(
     }
 
     /**
-     * Check if the current user already has a freelancer tenant.
-     */
-    suspend fun hasFreelancerTenant(): Result<Boolean> {
-        return tenantDataSource.hasFreelancerTenant()
-            .onFailure { error ->
-                logger.e(error) { "Failed to check freelancer tenant status" }
-            }
-    }
-
-    /**
      * Get current user info.
      */
     suspend fun getCurrentUser(): Result<User> {

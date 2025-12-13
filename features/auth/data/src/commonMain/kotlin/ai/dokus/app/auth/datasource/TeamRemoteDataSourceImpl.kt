@@ -78,7 +78,7 @@ internal class TeamRemoteDataSourceImpl(
 
     override suspend fun transferOwnership(newOwnerId: UserId): Result<Unit> {
         return runCatching {
-            httpClient.post(Team.TransferOwnership()) {
+            httpClient.put(Team.Owner()) {
                 contentType(ContentType.Application.Json)
                 setBody(TransferOwnershipRequest(newOwnerId))
             }

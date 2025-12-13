@@ -155,7 +155,7 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<Unit> {
         return runCatching {
             val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
-            httpClient.post(Invoices.Id.SendEmail(parent = invoiceIdRoute)) {
+            httpClient.post(Invoices.Id.Emails(parent = invoiceIdRoute)) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf(
                     "recipientEmail" to recipientEmail,
@@ -165,21 +165,8 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun markInvoiceAsSent(invoiceId: InvoiceId): Result<Unit> {
-        return runCatching {
-            val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
-            httpClient.post(Invoices.Id.MarkSent(parent = invoiceIdRoute)).body()
-        }
-    }
-
-    override suspend fun calculateInvoiceTotals(items: List<InvoiceItemDto>): Result<InvoiceTotals> {
-        return runCatching {
-            httpClient.post(Invoices.CalculateTotals()) {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("items" to items))
-            }.body()
-        }
-    }
+    // Note: markInvoiceAsSent was removed - use updateInvoiceStatus with SENT status instead.
+    // Note: calculateInvoiceTotals was removed - compute client-side or include in invoice response.
 
     // ============================================================================
     // EXPENSE MANAGEMENT
@@ -236,20 +223,7 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun categorizeExpense(
-        merchant: String,
-        description: String?
-    ): Result<ExpenseCategory> {
-        return runCatching {
-            httpClient.post(Expenses.Categorize()) {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "merchant" to merchant,
-                    "description" to description
-                ))
-            }.body()
-        }
-    }
+    // Note: categorizeExpense was removed - compute client-side or use AI service directly.
 
     // ============================================================================
     // BILL MANAGEMENT (Supplier Invoices / Cash-Out)
@@ -314,7 +288,7 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<FinancialDocumentDto.BillDto> {
         return runCatching {
             val billIdRoute = Bills.Id(id = billId.toString())
-            httpClient.post(Bills.Id.Pay(parent = billIdRoute)) {
+            httpClient.post(Bills.Id.Payments(parent = billIdRoute)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -401,7 +375,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun getAttachmentDownloadUrl(attachmentId: AttachmentId): Result<String> {
         return runCatching {
             val attachmentIdRoute = Attachments.Id(id = attachmentId.toString())
-            httpClient.get(Attachments.Id.DownloadUrl(parent = attachmentIdRoute)).body()
+            httpClient.get(Attachments.Id.Url(parent = attachmentIdRoute)).body()
         }
     }
 
@@ -504,7 +478,7 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto>> {
         return runCatching {
-            httpClient.get(Cashflow.Documents(
+            httpClient.get(Cashflow.CashflowDocuments(
                 fromDate = fromDate,
                 toDate = toDate,
                 limit = limit,
@@ -587,14 +561,14 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun testPeppolConnection(): Result<Boolean> {
         return runCatching {
             val settingsRoute = Peppol.Settings()
-            val response: TestConnectionResponse = httpClient.post(Peppol.Settings.Test(parent = settingsRoute)).body()
+            val response: TestConnectionResponse = httpClient.post(Peppol.Settings.ConnectionTests(parent = settingsRoute)).body()
             response.success
         }
     }
 
     override suspend fun verifyPeppolRecipient(peppolId: String): Result<PeppolVerifyResponse> {
         return runCatching {
-            httpClient.post(Peppol.Verify()) {
+            httpClient.post(Peppol.RecipientValidations()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("peppolId" to peppolId))
             }.body()
@@ -603,22 +577,20 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun validateInvoiceForPeppol(invoiceId: InvoiceId): Result<PeppolValidationResult> {
         return runCatching {
-            val sendRoute = Peppol.Send()
-            httpClient.post(Peppol.Send.Validate(parent = sendRoute, invoiceId = invoiceId.toString())).body()
+            httpClient.post(Peppol.InvoiceValidations(invoiceId = invoiceId.toString())).body()
         }
     }
 
     override suspend fun sendInvoiceViaPeppol(invoiceId: InvoiceId): Result<SendInvoiceViaPeppolResponse> {
         return runCatching {
-            val sendRoute = Peppol.Send()
-            httpClient.post(Peppol.Send.Invoice(parent = sendRoute, invoiceId = invoiceId.toString())).body()
+            httpClient.post(Peppol.Transmissions(invoiceId = invoiceId.toString())).body()
         }
     }
 
     override suspend fun pollPeppolInbox(): Result<PeppolInboxPollResponse> {
         return runCatching {
             val inboxRoute = Peppol.Inbox()
-            httpClient.post(Peppol.Inbox.Poll(parent = inboxRoute)).body()
+            httpClient.post(Peppol.Inbox.Syncs(parent = inboxRoute)).body()
         }
     }
 
@@ -640,16 +612,12 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getPeppolTransmissionForInvoice(invoiceId: InvoiceId): Result<PeppolTransmissionDto?> {
         return runCatching {
-            val transmissionsRoute = Peppol.Transmissions()
-            val response = httpClient.get(Peppol.Transmissions.ByInvoice(
-                parent = transmissionsRoute,
-                invoiceId = invoiceId.toString()
-            ))
-            if (response.status.value == 404) {
-                null
-            } else {
-                response.body<PeppolTransmissionDto>()
-            }
+            // Use invoiceId filter on transmissions endpoint
+            val transmissions = httpClient.get(Peppol.Transmissions(
+                invoiceId = invoiceId.toString(),
+                limit = 1
+            )).body<List<PeppolTransmissionDto>>()
+            transmissions.firstOrNull()
         }
     }
 }

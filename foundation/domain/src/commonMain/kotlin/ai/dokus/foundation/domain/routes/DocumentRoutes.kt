@@ -16,6 +16,14 @@ class Documents(
     val offset: Int = 0
 ) {
     /**
+     * POST /api/v1/documents/upload
+     * Upload a new document
+     */
+    @Serializable
+    @Resource("upload")
+    class Upload(val parent: Documents = Documents())
+
+    /**
      * GET /api/v1/documents/processing
      * List documents in processing queue with status filter
      * Status can be comma-separated list (e.g., "PENDING,PROCESSING")
