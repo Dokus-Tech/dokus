@@ -30,7 +30,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            binaryOption("bundleId", "ai.dokus.app")
+            binaryOption("bundleId", "vision.invoid.dokus")
             binaryOption("bundleVersion", "1")
 
             linkerOpts("-lsqlite3")
@@ -120,7 +120,7 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "ai.dokus.app"
+        applicationId = "vision.invoid.dokus"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -173,7 +173,7 @@ compose.desktop {
             macOS {
                 dockName = "D[#]kus"
                 appStore = false
-                bundleID = "ai.dokus.app"
+                bundleID = "vision.invoid.dokus"
                 copyright = "Invoid Vision 2025"
                 description = "Dokus financial document management"
             }
