@@ -1,48 +1,61 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.auth.datasource.AccountRemoteDataSource
+import ai.dokus.app.auth.viewmodel.ProfileSettingsViewModel
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.state.isLoading
 import ai.dokus.app.core.state.isSuccess
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.profile_cancel
 import ai.dokus.app.resources.generated.profile_danger_zone
 import ai.dokus.app.resources.generated.profile_deactivate_account
 import ai.dokus.app.resources.generated.profile_deactivate_warning
+import ai.dokus.app.resources.generated.profile_edit
 import ai.dokus.app.resources.generated.profile_email
 import ai.dokus.app.resources.generated.profile_first_name
 import ai.dokus.app.resources.generated.profile_last_name
 import ai.dokus.app.resources.generated.profile_logout
 import ai.dokus.app.resources.generated.profile_logout_description
 import ai.dokus.app.resources.generated.profile_personal_info
+import ai.dokus.app.resources.generated.profile_save
+import ai.dokus.app.resources.generated.profile_save_error
+import ai.dokus.app.resources.generated.profile_save_success
 import ai.dokus.app.resources.generated.profile_settings_title
 import ai.dokus.app.auth.usecases.LogoutUseCase
+import ai.dokus.foundation.design.components.PPrimaryButton
+import ai.dokus.foundation.design.components.POutlinedButton
+import ai.dokus.foundation.design.components.common.PTopAppBar
+import ai.dokus.foundation.design.components.fields.PTextFieldName
+import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
-import kotlinx.coroutines.launch
-import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,9 +63,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Profile settings screen with top bar and navigation.
@@ -60,15 +79,19 @@ import org.koin.compose.koinInject
  */
 @Composable
 fun ProfileSettingsScreen() {
+    val snackbarHostState = remember { SnackbarHostState() }
+
     Scaffold(
         topBar = {
             PTopAppBar(
                 title = stringResource(Res.string.profile_settings_title)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
         ProfileSettingsContent(
-            modifier = Modifier.padding(contentPadding)
+            modifier = Modifier.padding(contentPadding),
+            snackbarHostState = snackbarHostState
         )
     }
 }
@@ -80,31 +103,39 @@ fun ProfileSettingsScreen() {
 @Composable
 fun ProfileSettingsContent(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val logger = remember { Logger.withTag("ProfileSettingsContent") }
-    val accountDataSource: AccountRemoteDataSource = koinInject()
+    val viewModel: ProfileSettingsViewModel = koinViewModel()
     val logoutUseCase: LogoutUseCase = koinInject()
     val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
 
-    var userState by remember { mutableStateOf<DokusState<User>>(DokusState.idle()) }
+    val userState by viewModel.state.collectAsState()
+    val isEditing by viewModel.isEditing.collectAsState()
+    val editFirstName by viewModel.editFirstName.collectAsState()
+    val editLastName by viewModel.editLastName.collectAsState()
+    val isSaving by viewModel.isSaving.collectAsState()
+
     var isLoggingOut by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        logger.d { "Loading user profile" }
-        userState = DokusState.loading()
+    // String resources for effects
+    val saveSuccessMessage = stringResource(Res.string.profile_save_success)
+    val saveErrorMessage = stringResource(Res.string.profile_save_error)
 
-        accountDataSource.getCurrentUser().fold(
-            onSuccess = { user ->
-                logger.i { "User profile loaded: ${user.email.value}" }
-                userState = DokusState.success(user)
-            },
-            onFailure = { error ->
-                logger.e(error) { "Failed to load user profile" }
-                userState = DokusState.error(error) {}
+    // Handle effects
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is ProfileSettingsViewModel.Effect.ShowSaveSuccess -> {
+                    snackbarHostState.showSnackbar(saveSuccessMessage)
+                }
+                is ProfileSettingsViewModel.Effect.ShowSaveError -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
             }
-        )
+        }
     }
 
     Column(
@@ -132,14 +163,25 @@ fun ProfileSettingsContent(
                 // Personal Information Section
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(Res.string.profile_personal_info),
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.profile_personal_info),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            if (!isEditing) {
+                                TextButton(onClick = { viewModel.startEditing() }) {
+                                    Text(stringResource(Res.string.profile_edit))
+                                }
+                            }
+                        }
 
                         Spacer(Modifier.height(16.dp))
 
-                        // Email
+                        // Email (always read-only)
                         ProfileField(
                             label = stringResource(Res.string.profile_email),
                             value = user.email.value
@@ -147,27 +189,81 @@ fun ProfileSettingsContent(
 
                         Spacer(Modifier.height(12.dp))
 
-                        // First Name
-                        ProfileField(
-                            label = stringResource(Res.string.profile_first_name),
-                            value = user.firstName?.value ?: "-"
-                        )
+                        if (isEditing) {
+                            // Edit mode - show text fields
+                            PTextFieldName(
+                                fieldName = stringResource(Res.string.profile_first_name),
+                                value = editFirstName,
+                                icon = null,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Text,
+                                    capitalization = KeyboardCapitalization.Words,
+                                    imeAction = ImeAction.Next
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                                onValueChange = { viewModel.updateFirstName(it) }
+                            )
 
-                        Spacer(Modifier.height(12.dp))
+                            Spacer(Modifier.height(12.dp))
 
-                        // Last Name
-                        ProfileField(
-                            label = stringResource(Res.string.profile_last_name),
-                            value = user.lastName?.value ?: "-"
-                        )
+                            PTextFieldName(
+                                fieldName = stringResource(Res.string.profile_last_name),
+                                value = editLastName,
+                                icon = null,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Text,
+                                    capitalization = KeyboardCapitalization.Words,
+                                    imeAction = ImeAction.Done
+                                ),
+                                onAction = { if (viewModel.canSave()) viewModel.saveProfile() },
+                                modifier = Modifier.fillMaxWidth(),
+                                onValueChange = { viewModel.updateLastName(it) }
+                            )
 
-                        Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(16.dp))
 
-                        Text(
-                            text = "Profile editing coming soon",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            // Save/Cancel buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                POutlinedButton(
+                                    text = stringResource(Res.string.profile_cancel),
+                                    enabled = !isSaving,
+                                    onClick = { viewModel.cancelEditing() }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                if (isSaving) {
+                                    Box(
+                                        modifier = Modifier.height(42.dp).width(80.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.height(24.dp).width(24.dp)
+                                        )
+                                    }
+                                } else {
+                                    PPrimaryButton(
+                                        text = stringResource(Res.string.profile_save),
+                                        enabled = viewModel.canSave(),
+                                        onClick = { viewModel.saveProfile() }
+                                    )
+                                }
+                            }
+                        } else {
+                            // View mode - show read-only fields
+                            ProfileField(
+                                label = stringResource(Res.string.profile_first_name),
+                                value = user.firstName?.value ?: "-"
+                            )
+
+                            Spacer(Modifier.height(12.dp))
+
+                            ProfileField(
+                                label = stringResource(Res.string.profile_last_name),
+                                value = user.lastName?.value ?: "-"
+                            )
+                        }
                     }
                 }
 

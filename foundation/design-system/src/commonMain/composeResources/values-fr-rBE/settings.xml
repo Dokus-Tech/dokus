@@ -39,6 +39,11 @@
     <string name="profile_logout_description">Se déconnecter de cet appareil</string>
     <string name="profile_editing_coming_soon">Modification du profil bientôt disponible</string>
     <string name="profile_load_failed">Échec du chargement du profil</string>
+    <string name="profile_edit">Modifier</string>
+    <string name="profile_save">Enregistrer</string>
+    <string name="profile_cancel">Annuler</string>
+    <string name="profile_save_success">Profil mis à jour avec succès</string>
+    <string name="profile_save_error">Échec de la mise à jour du profil</string>
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Détails de l\'entreprise</string>
