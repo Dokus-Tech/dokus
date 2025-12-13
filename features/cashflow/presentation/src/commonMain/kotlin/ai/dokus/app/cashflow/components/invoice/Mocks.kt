@@ -98,7 +98,7 @@ object Mocks {
         issueDate = LocalDate(2024, 12, 13),
         dueDate = LocalDate(2025, 1, 13),
         items = sampleSingleLineItem,
-        notes = null
+        notes = ""
     )
 
     val emptyFormState = CreateInvoiceFormState()
