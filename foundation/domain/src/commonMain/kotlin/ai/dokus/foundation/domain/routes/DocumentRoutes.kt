@@ -1,6 +1,5 @@
 package ai.dokus.foundation.domain.routes
 
-import ai.dokus.foundation.domain.enums.ProcessingStatus
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
 
@@ -19,14 +18,15 @@ class Documents(
     /**
      * GET /api/v1/documents/processing
      * List documents in processing queue with status filter
+     * Status can be comma-separated list (e.g., "PENDING,PROCESSING")
      */
     @Serializable
     @Resource("processing")
     class Processing(
         val parent: Documents = Documents(),
-        val status: ProcessingStatus? = null,
-        val limit: Int = 50,
-        val offset: Int = 0
+        val status: String? = null,
+        val page: Int = 1,
+        val limit: Int = 20
     )
 
     /**
@@ -37,6 +37,14 @@ class Documents(
     @Serializable
     @Resource("{id}")
     class Id(val parent: Documents = Documents(), val id: String) {
+        /**
+         * GET /api/v1/documents/{id}/processing
+         * Get processing details for this document
+         */
+        @Serializable
+        @Resource("processing")
+        class Processing(val parent: Id)
+
         /**
          * GET/PATCH /api/v1/documents/{id}/status
          * GET - Get document processing status
