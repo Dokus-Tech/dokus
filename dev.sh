@@ -104,7 +104,6 @@ SYMBOL_SMALL="⋄"
 PROJECT_NAME="dokus"
 COMPOSE_FILE="docker-compose.local.yml"
 AUTH_SERVICE_DIR="features/auth/backend"
-AUDIT_SERVICE_DIR="features/audit/backend"
 BANKING_SERVICE_DIR="features/banking/backend"
 
 # Database configuration - consolidated single database
@@ -329,7 +328,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "audit" "banking" "payment" "reporting" "cashflow" "contacts")
+    local services=("auth" "banking" "payment" "cashflow" "contacts")
     local total=${#services[@]}
     local current=0
 
@@ -455,8 +454,6 @@ start_services() {
             "Auth:7091:/metrics"
             "Cashflow:7092:/health"
             "Payment:7093:/health"
-            "Reporting:7094:/health"
-            "Audit:7095:/health"
             "Banking:7096:/health"
             "Contacts:7097:/health"
         )
@@ -570,8 +567,6 @@ show_status() {
         "Auth Service:auth-service-local:7091:/metrics"
         "Cashflow Service:cashflow-service-local:7092:/health"
         "Payment Service:payment-service-local:7093:/health"
-        "Reporting Service:reporting-service-local:7094:/health"
-        "Audit Service:audit-service-local:7095:/health"
         "Banking Service:banking-service-local:7096:/health"
         "Contacts Service:contacts-service-local:7097:/health"
     )
@@ -809,9 +804,9 @@ run_tests() {
     if [ "$service" = "all" ]; then
         print_gradient_header "🧪 Running All Test Suites"
         if [ -f "./gradlew" ]; then
-            ./gradlew :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test :features:contacts:backend:test
+            ./gradlew :features:auth:backend:test :features:banking:backend:test :features:cashflow:backend:test :features:contacts:backend:test
         else
-            gradle :features:auth:backend:test :features:audit:backend:test :features:banking:backend:test :features:cashflow:backend:test :features:contacts:backend:test
+            gradle :features:auth:backend:test :features:banking:backend:test :features:cashflow:backend:test :features:contacts:backend:test
         fi
     elif [ "$service" = "auth" ]; then
         print_gradient_header "🧪 Running Auth Service Tests"
@@ -819,13 +814,6 @@ run_tests() {
             ./gradlew :features:auth:backend:test
         else
             gradle :features:auth:backend:test
-        fi
-    elif [ "$service" = "audit" ]; then
-        print_gradient_header "🧪 Running Audit Service Tests"
-        if [ -f "./gradlew" ]; then
-            ./gradlew :features:audit:backend:test
-        else
-            gradle :features:audit:backend:test
         fi
     elif [ "$service" = "banking" ]; then
         print_gradient_header "🧪 Running Banking Service Tests"
@@ -849,7 +837,7 @@ run_tests() {
             gradle :features:contacts:backend:test
         fi
     else
-        print_status error "Invalid service type. Use 'all', 'auth', 'audit', 'banking', 'cashflow', or 'contacts'"
+        print_status error "Invalid service type. Use 'all', 'auth', 'banking', 'cashflow', or 'contacts'"
         exit 1
     fi
     echo ""
@@ -875,12 +863,6 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7093${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15009${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Reporting Service${NC}    ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7094${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15010${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Audit Service${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7095${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15011${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
@@ -949,10 +931,10 @@ watch_mode() {
     # Watch for changes (requires fswatch or inotify-tools)
     if command -v fswatch &> /dev/null; then
         if [ "$service" = "all" ]; then
-            fswatch -o $AUTH_SERVICE_DIR/src $AUDIT_SERVICE_DIR/src $BANKING_SERVICE_DIR/src | while read num ; do
+            fswatch -o $AUTH_SERVICE_DIR/src $BANKING_SERVICE_DIR/src | while read num ; do
                 print_color "$SOFT_YELLOW" "🔄 Changes detected, rebuilding..."
                 build_app
-                docker-compose -f $COMPOSE_FILE restart dokus-auth-local dokus-audit-local dokus-banking-local
+                docker-compose -f $COMPOSE_FILE restart dokus-auth-local dokus-banking-local
                 print_color "$SOFT_GREEN" "✓ Services restarted"
             done
         elif [ "$service" = "auth" ]; then
@@ -966,18 +948,6 @@ watch_mode() {
                 docker build -f features/auth/backend/Dockerfile.dev -t invoid-vision/dokus-auth:dev-latest .
                 docker-compose -f $COMPOSE_FILE restart dokus-auth-local
                 print_color "$SOFT_GREEN" "✓ Auth Service restarted"
-            done
-        elif [ "$service" = "audit" ]; then
-            fswatch -o $AUDIT_SERVICE_DIR/src | while read num ; do
-                print_color "$SOFT_YELLOW" "🔄 Audit Service changes detected, rebuilding..."
-                if [ -f "./gradlew" ]; then
-                    ./gradlew :features:audit:backend:shadowJar -x test
-                else
-                    gradle :features:audit:backend:shadowJar -x test
-                fi
-                docker build -f features/audit/backend/Dockerfile.dev -t invoid-vision/dokus-audit:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart dokus-audit-local
-                print_color "$SOFT_GREEN" "✓ Audit Service restarted"
             done
         elif [ "$service" = "banking" ]; then
             fswatch -o $BANKING_SERVICE_DIR/src | while read num ; do
@@ -1085,7 +1055,7 @@ show_help() {
     echo_e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
     echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Create service JARs + images${NC}"
     echo_e "    ${SOFT_CYAN}watch${NC} [svc]  ${DIM_WHITE}Auto rebuild on changes${NC}"
-    echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|audit|banking|cashflow|all)${NC}"
+    echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|banking|cashflow|contacts|all)${NC}"
     echo ""
 
     echo_e "  ${SOFT_YELLOW}${BOLD}Data & Tooling${NC}"
