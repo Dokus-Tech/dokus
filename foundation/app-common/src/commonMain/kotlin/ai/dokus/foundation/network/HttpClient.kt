@@ -25,6 +25,7 @@ fun createBaseHttpClient(
     // Let HttpResponseValidator handle non-2xx responses instead of throwing at the engine level.
     expectSuccess = false
     withJsonContentNegotiation()
+    withResources()
     withDokusEndpoint(dokusEndpoint)
     withLogging()
     withResponseValidation {

@@ -6,16 +6,17 @@ import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import ai.dokus.foundation.domain.routes.Identity
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.post
+import io.ktor.client.plugins.resources.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 /**
  * HTTP implementation of IdentityRemoteDataSource.
- * Uses Ktor HttpClient to communicate with the identity service.
+ * Uses Ktor HttpClient with type-safe routing to communicate with the identity service.
  */
 internal class IdentityRemoteDataSourceImpl(
     private val httpClient: HttpClient,
@@ -23,7 +24,7 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun login(request: LoginRequest): Result<LoginResponse> {
         return runCatching {
-            httpClient.post("/api/v1/identity/login") {
+            httpClient.post(Identity.Login()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -32,7 +33,7 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun register(request: RegisterRequest): Result<LoginResponse> {
         return runCatching {
-            httpClient.post("/api/v1/identity/register") {
+            httpClient.post(Identity.Register()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -41,7 +42,7 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun refreshToken(request: RefreshTokenRequest): Result<LoginResponse> {
         return runCatching {
-            httpClient.post("/api/v1/identity/refresh") {
+            httpClient.post(Identity.Refresh()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
@@ -50,7 +51,7 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun requestPasswordReset(email: Email): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/identity/request-password-reset") {
+            httpClient.post(Identity.RequestPasswordReset()) {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf("email" to email))
             }
@@ -59,7 +60,7 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun resetPassword(resetToken: String, request: ResetPasswordRequest): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/identity/reset-password/$resetToken") {
+            httpClient.post(Identity.ResetPassword(token = resetToken)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -68,7 +69,7 @@ internal class IdentityRemoteDataSourceImpl(
 
     override suspend fun verifyEmail(token: String): Result<Unit> {
         return runCatching {
-            httpClient.post("/api/v1/identity/verify-email/$token") {
+            httpClient.post(Identity.VerifyEmail(token = token)) {
                 contentType(ContentType.Application.Json)
             }
         }

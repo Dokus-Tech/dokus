@@ -58,6 +58,7 @@ kotlin {
             implementation(libs.kotlinx.coroutinesCore)
 
             implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
 
