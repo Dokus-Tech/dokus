@@ -1,12 +1,12 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.foundation.design.Res
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_subtotal
+import ai.dokus.app.resources.generated.invoice_title
+import ai.dokus.app.resources.generated.invoice_total
+import ai.dokus.app.resources.generated.invoice_vat
 import ai.dokus.foundation.design.components.PDashedDivider
 import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.invoice_subtotal
-import ai.dokus.foundation.design.invoice_title
-import ai.dokus.foundation.design.invoice_total
-import ai.dokus.foundation.design.invoice_vat
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
@@ -88,8 +88,8 @@ internal fun InvoiceTotalsSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        InvoiceTotalRow(label = "Subtotal", value = subtotal)
-        InvoiceTotalRow(label = "VAT", value = vatAmount)
+        InvoiceTotalRow(label = stringResource(Res.string.invoice_subtotal), value = subtotal)
+        InvoiceTotalRow(label = stringResource(Res.string.invoice_vat), value = vatAmount)
 
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -109,7 +109,7 @@ internal fun InvoiceTotalsSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "TOTAL",
+                text = stringResource(Res.string.invoice_total).uppercase(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
