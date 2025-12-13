@@ -34,6 +34,6 @@ object UsersTable : UUIDTable("users") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, email)
+        // uniqueIndex already defined on column; avoid redundant non-unique index
     }
 }

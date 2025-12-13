@@ -14,7 +14,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object ClientsTable : UUIDTable("clients") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("tenant_id").index()
+    val tenantId = reference(
+        name = "tenant_id",
+        foreign = ai.dokus.foundation.database.tables.auth.TenantTable,
+        onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.CASCADE
+    ).index()
 
     // Client identification
     val name = varchar("name", 255)
@@ -52,4 +56,9 @@ object ClientsTable : UUIDTable("clients") {
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
+
+    init {
+        // Prevent duplicates per tenant on VAT number when provided
+        uniqueIndex(tenantId, vatNumber)
+    }
 }
