@@ -24,7 +24,7 @@ class DatabaseFactory(
 
     /**
      * Connect to the database without creating any tables.
-     * Use this when tables will be initialized centrally via DatabaseInitializer.
+     * Tables should be initialized via service-specific initializers (e.g., AuthTables.initialize()).
      */
     fun connect(): Database {
         dataSource = createHikariDataSource()
@@ -40,8 +40,9 @@ class DatabaseFactory(
 
     /**
      * Connect and create the specified tables.
-     * @deprecated Use connect() + DatabaseInitializer.initializeAllTables() instead
+     * @deprecated Use connect() + service-specific table initializers instead
      */
+    @Deprecated("Use connect() + service-specific table initializers", level = DeprecationLevel.WARNING)
     suspend fun init(vararg tables: Table): Database {
         connect()
         createTables(*tables)
