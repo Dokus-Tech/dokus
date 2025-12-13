@@ -3,16 +3,14 @@ package ai.dokus.foundation.database.repository.cashflow
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.Quantity
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.ClientId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.InvoiceItemId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
-import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.PeppolId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto

@@ -1,7 +1,9 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.ktor.database.dbEnumeration
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -14,7 +16,10 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object ClientsTable : UUIDTable("clients") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("tenant_id").index()
+    val tenantId = uuid("tenant_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
+    ).index()
 
     // Client identification
     val name = varchar("name", 255)
@@ -52,4 +57,9 @@ object ClientsTable : UUIDTable("clients") {
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
+
+    init {
+        // Prevent duplicates per tenant on VAT number when provided
+        uniqueIndex(tenantId, vatNumber)
+    }
 }

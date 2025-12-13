@@ -32,8 +32,4 @@ object UsersTable : UUIDTable("users") {
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
-
-    init {
-        index(false, email)
-    }
 }

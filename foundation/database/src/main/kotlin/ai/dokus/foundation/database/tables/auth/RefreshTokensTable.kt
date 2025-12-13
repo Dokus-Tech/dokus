@@ -12,15 +12,13 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * OWNER: auth service
  */
 object RefreshTokensTable : UUIDTable("refresh_tokens") {
-    val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE)
+    val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
     val token = varchar("token", 500).uniqueIndex()
-    val expiresAt = datetime("expires_at")
+    val expiresAt = datetime("expires_at").index()
     val isRevoked = bool("is_revoked").default(false)
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, userId)
-        index(false, token)
-        index(false, expiresAt) // For cleanup jobs
+        // token already unique index; user/expires indexed on columns
     }
 }

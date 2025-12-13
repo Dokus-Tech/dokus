@@ -1,5 +1,7 @@
 package ai.dokus.foundation.database.tables.peppol
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -12,10 +14,13 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object PeppolSettingsTable : UUIDTable("peppol_settings") {
     // Multi-tenancy (CRITICAL) - one settings record per tenant
-    val tenantId = uuid("tenant_id").uniqueIndex()
+    val tenantId = uuid("tenant_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
+    )
 
     // Provider identification - supports multiple providers
-    val providerId = varchar("provider_id", 50).default("recommand")
+    val providerId = varchar("provider_id", 50).default("recommand").index()
 
     // Provider-specific configuration (JSON) for future extensibility
     val providerConfig = text("provider_config").nullable()
@@ -37,7 +42,6 @@ object PeppolSettingsTable : UUIDTable("peppol_settings") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        index(false, tenantId)
-        index(false, providerId)
+        uniqueIndex(tenantId, providerId)
     }
 }

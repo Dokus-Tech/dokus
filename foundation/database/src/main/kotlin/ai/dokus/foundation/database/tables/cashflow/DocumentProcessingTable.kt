@@ -1,5 +1,6 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
@@ -32,7 +33,10 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
         .uniqueIndex()
 
     // Multi-tenancy (denormalized for query performance)
-    val tenantId = uuid("tenant_id")
+    val tenantId = uuid("tenant_id").references(
+        TenantTable.id,
+        onDelete = ReferenceOption.CASCADE
+    )
 
     // Processing state
     val status = dbEnumeration<ProcessingStatus>("status")
@@ -78,9 +82,6 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
 
         // For background job: find pending/failed documents to process
         index(false, status, processingAttempts)
-
-        // For looking up processing by document
-        index(false, documentId)
 
         // For cleanup: find old unconfirmed documents
         index(false, tenantId, confirmedAt)

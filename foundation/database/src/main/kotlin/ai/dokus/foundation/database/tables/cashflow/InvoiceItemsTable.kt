@@ -10,7 +10,7 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
  */
 object InvoiceItemsTable : UUIDTable("invoice_items") {
     // Foreign key to invoice
-    val invoiceId = uuid("invoice_id").references(InvoicesTable.id)
+    val invoiceId = uuid("invoice_id").references(InvoicesTable.id).index()
 
     // Item details
     val description = text("description")
@@ -25,7 +25,5 @@ object InvoiceItemsTable : UUIDTable("invoice_items") {
     // Ordering
     val sortOrder = integer("sort_order").default(0)
 
-    init {
-        index(false, invoiceId)
-    }
+    init {}
 }

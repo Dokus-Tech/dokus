@@ -14,8 +14,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * OWNER: auth service
  */
 object TenantMembersTable : UUIDTable("tenant_members") {
-    val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE)
-    val tenantId = reference("tenant_id", TenantTable, onDelete = ReferenceOption.CASCADE)
+    val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
+    val tenantId = reference("tenant_id", TenantTable, onDelete = ReferenceOption.CASCADE).index()
     val role = dbEnumeration<UserRole>("role")
     val isActive = bool("is_active").default(true)
 
@@ -25,8 +25,6 @@ object TenantMembersTable : UUIDTable("tenant_members") {
 
     init {
         uniqueIndex(userId, tenantId)
-        index(false, userId)
-        index(false, tenantId)
         index(false, tenantId, isActive) // For active members query
     }
 }
