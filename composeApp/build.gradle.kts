@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -11,6 +12,21 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
 }
+
+// Shared versioning derived from version.properties (major/minor) + build number
+val versionProperties = Properties().apply {
+    val propsFile = rootProject.file("version.properties")
+    if (propsFile.exists()) {
+        load(propsFile.inputStream())
+    }
+}
+val versionMajor = versionProperties.getProperty("major", "1")
+val versionMinor = versionProperties.getProperty("minor", "0")
+val versionCodeResolved = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
+val versionNameDefault = "$versionMajor.$versionMinor.$versionCodeResolved"
+val versionNameOverride = project.findProperty("versionName") as String?
+val versionNameResolved = versionNameOverride ?: versionNameDefault
+val appleBundleId = project.findProperty("appleBundleId") as String? ?: "vision.invoid.dokus"
 
 kotlin {
     jvmToolchain(17)
@@ -30,8 +46,8 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            binaryOption("bundleId", "ai.dokus.app")
-            binaryOption("bundleVersion", "1")
+            binaryOption("bundleId", appleBundleId)
+            binaryOption("bundleVersion", versionCodeResolved.toString())
 
             linkerOpts("-lsqlite3")
         }
@@ -118,11 +134,11 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "ai.dokus.app"
+        applicationId = "vision.invoid.dokus"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = versionCodeResolved
+        versionName = versionNameResolved
     }
     packaging {
         resources {
@@ -148,6 +164,9 @@ compose.desktop {
 
     application {
         mainClass = "ai.dokus.app.MainKt"
+        val macAppStore = (project.findProperty("compose.desktop.mac.appStore") as String?)?.toBoolean() ?: false
+        val macSigningEnabled = (project.findProperty("mac.signing.enabled") as String?)?.toBoolean() ?: false
+        val macSigningIdentity = project.findProperty("mac.signing.identity") as String?
 
         buildTypes {
             release {
@@ -165,15 +184,21 @@ compose.desktop {
             modules("java.sql")  // Required for SQLDelight/JDBC
 
             packageName = "Dokus"
-            packageVersion = "1.0.0"
+            packageVersion = versionNameResolved
             vendor = "Invoid Vision"
 
             macOS {
                 dockName = "D[#]kus"
-                appStore = false
-                bundleID = "ai.dokus.app"
+                appStore = macAppStore
+                bundleID = appleBundleId
                 copyright = "Invoid Vision 2025"
                 description = "Dokus financial document management"
+                signing {
+                    sign.set(macSigningEnabled)
+                    if (macSigningIdentity != null) {
+                        identity.set(macSigningIdentity)
+                    }
+                }
             }
 
             windows {
