@@ -19,9 +19,9 @@ object AuditLogsTable : UUIDTable("audit_logs") {
     val userId = uuid("user_id").references(
         ai.dokus.foundation.database.tables.auth.UsersTable.id,
         onDelete = org.jetbrains.exposed.v1.core.ReferenceOption.SET_NULL
-    ).nullable()
+    ).nullable().index()
 
-    val action = dbEnumeration<AuditAction>("action")
+    val action = dbEnumeration<AuditAction>("action").index()
     val entityType = dbEnumeration<EntityType>("entity_type")
     val entityId = varchar("entity_id", 255)
 
@@ -38,7 +38,5 @@ object AuditLogsTable : UUIDTable("audit_logs") {
     init {
         index(false, tenantId, createdAt)
         index(false, entityType, entityId)
-        index(false, userId)
-        index(false, action)
     }
 }
