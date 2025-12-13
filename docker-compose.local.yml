@@ -387,6 +387,42 @@ services:
       - ./logs-local:/app/logs
       - cashflow-storage-local:/app/storage/documents
 
+  # Contacts Service
+  contacts-service-local:
+    image: invoid-vision/dokus-contacts:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-contacts-local
+    environment:
+      PORT: 8080
+      ENVIRONMENT: local
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: local.dokus.tech
+      JWT_AUDIENCE: dokus-api-local
+      REDIS_HOST: redis-local
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: devredispass
+      LOG_LEVEL: DEBUG
+    ports:
+      - "7097:8080"
+      - "15013:5005"
+    depends_on:
+      postgres-local:
+        condition: service_healthy
+      redis-local:
+        condition: service_healthy
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-local:/app/logs
+
   # pgAdmin for database management (profile: tools)
   pgadmin:
     image: dpage/pgadmin4:latest
