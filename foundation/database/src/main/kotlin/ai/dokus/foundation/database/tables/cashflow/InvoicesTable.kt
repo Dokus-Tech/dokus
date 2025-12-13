@@ -23,20 +23,20 @@ object InvoicesTable : UUIDTable("invoices") {
     val tenantId = uuid("organization_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // Client reference
     val clientId = uuid("client_id").references(
         ClientsTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // Invoice identification
     val invoiceNumber = varchar("invoice_number", 50)
 
     // Dates
-    val issueDate = date("issue_date")
-    val dueDate = date("due_date")
+    val issueDate = date("issue_date").index()
+    val dueDate = date("due_date").index()
 
     // Amounts (NUMERIC for exact decimal arithmetic - NEVER Float!)
     val subtotalAmount = decimal("subtotal_amount", 12, 2)
@@ -45,7 +45,7 @@ object InvoicesTable : UUIDTable("invoices") {
     val paidAmount = decimal("paid_amount", 12, 2).default(java.math.BigDecimal.ZERO)
 
     // Status
-    val status = dbEnumeration<InvoiceStatus>("status").default(InvoiceStatus.Draft)
+    val status = dbEnumeration<InvoiceStatus>("status").default(InvoiceStatus.Draft).index()
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // Optional fields
@@ -71,13 +71,6 @@ object InvoicesTable : UUIDTable("invoices") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index organization_id for security and performance
-        index(false, tenantId)
-        index(false, clientId)
-        index(false, status)
-        index(false, issueDate)
-        index(false, dueDate)
-
         // Composite index for common queries
         index(false, tenantId, status)
         index(false, tenantId, clientId)

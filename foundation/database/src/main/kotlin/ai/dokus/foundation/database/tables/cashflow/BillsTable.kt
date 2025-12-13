@@ -26,16 +26,16 @@ object BillsTable : UUIDTable("bills") {
     val tenantId = uuid("organization_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // Supplier information
-    val supplierName = varchar("supplier_name", 255)
+    val supplierName = varchar("supplier_name", 255).index()
     val supplierVatNumber = varchar("supplier_vat_number", 50).nullable()
 
     // Invoice details
     val invoiceNumber = varchar("invoice_number", 100).nullable()
     val issueDate = date("issue_date")
-    val dueDate = date("due_date")
+    val dueDate = date("due_date").index()
 
     // Amounts (NUMERIC for exact arithmetic - NO FLOATS!)
     val amount = decimal("amount", 12, 2)
@@ -43,7 +43,7 @@ object BillsTable : UUIDTable("bills") {
     val vatRate = decimal("vat_rate", 5, 4).nullable() // e.g., 0.2100 for 21%
 
     // Status & Currency
-    val status = dbEnumeration<BillStatus>("status").default(BillStatus.Pending)
+    val status = dbEnumeration<BillStatus>("status").default(BillStatus.Pending).index()
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // Categorization
@@ -67,12 +67,6 @@ object BillsTable : UUIDTable("bills") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // CRITICAL: Index organization_id for security and performance
-        index(false, tenantId)
-        index(false, status)
-        index(false, dueDate)
-        index(false, supplierName)
-
         // Composite indexes for common queries
         index(false, tenantId, status)
         index(false, tenantId, dueDate)
