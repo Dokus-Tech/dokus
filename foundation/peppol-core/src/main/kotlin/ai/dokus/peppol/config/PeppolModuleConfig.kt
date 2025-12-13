@@ -1,38 +1,72 @@
 package ai.dokus.peppol.config
 
+import com.typesafe.config.Config
+
 /**
  * Configuration for the Peppol module.
  *
- * Loaded from environment variables since peppol-core is a library module.
+ * Loaded from HOCON configuration files following application patterns.
+ * Expected configuration path: peppol.*
  */
 data class PeppolModuleConfig(
     /** Default provider ID (e.g., "recommand") */
-    val defaultProvider: String = "recommand",
+    val defaultProvider: String,
 
-    /** Whether inbox polling is enabled */
-    val pollingEnabled: Boolean = true,
+    /** Recommand provider configuration */
+    val recommand: RecommandConfig,
 
-    /** Polling interval in minutes */
-    val pollingIntervalMinutes: Int = 10,
-
-    /** Recommand API base URL */
-    val recommandBaseUrl: String = "https://app.recommand.eu",
+    /** Inbox polling configuration */
+    val inbox: InboxConfig,
 
     /** Global test mode override (if true, all tenants use test mode) */
-    val globalTestMode: Boolean = false
+    val globalTestMode: Boolean
 ) {
     companion object {
         /**
-         * Create config from environment variables.
+         * Create config from HOCON configuration.
          */
-        fun fromEnvironment(): PeppolModuleConfig {
+        fun fromConfig(config: Config): PeppolModuleConfig {
+            val peppolConfig = config.getConfig("peppol")
             return PeppolModuleConfig(
-                defaultProvider = System.getenv("PEPPOL_DEFAULT_PROVIDER") ?: "recommand",
-                pollingEnabled = System.getenv("PEPPOL_INBOX_POLL_ENABLED")?.toBooleanStrictOrNull() ?: true,
-                pollingIntervalMinutes = System.getenv("PEPPOL_INBOX_POLL_INTERVAL_MINUTES")?.toIntOrNull() ?: 10,
-                recommandBaseUrl = System.getenv("RECOMMAND_BASE_URL") ?: "https://app.recommand.eu",
-                globalTestMode = System.getenv("PEPPOL_TEST_MODE")?.toBooleanStrictOrNull() ?: false
+                defaultProvider = peppolConfig.getString("defaultProvider"),
+                recommand = RecommandConfig.fromConfig(peppolConfig.getConfig("recommand")),
+                inbox = InboxConfig.fromConfig(peppolConfig.getConfig("inbox")),
+                globalTestMode = peppolConfig.getBoolean("globalTestMode")
             )
         }
+    }
+}
+
+/**
+ * Recommand provider configuration.
+ */
+data class RecommandConfig(
+    /** Production API base URL */
+    val baseUrl: String,
+    /** Test/sandbox API base URL */
+    val testUrl: String
+) {
+    companion object {
+        fun fromConfig(config: Config): RecommandConfig = RecommandConfig(
+            baseUrl = config.getString("baseUrl"),
+            testUrl = config.getString("testUrl")
+        )
+    }
+}
+
+/**
+ * Inbox polling configuration.
+ */
+data class InboxConfig(
+    /** Whether inbox polling is enabled */
+    val pollingEnabled: Boolean,
+    /** Polling interval in seconds */
+    val pollingIntervalSeconds: Int
+) {
+    companion object {
+        fun fromConfig(config: Config): InboxConfig = InboxConfig(
+            pollingEnabled = config.getBoolean("pollingEnabled"),
+            pollingIntervalSeconds = config.getInt("pollingIntervalSeconds")
+        )
     }
 }
