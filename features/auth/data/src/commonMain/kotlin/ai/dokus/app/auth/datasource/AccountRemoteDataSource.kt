@@ -5,6 +5,7 @@ import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
+import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
 
 /**
  * Remote data source for account management operations.
@@ -30,6 +31,13 @@ interface AccountRemoteDataSource {
      * @return Result indicating success or failure
      */
     suspend fun logout(request: LogoutRequest): Result<Unit>
+
+    /**
+     * Update the current user's profile (first name, last name).
+     * @param request Profile update data
+     * @return Result containing the updated User object
+     */
+    suspend fun updateProfile(request: UpdateProfileRequest): Result<User>
 
     /**
      * Deactivate the current user account.

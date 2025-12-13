@@ -39,6 +39,11 @@
     <string name="profile_logout_description">Von diesem Gerät abmelden</string>
     <string name="profile_editing_coming_soon">Profilbearbeitung demnächst verfügbar</string>
     <string name="profile_load_failed">Profil konnte nicht geladen werden</string>
+    <string name="profile_edit">Bearbeiten</string>
+    <string name="profile_save">Speichern</string>
+    <string name="profile_cancel">Abbrechen</string>
+    <string name="profile_save_success">Profil erfolgreich aktualisiert</string>
+    <string name="profile_save_error">Profil konnte nicht aktualisiert werden</string>
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Firmendaten</string>
