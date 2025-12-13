@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package ai.dokus.app.cashflow.screens
 
 import ai.dokus.app.cashflow.components.invoice.InteractiveInvoiceDocument
@@ -11,6 +9,7 @@ import ai.dokus.app.cashflow.viewmodel.DatePickerTarget
 import ai.dokus.app.cashflow.viewmodel.InvoiceCreationStep
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
+import ai.dokus.foundation.design.components.PDatePickerDialog
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -24,29 +23,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -55,7 +43,6 @@ import org.koin.compose.viewmodel.koinViewModel
  * Desktop: Two-column layout with interactive invoice on left, send options on right.
  * Mobile: Two-step flow - edit invoice, then send options.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateInvoiceScreen(
     viewModel: CreateInvoiceViewModel = koinViewModel(),
@@ -67,7 +54,6 @@ internal fun CreateInvoiceScreen(
     val formState by viewModel.formState.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val clientsState by viewModel.clientsState.collectAsState()
-    val saveState by viewModel.state.collectAsState()
     val createdInvoiceId by viewModel.createdInvoiceId.collectAsState()
 
     // Navigate back when invoice is created
@@ -183,10 +169,10 @@ internal fun CreateInvoiceScreen(
                 val initialDate = when (uiState.isDatePickerOpen) {
                     DatePickerTarget.ISSUE_DATE -> formState.issueDate
                     DatePickerTarget.DUE_DATE -> formState.dueDate
-                    null -> null
+                    else -> null
                 }
 
-                DatePickerModal(
+                PDatePickerDialog(
                     initialDate = initialDate,
                     onDateSelected = { date ->
                         if (date != null) {
@@ -214,12 +200,12 @@ private fun DesktopLayout(
             .fillMaxSize()
             .padding(contentPadding)
             .padding(32.dp),
-        horizontalArrangement = Arrangement.spacedBy(32.dp)
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Left column: Interactive invoice
         Column(
             modifier = Modifier
-                .weight(1.5f)
+                .weight(1.6f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -236,10 +222,11 @@ private fun DesktopLayout(
             invoiceContent()
         }
 
-        // Right column: Send options
+        // Right column: Send options (weighted with min width)
         Column(
             modifier = Modifier
-                .width(320.dp)
+                .weight(1f)
+                .widthIn(min = 320.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             sendOptionsContent()
@@ -295,44 +282,5 @@ private fun MobileEditLayout(
                 isEnabled = isNextEnabled
             )
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DatePickerModal(
-    initialDate: LocalDate?,
-    onDateSelected: (LocalDate?) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val initialMillis = initialDate?.let {
-        it.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
-    }
-
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
-
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                val selectedMillis = datePickerState.selectedDateMillis
-                if (selectedMillis != null) {
-                    val instant = kotlin.time.Instant.fromEpochMilliseconds(selectedMillis)
-                    val localDate = instant.toLocalDateTime(TimeZone.UTC).date
-                    onDateSelected(localDate)
-                } else {
-                    onDateSelected(null)
-                }
-            }) {
-                Text("Confirm")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    ) {
-        DatePicker(state = datePickerState)
     }
 }
