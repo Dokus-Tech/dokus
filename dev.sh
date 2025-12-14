@@ -118,6 +118,10 @@ OLLAMA_CONTAINER="ollama-local"
 OLLAMA_PORT="11434"
 OLLAMA_DEFAULT_MODELS=("mistral:7b" "llama3.1:8b")
 
+# Gateway configuration
+GATEWAY_PORT="8000"
+GATEWAY_DASHBOARD_PORT="8080"
+
 # Function to capitalize first letter (Bash 3.2 compatible)
 capitalize() {
     local str=$1
@@ -373,6 +377,32 @@ build_app() {
     done
 
     echo ""
+    print_separator
+    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}Phase 3: Building Web Frontend${NC}\n"
+
+    print_simple_status building "Compiling Kotlin/WASM..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :composeApp:wasmJsBrowserDistribution -q > /dev/null 2>&1
+    else
+        gradle :composeApp:wasmJsBrowserDistribution -q > /dev/null 2>&1
+    fi
+
+    if [ $? -ne 0 ]; then
+        print_status error "Web WASM build failed"
+        exit 1
+    fi
+    print_simple_status success "WASM bundle compiled"
+
+    print_simple_status building "Building web Docker image..."
+    docker build -f composeApp/Dockerfile -t invoid-vision/dokus-web:dev-latest . -q > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "Web Docker image build failed"
+        exit 1
+    fi
+    print_simple_status success "Web image ready"
+
+    echo ""
     echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}All services built successfully${NC}"
     echo ""
 }
@@ -441,6 +471,20 @@ start_services() {
                 break
             fi
             if [ $i -eq 60 ]; then
+                echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
+            fi
+            echo -n "."
+            sleep 1
+        done
+
+        # Wait for Traefik Gateway
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Traefik Gateway"
+        for i in {1..30}; do
+            if curl -f -s http://localhost:${GATEWAY_PORT}/health &>/dev/null 2>&1 || curl -f -s http://localhost:${GATEWAY_DASHBOARD_PORT}/api/overview &>/dev/null 2>&1; then
+                echo_e "${SOFT_GREEN}◎ Ready${NC}"
+                break
+            fi
+            if [ $i -eq 30 ]; then
                 echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
             fi
             echo -n "."
@@ -555,6 +599,14 @@ show_status() {
     # Ollama AI
     printf "  ${SOFT_GRAY}│${NC} Ollama AI Server        ${SOFT_GRAY}│${NC} "
     if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
+
+    # Traefik Gateway
+    printf "  ${SOFT_GRAY}│${NC} Traefik Gateway         ${SOFT_GRAY}│${NC} "
+    if curl -f -s http://localhost:${GATEWAY_DASHBOARD_PORT}/api/overview &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -859,7 +911,7 @@ start_web() {
     echo ""
     printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Web Application"
     for i in {1..30}; do
-        if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
+        if curl -f -s http://localhost:${GATEWAY_PORT}/ > /dev/null 2>&1; then
             echo_e "${SOFT_GREEN}◎ Ready${NC}"
             break
         fi
@@ -871,7 +923,7 @@ start_web() {
     done
 
     echo ""
-    print_status success "Web app available at http://localhost:8080"
+    print_status success "Web app available at http://localhost:${GATEWAY_PORT}"
     echo ""
 }
 
@@ -925,32 +977,43 @@ run_tests() {
 print_services_info() {
     print_separator
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}📍 Service Endpoints${NC}\n"
+    echo_e "  ${SOFT_GREEN}${BOLD}🌐 API Gateway${NC}\n"
 
-    # Service table
-    echo_e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Endpoints${NC}                               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    # Gateway info box
+    echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://localhost:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://localhost:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
 
-    # Services
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7091${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC} • ${SOFT_GRAY}debug: 15007${NC}   ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7092${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15008${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7093${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15009${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15013${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web App (WASM)${NC}       ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:8080${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}./dev.sh web${NC} ${SOFT_GRAY}to build${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
+    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}📍 API Routes (via Gateway)${NC}\n"
+
+    # Routes table
+    echo_e "  ${SOFT_GRAY}┌─────────────────────────────┬────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Route Prefix${NC}                ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                            ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/*${NC}                          ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web Frontend (WASM)${NC}              ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└─────────────────────────────┴────────────────────────────────────┘${NC}"
+
+    echo ""
+    echo_e "  ${SOFT_GRAY}${BOLD}Debug Ports (direct access)${NC}"
+    echo_e "    ${DIM_WHITE}Auth: 15007 • Cashflow: 15008 • Payment: 15009 • Banking: 15012 • Contacts: 15013${NC}"
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}💾 Database & Services${NC}\n"

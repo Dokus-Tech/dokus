@@ -1,0 +1,45 @@
+# Shared middlewares for Traefik
+# Used by both local and cloud deployments
+
+http:
+  middlewares:
+    # Security headers for production
+    security-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
+          Server: ""
+
+    # Rate limiting - 100 requests/second with burst of 50
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    # Gzip compression
+    compress:
+      compress: {}
+
+    # CORS headers for API
+    cors-api:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "*"
+        accessControlAllowOriginList:
+          - "*"
+        accessControlMaxAge: 100
+        addVaryHeader: true

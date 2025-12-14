@@ -62,6 +62,11 @@ DB_CONTAINER="postgres"
 DB_PORT="15432"
 DB_NAME="dokus"
 
+# Gateway configuration
+GATEWAY_PORT="443"
+GATEWAY_DASHBOARD_PORT="8080"
+DEFAULT_DOMAIN="dokus.tech"
+
 # Credentials
 if [ -f .env ]; then
     export $(grep -v '^#' .env | grep -E 'DB_USERNAME|DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_USERNAME|RABBITMQ_PASSWORD' | xargs)
@@ -253,20 +258,30 @@ show_status() {
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
+    printf "  ${SOFT_GRAY}│${NC} Traefik Gateway         ${SOFT_GRAY}│${NC} "
+    if curl -f -s -k https://localhost/health &>/dev/null 2>&1 || curl -f -s http://localhost:80/ &>/dev/null 2>&1; then
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
+
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
+    # Check services via gateway (services don't expose ports directly)
     local services=(
-        "Auth Service:6091:/metrics"
-        "Cashflow Service:6092:/health"
-        "Payment Service:6093:/health"
-        "Banking Service:6096:/health"
-        "Contacts Service:6097:/health"
+        "Auth Service:/api/v1/identity"
+        "Cashflow Service:/api/v1/invoices"
+        "Payment Service:/api/v1/payments"
+        "Banking Service:/api/v1/banking"
+        "Contacts Service:/api/v1/contacts"
+        "Web Frontend:/"
     )
 
     for service_info in "${services[@]}"; do
-        IFS=':' read -r service_name port endpoint <<< "$service_info"
+        IFS=':' read -r service_name endpoint <<< "$service_info"
         printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
-        if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
+        # Check via HTTPS gateway (using -k to allow self-signed certs during testing)
+        if curl -f -s -k "https://localhost${endpoint}" > /dev/null 2>&1; then
             echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
         else
             echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -278,21 +293,48 @@ show_status() {
 }
 
 print_services_info() {
+    # Load domain from .env if available
+    local DOMAIN="${DEFAULT_DOMAIN}"
+    if [ -f .env ]; then
+        source <(grep -E '^DOMAIN=' .env)
+        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
+    fi
+
     print_separator
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}📍 Service Endpoints${NC}\n"
+    echo_e "  ${SOFT_GREEN}${BOLD}🌐 API Gateway${NC}\n"
 
-    echo_e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Endpoints${NC}                               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6091${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC}                    ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6092${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6093${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6096${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:6097${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
+    # Gateway info box
+    echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}https://${DOMAIN}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}                   ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}https://traefik.${DOMAIN}${NC}                       ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
+
+    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}📍 API Routes (via Gateway)${NC}\n"
+
+    # Routes table
+    echo_e "  ${SOFT_GRAY}┌─────────────────────────────┬────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Route Prefix${NC}                ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                            ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/*${NC}                          ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web Frontend (WASM)${NC}              ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└─────────────────────────────┴────────────────────────────────────┘${NC}"
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}💾 Infrastructure Services${NC}\n"
@@ -542,6 +584,29 @@ initial_setup() {
 
     GEOIP_ENABLED="true"
 
+    # Gateway configuration
+    echo ""
+    print_status task "Configuring API Gateway (Traefik)"
+    DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "${DEFAULT_DOMAIN}" "DOMAIN")
+
+    # Generate Traefik dashboard password
+    TRAEFIK_DASHBOARD_USER="admin"
+    TRAEFIK_DASHBOARD_PASS=$(generate_password | cut -c1-16)
+    if command -v htpasswd &> /dev/null; then
+        TRAEFIK_DASHBOARD_AUTH=$(htpasswd -nb "$TRAEFIK_DASHBOARD_USER" "$TRAEFIK_DASHBOARD_PASS")
+    else
+        # Fallback: Use openssl for basic auth encoding
+        TRAEFIK_DASHBOARD_AUTH="${TRAEFIK_DASHBOARD_USER}:$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")"
+    fi
+
+    ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "admin@${DOMAIN}" "ACME_EMAIL")
+
+    # Create required directories
+    mkdir -p acme logs/traefik
+    touch acme/acme.json
+    chmod 600 acme/acme.json
+    print_status success "Created acme/ and logs/traefik/ directories"
+
     cat > .env << EOF
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
@@ -656,10 +721,23 @@ OLLAMA_NUM_PARALLEL=1
 OLLAMA_MAX_LOADED_MODELS=1
 
 # ============================================================================
+# API GATEWAY (Traefik)
+# ============================================================================
+DOMAIN=$DOMAIN
+ACME_EMAIL=$ACME_EMAIL
+TRAEFIK_DASHBOARD_AUTH=$TRAEFIK_DASHBOARD_AUTH
+
+# ============================================================================
 # LOGGING
 # ============================================================================
 LOG_LEVEL=$LOG_LEVEL
 EOF
+
+    echo ""
+    print_status info "Traefik Dashboard credentials:"
+    echo "  ${DIM_WHITE}User: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_USER}${NC}"
+    echo "  ${DIM_WHITE}Password: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_PASS}${NC}"
+    echo "  ${DIM_WHITE}URL: ${SOFT_CYAN}https://traefik.${DOMAIN}${NC}"
 
     echo ""
     print_status success ".env minted with fresh credentials"
