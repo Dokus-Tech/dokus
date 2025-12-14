@@ -223,7 +223,7 @@ private fun LoginContent(
                 POutlinedButton(
                     text = "Connect to server",
                     onClick = {
-                        // TODO: Implement server connection dialog
+                        navController.navigateTo(AuthDestination.ServerConnection())
                     },
                     modifier = Modifier.fillMaxWidth()
                 )

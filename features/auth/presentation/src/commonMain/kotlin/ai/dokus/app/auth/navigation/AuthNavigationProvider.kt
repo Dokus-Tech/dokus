@@ -5,6 +5,7 @@ import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 
 internal object AuthNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
@@ -28,6 +29,14 @@ internal object AuthNavigationProvider : NavigationProvider {
         }
         composable<AuthDestination.ProfileSettings> {
             ProfileSettingsScreen()
+        }
+        composable<AuthDestination.ServerConnection> { entry ->
+            val route = entry.toRoute<AuthDestination.ServerConnection>()
+            ServerConnectionScreen(
+                host = route.host,
+                port = route.port,
+                protocol = route.protocol
+            )
         }
     }
 }

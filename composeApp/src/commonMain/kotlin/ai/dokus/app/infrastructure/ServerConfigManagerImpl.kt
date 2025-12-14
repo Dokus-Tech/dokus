@@ -1,4 +1,4 @@
-package ai.dokus.foundation.platform
+package ai.dokus.app.infrastructure
 
 import ai.dokus.foundation.domain.config.ServerConfig
 import ai.dokus.foundation.domain.config.ServerConfigManager
