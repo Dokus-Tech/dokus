@@ -40,7 +40,12 @@ fun Application.withCors(corsConfig: SecurityConfig.Cors) {
         allowCredentials = true
         maxAgeInSeconds = 3600
 
-        corsConfig.allowedHosts.forEach { allowHost(host = it, schemes = listOf("http", "https")) }
+        // Handle "*" for allowing any host (development/internal deployments)
+        if (corsConfig.allowedHosts.contains("*")) {
+            anyHost()
+        } else {
+            corsConfig.allowedHosts.forEach { allowHost(host = it, schemes = listOf("http", "https")) }
+        }
     }
 }
 
