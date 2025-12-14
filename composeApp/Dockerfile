@@ -18,6 +18,7 @@ RUN addgroup -g 1001 -S appuser && adduser -u 1001 -S appuser -G appuser && \
     chown -R appuser:appuser /usr/share/nginx/html && \
     chown -R appuser:appuser /var/cache/nginx && \
     chown -R appuser:appuser /var/log/nginx && \
+    chown -R appuser:appuser /etc/nginx/conf.d && \
     touch /var/run/nginx.pid && \
     chown -R appuser:appuser /var/run/nginx.pid
 
@@ -27,6 +28,6 @@ USER appuser
 # Expose nginx port
 EXPOSE 8080
 
-# Health check
+# Health check (use 127.0.0.1 instead of localhost for IPv4)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/ || exit 1

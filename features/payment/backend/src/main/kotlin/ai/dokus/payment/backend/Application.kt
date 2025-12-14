@@ -4,12 +4,15 @@ import ai.dokus.payment.backend.config.configureDependencyInjection
 import ai.dokus.payment.backend.plugins.*
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.configure.configureErrorHandling
+import ai.dokus.foundation.ktor.configure.configureJwtAuthentication
 import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
 import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.resources.Resources
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("Application")
@@ -44,10 +47,14 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureDatabase()
 
     // Ktor plugins
+    install(Resources)
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)
     configureMonitoring()
+
+    // JWT Authentication
+    configureJwtAuthentication()
 
     // Application features
     configureRouting()
