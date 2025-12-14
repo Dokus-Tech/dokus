@@ -21,17 +21,30 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Deep Link Intent Filter -->
+            <!-- Deep Link Intent Filter for QR Auth -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <!-- dokus:// scheme -->
+                <!-- dokus://auth/qr scheme for QR code authentication -->
                 <data
                     android:host="auth"
                     android:pathPrefix="/qr"
+                    android:scheme="dokus" />
+            </intent-filter>
+
+            <!-- Deep Link Intent Filter for Server Connection -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- dokus://connect scheme for connecting to self-hosted servers -->
+                <data
+                    android:host="connect"
                     android:scheme="dokus" />
             </intent-filter>
 

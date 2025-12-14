@@ -1,5 +1,6 @@
 package ai.dokus.foundation.ktor.routes
 
+import ai.dokus.foundation.ktor.config.ServerInfoConfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
@@ -18,16 +19,14 @@ import kotlinx.serialization.Serializable
  * The endpoint is public (no authentication required) to allow clients
  * to validate servers before attempting login.
  */
-fun Routing.serverInfoRoutes(
-    serviceName: String = System.getenv("SERVICE_NAME") ?: "Dokus Server"
-) {
+fun Routing.serverInfoRoutes(config: ServerInfoConfig) {
     get("/api/v1/server/info") {
         val serverInfo = ServerInfoResponse(
-            name = System.getenv("SERVER_NAME") ?: serviceName,
-            version = System.getenv("SERVER_VERSION") ?: "1.0.0",
-            environment = System.getenv("ENVIRONMENT") ?: "self-hosted",
+            name = config.name,
+            version = config.version,
+            environment = config.environment,
             status = ServerInfoStatus.UP,
-            features = getEnabledFeatures()
+            features = getEnabledFeatures(config)
         )
         call.respond(HttpStatusCode.OK, serverInfo)
     }
@@ -66,9 +65,9 @@ enum class ServerInfoStatus {
 }
 
 /**
- * Get list of enabled features based on environment or configuration.
+ * Get list of enabled features based on configuration.
  */
-private fun getEnabledFeatures(): List<String> {
+private fun getEnabledFeatures(config: ServerInfoConfig): List<String> {
     // Core features that are always available
     val coreFeatures = listOf(
         "auth",
@@ -77,14 +76,14 @@ private fun getEnabledFeatures(): List<String> {
         "contacts"
     )
 
-    // Optional features based on environment
+    // Optional features based on configuration
     val optionalFeatures = mutableListOf<String>()
 
-    if (System.getenv("BANKING_ENABLED")?.toBoolean() != false) {
+    if (config.bankingEnabled) {
         optionalFeatures.add("banking")
     }
 
-    if (System.getenv("PAYMENTS_ENABLED")?.toBoolean() != false) {
+    if (config.paymentsEnabled) {
         optionalFeatures.add("payments")
     }
 

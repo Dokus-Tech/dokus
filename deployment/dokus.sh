@@ -462,7 +462,7 @@ show_mobile_connection() {
     fi
 
     # Generate deep link URL
-    local CONNECT_URL="https://dokus.tech/connect?host=${SERVER_HOST}&port=${SERVER_PORT}&protocol=${SERVER_PROTOCOL}"
+    local CONNECT_URL="dokus://connect?host=${SERVER_HOST}&port=${SERVER_PORT}&protocol=${SERVER_PROTOCOL}"
 
     echo_e "  ${SOFT_CYAN}${BOLD}Server Connection Details${NC}\n"
 

@@ -117,16 +117,6 @@ data class ServerConfig(
                 isCloud = false
             )
         }
-
-        /**
-         * Generate a deep link URL for this server configuration.
-         *
-         * @return Deep link URL that can be encoded in a QR code
-         */
-        fun ServerConfig.toDeepLink(): String {
-            val nameParam = name?.let { "&name=$it" } ?: ""
-            return "https://dokus.tech/connect?host=$host&port=$port&protocol=$protocol$nameParam"
-        }
     }
 }
 

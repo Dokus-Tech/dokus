@@ -428,7 +428,7 @@ for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
 REM Remove leading spaces from IP
 for /f "tokens=* delims= " %%a in ("%LOCAL_IP%") do set "LOCAL_IP=%%a"
 
-set "CONNECT_URL=https://dokus.tech/connect?host=%LOCAL_IP%&port=8000&protocol=http"
+set "CONNECT_URL=dokus://connect?host=%LOCAL_IP%&port=8000&protocol=http"
 
 echo   Server Connection Details
 echo   -------------------------
