@@ -359,7 +359,7 @@ jobs:
             2. Extract and run `dokus.bat`
 
             **What's included:**
-            - ✅ All 6 backend services (auth, cashflow, payment, reporting, audit, banking)
+            - ✅ All 5 backend services (auth, cashflow, payment, banking, contacts)
             - ✅ Interactive setup with auto-generated passwords
             - ✅ Multi-architecture support (AMD64 + ARM64)
             - ✅ PostgreSQL, Redis, RabbitMQ
