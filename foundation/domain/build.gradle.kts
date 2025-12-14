@@ -65,7 +65,7 @@ buildkonfig {
         buildConfigField(STRING, "env", "cloud")
 
         // Gateway endpoint (for external clients via Traefik) - Cloud
-        buildConfigField(STRING, "gatewayHost", "api.dokus.ai")
+        buildConfigField(STRING, "gatewayHost", "api.dokus.tech")
         buildConfigField(INT, "gatewayPort", "443")
         buildConfigField(STRING, "gatewayProtocol", "https")
 
