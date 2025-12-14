@@ -7,6 +7,7 @@ RUN rm -rf /usr/share/nginx/html/*
 
 # Copy built WASM static files from the build context
 # When building from root: docker build -f composeApp/Dockerfile .
+# Output from wasmJsBrowserDistribution task
 COPY composeApp/build/dist/wasmJs/productionExecutable/ /usr/share/nginx/html/
 
 # Copy nginx configuration

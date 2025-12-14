@@ -805,13 +805,13 @@ build_web() {
 
     print_simple_status building "Compiling Kotlin/WASM..."
     if [ -f "./gradlew" ]; then
-        ./gradlew :composeApp:wasmJsBrowserProductionWebpack -q 2>&1 | while read line; do
+        ./gradlew :composeApp:wasmJsBrowserDistribution -q 2>&1 | while read line; do
             if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
                 echo "  $line"
             fi
         done
     else
-        gradle :composeApp:wasmJsBrowserProductionWebpack -q 2>&1 | while read line; do
+        gradle :composeApp:wasmJsBrowserDistribution -q 2>&1 | while read line; do
             if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
                 echo "  $line"
             fi
