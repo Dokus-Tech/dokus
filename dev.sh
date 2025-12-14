@@ -377,32 +377,6 @@ build_app() {
     done
 
     echo ""
-    print_separator
-    echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 3: Building Web Frontend${NC}\n"
-
-    print_simple_status building "Compiling Kotlin/WASM..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :composeApp:wasmJsBrowserDistribution -q > /dev/null 2>&1
-    else
-        gradle :composeApp:wasmJsBrowserDistribution -q > /dev/null 2>&1
-    fi
-
-    if [ $? -ne 0 ]; then
-        print_status error "Web WASM build failed"
-        exit 1
-    fi
-    print_simple_status success "WASM bundle compiled"
-
-    print_simple_status building "Building web Docker image..."
-    docker build -f composeApp/Dockerfile -t invoid-vision/dokus-web:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Web Docker image build failed"
-        exit 1
-    fi
-    print_simple_status success "Web image ready"
-
-    echo ""
     echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}All services built successfully${NC}"
     echo ""
 }
@@ -501,14 +475,15 @@ start_services() {
             "Payment:/api/v1/payments"
             "Banking:/api/v1/banking"
             "Contacts:/api/v1/contacts"
-            "Web Frontend:/"
         )
 
         for service_info in "${services[@]}"; do
             IFS=':' read -r service_name endpoint <<< "$service_info"
             printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "${service_name}"
             for i in {1..30}; do
-                if curl -f -s "http://localhost:${GATEWAY_PORT}${endpoint}" > /dev/null 2>&1; then
+                # Accept any HTTP response (401/404 means service is reachable through gateway)
+                http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${GATEWAY_PORT}${endpoint}" 2>/dev/null)
+                if [ "$http_code" != "000" ] && [ "$http_code" != "" ]; then
                     echo_e "${SOFT_GREEN}◎ Ready${NC}"
                     break
                 fi
@@ -626,7 +601,6 @@ show_status() {
         "Payment Service:payment-service-local:/api/v1/payments"
         "Banking Service:banking-service-local:/api/v1/banking"
         "Contacts Service:contacts-service-local:/api/v1/contacts"
-        "Web Frontend:web-local:/"
     )
 
     check_service() {
@@ -640,8 +614,9 @@ show_status() {
             return
         fi
 
-        # Health probe via gateway
-        if curl -f -s "http://localhost:${GATEWAY_PORT}${endpoint}" > /dev/null 2>&1; then
+        # Health probe via gateway - accept any HTTP response (401/404 means service is reachable)
+        local http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${GATEWAY_PORT}${endpoint}" 2>/dev/null)
+        if [ "$http_code" != "000" ] && [ "$http_code" != "" ]; then
             printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}\n" "$name"
         else
             printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}\n" "$name"
@@ -854,84 +829,6 @@ except:
     echo ""
 }
 
-# Function to build web WASM app
-build_web() {
-    print_gradient_header "🌐 Building Web Application"
-
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 1: Building WASM bundle${NC}\n"
-
-    print_simple_status building "Compiling Kotlin/WASM..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :composeApp:wasmJsBrowserDistribution -q 2>&1 | while read line; do
-            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
-                echo "  $line"
-            fi
-        done
-    else
-        gradle :composeApp:wasmJsBrowserDistribution -q 2>&1 | while read line; do
-            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
-                echo "  $line"
-            fi
-        done
-    fi
-
-    if [ $? -ne 0 ]; then
-        print_status error "Web build failed"
-        exit 1
-    fi
-    print_simple_status success "WASM bundle compiled"
-
-    echo ""
-    print_separator
-    echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 2: Building Docker image${NC}\n"
-
-    print_simple_status building "Building nginx container..."
-    docker build -f composeApp/Dockerfile -t invoid-vision/dokus-web:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Web Docker image build failed"
-        exit 1
-    fi
-    print_simple_status success "Web image ready"
-
-    echo ""
-    echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}Web application built successfully${NC}"
-    echo ""
-}
-
-# Function to start web service
-start_web() {
-    print_gradient_header "🌐 Starting Web Application"
-
-    # Check if web image exists
-    if ! docker images | grep -q "invoid-vision/dokus-web"; then
-        print_status warning "Web image not found, building first..."
-        build_web
-    fi
-
-    # Start web service
-    print_status loading "Starting web container..."
-    docker-compose -f $COMPOSE_FILE up -d web-local
-
-    echo ""
-    printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Web Application"
-    for i in {1..30}; do
-        if curl -f -s http://localhost:${GATEWAY_PORT}/ > /dev/null 2>&1; then
-            echo_e "${SOFT_GREEN}◎ Ready${NC}"
-            break
-        fi
-        if [ $i -eq 30 ]; then
-            echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
-        fi
-        echo -n "."
-        sleep 1
-    done
-
-    echo ""
-    print_status success "Web app available at http://localhost:${GATEWAY_PORT}"
-    echo ""
-}
-
 # Function to run tests
 run_tests() {
     service=${1:-all}
@@ -1012,8 +909,6 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}                  ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}                 ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/*${NC}                          ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web Frontend (WASM)${NC}              ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└─────────────────────────────┴────────────────────────────────────┘${NC}"
 
     echo ""
@@ -1165,18 +1060,6 @@ main() {
         ai-test)
             ollama_test
             ;;
-        web)
-            check_requirements
-            build_web
-            start_web
-            ;;
-        web-build)
-            check_requirements
-            build_web
-            ;;
-        web-start)
-            start_web
-            ;;
         test)
             run_tests ${2:-all}
             ;;
@@ -1215,9 +1098,6 @@ show_help() {
 
     echo_e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
     echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Create service JARs + images${NC}"
-    echo_e "    ${SOFT_CYAN}web${NC}          ${DIM_WHITE}Build + start web WASM app${NC}"
-    echo_e "    ${SOFT_CYAN}web-build${NC}    ${DIM_WHITE}Build web WASM + Docker image only${NC}"
-    echo_e "    ${SOFT_CYAN}web-start${NC}    ${DIM_WHITE}Start web container (needs prior build)${NC}"
     echo_e "    ${SOFT_CYAN}watch${NC} [svc]  ${DIM_WHITE}Auto rebuild on changes${NC}"
     echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|banking|cashflow|contacts|all)${NC}"
     echo ""

@@ -509,36 +509,6 @@ services:
       - "traefik.http.services.audit.loadbalancer.healthcheck.interval=30s"
 
   # ==========================================================================
-  # WEB FRONTEND
-  # ==========================================================================
-
-  # Web Frontend (WASM) - Local Development (routed through Traefik)
-  web-local:
-    image: invoid-vision/dokus-web:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-web-local
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    labels:
-      - "traefik.enable=true"
-      # Web frontend as SPA fallback (lowest priority)
-      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.web.entrypoints=web"
-      - "traefik.http.routers.web.service=web"
-      - "traefik.http.routers.web.priority=1"
-      - "traefik.http.services.web.loadbalancer.server.port=8080"
-
-  # ==========================================================================
   # TOOLS (optional profiles)
   # ==========================================================================
 
