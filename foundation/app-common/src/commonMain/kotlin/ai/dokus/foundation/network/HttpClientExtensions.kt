@@ -24,10 +24,21 @@ fun HttpClientConfig<*>.withJsonContentNegotiation() {
     }
 }
 
+/**
+ * Configures the HTTP client to use the gateway endpoint with path prefix.
+ * All requests go through the Traefik gateway, with the path prefix prepended.
+ */
 fun HttpClientConfig<*>.withDokusEndpoint(endpoint: DokusEndpoint) {
     defaultRequest {
-        host = endpoint.host
-        port = endpoint.port
+        host = endpoint.gatewayHost
+        port = endpoint.gatewayPort
+        url {
+            protocol = when (endpoint.gatewayProtocol) {
+                "https" -> URLProtocol.HTTPS
+                else -> URLProtocol.HTTP
+            }
+            // Path prefix is applied in routes via type-safe resources
+        }
     }
 }
 
