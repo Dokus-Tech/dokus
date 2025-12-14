@@ -27,20 +27,6 @@ sealed class DokusEndpoint(
         internalPort = BuildKonfig.paymentInternalPort
     )
 
-    data object Reporting : DokusEndpoint(
-        host = BuildKonfig.reportingHost,
-        port = BuildKonfig.reportingPort,
-        internalHost = BuildKonfig.reportingInternalHost,
-        internalPort = BuildKonfig.reportingInternalPort
-    )
-
-    data object Audit : DokusEndpoint(
-        host = BuildKonfig.auditHost,
-        port = BuildKonfig.auditPort,
-        internalHost = BuildKonfig.auditInternalHost,
-        internalPort = BuildKonfig.auditInternalPort
-    )
-
     data object Banking : DokusEndpoint(
         host = BuildKonfig.bankingHost,
         port = BuildKonfig.bankingPort,
