@@ -25,7 +25,7 @@ private class SettingsDelegate(
     }
 }
 
-class Persistence(settings: Settings) {
+class Persistence(private val settings: Settings) {
     var userId: String? by SettingsDelegate(settings, "user_id")
     var firstName: String? by SettingsDelegate(settings, "name")
     var lastName: String? by SettingsDelegate(settings, "last_name")
@@ -35,6 +35,21 @@ class Persistence(settings: Settings) {
 
     // Appearance preferences
     var themeModePreference: String? by SettingsDelegate(settings, "theme_mode")
+
+    /**
+     * Clear all user-related data.
+     * Called when switching servers to ensure clean state.
+     * Preserves theme preferences.
+     */
+    fun clearUserData() {
+        userId = null
+        firstName = null
+        lastName = null
+        email = null
+        selectedWorkspace = null
+        jwtToken = null
+        // Note: themeModePreference is intentionally preserved
+    }
 }
 
 private val settings: Settings = Settings()
