@@ -1,0 +1,29 @@
+# Dokus Web Application Docker Compose
+# Standalone configuration for the web frontend
+# Run with: docker-compose up -d
+
+services:
+  dokus-web:
+    image: 94.111.226.82:5000/dokus-web:latest
+    container_name: dokus-web
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - dokus-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  dokus-network:
+    external: true
+    name: dokus-deployment_dokus-network
