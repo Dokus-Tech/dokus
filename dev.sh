@@ -494,21 +494,26 @@ start_services() {
         # Wait for services with proper spacing
         sleep 3
 
+        # Check services via gateway
         local services=(
-            "Auth:7091:/metrics"
-            "Cashflow:7092:/health"
-            "Payment:7093:/health"
-            "Banking:7096:/health"
-            "Contacts:7097:/health"
+            "Auth:/api/v1/identity"
+            "Cashflow:/api/v1/invoices"
+            "Payment:/api/v1/payments"
+            "Banking:/api/v1/banking"
+            "Contacts:/api/v1/contacts"
+            "Web Frontend:/"
         )
 
         for service_info in "${services[@]}"; do
-            IFS=':' read -r service_name port endpoint <<< "$service_info"
-            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "${service_name} Service"
+            IFS=':' read -r service_name endpoint <<< "$service_info"
+            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "${service_name}"
             for i in {1..30}; do
-                if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
+                if curl -f -s "http://localhost:${GATEWAY_PORT}${endpoint}" > /dev/null 2>&1; then
                     echo_e "${SOFT_GREEN}◎ Ready${NC}"
                     break
+                fi
+                if [ $i -eq 30 ]; then
+                    echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
                 fi
                 echo -n "."
                 sleep 1
@@ -614,20 +619,20 @@ show_status() {
 
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Services
+    # Services - Check via gateway using path-based routing
     local services=(
-        "Auth Service:auth-service-local:7091:/metrics"
-        "Cashflow Service:cashflow-service-local:7092:/health"
-        "Payment Service:payment-service-local:7093:/health"
-        "Banking Service:banking-service-local:7096:/health"
-        "Contacts Service:contacts-service-local:7097:/health"
+        "Auth Service:auth-service-local:/api/v1/identity"
+        "Cashflow Service:cashflow-service-local:/api/v1/invoices"
+        "Payment Service:payment-service-local:/api/v1/payments"
+        "Banking Service:banking-service-local:/api/v1/banking"
+        "Contacts Service:contacts-service-local:/api/v1/contacts"
+        "Web Frontend:web-local:/"
     )
 
     check_service() {
         local name=$1
         local container=$2
-        local port=$3
-        local endpoint=$4
+        local endpoint=$3
 
         # If container is not running, surface that clearly
         if ! docker-compose -f $COMPOSE_FILE ps -q "$container" | grep -q .; then
@@ -635,8 +640,8 @@ show_status() {
             return
         fi
 
-        # Health probe
-        if curl -f -s "http://localhost:${port}${endpoint}" > /dev/null 2>&1; then
+        # Health probe via gateway
+        if curl -f -s "http://localhost:${GATEWAY_PORT}${endpoint}" > /dev/null 2>&1; then
             printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}\n" "$name"
         else
             printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}\n" "$name"
@@ -644,8 +649,8 @@ show_status() {
     }
 
     for service_info in "${services[@]}"; do
-        IFS=':' read -r service_name container port endpoint <<< "$service_info"
-        check_service "$service_name" "$container" "$port" "$endpoint"
+        IFS=':' read -r service_name container endpoint <<< "$service_info"
+        check_service "$service_name" "$container" "$endpoint"
     done
 
     echo_e "  ${SOFT_GRAY}└─────────────────────────┴──────────────────┘${NC}"
