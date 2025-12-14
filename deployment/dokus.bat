@@ -39,9 +39,12 @@ echo   Development Tools
 echo     6  View logs
 echo     7  Access database
 echo.
+echo   Mobile App
+echo     8  Show mobile connection (QR code)
+echo.
 echo     0  Exit
 echo.
-set /p choice="   Enter choice [0-7]: "
+set /p choice="   Enter choice [0-8]: "
 
 if "%choice%"=="1" goto INITIAL_SETUP
 if "%choice%"=="2" goto START_SERVICES
@@ -50,6 +53,7 @@ if "%choice%"=="4" goto RESTART_SERVICES
 if "%choice%"=="5" goto SHOW_STATUS
 if "%choice%"=="6" goto SHOW_LOGS
 if "%choice%"=="7" goto ACCESS_DB
+if "%choice%"=="8" goto SHOW_MOBILE_CONNECTION
 if "%choice%"=="0" (
     echo.
     echo   Goodbye!
@@ -403,6 +407,46 @@ if "%db_choice%"=="4" docker compose exec postgres-banking psql -U dokus -d doku
 if "%db_choice%"=="5" docker compose exec postgres-contacts psql -U dokus -d dokus_contacts
 if "%db_choice%"=="0" goto SHOW_MENU
 
+echo.
+pause
+goto SHOW_MENU
+
+:SHOW_MOBILE_CONNECTION
+cls
+echo.
+echo ======================================================================
+echo   Mobile App Connection
+echo ======================================================================
+echo.
+
+REM Get local IP address
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+    set "LOCAL_IP=%%a"
+    goto :GOT_IP
+)
+:GOT_IP
+REM Remove leading spaces from IP
+for /f "tokens=* delims= " %%a in ("%LOCAL_IP%") do set "LOCAL_IP=%%a"
+
+set "CONNECT_URL=https://dokus.tech/connect?host=%LOCAL_IP%&port=8000&protocol=http"
+
+echo   Server Connection Details
+echo   -------------------------
+echo.
+echo   Manual Entry:
+echo   -------------
+echo   Protocol:  http
+echo   Host:      %LOCAL_IP%
+echo   Port:      8000
+echo.
+echo   Deep Link URL:
+echo   %CONNECT_URL%
+echo.
+echo   [!] For QR code generation, copy the URL above to:
+echo       https://www.qr-code-generator.com/
+echo.
+echo   In the Dokus app, tap 'Connect to Server' and scan the QR code
+echo   or enter the connection details manually.
 echo.
 pause
 goto SHOW_MENU

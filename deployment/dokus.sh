@@ -67,6 +67,28 @@ GATEWAY_PORT="443"
 GATEWAY_DASHBOARD_PORT="8080"
 DEFAULT_DOMAIN="dokus.tech"
 
+# Function to get server IP address
+get_server_ip() {
+    # First try to get public IP
+    local PUBLIC_IP=$(curl -s --connect-timeout 2 https://api.ipify.org 2>/dev/null || \
+                     curl -s --connect-timeout 2 https://ifconfig.me 2>/dev/null || \
+                     echo "")
+
+    if [ -n "$PUBLIC_IP" ]; then
+        echo "$PUBLIC_IP"
+        return
+    fi
+
+    # Fall back to local IP
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        ipconfig getifaddr en0 2>/dev/null || \
+        ipconfig getifaddr en1 2>/dev/null || \
+        echo "localhost"
+    else
+        hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost"
+    fi
+}
+
 # Credentials
 if [ -f .env ]; then
     export $(grep -v '^#' .env | grep -E 'DB_USERNAME|DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_USERNAME|RABBITMQ_PASSWORD' | xargs)
@@ -409,6 +431,68 @@ access_db() {
     print_status info "Connecting to PostgreSQL (${DB_NAME})..."
     echo ""
     docker compose exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
+}
+
+# Function to show mobile app connection info with QR code
+show_mobile_connection() {
+    print_gradient_header "📱 Mobile App Connection" "Connect your mobile app to this server"
+
+    # Load domain from .env if available
+    local DOMAIN="${DEFAULT_DOMAIN}"
+    local SERVER_PROTOCOL="https"
+    local SERVER_PORT="443"
+
+    if [ -f .env ]; then
+        source <(grep -E '^DOMAIN=' .env)
+        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
+    fi
+
+    # If using custom domain with HTTPS, use domain; otherwise use IP
+    local SERVER_HOST="${DOMAIN}"
+    if [ "$DOMAIN" = "$DEFAULT_DOMAIN" ]; then
+        # Using default cloud domain - still use it
+        SERVER_HOST="api.${DOMAIN}"
+    else
+        # Custom domain - check if we should use IP instead
+        local SERVER_IP=$(get_server_ip)
+        if [ "$SERVER_IP" != "localhost" ]; then
+            # For self-hosted, might need to use IP if domain not configured
+            print_status info "Public/Local IP detected: ${SERVER_IP}"
+        fi
+    fi
+
+    # Generate deep link URL
+    local CONNECT_URL="https://dokus.tech/connect?host=${SERVER_HOST}&port=${SERVER_PORT}&protocol=${SERVER_PROTOCOL}"
+
+    echo_e "  ${SOFT_CYAN}${BOLD}Server Connection Details${NC}\n"
+
+    echo_e "  ${SOFT_GRAY}┌───────────────────────────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Manual Entry${NC}                                                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├───────────────────────────────────────────────────────────────┤${NC}"
+    printf "  ${SOFT_GRAY}│${NC}  Protocol:  ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "${SERVER_PROTOCOL}"
+    printf "  ${SOFT_GRAY}│${NC}  Host:      ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "${SERVER_HOST}"
+    printf "  ${SOFT_GRAY}│${NC}  Port:      ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "${SERVER_PORT}"
+    echo_e "  ${SOFT_GRAY}└───────────────────────────────────────────────────────────────┘${NC}"
+
+    echo ""
+    echo_e "  ${SOFT_GRAY}Deep Link URL:${NC}"
+    echo_e "  ${DIM_WHITE}${CONNECT_URL}${NC}"
+    echo ""
+
+    # Generate QR code (requires qrencode)
+    if command -v qrencode &> /dev/null; then
+        echo_e "  ${SOFT_CYAN}${BOLD}Scan with Mobile App${NC}\n"
+        qrencode -t ANSIUTF8 -m 2 "$CONNECT_URL"
+    else
+        echo_e "  ${SOFT_YELLOW}${SYMBOL_WARN}${NC}  Install 'qrencode' for QR code display:"
+        echo_e "     ${DIM_WHITE}brew install qrencode${NC}  (macOS)"
+        echo_e "     ${DIM_WHITE}apt install qrencode${NC}   (Linux)"
+    fi
+
+    echo ""
+    echo_e "  ${SOFT_GRAY}${DIM}In the Dokus app, tap 'Connect to Server' and scan this QR code${NC}"
+    echo_e "  ${SOFT_GRAY}${DIM}or enter the connection details manually.${NC}"
+    echo ""
 }
 
 initial_setup() {
@@ -908,10 +992,14 @@ show_menu() {
     echo_e "    ${SOFT_CYAN}7${NC}   Database console"
     echo ""
 
+    echo_e "  ${SOFT_BLUE}${BOLD}Mobile App${NC}"
+    echo_e "    ${SOFT_CYAN}8${NC}   Show mobile connection (QR code)"
+    echo ""
+
     echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-7]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-8]:${NC} "
     read choice
     echo ""
 
@@ -923,6 +1011,7 @@ show_menu() {
         5) show_status ;;
         6) show_logs ;;
         7) access_db ;;
+        8) show_mobile_connection ;;
         0) echo "  ${SOFT_CYAN}👋 Goodbye!${NC}\n" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac
@@ -957,6 +1046,9 @@ main() {
             ;;
         db)
             access_db
+            ;;
+        connect|qr)
+            show_mobile_connection
             ;;
         *)
             show_menu

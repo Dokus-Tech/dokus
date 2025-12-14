@@ -875,6 +875,62 @@ run_tests() {
     echo ""
 }
 
+# Function to get local IP address
+get_local_ip() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS - try multiple interfaces
+        ipconfig getifaddr en0 2>/dev/null || \
+        ipconfig getifaddr en1 2>/dev/null || \
+        ipconfig getifaddr en2 2>/dev/null || \
+        echo "localhost"
+    else
+        # Linux
+        hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost"
+    fi
+}
+
+# Function to show mobile app connection info with QR code
+show_mobile_connection() {
+    print_gradient_header "📱 Mobile App Connection" "Connect your mobile app to this server"
+
+    # Get local IP address
+    local LOCAL_IP=$(get_local_ip)
+
+    # Generate deep link URL (dokus:// scheme opens the app directly)
+    local CONNECT_URL="dokus://connect?host=${LOCAL_IP}&port=${GATEWAY_PORT}&protocol=http"
+
+    echo_e "  ${SOFT_CYAN}${BOLD}Server Connection Details${NC}\n"
+
+    echo_e "  ${SOFT_GRAY}┌───────────────────────────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Manual Entry (in app: Connect to Server)${NC}                      ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├───────────────────────────────────────────────────────────────┤${NC}"
+    printf "  ${SOFT_GRAY}│${NC}  Protocol:  ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "http"
+    printf "  ${SOFT_GRAY}│${NC}  Host:      ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "${LOCAL_IP}"
+    printf "  ${SOFT_GRAY}│${NC}  Port:      ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "${GATEWAY_PORT}"
+    echo_e "  ${SOFT_GRAY}└───────────────────────────────────────────────────────────────┘${NC}"
+
+    echo ""
+
+    # Generate QR code (requires qrencode)
+    if command -v qrencode &> /dev/null; then
+        echo_e "  ${SOFT_CYAN}${BOLD}Scan with Device Camera${NC}\n"
+        qrencode -t ANSIUTF8 -m 2 "$CONNECT_URL"
+        echo ""
+        echo_e "  ${SOFT_GRAY}Deep Link:${NC} ${DIM_WHITE}${CONNECT_URL}${NC}"
+    else
+        echo_e "  ${SOFT_YELLOW}${SYMBOL_WARNING}${NC}  Install 'qrencode' for QR code display:"
+        echo_e "     ${DIM_WHITE}brew install qrencode${NC}  (macOS)"
+        echo_e "     ${DIM_WHITE}apt install qrencode${NC}   (Linux)"
+        echo ""
+        echo_e "  ${SOFT_GRAY}Deep Link:${NC} ${DIM_WHITE}${CONNECT_URL}${NC}"
+    fi
+
+    echo ""
+    echo_e "  ${SOFT_GRAY}${DIM}Scan QR code with your device camera to open Dokus app,${NC}"
+    echo_e "  ${SOFT_GRAY}${DIM}or enter the details manually via 'Connect to Server'.${NC}"
+    echo ""
+}
+
 # Function to print service information
 print_services_info() {
     print_separator
@@ -1070,6 +1126,9 @@ main() {
             check_requirements
             watch_mode ${2:-all}
             ;;
+        connect|qr)
+            show_mobile_connection
+            ;;
         help)
             show_help
             ;;
@@ -1119,6 +1178,11 @@ show_help() {
     echo_e "    ${SOFT_CYAN}clean${NC}        ${DIM_WHITE}Remove containers and volumes${NC}"
     echo ""
 
+    echo_e "  ${SOFT_BLUE}${BOLD}Mobile App${NC}"
+    echo_e "    ${SOFT_CYAN}connect${NC}      ${DIM_WHITE}Show QR code for mobile app connection${NC}"
+    echo_e "    ${SOFT_CYAN}qr${NC}           ${DIM_WHITE}Alias for connect${NC}"
+    echo ""
+
     print_separator
     echo ""
     echo_e "  ${SOFT_GRAY}${DIM}Tip: run './dev.sh' without args for the animated console.${NC}"
@@ -1155,10 +1219,14 @@ show_menu() {
     echo_e "    ${SOFT_CYAN}12${NC}  Deep clean"
     echo ""
 
+    echo_e "  ${SOFT_BLUE}${BOLD}Mobile App${NC}"
+    echo_e "    ${SOFT_CYAN}13${NC}  Show mobile connection (QR code)"
+    echo ""
+
     echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-12]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-13]:${NC} "
     read choice
 
     echo ""
@@ -1176,6 +1244,7 @@ show_menu() {
         10) run_tests all ;;
         11) start_pgadmin ;;
         12) clean_all ;;
+        13) show_mobile_connection ;;
         0) echo_e "  ${SOFT_CYAN}👋 See you in the grid.${NC}\n" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac
