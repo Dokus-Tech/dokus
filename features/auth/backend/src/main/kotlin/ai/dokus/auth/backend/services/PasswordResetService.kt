@@ -7,6 +7,7 @@ import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.ktor.security.TokenBlacklistService
 import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.ktor.database.now
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +26,7 @@ import kotlin.time.Duration.Companion.hours
  * - Cryptographically secure token generation (32 bytes, URL-safe Base64)
  * - 1-hour token expiration
  * - One-time use tokens
- * - All refresh tokens revoked on successful password reset
+ * - All tokens (access + refresh) revoked on successful password reset
  * - Automatic cleanup of expired/used tokens
  * - Email failures don't prevent token generation (graceful degradation)
  *
@@ -39,7 +40,8 @@ class PasswordResetService(
     private val userRepository: UserRepository,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val emailService: EmailService
+    private val emailService: EmailService,
+    private val tokenBlacklistService: TokenBlacklistService? = null
 ) {
     private val logger = LoggerFactory.getLogger(PasswordResetService::class.java)
     private val emailScope = CoroutineScope(Dispatchers.IO)
@@ -134,6 +136,12 @@ class PasswordResetService(
 
             // Update password via repository
             userRepository.updatePassword(tokenInfo.userId, newPassword)
+
+            // Blacklist all active access tokens (immediate invalidation)
+            tokenBlacklistService?.let {
+                it.blacklistAllUserTokens(tokenInfo.userId)
+                logger.info("All access tokens blacklisted for user: ${tokenInfo.userId.value}")
+            }
 
             // Revoke all refresh tokens (force re-login everywhere)
             refreshTokenRepository.revokeAllUserTokens(tokenInfo.userId)
