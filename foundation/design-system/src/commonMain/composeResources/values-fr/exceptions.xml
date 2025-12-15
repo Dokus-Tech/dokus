@@ -42,6 +42,11 @@
     <string name="exception_account_locked">Votre compte a été verrouillé. Veuillez contacter le support pour le débloquer.</string>
     <string name="exception_email_not_verified">Veuillez vérifier votre adresse e-mail pour continuer</string>
     <string name="exception_email_already_verified">L\'adresse e-mail a déjà été vérifiée</string>
+    <string name="exception_too_many_sessions">Nombre maximum de sessions simultanées atteint. Veuillez vous déconnecter d\'un autre appareil.</string>
+
+    <!-- 404 Erreurs non trouvé -->
+    <string name="exception_not_found">La ressource demandée n\'a pas été trouvée</string>
+    <string name="exception_user_not_found">Utilisateur non trouvé</string>
 
     <!-- 409 Erreurs de conflit -->
     <string name="exception_user_already_exists">Un utilisateur avec cet e-mail existe déjà</string>
@@ -53,6 +58,9 @@
     <string name="exception_internal_error">Une erreur interne s\'est produite. Veuillez réessayer plus tard.</string>
     <string name="exception_tenant_creation_failed">Échec de la création du tenant. Veuillez réessayer.</string>
     <string name="exception_unknown">Une erreur inconnue s\'est produite</string>
+
+    <!-- 501 Non implémenté -->
+    <string name="exception_not_implemented">Cette fonctionnalité n\'est pas encore implémentée</string>
 
     <!-- 503 Service indisponible -->
     <string name="exception_connection_error">Erreur de connexion. Veuillez réessayer plus tard.</string>

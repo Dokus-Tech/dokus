@@ -246,6 +246,74 @@ class RefreshTokenRepository {
     }
 
     /**
+     * Count active sessions (non-revoked, non-expired tokens) for a user.
+     *
+     * Used for enforcing concurrent session limits.
+     *
+     * @param userId The user to count sessions for
+     * @return Number of active sessions
+     */
+    suspend fun countActiveForUser(userId: UserId): Int = try {
+        dbQuery {
+            val userUuid = userId.uuid.toJavaUuid()
+            val now = now().toLocalDateTime(TimeZone.UTC)
+
+            RefreshTokensTable
+                .selectAll()
+                .where {
+                    (RefreshTokensTable.userId eq userUuid) and
+                    (RefreshTokensTable.isRevoked eq false) and
+                    (RefreshTokensTable.expiresAt greater now)
+                }
+                .count()
+                .toInt()
+        }
+    } catch (error: Exception) {
+        logger.error("Failed to count active sessions for user: ${userId.value}", error)
+        0
+    }
+
+    /**
+     * Revoke the oldest active session for a user.
+     *
+     * Used when the user reaches their concurrent session limit
+     * to make room for a new session.
+     *
+     * @param userId The user whose oldest session should be revoked
+     * @return Result indicating success or failure
+     */
+    suspend fun revokeOldestForUser(userId: UserId): Result<Unit> = runCatching {
+        dbQuery {
+            val userUuid = userId.uuid.toJavaUuid()
+            val now = now().toLocalDateTime(TimeZone.UTC)
+
+            // Find the oldest active token
+            val oldestToken = RefreshTokensTable
+                .selectAll()
+                .where {
+                    (RefreshTokensTable.userId eq userUuid) and
+                    (RefreshTokensTable.isRevoked eq false) and
+                    (RefreshTokensTable.expiresAt greater now)
+                }
+                .orderBy(RefreshTokensTable.createdAt, SortOrder.ASC)
+                .limit(1)
+                .singleOrNull()
+
+            if (oldestToken != null) {
+                val tokenId = oldestToken[RefreshTokensTable.id].value
+                RefreshTokensTable.update({ RefreshTokensTable.id eq tokenId }) {
+                    it[RefreshTokensTable.isRevoked] = true
+                }
+                logger.info("Revoked oldest session for user: ${userId.value}, token ID: $tokenId")
+            } else {
+                logger.debug("No active sessions to revoke for user: ${userId.value}")
+            }
+        }
+    }.onFailure { error ->
+        logger.error("Failed to revoke oldest session for user: ${userId.value}", error)
+    }
+
+    /**
      * Get all active tokens for a user
      *
      * Useful for displaying active sessions to the user.
