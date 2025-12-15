@@ -504,26 +504,8 @@ workflows:
             - deploy_path: "$BITRISE_DMG_PATH"
             - notify_user_groups: "none"
 
-  # --------------------------------------------------------------------------
-  # LEGACY WORKFLOWS (for backward compatibility)
-  # --------------------------------------------------------------------------
-  android_build:
-    title: "[Legacy] Android Build"
-    after_run:
-      - android-build-aab
-
-  ios_build:
-    title: "[Legacy] iOS Build"
-    after_run:
-      - ios-build
-
-  run_tests:
-    title: "[Legacy] Run Tests"
-    after_run:
-      - tests
-
 # ============================================================================
-# TRIGGERS
+# TRIGGERS (for Bitrise webhook triggers)
 # ============================================================================
 trigger_map:
   - push_branch: main
