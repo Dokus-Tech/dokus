@@ -444,7 +444,7 @@ workflows:
 
       - script@1:
           title: Notarize DMG
-          run_if: '{{getenv "ASC_API_KEY_ID" | ne ""}} && {{getenv "MAC_SIGNING_ENABLED" | eq "true"}}'
+          run_if: '{{and (ne (getenv "ASC_API_KEY_ID") "") (eq (getenv "MAC_SIGNING_ENABLED") "true")}}'
           inputs:
             - content: |
                 #!/bin/bash
