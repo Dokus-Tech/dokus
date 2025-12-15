@@ -102,15 +102,14 @@ class AuthRepository(
     suspend fun selectTenant(tenantId: TenantId): Result<Unit> {
         logger.d { "Selecting tenant: $tenantId" }
 
-        return accountDataSource.selectTenant(tenantId)
-            .onSuccess { response ->
-                tokenManager.saveTokens(response)
-                authManager.onLoginSuccess()
-            }
-            .onFailure { error ->
-                logger.e(error) { "Tenant selection failed" }
-            }
-            .map { }
+        val response = accountDataSource.selectTenant(tenantId).getOrElse { error ->
+            logger.e(error) { "Tenant selection failed" }
+            return Result.failure(error)
+        }
+
+        tokenManager.saveTokens(response)
+        authManager.onLoginSuccess()
+        return Result.success(Unit)
     }
 
     /**
