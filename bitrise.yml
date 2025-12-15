@@ -67,10 +67,6 @@ workflows:
     steps:
       - git-clone@8: {}
 
-      - restore-gradle-cache@2: {}
-
-      - activate-build-cache-for-gradle@2: {}
-
       - set-java-version@1:
           inputs:
             - set_java_version: "21"
@@ -106,6 +102,7 @@ workflows:
       - gradle-runner@2:
           title: Run Android Unit Tests
           inputs:
+            - gradlew_path: "./gradlew"
             - gradle_task: ":composeApp:testDebugUnitTest"
             - gradle_options: "--no-daemon --stacktrace --continue"
 
@@ -149,8 +146,6 @@ workflows:
                   echo "No backend tests found - skipping"
                 fi
 
-      - save-gradle-cache@1: {}
-
       - deploy-to-bitrise-io@2: {}
 
   # --------------------------------------------------------------------------
@@ -165,10 +160,6 @@ workflows:
       - Signed release APK (for direct distribution)
     steps:
       - git-clone@8: {}
-
-      - restore-gradle-cache@2: {}
-
-      - activate-build-cache-for-gradle@2: {}
 
       - set-java-version@1:
           inputs:
@@ -259,8 +250,6 @@ workflows:
                   echo "Renamed APK to: $NEW_APK"
                 fi
 
-      - save-gradle-cache@1: {}
-
       - deploy-to-bitrise-io@2:
           inputs:
             - notify_user_groups: "none"
@@ -277,10 +266,6 @@ workflows:
       Uses automatic code signing with App Store Connect API key
     steps:
       - git-clone@8: {}
-
-      - restore-gradle-cache@2: {}
-
-      - activate-build-cache-for-gradle@2: {}
 
       - set-java-version@1:
           inputs:
@@ -326,8 +311,9 @@ workflows:
       - gradle-runner@2:
           title: Build KMP Framework
           inputs:
+            - gradlew_path: "./gradlew"
             - gradle_task: ":composeApp:linkReleaseFrameworkIosArm64"
-            - gradle_options: "--no-daemon --stacktrace --build-cache -PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME -PappleBundleId=$BUNDLE_ID"
+            - gradle_options: "--no-daemon --stacktrace -PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME -PappleBundleId=$BUNDLE_ID"
 
       - xcode-archive@5:
           title: Archive iOS App
@@ -354,8 +340,6 @@ workflows:
                   echo "Renamed IPA to: $NEW_IPA"
                 fi
 
-      - save-gradle-cache@1: {}
-
       - deploy-to-bitrise-io@2:
           inputs:
             - notify_user_groups: "none"
@@ -381,10 +365,6 @@ workflows:
       - MAC_BUNDLE_ID: vision.invoid.dokus
     steps:
       - git-clone@8: {}
-
-      - restore-gradle-cache@2: {}
-
-      - activate-build-cache-for-gradle@2: {}
 
       - set-java-version@1:
           inputs:
@@ -458,8 +438,9 @@ workflows:
       - gradle-runner@2:
           title: Build macOS Release DMG
           inputs:
+            - gradlew_path: "./gradlew"
             - gradle_task: ":composeApp:packageReleaseDmg"
-            - gradle_options: "--no-daemon --stacktrace --build-cache -PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME -Pmac.signing.enabled=$MAC_SIGNING_ENABLED -Pmac.signing.identity=$MAC_SIGNING_IDENTITY -PappleBundleId=$MAC_BUNDLE_ID"
+            - gradle_options: "--no-daemon --stacktrace -PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME -Pmac.signing.enabled=$MAC_SIGNING_ENABLED -Pmac.signing.identity=$MAC_SIGNING_IDENTITY -PappleBundleId=$MAC_BUNDLE_ID"
 
       - script@1:
           title: Notarize DMG
@@ -513,8 +494,6 @@ workflows:
                 envman add --key BITRISE_DMG_PATH --value "$NEW_DMG"
                 echo "Renamed DMG to: $NEW_DMG"
                 ls -lh "$NEW_DMG"
-
-      - save-gradle-cache@1: {}
 
       - deploy-to-bitrise-io@2:
           inputs:
