@@ -42,6 +42,7 @@
     <string name="exception_account_locked">Your account has been locked. Please contact support to unlock it.</string>
     <string name="exception_email_not_verified">Please verify your email address to continue</string>
     <string name="exception_email_already_verified">Email address has already been verified</string>
+    <string name="exception_too_many_sessions">Maximum number of concurrent sessions reached. Please log out from another device.</string>
 
     <!-- 409 Conflict Errors -->
     <string name="exception_user_already_exists">A user with this email already exists</string>

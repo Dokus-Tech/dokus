@@ -72,7 +72,16 @@ fun HttpClientConfig<*>.withResponseValidation(onUnauthorized: suspend () -> Uni
         validateResponse { response: HttpResponse ->
             if (response.status.isSuccess()) return@validateResponse
             runCatching { response.body<DokusException>() }.fold(
-                onSuccess = { throw it },
+                onSuccess = { exception ->
+                    // For rate limit exceptions, try to extract Retry-After header
+                    if (exception is DokusException.TooManyLoginAttempts) {
+                        val retryAfter = parseRetryAfterHeader(response)
+                        throw DokusException.TooManyLoginAttempts(
+                            retryAfterSeconds = retryAfter ?: exception.retryAfterSeconds
+                        )
+                    }
+                    throw exception
+                },
                 onFailure = {
                     when (response.status) {
                         HttpStatusCode.Unauthorized -> {
@@ -86,12 +95,30 @@ fun HttpClientConfig<*>.withResponseValidation(onUnauthorized: suspend () -> Uni
 
                         HttpStatusCode.NotFound -> throw DokusException.NotFound()
 
+                        HttpStatusCode.TooManyRequests -> {
+                            val retryAfter = parseRetryAfterHeader(response)
+                            throw DokusException.TooManyLoginAttempts(
+                                retryAfterSeconds = retryAfter ?: 60
+                            )
+                        }
+
                         else -> throw DokusException.Unknown(it)
                     }
                 }
             )
         }
     }
+}
+
+/**
+ * Parse the Retry-After header from an HTTP response.
+ * Supports both seconds format and HTTP-date format (falls back to default).
+ *
+ * @return Number of seconds to wait, or null if header is missing/invalid
+ */
+private fun parseRetryAfterHeader(response: HttpResponse): Int? {
+    val retryAfter = response.headers[HttpHeaders.RetryAfter] ?: return null
+    return retryAfter.toIntOrNull()
 }
 
 fun HttpClientConfig<*>.withLogging(logLevel: LogLevel = LogLevel.ALL) {
