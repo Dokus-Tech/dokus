@@ -16,6 +16,7 @@ import ai.dokus.auth.backend.services.RateLimitService
 import ai.dokus.auth.backend.services.SmtpEmailService
 import ai.dokus.auth.backend.services.TeamService
 import ai.dokus.foundation.ktor.DokusRabbitMq
+import ai.dokus.foundation.ktor.cache.RedisClient
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig
@@ -24,12 +25,16 @@ import ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.security.JwtValidator
+import ai.dokus.foundation.ktor.security.InMemoryTokenBlacklistService
+import ai.dokus.foundation.ktor.security.RedisTokenBlacklistService
+import ai.dokus.foundation.ktor.security.TokenBlacklistService
 import ai.dokus.foundation.messaging.integration.createDefaultRabbitMqConfig
 import ai.dokus.foundation.messaging.integration.messagingModule
 import io.ktor.server.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
+import org.slf4j.LoggerFactory
 
 private val appModule = module {
     // Database - connect and initialize auth-owned tables only
@@ -78,7 +83,8 @@ private val appModule = module {
             get<UserRepository>(),
             get<PasswordResetTokenRepository>(),
             get<RefreshTokenRepository>(),
-            get<EmailService>()
+            get<EmailService>(),
+            getOrNull<TokenBlacklistService>()
         )
     }
 
@@ -88,8 +94,26 @@ private val appModule = module {
     // Background cleanup job for rate limiting
     single { RateLimitCleanupJob(get()) }
 
+    // Token blacklist service - uses Redis if available, falls back to in-memory
+    single<TokenBlacklistService> {
+        val logger = LoggerFactory.getLogger("TokenBlacklistService")
+        try {
+            val redisClient = getOrNull<RedisClient>()
+            if (redisClient != null) {
+                logger.info("Using Redis-backed token blacklist service")
+                RedisTokenBlacklistService(redisClient)
+            } else {
+                logger.warn("Redis not available, using in-memory token blacklist (not suitable for multi-instance)")
+                InMemoryTokenBlacklistService()
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to create Redis blacklist service, using in-memory fallback: ${e.message}")
+            InMemoryTokenBlacklistService()
+        }
+    }
+
     // Authentication service
-    single { AuthService(get(), get(), get(), get(), get(), get()) }
+    single { AuthService(get(), get(), get(), get(), get(), get(), get()) }
 
     // Team management service
     single { TeamService(get(), get(), get()) }

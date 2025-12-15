@@ -22,7 +22,7 @@ data class LoginAttemptTracker(
 )
 
 /**
- * Service for rate limiting login attempts to prevent brute force attacks.
+ * In-memory rate limiting for single-instance deployments.
  *
  * Features:
  * - Tracks failed login attempts per email address
@@ -30,14 +30,15 @@ data class LoginAttemptTracker(
  * - Automatic unlock after LOCKOUT_DURATION (15 minutes)
  * - Attempt window of ATTEMPT_WINDOW (15 minutes)
  * - Thread-safe with mutex for concurrent access
- * - In-memory storage (can be upgraded to Redis for multi-instance deployments)
+ *
+ * Note: For multi-instance deployments, use [RedisRateLimitService] instead.
  *
  * Security considerations:
  * - Email addresses are normalized to lowercase for consistent tracking
  * - Expired entries are automatically cleaned up to prevent memory leaks
  * - Lockout duration increases security without permanent account lockout
  */
-class RateLimitService {
+class RateLimitService : RateLimitServiceInterface {
     private val logger = LoggerFactory.getLogger(RateLimitService::class.java)
     private val loginAttempts = mutableMapOf<String, LoginAttemptTracker>()
     private val mutex = Mutex()
@@ -61,7 +62,7 @@ class RateLimitService {
      * @param email Email address attempting to log in
      * @return Result.success if login attempt is allowed, Result.failure with TooManyLoginAttempts if blocked
      */
-    suspend fun checkLoginAttempts(email: String): Result<Unit> = mutex.withLock {
+    override suspend fun checkLoginAttempts(email: String): Result<Unit> = mutex.withLock {
         val normalizedEmail = email.lowercase()
         val tracker = loginAttempts[normalizedEmail]
 
@@ -110,7 +111,7 @@ class RateLimitService {
      *
      * @param email Email address that failed to log in
      */
-    suspend fun recordFailedLogin(email: String) = mutex.withLock {
+    override suspend fun recordFailedLogin(email: String) = mutex.withLock {
         val normalizedEmail = email.lowercase()
         val tracker = loginAttempts.getOrPut(normalizedEmail) {
             LoginAttemptTracker()
