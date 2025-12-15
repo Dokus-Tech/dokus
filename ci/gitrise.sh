@@ -19,24 +19,23 @@ build_artifacts_slugs=()
 
 function usage() {
     echo ""
-    echo "Usage: gitrise.sh [-d] [-e] [-h] [-T] [-v]  -a token -s project_slug [-w workflow|-P pipeline] [-b branch|-t tag|-c commit]"
-    echo
+    echo "Usage: gitrise.sh [-d] [-e] [-h] [-T] [-v]  -a token -s project_slug -w workflow [-b branch|-t tag|-c commit]"
+    echo 
     echo "  -a, --access-token         <string>    Bitrise access token"
     echo "  -b, --branch               <string>    Git branch"
     echo "  -c, --commit               <string>    Git commit hash "
     echo "  -d, --debug                            Debug mode enabled"
-    echo "      --download-artifacts   <string>    List of build artifact names to download in the form of name1,name2"
+    echo "      --download-artifacts   <string>    List of build artifact names to download in the form of name1,name2" 
     echo "  -e, --env                  <string>    List of environment variables in the form of key1:value1,key2:value2"
     echo "  -h, --help                             Print this help text"
     echo "  -p, --poll                  <string>   Polling interval (in seconds) to get the build status."
-    echo "  -P, --pipeline             <string>    Bitrise pipeline (use instead of workflow for pipeline builds)"
     echo "      --stream                           Stream build logs"
     echo "  -s, --slug                  <string>   Bitrise project slug"
     echo "  -T, --test                             Test mode enabled"
     echo "  -t, --tag                   <string>   Git tag"
     echo "  -v, --version                          App version"
     echo "  -w, --workflow              <string>   Bitrise workflow"
-    echo
+    echo 
 }
 
 # parsing space separated options
@@ -49,10 +48,6 @@ while [ $# -gt 0 ]; do
     ;;
     -w|--workflow)
         WORKFLOW="$2"
-        shift;shift
-    ;;
-    -P|--pipeline)
-        PIPELINE="$2"
         shift;shift
     ;;
     -c|--commit)
@@ -124,20 +119,8 @@ if [ -n "$BUILD_ARTIFACTS" ]; then
 fi
 
 function validate_input() {
-    if [ -z "$ACCESS_TOKEN" ] || [ -z "$PROJECT_SLUG" ]; then
-        printf "\e[31m ERROR: Missing arguments(s). These args must be passed: --slug, --access-token \e[0m\n"
-        usage
-        exit 1
-    fi
-
-    if [ -z "$WORKFLOW" ] && [ -z "$PIPELINE" ]; then
-        printf "\e[31m ERROR: Missing arguments(s). Either --workflow or --pipeline must be passed \e[0m\n"
-        usage
-        exit 1
-    fi
-
-    if [ -n "$WORKFLOW" ] && [ -n "$PIPELINE" ]; then
-        printf "\e[31m ERROR: Cannot specify both --workflow and --pipeline. Choose one. \e[0m\n"
+    if [ -z "$WORKFLOW" ] || [ -z "$ACCESS_TOKEN" ] || [ -z "$PROJECT_SLUG" ]; then
+        printf "\e[31m ERROR: Missing arguments(s). All these args must be passed: --workflow,--slug,--access-token \e[0m\n"
         usage
         exit 1
     fi
