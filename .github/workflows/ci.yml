@@ -87,30 +87,53 @@ jobs:
     outputs:
       bitrise-build-url: ${{ steps.trigger.outputs.build_url }}
       bitrise-build-slug: ${{ steps.trigger.outputs.build_slug }}
-      bitrise-pipeline: ${{ steps.pipeline.outputs.pipeline }}
+      bitrise-workflow: ${{ steps.workflow.outputs.workflow }}
 
     steps:
-      - name: Determine pipeline
-        id: pipeline
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Determine workflow
+        id: workflow
         run: |
           if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "pipeline=build-all" >> $GITHUB_OUTPUT
-            echo "Selected pipeline: build-all (main branch push)"
+            echo "workflow=build-all" >> $GITHUB_OUTPUT
+            echo "Selected: build-all (main branch push)"
           else
-            echo "pipeline=test-only" >> $GITHUB_OUTPUT
-            echo "Selected pipeline: test-only (PR or non-main branch)"
+            echo "workflow=tests" >> $GITHUB_OUTPUT
+            echo "Selected: tests (PR or non-main branch)"
           fi
 
       - name: Trigger Bitrise Build
         id: trigger
-        uses: Suspended/gitrise@v2.0.0
-        with:
-          access_token: ${{ secrets.BITRISE_ACCESS_TOKEN }}
-          app_slug: ${{ secrets.BITRISE_APP_SLUG }}
-          pipeline: ${{ steps.pipeline.outputs.pipeline }}
-          branch: ${{ github.head_ref || github.ref_name }}
-          commit_hash: ${{ github.sha }}
-          commit_message: ${{ github.event.head_commit.message || github.event.pull_request.title }}
+        env:
+          BITRISE_ACCESS_TOKEN: ${{ secrets.BITRISE_ACCESS_TOKEN }}
+          BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
+        run: |
+          chmod +x ci/gitrise.sh
+
+          # Capture output while still showing it (use tee to show and capture)
+          ci/gitrise.sh \
+            -a "$BITRISE_ACCESS_TOKEN" \
+            -s "$BITRISE_APP_SLUG" \
+            -w "${{ steps.workflow.outputs.workflow }}" \
+            -b "${{ github.head_ref || github.ref_name }}" \
+            --stream 2>&1 | tee build_output.txt || EXIT_CODE=$?
+
+          # Extract build URL and slug from output
+          BUILD_URL=$(grep -oP 'Build URL: \K[^\s]+' build_output.txt || echo "")
+          BUILD_SLUG=$(echo "$BUILD_URL" | grep -oP 'builds/\K[a-z0-9]+' || echo "")
+
+          echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
+          echo "build_slug=$BUILD_SLUG" >> $GITHUB_OUTPUT
+
+          # Exit with the original exit code
+          exit ${EXIT_CODE:-0}
 
       - name: Add PR comment with Bitrise link
         if: github.event_name == 'pull_request' && steps.trigger.outputs.build_url != ''
@@ -125,7 +148,7 @@ jobs:
 
             | Item | Value |
             |------|-------|
-            | Pipeline | \`${{ steps.pipeline.outputs.pipeline }}\` |
+            | Workflow | \`${{ steps.workflow.outputs.workflow }}\` |
             | Build | [${{ steps.trigger.outputs.build_slug }}](${{ steps.trigger.outputs.build_url }}) |
             | Commit | \`${{ github.sha }}\` |
 
@@ -134,70 +157,8 @@ jobs:
             ### What this builds:
             - Android unit tests
             - Backend tests (if any exist)
-            ${{ steps.pipeline.outputs.pipeline == 'build-all' && '- Android release AAB & APK (signed)\n- iOS IPA (App Store)\n- macOS DMG (notarized)' || '' }}`
+            ${{ steps.workflow.outputs.workflow == 'build-all' && '- Android release AAB & APK (signed)\n- iOS IPA (App Store)\n- macOS DMG (notarized)' || '' }}`
             })
-
-  # Wait for Bitrise build to complete (only on main branch)
-  wait-for-bitrise:
-    name: Wait for Bitrise
-    needs: trigger-bitrise
-    runs-on: ubuntu-latest
-    if: |
-      github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
-      needs.trigger-bitrise.outputs.bitrise-build-slug != ''
-    timeout-minutes: 90
-
-    outputs:
-      bitrise-status: ${{ steps.poll.outputs.status }}
-
-    steps:
-      - name: Poll Bitrise build status
-        id: poll
-        env:
-          BITRISE_API_TOKEN: ${{ secrets.BITRISE_ACCESS_TOKEN }}
-          BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
-          BUILD_SLUG: ${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}
-        run: |
-          echo "Waiting for Bitrise build: $BUILD_SLUG"
-          echo "Build URL: ${{ needs.trigger-bitrise.outputs.bitrise-build-url }}"
-
-          while true; do
-            RESPONSE=$(curl -s "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/builds/${BUILD_SLUG}" \
-              -H "Authorization: ${BITRISE_API_TOKEN}")
-
-            STATUS=$(echo "$RESPONSE" | jq -r '.data.status')
-            STATUS_TEXT=$(echo "$RESPONSE" | jq -r '.data.status_text')
-            FINISHED_AT=$(echo "$RESPONSE" | jq -r '.data.finished_at')
-
-            echo "Status: $STATUS_TEXT (code: $STATUS)"
-
-            case $STATUS in
-              0)
-                echo "Build still in progress..."
-                sleep 30
-                ;;
-              1)
-                echo "Build succeeded!"
-                echo "status=success" >> $GITHUB_OUTPUT
-                exit 0
-                ;;
-              2)
-                echo "Build failed!"
-                echo "status=failure" >> $GITHUB_OUTPUT
-                exit 1
-                ;;
-              3)
-                echo "Build aborted!"
-                echo "status=aborted" >> $GITHUB_OUTPUT
-                exit 1
-                ;;
-              *)
-                echo "Unknown status: $STATUS"
-                sleep 30
-                ;;
-            esac
-          done
 
   # Create deployment package for releases (backend only)
   create-deployment-package:
@@ -261,7 +222,7 @@ jobs:
           if [ -n "${{ needs.trigger-bitrise.outputs.bitrise-build-url }}" ]; then
             echo "## Bitrise Build" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- **Pipeline:** \`${{ needs.trigger-bitrise.outputs.bitrise-pipeline }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Workflow:** \`${{ needs.trigger-bitrise.outputs.bitrise-workflow }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- **Build URL:** [${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}](${{ needs.trigger-bitrise.outputs.bitrise-build-url }})" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
