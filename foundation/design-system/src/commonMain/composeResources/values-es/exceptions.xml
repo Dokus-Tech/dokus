@@ -42,6 +42,7 @@
     <string name="exception_account_locked">Tu cuenta ha sido bloqueada. Contacta con soporte para desbloquearla.</string>
     <string name="exception_email_not_verified">Verifica tu dirección de correo electrónico para continuar</string>
     <string name="exception_email_already_verified">La dirección de correo electrónico ya ha sido verificada</string>
+    <string name="exception_too_many_sessions">Número máximo de sesiones simultáneas alcanzado. Cierra sesión en otro dispositivo.</string>
 
     <!-- 409 Conflict Errors -->
     <string name="exception_user_already_exists">Ya existe un usuario con este correo electrónico</string>

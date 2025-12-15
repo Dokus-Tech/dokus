@@ -42,6 +42,7 @@
     <string name="exception_account_locked">Ваш аккаунт заблокирован. Пожалуйста, свяжитесь с поддержкой для разблокировки.</string>
     <string name="exception_email_not_verified">Пожалуйста, подтвердите свой адрес электронной почты, чтобы продолжить</string>
     <string name="exception_email_already_verified">Адрес электронной почты уже подтверждён</string>
+    <string name="exception_too_many_sessions">Достигнуто максимальное количество одновременных сессий. Пожалуйста, выйдите с другого устройства.</string>
 
     <!-- 409 Conflict Errors -->
     <string name="exception_user_already_exists">Пользователь с таким email уже существует</string>
