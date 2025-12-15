@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package ai.dokus.foundation.ktor.security
 
 import ai.dokus.foundation.domain.ids.UserId
+import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.ktor.cache.RedisClient
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
