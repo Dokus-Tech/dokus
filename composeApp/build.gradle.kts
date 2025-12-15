@@ -1,9 +1,10 @@
-import java.util.Properties
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -173,9 +174,9 @@ compose.desktop {
         buildTypes {
             release {
                 proguard {
-                    obfuscate = false
-                    optimize = false
-                    isEnabled = false
+                    obfuscate = true
+                    optimize = true
+                    isEnabled = true
                 }
             }
         }
