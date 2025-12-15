@@ -131,7 +131,19 @@ private val appModule = module {
     }
 
     // Authentication service
-    single { AuthService(get(), get(), get(), get(), get(), get(), get()) }
+    single {
+        val appConfig = get<AppBaseConfig>()
+        AuthService(
+            userRepository = get(),
+            jwtGenerator = get(),
+            refreshTokenRepository = get(),
+            rateLimitService = get(),
+            emailVerificationService = get(),
+            passwordResetService = get(),
+            tokenBlacklistService = getOrNull(),
+            maxConcurrentSessions = appConfig.auth.maxConcurrentSessions
+        )
+    }
 
     // Team management service
     single { TeamService(get(), get(), get()) }

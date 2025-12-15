@@ -37,8 +37,7 @@ class AuthService(
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
     private val tokenBlacklistService: TokenBlacklistService? = null,
-    private val maxConcurrentSessions: Int = DEFAULT_MAX_CONCURRENT_SESSIONS,
-    private val revokeOldestOnSessionLimit: Boolean = true
+    private val maxConcurrentSessions: Int = DEFAULT_MAX_CONCURRENT_SESSIONS
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -85,17 +84,12 @@ class AuthService(
 
         val response = jwtGenerator.generateTokens(claims)
 
-        // Check concurrent session limit before creating new session
+        // Enforce concurrent session limit by revoking oldest session if needed
         val activeSessions = refreshTokenRepository.countActiveForUser(userId)
         if (activeSessions >= maxConcurrentSessions) {
-            if (revokeOldestOnSessionLimit) {
-                logger.info("User ${userId.value} at session limit ($activeSessions/$maxConcurrentSessions), revoking oldest")
-                refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
-                    logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
-                }
-            } else {
-                logger.warn("User ${userId.value} blocked from login: too many sessions ($activeSessions/$maxConcurrentSessions)")
-                throw DokusException.TooManySessions(maxSessions = maxConcurrentSessions)
+            logger.info("User ${userId.value} at session limit ($activeSessions/$maxConcurrentSessions), revoking oldest session")
+            refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
+                logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
             }
         }
 
@@ -263,17 +257,12 @@ class AuthService(
 
         val response = jwtGenerator.generateTokens(claims)
 
-        // Check concurrent session limit before creating new session
+        // Enforce concurrent session limit by revoking oldest session if needed
         val activeSessions = refreshTokenRepository.countActiveForUser(userId)
         if (activeSessions >= maxConcurrentSessions) {
-            if (revokeOldestOnSessionLimit) {
-                logger.info("User ${userId.value} at session limit during tenant selection, revoking oldest")
-                refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
-                    logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
-                }
-            } else {
-                logger.warn("User ${userId.value} blocked: too many sessions during tenant selection")
-                throw DokusException.TooManySessions(maxSessions = maxConcurrentSessions)
+            logger.info("User ${userId.value} at session limit during tenant selection, revoking oldest session")
+            refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
+                logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
             }
         }
 
