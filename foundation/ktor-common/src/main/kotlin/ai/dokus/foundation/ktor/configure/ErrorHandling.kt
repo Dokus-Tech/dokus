@@ -13,6 +13,16 @@ fun Application.configureErrorHandling() {
     val logger = LoggerFactory.getLogger("ErrorHandler")
 
     install(StatusPages) {
+        // Handle rate limiting with Retry-After header
+        exception<DokusException.TooManyLoginAttempts> { call, cause ->
+            logger.warn("Rate limit exceeded: ${cause.message}")
+            call.response.headers.append(HttpHeaders.RetryAfter, cause.retryAfterSeconds.toString())
+            call.respond<DokusException>(
+                HttpStatusCode.TooManyRequests,
+                cause,
+            )
+        }
+
         exception<DokusException> { call, cause ->
             logger.warn("DokusException: ${cause.message}")
             call.respond<DokusException>(
