@@ -52,19 +52,22 @@ jobs:
           BITRISE_ACCESS_TOKEN: ${{ secrets.BITRISE_ACCESS_TOKEN }}
           BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
         run: |
+          set -o pipefail
           chmod +x ci/gitrise.sh
+
           ci/gitrise.sh \
             -a "$BITRISE_ACCESS_TOKEN" \
             -s "$BITRISE_APP_SLUG" \
             -w "tests" \
             -c "${{ github.sha }}" \
-            --stream 2>&1 | tee output.txt || EXIT_CODE=$?
+            --stream 2>&1 | tee output.txt
+          EXIT_CODE=$?
 
           BUILD_URL=$(grep -oP 'Build URL: \K[^\s]+' output.txt || echo "")
           BUILD_SLUG=$(echo "$BUILD_URL" | grep -oP 'builds/\K[a-z0-9]+' || echo "")
           echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
           echo "build_slug=$BUILD_SLUG" >> $GITHUB_OUTPUT
-          exit ${EXIT_CODE:-0}
+          exit $EXIT_CODE
 
   # Build Android on Bitrise (main branch only)
   bitrise-android:
@@ -89,19 +92,22 @@ jobs:
           BITRISE_ACCESS_TOKEN: ${{ secrets.BITRISE_ACCESS_TOKEN }}
           BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
         run: |
+          set -o pipefail
           chmod +x ci/gitrise.sh
+
           ci/gitrise.sh \
             -a "$BITRISE_ACCESS_TOKEN" \
             -s "$BITRISE_APP_SLUG" \
             -w "android-build-aab" \
             -c "${{ github.sha }}" \
-            --stream 2>&1 | tee output.txt || EXIT_CODE=$?
+            --stream 2>&1 | tee output.txt
+          EXIT_CODE=$?
 
           BUILD_URL=$(grep -oP 'Build URL: \K[^\s]+' output.txt || echo "")
           BUILD_SLUG=$(echo "$BUILD_URL" | grep -oP 'builds/\K[a-z0-9]+' || echo "")
           echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
           echo "build_slug=$BUILD_SLUG" >> $GITHUB_OUTPUT
-          exit ${EXIT_CODE:-0}
+          exit $EXIT_CODE
 
       - name: Download Android artifacts
         if: success()
@@ -168,19 +174,22 @@ jobs:
           BITRISE_ACCESS_TOKEN: ${{ secrets.BITRISE_ACCESS_TOKEN }}
           BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
         run: |
+          set -o pipefail
           chmod +x ci/gitrise.sh
+
           ci/gitrise.sh \
             -a "$BITRISE_ACCESS_TOKEN" \
             -s "$BITRISE_APP_SLUG" \
             -w "macos-build-dmg" \
             -c "${{ github.sha }}" \
-            --stream 2>&1 | tee output.txt || EXIT_CODE=$?
+            --stream 2>&1 | tee output.txt
+          EXIT_CODE=$?
 
           BUILD_URL=$(grep -oP 'Build URL: \K[^\s]+' output.txt || echo "")
           BUILD_SLUG=$(echo "$BUILD_URL" | grep -oP 'builds/\K[a-z0-9]+' || echo "")
           echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
           echo "build_slug=$BUILD_SLUG" >> $GITHUB_OUTPUT
-          exit ${EXIT_CODE:-0}
+          exit $EXIT_CODE
 
       - name: Download macOS artifacts
         if: success()
