@@ -1,6 +1,6 @@
 package ai.dokus.auth.backend.jobs
 
-import ai.dokus.auth.backend.services.RateLimitService
+import ai.dokus.auth.backend.services.RateLimitServiceInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.hours
  * accurate tracking of login attempts.
  */
 class RateLimitCleanupJob(
-    private val rateLimitService: RateLimitService
+    private val rateLimitService: RateLimitServiceInterface
 ) {
     private val logger = LoggerFactory.getLogger(RateLimitCleanupJob::class.java)
     private val scope = CoroutineScope(Dispatchers.IO)

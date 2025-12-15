@@ -13,6 +13,8 @@ import ai.dokus.auth.backend.services.EmailService
 import ai.dokus.auth.backend.services.EmailVerificationService
 import ai.dokus.auth.backend.services.PasswordResetService
 import ai.dokus.auth.backend.services.RateLimitService
+import ai.dokus.auth.backend.services.RateLimitServiceInterface
+import ai.dokus.auth.backend.services.RedisRateLimitService
 import ai.dokus.auth.backend.services.SmtpEmailService
 import ai.dokus.auth.backend.services.TeamService
 import ai.dokus.foundation.ktor.DokusRabbitMq
@@ -89,7 +91,23 @@ private val appModule = module {
     }
 
     // Rate limit service - prevents brute force attacks
-    single { RateLimitService() }
+    // Uses Redis if available, falls back to in-memory
+    single<RateLimitServiceInterface> {
+        val logger = LoggerFactory.getLogger("RateLimitService")
+        try {
+            val redisClient = getOrNull<RedisClient>()
+            if (redisClient != null) {
+                logger.info("Using Redis-backed rate limit service")
+                RedisRateLimitService(redisClient)
+            } else {
+                logger.warn("Redis not available, using in-memory rate limit (not suitable for multi-instance)")
+                RateLimitService()
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to create Redis rate limit service, using in-memory fallback: ${e.message}")
+            RateLimitService()
+        }
+    }
 
     // Background cleanup job for rate limiting
     single { RateLimitCleanupJob(get()) }
