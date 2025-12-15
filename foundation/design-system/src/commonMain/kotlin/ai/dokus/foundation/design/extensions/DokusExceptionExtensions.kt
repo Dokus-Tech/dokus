@@ -45,6 +45,9 @@ import ai.dokus.app.resources.generated.exception_unknown
 import ai.dokus.app.resources.generated.exception_user_already_exists
 import ai.dokus.app.resources.generated.exception_validation_error
 import ai.dokus.app.resources.generated.exception_weak_password
+import ai.dokus.app.resources.generated.exception_not_found
+import ai.dokus.app.resources.generated.exception_user_not_found
+import ai.dokus.app.resources.generated.exception_not_implemented
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
@@ -129,11 +132,13 @@ val DokusException.localized: String
         is DokusException.TenantCreationFailed -> stringResource(Res.string.exception_tenant_creation_failed)
         is DokusException.Unknown -> message ?: stringResource(Res.string.exception_unknown)
 
+        // 404 Not Found
+        is DokusException.NotFound -> stringResource(Res.string.exception_not_found)
+        is DokusException.UserNotFound -> stringResource(Res.string.exception_user_not_found)
+
         // 501 Not Implemented
-        is DokusException.NotImplemented -> message ?: "This feature is not yet implemented."
+        is DokusException.NotImplemented -> message ?: stringResource(Res.string.exception_not_implemented)
 
         // 503 Service Unavailable
         is DokusException.ConnectionError -> stringResource(Res.string.exception_connection_error)
-        is DokusException.NotFound -> "TODO"
-        is DokusException.UserNotFound -> "TODO"
     }

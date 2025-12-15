@@ -44,6 +44,10 @@
     <string name="exception_email_already_verified">La dirección de correo electrónico ya ha sido verificada</string>
     <string name="exception_too_many_sessions">Número máximo de sesiones simultáneas alcanzado. Cierra sesión en otro dispositivo.</string>
 
+    <!-- 404 No encontrado -->
+    <string name="exception_not_found">El recurso solicitado no fue encontrado</string>
+    <string name="exception_user_not_found">Usuario no encontrado</string>
+
     <!-- 409 Conflict Errors -->
     <string name="exception_user_already_exists">Ya existe un usuario con este correo electrónico</string>
 
@@ -54,6 +58,9 @@
     <string name="exception_internal_error">Se produjo un error interno. Inténtalo más tarde.</string>
     <string name="exception_tenant_creation_failed">Error al crear el espacio de trabajo. Inténtalo de nuevo.</string>
     <string name="exception_unknown">Se produjo un error desconocido</string>
+
+    <!-- 501 No implementado -->
+    <string name="exception_not_implemented">Esta función aún no está implementada</string>
 
     <!-- 503 Service Unavailable -->
     <string name="exception_connection_error">Error de conexión. Inténtalo más tarde.</string>

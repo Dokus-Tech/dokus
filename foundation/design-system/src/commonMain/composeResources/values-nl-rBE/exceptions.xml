@@ -44,6 +44,10 @@
     <string name="exception_email_already_verified">E-mailadres is al geverifieerd</string>
     <string name="exception_too_many_sessions">Maximaal aantal gelijktijdige sessies bereikt. Log uit op een ander apparaat.</string>
 
+    <!-- 404 Niet gevonden -->
+    <string name="exception_not_found">De gevraagde bron is niet gevonden</string>
+    <string name="exception_user_not_found">Gebruiker niet gevonden</string>
+
     <!-- 409 Conflictfouten -->
     <string name="exception_user_already_exists">Een gebruiker met dit e-mailadres bestaat al</string>
 
@@ -54,6 +58,9 @@
     <string name="exception_internal_error">Er is een interne fout opgetreden. Probeer het later opnieuw.</string>
     <string name="exception_tenant_creation_failed">Aanmaken van tenant mislukt. Probeer het opnieuw.</string>
     <string name="exception_unknown">Er is een onbekende fout opgetreden</string>
+
+    <!-- 501 Niet geïmplementeerd -->
+    <string name="exception_not_implemented">Deze functie is nog niet geïmplementeerd</string>
 
     <!-- 503 Service niet beschikbaar -->
     <string name="exception_connection_error">Verbindingsfout. Probeer het later opnieuw.</string>

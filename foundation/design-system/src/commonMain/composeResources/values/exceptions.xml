@@ -44,6 +44,10 @@
     <string name="exception_email_already_verified">Email address has already been verified</string>
     <string name="exception_too_many_sessions">Maximum number of concurrent sessions reached. Please log out from another device.</string>
 
+    <!-- 404 Not Found Errors -->
+    <string name="exception_not_found">The requested resource was not found</string>
+    <string name="exception_user_not_found">User not found</string>
+
     <!-- 409 Conflict Errors -->
     <string name="exception_user_already_exists">A user with this email already exists</string>
 
@@ -54,6 +58,9 @@
     <string name="exception_internal_error">An internal error occurred. Please try again later.</string>
     <string name="exception_tenant_creation_failed">Failed to create tenant. Please try again.</string>
     <string name="exception_unknown">An unknown error occurred</string>
+
+    <!-- 501 Not Implemented -->
+    <string name="exception_not_implemented">This feature is not yet implemented</string>
 
     <!-- 503 Service Unavailable -->
     <string name="exception_connection_error">Connection error. Please try again later.</string>
