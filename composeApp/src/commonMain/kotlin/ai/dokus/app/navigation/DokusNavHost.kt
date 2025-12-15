@@ -4,6 +4,8 @@ import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.model.AuthEvent
+import ai.dokus.foundation.domain.model.common.DeepLinks
+import ai.dokus.foundation.domain.model.common.KnownDeepLinks
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.animation.TransitionsProvider
 import ai.dokus.foundation.navigation.destinations.AuthDestination
@@ -44,11 +46,31 @@ fun DokusNavHost(
 
     LaunchedEffect(navController) {
         launch {
-            ExternalUriHandler.deeplinkState.collect {
-                if (it != null) {
-                    println("Collecting deeplink state: $it")
+            ExternalUriHandler.deeplinkState.collect { deepLink ->
+                if (deepLink != null) {
+                    println("Collecting deeplink state: $deepLink")
                     delay(0.5.seconds)
-                    navController.navigateTo(NavUri(it.withAppScheme))
+
+                    // Handle server connect deep links specially
+                    if (deepLink.path.startsWith(KnownDeepLinks.ServerConnect.path.path)) {
+                        val params = DeepLinks.extractServerConnect(deepLink)
+                        if (params != null) {
+                            val (host, port, protocol) = params
+                            navController.navigateTo(
+                                AuthDestination.ServerConnection(
+                                    host = host,
+                                    port = port,
+                                    protocol = protocol
+                                )
+                            )
+                        } else {
+                            // Invalid params, navigate to server connection without pre-fill
+                            navController.navigateTo(AuthDestination.ServerConnection())
+                        }
+                    } else {
+                        // Handle other deep links normally
+                        navController.navigateTo(NavUri(deepLink.withAppScheme))
+                    }
                 }
             }
         }

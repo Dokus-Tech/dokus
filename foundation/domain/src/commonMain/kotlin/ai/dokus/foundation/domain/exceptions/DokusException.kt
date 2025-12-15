@@ -176,6 +176,12 @@ sealed class DokusException(
         data object InvalidCountry : Validation(
             message = "Invalid country",
         )
+
+        @Serializable
+        @SerialName("DokusException.Validation.Generic")
+        data class Generic(
+            val errorMessage: String,
+        ) : Validation(message = errorMessage)
     }
 
     // 401 Unauthorized - Authentication Errors

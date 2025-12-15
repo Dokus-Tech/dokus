@@ -69,7 +69,7 @@ jobs:
           # On main branch, always build all services for releases
           if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
             echo "Main branch push detected - building all services for release"
-            SERVICES="auth,audit,banking,cashflow,contacts,payment,reporting"
+            SERVICES="auth,banking,cashflow,contacts,payment"
             JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
             echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
             echo "has-changes=true" >> $GITHUB_OUTPUT

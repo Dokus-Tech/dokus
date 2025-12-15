@@ -1,0 +1,29 @@
+# Traefik configuration for local development
+# Single entry point on port 8000 for all services
+
+api:
+  dashboard: true
+  insecure: true  # Dashboard without auth for local dev
+
+ping:
+  entryPoint: web
+
+entryPoints:
+  web:
+    address: ":8000"
+  traefik:
+    address: ":8080"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: dokus-local-network
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+log:
+  level: DEBUG
+
+accessLog: {}

@@ -3,6 +3,7 @@ package ai.dokus.app.viewmodel
 import ai.dokus.app.auth.AuthInitializer
 import ai.dokus.app.core.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.asbtractions.TokenManager
+import ai.dokus.foundation.domain.config.ServerConfigManager
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,13 +13,16 @@ import kotlinx.coroutines.launch
 class BootstrapViewModel(
     private val authInitializer: AuthInitializer,
     private val tokenManager: TokenManager,
-//    private val userRepository: UserRepository,
+    private val serverConfigManager: ServerConfigManager,
 ) : BaseViewModel<List<BootstrapViewModel.BootstrapState>>(BootstrapState.all) {
     private val mutableEffect = MutableStateFlow<Effect>(Effect.Idle)
     val effect: StateFlow<Effect> = mutableEffect.asStateFlow()
 
     fun load() {
         viewModelScope.launch {
+            // Initialize server config first (loads persisted server selection)
+            initializeServerConfig()
+
             mutableEffect.value = when {
                 needsUpdate() -> Effect.NeedsUpdate
                 needsLogin() -> Effect.NeedsLogin
@@ -27,6 +31,11 @@ class BootstrapViewModel(
                 else -> Effect.Ok
             }
         }
+    }
+
+    private suspend fun initializeServerConfig() {
+        updateStep(BootstrapState.InitializeApp(isActive = true, isCurrent = true))
+        serverConfigManager.initialize()
     }
 
     private suspend fun needsLogin(): Boolean {

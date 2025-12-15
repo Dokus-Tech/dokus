@@ -64,4 +64,19 @@ sealed interface AuthDestination : NavigationDestination {
     @Serializable
     @SerialName("auth/qr/decision")
     data class QrLoginDecision(val sessionId: String, val token: String) : AuthDestination
+
+    /**
+     * Server connection screen for self-hosted server support.
+     *
+     * @param host Optional pre-filled host (from deep link)
+     * @param port Optional pre-filled port (from deep link)
+     * @param protocol Optional pre-filled protocol (from deep link)
+     */
+    @Serializable
+    @SerialName("server/connect")
+    data class ServerConnection(
+        val host: String? = null,
+        val port: Int? = null,
+        val protocol: String? = null
+    ) : AuthDestination
 }

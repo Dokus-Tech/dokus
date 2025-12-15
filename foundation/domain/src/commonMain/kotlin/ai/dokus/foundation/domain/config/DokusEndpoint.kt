@@ -1,56 +1,56 @@
 package ai.dokus.foundation.domain.config
 
+/**
+ * Represents a Dokus service endpoint.
+ *
+ * With Traefik gateway, external clients connect to a single gateway host/port,
+ * and the path prefix determines which service handles the request.
+ * Internal service-to-service calls still use direct host/port within Docker network.
+ *
+ * @property pathPrefix The path prefix for this service (e.g., "/api/v1/identity")
+ * @property internalHost Hostname for inter-service calls within Docker network
+ * @property internalPort Port for inter-service calls within Docker network
+ */
 sealed class DokusEndpoint(
-    val host: String,
-    val port: Int,
+    val pathPrefix: String,
     val internalHost: String,
     val internalPort: Int,
 ) {
+    /** Gateway host for external connections (from BuildKonfig) */
+    val gatewayHost: String get() = BuildKonfig.gatewayHost
+
+    /** Gateway port for external connections (from BuildKonfig) */
+    val gatewayPort: Int get() = BuildKonfig.gatewayPort
+
+    /** Gateway protocol (http or https) from BuildKonfig */
+    val gatewayProtocol: String get() = BuildKonfig.gatewayProtocol
+
     data object Auth : DokusEndpoint(
-        host = BuildKonfig.authHost,
-        port = BuildKonfig.authPort,
+        pathPrefix = "/api/v1",
         internalHost = BuildKonfig.authInternalHost,
         internalPort = BuildKonfig.authInternalPort
     )
 
     data object Cashflow : DokusEndpoint(
-        host = BuildKonfig.cashflowHost,
-        port = BuildKonfig.cashflowPort,
+        pathPrefix = "/api/v1",
         internalHost = BuildKonfig.cashflowInternalHost,
         internalPort = BuildKonfig.cashflowInternalPort
     )
 
     data object Payment : DokusEndpoint(
-        host = BuildKonfig.paymentHost,
-        port = BuildKonfig.paymentPort,
+        pathPrefix = "/api/v1",
         internalHost = BuildKonfig.paymentInternalHost,
         internalPort = BuildKonfig.paymentInternalPort
     )
 
-    data object Reporting : DokusEndpoint(
-        host = BuildKonfig.reportingHost,
-        port = BuildKonfig.reportingPort,
-        internalHost = BuildKonfig.reportingInternalHost,
-        internalPort = BuildKonfig.reportingInternalPort
-    )
-
-    data object Audit : DokusEndpoint(
-        host = BuildKonfig.auditHost,
-        port = BuildKonfig.auditPort,
-        internalHost = BuildKonfig.auditInternalHost,
-        internalPort = BuildKonfig.auditInternalPort
-    )
-
     data object Banking : DokusEndpoint(
-        host = BuildKonfig.bankingHost,
-        port = BuildKonfig.bankingPort,
+        pathPrefix = "/api/v1",
         internalHost = BuildKonfig.bankingInternalHost,
         internalPort = BuildKonfig.bankingInternalPort
     )
 
     data object Media : DokusEndpoint(
-        host = BuildKonfig.mediaHost,
-        port = BuildKonfig.mediaPort,
+        pathPrefix = "/api/v1",
         internalHost = BuildKonfig.mediaInternalHost,
         internalPort = BuildKonfig.mediaInternalPort
     )

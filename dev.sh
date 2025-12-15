@@ -118,6 +118,10 @@ OLLAMA_CONTAINER="ollama-local"
 OLLAMA_PORT="11434"
 OLLAMA_DEFAULT_MODELS=("mistral:7b" "llama3.1:8b")
 
+# Gateway configuration
+GATEWAY_PORT="8000"
+GATEWAY_DASHBOARD_PORT="8080"
+
 # Function to capitalize first letter (Bash 3.2 compatible)
 capitalize() {
     local str=$1
@@ -447,24 +451,44 @@ start_services() {
             sleep 1
         done
 
+        # Wait for Traefik Gateway
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Traefik Gateway"
+        for i in {1..30}; do
+            if curl -f -s http://localhost:${GATEWAY_PORT}/health &>/dev/null 2>&1 || curl -f -s http://localhost:${GATEWAY_DASHBOARD_PORT}/api/overview &>/dev/null 2>&1; then
+                echo_e "${SOFT_GREEN}◎ Ready${NC}"
+                break
+            fi
+            if [ $i -eq 30 ]; then
+                echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
+            fi
+            echo -n "."
+            sleep 1
+        done
+
         # Wait for services with proper spacing
         sleep 3
 
+        # Check services via gateway
         local services=(
-            "Auth:7091:/metrics"
-            "Cashflow:7092:/health"
-            "Payment:7093:/health"
-            "Banking:7096:/health"
-            "Contacts:7097:/health"
+            "Auth:/api/v1/identity"
+            "Cashflow:/api/v1/invoices"
+            "Payment:/api/v1/payments"
+            "Banking:/api/v1/banking"
+            "Contacts:/api/v1/contacts"
         )
 
         for service_info in "${services[@]}"; do
-            IFS=':' read -r service_name port endpoint <<< "$service_info"
-            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "${service_name} Service"
+            IFS=':' read -r service_name endpoint <<< "$service_info"
+            printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "${service_name}"
             for i in {1..30}; do
-                if curl -f -s http://localhost:${port}${endpoint} > /dev/null 2>&1; then
+                # Accept any HTTP response (401/404 means service is reachable through gateway)
+                http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${GATEWAY_PORT}${endpoint}" 2>/dev/null)
+                if [ "$http_code" != "000" ] && [ "$http_code" != "" ]; then
                     echo_e "${SOFT_GREEN}◎ Ready${NC}"
                     break
+                fi
+                if [ $i -eq 30 ]; then
+                    echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
                 fi
                 echo -n "."
                 sleep 1
@@ -560,22 +584,29 @@ show_status() {
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
+    # Traefik Gateway
+    printf "  ${SOFT_GRAY}│${NC} Traefik Gateway         ${SOFT_GRAY}│${NC} "
+    if curl -f -s http://localhost:${GATEWAY_DASHBOARD_PORT}/api/overview &>/dev/null 2>&1; then
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
+
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
-    # Services
+    # Services - Check via gateway using path-based routing
     local services=(
-        "Auth Service:auth-service-local:7091:/metrics"
-        "Cashflow Service:cashflow-service-local:7092:/health"
-        "Payment Service:payment-service-local:7093:/health"
-        "Banking Service:banking-service-local:7096:/health"
-        "Contacts Service:contacts-service-local:7097:/health"
+        "Auth Service:auth-service-local:/api/v1/identity"
+        "Cashflow Service:cashflow-service-local:/api/v1/invoices"
+        "Payment Service:payment-service-local:/api/v1/payments"
+        "Banking Service:banking-service-local:/api/v1/banking"
+        "Contacts Service:contacts-service-local:/api/v1/contacts"
     )
 
     check_service() {
         local name=$1
         local container=$2
-        local port=$3
-        local endpoint=$4
+        local endpoint=$3
 
         # If container is not running, surface that clearly
         if ! docker-compose -f $COMPOSE_FILE ps -q "$container" | grep -q .; then
@@ -583,8 +614,9 @@ show_status() {
             return
         fi
 
-        # Health probe
-        if curl -f -s "http://localhost:${port}${endpoint}" > /dev/null 2>&1; then
+        # Health probe via gateway - accept any HTTP response (401/404 means service is reachable)
+        local http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${GATEWAY_PORT}${endpoint}" 2>/dev/null)
+        if [ "$http_code" != "000" ] && [ "$http_code" != "" ]; then
             printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}\n" "$name"
         else
             printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} ${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}\n" "$name"
@@ -592,8 +624,8 @@ show_status() {
     }
 
     for service_info in "${services[@]}"; do
-        IFS=':' read -r service_name container port endpoint <<< "$service_info"
-        check_service "$service_name" "$container" "$port" "$endpoint"
+        IFS=':' read -r service_name container endpoint <<< "$service_info"
+        check_service "$service_name" "$container" "$endpoint"
     done
 
     echo_e "  ${SOFT_GRAY}└─────────────────────────┴──────────────────┘${NC}"
@@ -797,84 +829,6 @@ except:
     echo ""
 }
 
-# Function to build web WASM app
-build_web() {
-    print_gradient_header "🌐 Building Web Application"
-
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 1: Building WASM bundle${NC}\n"
-
-    print_simple_status building "Compiling Kotlin/WASM..."
-    if [ -f "./gradlew" ]; then
-        ./gradlew :composeApp:wasmJsBrowserDistribution -q 2>&1 | while read line; do
-            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
-                echo "  $line"
-            fi
-        done
-    else
-        gradle :composeApp:wasmJsBrowserDistribution -q 2>&1 | while read line; do
-            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
-                echo "  $line"
-            fi
-        done
-    fi
-
-    if [ $? -ne 0 ]; then
-        print_status error "Web build failed"
-        exit 1
-    fi
-    print_simple_status success "WASM bundle compiled"
-
-    echo ""
-    print_separator
-    echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 2: Building Docker image${NC}\n"
-
-    print_simple_status building "Building nginx container..."
-    docker build -f composeApp/Dockerfile -t invoid-vision/dokus-web:dev-latest . -q > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        print_status error "Web Docker image build failed"
-        exit 1
-    fi
-    print_simple_status success "Web image ready"
-
-    echo ""
-    echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}Web application built successfully${NC}"
-    echo ""
-}
-
-# Function to start web service
-start_web() {
-    print_gradient_header "🌐 Starting Web Application"
-
-    # Check if web image exists
-    if ! docker images | grep -q "invoid-vision/dokus-web"; then
-        print_status warning "Web image not found, building first..."
-        build_web
-    fi
-
-    # Start web service
-    print_status loading "Starting web container..."
-    docker-compose -f $COMPOSE_FILE up -d web-local
-
-    echo ""
-    printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Web Application"
-    for i in {1..30}; do
-        if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
-            echo_e "${SOFT_GREEN}◎ Ready${NC}"
-            break
-        fi
-        if [ $i -eq 30 ]; then
-            echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
-        fi
-        echo -n "."
-        sleep 1
-    done
-
-    echo ""
-    print_status success "Web app available at http://localhost:8080"
-    echo ""
-}
-
 # Function to run tests
 run_tests() {
     service=${1:-all}
@@ -921,36 +875,101 @@ run_tests() {
     echo ""
 }
 
+# Function to get local IP address
+get_local_ip() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS - try multiple interfaces
+        ipconfig getifaddr en0 2>/dev/null || \
+        ipconfig getifaddr en1 2>/dev/null || \
+        ipconfig getifaddr en2 2>/dev/null || \
+        echo "localhost"
+    else
+        # Linux
+        hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost"
+    fi
+}
+
+# Function to show mobile app connection info with QR code
+show_mobile_connection() {
+    print_gradient_header "📱 Mobile App Connection" "Connect your mobile app to this server"
+
+    # Get local IP address
+    local LOCAL_IP=$(get_local_ip)
+
+    # Generate deep link URL (dokus:// scheme opens the app directly)
+    local CONNECT_URL="dokus://connect?host=${LOCAL_IP}&port=${GATEWAY_PORT}&protocol=http"
+
+    echo_e "  ${SOFT_CYAN}${BOLD}Server Connection Details${NC}\n"
+
+    echo_e "  ${SOFT_GRAY}┌───────────────────────────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Manual Entry (in app: Connect to Server)${NC}                      ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├───────────────────────────────────────────────────────────────┤${NC}"
+    printf "  ${SOFT_GRAY}│${NC}  Protocol:  ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "http"
+    printf "  ${SOFT_GRAY}│${NC}  Host:      ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "${LOCAL_IP}"
+    printf "  ${SOFT_GRAY}│${NC}  Port:      ${SOFT_CYAN}%-47s${NC} ${SOFT_GRAY}│${NC}\n" "${GATEWAY_PORT}"
+    echo_e "  ${SOFT_GRAY}└───────────────────────────────────────────────────────────────┘${NC}"
+
+    echo ""
+
+    # Generate QR code (requires qrencode)
+    if command -v qrencode &> /dev/null; then
+        echo_e "  ${SOFT_CYAN}${BOLD}Scan with Device Camera${NC}\n"
+        qrencode -t ANSIUTF8 -m 2 "$CONNECT_URL"
+        echo ""
+        echo_e "  ${SOFT_GRAY}Deep Link:${NC} ${DIM_WHITE}${CONNECT_URL}${NC}"
+    else
+        echo_e "  ${SOFT_YELLOW}${SYMBOL_WARNING}${NC}  Install 'qrencode' for QR code display:"
+        echo_e "     ${DIM_WHITE}brew install qrencode${NC}  (macOS)"
+        echo_e "     ${DIM_WHITE}apt install qrencode${NC}   (Linux)"
+        echo ""
+        echo_e "  ${SOFT_GRAY}Deep Link:${NC} ${DIM_WHITE}${CONNECT_URL}${NC}"
+    fi
+
+    echo ""
+    echo_e "  ${SOFT_GRAY}${DIM}Scan QR code with your device camera to open Dokus app,${NC}"
+    echo_e "  ${SOFT_GRAY}${DIM}or enter the details manually via 'Connect to Server'.${NC}"
+    echo ""
+}
+
 # Function to print service information
 print_services_info() {
     print_separator
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}📍 Service Endpoints${NC}\n"
+    echo_e "  ${SOFT_GREEN}${BOLD}🌐 API Gateway${NC}\n"
 
-    # Service table
-    echo_e "  ${SOFT_GRAY}┌──────────────────────┬─────────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}              ${SOFT_GRAY}│${NC} ${BOLD}Endpoints${NC}                               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
+    # Gateway info box
+    echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://localhost:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://localhost:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
 
-    # Services
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}         ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7091${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/metrics /health${NC} • ${SOFT_GRAY}debug: 15007${NC}   ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7092${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15008${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7093${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15009${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}      ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7096${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15012${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}     ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:7097${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}/health${NC} • ${SOFT_GRAY}debug: 15013${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web App (WASM)${NC}       ${SOFT_GRAY}│${NC} ${DIM_WHITE}http://localhost:8080${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}./dev.sh web${NC} ${SOFT_GRAY}to build${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
+    echo ""
+    echo_e "  ${SOFT_CYAN}${BOLD}📍 API Routes (via Gateway)${NC}\n"
+
+    # Routes table
+    echo_e "  ${SOFT_GRAY}┌─────────────────────────────┬────────────────────────────────────┐${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Route Prefix${NC}                ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                            ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}└─────────────────────────────┴────────────────────────────────────┘${NC}"
+
+    echo ""
+    echo_e "  ${SOFT_GRAY}${BOLD}Debug Ports (direct access)${NC}"
+    echo_e "    ${DIM_WHITE}Auth: 15007 • Cashflow: 15008 • Payment: 15009 • Banking: 15012 • Contacts: 15013${NC}"
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}💾 Database & Services${NC}\n"
@@ -1097,18 +1116,6 @@ main() {
         ai-test)
             ollama_test
             ;;
-        web)
-            check_requirements
-            build_web
-            start_web
-            ;;
-        web-build)
-            check_requirements
-            build_web
-            ;;
-        web-start)
-            start_web
-            ;;
         test)
             run_tests ${2:-all}
             ;;
@@ -1118,6 +1125,9 @@ main() {
         watch)
             check_requirements
             watch_mode ${2:-all}
+            ;;
+        connect|qr)
+            show_mobile_connection
             ;;
         help)
             show_help
@@ -1147,9 +1157,6 @@ show_help() {
 
     echo_e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
     echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Create service JARs + images${NC}"
-    echo_e "    ${SOFT_CYAN}web${NC}          ${DIM_WHITE}Build + start web WASM app${NC}"
-    echo_e "    ${SOFT_CYAN}web-build${NC}    ${DIM_WHITE}Build web WASM + Docker image only${NC}"
-    echo_e "    ${SOFT_CYAN}web-start${NC}    ${DIM_WHITE}Start web container (needs prior build)${NC}"
     echo_e "    ${SOFT_CYAN}watch${NC} [svc]  ${DIM_WHITE}Auto rebuild on changes${NC}"
     echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|banking|cashflow|contacts|all)${NC}"
     echo ""
@@ -1169,6 +1176,11 @@ show_help() {
 
     echo_e "  ${SOFT_RED}${BOLD}Maintenance${NC}"
     echo_e "    ${SOFT_CYAN}clean${NC}        ${DIM_WHITE}Remove containers and volumes${NC}"
+    echo ""
+
+    echo_e "  ${SOFT_BLUE}${BOLD}Mobile App${NC}"
+    echo_e "    ${SOFT_CYAN}connect${NC}      ${DIM_WHITE}Show QR code for mobile app connection${NC}"
+    echo_e "    ${SOFT_CYAN}qr${NC}           ${DIM_WHITE}Alias for connect${NC}"
     echo ""
 
     print_separator
@@ -1207,10 +1219,14 @@ show_menu() {
     echo_e "    ${SOFT_CYAN}12${NC}  Deep clean"
     echo ""
 
+    echo_e "  ${SOFT_BLUE}${BOLD}Mobile App${NC}"
+    echo_e "    ${SOFT_CYAN}13${NC}  Show mobile connection (QR code)"
+    echo ""
+
     echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-12]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-13]:${NC} "
     read choice
 
     echo ""
@@ -1228,6 +1244,7 @@ show_menu() {
         10) run_tests all ;;
         11) start_pgadmin ;;
         12) clean_all ;;
+        13) show_mobile_connection ;;
         0) echo_e "  ${SOFT_CYAN}👋 See you in the grid.${NC}\n" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac

@@ -64,21 +64,10 @@ buildkonfig {
     defaultConfigs {
         buildConfigField(STRING, "env", "cloud")
 
-        // External endpoints (for clients outside Docker) - Cloud
-        buildConfigField(STRING, "authHost", "94.111.226.82")
-        buildConfigField(INT, "authPort", "6091")
-        buildConfigField(STRING, "cashflowHost", "94.111.226.82")
-        buildConfigField(INT, "cashflowPort", "6092")
-        buildConfigField(STRING, "paymentHost", "94.111.226.82")
-        buildConfigField(INT, "paymentPort", "6093")
-        buildConfigField(STRING, "reportingHost", "94.111.226.82")
-        buildConfigField(INT, "reportingPort", "6094")
-        buildConfigField(STRING, "auditHost", "94.111.226.82")
-        buildConfigField(INT, "auditPort", "6095")
-        buildConfigField(STRING, "bankingHost", "94.111.226.82")
-        buildConfigField(INT, "bankingPort", "6096")
-        buildConfigField(STRING, "mediaHost", "94.111.226.82")
-        buildConfigField(INT, "mediaPort", "6097")
+        // Gateway endpoint (for external clients via Traefik) - Cloud
+        buildConfigField(STRING, "gatewayHost", "api.dokus.tech")
+        buildConfigField(INT, "gatewayPort", "443")
+        buildConfigField(STRING, "gatewayProtocol", "https")
 
         // RabbitMQ Configuration - Cloud (credentials from env vars at runtime)
         buildConfigField(STRING, "rabbitmqHost", "rabbitmq")
@@ -87,38 +76,25 @@ buildkonfig {
 
         // Internal endpoints (for inter-service communication in Docker) - Cloud
         buildConfigField(STRING, "authInternalHost", "auth-service")
-        buildConfigField(INT, "authInternalPort", "6091")
+        buildConfigField(INT, "authInternalPort", "8080")
         buildConfigField(STRING, "cashflowInternalHost", "cashflow-service")
-        buildConfigField(INT, "cashflowInternalPort", "6092")
+        buildConfigField(INT, "cashflowInternalPort", "8080")
         buildConfigField(STRING, "paymentInternalHost", "payment-service")
-        buildConfigField(INT, "paymentInternalPort", "6093")
-        buildConfigField(STRING, "reportingInternalHost", "reporting-service")
-        buildConfigField(INT, "reportingInternalPort", "6094")
-        buildConfigField(STRING, "auditInternalHost", "audit-service")
-        buildConfigField(INT, "auditInternalPort", "6095")
+        buildConfigField(INT, "paymentInternalPort", "8080")
         buildConfigField(STRING, "bankingInternalHost", "banking-service")
-        buildConfigField(INT, "bankingInternalPort", "6096")
+        buildConfigField(INT, "bankingInternalPort", "8080")
+        buildConfigField(STRING, "contactsInternalHost", "contacts-service")
+        buildConfigField(INT, "contactsInternalPort", "8080")
         buildConfigField(STRING, "mediaInternalHost", "media-service")
-        buildConfigField(INT, "mediaInternalPort", "6097")
+        buildConfigField(INT, "mediaInternalPort", "8080")
     }
     defaultConfigs("local") {
         buildConfigField(STRING, "env", "local")
 
-        // External endpoints (same as internal for local development)
-        buildConfigField(STRING, "authHost", "0.0.0.0")
-        buildConfigField(INT, "authPort", "7091")
-        buildConfigField(STRING, "cashflowHost", "0.0.0.0")
-        buildConfigField(INT, "cashflowPort", "7092")
-        buildConfigField(STRING, "paymentHost", "0.0.0.0")
-        buildConfigField(INT, "paymentPort", "7093")
-        buildConfigField(STRING, "reportingHost", "0.0.0.0")
-        buildConfigField(INT, "reportingPort", "7094")
-        buildConfigField(STRING, "auditHost", "0.0.0.0")
-        buildConfigField(INT, "auditPort", "7095")
-        buildConfigField(STRING, "bankingHost", "0.0.0.0")
-        buildConfigField(INT, "bankingPort", "7096")
-        buildConfigField(STRING, "mediaHost", "0.0.0.0")
-        buildConfigField(INT, "mediaPort", "7097")
+        // Gateway endpoint (for external clients via Traefik) - Local
+        buildConfigField(STRING, "gatewayHost", "0.0.0.0")
+        buildConfigField(INT, "gatewayPort", "8000")
+        buildConfigField(STRING, "gatewayProtocol", "http")
 
         // RabbitMQ Configuration - Local (credentials from env vars at runtime)
         buildConfigField(STRING, "rabbitmqHost", "localhost")
@@ -127,29 +103,22 @@ buildkonfig {
 
         // Internal endpoints (for inter-service communication in Docker)
         buildConfigField(STRING, "authInternalHost", "auth-service-local")
-        buildConfigField(INT, "authInternalPort", "7091")
+        buildConfigField(INT, "authInternalPort", "8080")
         buildConfigField(STRING, "cashflowInternalHost", "cashflow-service-local")
-        buildConfigField(INT, "cashflowInternalPort", "7092")
+        buildConfigField(INT, "cashflowInternalPort", "8080")
         buildConfigField(STRING, "paymentInternalHost", "payment-service-local")
-        buildConfigField(INT, "paymentInternalPort", "7093")
-        buildConfigField(STRING, "reportingInternalHost", "reporting-service-local")
-        buildConfigField(INT, "reportingInternalPort", "7094")
-        buildConfigField(STRING, "auditInternalHost", "audit-service-local")
-        buildConfigField(INT, "auditInternalPort", "7095")
+        buildConfigField(INT, "paymentInternalPort", "8080")
         buildConfigField(STRING, "bankingInternalHost", "banking-service-local")
-        buildConfigField(INT, "bankingInternalPort", "7096")
+        buildConfigField(INT, "bankingInternalPort", "8080")
+        buildConfigField(STRING, "contactsInternalHost", "contacts-service-local")
+        buildConfigField(INT, "contactsInternalPort", "8080")
         buildConfigField(STRING, "mediaInternalHost", "media-service-local")
-        buildConfigField(INT, "mediaInternalPort", "7097")
+        buildConfigField(INT, "mediaInternalPort", "8080")
     }
     targetConfigs("local") {
         create("wasmJs") {
-            buildConfigField(STRING, "authHost", "localhost")
-            buildConfigField(STRING, "cashflowHost", "localhost")
-            buildConfigField(STRING, "paymentHost", "localhost")
-            buildConfigField(STRING, "reportingHost", "localhost")
-            buildConfigField(STRING, "auditHost", "localhost")
-            buildConfigField(STRING, "bankingHost", "localhost")
-            buildConfigField(STRING, "mediaHost", "localhost")
+            // WASM runs in browser, needs to connect via localhost
+            buildConfigField(STRING, "gatewayHost", "localhost")
         }
     }
 }
