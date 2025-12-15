@@ -103,65 +103,14 @@ jobs:
 
       - name: Trigger Bitrise Build
         id: trigger
-        env:
-          BITRISE_API_TOKEN: ${{ secrets.BITRISE_API_TOKEN }}
-          BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
-        run: |
-          # Check if secrets are configured
-          if [ -z "$BITRISE_API_TOKEN" ] || [ -z "$BITRISE_APP_SLUG" ]; then
-            echo "Warning: Bitrise secrets not configured. Skipping Bitrise trigger."
-            echo "To enable Bitrise builds, add BITRISE_API_TOKEN and BITRISE_APP_SLUG to GitHub Secrets."
-            echo "build_slug=" >> $GITHUB_OUTPUT
-            echo "build_url=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Prepare commit message (escape quotes for JSON)
-          COMMIT_MSG="${{ github.event.head_commit.message || github.event.pull_request.title }}"
-          COMMIT_MSG=$(echo "$COMMIT_MSG" | head -1 | sed 's/"/\\"/g' | cut -c1-100)
-
-          # Trigger Bitrise build
-          RESPONSE=$(curl -s -X POST "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/build/start.json" \
-            -H "Authorization: ${BITRISE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"hook_info\": {
-                \"type\": \"bitrise\"
-              },
-              \"build_params\": {
-                \"branch\": \"${{ github.head_ref || github.ref_name }}\",
-                \"commit_hash\": \"${{ github.sha }}\",
-                \"commit_message\": \"${COMMIT_MSG}\",
-                \"pipeline_id\": \"${{ steps.pipeline.outputs.pipeline }}\",
-                \"environments\": [
-                  {
-                    \"mapped_to\": \"GITHUB_PR_NUMBER\",
-                    \"value\": \"${{ github.event.pull_request.number || '' }}\"
-                  },
-                  {
-                    \"mapped_to\": \"GITHUB_RUN_ID\",
-                    \"value\": \"${{ github.run_id }}\"
-                  }
-                ]
-              }
-            }")
-
-          echo "API Response: $RESPONSE"
-
-          BUILD_SLUG=$(echo "$RESPONSE" | jq -r '.build_slug // empty')
-          BUILD_URL=$(echo "$RESPONSE" | jq -r '.build_url // empty')
-
-          if [ -z "$BUILD_SLUG" ] || [ "$BUILD_SLUG" == "null" ]; then
-            echo "Failed to trigger Bitrise build"
-            echo "Response: $RESPONSE"
-            echo "build_slug=" >> $GITHUB_OUTPUT
-            echo "build_url=" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-          echo "build_slug=$BUILD_SLUG" >> $GITHUB_OUTPUT
-          echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
-          echo "Triggered Bitrise build: $BUILD_URL"
+        uses: Suspended/gitrise@v2.0.0
+        with:
+          access_token: ${{ secrets.BITRISE_ACCESS_TOKEN }}
+          app_slug: ${{ secrets.BITRISE_APP_SLUG }}
+          pipeline: ${{ steps.pipeline.outputs.pipeline }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          commit_hash: ${{ github.sha }}
+          commit_message: ${{ github.event.head_commit.message || github.event.pull_request.title }}
 
       - name: Add PR comment with Bitrise link
         if: github.event_name == 'pull_request' && steps.trigger.outputs.build_url != ''
@@ -206,7 +155,7 @@ jobs:
       - name: Poll Bitrise build status
         id: poll
         env:
-          BITRISE_API_TOKEN: ${{ secrets.BITRISE_API_TOKEN }}
+          BITRISE_API_TOKEN: ${{ secrets.BITRISE_ACCESS_TOKEN }}
           BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
           BUILD_SLUG: ${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}
         run: |
@@ -395,7 +344,7 @@ jobs:
       - name: Download Bitrise artifacts
         id: bitrise-artifacts
         env:
-          BITRISE_API_TOKEN: ${{ secrets.BITRISE_API_TOKEN }}
+          BITRISE_API_TOKEN: ${{ secrets.BITRISE_ACCESS_TOKEN }}
           BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
           BUILD_SLUG: ${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}
         run: |
