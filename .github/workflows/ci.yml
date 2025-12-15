@@ -199,7 +199,7 @@ jobs:
   ci-status:
     name: CI Status
     runs-on: ubuntu-latest
-    needs: [validation, lint, trigger-bitrise, wait-for-bitrise, create-deployment-package]
+    needs: [validation, lint, trigger-bitrise, create-deployment-package]
     if: always()
 
     steps:
@@ -213,8 +213,7 @@ jobs:
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Validation | ${{ needs.validation.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Code Quality | ${{ needs.lint.result == 'success' && 'Passed' || needs.lint.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Bitrise Trigger | ${{ needs.trigger-bitrise.result == 'success' && 'Triggered' || needs.trigger-bitrise.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Bitrise Build | ${{ needs.wait-for-bitrise.result == 'success' && 'Passed' || needs.wait-for-bitrise.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bitrise Build | ${{ needs.trigger-bitrise.result == 'success' && 'Passed' || needs.trigger-bitrise.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Deployment Package | ${{ needs.create-deployment-package.result == 'success' && 'Created' || needs.create-deployment-package.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -230,8 +229,7 @@ jobs:
       - name: Check overall status
         run: |
           if [ "${{ needs.validation.result }}" == "failure" ] || \
-             [ "${{ needs.trigger-bitrise.result }}" == "failure" ] || \
-             [ "${{ needs.wait-for-bitrise.result }}" == "failure" ]; then
+             [ "${{ needs.trigger-bitrise.result }}" == "failure" ]; then
             echo "CI Pipeline Failed"
             exit 1
           fi
@@ -240,11 +238,11 @@ jobs:
   # Create GitHub release after Bitrise succeeds (main branch only)
   release:
     name: Create Release
-    needs: [trigger-bitrise, wait-for-bitrise, create-deployment-package]
+    needs: [trigger-bitrise, create-deployment-package]
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.wait-for-bitrise.result == 'success' &&
+      needs.trigger-bitrise.result == 'success' &&
       needs.create-deployment-package.result == 'success'
     runs-on: ubuntu-latest
     permissions:
