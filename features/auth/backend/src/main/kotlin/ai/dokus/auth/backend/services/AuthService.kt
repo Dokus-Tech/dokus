@@ -85,6 +85,20 @@ class AuthService(
 
         val response = jwtGenerator.generateTokens(claims)
 
+        // Check concurrent session limit before creating new session
+        val activeSessions = refreshTokenRepository.countActiveForUser(userId)
+        if (activeSessions >= maxConcurrentSessions) {
+            if (revokeOldestOnSessionLimit) {
+                logger.info("User ${userId.value} at session limit ($activeSessions/$maxConcurrentSessions), revoking oldest")
+                refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
+                    logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
+                }
+            } else {
+                logger.warn("User ${userId.value} blocked from login: too many sessions ($activeSessions/$maxConcurrentSessions)")
+                throw DokusException.TooManySessions(maxSessions = maxConcurrentSessions)
+            }
+        }
+
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
@@ -248,6 +262,20 @@ class AuthService(
         )
 
         val response = jwtGenerator.generateTokens(claims)
+
+        // Check concurrent session limit before creating new session
+        val activeSessions = refreshTokenRepository.countActiveForUser(userId)
+        if (activeSessions >= maxConcurrentSessions) {
+            if (revokeOldestOnSessionLimit) {
+                logger.info("User ${userId.value} at session limit during tenant selection, revoking oldest")
+                refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
+                    logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
+                }
+            } else {
+                logger.warn("User ${userId.value} blocked: too many sessions during tenant selection")
+                throw DokusException.TooManySessions(maxSessions = maxConcurrentSessions)
+            }
+        }
 
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
