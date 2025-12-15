@@ -42,6 +42,7 @@
     <string name="exception_account_locked">Uw account is vergrendeld. Neem contact op met ondersteuning om het te ontgrendelen.</string>
     <string name="exception_email_not_verified">Verifieer uw e-mailadres om verder te gaan</string>
     <string name="exception_email_already_verified">E-mailadres is al geverifieerd</string>
+    <string name="exception_too_many_sessions">Maximaal aantal gelijktijdige sessies bereikt. Log uit op een ander apparaat.</string>
 
     <!-- 409 Conflictfouten -->
     <string name="exception_user_already_exists">Een gebruiker met dit e-mailadres bestaat al</string>

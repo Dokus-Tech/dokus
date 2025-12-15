@@ -42,6 +42,7 @@
     <string name="exception_account_locked">Votre compte a été verrouillé. Veuillez contacter le support pour le débloquer.</string>
     <string name="exception_email_not_verified">Veuillez vérifier votre adresse e-mail pour continuer</string>
     <string name="exception_email_already_verified">L\'adresse e-mail a déjà été vérifiée</string>
+    <string name="exception_too_many_sessions">Nombre maximum de sessions simultanées atteint. Veuillez vous déconnecter d\'un autre appareil.</string>
 
     <!-- 409 Erreurs de conflit -->
     <string name="exception_user_already_exists">Un utilisateur avec cet e-mail existe déjà</string>

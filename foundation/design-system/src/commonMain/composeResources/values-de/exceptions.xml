@@ -42,6 +42,7 @@
     <string name="exception_account_locked">Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Support, um es zu entsperren.</string>
     <string name="exception_email_not_verified">Bitte verifizieren Sie Ihre E-Mail-Adresse, um fortzufahren</string>
     <string name="exception_email_already_verified">E-Mail-Adresse wurde bereits verifiziert</string>
+    <string name="exception_too_many_sessions">Maximale Anzahl gleichzeitiger Sitzungen erreicht. Bitte melden Sie sich von einem anderen Gerät ab.</string>
 
     <!-- 409 Konfliktfehler -->
     <string name="exception_user_already_exists">Ein Benutzer mit dieser E-Mail existiert bereits</string>
