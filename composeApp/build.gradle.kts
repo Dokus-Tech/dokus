@@ -174,9 +174,9 @@ compose.desktop {
         buildTypes {
             release {
                 proguard {
-                    obfuscate = true
+                    obfuscate = false
                     optimize = true
-                    isEnabled = true
+                    isEnabled = false
                 }
             }
         }
