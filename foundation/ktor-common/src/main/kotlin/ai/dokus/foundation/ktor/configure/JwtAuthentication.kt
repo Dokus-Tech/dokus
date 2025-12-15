@@ -1,10 +1,12 @@
 package ai.dokus.foundation.ktor.configure
 
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.ktor.config.JwtConfig
 import ai.dokus.foundation.ktor.security.AuthMethod
 import ai.dokus.foundation.ktor.security.DokusPrincipal
 import ai.dokus.foundation.ktor.security.JwtValidator
+import ai.dokus.foundation.ktor.security.TokenBlacklistService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -13,6 +15,7 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.response.respond
 import org.koin.ktor.ext.inject
+import org.koin.ktor.ext.getKoin
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("JwtAuthentication")
@@ -33,6 +36,8 @@ private val logger = LoggerFactory.getLogger("JwtAuthentication")
  */
 fun Application.configureJwtAuthentication() {
     val jwtValidator by inject<JwtValidator>()
+    // TokenBlacklistService is optional - if not registered, blacklist checks are skipped
+    val tokenBlacklistService = runCatching { getKoin().getOrNull<TokenBlacklistService>() }.getOrNull()
 
     install(Authentication) {
         jwt(AuthMethod.JWT) {
@@ -41,6 +46,15 @@ fun Application.configureJwtAuthentication() {
             verifier(jwtValidator.verifier)
 
             validate { credential ->
+                // Check if token is blacklisted (by JTI)
+                val jti = credential.payload.getClaim(JwtClaims.CLAIM_JTI).asString()
+                if (jti != null && tokenBlacklistService != null) {
+                    if (tokenBlacklistService.isBlacklisted(jti)) {
+                        logger.debug("Rejected blacklisted token with JTI: $jti")
+                        return@validate null
+                    }
+                }
+
                 // Extract authentication info from the validated JWT
                 val authInfo = jwtValidator.extractAuthInfo(credential.payload)
                 if (authInfo == null) {
@@ -61,14 +75,17 @@ fun Application.configureJwtAuthentication() {
         }
     }
 
-    logger.info("JWT authentication configured")
+    logger.info("JWT authentication configured${if (tokenBlacklistService != null) " with token blacklist" else ""}")
 }
 
 /**
  * Configures JWT authentication with a custom JwtConfig.
  * Useful when you need to provide configuration explicitly.
  */
-fun Application.configureJwtAuthentication(jwtConfig: JwtConfig) {
+fun Application.configureJwtAuthentication(
+    jwtConfig: JwtConfig,
+    tokenBlacklistService: TokenBlacklistService? = null
+) {
     val jwtValidator = JwtValidator(jwtConfig)
 
     install(Authentication) {
@@ -78,6 +95,15 @@ fun Application.configureJwtAuthentication(jwtConfig: JwtConfig) {
             verifier(jwtValidator.verifier)
 
             validate { credential ->
+                // Check if token is blacklisted (by JTI)
+                val jti = credential.payload.getClaim(JwtClaims.CLAIM_JTI).asString()
+                if (jti != null && tokenBlacklistService != null) {
+                    if (tokenBlacklistService.isBlacklisted(jti)) {
+                        logger.debug("Rejected blacklisted token with JTI: $jti")
+                        return@validate null
+                    }
+                }
+
                 val authInfo = jwtValidator.extractAuthInfo(credential.payload)
                 if (authInfo == null) {
                     logger.debug("Failed to extract auth info from JWT payload")
@@ -96,5 +122,5 @@ fun Application.configureJwtAuthentication(jwtConfig: JwtConfig) {
         }
     }
 
-    logger.info("JWT authentication configured with custom config")
+    logger.info("JWT authentication configured with custom config${if (tokenBlacklistService != null) " and token blacklist" else ""}")
 }

@@ -22,6 +22,9 @@ import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
 import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.security.JwtGenerator
+import ai.dokus.foundation.ktor.security.TokenBlacklistService
+import com.auth0.jwt.JWT
+import java.time.Instant
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import org.slf4j.LoggerFactory
@@ -32,7 +35,8 @@ class AuthService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitService,
     private val emailVerificationService: EmailVerificationService,
-    private val passwordResetService: PasswordResetService
+    private val passwordResetService: PasswordResetService,
+    private val tokenBlacklistService: TokenBlacklistService? = null
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -260,6 +264,10 @@ class AuthService(
     suspend fun logout(request: LogoutRequest): Result<Unit> = try {
         logger.info("Logout request received")
 
+        // Blacklist the access token (sessionToken) to prevent further use
+        blacklistAccessToken(request.sessionToken)
+
+        // Revoke the refresh token
         request.refreshToken?.let { token ->
             refreshTokenRepository.revokeToken(token).onFailure { error ->
                 logger.warn("Failed to revoke refresh token during logout: ${error.message}")
@@ -273,6 +281,33 @@ class AuthService(
     } catch (e: Exception) {
         logger.warn("Logout error (non-critical, returning success): ${e.message}", e)
         Result.success(Unit)
+    }
+
+    /**
+     * Blacklist an access token by extracting its JTI and expiration.
+     * Non-critical - failures are logged but don't break the flow.
+     */
+    private suspend fun blacklistAccessToken(accessToken: String) {
+        if (tokenBlacklistService == null) {
+            logger.debug("Token blacklist service not configured, skipping blacklist")
+            return
+        }
+
+        try {
+            val decoded = JWT.decode(accessToken)
+            val jti = decoded.id
+            val expiresAt = decoded.expiresAt?.toInstant()
+
+            if (jti != null && expiresAt != null) {
+                tokenBlacklistService.blacklistToken(jti, expiresAt)
+                logger.debug("Access token blacklisted: ${jti.take(8)}...")
+            } else {
+                logger.debug("Cannot blacklist token: missing JTI or expiration")
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to blacklist access token: ${e.message}")
+            // Non-critical - logout still succeeds
+        }
     }
 
     suspend fun verifyEmail(token: String): Result<Unit> {
@@ -311,6 +346,12 @@ class AuthService(
 
         userRepository.deactivate(userId, reason)
         logger.info("User account marked as inactive: ${userId.value}")
+
+        // Blacklist all active access tokens for this user
+        tokenBlacklistService?.let {
+            it.blacklistAllUserTokens(userId)
+            logger.info("All access tokens blacklisted for user: ${userId.value}")
+        }
 
         refreshTokenRepository.revokeAllUserTokens(userId)
             .onSuccess {
