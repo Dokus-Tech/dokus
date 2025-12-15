@@ -24,6 +24,7 @@ import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.destinations.HomeDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import ai.dokus.foundation.platform.platformModule
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Group
@@ -87,7 +88,7 @@ internal object AppMainModule : AppModule {
 
     // Data layer
     override val dataDi: AppDataModuleDi = object : AppDataModuleDi {
-        override val platform = null
+        override val platform = platformModule
         override val network = null
         override val data = null
     }

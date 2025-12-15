@@ -1,6 +1,7 @@
 package ai.dokus.foundation.network
 
 import ai.dokus.foundation.domain.config.DokusEndpoint
+import ai.dokus.foundation.domain.config.DynamicEndpoint
 import ai.dokus.foundation.domain.exceptions.DokusException
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -24,10 +25,45 @@ fun HttpClientConfig<*>.withJsonContentNegotiation() {
     }
 }
 
+/**
+ * Configures the HTTP client to use the gateway endpoint with path prefix.
+ * All requests go through the Traefik gateway, with the path prefix prepended.
+ *
+ * @deprecated Use [withDynamicDokusEndpoint] for dynamic server selection support.
+ */
 fun HttpClientConfig<*>.withDokusEndpoint(endpoint: DokusEndpoint) {
     defaultRequest {
+        host = endpoint.gatewayHost
+        port = endpoint.gatewayPort
+        url {
+            protocol = when (endpoint.gatewayProtocol) {
+                "https" -> URLProtocol.HTTPS
+                else -> URLProtocol.HTTP
+            }
+            // Path prefix is applied in routes via type-safe resources
+        }
+    }
+}
+
+/**
+ * Configures the HTTP client to use a dynamic endpoint for self-hosted server support.
+ *
+ * Unlike [withDokusEndpoint] which uses compile-time BuildKonfig values,
+ * this function uses runtime values from the user's selected server configuration.
+ *
+ * @param endpoint The dynamic endpoint configuration from [DynamicDokusEndpointProvider]
+ */
+fun HttpClientConfig<*>.withDynamicDokusEndpoint(endpoint: DynamicEndpoint) {
+    defaultRequest {
         host = endpoint.host
-        port = endpoint.port
+        this.port = endpoint.port
+        url {
+            protocol = when (endpoint.protocol) {
+                "https" -> URLProtocol.HTTPS
+                else -> URLProtocol.HTTP
+            }
+            // Path prefix is applied in routes via type-safe resources
+        }
     }
 }
 

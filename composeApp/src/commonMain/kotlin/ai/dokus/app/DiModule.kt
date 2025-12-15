@@ -8,6 +8,7 @@ import ai.dokus.app.core.database.LocalDatabaseCleaner
 import ai.dokus.app.local.DefaultLocalDatabaseCleaner
 import ai.dokus.app.auth.datasource.TeamRemoteDataSource
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
+import ai.dokus.app.infrastructure.ServerConfigManagerImpl
 import ai.dokus.app.viewmodel.AppVersionCheckViewModel
 import ai.dokus.app.viewmodel.BootstrapViewModel
 import ai.dokus.app.viewmodel.DashboardViewModel
@@ -17,12 +18,21 @@ import ai.dokus.app.viewmodel.TeamSettingsViewModel
 import ai.dokus.app.viewmodel.WorkspaceSettingsViewModel
 import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
+import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
+import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.flags.FeatureFlagService
 import androidx.lifecycle.SavedStateHandle
+import com.russhwolf.settings.Settings
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 internal val diModuleApp = module {
+    // Server configuration management (bridges platform settings with domain types)
+    single<ServerConfigManager> { ServerConfigManagerImpl(get<Settings>()) }
+
+    // Dynamic endpoint provider (bridges server config to HTTP clients)
+    single<DynamicDokusEndpointProvider> { DynamicDokusEndpointProvider(get<ServerConfigManager>()) }
+
     // Theme management (singleton)
     single { ThemeManager() }
 
@@ -30,6 +40,7 @@ internal val diModuleApp = module {
         BootstrapViewModel(
             get<AuthInitializer>(),
             get<TokenManager>(),
+            get<ServerConfigManager>(),
         )
     }
     viewModel { AppVersionCheckViewModel() }

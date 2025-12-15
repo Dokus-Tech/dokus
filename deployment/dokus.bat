@@ -39,9 +39,12 @@ echo   Development Tools
 echo     6  View logs
 echo     7  Access database
 echo.
+echo   Mobile App
+echo     8  Show mobile connection (QR code)
+echo.
 echo     0  Exit
 echo.
-set /p choice="   Enter choice [0-7]: "
+set /p choice="   Enter choice [0-8]: "
 
 if "%choice%"=="1" goto INITIAL_SETUP
 if "%choice%"=="2" goto START_SERVICES
@@ -50,6 +53,7 @@ if "%choice%"=="4" goto RESTART_SERVICES
 if "%choice%"=="5" goto SHOW_STATUS
 if "%choice%"=="6" goto SHOW_LOGS
 if "%choice%"=="7" goto ACCESS_DB
+if "%choice%"=="8" goto SHOW_MOBILE_CONNECTION
 if "%choice%"=="0" (
     echo.
     echo   Goodbye!
@@ -389,42 +393,76 @@ echo.
 echo   1  Auth (dokus_auth) - localhost:15441
 echo   2  Cashflow (dokus_cashflow) - localhost:15442
 echo   3  Payment (dokus_payment) - localhost:15443
-echo   4  Reporting (dokus_reporting) - localhost:15444
-echo   5  Audit (dokus_audit) - localhost:15445
-echo   6  Banking (dokus_banking) - localhost:15446
+echo   4  Banking (dokus_banking) - localhost:15446
+echo   5  Contacts (dokus_contacts) - localhost:15447
 echo.
 echo   0  Cancel
 echo.
-set /p db_choice="   Enter choice [0-6]: "
+set /p db_choice="   Enter choice [0-5]: "
 
 if "%db_choice%"=="1" docker compose exec postgres-auth psql -U dokus -d dokus_auth
 if "%db_choice%"=="2" docker compose exec postgres-cashflow psql -U dokus -d dokus_cashflow
 if "%db_choice%"=="3" docker compose exec postgres-payment psql -U dokus -d dokus_payment
-if "%db_choice%"=="4" docker compose exec postgres-reporting psql -U dokus -d dokus_reporting
-if "%db_choice%"=="5" docker compose exec postgres-audit psql -U dokus -d dokus_audit
-if "%db_choice%"=="6" docker compose exec postgres-banking psql -U dokus -d dokus_banking
+if "%db_choice%"=="4" docker compose exec postgres-banking psql -U dokus -d dokus_banking
+if "%db_choice%"=="5" docker compose exec postgres-contacts psql -U dokus -d dokus_contacts
 if "%db_choice%"=="0" goto SHOW_MENU
 
 echo.
 pause
 goto SHOW_MENU
 
+:SHOW_MOBILE_CONNECTION
+cls
+echo.
+echo ======================================================================
+echo   Mobile App Connection
+echo ======================================================================
+echo.
+
+REM Get local IP address
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+    set "LOCAL_IP=%%a"
+    goto :GOT_IP
+)
+:GOT_IP
+REM Remove leading spaces from IP
+for /f "tokens=* delims= " %%a in ("%LOCAL_IP%") do set "LOCAL_IP=%%a"
+
+set "CONNECT_URL=dokus://connect?host=%LOCAL_IP%&port=8000&protocol=http"
+
+echo   Server Connection Details
+echo   -------------------------
+echo.
+echo   Manual Entry:
+echo   -------------
+echo   Protocol:  http
+echo   Host:      %LOCAL_IP%
+echo   Port:      8000
+echo.
+echo   Deep Link URL:
+echo   %CONNECT_URL%
+echo.
+echo   [!] For QR code generation, copy the URL above to:
+echo       https://www.qr-code-generator.com/
+echo.
+echo   In the Dokus app, tap 'Connect to Server' and scan the QR code
+echo   or enter the connection details manually.
+echo.
+pause
+goto SHOW_MENU
+
 :PRINT_SERVICE_INFO
 echo Services available at:
-echo   Auth Service:      http://localhost:6091
-echo   Cashflow Service:  http://localhost:6092
-echo   Payment Service:   http://localhost:6093
-echo   Reporting Service: http://localhost:6094
-echo   Audit Service:     http://localhost:6095
-echo   Banking Service:   http://localhost:6096
+echo   Gateway:           http://localhost:8000
+echo   Auth Service:      http://localhost:8000/api/v1/identity
+echo   Cashflow Service:  http://localhost:8000/api/v1/invoices
+echo   Payment Service:   http://localhost:8000/api/v1/payments
+echo   Banking Service:   http://localhost:8000/api/v1/banking
+echo   Contacts Service:  http://localhost:8000/api/v1/contacts
 echo.
 echo   RabbitMQ UI:       http://localhost:25673
+echo   Traefik Dashboard: http://localhost:8080
 echo.
-echo Database Connections:
-echo   Auth:      localhost:15441 - dokus_auth
-echo   Cashflow:  localhost:15442 - dokus_cashflow
-echo   Payment:   localhost:15443 - dokus_payment
-echo   Reporting: localhost:15444 - dokus_reporting
-echo   Audit:     localhost:15445 - dokus_audit
-echo   Banking:   localhost:15446 - dokus_banking
+echo Database Connection:
+echo   PostgreSQL:  localhost:15432 - dokus
 goto :EOF

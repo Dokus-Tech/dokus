@@ -3,6 +3,37 @@
 # Run with: docker-compose up -d
 
 services:
+  # Traefik API Gateway
+  traefik:
+    image: traefik:v3.2
+    container_name: dokus-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"      # HTTP (redirects to HTTPS)
+      - "443:443"    # HTTPS
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.cloud.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./acme:/acme
+      - ./logs/traefik:/logs
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      # Dashboard routing
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN:-dokus.tech}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
+
   # Single PostgreSQL Database for all services
   postgres:
     image: postgres:17-alpine
@@ -210,8 +241,6 @@ services:
       GEOIP_ENABLED: ${GEOIP_ENABLED:-false}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    ports:
-      - "6091:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -228,6 +257,29 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      # Auth API routes
+      - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.auth.service=auth"
+      - "traefik.http.routers.auth.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+      - "traefik.http.services.auth.loadbalancer.healthcheck.path=/metrics"
+      - "traefik.http.services.auth.loadbalancer.healthcheck.interval=30s"
+      # Health endpoint (high priority)
+      - "traefik.http.routers.health.rule=Path(`/health`)"
+      - "traefik.http.routers.health.entrypoints=websecure"
+      - "traefik.http.routers.health.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.health.service=auth"
+      - "traefik.http.routers.health.priority=1000"
+      # Server info endpoint (high priority)
+      - "traefik.http.routers.server-info.rule=Path(`/api/v1/server/info`)"
+      - "traefik.http.routers.server-info.entrypoints=websecure"
+      - "traefik.http.routers.server-info.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.server-info.service=auth"
+      - "traefik.http.routers.server-info.priority=1000"
 
   # Cashflow Service
   cashflow-service:
@@ -262,8 +314,6 @@ services:
       AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    ports:
-      - "6092:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -280,6 +330,16 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
+      - "traefik.http.routers.cashflow.entrypoints=websecure"
+      - "traefik.http.routers.cashflow.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.cashflow.service=cashflow"
+      - "traefik.http.routers.cashflow.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
+      - "traefik.http.services.cashflow.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.cashflow.loadbalancer.healthcheck.interval=30s"
 
   # Payment Service
   payment-service:
@@ -301,8 +361,6 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL}
-    ports:
-      - "6093:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -315,6 +373,16 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.payment.rule=PathPrefix(`/api/v1/payments`)"
+      - "traefik.http.routers.payment.entrypoints=websecure"
+      - "traefik.http.routers.payment.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.payment.service=payment"
+      - "traefik.http.routers.payment.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.services.payment.loadbalancer.server.port=8080"
+      - "traefik.http.services.payment.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.payment.loadbalancer.healthcheck.interval=30s"
 
   # Banking Service
   banking-service:
@@ -336,8 +404,6 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL}
-    ports:
-      - "6096:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -350,6 +416,16 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.banking.rule=PathPrefix(`/api/v1/banking`)"
+      - "traefik.http.routers.banking.entrypoints=websecure"
+      - "traefik.http.routers.banking.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.banking.service=banking"
+      - "traefik.http.routers.banking.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.services.banking.loadbalancer.server.port=8080"
+      - "traefik.http.services.banking.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.banking.loadbalancer.healthcheck.interval=30s"
 
   # Contacts Service
   contacts-service:
@@ -371,8 +447,6 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL}
-    ports:
-      - "6097:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -385,13 +459,21 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.contacts.rule=PathPrefix(`/api/v1/contacts`)"
+      - "traefik.http.routers.contacts.entrypoints=websecure"
+      - "traefik.http.routers.contacts.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.contacts.service=contacts"
+      - "traefik.http.routers.contacts.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.services.contacts.loadbalancer.server.port=8080"
+      - "traefik.http.services.contacts.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.contacts.loadbalancer.healthcheck.interval=30s"
 
   # Web Frontend (WASM)
   web:
     image: 94.111.226.82:5000/dokus-web:latest
     container_name: dokus-web
-    ports:
-      - "8080:8080"
     networks:
       - dokus-network
     healthcheck:
@@ -406,6 +488,20 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    labels:
+      - "traefik.enable=true"
+      # Main web app route (lowest priority for SPA fallback)
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN:-dokus.tech}`) || Host(`www.${DOMAIN:-dokus.tech}`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.web.service=web"
+      - "traefik.http.routers.web.priority=1"
+      - "traefik.http.routers.web.middlewares=security-headers@file,compress@file"
+      - "traefik.http.services.web.loadbalancer.server.port=8080"
+      # WWW to non-WWW redirect
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://$${1}"
+      - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
 
 networks:
   dokus-network:

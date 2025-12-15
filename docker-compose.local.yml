@@ -1,7 +1,35 @@
 # Development Docker Compose configuration
 # Consolidated to single PostgreSQL database
+# All API traffic routed through Traefik gateway on port 8000
 
 services:
+  # ==========================================================================
+  # TRAEFIK API GATEWAY
+  # ==========================================================================
+  traefik:
+    image: traefik:v3.2
+    container_name: dokus-traefik-local
+    ports:
+      - "8000:8000"   # API Gateway
+      - "8080:8080"   # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./deployment/traefik/traefik.local.yml:/etc/traefik/traefik.yml:ro
+      - ./deployment/traefik/dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=false"
+
+  # ==========================================================================
+  # INFRASTRUCTURE SERVICES
+  # ==========================================================================
+
   # Single PostgreSQL Database for all services
   postgres-local:
     image: postgres:17-alpine
@@ -70,14 +98,6 @@ services:
       - ollama-models-local:/root/.ollama
     networks:
       - dokus-local-network
-    # GPU support (uncomment for NVIDIA GPUs)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
     environment:
       - OLLAMA_NUM_PARALLEL=2
       - OLLAMA_MAX_LOADED_MODELS=2
@@ -147,6 +167,10 @@ services:
       timeout: 5s
       retries: 10
 
+  # ==========================================================================
+  # BACKEND SERVICES (routed through Traefik)
+  # ==========================================================================
+
   # Auth Service
   auth-service-local:
     image: invoid-vision/dokus-auth:dev-${BUILD_NUMBER:-latest}
@@ -172,8 +196,7 @@ services:
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
     ports:
-      - "7091:8080"
-      - "15007:5005"
+      - "15007:5005"  # Debug port only
     depends_on:
       postgres-local:
         condition: service_healthy
@@ -191,139 +214,27 @@ services:
       start_period: 40s
     volumes:
       - ./logs-local:/app/logs
+    labels:
+      - "traefik.enable=true"
+      # Auth routes: identity, account, tenants, team
+      - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`)"
+      - "traefik.http.routers.auth.entrypoints=web"
+      - "traefik.http.routers.auth.service=auth"
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+      - "traefik.http.services.auth.loadbalancer.healthcheck.path=/metrics"
+      - "traefik.http.services.auth.loadbalancer.healthcheck.interval=30s"
+      # Gateway health endpoint routed to auth service
+      - "traefik.http.routers.health.rule=Path(`/health`)"
+      - "traefik.http.routers.health.entrypoints=web"
+      - "traefik.http.routers.health.service=auth"
+      - "traefik.http.routers.health.priority=1000"
+      # Server info endpoint for mobile app discovery
+      - "traefik.http.routers.server-info.rule=Path(`/api/v1/server/info`)"
+      - "traefik.http.routers.server-info.entrypoints=web"
+      - "traefik.http.routers.server-info.service=auth"
+      - "traefik.http.routers.server-info.priority=1000"
 
-  # Payment Service
-  payment-service-local:
-    image: invoid-vision/dokus-payment:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-payment-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7093:8080"
-      - "15009:5005"
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-
-  # Reporting Service
-  reporting-service-local:
-    image: invoid-vision/dokus-reporting:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-reporting-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7094:8080"
-      - "15010:5005"
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-
-  # Audit Service
-  audit-service-local:
-    image: invoid-vision/dokus-audit:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-audit-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      RABBITMQ_HOST: rabbitmq-local
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: dokus
-      RABBITMQ_PASSWORD: localrabbitpass
-      RABBITMQ_VHOST: /dokus
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7095:8080"
-      - "15011:5005"
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-      rabbitmq-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-
-  # Banking Service
-  banking-service-local:
-    image: invoid-vision/dokus-banking:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-banking-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      LOG_LEVEL: DEBUG
-    ports:
-      - "7096:8080"
-      - "15012:5005"
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-
-  # Cashflow Service (Invoice + Expense merged)
+  # Cashflow Service (Invoice + Expense + Documents + Peppol)
   cashflow-service-local:
     image: invoid-vision/dokus-cashflow:dev-${BUILD_NUMBER:-latest}
     container_name: dokus-cashflow-local
@@ -355,15 +266,14 @@ services:
       AI_OLLAMA_URL: http://ollama-local:11434
       AI_OLLAMA_MODEL: mistral:7b
       AI_OPENAI_ENABLED: "false"
-      # Peppol Configuration (integrated into cashflow service)
+      # Peppol Configuration
       ENCRYPTION_KEY: local-peppol-encryption-key-32chars!
       PEPPOL_DEFAULT_PROVIDER: recommand
       PEPPOL_INBOX_POLL_ENABLED: "true"
       PEPPOL_INBOX_POLL_INTERVAL_MINUTES: "10"
       LOG_LEVEL: DEBUG
     ports:
-      - "7092:8080"
-      - "15008:5005"
+      - "15008:5005"  # Debug port only
     depends_on:
       postgres-local:
         condition: service_healthy
@@ -373,7 +283,7 @@ services:
         condition: service_healthy
       minio-local:
         condition: service_healthy
-      ollama-local: # Optional - uncomment when using AI features
+      ollama-local:
         condition: service_healthy
     networks:
       - dokus-local-network
@@ -386,6 +296,91 @@ services:
     volumes:
       - ./logs-local:/app/logs
       - cashflow-storage-local:/app/storage/documents
+    labels:
+      - "traefik.enable=true"
+      # Cashflow routes: invoices, expenses, cashflow, documents, attachments, peppol
+      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
+      - "traefik.http.routers.cashflow.entrypoints=web"
+      - "traefik.http.routers.cashflow.service=cashflow"
+      - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
+      - "traefik.http.services.cashflow.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.cashflow.loadbalancer.healthcheck.interval=30s"
+
+  # Payment Service
+  payment-service-local:
+    image: invoid-vision/dokus-payment:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-payment-local
+    environment:
+      PORT: 8080
+      ENVIRONMENT: local
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: local.dokus.tech
+      JWT_AUDIENCE: dokus-api-local
+      LOG_LEVEL: DEBUG
+    ports:
+      - "15009:5005"  # Debug port only
+    depends_on:
+      postgres-local:
+        condition: service_healthy
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-local:/app/logs
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.payment.rule=PathPrefix(`/api/v1/payments`)"
+      - "traefik.http.routers.payment.entrypoints=web"
+      - "traefik.http.routers.payment.service=payment"
+      - "traefik.http.services.payment.loadbalancer.server.port=8080"
+      - "traefik.http.services.payment.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.payment.loadbalancer.healthcheck.interval=30s"
+
+  # Banking Service
+  banking-service-local:
+    image: invoid-vision/dokus-banking:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-banking-local
+    environment:
+      PORT: 8080
+      ENVIRONMENT: local
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      JWT_SECRET: local-secret-key
+      JWT_ISSUER: local.dokus.tech
+      JWT_AUDIENCE: dokus-api-local
+      LOG_LEVEL: DEBUG
+    ports:
+      - "15012:5005"  # Debug port only
+    depends_on:
+      postgres-local:
+        condition: service_healthy
+    networks:
+      - dokus-local-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-local:/app/logs
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.banking.rule=PathPrefix(`/api/v1/banking`)"
+      - "traefik.http.routers.banking.entrypoints=web"
+      - "traefik.http.routers.banking.service=banking"
+      - "traefik.http.services.banking.loadbalancer.server.port=8080"
+      - "traefik.http.services.banking.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.banking.loadbalancer.healthcheck.interval=30s"
 
   # Contacts Service
   contacts-service-local:
@@ -405,8 +400,7 @@ services:
       REDIS_PASSWORD: devredispass
       LOG_LEVEL: DEBUG
     ports:
-      - "7097:8080"
-      - "15013:5005"
+      - "15013:5005"  # Debug port only
     depends_on:
       postgres-local:
         condition: service_healthy
@@ -422,6 +416,18 @@ services:
       start_period: 40s
     volumes:
       - ./logs-local:/app/logs
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.contacts.rule=PathPrefix(`/api/v1/contacts`)"
+      - "traefik.http.routers.contacts.entrypoints=web"
+      - "traefik.http.routers.contacts.service=contacts"
+      - "traefik.http.services.contacts.loadbalancer.server.port=8080"
+      - "traefik.http.services.contacts.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.contacts.loadbalancer.healthcheck.interval=30s"
+
+  # ==========================================================================
+  # TOOLS (optional profiles)
+  # ==========================================================================
 
   # pgAdmin for database management (profile: tools)
   pgadmin:
@@ -438,26 +444,6 @@ services:
       - dokus-local-network
     profiles:
       - tools
-
-  # Web Frontend (WASM) - Local Development
-  web-local:
-    image: invoid-vision/dokus-web:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-web-local
-    ports:
-      - "8080:8080"
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
 networks:
   dokus-local-network:

@@ -30,8 +30,10 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.persistence.settings)
+            api(libs.persistence.settings)
             api(libs.kermit)
+            implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(libs.koin.core)
         }
     }
 }

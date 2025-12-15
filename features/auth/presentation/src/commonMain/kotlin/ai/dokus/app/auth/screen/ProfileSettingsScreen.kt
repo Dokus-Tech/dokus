@@ -1,5 +1,7 @@
 package ai.dokus.app.auth.screen
 
+import ai.dokus.app.auth.components.CurrentServerSection
+import ai.dokus.app.auth.usecases.ConnectToServerUseCase
 import ai.dokus.app.auth.viewmodel.ProfileSettingsViewModel
 import ai.dokus.app.core.state.DokusState
 import ai.dokus.app.core.state.isLoading
@@ -27,6 +29,7 @@ import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldName
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
 import ai.dokus.foundation.domain.Name
+import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -109,8 +112,13 @@ fun ProfileSettingsContent(
     val logger = remember { Logger.withTag("ProfileSettingsContent") }
     val viewModel: ProfileSettingsViewModel = koinViewModel()
     val logoutUseCase: LogoutUseCase = koinInject()
+    val serverConfigManager: ServerConfigManager = koinInject()
+    val connectToServerUseCase: ConnectToServerUseCase = koinInject()
     val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
+
+    val currentServer by serverConfigManager.currentServer.collectAsState()
+    var isResettingToCloud by remember { mutableStateOf(false) }
 
     val userState by viewModel.state.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
@@ -310,6 +318,31 @@ fun ProfileSettingsContent(
                 }
             }
         }
+
+        // Server Connection Section - ALWAYS visible
+        CurrentServerSection(
+            currentServer = currentServer,
+            onChangeServer = {
+                navController.navigateTo(AuthDestination.ServerConnection())
+            },
+            onResetToCloud = {
+                scope.launch {
+                    isResettingToCloud = true
+                    connectToServerUseCase.resetToCloud().fold(
+                        onSuccess = {
+                            navController.navigateTo(AuthDestination.Login) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        onFailure = { error ->
+                            logger.e(error) { "Failed to reset to cloud" }
+                            snackbarHostState.showSnackbar("Failed to reset to cloud")
+                            isResettingToCloud = false
+                        }
+                    )
+                }
+            }
+        )
 
         // Logout Section - ALWAYS visible regardless of profile state
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {

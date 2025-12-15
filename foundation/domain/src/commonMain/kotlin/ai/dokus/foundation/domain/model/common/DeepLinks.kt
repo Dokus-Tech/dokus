@@ -45,7 +45,8 @@ value class DeepLink(val value: String) {
 }
 
 enum class KnownDeepLinks(val path: DeepLink, val pattern: DeepLink) {
-    QrDecision(DeepLink("auth/qr/decision"), DeepLink("auth/qr/decision?s={sessionId}&t={token}"));
+    QrDecision(DeepLink("auth/qr/decision"), DeepLink("auth/qr/decision?s={sessionId}&t={token}")),
+    ServerConnect(DeepLink("connect"), DeepLink("connect?host={host}&port={port}&protocol={protocol}"));
 }
 
 object DeepLinks {
@@ -68,5 +69,37 @@ object DeepLinks {
             params.firstOrNull { it.startsWith("s=") }?.substringAfter("s=") ?: return null
         val token = params.firstOrNull { it.startsWith("t=") }?.substringAfter("t=") ?: return null
         return SessionId(sessionId) to token
+    }
+
+    /**
+     * Builds a server connect deep link with host, port, and protocol parameters.
+     */
+    fun buildServerConnect(host: String, port: Int, protocol: String): DeepLink {
+        return DeepLink.build {
+            append(KnownDeepLinks.ServerConnect.path)
+            append("?host=")
+            append(host)
+            append("&port=")
+            append(port)
+            append("&protocol=")
+            append(protocol)
+        }
+    }
+
+    /**
+     * Extracts server connection parameters from a deep link.
+     * Returns a Triple of (host, port, protocol) or null if invalid.
+     */
+    fun extractServerConnect(deepLink: DeepLink): Triple<String, Int, String>? {
+        val path = deepLink.path
+        if (!path.startsWith(KnownDeepLinks.ServerConnect.path.path)) return null
+        val query = path.substringAfter("?", "")
+        if (query.isEmpty()) return null
+        val params = query.split("&")
+        val host = params.firstOrNull { it.startsWith("host=") }?.substringAfter("host=") ?: return null
+        val portStr = params.firstOrNull { it.startsWith("port=") }?.substringAfter("port=") ?: return null
+        val port = portStr.toIntOrNull() ?: return null
+        val protocol = params.firstOrNull { it.startsWith("protocol=") }?.substringAfter("protocol=") ?: "https"
+        return Triple(host, port, protocol)
     }
 }
