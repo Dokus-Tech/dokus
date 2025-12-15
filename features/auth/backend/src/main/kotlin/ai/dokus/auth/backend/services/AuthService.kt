@@ -36,9 +36,16 @@ class AuthService(
     private val rateLimitService: RateLimitServiceInterface,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
-    private val tokenBlacklistService: TokenBlacklistService? = null
+    private val tokenBlacklistService: TokenBlacklistService? = null,
+    private val maxConcurrentSessions: Int = DEFAULT_MAX_CONCURRENT_SESSIONS,
+    private val revokeOldestOnSessionLimit: Boolean = true
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
+
+    companion object {
+        /** Default maximum concurrent sessions per user */
+        const val DEFAULT_MAX_CONCURRENT_SESSIONS = 5
+    }
 
     suspend fun login(request: LoginRequest): Result<LoginResponse> = try {
         logger.debug("Login attempt for email: ${request.email.value}")
