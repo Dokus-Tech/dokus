@@ -57,7 +57,7 @@ jobs:
             -a "$BITRISE_ACCESS_TOKEN" \
             -s "$BITRISE_APP_SLUG" \
             -w "tests" \
-            -b "${{ github.head_ref || github.ref_name }}" \
+            -c "${{ github.sha }}" \
             --stream 2>&1 | tee output.txt || EXIT_CODE=$?
 
           BUILD_URL=$(grep -oP 'Build URL: \K[^\s]+' output.txt || echo "")
@@ -94,7 +94,7 @@ jobs:
             -a "$BITRISE_ACCESS_TOKEN" \
             -s "$BITRISE_APP_SLUG" \
             -w "android-build-aab" \
-            -b "${{ github.ref_name }}" \
+            -c "${{ github.sha }}" \
             --stream 2>&1 | tee output.txt || EXIT_CODE=$?
 
           BUILD_URL=$(grep -oP 'Build URL: \K[^\s]+' output.txt || echo "")
@@ -173,7 +173,7 @@ jobs:
             -a "$BITRISE_ACCESS_TOKEN" \
             -s "$BITRISE_APP_SLUG" \
             -w "macos-build-dmg" \
-            -b "${{ github.ref_name }}" \
+            -c "${{ github.sha }}" \
             --stream 2>&1 | tee output.txt || EXIT_CODE=$?
 
           BUILD_URL=$(grep -oP 'Build URL: \K[^\s]+' output.txt || echo "")
