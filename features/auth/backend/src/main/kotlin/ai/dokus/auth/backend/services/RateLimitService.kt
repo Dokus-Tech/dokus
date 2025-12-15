@@ -133,7 +133,7 @@ class RateLimitService : RateLimitServiceInterface {
      *
      * @param email Email address to reset
      */
-    suspend fun resetLoginAttempts(email: String) = mutex.withLock {
+    override suspend fun resetLoginAttempts(email: String) = mutex.withLock {
         val normalizedEmail = email.lowercase()
         loginAttempts.remove(normalizedEmail)
         logger.debug("Login attempts reset for $normalizedEmail")
@@ -147,7 +147,7 @@ class RateLimitService : RateLimitServiceInterface {
      * - The attempt window has expired AND the account is not locked
      * - The lockout period has expired
      */
-    suspend fun cleanupExpiredEntries() = mutex.withLock {
+    override suspend fun cleanupExpiredEntries() = mutex.withLock {
         val currentTime = now()
         val toRemove = loginAttempts.filter { (_, tracker) ->
             val windowExpiry = tracker.firstAttemptAt + ATTEMPT_WINDOW
@@ -171,7 +171,7 @@ class RateLimitService : RateLimitServiceInterface {
      * @param email Email address to check
      * @return Number of failed attempts (0 if no attempts recorded)
      */
-    suspend fun getAttemptCount(email: String): Int = mutex.withLock {
+    override suspend fun getAttemptCount(email: String): Int = mutex.withLock {
         loginAttempts[email.lowercase()]?.attempts ?: 0
     }
 
@@ -182,7 +182,7 @@ class RateLimitService : RateLimitServiceInterface {
      * @param email Email address to check
      * @return true if the account is locked, false otherwise
      */
-    suspend fun isLocked(email: String): Boolean = mutex.withLock {
+    override suspend fun isLocked(email: String): Boolean = mutex.withLock {
         val tracker = loginAttempts[email.lowercase()] ?: return@withLock false
         val lockUntil = tracker.lockUntil ?: return@withLock false
         lockUntil > now()

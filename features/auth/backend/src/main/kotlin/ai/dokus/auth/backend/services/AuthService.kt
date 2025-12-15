@@ -33,7 +33,7 @@ class AuthService(
     private val userRepository: UserRepository,
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val rateLimitService: RateLimitService,
+    private val rateLimitService: RateLimitServiceInterface,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
     private val tokenBlacklistService: TokenBlacklistService? = null
