@@ -25,96 +25,51 @@ env:
 jobs:
   # Quick validation checks that fail fast
   validation:
-    name: 🔍 Validation
+    name: Validation
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: ✅ Validate Gradle wrapper
+      - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
 
-      - name: 📊 Check for TODO/FIXME
+      - name: Check for TODO/FIXME
         run: |
           echo "Checking for unresolved TODOs and FIXMEs..."
-          if git diff origin/${{ github.base_ref }}...HEAD | grep -E "^\+.*\b(TODO|FIXME)\b" | grep -v "github/workflows"; then
-            echo "⚠️ Warning: New TODOs or FIXMEs found in this PR"
+          if git diff origin/${{ github.base_ref }}...HEAD 2>/dev/null | grep -E "^\+.*\b(TODO|FIXME)\b" | grep -v "github/workflows"; then
+            echo "Warning: New TODOs or FIXMEs found in this PR"
           fi
         continue-on-error: true
 
-  # Determine which platforms need testing
-  changes:
-    name: 🔎 Detect Changes
-    runs-on: ubuntu-latest
-    outputs:
-      android: ${{ steps.filter.outputs.android }}
-      ios: ${{ steps.filter.outputs.ios }}
-      desktop: ${{ steps.filter.outputs.desktop }}
-      wasm: ${{ steps.filter.outputs.wasm }}
-      common: ${{ steps.filter.outputs.common }}
-      has-changes: ${{ steps.filter.outputs.changes }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🔍 Check changed files
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            android:
-              - 'composeApp/src/androidMain/**'
-              - 'features/**/androidMain/**'
-              - 'foundation/**/androidMain/**'
-            ios:
-              - 'composeApp/src/iosMain/**'
-              - 'features/**/iosMain/**'
-              - 'foundation/**/iosMain/**'
-            desktop:
-              - 'composeApp/src/desktopMain/**'
-              - 'composeApp/src/jvmMain/**'
-              - 'features/**/jvmMain/**'
-              - 'foundation/**/jvmMain/**'
-            wasm:
-              - 'composeApp/src/wasmJsMain/**'
-              - 'features/**/wasmJsMain/**'
-              - 'foundation/**/wasmJsMain/**'
-            common:
-              - 'composeApp/src/commonMain/**'
-              - 'features/**/commonMain/**'
-              - 'foundation/**/commonMain/**'
-              - '*.gradle.kts'
-              - 'gradle/**'
-
   # Code quality checks
   lint:
-    name: 🧹 Code Quality
+    name: Code Quality
     needs: validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🔧 Setup environment
+      - name: Setup environment
         uses: ./.github/actions/job-set-up
 
-      - name: 🧹 Run ktlint
+      - name: Run ktlint
         run: |
           echo "Running Kotlin linter..."
-          ./gradlew ktlintCheck --continue || echo "⚠️ Linting issues found"
+          ./gradlew ktlintCheck --continue || echo "Linting issues found"
         continue-on-error: true
 
-      - name: 📊 Generate dependency graph
+      - name: Generate dependency graph
         run: ./gradlew dependencies > dependencies.txt || true
 
-      - name: 📤 Upload dependency report
+      - name: Upload dependency report
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -122,81 +77,193 @@ jobs:
           path: dependencies.txt
           retention-days: 7
 
-  # Run tests for affected platforms
-  test:
-    name: 🧪 Tests
-    needs: [validation, changes]
-    if: |
-      github.event_name == 'push' ||
-      needs.changes.outputs.android == 'true' ||
-      needs.changes.outputs.ios == 'true' ||
-      needs.changes.outputs.desktop == 'true' ||
-      needs.changes.outputs.common == 'true'
-    uses: ./.github/workflows/test.yml
-    with:
-      # Common changes affect ALL platforms
-      run-android: ${{ github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.android == 'true' }}
-      run-desktop: ${{ github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.desktop == 'true' }}
-      run-ios: ${{ needs.changes.outputs.common == 'true' || needs.changes.outputs.ios == 'true' }}  # Enable iOS tests when common changes
+  # Trigger Bitrise builds for frontend (Android, iOS, macOS)
+  trigger-bitrise:
+    name: Trigger Bitrise Build
+    needs: [validation, lint]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
 
-  # Build Android APK
-  build-android:
-    name: 🏗️ Build Android
-    needs: [test, changes]
-    if: |
-      always() &&
-      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
-      (github.ref == 'refs/heads/main' || github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.android == 'true')
-    uses: ./.github/workflows/build-android.yml
-    with:
-      build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
-      create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-    secrets: inherit
+    outputs:
+      bitrise-build-url: ${{ steps.trigger.outputs.build_url }}
+      bitrise-build-slug: ${{ steps.trigger.outputs.build_slug }}
+      bitrise-pipeline: ${{ steps.pipeline.outputs.pipeline }}
 
-  # Build macOS DMG
-  build-macos:
-    name: 🏗️ Build macOS
-    needs: [test, changes]
-    if: |
-      always() &&
-      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
-      (github.ref == 'refs/heads/main' || github.event_name == 'push' || needs.changes.outputs.common == 'true' || needs.changes.outputs.desktop == 'true')
-    uses: ./.github/workflows/build-macos.yml
-    with:
-      build-type: ${{ github.ref == 'refs/heads/main' && 'release' || 'debug' }}
-      create-release: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-    secrets: inherit
+    steps:
+      - name: Determine pipeline
+        id: pipeline
+        run: |
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "pipeline=build-all" >> $GITHUB_OUTPUT
+            echo "Selected pipeline: build-all (main branch push)"
+          else
+            echo "pipeline=test-only" >> $GITHUB_OUTPUT
+            echo "Selected pipeline: test-only (PR or non-main branch)"
+          fi
 
-  release-apple:
-    name: 🚀 Release Apple (iOS & macOS)
-    needs: [test]
+      - name: Trigger Bitrise Build
+        id: trigger
+        env:
+          BITRISE_API_TOKEN: ${{ secrets.BITRISE_API_TOKEN }}
+          BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
+        run: |
+          # Check if secrets are configured
+          if [ -z "$BITRISE_API_TOKEN" ] || [ -z "$BITRISE_APP_SLUG" ]; then
+            echo "Warning: Bitrise secrets not configured. Skipping Bitrise trigger."
+            echo "To enable Bitrise builds, add BITRISE_API_TOKEN and BITRISE_APP_SLUG to GitHub Secrets."
+            echo "build_slug=" >> $GITHUB_OUTPUT
+            echo "build_url=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Prepare commit message (escape quotes for JSON)
+          COMMIT_MSG="${{ github.event.head_commit.message || github.event.pull_request.title }}"
+          COMMIT_MSG=$(echo "$COMMIT_MSG" | head -1 | sed 's/"/\\"/g' | cut -c1-100)
+
+          # Trigger Bitrise build
+          RESPONSE=$(curl -s -X POST "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/build/start.json" \
+            -H "Authorization: ${BITRISE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"hook_info\": {
+                \"type\": \"bitrise\"
+              },
+              \"build_params\": {
+                \"branch\": \"${{ github.head_ref || github.ref_name }}\",
+                \"commit_hash\": \"${{ github.sha }}\",
+                \"commit_message\": \"${COMMIT_MSG}\",
+                \"pipeline_id\": \"${{ steps.pipeline.outputs.pipeline }}\",
+                \"environments\": [
+                  {
+                    \"mapped_to\": \"GITHUB_PR_NUMBER\",
+                    \"value\": \"${{ github.event.pull_request.number || '' }}\"
+                  },
+                  {
+                    \"mapped_to\": \"GITHUB_RUN_ID\",
+                    \"value\": \"${{ github.run_id }}\"
+                  }
+                ]
+              }
+            }")
+
+          echo "API Response: $RESPONSE"
+
+          BUILD_SLUG=$(echo "$RESPONSE" | jq -r '.build_slug // empty')
+          BUILD_URL=$(echo "$RESPONSE" | jq -r '.build_url // empty')
+
+          if [ -z "$BUILD_SLUG" ] || [ "$BUILD_SLUG" == "null" ]; then
+            echo "Failed to trigger Bitrise build"
+            echo "Response: $RESPONSE"
+            echo "build_slug=" >> $GITHUB_OUTPUT
+            echo "build_url=" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "build_slug=$BUILD_SLUG" >> $GITHUB_OUTPUT
+          echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
+          echo "Triggered Bitrise build: $BUILD_URL"
+
+      - name: Add PR comment with Bitrise link
+        if: github.event_name == 'pull_request' && steps.trigger.outputs.build_url != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Bitrise Build Triggered
+
+            | Item | Value |
+            |------|-------|
+            | Pipeline | \`${{ steps.pipeline.outputs.pipeline }}\` |
+            | Build | [${{ steps.trigger.outputs.build_slug }}](${{ steps.trigger.outputs.build_url }}) |
+            | Commit | \`${{ github.sha }}\` |
+
+            Check [Bitrise](${{ steps.trigger.outputs.build_url }}) for build progress and artifacts.
+
+            ### What this builds:
+            - Android unit tests
+            - Backend tests (if any exist)
+            ${{ steps.pipeline.outputs.pipeline == 'build-all' && '- Android release AAB & APK (signed)\n- iOS IPA (App Store)\n- macOS DMG (notarized)' || '' }}`
+            })
+
+  # Wait for Bitrise build to complete (only on main branch)
+  wait-for-bitrise:
+    name: Wait for Bitrise
+    needs: trigger-bitrise
+    runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      (needs.test.result == 'success' || needs.test.result == 'skipped')
-    uses: ./.github/workflows/release-apple.yml
-    with:
-      run-ios: true
-      run-macos: true
-      include-dmg: false
-    secrets: inherit
+      needs.trigger-bitrise.outputs.bitrise-build-slug != ''
+    timeout-minutes: 90
 
-  # Create deployment package for releases
+    outputs:
+      bitrise-status: ${{ steps.poll.outputs.status }}
+
+    steps:
+      - name: Poll Bitrise build status
+        id: poll
+        env:
+          BITRISE_API_TOKEN: ${{ secrets.BITRISE_API_TOKEN }}
+          BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
+          BUILD_SLUG: ${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}
+        run: |
+          echo "Waiting for Bitrise build: $BUILD_SLUG"
+          echo "Build URL: ${{ needs.trigger-bitrise.outputs.bitrise-build-url }}"
+
+          while true; do
+            RESPONSE=$(curl -s "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/builds/${BUILD_SLUG}" \
+              -H "Authorization: ${BITRISE_API_TOKEN}")
+
+            STATUS=$(echo "$RESPONSE" | jq -r '.data.status')
+            STATUS_TEXT=$(echo "$RESPONSE" | jq -r '.data.status_text')
+            FINISHED_AT=$(echo "$RESPONSE" | jq -r '.data.finished_at')
+
+            echo "Status: $STATUS_TEXT (code: $STATUS)"
+
+            case $STATUS in
+              0)
+                echo "Build still in progress..."
+                sleep 30
+                ;;
+              1)
+                echo "Build succeeded!"
+                echo "status=success" >> $GITHUB_OUTPUT
+                exit 0
+                ;;
+              2)
+                echo "Build failed!"
+                echo "status=failure" >> $GITHUB_OUTPUT
+                exit 1
+                ;;
+              3)
+                echo "Build aborted!"
+                echo "status=aborted" >> $GITHUB_OUTPUT
+                exit 1
+                ;;
+              *)
+                echo "Unknown status: $STATUS"
+                sleep 30
+                ;;
+            esac
+          done
+
+  # Create deployment package for releases (backend only)
   create-deployment-package:
-    name: 📦 Create Deployment Package
-    needs: [ test ]
+    name: Create Deployment Package
+    needs: [validation]
     if: |
-      always() &&
-      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Create deployment package
+      - name: Create deployment package
         run: |
           # Create deployment archive
           cd deployment
@@ -204,14 +271,14 @@ jobs:
           cd ..
 
           # Show contents
-          echo "📦 Package contents:"
+          echo "Package contents:"
           unzip -l dokus-quick-deploy.zip
 
           # Get file size
           SIZE=$(du -h dokus-quick-deploy.zip | cut -f1)
-          echo "📊 Package size: $SIZE"
+          echo "Package size: $SIZE"
 
-      - name: 📤 Upload deployment package
+      - name: Upload deployment package
         uses: actions/upload-artifact@v4
         with:
           name: deployment-package
@@ -220,83 +287,89 @@ jobs:
 
   # Summary and status reporting
   ci-status:
-    name: 📊 CI Status
+    name: CI Status
     runs-on: ubuntu-latest
-    needs: [ validation, changes, lint, test, build-android, build-macos, create-deployment-package ]
+    needs: [validation, lint, trigger-bitrise, wait-for-bitrise, create-deployment-package]
     if: always()
 
     steps:
-      - name: 📊 Generate status report
+      - name: Generate status report
         run: |
-          echo "# 📊 CI Pipeline Status Report" >> $GITHUB_STEP_SUMMARY
+          echo "# CI Pipeline Status Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Job Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Validation | ${{ needs.validation.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Code Quality | ${{ needs.lint.result == 'success' && '✅ Passed' || needs.lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Android | ${{ needs.build-android.result == 'success' && '✅ Passed' || needs.build-android.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build macOS | ${{ needs.build-macos.result == 'success' && '✅ Passed' || needs.build-macos.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Deployment Package | ${{ needs.create-deployment-package.result == 'success' && '✅ Passed' || needs.create-deployment-package.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | ${{ needs.validation.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.lint.result == 'success' && 'Passed' || needs.lint.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bitrise Trigger | ${{ needs.trigger-bitrise.result == 'success' && 'Triggered' || needs.trigger-bitrise.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bitrise Build | ${{ needs.wait-for-bitrise.result == 'success' && 'Passed' || needs.wait-for-bitrise.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployment Package | ${{ needs.create-deployment-package.result == 'success' && 'Created' || needs.create-deployment-package.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Platform changes detected
-          echo "## 🔍 Changes Detected" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Android: ${{ needs.changes.outputs.android == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- iOS: ${{ needs.changes.outputs.ios == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Desktop: ${{ needs.changes.outputs.desktop == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- WASM: ${{ needs.changes.outputs.wasm == 'true' && '✅ Yes' || '➖ No' }}" >> $GITHUB_STEP_SUMMARY
+          # Bitrise build info
+          if [ -n "${{ needs.trigger-bitrise.outputs.bitrise-build-url }}" ]; then
+            echo "## Bitrise Build" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Pipeline:** \`${{ needs.trigger-bitrise.outputs.bitrise-pipeline }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Build URL:** [${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}](${{ needs.trigger-bitrise.outputs.bitrise-build-url }})" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
 
-      - name: ✅ Check overall status
+      - name: Check overall status
         run: |
           if [ "${{ needs.validation.result }}" == "failure" ] || \
-             [ "${{ needs.test.result }}" == "failure" ] || \
-             [ "${{ needs.build-android.result }}" == "failure" ] || \
-             [ "${{ needs.build-macos.result }}" == "failure" ] || \
-             [ "${{ needs.create-deployment-package.result }}" == "failure" ]; then
-            echo "❌ CI Pipeline Failed"
+             [ "${{ needs.trigger-bitrise.result }}" == "failure" ] || \
+             [ "${{ needs.wait-for-bitrise.result }}" == "failure" ]; then
+            echo "CI Pipeline Failed"
             exit 1
           fi
-          echo "✅ CI Pipeline Passed"
+          echo "CI Pipeline Passed"
 
-  # Automatic release on main branch
+  # Create GitHub release after Bitrise succeeds (main branch only)
   release:
-    name: 🚀 Create Release
-    needs: [ build-android, build-macos, create-deployment-package ]
+    name: Create Release
+    needs: [trigger-bitrise, wait-for-bitrise, create-deployment-package]
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.build-android.result == 'success' &&
-      needs.build-macos.result == 'success' &&
+      needs.wait-for-bitrise.result == 'success' &&
       needs.create-deployment-package.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🏷️ Generate version tag
+      - name: Generate version tag
         id: version
         run: |
-          # Generate version from commit count and short SHA
+          # Read version from version.properties
+          if [ -f "version.properties" ]; then
+            MAJOR=$(grep '^major=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+            MINOR=$(grep '^minor=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          else
+            MAJOR=1
+            MINOR=0
+          fi
+
           VERSION_CODE=$(git rev-list --count HEAD)
           SHORT_SHA=$(git rev-parse --short HEAD)
-          VERSION_TAG="v0.0.${VERSION_CODE}"
+          VERSION_TAG="v${MAJOR}.${MINOR}.${VERSION_CODE}"
 
           echo "version-tag=$VERSION_TAG" >> $GITHUB_OUTPUT
           echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "version-name=${MAJOR}.${MINOR}.${VERSION_CODE}" >> $GITHUB_OUTPUT
           echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-          echo "📦 Version: $VERSION_TAG (build $VERSION_CODE)"
+          echo "Version: $VERSION_TAG (build $VERSION_CODE)"
 
-      - name: 📝 Generate changelog
+      - name: Generate changelog
         id: changelog
         run: |
           # Get commits since last tag
@@ -311,54 +384,98 @@ jobs:
           # Save to file for multiline
           echo "$COMMITS" > changelog.txt
 
-          echo "📋 Generated changelog"
+          echo "Generated changelog"
 
-      - name: 📥 Download Android APK
-        uses: actions/download-artifact@v4
-        with:
-          name: release-apk
-          path: ./artifacts
-
-      - name: 📥 Download macOS DMG
-        uses: actions/download-artifact@v4
-        with:
-          name: release-dmg
-          path: ./artifacts
-
-      - name: 📥 Download Backend Deployment Package
+      - name: Download deployment package
         uses: actions/download-artifact@v4
         with:
           name: deployment-package
           path: ./artifacts
 
-      - name: 🚀 Create GitHub Release
+      - name: Download Bitrise artifacts
+        id: bitrise-artifacts
+        env:
+          BITRISE_API_TOKEN: ${{ secrets.BITRISE_API_TOKEN }}
+          BITRISE_APP_SLUG: ${{ secrets.BITRISE_APP_SLUG }}
+          BUILD_SLUG: ${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}
+        run: |
+          echo "Downloading artifacts from Bitrise build: $BUILD_SLUG"
+          mkdir -p ./artifacts/frontend
+
+          # Get list of artifacts
+          ARTIFACTS=$(curl -s "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/builds/${BUILD_SLUG}/artifacts" \
+            -H "Authorization: ${BITRISE_API_TOKEN}")
+
+          echo "Artifacts response: $ARTIFACTS"
+
+          # Parse artifact slugs and titles
+          ARTIFACT_COUNT=$(echo "$ARTIFACTS" | jq -r '.data | length')
+          echo "Found $ARTIFACT_COUNT artifacts"
+
+          DOWNLOADED=0
+          for i in $(seq 0 $((ARTIFACT_COUNT - 1))); do
+            ARTIFACT_SLUG=$(echo "$ARTIFACTS" | jq -r ".data[$i].slug")
+            ARTIFACT_TITLE=$(echo "$ARTIFACTS" | jq -r ".data[$i].title")
+            ARTIFACT_SIZE=$(echo "$ARTIFACTS" | jq -r ".data[$i].file_size_bytes")
+
+            # Skip non-app artifacts (logs, etc.)
+            if [[ "$ARTIFACT_TITLE" != *.apk && "$ARTIFACT_TITLE" != *.aab && "$ARTIFACT_TITLE" != *.ipa && "$ARTIFACT_TITLE" != *.dmg ]]; then
+              echo "Skipping non-app artifact: $ARTIFACT_TITLE"
+              continue
+            fi
+
+            echo "Downloading: $ARTIFACT_TITLE ($ARTIFACT_SIZE bytes)"
+
+            # Get download URL
+            ARTIFACT_DETAIL=$(curl -s "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/builds/${BUILD_SLUG}/artifacts/${ARTIFACT_SLUG}" \
+              -H "Authorization: ${BITRISE_API_TOKEN}")
+
+            DOWNLOAD_URL=$(echo "$ARTIFACT_DETAIL" | jq -r '.data.expiring_download_url')
+
+            if [ -n "$DOWNLOAD_URL" ] && [ "$DOWNLOAD_URL" != "null" ]; then
+              curl -L -o "./artifacts/frontend/$ARTIFACT_TITLE" "$DOWNLOAD_URL"
+              echo "Downloaded: $ARTIFACT_TITLE"
+              DOWNLOADED=$((DOWNLOADED + 1))
+            else
+              echo "Warning: Could not get download URL for $ARTIFACT_TITLE"
+            fi
+          done
+
+          echo "Downloaded $DOWNLOADED frontend artifacts"
+          ls -la ./artifacts/frontend/ || echo "No frontend artifacts downloaded"
+
+          # Set output for release notes
+          if [ $DOWNLOADED -gt 0 ]; then
+            echo "has-frontend-artifacts=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-frontend-artifacts=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version-tag }}
           name: Release ${{ steps.version.outputs.version-tag }}
           body: |
-            # 🚀 Dokus Release ${{ steps.version.outputs.version-tag }}
+            # Dokus Release ${{ steps.version.outputs.version-tag }}
 
             **Build:** ${{ steps.version.outputs.version-code }}
             **Commit:** ${{ steps.version.outputs.short-sha }}
             **Branch:** ${{ github.ref_name }}
             **Date:** ${{ github.event.head_commit.timestamp }}
 
-            ## 📝 Changes
+            ## Downloads
 
-            ${{ steps.changelog.outputs.commits }}
+            ### Mobile & Desktop Apps
+            - **Android AAB** - Signed App Bundle for Play Store upload
+            - **Android APK** - Signed APK for direct installation
+            - **iOS IPA** - Signed for App Store distribution
+            - **macOS DMG** - Signed and notarized for direct download
 
-            ## 📦 Downloads
+            ### Backend Server
+            - **Quick Deploy Package** (`dokus-quick-deploy.zip`) - One-click deployment
 
-            ### 🖥️ Desktop & Mobile Apps
-            - **Android APK**: See assets below
-            - **macOS DMG**: See assets below
-            - **Release Bundle (AAB)**: Available in [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            ### 🐳 Backend Server
-            - **Quick Deploy Package**: `dokus-quick-deploy.zip` - One-click deployment for any platform
-
-            ## 🚀 Quick Start
+            ## Quick Start
 
             ### Deploy Backend Server
 
@@ -374,38 +491,42 @@ jobs:
             2. Extract and run `dokus.bat`
 
             **What's included:**
-            - ✅ All 5 backend services (auth, cashflow, payment, banking, contacts)
-            - ✅ Interactive setup with auto-generated passwords
-            - ✅ Multi-architecture support (AMD64 + ARM64)
-            - ✅ PostgreSQL, Redis, RabbitMQ
+            - All 5 backend services (auth, cashflow, payment, banking, contacts)
+            - Interactive setup with auto-generated passwords
+            - Multi-architecture support (AMD64 + ARM64)
+            - PostgreSQL, Redis, RabbitMQ
 
-            ## 📱 Mobile & Desktop Installation
+            ### Install Mobile/Desktop Apps
 
-            ### Android
-            1. Download the APK from assets
-            2. Enable "Install from unknown sources" on your Android device
+            **Android:**
+            1. Download the APK from assets below
+            2. Enable "Install from unknown sources" on your device
             3. Install the APK
 
-            ### macOS
-            1. Download the DMG from assets
-            2. Open the DMG file
-            3. Drag the app to your Applications folder
+            **macOS:**
+            1. Download the DMG from assets below
+            2. Open the DMG and drag the app to Applications
+            3. The app is notarized and will run without Gatekeeper warnings
 
-            ## 🔐 Verification
+            **iOS:**
+            - Use the IPA with TestFlight or App Store Connect
 
-            This release was automatically built and signed by GitHub Actions.
+            ## Build Information
 
-            - Workflow: [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - GitHub Workflow: [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - Bitrise Build: [${{ needs.trigger-bitrise.outputs.bitrise-build-slug }}](${{ needs.trigger-bitrise.outputs.bitrise-build-url }})
             - Commit: [${{ steps.version.outputs.short-sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
           files: |
-            ./artifacts/*.apk
-            ./artifacts/*.dmg
             ./artifacts/*.zip
+            ./artifacts/frontend/*.apk
+            ./artifacts/frontend/*.aab
+            ./artifacts/frontend/*.ipa
+            ./artifacts/frontend/*.dmg
           draft: false
           prerelease: true
           generate_release_notes: true
 
-      - name: 🎉 Release created
+      - name: Release created
         run: |
-          echo "✅ Release ${{ steps.version.outputs.version-tag }} created successfully!"
-          echo "🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version-tag }}"
+          echo "Release ${{ steps.version.outputs.version-tag }} created successfully!"
+          echo "https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version-tag }}"
