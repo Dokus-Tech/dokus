@@ -325,8 +325,7 @@ workflows:
             - scheme: "$BITRISE_SCHEME"
             - distribution_method: "app-store"
             - configuration: "Release"
-            - automatic_code_signing: "off"
-            - code_signing_identity: "iPhone Distribution"
+            - automatic_code_signing: "api-key"
             - xcodebuild_options: "DEVELOPMENT_TEAM=V2V9U9A3MG PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID"
 
       - script@1:

@@ -42,6 +42,11 @@
     <string name="exception_account_locked">Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Support, um es zu entsperren.</string>
     <string name="exception_email_not_verified">Bitte verifizieren Sie Ihre E-Mail-Adresse, um fortzufahren</string>
     <string name="exception_email_already_verified">E-Mail-Adresse wurde bereits verifiziert</string>
+    <string name="exception_too_many_sessions">Maximale Anzahl gleichzeitiger Sitzungen erreicht. Bitte melden Sie sich von einem anderen Gerät ab.</string>
+
+    <!-- 404 Nicht gefunden -->
+    <string name="exception_not_found">Die angeforderte Ressource wurde nicht gefunden</string>
+    <string name="exception_user_not_found">Benutzer nicht gefunden</string>
 
     <!-- 409 Konfliktfehler -->
     <string name="exception_user_already_exists">Ein Benutzer mit dieser E-Mail existiert bereits</string>
@@ -53,6 +58,9 @@
     <string name="exception_internal_error">Ein interner Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.</string>
     <string name="exception_tenant_creation_failed">Erstellung des Mandanten fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
     <string name="exception_unknown">Ein unbekannter Fehler ist aufgetreten</string>
+
+    <!-- 501 Nicht implementiert -->
+    <string name="exception_not_implemented">Diese Funktion ist noch nicht implementiert</string>
 
     <!-- 503 Dienst nicht verfügbar -->
     <string name="exception_connection_error">Verbindungsfehler. Bitte versuchen Sie es später erneut.</string>

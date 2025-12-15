@@ -425,6 +425,22 @@ sealed class DokusException(
         }
     }
 
+    @Serializable
+    @SerialName("DokusException.TooManySessions")
+    data class TooManySessions(
+        override val message: String? = "Maximum number of concurrent sessions reached. Please log out from another device.",
+        val maxSessions: Int = 5,
+    ) : DokusException(
+        httpStatusCode = HTTP_STATUS,
+        errorCode = ERROR_CODE,
+        recoverable = true,
+    ) {
+        companion object {
+            const val HTTP_STATUS = 403
+            const val ERROR_CODE = "TOO_MANY_SESSIONS"
+        }
+    }
+
     // 409 Conflict - Duplicate Resources
     @Serializable
     @SerialName("DokusException.UserAlreadyExists")

@@ -42,6 +42,11 @@
     <string name="exception_account_locked">Ваш аккаунт заблокирован. Пожалуйста, свяжитесь с поддержкой для разблокировки.</string>
     <string name="exception_email_not_verified">Пожалуйста, подтвердите свой адрес электронной почты, чтобы продолжить</string>
     <string name="exception_email_already_verified">Адрес электронной почты уже подтверждён</string>
+    <string name="exception_too_many_sessions">Достигнуто максимальное количество одновременных сессий. Пожалуйста, выйдите с другого устройства.</string>
+
+    <!-- 404 Не найдено -->
+    <string name="exception_not_found">Запрошенный ресурс не найден</string>
+    <string name="exception_user_not_found">Пользователь не найден</string>
 
     <!-- 409 Conflict Errors -->
     <string name="exception_user_already_exists">Пользователь с таким email уже существует</string>
@@ -53,6 +58,9 @@
     <string name="exception_internal_error">Произошла внутренняя ошибка. Пожалуйста, попробуйте позже.</string>
     <string name="exception_tenant_creation_failed">Не удалось создать рабочее пространство. Пожалуйста, попробуйте снова.</string>
     <string name="exception_unknown">Произошла неизвестная ошибка</string>
+
+    <!-- 501 Не реализовано -->
+    <string name="exception_not_implemented">Эта функция ещё не реализована</string>
 
     <!-- 503 Service Unavailable -->
     <string name="exception_connection_error">Ошибка соединения. Пожалуйста, попробуйте позже.</string>
