@@ -50,32 +50,29 @@ workflows:
           inputs:
             - set_java_version: '21'
       - script@1:
-          title: Extract version info
+          title: Set build number in Versions.kt
           inputs:
             - content: |
                 #!/bin/bash
                 set -ex
-                
-                # Extract version from version.properties
-                if [ -f "version.properties" ]; then
-                  MAJOR=$(grep '^major=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                  MINOR=$(grep '^minor=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                else
-                  MAJOR=1
-                  MINOR=0
-                fi
-                
+
                 # Build number from git commit count
                 BUILD_NUMBER=$(git rev-list --count HEAD)
-                VERSION_NAME="${MAJOR}.${MINOR}.${BUILD_NUMBER}"
-                
-                # Export for subsequent steps
-                envman add --key VERSION_MAJOR --value "$MAJOR"
-                envman add --key VERSION_MINOR --value "$MINOR"
-                envman add --key VERSION_CODE --value "$BUILD_NUMBER"
+
+                # Update BUILD in Versions.kt
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
+
+                # Extract version for display
+                MAJOR=$(grep 'const val MAJOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                MINOR=$(grep 'const val MINOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                VERSION_NAME="$MAJOR.$MINOR.$BUILD_NUMBER"
+
+                envman add --key BUILD_NUMBER --value "$BUILD_NUMBER"
                 envman add --key VERSION_NAME --value "$VERSION_NAME"
-                
-                echo "Version: $VERSION_NAME (code: $BUILD_NUMBER)"
+
+                echo "Updated Versions.kt: $VERSION_NAME (BUILD=$BUILD_NUMBER)"
+                cat "$VERSIONS_FILE"
       - gradle-runner@2:
           title: Run Android Unit Tests
           inputs:
@@ -88,7 +85,7 @@ workflows:
             - content: |
                 #!/bin/bash
                 set -e
-                
+
                 # List of backend modules to test
                 BACKEND_MODULES=(
                   ":features:auth:backend"
@@ -99,14 +96,14 @@ workflows:
                   ":features:processor:backend"
                   ":features:ai:backend"
                 )
-                
+
                 # Build test task list for modules that have test sources
                 TEST_TASKS=""
                 for module in "${BACKEND_MODULES[@]}"; do
                   MODULE_PATH="${module//:///}"
                   MODULE_PATH="${MODULE_PATH:1}"  # Remove leading /
                   TEST_DIR="$MODULE_PATH/src/test/kotlin"
-                
+
                   if [ -d "$TEST_DIR" ] && [ "$(ls -A $TEST_DIR 2>/dev/null)" ]; then
                     TEST_TASKS="$TEST_TASKS ${module}:test"
                     echo "Found tests in: $module"
@@ -114,7 +111,7 @@ workflows:
                     echo "No tests in: $module (skipping)"
                   fi
                 done
-                
+
                 if [ -n "$TEST_TASKS" ]; then
                   echo "Running backend tests:$TEST_TASKS"
                   ./gradlew $TEST_TASKS --no-daemon --stacktrace --continue
@@ -135,27 +132,27 @@ workflows:
           inputs:
             - set_java_version: '21'
       - script@1:
-          title: Extract version info
+          title: Set build number in Versions.kt
           inputs:
             - content: |
                 #!/bin/bash
                 set -ex
-                
-                if [ -f "version.properties" ]; then
-                  MAJOR=$(grep '^major=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                  MINOR=$(grep '^minor=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                else
-                  MAJOR=1
-                  MINOR=0
-                fi
-                
+
                 BUILD_NUMBER=$(git rev-list --count HEAD)
-                VERSION_NAME="${MAJOR}.${MINOR}.${BUILD_NUMBER}"
-                
-                envman add --key VERSION_CODE --value "$BUILD_NUMBER"
+
+                # Update BUILD in Versions.kt
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
+
+                # Extract version for display
+                MAJOR=$(grep 'const val MAJOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                MINOR=$(grep 'const val MINOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                VERSION_NAME="$MAJOR.$MINOR.$BUILD_NUMBER"
+
+                envman add --key BUILD_NUMBER --value "$BUILD_NUMBER"
                 envman add --key VERSION_NAME --value "$VERSION_NAME"
-                
-                echo "Building Android v$VERSION_NAME (code: $BUILD_NUMBER)"
+
+                echo "Building Android v$VERSION_NAME"
       - android-build@1:
           title: Build Release AAB
           inputs:
@@ -163,7 +160,6 @@ workflows:
             - module: "$MODULE"
             - build_type: aab
             - variant: release
-            - arguments: "-PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME"
       - sign-apk@2:
           title: Sign AAB with Keystore
           run_if: '{{getenv "BITRISEIO_ANDROID_KEYSTORE_URL" | ne ""}}'
@@ -180,7 +176,6 @@ workflows:
             - module: "$MODULE"
             - build_type: apk
             - variant: release
-            - arguments: "-PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME"
       - sign-apk@2:
           title: Sign APK with Keystore
           run_if: '{{getenv "BITRISEIO_ANDROID_KEYSTORE_URL" | ne ""}}'
@@ -195,7 +190,7 @@ workflows:
             - content: |
                 #!/bin/bash
                 set -ex
-                
+
                 # Rename AAB
                 if [ -n "$BITRISE_SIGNED_AAB_PATH" ]; then
                   AAB_DIR=$(dirname "$BITRISE_SIGNED_AAB_PATH")
@@ -204,7 +199,7 @@ workflows:
                   envman add --key BITRISE_SIGNED_AAB_PATH --value "$NEW_AAB"
                   echo "Renamed AAB to: $NEW_AAB"
                 fi
-                
+
                 # Rename APK
                 if [ -n "$BITRISE_SIGNED_APK_PATH" ]; then
                   APK_DIR=$(dirname "$BITRISE_SIGNED_APK_PATH")
@@ -229,47 +224,37 @@ workflows:
           inputs:
             - set_java_version: '21'
       - script@1:
-          title: Extract version info
+          title: Set build number in Versions.kt and Info.plist
           inputs:
             - content: |
                 #!/bin/bash
                 set -ex
-                
-                if [ -f "version.properties" ]; then
-                  MAJOR=$(grep '^major=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                  MINOR=$(grep '^minor=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                else
-                  MAJOR=1
-                  MINOR=0
-                fi
-                
+
                 BUILD_NUMBER=$(git rev-list --count HEAD)
-                VERSION_NAME="${MAJOR}.${MINOR}.${BUILD_NUMBER}"
-                
-                envman add --key VERSION_CODE --value "$BUILD_NUMBER"
+
+                # Update BUILD in Versions.kt
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
+
+                # Extract version
+                MAJOR=$(grep 'const val MAJOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                MINOR=$(grep 'const val MINOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                VERSION_NAME="$MAJOR.$MINOR.$BUILD_NUMBER"
+
+                envman add --key BUILD_NUMBER --value "$BUILD_NUMBER"
                 envman add --key VERSION_NAME --value "$VERSION_NAME"
-                envman add --key BUNDLE_ID --value "vision.invoid.dokus"
-                
-                echo "Building iOS v$VERSION_NAME (build: $BUILD_NUMBER)"
-      - script@1:
-          title: Update Info.plist versions
-          inputs:
-            - content: |
-                #!/bin/bash
-                set -ex
-                
+
                 # Update iOS Info.plist
                 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NAME" iosApp/iosApp/Info.plist
-                /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION_CODE" iosApp/iosApp/Info.plist
-                
-                echo "Updated Info.plist: $VERSION_NAME ($VERSION_CODE)"
+                /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" iosApp/iosApp/Info.plist
+
+                echo "Building iOS v$VERSION_NAME"
       - gradle-runner:
           title: Build KMP Framework
           inputs:
             - gradlew_path: "./gradlew"
             - gradle_task: ":composeApp:linkReleaseFrameworkIosArm64"
-            - gradle_options: "--no-daemon --stacktrace -PversionCode=$VERSION_CODE
-            -PversionName=$VERSION_NAME -PappleBundleId=$BUNDLE_ID"
+            - gradle_options: "--no-daemon --stacktrace"
       - certificate-and-profile-installer:
           title: Install iOS Certificate & Profile
       - xcode-archive@5:
@@ -280,14 +265,14 @@ workflows:
             - distribution_method: app-store
             - configuration: Release
             - automatic_code_signing: api-key
-            - xcodebuild_options: DEVELOPMENT_TEAM=V2V9U9A3MG PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID
+            - xcodebuild_options: DEVELOPMENT_TEAM=V2V9U9A3MG PRODUCT_BUNDLE_IDENTIFIER=vision.invoid.dokus
       - script@1:
           title: Rename IPA artifact
           inputs:
             - content: |
                 #!/bin/bash
                 set -ex
-                
+
                 if [ -n "$BITRISE_IPA_PATH" ]; then
                   IPA_DIR=$(dirname "$BITRISE_IPA_PATH")
                   NEW_IPA="$IPA_DIR/dokus-ios-$VERSION_NAME.ipa"
@@ -320,27 +305,27 @@ workflows:
           inputs:
             - set_java_version: '21'
       - script@1:
-          title: Extract version info
+          title: Set build number in Versions.kt
           inputs:
             - content: |
                 #!/bin/bash
                 set -ex
-                
-                if [ -f "version.properties" ]; then
-                  MAJOR=$(grep '^major=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                  MINOR=$(grep '^minor=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
-                else
-                  MAJOR=1
-                  MINOR=0
-                fi
-                
+
                 BUILD_NUMBER=$(git rev-list --count HEAD)
-                VERSION_NAME="${MAJOR}.${MINOR}.${BUILD_NUMBER}"
-                
-                envman add --key VERSION_CODE --value "$BUILD_NUMBER"
+
+                # Update BUILD in Versions.kt
+                VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
+                sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
+
+                # Extract version
+                MAJOR=$(grep 'const val MAJOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                MINOR=$(grep 'const val MINOR' "$VERSIONS_FILE" | sed 's/.*= //')
+                VERSION_NAME="$MAJOR.$MINOR.$BUILD_NUMBER"
+
+                envman add --key BUILD_NUMBER --value "$BUILD_NUMBER"
                 envman add --key VERSION_NAME --value "$VERSION_NAME"
-                
-                echo "Building macOS v$VERSION_NAME (build: $BUILD_NUMBER)"
+
+                echo "Building macOS v$VERSION_NAME"
       - certificate-and-profile-installer@1:
           title: Install Developer ID Certificate
           run_if: '{{getenv "MAC_DEVELOPER_ID_APP_CERT" | ne ""}}'
@@ -353,10 +338,10 @@ workflows:
             - content: |
                 #!/bin/bash
                 set -ex
-                
+
                 # Find Developer ID Application certificate
                 IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"//;s/".*//')
-                
+
                 if [ -z "$IDENTITY" ]; then
                   echo "Warning: No Developer ID Application certificate found"
                   echo "Building unsigned DMG"
@@ -374,49 +359,48 @@ workflows:
             - content: |
                 #!/bin/bash
                 set -ex
-                
+
                 mkdir -p ~/.appstoreconnect/private_keys
                 echo "$ASC_API_KEY_PRIVATE_KEY" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
                 chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
-                
+
                 echo "Configured App Store Connect API key"
       - gradle-runner@2:
           title: Build macOS Release DMG
           inputs:
             - gradlew_path: "./gradlew"
             - gradle_task: ":composeApp:packageReleaseDmg"
-            - gradle_options: "--no-daemon --stacktrace -PversionCode=$VERSION_CODE
-            -PversionName=$VERSION_NAME
+            - gradle_options: "--no-daemon --stacktrace
             -Pmac.signing.enabled=$MAC_SIGNING_ENABLED
-            -Pmac.signing.identity=$MAC_SIGNING_IDENTITY
-            -PappleBundleId=$MAC_BUNDLE_ID"
+            -Pmac.signing.identity=$MAC_SIGNING_IDENTITY"
       - script@1:
           title: Notarize DMG
+          run_if: '{{and (getenv "ASC_API_KEY_ID" | ne "") (eq (getenv "MAC_SIGNING_ENABLED") "true")}}'
           inputs:
             - content: |
                 #!/bin/bash
                 set -ex
-                
+
                 # Find the built DMG
                 DMG_PATH=$(find composeApp/build/compose/binaries/main-release/dmg -name "*.dmg" -type f | head -1)
-                
+
                 if [ -z "$DMG_PATH" ]; then
                   echo "Error: DMG not found"
                   exit 1
                 fi
-                
+
                 echo "Notarizing: $DMG_PATH"
-                
+
                 # Submit for notarization
                 xcrun notarytool submit "$DMG_PATH" \
                   --key ~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8 \
                   --key-id "$ASC_API_KEY_ID" \
                   --issuer "$ASC_API_KEY_ISSUER_ID" \
                   --wait
-                
+
                 # Staple the notarization ticket
                 xcrun stapler staple "$DMG_PATH"
-                
+
                 echo "Notarization complete"
       - script@1:
           title: Rename and export DMG
@@ -424,19 +408,19 @@ workflows:
             - content: |
                 #!/bin/bash
                 set -ex
-                
+
                 # Find DMG (check both release and main directories)
                 DMG_PATH=$(find composeApp/build/compose/binaries -name "*.dmg" -type f | head -1)
-                
+
                 if [ -z "$DMG_PATH" ]; then
                   echo "Error: DMG not found"
                   exit 1
                 fi
-                
+
                 DMG_DIR=$(dirname "$DMG_PATH")
                 NEW_DMG="$DMG_DIR/dokus-macos-$VERSION_NAME.dmg"
                 mv "$DMG_PATH" "$NEW_DMG"
-                
+
                 envman add --key BITRISE_DMG_PATH --value "$NEW_DMG"
                 echo "Renamed DMG to: $NEW_DMG"
                 ls -lh "$NEW_DMG"
