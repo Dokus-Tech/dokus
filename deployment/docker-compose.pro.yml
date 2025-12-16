@@ -1,16 +1,51 @@
-# Dokus Production Docker Compose
-# Consolidated to a single PostgresSQL database
-# Run with: docker-compose up -d
+# Dokus Docker Compose - Pro Profile (High Performance)
+# Optimized for: High throughput, more connections, Kubernetes-ready
+# Target: Mac (Apple Silicon), Linux servers, GKE/EKS
+#
+# Usage:
+#   docker-compose -f docker-compose.pro.yml up -d
+#   ./dokus.sh --profile=pro start
+#
+# JVM Optimizations:
+#   - G1GC with larger heap (1GB max per service)
+#   - String deduplication for memory efficiency
+#   - Container-aware memory settings
+#   - Higher connection pools
+
+x-jvm-mac-defaults: &jvm-mac-defaults
+  JAVA_OPTS: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=75
+    -XX:InitialRAMPercentage=50
+    -XX:+UseG1GC
+    -XX:MaxGCPauseMillis=100
+    -XX:+UseStringDeduplication
+    -XX:+OptimizeStringConcat
+    -XX:+ParallelRefProcEnabled
+    -XX:+UseNUMA
+    -Djava.security.egd=file:/dev/./urandom
+    -Dfile.encoding=UTF-8
+
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 45s
 
 services:
+  # ==========================================================================
+  # INFRASTRUCTURE
+  # ==========================================================================
+
   # Traefik API Gateway
   traefik:
     image: traefik:v3.2
     container_name: dokus-traefik
     restart: unless-stopped
     ports:
-      - "80:80"      # HTTP (redirects to HTTPS)
-      - "443:443"    # HTTPS
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.cloud.yml:/etc/traefik/traefik.yml:ro
@@ -19,22 +54,27 @@ services:
       - ./logs/traefik:/logs
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      <<: *healthcheck-defaults
     labels:
       - "traefik.enable=true"
-      # Dashboard routing
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN:-dokus.tech}`)"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN:-dokus.local}`)"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
 
-  # Single PostgreSQL Database for all services
+  # PostgreSQL Database - Higher connection limits for Mac
   postgres:
     image: postgres:17-alpine
     container_name: dokus-postgres
@@ -42,20 +82,46 @@ services:
       POSTGRES_DB: dokus
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # Mac optimizations: more connections, larger buffers
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=512MB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "random_page_cost=1.1"
     ports:
       - "15432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      <<: *healthcheck-defaults
     restart: unless-stopped
 
-  # Shared Redis
+  # Redis - Larger memory for Mac
   redis:
     image: redis:8-alpine
     container_name: dokus-redis
@@ -63,17 +129,30 @@ services:
       - "16379:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 300
+      --timeout 0
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep PONG"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      <<: *healthcheck-defaults
     restart: unless-stopped
 
-  # RabbitMQ Message Broker
+  # RabbitMQ - Higher throughput settings
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: dokus-rabbitmq
@@ -81,21 +160,28 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /dokus
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.6
     ports:
-      - "25672:5672"    # AMQP
-      - "25673:15672"  # Management UI
+      - "25672:5672"
+      - "25673:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      <<: *healthcheck-defaults
     restart: unless-stopped
 
-  # MinIO Object Storage (S3-compatible)
+  # MinIO Object Storage
   minio:
     image: minio/minio:latest
     container_name: dokus-minio
@@ -103,22 +189,29 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "9000:9000"   # API
-      - "9001:9001"   # Console
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio-data:/data
     command: server /data --console-address ":9001"
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      <<: *healthcheck-defaults
     restart: unless-stopped
 
-  # Ollama LLM Server for AI inference
-  # Note: For Raspberry Pi, use CPU-only mode. For servers with GPUs, uncomment deploy section.
+  # ==========================================================================
+  # OLLAMA - Mac Optimized (Metal GPU support on Apple Silicon)
+  # ==========================================================================
   ollama:
     image: ollama/ollama:latest
     container_name: dokus-ollama
@@ -129,16 +222,19 @@ services:
     networks:
       - dokus-network
     environment:
-      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-1}
-      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-1}
-    # GPU support (uncomment for NVIDIA GPUs on non-Pi servers)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+      # Mac can handle more parallelism
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-4}
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-2}
+      OLLAMA_KEEP_ALIVE: "5m"
+      # Apple Silicon uses Metal automatically
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '1.0'
+          memory: 4G
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
@@ -147,7 +243,6 @@ services:
       start_period: 60s
     restart: unless-stopped
 
-  # Ollama Model Initialization (auto-pulls required models via API)
   ollama-init:
     image: curlimages/curl:latest
     container_name: dokus-ollama-init
@@ -155,53 +250,54 @@ services:
       ollama:
         condition: service_healthy
     environment:
-      - OLLAMA_MODEL=${AI_OLLAMA_MODEL:-mistral:7b}
+      # Mac can run larger models
+      OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2.5:14b-instruct}
     networks:
       - dokus-network
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        echo "Checking for $${OLLAMA_MODEL} model..."
+        echo "Initializing Ollama model: $${OLLAMA_MODEL}..."
         MODELS=$$(curl -s http://ollama:11434/api/tags | grep -o "\"name\":\"$${OLLAMA_MODEL}\"" || true)
         if [ -n "$$MODELS" ]; then
-          echo "Model $${OLLAMA_MODEL} already exists, skipping download"
+          echo "Model $${OLLAMA_MODEL} already exists"
         else
-          echo "Pulling $${OLLAMA_MODEL} model via API (this may take several minutes)..."
+          echo "Pulling $${OLLAMA_MODEL}..."
           curl -s http://ollama:11434/api/pull -d "{\"name\": \"$${OLLAMA_MODEL}\"}" | while read line; do
             echo "$$line" | grep -o '"status":"[^"]*"' | head -1 || true
           done
-          echo "Model $${OLLAMA_MODEL} pull initiated"
         fi
-        echo "Waiting for model to be available..."
-        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-          MODELS=$$(curl -s http://ollama:11434/api/tags | grep -o "\"name\":\"$${OLLAMA_MODEL}\"" || true)
-          if [ -n "$$MODELS" ]; then
-            echo "Model $${OLLAMA_MODEL} is ready!"
-            exit 0
-          fi
-          echo "  Waiting... ($$i/20)"
-          sleep 30
-        done
-        echo "Model download may still be in progress"
+        # Pre-warm the model
+        echo "Pre-warming model..."
+        curl -s http://ollama:11434/api/generate -d '{"model":"'"$${OLLAMA_MODEL}"'","prompt":"hello","stream":false}' > /dev/null || true
+        echo "Model ready!"
     restart: "no"
 
-  # Auth Service
+  # ==========================================================================
+  # BACKEND SERVICES - Mac Optimized JVM
+  # ==========================================================================
+
   auth-service:
-    image: 94.111.226.82:5000/dokus-auth:latest
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-auth:${TAG:-latest}
     container_name: dokus-auth
     environment:
+      <<: *jvm-mac-defaults
       PORT: 8080
       ENVIRONMENT: cloud
+      # Database - higher pool for Mac
       DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-5}
+      # JWT
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
-      # Caching (CRITICAL!)
-      CACHE_TYPE: ${CACHE_TYPE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
+      # Caching
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
@@ -211,35 +307,9 @@ services:
       RABBITMQ_VHOST: /dokus
       # Security
       CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS:-*}
-      MONITORING_API_KEY: ${MONITORING_API_KEY:-changeme}
-      ADMIN_API_KEY: ${ADMIN_API_KEY:-changeme}
-      INTEGRATION_API_KEY: ${INTEGRATION_API_KEY:-changeme}
-      REQUEST_SIGNING_ENABLED: ${REQUEST_SIGNING_ENABLED:-false}
-      REQUEST_SIGNING_SECRET: ${REQUEST_SIGNING_SECRET:-default-signing-secret}
-      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
-      # Email (optional - all set via .env)
-      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
-      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USERNAME: ${SMTP_USERNAME:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_ENABLE_TLS: ${SMTP_ENABLE_TLS:-true}
-      SMTP_ENABLE_AUTH: ${SMTP_ENABLE_AUTH:-true}
-      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@dokus.local}
-      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Dokus}
-      EMAIL_REPLY_TO_ADDRESS: ${EMAIL_REPLY_TO_ADDRESS:-}
-      EMAIL_REPLY_TO_NAME: ${EMAIL_REPLY_TO_NAME:-}
-      EMAIL_BASE_URL: ${EMAIL_BASE_URL:-http://localhost}
-      EMAIL_SUPPORT_ADDRESS: ${EMAIL_SUPPORT_ADDRESS:-}
-      # Monitoring (optional - all set via .env)
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120}
+      # Monitoring
       METRICS_ENABLED: ${METRICS_ENABLED:-true}
-      METRICS_PORT: ${METRICS_PORT:-7090}
-      TRACING_ENABLED: ${TRACING_ENABLED:-false}
-      JAEGER_ENDPOINT: ${JAEGER_ENDPOINT:-}
-      # GeoIP
-      GEOIP_ENABLED: ${GEOIP_ENABLED:-false}
-      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       postgres:
@@ -250,69 +320,67 @@ services:
         condition: service_healthy
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/metrics"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      <<: *healthcheck-defaults
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      # Auth API routes
       - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`)"
       - "traefik.http.routers.auth.entrypoints=websecure"
       - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
       - "traefik.http.routers.auth.service=auth"
       - "traefik.http.routers.auth.middlewares=security-headers@file,rate-limit@file,cors-api@file"
       - "traefik.http.services.auth.loadbalancer.server.port=8080"
-      - "traefik.http.services.auth.loadbalancer.healthcheck.path=/metrics"
-      - "traefik.http.services.auth.loadbalancer.healthcheck.interval=30s"
-      # Health endpoint (high priority)
       - "traefik.http.routers.health.rule=Path(`/health`)"
       - "traefik.http.routers.health.entrypoints=websecure"
       - "traefik.http.routers.health.tls.certresolver=letsencrypt"
       - "traefik.http.routers.health.service=auth"
       - "traefik.http.routers.health.priority=1000"
-      # Server info endpoint (high priority)
       - "traefik.http.routers.server-info.rule=Path(`/api/v1/server/info`)"
       - "traefik.http.routers.server-info.entrypoints=websecure"
       - "traefik.http.routers.server-info.tls.certresolver=letsencrypt"
       - "traefik.http.routers.server-info.service=auth"
       - "traefik.http.routers.server-info.priority=1000"
 
-  # Cashflow Service
   cashflow-service:
-    image: 94.111.226.82:5000/dokus-cashflow:latest
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-cashflow:${TAG:-latest}
     container_name: dokus-cashflow
     environment:
+      <<: *jvm-mac-defaults
       PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
-      # Caching
-      CACHE_TYPE: ${CACHE_TYPE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      # MinIO Storage
+      # MinIO
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
-      # AI Configuration
+      MINIO_BUCKET: ${MINIO_BUCKET:-dokus-documents}
+      # AI
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
       AI_OLLAMA_ENABLED: ${AI_OLLAMA_ENABLED:-true}
       AI_OLLAMA_URL: http://ollama:11434
-      AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-mistral:7b}
+      AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2.5:14b-instruct}
       AI_OPENAI_ENABLED: ${AI_OPENAI_ENABLED:-false}
       AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
-      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
-      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       postgres:
@@ -323,12 +391,17 @@ services:
         condition: service_healthy
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      <<: *healthcheck-defaults
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
@@ -338,40 +411,42 @@ services:
       - "traefik.http.routers.cashflow.service=cashflow"
       - "traefik.http.routers.cashflow.middlewares=security-headers@file,rate-limit@file,cors-api@file"
       - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
-      - "traefik.http.services.cashflow.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.cashflow.loadbalancer.healthcheck.interval=30s"
 
-  # Payment Service
   payment-service:
-    image: 94.111.226.82:5000/dokus-payment:latest
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-payment:${TAG:-latest}
     container_name: dokus-payment
     environment:
+      <<: *jvm-mac-defaults
       PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
-      # Caching
-      CACHE_TYPE: ${CACHE_TYPE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      # Logging
-      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.25'
+          memory: 384M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      <<: *healthcheck-defaults
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
@@ -381,40 +456,42 @@ services:
       - "traefik.http.routers.payment.service=payment"
       - "traefik.http.routers.payment.middlewares=security-headers@file,rate-limit@file,cors-api@file"
       - "traefik.http.services.payment.loadbalancer.server.port=8080"
-      - "traefik.http.services.payment.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.payment.loadbalancer.healthcheck.interval=30s"
 
-  # Banking Service
   banking-service:
-    image: 94.111.226.82:5000/dokus-banking:latest
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-banking:${TAG:-latest}
     container_name: dokus-banking
     environment:
+      <<: *jvm-mac-defaults
       PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
-      # Caching
-      CACHE_TYPE: ${CACHE_TYPE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      # Logging
-      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.25'
+          memory: 384M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      <<: *healthcheck-defaults
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
@@ -424,40 +501,42 @@ services:
       - "traefik.http.routers.banking.service=banking"
       - "traefik.http.routers.banking.middlewares=security-headers@file,rate-limit@file,cors-api@file"
       - "traefik.http.services.banking.loadbalancer.server.port=8080"
-      - "traefik.http.services.banking.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.banking.loadbalancer.healthcheck.interval=30s"
 
-  # Contacts Service
   contacts-service:
-    image: 94.111.226.82:5000/dokus-contacts:latest
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-contacts:${TAG:-latest}
     container_name: dokus-contacts
     environment:
+      <<: *jvm-mac-defaults
       PORT: 8080
       ENVIRONMENT: cloud
       DB_URL: jdbc:postgresql://postgres:5432/dokus
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
-      # Caching
-      CACHE_TYPE: ${CACHE_TYPE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      # Logging
-      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.25'
+          memory: 384M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      <<: *healthcheck-defaults
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
@@ -467,41 +546,36 @@ services:
       - "traefik.http.routers.contacts.service=contacts"
       - "traefik.http.routers.contacts.middlewares=security-headers@file,rate-limit@file,cors-api@file"
       - "traefik.http.services.contacts.loadbalancer.server.port=8080"
-      - "traefik.http.services.contacts.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.contacts.loadbalancer.healthcheck.interval=30s"
 
-  # Web Frontend (WASM)
+  # ==========================================================================
+  # WEB FRONTEND
+  # ==========================================================================
   web:
-    image: 94.111.226.82:5000/dokus-web:latest
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-web:${TAG:-latest}
     container_name: dokus-web
     networks:
       - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      <<: *healthcheck-defaults
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
     labels:
       - "traefik.enable=true"
-      # Main web app route (lowest priority for SPA fallback)
-      - "traefik.http.routers.web.rule=Host(`${DOMAIN:-dokus.tech}`) || Host(`www.${DOMAIN:-dokus.tech}`)"
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN:-dokus.local}`) || Host(`www.${DOMAIN:-dokus.local}`)"
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls.certresolver=letsencrypt"
       - "traefik.http.routers.web.service=web"
       - "traefik.http.routers.web.priority=1"
       - "traefik.http.routers.web.middlewares=security-headers@file,compress@file"
       - "traefik.http.services.web.loadbalancer.server.port=8080"
-      # WWW to non-WWW redirect
-      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.(.+)"
-      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://$${1}"
-      - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
 
 networks:
   dokus-network:

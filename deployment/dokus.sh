@@ -2,7 +2,11 @@
 #
 # Dokus Cloud Management Script — Neon Onboarding Edition
 # Supports: macOS, Linux
-# Usage: ./dokus.sh [command]
+# Usage: ./dokus.sh [--profile=<pro|lite>] [command]
+#
+# Profiles:
+#   pro  - High performance for Mac/servers (docker-compose.pro.yml)
+#   lite - Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
 #
 
 set -e
@@ -57,10 +61,70 @@ SYMBOL_INFO="◦"
 SYMBOL_TASK="▹"
 
 # Configuration
-COMPOSE_FILE="docker-compose.yml"
 DB_CONTAINER="postgres"
 DB_PORT="15432"
 DB_NAME="dokus"
+
+# Profile configuration
+# Available profiles:
+#   - pro:  High performance for Mac/servers (docker-compose.pro.yml)
+#   - lite: Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
+PROFILE_FILE=".dokus-profile"
+
+# Load saved profile or detect automatically
+load_profile() {
+    if [ -f "$PROFILE_FILE" ]; then
+        DOKUS_PROFILE=$(cat "$PROFILE_FILE")
+    elif [ -n "${DOKUS_PROFILE:-}" ]; then
+        # Use environment variable if set
+        :
+    else
+        # Auto-detect based on system
+        detect_profile
+    fi
+
+    case "${DOKUS_PROFILE:-lite}" in
+        pro)
+            COMPOSE_FILE="docker-compose.pro.yml"
+            ;;
+        *)
+            COMPOSE_FILE="docker-compose.lite.yml"
+            DOKUS_PROFILE="lite"
+            ;;
+    esac
+}
+
+# Auto-detect optimal profile based on hardware
+detect_profile() {
+    # macOS = pro profile (assuming powerful Mac)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        DOKUS_PROFILE="pro"
+        return
+    fi
+
+    # Everything else defaults to lite (safe for Pi, SBCs, low-end servers)
+    DOKUS_PROFILE="lite"
+}
+
+# Save profile choice
+save_profile() {
+    echo "$DOKUS_PROFILE" > "$PROFILE_FILE"
+}
+
+# Get profile display name
+get_profile_display() {
+    case "${DOKUS_PROFILE:-lite}" in
+        pro)
+            echo "Pro (High Performance)"
+            ;;
+        *)
+            echo "Lite (Low Resource)"
+            ;;
+    esac
+}
+
+# Initialize profile
+load_profile
 
 # Gateway configuration
 GATEWAY_PORT="443"
@@ -234,7 +298,7 @@ check_env() {
 show_status() {
     print_gradient_header "📊 Service Status" "Docker compose + health probes"
 
-    docker compose ps
+    docker compose -f "$COMPOSE_FILE" ps
     echo ""
 
     print_separator
@@ -246,14 +310,14 @@ show_status() {
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
     printf "  ${SOFT_GRAY}│${NC} PostgreSQL (${DB_NAME})     ${SOFT_GRAY}│${NC} "
-    if docker compose exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+    if docker compose -f "$COMPOSE_FILE" exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
-    if docker compose exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
+    if docker compose -f "$COMPOSE_FILE" exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -383,10 +447,10 @@ start_services() {
     print_gradient_header "🚀 Launching Dokus" "Compose stack + health probes"
 
     print_status info "Pulling latest images..."
-    docker compose pull -q
+    docker compose -f "$COMPOSE_FILE" pull -q
 
     print_status info "Starting services..."
-    docker compose up -d
+    docker compose -f "$COMPOSE_FILE" up -d
 
     if [ $? -eq 0 ]; then
         print_status success "Containers ignited"
@@ -405,7 +469,7 @@ start_services() {
 
 stop_services() {
     print_gradient_header "🛑 Stopping Services"
-    docker compose down
+    docker compose -f "$COMPOSE_FILE" down
     echo ""
     print_status success "All services stopped"
     echo ""
@@ -420,9 +484,9 @@ restart_services() {
 show_logs() {
     service=$1
     if [ -z "$service" ]; then
-        docker compose logs -f
+        docker compose -f "$COMPOSE_FILE" logs -f
     else
-        docker compose logs -f $service
+        docker compose -f "$COMPOSE_FILE" logs -f $service
     fi
 }
 
@@ -430,7 +494,7 @@ access_db() {
     print_gradient_header "🗄️  Database CLI"
     print_status info "Connecting to PostgreSQL (${DB_NAME})..."
     echo ""
-    docker compose exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
+    docker compose -f "$COMPOSE_FILE" exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
 }
 
 # Function to show mobile app connection info with QR code
@@ -834,12 +898,12 @@ EOF
 
     echo ""
     print_status task "Pulling latest Docker images"
-    docker compose pull
+    docker compose -f "$COMPOSE_FILE" pull
     print_status success "Images pulled"
 
     echo ""
     print_status task "Starting Dokus services"
-    docker compose up -d
+    docker compose -f "$COMPOSE_FILE" up -d
     print_status success "Services started"
 
     echo ""
@@ -849,7 +913,7 @@ EOF
     local MAX_RETRIES=30
     local RETRY_COUNT=0
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        HEALTHY_COUNT=$(docker compose ps | grep -c "healthy" || true)
+        HEALTHY_COUNT=$(docker compose -f "$COMPOSE_FILE" ps | grep -c "healthy" || true)
         if [ $HEALTHY_COUNT -ge 7 ]; then
             print_status success "All services are healthy"
             break
@@ -910,6 +974,61 @@ configure_registry() {
     fi
 }
 
+select_profile() {
+    print_gradient_header "⚙️  Profile Selection" "Choose resource profile for your hardware"
+
+    echo_e "  ${SOFT_CYAN}Current profile: ${SOFT_GREEN}$(get_profile_display)${NC}"
+    echo_e "  ${SOFT_CYAN}Using: ${DIM_WHITE}$COMPOSE_FILE${NC}"
+    echo ""
+
+    echo_e "  ${SOFT_GRAY}Available profiles:${NC}"
+    echo ""
+    echo_e "  ${SOFT_CYAN}1${NC}   ${BOLD}Pro${NC} ${SOFT_GREEN}(Mac/Servers)${NC}"
+    echo_e "      ${DIM_WHITE}High performance: G1GC, 1GB heap, more connections${NC}"
+    echo_e "      ${DIM_WHITE}Ollama: qwen2.5:14b-instruct, 4 parallel requests${NC}"
+    echo_e "      ${DIM_WHITE}File: docker-compose.pro.yml${NC}"
+    echo ""
+    echo_e "  ${SOFT_CYAN}2${NC}   ${BOLD}Lite${NC} ${SOFT_YELLOW}(Raspberry Pi / Default)${NC}"
+    echo_e "      ${DIM_WHITE}Low resource: SerialGC, 256MB heap, minimal connections${NC}"
+    echo_e "      ${DIM_WHITE}Ollama: qwen2:1.5b, 1 parallel request${NC}"
+    echo_e "      ${DIM_WHITE}File: docker-compose.lite.yml${NC}"
+    echo ""
+    echo_e "  ${SOFT_GRAY}0${NC}   Cancel"
+    echo ""
+
+    printf "  ${BOLD}Select profile ${DIM_WHITE}[0-2]:${NC} "
+    read choice
+    echo ""
+
+    case $choice in
+        1)
+            DOKUS_PROFILE="pro"
+            COMPOSE_FILE="docker-compose.pro.yml"
+            save_profile
+            print_status success "Profile set to Pro"
+            ;;
+        2)
+            DOKUS_PROFILE="lite"
+            COMPOSE_FILE="docker-compose.lite.yml"
+            save_profile
+            print_status success "Profile set to Lite"
+            ;;
+        0)
+            print_status info "Cancelled"
+            return
+            ;;
+        *)
+            print_status error "Invalid choice"
+            return
+            ;;
+    esac
+
+    echo ""
+    print_status info "Using compose file: $COMPOSE_FILE"
+    echo ""
+    print_status warning "Restart services for changes to take effect"
+}
+
 configure_autostart() {
     local OS=$1
 
@@ -928,7 +1047,7 @@ configure_autostart() {
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>cd $SCRIPT_PATH && docker compose up -d</string>
+        <string>cd $SCRIPT_PATH && docker compose -f $COMPOSE_FILE up -d</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -960,8 +1079,8 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$WORKING_DIR
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose down
+ExecStart=/usr/bin/docker compose -f $COMPOSE_FILE up -d
+ExecStop=/usr/bin/docker compose -f $COMPOSE_FILE down
 User=$USER
 
 [Install]
@@ -977,6 +1096,10 @@ EOF
 
 show_menu() {
     splash_screen
+
+    # Show current profile
+    echo_e "  ${SOFT_GRAY}Profile: ${SOFT_GREEN}$(get_profile_display)${NC} ${DIM_WHITE}($COMPOSE_FILE)${NC}\n"
+
     echo_e "  ${SOFT_GRAY}${DIM}Choose a lane:${NC}\n"
 
     echo_e "  ${SOFT_GREEN}${BOLD}Launchpad${NC}"
@@ -996,10 +1119,14 @@ show_menu() {
     echo_e "    ${SOFT_CYAN}8${NC}   Show mobile connection (QR code)"
     echo ""
 
+    echo_e "  ${SOFT_ORANGE}${BOLD}Configuration${NC}"
+    echo_e "    ${SOFT_CYAN}9${NC}   Select profile (pro/lite)"
+    echo ""
+
     echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-8]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-9]:${NC} "
     read choice
     echo ""
 
@@ -1012,6 +1139,7 @@ show_menu() {
         6) show_logs ;;
         7) access_db ;;
         8) show_mobile_connection ;;
+        9) select_profile ;;
         0) echo "  ${SOFT_CYAN}👋 Goodbye!${NC}\n" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac
@@ -1023,7 +1151,39 @@ show_menu() {
 }
 
 main() {
-    case ${1:-} in
+    # Parse --profile option first
+    local cmd=""
+    local args=()
+
+    for arg in "$@"; do
+        case $arg in
+            --profile=*)
+                DOKUS_PROFILE="${arg#*=}"
+                case "$DOKUS_PROFILE" in
+                    pro)
+                        COMPOSE_FILE="docker-compose.pro.yml"
+                        ;;
+                    lite)
+                        COMPOSE_FILE="docker-compose.lite.yml"
+                        ;;
+                    *)
+                        print_status error "Unknown profile: $DOKUS_PROFILE"
+                        print_status info "Available profiles: pro, lite"
+                        exit 1
+                        ;;
+                esac
+                ;;
+            *)
+                if [ -z "$cmd" ]; then
+                    cmd="$arg"
+                else
+                    args+=("$arg")
+                fi
+                ;;
+        esac
+    done
+
+    case ${cmd:-} in
         setup)
             initial_setup
             ;;
@@ -1042,13 +1202,70 @@ main() {
             show_status
             ;;
         logs)
-            show_logs ${2:-}
+            show_logs ${args[0]:-}
             ;;
         db)
             access_db
             ;;
         connect|qr)
             show_mobile_connection
+            ;;
+        profile)
+            if [ -n "${args[0]:-}" ]; then
+                # Set profile from CLI
+                case "${args[0]}" in
+                    pro|lite)
+                        DOKUS_PROFILE="${args[0]}"
+                        case "$DOKUS_PROFILE" in
+                            pro) COMPOSE_FILE="docker-compose.pro.yml" ;;
+                            *) COMPOSE_FILE="docker-compose.lite.yml" ;;
+                        esac
+                        save_profile
+                        print_status success "Profile set to $(get_profile_display)"
+                        print_status info "Using: $COMPOSE_FILE"
+                        ;;
+                    *)
+                        print_status error "Unknown profile: ${args[0]}"
+                        print_status info "Available profiles: pro, lite"
+                        exit 1
+                        ;;
+                esac
+            else
+                # Show current profile
+                print_status info "Current profile: $(get_profile_display)"
+                print_status info "Using: $COMPOSE_FILE"
+                echo ""
+                print_status info "Set profile with: ./dokus.sh profile <pro|lite>"
+                print_status info "Or use --profile flag: ./dokus.sh --profile=pro start"
+            fi
+            ;;
+        help|--help|-h)
+            echo ""
+            echo_e "  ${BOLD}Dokus Cloud Management Script${NC}"
+            echo ""
+            echo_e "  ${SOFT_CYAN}Usage:${NC} ./dokus.sh [--profile=<pro|lite>] [command]"
+            echo ""
+            echo_e "  ${SOFT_GREEN}Commands:${NC}"
+            echo_e "    setup      Guided initial setup"
+            echo_e "    start      Start all services"
+            echo_e "    stop       Stop all services"
+            echo_e "    restart    Restart all services"
+            echo_e "    status     Show service status"
+            echo_e "    logs       View logs (optionally: logs <service>)"
+            echo_e "    db         Access PostgreSQL console"
+            echo_e "    connect    Show mobile app connection info"
+            echo_e "    profile    Show/set resource profile"
+            echo ""
+            echo_e "  ${SOFT_ORANGE}Profiles:${NC}"
+            echo_e "    pro        High performance (Mac/servers)"
+            echo_e "    lite       Low resource (Raspberry Pi/edge) [default]"
+            echo ""
+            echo_e "  ${SOFT_MAGENTA}Examples:${NC}"
+            echo_e "    ./dokus.sh                     Interactive menu"
+            echo_e "    ./dokus.sh start               Start with saved profile"
+            echo_e "    ./dokus.sh --profile=pro start"
+            echo_e "    ./dokus.sh profile pro         Set and save profile"
+            echo ""
             ;;
         *)
             show_menu
