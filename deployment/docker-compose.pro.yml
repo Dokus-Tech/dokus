@@ -251,7 +251,7 @@ services:
         condition: service_healthy
     environment:
       # Mac can run larger models
-      OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-llama3.1:8b}
+      OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2.5:14b-instruct}
     networks:
       - dokus-network
     entrypoint: ["/bin/sh", "-c"]
@@ -378,7 +378,7 @@ services:
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
       AI_OLLAMA_ENABLED: ${AI_OLLAMA_ENABLED:-true}
       AI_OLLAMA_URL: http://ollama:11434
-      AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-llama3.1:8b}
+      AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2.5:14b-instruct}
       AI_OPENAI_ENABLED: ${AI_OPENAI_ENABLED:-false}
       AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
