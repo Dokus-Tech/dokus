@@ -9,4 +9,11 @@ dependencies {
     implementation(libs.android.gradlePlugin)
 }
 
-gradlePlugin {}
+gradlePlugin {
+    plugins {
+        register("versioning") {
+            id = "dokus.versioning"
+            implementationClass = "ai.dokus.convention.VersioningPlugin"
+        }
+    }
+}
