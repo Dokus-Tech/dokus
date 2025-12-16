@@ -1,9 +1,10 @@
-# Dokus Docker Compose - Raspberry Pi Optimized
+# Dokus Docker Compose - Lite Profile (Low Resource)
 # Optimized for: Low memory, ARM64, constrained resources
 # Target: Raspberry Pi 4/5 (4GB+ RAM recommended, 8GB ideal)
 #
 # Usage:
-#   docker-compose -f docker-compose.pi.yml up -d
+#   docker-compose -f docker-compose.lite.yml up -d
+#   ./dokus.sh --profile=lite start
 #
 # JVM Optimizations for ARM/Pi:
 #   - SerialGC for lower overhead on limited cores

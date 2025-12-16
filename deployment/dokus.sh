@@ -2,12 +2,11 @@
 #
 # Dokus Cloud Management Script — Neon Onboarding Edition
 # Supports: macOS, Linux
-# Usage: ./dokus.sh [--profile=<standard|pro|lite>] [command]
+# Usage: ./dokus.sh [--profile=<pro|lite>] [command]
 #
 # Profiles:
-#   standard - Default balanced configuration (docker-compose.yml)
-#   pro      - High performance for Mac/servers (docker-compose.pro.yml)
-#   lite     - Low resource for Raspberry Pi/edge (docker-compose.lite.yml)
+#   pro  - High performance for Mac/servers (docker-compose.pro.yml)
+#   lite - Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
 #
 
 set -e
@@ -68,9 +67,8 @@ DB_NAME="dokus"
 
 # Profile configuration
 # Available profiles:
-#   - standard: Default balanced configuration (docker-compose.yml)
-#   - pro:      High performance for Mac/servers (docker-compose.pro.yml)
-#   - lite:     Low resource for Raspberry Pi/edge (docker-compose.lite.yml)
+#   - pro:  High performance for Mac/servers (docker-compose.pro.yml)
+#   - lite: Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
 PROFILE_FILE=".dokus-profile"
 
 # Load saved profile or detect automatically
@@ -85,45 +83,27 @@ load_profile() {
         detect_profile
     fi
 
-    case "${DOKUS_PROFILE:-standard}" in
+    case "${DOKUS_PROFILE:-lite}" in
         pro)
             COMPOSE_FILE="docker-compose.pro.yml"
             ;;
-        lite)
-            COMPOSE_FILE="docker-compose.lite.yml"
-            ;;
         *)
-            COMPOSE_FILE="docker-compose.yml"
-            DOKUS_PROFILE="standard"
+            COMPOSE_FILE="docker-compose.lite.yml"
+            DOKUS_PROFILE="lite"
             ;;
     esac
 }
 
 # Auto-detect optimal profile based on hardware
 detect_profile() {
-    # Check for Raspberry Pi
-    if [[ -f /proc/device-tree/model ]] && grep -qi "raspberry pi" /proc/device-tree/model 2>/dev/null; then
-        DOKUS_PROFILE="lite"
-        return
-    fi
-
-    # Check for ARM64 Linux with limited RAM (likely SBC)
-    if [[ "$(uname -s)" == "Linux" && "$(uname -m)" == "aarch64" ]]; then
-        local mem_kb=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
-        if [[ -n "$mem_kb" && $mem_kb -lt 6000000 ]]; then
-            DOKUS_PROFILE="lite"
-            return
-        fi
-    fi
-
-    # macOS or beefy Linux = pro profile
+    # macOS = pro profile (assuming powerful Mac)
     if [[ "$OSTYPE" == "darwin"* ]]; then
         DOKUS_PROFILE="pro"
         return
     fi
 
-    # Default to standard
-    DOKUS_PROFILE="standard"
+    # Everything else defaults to lite (safe for Pi, SBCs, low-end servers)
+    DOKUS_PROFILE="lite"
 }
 
 # Save profile choice
@@ -133,15 +113,12 @@ save_profile() {
 
 # Get profile display name
 get_profile_display() {
-    case "${DOKUS_PROFILE:-standard}" in
+    case "${DOKUS_PROFILE:-lite}" in
         pro)
             echo "Pro (High Performance)"
             ;;
-        lite)
-            echo "Lite (Low Resource)"
-            ;;
         *)
-            echo "Standard"
+            echo "Lite (Low Resource)"
             ;;
     esac
 }
@@ -1006,16 +983,12 @@ select_profile() {
 
     echo_e "  ${SOFT_GRAY}Available profiles:${NC}"
     echo ""
-    echo_e "  ${SOFT_CYAN}1${NC}   ${BOLD}Standard${NC}"
-    echo_e "      ${DIM_WHITE}Default balanced configuration${NC}"
-    echo_e "      ${DIM_WHITE}File: docker-compose.yml${NC}"
-    echo ""
-    echo_e "  ${SOFT_CYAN}2${NC}   ${BOLD}Pro${NC} ${SOFT_GREEN}(Recommended for Mac/Servers)${NC}"
+    echo_e "  ${SOFT_CYAN}1${NC}   ${BOLD}Pro${NC} ${SOFT_GREEN}(Mac/Servers)${NC}"
     echo_e "      ${DIM_WHITE}High performance: G1GC, 1GB heap, more connections${NC}"
-    echo_e "      ${DIM_WHITE}Ollama: mistral:7b, 4 parallel requests${NC}"
+    echo_e "      ${DIM_WHITE}Ollama: llama3.1:8b, 4 parallel requests${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.pro.yml${NC}"
     echo ""
-    echo_e "  ${SOFT_CYAN}3${NC}   ${BOLD}Lite${NC} ${SOFT_YELLOW}(Recommended for Raspberry Pi)${NC}"
+    echo_e "  ${SOFT_CYAN}2${NC}   ${BOLD}Lite${NC} ${SOFT_YELLOW}(Raspberry Pi / Default)${NC}"
     echo_e "      ${DIM_WHITE}Low resource: SerialGC, 256MB heap, minimal connections${NC}"
     echo_e "      ${DIM_WHITE}Ollama: qwen2:1.5b, 1 parallel request${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.lite.yml${NC}"
@@ -1023,24 +996,18 @@ select_profile() {
     echo_e "  ${SOFT_GRAY}0${NC}   Cancel"
     echo ""
 
-    printf "  ${BOLD}Select profile ${DIM_WHITE}[0-3]:${NC} "
+    printf "  ${BOLD}Select profile ${DIM_WHITE}[0-2]:${NC} "
     read choice
     echo ""
 
     case $choice in
         1)
-            DOKUS_PROFILE="standard"
-            COMPOSE_FILE="docker-compose.yml"
-            save_profile
-            print_status success "Profile set to Standard"
-            ;;
-        2)
             DOKUS_PROFILE="pro"
             COMPOSE_FILE="docker-compose.pro.yml"
             save_profile
             print_status success "Profile set to Pro"
             ;;
-        3)
+        2)
             DOKUS_PROFILE="lite"
             COMPOSE_FILE="docker-compose.lite.yml"
             save_profile
@@ -1153,7 +1120,7 @@ show_menu() {
     echo ""
 
     echo_e "  ${SOFT_ORANGE}${BOLD}Configuration${NC}"
-    echo_e "    ${SOFT_CYAN}9${NC}   Select profile (standard/pro/lite)"
+    echo_e "    ${SOFT_CYAN}9${NC}   Select profile (pro/lite)"
     echo ""
 
     echo_e "  ${SOFT_GRAY}0${NC}    Exit"
@@ -1199,12 +1166,9 @@ main() {
                     lite)
                         COMPOSE_FILE="docker-compose.lite.yml"
                         ;;
-                    standard)
-                        COMPOSE_FILE="docker-compose.yml"
-                        ;;
                     *)
                         print_status error "Unknown profile: $DOKUS_PROFILE"
-                        print_status info "Available profiles: standard, pro, lite"
+                        print_status info "Available profiles: pro, lite"
                         exit 1
                         ;;
                 esac
@@ -1250,12 +1214,11 @@ main() {
             if [ -n "${args[0]:-}" ]; then
                 # Set profile from CLI
                 case "${args[0]}" in
-                    pro|lite|standard)
+                    pro|lite)
                         DOKUS_PROFILE="${args[0]}"
                         case "$DOKUS_PROFILE" in
                             pro) COMPOSE_FILE="docker-compose.pro.yml" ;;
-                            lite) COMPOSE_FILE="docker-compose.lite.yml" ;;
-                            *) COMPOSE_FILE="docker-compose.yml" ;;
+                            *) COMPOSE_FILE="docker-compose.lite.yml" ;;
                         esac
                         save_profile
                         print_status success "Profile set to $(get_profile_display)"
@@ -1263,7 +1226,7 @@ main() {
                         ;;
                     *)
                         print_status error "Unknown profile: ${args[0]}"
-                        print_status info "Available profiles: standard, pro, lite"
+                        print_status info "Available profiles: pro, lite"
                         exit 1
                         ;;
                 esac
@@ -1272,7 +1235,7 @@ main() {
                 print_status info "Current profile: $(get_profile_display)"
                 print_status info "Using: $COMPOSE_FILE"
                 echo ""
-                print_status info "Set profile with: ./dokus.sh profile <standard|pro|lite>"
+                print_status info "Set profile with: ./dokus.sh profile <pro|lite>"
                 print_status info "Or use --profile flag: ./dokus.sh --profile=pro start"
             fi
             ;;
@@ -1280,7 +1243,7 @@ main() {
             echo ""
             echo_e "  ${BOLD}Dokus Cloud Management Script${NC}"
             echo ""
-            echo_e "  ${SOFT_CYAN}Usage:${NC} ./dokus.sh [--profile=<profile>] [command]"
+            echo_e "  ${SOFT_CYAN}Usage:${NC} ./dokus.sh [--profile=<pro|lite>] [command]"
             echo ""
             echo_e "  ${SOFT_GREEN}Commands:${NC}"
             echo_e "    setup      Guided initial setup"
@@ -1294,14 +1257,13 @@ main() {
             echo_e "    profile    Show/set resource profile"
             echo ""
             echo_e "  ${SOFT_ORANGE}Profiles:${NC}"
-            echo_e "    standard   Default balanced configuration"
             echo_e "    pro        High performance (Mac/servers)"
-            echo_e "    lite       Low resource (Raspberry Pi/edge)"
+            echo_e "    lite       Low resource (Raspberry Pi/edge) [default]"
             echo ""
             echo_e "  ${SOFT_MAGENTA}Examples:${NC}"
             echo_e "    ./dokus.sh                     Interactive menu"
             echo_e "    ./dokus.sh start               Start with saved profile"
-            echo_e "    ./dokus.sh --profile=lite start"
+            echo_e "    ./dokus.sh --profile=pro start"
             echo_e "    ./dokus.sh profile pro         Set and save profile"
             echo ""
             ;;
