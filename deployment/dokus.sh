@@ -985,7 +985,7 @@ select_profile() {
     echo ""
     echo_e "  ${SOFT_CYAN}1${NC}   ${BOLD}Pro${NC} ${SOFT_GREEN}(Mac/Servers)${NC}"
     echo_e "      ${DIM_WHITE}High performance: G1GC, 1GB heap, more connections${NC}"
-    echo_e "      ${DIM_WHITE}Ollama: llama3.1:8b, 4 parallel requests${NC}"
+    echo_e "      ${DIM_WHITE}Ollama: qwen2.5:14b-instruct, 4 parallel requests${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.pro.yml${NC}"
     echo ""
     echo_e "  ${SOFT_CYAN}2${NC}   ${BOLD}Lite${NC} ${SOFT_YELLOW}(Raspberry Pi / Default)${NC}"
