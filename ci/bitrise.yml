@@ -392,8 +392,6 @@ workflows:
             -PappleBundleId=$MAC_BUNDLE_ID"
       - script@1:
           title: Notarize DMG
-          run_if: '{{and (ne (getenv "ASC_API_KEY_ID") "") (eq (getenv
-          "MAC_SIGNING_ENABLED") "true")}}'
           inputs:
             - content: |
                 #!/bin/bash
