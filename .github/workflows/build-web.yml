@@ -1,0 +1,162 @@
+name: Build and Deploy Web Application
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'composeApp/**'
+      - 'application/**'
+      - 'foundation/**'
+      - '.github/workflows/build-web.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'composeApp/**'
+      - 'application/**'
+      - 'foundation/**'
+  workflow_dispatch:
+    inputs:
+      force-build:
+        description: 'Force build even without changes'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Cancel in-progress runs for the same workflow and ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Xmx6g
+  JAVA_VERSION: '21'
+  REGISTRY: '94.111.226.82:5000'
+  IMAGE_NAME: 'dokus-web'
+
+jobs:
+  # Build WASM and Docker in single job to avoid artifact issues
+  build-and-push:
+    name: Build & Deploy Web App
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build WASM production bundle
+        run: |
+          echo "Building Kotlin/WASM production bundle..."
+          ./gradlew :composeApp:wasmJsBrowserDistribution -x test
+
+      - name: Verify build output
+        run: |
+          echo "Verifying build output..."
+          BUILD_DIR="composeApp/build/dist/wasmJs/productionExecutable"
+          if [ ! -d "$BUILD_DIR" ]; then
+            echo "Build output directory not found!"
+            echo "Checking available directories..."
+            find composeApp/build -type d 2>/dev/null | head -30 || echo "No directories found"
+            exit 1
+          fi
+          echo "Build output size:"
+          du -sh "$BUILD_DIR"
+          echo "Build output contents:"
+          ls -la "$BUILD_DIR"
+          if [ ! -f "$BUILD_DIR/index.html" ]; then
+            echo "index.html not found in build output!"
+            exit 1
+          fi
+          echo "Build output verified"
+
+      - name: Generate Docker tags
+        id: meta
+        run: |
+          # Branch name (sanitized for Docker)
+          BRANCH_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+
+          # Commit SHA (short)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          # Image name
+          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+
+          # Build tags
+          TAGS="${IMAGE_NAME}:${BRANCH_NAME}-${SHORT_SHA}"
+          TAGS="${TAGS},${IMAGE_NAME}:${BRANCH_NAME}-latest"
+
+          # Add 'latest' tag for main branch
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            TAGS="${TAGS},${IMAGE_NAME}:latest"
+          fi
+
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "image-name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+
+          echo "Image: ${IMAGE_NAME}"
+          echo "Tags: ${TAGS}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+          config-inline: |
+            [registry."94.111.226.82:5000"]
+              http = true
+              insecure = true
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: composeApp/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=dokus-web
+            org.opencontainers.image.description=Dokus Web Application (WASM)
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.branch }}-${{ steps.meta.outputs.short-sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "# Web Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ${{ steps.meta.outputs.image-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
