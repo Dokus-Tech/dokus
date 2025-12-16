@@ -9,7 +9,9 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinPluginSerialization)
     alias(libs.plugins.buildKonfig)
+    id("dokus.versioning")
 }
+val appVersion: ai.dokus.convention.AppVersionExtension by project.extensions
 
 kotlin {
     jvmToolchain(17)
@@ -31,7 +33,7 @@ kotlin {
     wasmJs {
         browser()
     }
-    
+
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.datetime)
@@ -62,6 +64,12 @@ android {
 buildkonfig {
     packageName = "ai.dokus.foundation.domain.config"
     defaultConfigs {
+        buildConfigField(STRING, "appVersionName", appVersion.name)
+        buildConfigField(INT, "appVersionCode", appVersion.code.toString())
+        buildConfigField(INT, "appVersionMajor", appVersion.major.toString())
+        buildConfigField(INT, "appVersionMinor", appVersion.minor.toString())
+        buildConfigField(INT, "appVersionBuild", appVersion.build.toString())
+
         buildConfigField(STRING, "env", "cloud")
 
         // Gateway endpoint (for external clients via Traefik) - Cloud
