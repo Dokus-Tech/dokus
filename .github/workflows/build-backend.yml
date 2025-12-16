@@ -301,9 +301,10 @@ jobs:
     needs: [ detect-changes, build-jars, build-docker ]
     if: |
       github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
-      needs.build-jars.result == 'success' &&
-      needs.build-docker.result == 'success'
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.build-jars.result == 'success' || needs.build-jars.result == 'skipped') &&
+      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') &&
+      needs.detect-changes.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
