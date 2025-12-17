@@ -79,10 +79,48 @@ jobs:
           echo "Building common code..."
           ./gradlew :composeApp:compileKotlinDesktop --stacktrace
 
+  # Create deployment package for releases
+  create-deployment-package:
+    name: 📦 Create Deployment Package
+    needs: [tests, build-check]
+    if: |
+      always() &&
+      (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
+      (needs.build-check.result == 'success' || needs.build-check.result == 'skipped') &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Create deployment package
+        run: |
+          # Create deployment archive
+          cd deployment
+          zip -r ../dokus-quick-deploy.zip . -x "*.git*" -x ".env" -x ".env.backup"
+          cd ..
+
+          # Show contents
+          echo "📦 Package contents:"
+          unzip -l dokus-quick-deploy.zip
+
+          # Get file size
+          SIZE=$(du -h dokus-quick-deploy.zip | cut -f1)
+          echo "📊 Package size: $SIZE"
+
+      - name: 📤 Upload deployment package
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-package
+          path: dokus-quick-deploy.zip
+          retention-days: 90
+
   # Summary job - runs after all checks complete
   summary:
     name: 📊 Build Summary
-    needs: [validation, tests, build-check]
+    needs: [validation, tests, build-check, create-deployment-package]
     if: always()
     runs-on: ubuntu-latest
 
@@ -126,6 +164,15 @@ jobs:
             echo "| 🏗️ Build Check | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| 🏗️ Build Check | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Deployment Package
+          if [ "${{ needs.create-deployment-package.result }}" == "success" ]; then
+            echo "| 📦 Deployment Package | ✅ Created |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.create-deployment-package.result }}" == "skipped" ]; then
+            echo "| 📦 Deployment Package | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 📦 Deployment Package | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -188,11 +235,16 @@ jobs:
         if: needs.tests.result == 'failure' || needs.build-check.result == 'failure'
         run: exit 1
 
-  # Create release tag and package on main branch
+  # Create release with deployment package on main branch
   release:
-    name: 📦 Create Release
-    needs: [tests, build-check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    name: 🚀 Create Release
+    needs: [tests, build-check, create-deployment-package]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.tests.result == 'success' &&
+      needs.build-check.result == 'success' &&
+      needs.create-deployment-package.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
@@ -204,76 +256,110 @@ jobs:
       - name: 🏷️ Generate version
         id: version
         run: |
-          # Get the latest tag or default to v0.0.0
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "Latest tag: $LATEST_TAG"
+          # Generate version from commit count and short SHA
+          VERSION_CODE=$(git rev-list --count HEAD)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION_TAG="v0.0.${VERSION_CODE}"
 
-          # Extract version numbers
-          VERSION=${LATEST_TAG#v}
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f2)
-          PATCH=$(echo $VERSION | cut -d. -f3)
+          echo "version-tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+          echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-          # Increment patch version
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+          echo "📦 Version: $VERSION_TAG (build $VERSION_CODE)"
 
-          # Short SHA for build metadata
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-
-          echo "new-version=${NEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "New version: ${NEW_VERSION}"
-
-      - name: 🏷️ Create Git tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ steps.version.outputs.new-version }}" -m "Release ${{ steps.version.outputs.new-version }}"
-          git push origin "${{ steps.version.outputs.new-version }}"
-
-      - name: 📝 Generate release notes
-        id: notes
+      - name: 📝 Generate changelog
+        id: changelog
         run: |
           # Get commits since last tag
-          LATEST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -n "$LATEST_TAG" ]; then
-            COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | head -20)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" -n 10)
           else
-            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)")
           fi
 
-          # Write to file for multiline output
-          echo "$COMMITS" > release_notes.txt
-          echo "Generated release notes"
+          # Save to file for multiline
+          echo "$COMMITS" > changelog.txt
 
-      - name: 📦 Create GitHub Release
-        uses: actions/github-script@v7
+          echo "📋 Generated changelog"
+
+      - name: 📥 Download Deployment Package
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            const fs = require('fs');
-            const notes = fs.readFileSync('release_notes.txt', 'utf8');
+          name: deployment-package
+          path: ./artifacts
 
-            const release = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: '${{ steps.version.outputs.new-version }}',
-              name: 'Release ${{ steps.version.outputs.new-version }}',
-              body: `## What's Changed\n\n${notes}\n\n**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/.../${{ steps.version.outputs.new-version }}`,
-              draft: false,
-              prerelease: false
-            });
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version-tag }}
+          name: Release ${{ steps.version.outputs.version-tag }}
+          body: |
+            # 🚀 Dokus Release ${{ steps.version.outputs.version-tag }}
 
-            console.log(`Created release: ${release.data.html_url}`);
+            **Build:** ${{ steps.version.outputs.version-code }}
+            **Commit:** ${{ steps.version.outputs.short-sha }}
+            **Branch:** ${{ github.ref_name }}
+
+            ## 📝 Changes
+
+            See changelog below.
+
+            ## 🚀 Quick Start
+
+            ### Deploy Backend Server
+
+            **Linux / macOS:**
+            ```bash
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version-tag }}/dokus-quick-deploy.zip -o dokus.zip
+            unzip dokus.zip -d dokus && cd dokus
+            chmod +x dokus.sh && ./dokus.sh
+            ```
+
+            **Windows:**
+            1. Download `dokus-quick-deploy.zip` from assets
+            2. Extract and run `dokus.bat`
+
+            **What's included:**
+            - ✅ All 6 backend services (auth, cashflow, payment, contacts, banking, gateway)
+            - ✅ Interactive setup with auto-generated passwords
+            - ✅ Multi-architecture support (AMD64 + ARM64)
+            - ✅ PostgreSQL, Redis, RabbitMQ
+
+            ## 🔐 Verification
+
+            This release was automatically built and signed by GitHub Actions.
+
+            - Workflow: [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - Commit: [${{ steps.version.outputs.short-sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+          files: |
+            ./artifacts/*.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      - name: 🎉 Release created
+        run: |
+          echo "✅ Release ${{ steps.version.outputs.version-tag }} created successfully!"
+          echo "🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version-tag }}"
 
       - name: 📊 Release summary
         run: |
           echo "# 📦 Release Created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ steps.version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version-tag }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Quick Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version-tag }}/dokus-quick-deploy.zip -o dokus.zip" >> $GITHUB_STEP_SUMMARY
+          echo "unzip dokus.zip -d dokus && cd dokus" >> $GITHUB_STEP_SUMMARY
+          echo "chmod +x dokus.sh && ./dokus.sh" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Changes" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat release_notes.txt >> $GITHUB_STEP_SUMMARY
+          cat changelog.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
