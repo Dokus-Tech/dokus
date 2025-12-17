@@ -1,0 +1,279 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  actions: read
+
+env:
+  JAVA_VERSION: '21'
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+
+jobs:
+  # Quick validation checks
+  validation:
+    name: 🔍 Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gradle/actions/wrapper-validation@v4
+
+  # Run tests on GitHub Actions
+  tests:
+    name: 🧪 Tests
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: 🧪 Run Desktop/JVM tests
+        run: |
+          echo "Running Desktop/JVM tests..."
+          ./gradlew :composeApp:desktopTest --stacktrace
+
+      - name: 📤 Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/build/test-results/**/TEST-*.xml
+            **/build/reports/tests/**
+          retention-days: 7
+
+  # Build verification (ensures code compiles)
+  build-check:
+    name: 🏗️ Build Check
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup environment
+        uses: ./.github/actions/job-set-up
+
+      - name: 🏗️ Build common code
+        run: |
+          echo "Building common code..."
+          ./gradlew :composeApp:compileKotlinDesktop --stacktrace
+
+  # Summary job - runs after all checks complete
+  summary:
+    name: 📊 Build Summary
+    needs: [validation, tests, build-check]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📊 Generate summary
+        run: |
+          echo "# 🚀 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Pipeline Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+
+          # Validation
+          if [ "${{ needs.validation.result }}" == "success" ]; then
+            echo "| 🔍 Validation | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.validation.result }}" == "skipped" ]; then
+            echo "| 🔍 Validation | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🔍 Validation | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Tests
+          if [ "${{ needs.tests.result }}" == "success" ]; then
+            echo "| 🧪 Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.tests.result }}" == "skipped" ]; then
+            echo "| 🧪 Tests | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🧪 Tests | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Build Check
+          if [ "${{ needs.build-check.result }}" == "success" ]; then
+            echo "| 🏗️ Build Check | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-check.result }}" == "skipped" ]; then
+            echo "| 🏗️ Build Check | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🏗️ Build Check | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall status
+          if [ "${{ needs.tests.result }}" == "success" ] && [ "${{ needs.build-check.result }}" == "success" ]; then
+            echo "## ✅ All Checks Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Some Checks Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 💬 PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const testsResult = '${{ needs.tests.result }}';
+            const buildResult = '${{ needs.build-check.result }}';
+            const allPassed = testsResult === 'success' && buildResult === 'success';
+            const statusEmoji = allPassed ? '✅' : '❌';
+
+            const body = `## ${statusEmoji} CI Pipeline ${allPassed ? 'Passed' : 'Failed'}
+
+            | Check | Status |
+            |-------|--------|
+            | 🧪 Tests | ${testsResult === 'success' ? '✅ Passed' : '❌ Failed'} |
+            | 🏗️ Build | ${buildResult === 'success' ? '✅ Passed' : '❌ Failed'} |
+
+            **Commit:** \`${{ github.sha }}\`
+            **Branch:** \`${{ github.head_ref }}\``;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('CI Pipeline')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: ❌ Fail if checks failed
+        if: needs.tests.result == 'failure' || needs.build-check.result == 'failure'
+        run: exit 1
+
+  # Create release tag and package on main branch
+  release:
+    name: 📦 Create Release
+    needs: [tests, build-check]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Generate version
+        id: version
+        run: |
+          # Get the latest tag or default to v0.0.0
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $LATEST_TAG"
+
+          # Extract version numbers
+          VERSION=${LATEST_TAG#v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+          # Short SHA for build metadata
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          echo "new-version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "New version: ${NEW_VERSION}"
+
+      - name: 🏷️ Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.new-version }}" -m "Release ${{ steps.version.outputs.new-version }}"
+          git push origin "${{ steps.version.outputs.new-version }}"
+
+      - name: 📝 Generate release notes
+        id: notes
+        run: |
+          # Get commits since last tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$LATEST_TAG" ]; then
+            COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | head -20)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          fi
+
+          # Write to file for multiline output
+          echo "$COMMITS" > release_notes.txt
+          echo "Generated release notes"
+
+      - name: 📦 Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const notes = fs.readFileSync('release_notes.txt', 'utf8');
+
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ steps.version.outputs.new-version }}',
+              name: 'Release ${{ steps.version.outputs.new-version }}',
+              body: `## What's Changed\n\n${notes}\n\n**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/.../${{ steps.version.outputs.new-version }}`,
+              draft: false,
+              prerelease: false
+            });
+
+            console.log(`Created release: ${release.data.html_url}`);
+
+      - name: 📊 Release summary
+        run: |
+          echo "# 📦 Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Changes" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat release_notes.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
