@@ -734,227 +734,129 @@ initial_setup() {
     fi
 
     echo ""
-    echo "  ${SOFT_BLUE}This wizard will mint fresh credentials and defaults.${NC}"
+    echo_e "  ${SOFT_BLUE}This wizard will generate secure credentials for your deployment.${NC}"
     echo ""
 
+    # Generate secure passwords
     DB_PASS=$(generate_password)
     REDIS_PASS=$(generate_password)
     RABBITMQ_PASS=$(generate_password)
     MINIO_PASS=$(generate_password)
     JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64 2>/dev/null || LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 64)
-    MONITORING_KEY=$(generate_password)
-    ADMIN_KEY=$(generate_password)
-    INTEGRATION_KEY=$(generate_password)
-    REQUEST_SIGNING_SECRET=$(generate_password)
 
-    DB_USERNAME=$(prompt_with_default "Database username:" "dokus" "DB_USERNAME")
+    # Core credentials (minimal prompts - use defaults for most)
+    print_status task "Core Credentials"
     DB_PASSWORD=$(prompt_with_default "Database password:" "$DB_PASS" "DB_PASSWORD" "true")
-
-    REDIS_HOST="redis"
-    REDIS_PORT="6379"
     REDIS_PASSWORD=$(prompt_with_default "Redis password:" "$REDIS_PASS" "REDIS_PASSWORD" "true")
-
-    RABBITMQ_USERNAME=$(prompt_with_default "RabbitMQ username:" "dokus" "RABBITMQ_USERNAME")
     RABBITMQ_PASSWORD=$(prompt_with_default "RabbitMQ password:" "$RABBITMQ_PASS" "RABBITMQ_PASSWORD" "true")
-
-    MINIO_ROOT_USER=$(prompt_with_default "MinIO root user:" "dokusadmin" "MINIO_ROOT_USER")
-    MINIO_ROOT_PASSWORD=$(prompt_with_default "MinIO root password:" "$MINIO_PASS" "MINIO_ROOT_PASSWORD" "true")
-    MINIO_BUCKET="dokus-documents"
-
+    MINIO_PASSWORD=$(prompt_with_default "MinIO password:" "$MINIO_PASS" "MINIO_PASSWORD" "true")
     JWT_SECRET_VAL=$(prompt_with_default "JWT secret (64+ chars):" "$JWT_SECRET" "JWT_SECRET" "true")
-    JWT_ISSUER="https://dokus.tech"
-    JWT_AUDIENCE="dokus-api"
 
-    CACHE_TYPE="redis"
-    MONITORING_API_KEY="$MONITORING_KEY"
-    ADMIN_API_KEY="$ADMIN_KEY"
-    INTEGRATION_API_KEY="$INTEGRATION_KEY"
-    REQUEST_SIGNING_ENABLED="true"
-    REQUEST_SIGNING_SECRET="$REQUEST_SIGNING_SECRET"
-    RATE_LIMIT_PER_MINUTE="60"
-    LOG_LEVEL="INFO"
+    # Create logs directory
+    mkdir -p logs/traefik
+    print_status success "Created logs/traefik/ directory"
 
-    EMAIL_ENABLED="false"
-    EMAIL_PROVIDER="smtp"
-    SMTP_HOST="smtp.example.com"
-    SMTP_PORT="587"
-    SMTP_USERNAME="noreply@dokus.tech"
-    SMTP_PASSWORD=""
-    SMTP_ENABLE_TLS="true"
-    SMTP_ENABLE_AUTH="true"
-    EMAIL_FROM_ADDRESS="noreply@dokus.tech"
-    EMAIL_FROM_NAME="Dokus"
-    EMAIL_REPLY_TO_ADDRESS="support@dokus.tech"
-    EMAIL_REPLY_TO_NAME="Dokus Support"
-    EMAIL_BASE_URL="https://dokus.tech"
-    EMAIL_SUPPORT_ADDRESS="support@dokus.tech"
+    # Cloud profile needs additional gateway config
+    if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
+        echo ""
+        print_status task "Cloud Gateway Configuration (Traefik + Let's Encrypt)"
 
-    METRICS_ENABLED="true"
-    METRICS_PORT="7090"
-    TRACING_ENABLED="false"
-    JAEGER_ENDPOINT=""
+        DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "app.dokus.tech" "DOMAIN")
+        ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "admin@${DOMAIN}" "ACME_EMAIL")
 
-    GEOIP_ENABLED="true"
+        # Generate Traefik dashboard password
+        TRAEFIK_DASHBOARD_USER="admin"
+        TRAEFIK_DASHBOARD_PASS=$(generate_password | cut -c1-16)
+        if command -v htpasswd &> /dev/null; then
+            TRAEFIK_DASHBOARD_AUTH=$(htpasswd -nb "$TRAEFIK_DASHBOARD_USER" "$TRAEFIK_DASHBOARD_PASS")
+        else
+            TRAEFIK_DASHBOARD_AUTH="${TRAEFIK_DASHBOARD_USER}:$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")"
+        fi
 
-    # Gateway configuration
-    echo ""
-    print_status task "Configuring API Gateway (Traefik)"
-    DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "${DEFAULT_DOMAIN}" "DOMAIN")
+        # Create ACME directory for Let's Encrypt
+        mkdir -p acme
+        touch acme/acme.json
+        chmod 600 acme/acme.json
+        print_status success "Created acme/ directory for Let's Encrypt"
 
-    # Generate Traefik dashboard password
-    TRAEFIK_DASHBOARD_USER="admin"
-    TRAEFIK_DASHBOARD_PASS=$(generate_password | cut -c1-16)
-    if command -v htpasswd &> /dev/null; then
-        TRAEFIK_DASHBOARD_AUTH=$(htpasswd -nb "$TRAEFIK_DASHBOARD_USER" "$TRAEFIK_DASHBOARD_PASS")
-    else
-        # Fallback: Use openssl for basic auth encoding
-        TRAEFIK_DASHBOARD_AUTH="${TRAEFIK_DASHBOARD_USER}:$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")"
-    fi
-
-    ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "admin@${DOMAIN}" "ACME_EMAIL")
-
-    # Create required directories
-    mkdir -p acme logs/traefik
-    touch acme/acme.json
-    chmod 600 acme/acme.json
-    print_status success "Created acme/ and logs/traefik/ directories"
-
-    cat > .env << EOF
+        cat > .env << EOF
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
-#
-# IMPORTANT: This file contains sensitive credentials - keep it secure!
-# You can modify optional settings below after deployment.
+# Profile: Cloud (HTTPS with Let's Encrypt)
 
 # ============================================================================
-# DATABASE CONFIGURATION
+# REQUIRED - Core Credentials
 # ============================================================================
-DB_USERNAME=$DB_USERNAME
 DB_PASSWORD=$DB_PASSWORD
-
-# ============================================================================
-# REDIS CACHE CONFIGURATION
-# ============================================================================
-REDIS_HOST=$REDIS_HOST
-REDIS_PORT=$REDIS_PORT
 REDIS_PASSWORD=$REDIS_PASSWORD
-
-# ============================================================================
-# RABBITMQ MESSAGE BROKER
-# ============================================================================
-RABBITMQ_USERNAME=$RABBITMQ_USERNAME
 RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
-
-# ============================================================================
-# MINIO OBJECT STORAGE
-# ============================================================================
-MINIO_ROOT_USER=$MINIO_ROOT_USER
-MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD
-MINIO_BUCKET=$MINIO_BUCKET
-
-# ============================================================================
-# JWT AUTHENTICATION
-# ============================================================================
+MINIO_PASSWORD=$MINIO_PASSWORD
 JWT_SECRET=$JWT_SECRET_VAL
-JWT_ISSUER=$JWT_ISSUER
-JWT_AUDIENCE=$JWT_AUDIENCE
 
 # ============================================================================
-# CACHING (CRITICAL!)
-# ============================================================================
-CACHE_TYPE=$CACHE_TYPE
-
-# ============================================================================
-# SECURITY & API KEYS
-# ============================================================================
-# API Keys (auto-generated - rotate these regularly)
-MONITORING_API_KEY=$MONITORING_API_KEY
-ADMIN_API_KEY=$ADMIN_API_KEY
-INTEGRATION_API_KEY=$INTEGRATION_API_KEY
-
-# Request Signing
-REQUEST_SIGNING_ENABLED=$REQUEST_SIGNING_ENABLED
-REQUEST_SIGNING_SECRET=$REQUEST_SIGNING_SECRET
-
-# Rate Limiting
-RATE_LIMIT_PER_MINUTE=$RATE_LIMIT_PER_MINUTE
-
-# ============================================================================
-# EMAIL CONFIGURATION (Optional - currently disabled)
-# ============================================================================
-EMAIL_ENABLED=$EMAIL_ENABLED
-EMAIL_PROVIDER=$EMAIL_PROVIDER
-SMTP_HOST=$SMTP_HOST
-SMTP_PORT=$SMTP_PORT
-SMTP_USERNAME=$SMTP_USERNAME
-SMTP_PASSWORD=$SMTP_PASSWORD
-SMTP_ENABLE_TLS=$SMTP_ENABLE_TLS
-SMTP_ENABLE_AUTH=$SMTP_ENABLE_AUTH
-EMAIL_FROM_ADDRESS=$EMAIL_FROM_ADDRESS
-EMAIL_FROM_NAME=$EMAIL_FROM_NAME
-EMAIL_REPLY_TO_ADDRESS=$EMAIL_REPLY_TO_ADDRESS
-EMAIL_REPLY_TO_NAME=$EMAIL_REPLY_TO_NAME
-EMAIL_BASE_URL=$EMAIL_BASE_URL
-EMAIL_SUPPORT_ADDRESS=$EMAIL_SUPPORT_ADDRESS
-
-# ============================================================================
-# MONITORING & OBSERVABILITY (Optional)
-# ============================================================================
-METRICS_ENABLED=$METRICS_ENABLED
-METRICS_PORT=$METRICS_PORT
-TRACING_ENABLED=$TRACING_ENABLED
-JAEGER_ENDPOINT=$JAEGER_ENDPOINT
-
-# ============================================================================
-# GEOLOCATION
-# ============================================================================
-GEOIP_ENABLED=$GEOIP_ENABLED
-
-# ============================================================================
-# CORS CONFIGURATION
-# ============================================================================
-CORS_ALLOWED_HOSTS=*
-
-# ============================================================================
-# AI CONFIGURATION (Document Processing)
-# ============================================================================
-AI_DEFAULT_PROVIDER=ollama
-AI_OLLAMA_ENABLED=true
-AI_OLLAMA_MODEL=mistral:7b
-AI_OPENAI_ENABLED=false
-AI_OPENAI_API_KEY=
-AI_OPENAI_MODEL=gpt-4o-mini
-
-# Ollama Performance (adjust for your hardware)
-# Raspberry Pi 4 (4GB): OLLAMA_NUM_PARALLEL=1, OLLAMA_MAX_LOADED_MODELS=1
-# Raspberry Pi 5 (8GB): OLLAMA_NUM_PARALLEL=2, OLLAMA_MAX_LOADED_MODELS=1
-# Server with GPU: OLLAMA_NUM_PARALLEL=4, OLLAMA_MAX_LOADED_MODELS=2
-OLLAMA_NUM_PARALLEL=1
-OLLAMA_MAX_LOADED_MODELS=1
-
-# ============================================================================
-# API GATEWAY (Traefik)
+# CLOUD GATEWAY (Traefik + Let's Encrypt)
 # ============================================================================
 DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
 TRAEFIK_DASHBOARD_AUTH=$TRAEFIK_DASHBOARD_AUTH
 
 # ============================================================================
-# LOGGING
+# OPTIONAL - AI Configuration (Ollama runs on host machine)
 # ============================================================================
-LOG_LEVEL=$LOG_LEVEL
+# Install Ollama: https://ollama.com/download
+# Then run: ollama pull mistral:7b
+AI_OLLAMA_URL=http://host.docker.internal:11434
+AI_OLLAMA_MODEL=mistral:7b
+
+# ============================================================================
+# OPTIONAL - Customization (uncomment to override defaults)
+# ============================================================================
+# LOG_LEVEL=INFO
+# CACHE_TYPE=redis
+# CORS_ALLOWED_HOSTS=*
 EOF
 
-    echo ""
-    print_status info "Traefik Dashboard credentials:"
-    echo "  ${DIM_WHITE}User: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_USER}${NC}"
-    echo "  ${DIM_WHITE}Password: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_PASS}${NC}"
-    echo "  ${DIM_WHITE}URL: ${SOFT_CYAN}https://traefik.${DOMAIN}${NC}"
+        echo ""
+        print_status info "Traefik Dashboard credentials:"
+        echo_e "  ${DIM_WHITE}User: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_USER}${NC}"
+        echo_e "  ${DIM_WHITE}Password: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_PASS}${NC}"
+        echo_e "  ${DIM_WHITE}URL: ${SOFT_CYAN}https://traefik.${DOMAIN}${NC}"
+
+    else
+        # Self-hosting profile (Pro/Lite) - simpler config
+        cat > .env << EOF
+# Dokus Self-Hosting Environment Configuration
+# Generated on $(date)
+# Profile: ${DOKUS_PROFILE:-lite}
+
+# ============================================================================
+# REQUIRED - Core Credentials
+# ============================================================================
+DB_PASSWORD=$DB_PASSWORD
+REDIS_PASSWORD=$REDIS_PASSWORD
+RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
+MINIO_PASSWORD=$MINIO_PASSWORD
+JWT_SECRET=$JWT_SECRET_VAL
+
+# ============================================================================
+# OPTIONAL - AI Configuration (Ollama runs on host machine)
+# ============================================================================
+# Install Ollama: https://ollama.com/download
+# Then run: ollama pull mistral:7b (or qwen2:1.5b for Raspberry Pi)
+AI_OLLAMA_URL=http://host.docker.internal:11434
+AI_OLLAMA_MODEL=mistral:7b
+
+# ============================================================================
+# OPTIONAL - Customization (uncomment to override defaults)
+# ============================================================================
+# LOG_LEVEL=INFO
+# CACHE_TYPE=redis  # or 'memory' for lite profile
+# CORS_ALLOWED_HOSTS=*
+EOF
+    fi
 
     echo ""
-    print_status success ".env minted with fresh credentials"
-    echo ""
-    print_status info "Optional features: metrics enabled by default; email & tracing disabled."
+    print_status success ".env created with secure credentials"
 
     echo ""
     print_status task "Configuring Docker registry"
