@@ -19,7 +19,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      test: [ "CMD", "traefik", "healthcheck", "--ping" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -232,7 +232,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-  volumes:
+    volumes:
       - ./logs-local:/app/logs
       - cashflow-storage-local:/app/storage/documents
     labels:
