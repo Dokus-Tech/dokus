@@ -1,0 +1,29 @@
+# Traefik configuration for self-hosting (HTTP-only)
+# Single entry point on port 8000 for all services
+
+api:
+  dashboard: true
+  insecure: true  # Dashboard without auth for self-hosted
+
+ping:
+  entryPoint: web
+
+entryPoints:
+  web:
+    address: ":8000"
+  traefik:
+    address: ":8080"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: dokus-network
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+log:
+  level: INFO
+
+accessLog: {}
