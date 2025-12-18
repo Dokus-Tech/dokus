@@ -762,7 +762,7 @@ initial_setup() {
         print_status task "Cloud Gateway Configuration (Traefik + Let's Encrypt)"
 
         DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "app.dokus.tech" "DOMAIN")
-        ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "admin@${DOMAIN}" "ACME_EMAIL")
+        ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "contact@dokus.tech" "ACME_EMAIL")
 
         # Generate Traefik dashboard password
         TRAEFIK_DASHBOARD_USER="admin"
@@ -772,6 +772,8 @@ initial_setup() {
         else
             TRAEFIK_DASHBOARD_AUTH="${TRAEFIK_DASHBOARD_USER}:$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")"
         fi
+        # Escape $ as $$ for Docker Compose .env file
+        TRAEFIK_DASHBOARD_AUTH=$(echo "$TRAEFIK_DASHBOARD_AUTH" | sed 's/\$/\$\$/g')
 
         # Create ACME directory for Let's Encrypt
         mkdir -p acme
