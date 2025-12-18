@@ -538,6 +538,25 @@ restart_services() {
     start_services
 }
 
+update_services() {
+    if ! check_env; then
+        return 1
+    fi
+
+    print_gradient_header "⬆️ Updating Dokus" "Pulling new images + applying updates"
+
+    print_status info "Checking registry and pulling images..."
+    docker compose -f "$COMPOSE_FILE" pull
+
+    echo ""
+    print_status info "Applying updates (restart/recreate as needed)..."
+    docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+
+    echo ""
+    print_status success "Update complete"
+    docker compose -f "$COMPOSE_FILE" ps
+}
+
 show_logs() {
     service=$1
     if [ -z "$service" ]; then
@@ -1051,10 +1070,14 @@ show_menu() {
     echo_e "    ${SOFT_CYAN}9${NC}   Select profile (pro/lite)"
     echo ""
 
+    echo_e "  ${SOFT_YELLOW}${BOLD}Maintenance${NC}"
+    echo_e "    ${SOFT_CYAN}10${NC}  Check + pull updates (restart)"
+    echo ""
+
     echo_e "  ${SOFT_GRAY}0${NC}    Exit"
     echo ""
 
-    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-9]:${NC} "
+    printf "  ${BOLD}Select channel ${DIM_WHITE}[0-10]:${NC} "
     read choice
     echo ""
 
@@ -1068,6 +1091,7 @@ show_menu() {
         7) access_db ;;
         8) show_mobile_connection ;;
         9) select_profile ;;
+        10) check_docker && update_services ;;
         0) echo "  ${SOFT_CYAN}👋 Goodbye!${NC}\n" && exit 0 ;;
         *) print_status error "Invalid choice" && sleep 1 && show_menu ;;
     esac
@@ -1115,7 +1139,7 @@ main() {
     done
 
     # For CLI commands that need a profile, prompt if not set
-    if [ -z "${DOKUS_PROFILE:-}" ] && [ -n "${cmd:-}" ] && [[ "$cmd" =~ ^(start|stop|restart|status|logs|setup)$ ]]; then
+    if [ -z "${DOKUS_PROFILE:-}" ] && [ -n "${cmd:-}" ] && [[ "$cmd" =~ ^(start|stop|restart|status|logs|setup|update|upgrade)$ ]]; then
         prompt_profile_selection
     fi
 
@@ -1129,6 +1153,10 @@ main() {
             ;;
         stop)
             stop_services
+            ;;
+        update|upgrade)
+            check_docker
+            update_services
             ;;
         restart)
             check_docker
@@ -1186,6 +1214,7 @@ main() {
             echo_e "    setup      Guided initial setup"
             echo_e "    start      Start all services"
             echo_e "    stop       Stop all services"
+            echo_e "    update     Pull new images and apply updates"
             echo_e "    restart    Restart all services"
             echo_e "    status     Show service status"
             echo_e "    logs       View logs (optionally: logs <service>)"
