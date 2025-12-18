@@ -199,8 +199,8 @@ get_server_ip() {
 
 # Credentials
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep -E 'DB_USERNAME|DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_USERNAME|RABBITMQ_PASSWORD' | xargs)
-    DB_USER="${DB_USERNAME:-dokus}"
+    export $(grep -v '^#' .env | grep -E 'DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_PASSWORD|MINIO_PASSWORD|JWT_SECRET|DOMAIN|ACME_EMAIL' | xargs)
+    DB_USER="dokus"
     DB_PASSWORD="${DB_PASSWORD}"
 else
     DB_USER="dokus"
@@ -764,23 +764,6 @@ initial_setup() {
         DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "app.dokus.tech" "DOMAIN")
         ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "contact@dokus.tech" "ACME_EMAIL")
 
-        # Generate Traefik dashboard password
-        TRAEFIK_DASHBOARD_USER="admin"
-        TRAEFIK_DASHBOARD_PASS=$(generate_password | cut -c1-16)
-        if command -v htpasswd &> /dev/null; then
-            TRAEFIK_DASHBOARD_AUTH=$(htpasswd -nb "$TRAEFIK_DASHBOARD_USER" "$TRAEFIK_DASHBOARD_PASS")
-        else
-            TRAEFIK_DASHBOARD_AUTH="${TRAEFIK_DASHBOARD_USER}:$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")"
-        fi
-        # Escape $ as $$ for Docker Compose .env file
-        TRAEFIK_DASHBOARD_AUTH=$(echo "$TRAEFIK_DASHBOARD_AUTH" | sed 's/\$/\$\$/g')
-
-        # Create ACME directory for Let's Encrypt
-        mkdir -p acme
-        touch acme/acme.json
-        chmod 600 acme/acme.json
-        print_status success "Created acme/ directory for Let's Encrypt"
-
         cat > .env << EOF
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
@@ -800,29 +783,7 @@ JWT_SECRET=$JWT_SECRET_VAL
 # ============================================================================
 DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
-TRAEFIK_DASHBOARD_AUTH=$TRAEFIK_DASHBOARD_AUTH
-
-# ============================================================================
-# OPTIONAL - AI Configuration (Ollama runs on host machine)
-# ============================================================================
-# Install Ollama: https://ollama.com/download
-# Then run: ollama pull mistral:7b
-AI_OLLAMA_URL=http://host.docker.internal:11434
-AI_OLLAMA_MODEL=mistral:7b
-
-# ============================================================================
-# OPTIONAL - Customization (uncomment to override defaults)
-# ============================================================================
-# LOG_LEVEL=INFO
-# CACHE_TYPE=redis
-# CORS_ALLOWED_HOSTS=*
 EOF
-
-        echo ""
-        print_status info "Traefik Dashboard credentials:"
-        echo_e "  ${DIM_WHITE}User: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_USER}${NC}"
-        echo_e "  ${DIM_WHITE}Password: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_PASS}${NC}"
-        echo_e "  ${DIM_WHITE}URL: ${SOFT_CYAN}https://traefik.${DOMAIN}${NC}"
 
     else
         # Self-hosting profile (Pro/Lite) - simpler config
@@ -839,21 +800,6 @@ REDIS_PASSWORD=$REDIS_PASSWORD
 RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
 MINIO_PASSWORD=$MINIO_PASSWORD
 JWT_SECRET=$JWT_SECRET_VAL
-
-# ============================================================================
-# OPTIONAL - AI Configuration (Ollama runs on host machine)
-# ============================================================================
-# Install Ollama: https://ollama.com/download
-# Then run: ollama pull mistral:7b (or qwen2:1.5b for Raspberry Pi)
-AI_OLLAMA_URL=http://host.docker.internal:11434
-AI_OLLAMA_MODEL=mistral:7b
-
-# ============================================================================
-# OPTIONAL - Customization (uncomment to override defaults)
-# ============================================================================
-# LOG_LEVEL=INFO
-# CACHE_TYPE=redis  # or 'memory' for lite profile
-# CORS_ALLOWED_HOSTS=*
 EOF
     fi
 

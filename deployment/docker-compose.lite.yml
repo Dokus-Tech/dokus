@@ -87,7 +87,7 @@ services:
     container_name: dokus-postgres
     environment:
       POSTGRES_DB: dokus
-      POSTGRES_USER: ${DB_USERNAME:-dokus}
+      POSTGRES_USER: dokus
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     command:
       - "postgres"
@@ -124,7 +124,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus"]
+      test: ["CMD-SHELL", "pg_isready -U dokus -d dokus"]
       <<: *healthcheck-pi
     restart: unless-stopped
 
@@ -165,7 +165,7 @@ services:
     image: rabbitmq:3.13-management-alpine
     container_name: dokus-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-dokus}
+      RABBITMQ_DEFAULT_USER: dokus
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /dokus
       # Aggressive memory limits for Pi
@@ -196,8 +196,8 @@ services:
     image: minio/minio:latest
     container_name: dokus-minio
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dokusadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-${MINIO_PASSWORD}}
+      MINIO_ROOT_USER: dokusadmin
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -226,39 +226,11 @@ services:
   auth-service:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-auth:${TAG:-latest}
     container_name: dokus-auth
+    env_file:
+      - .env
     environment:
       <<: *jvm-pi-defaults
-      PORT: 8080
-      ENVIRONMENT: selfhost
-      # Database - smaller pool for Pi
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME:-dokus}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
-      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-2}
-      # JWT
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-dokus}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
-      # Caching - use memory on Pi to save Redis memory
-      CACHE_TYPE: ${CACHE_TYPE:-memory}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      # RabbitMQ
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-      RABBITMQ_VHOST: /dokus
-      # Security - lower rate limit for Pi
-      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS:-*}
-      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-30}
-      # GeoIP disabled on Pi (80MB memory)
-      GEOIP_ENABLED: "false"
-      # Monitoring
-      METRICS_ENABLED: ${METRICS_ENABLED:-true}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: lite
     depends_on:
       postgres:
         condition: service_healthy
@@ -299,36 +271,11 @@ services:
   cashflow-service:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-cashflow:${TAG:-latest}
     container_name: dokus-cashflow
+    env_file:
+      - .env
     environment:
       <<: *jvm-pi-defaults
-      PORT: 8080
-      ENVIRONMENT: selfhost
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME:-dokus}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-dokus}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
-      CACHE_TYPE: ${CACHE_TYPE:-memory}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      # MinIO
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-dokusadmin}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-${MINIO_PASSWORD}}
-      MINIO_BUCKET: ${MINIO_BUCKET:-dokus-documents}
-      # AI - external Ollama on host
-      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
-      AI_OLLAMA_ENABLED: ${AI_OLLAMA_ENABLED:-true}
-      AI_OLLAMA_URL: ${AI_OLLAMA_URL:-http://host.docker.internal:11434}
-      AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2:1.5b}
-      AI_OPENAI_ENABLED: ${AI_OPENAI_ENABLED:-false}
-      AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      ENVIRONMENT: lite
     depends_on:
       postgres:
         condition: service_healthy
@@ -359,22 +306,11 @@ services:
   payment-service:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-payment:${TAG:-latest}
     container_name: dokus-payment
+    env_file:
+      - .env
     environment:
       <<: *jvm-pi-defaults
-      PORT: 8080
-      ENVIRONMENT: selfhost
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME:-dokus}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-dokus}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
-      CACHE_TYPE: ${CACHE_TYPE:-memory}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: lite
     depends_on:
       postgres:
         condition: service_healthy
@@ -403,22 +339,11 @@ services:
   banking-service:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-banking:${TAG:-latest}
     container_name: dokus-banking
+    env_file:
+      - .env
     environment:
       <<: *jvm-pi-defaults
-      PORT: 8080
-      ENVIRONMENT: selfhost
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME:-dokus}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-dokus}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
-      CACHE_TYPE: ${CACHE_TYPE:-memory}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: lite
     depends_on:
       postgres:
         condition: service_healthy
@@ -447,22 +372,11 @@ services:
   contacts-service:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-contacts:${TAG:-latest}
     container_name: dokus-contacts
+    env_file:
+      - .env
     environment:
       <<: *jvm-pi-defaults
-      PORT: 8080
-      ENVIRONMENT: selfhost
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME:-dokus}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-dokus}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
-      CACHE_TYPE: ${CACHE_TYPE:-memory}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: lite
     depends_on:
       postgres:
         condition: service_healthy

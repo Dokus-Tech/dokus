@@ -129,32 +129,16 @@ services:
     image: 94.111.226.82:5000/dokus-auth:latest
     container_name: dokus-auth
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       <<: *jvm-cloud-defaults
-      PORT: 8080
       ENVIRONMENT: cloud
-
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: dokus
-      DB_PASSWORD: ${DB_PASSWORD}
-
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: dokus
-      JWT_AUDIENCE: dokus
-
-      REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CACHE_TYPE: redis
-
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USERNAME: dokus
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-      RABBITMQ_VHOST: /dokus
     networks:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.auth.rule=Host(`app.dokus.tech`) && (PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/server`))
+      - traefik.http.routers.auth.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/server`))
       - traefik.http.routers.auth.entrypoints=websecure
       - traefik.http.routers.auth.tls.certresolver=letsencrypt
       - traefik.http.services.auth.loadbalancer.server.port=8080
@@ -163,31 +147,16 @@ services:
     image: 94.111.226.82:5000/dokus-cashflow:latest
     container_name: dokus-cashflow
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       <<: *jvm-cloud-defaults
-      PORT: 8080
       ENVIRONMENT: cloud
-
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: dokus
-      DB_PASSWORD: ${DB_PASSWORD}
-
-      REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CACHE_TYPE: redis
-
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: dokus
-      MINIO_SECRET_KEY: ${MINIO_PASSWORD}
-
-      AI_OLLAMA_URL: ${AI_OLLAMA_URL:-http://host.docker.internal:11434}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.cashflow.rule=Host(`app.dokus.tech`) && (PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`))
+      - traefik.http.routers.cashflow.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`))
       - traefik.http.routers.cashflow.entrypoints=websecure
       - traefik.http.routers.cashflow.tls.certresolver=letsencrypt
       - traefik.http.services.cashflow.loadbalancer.server.port=8080
@@ -196,27 +165,16 @@ services:
     image: 94.111.226.82:5000/dokus-payment:latest
     container_name: dokus-payment
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       <<: *jvm-cloud-defaults
-      PORT: 8080
       ENVIRONMENT: cloud
-
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: dokus
-      DB_PASSWORD: ${DB_PASSWORD}
-
-      REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CACHE_TYPE: redis
-
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: dokus
-      JWT_AUDIENCE: dokus
     networks:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.payment.rule=Host(`app.dokus.tech`) && PathPrefix(`/api/v1/payments`)
+      - traefik.http.routers.payment.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/payments`)
       - traefik.http.routers.payment.entrypoints=websecure
       - traefik.http.routers.payment.tls.certresolver=letsencrypt
       - traefik.http.services.payment.loadbalancer.server.port=8080
@@ -225,27 +183,16 @@ services:
     image: 94.111.226.82:5000/dokus-banking:latest
     container_name: dokus-banking
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       <<: *jvm-cloud-defaults
-      PORT: 8080
       ENVIRONMENT: cloud
-
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: dokus
-      DB_PASSWORD: ${DB_PASSWORD}
-
-      REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CACHE_TYPE: redis
-
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: dokus
-      JWT_AUDIENCE: dokus
     networks:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.banking.rule=Host(`app.dokus.tech`) && PathPrefix(`/api/v1/banking`)
+      - traefik.http.routers.banking.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/banking`)
       - traefik.http.routers.banking.entrypoints=websecure
       - traefik.http.routers.banking.tls.certresolver=letsencrypt
       - traefik.http.services.banking.loadbalancer.server.port=8080
@@ -254,27 +201,16 @@ services:
     image: 94.111.226.82:5000/dokus-contacts:latest
     container_name: dokus-contacts
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       <<: *jvm-cloud-defaults
-      PORT: 8080
       ENVIRONMENT: cloud
-
-      DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: dokus
-      DB_PASSWORD: ${DB_PASSWORD}
-
-      REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CACHE_TYPE: redis
-
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: dokus
-      JWT_AUDIENCE: dokus
     networks:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.contacts.rule=Host(`app.dokus.tech`) && PathPrefix(`/api/v1/contacts`)
+      - traefik.http.routers.contacts.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/contacts`)
       - traefik.http.routers.contacts.entrypoints=websecure
       - traefik.http.routers.contacts.tls.certresolver=letsencrypt
       - traefik.http.services.contacts.loadbalancer.server.port=8080
@@ -290,7 +226,7 @@ services:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.web.rule=Host(`app.dokus.tech`)
+      - traefik.http.routers.web.rule=Host(`${DOMAIN:-app.dokus.tech}`)
       - traefik.http.routers.web.entrypoints=websecure
       - traefik.http.routers.web.tls.certresolver=letsencrypt
       - traefik.http.services.web.loadbalancer.server.port=8080
