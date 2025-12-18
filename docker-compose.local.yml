@@ -292,8 +292,8 @@ services:
       - cashflow-storage-local:/app/storage/documents
     labels:
       - "traefik.enable=true"
-      # Cashflow routes: invoices, expenses, cashflow, documents, attachments, peppol
-      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
+      # Cashflow routes: invoices, expenses, bills, cashflow, documents, attachments, peppol
+      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
       - "traefik.http.routers.cashflow.entrypoints=web"
       - "traefik.http.routers.cashflow.service=cashflow"
       - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
