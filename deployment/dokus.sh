@@ -71,7 +71,7 @@ DB_NAME="dokus"
 #   - lite: Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
 PROFILE_FILE=".dokus-profile"
 
-# Load saved profile or detect automatically
+# Load saved profile or prompt user to select
 load_profile() {
     if [ -f "$PROFILE_FILE" ]; then
         DOKUS_PROFILE=$(cat "$PROFILE_FILE")
@@ -79,31 +79,72 @@ load_profile() {
         # Use environment variable if set
         :
     else
-        # Auto-detect based on system
-        detect_profile
+        # No saved profile - will prompt on first interactive use
+        DOKUS_PROFILE=""
     fi
 
-    case "${DOKUS_PROFILE:-lite}" in
+    set_compose_file
+}
+
+# Set compose file based on profile
+set_compose_file() {
+    case "${DOKUS_PROFILE:-}" in
+        cloud)
+            COMPOSE_FILE="docker-compose.cloud.yml"
+            ;;
         pro)
             COMPOSE_FILE="docker-compose.pro.yml"
             ;;
-        *)
+        lite)
             COMPOSE_FILE="docker-compose.lite.yml"
-            DOKUS_PROFILE="lite"
+            ;;
+        *)
+            # Default to lite if no profile set yet
+            COMPOSE_FILE="docker-compose.lite.yml"
             ;;
     esac
 }
 
-# Auto-detect optimal profile based on hardware
-detect_profile() {
-    # macOS = pro profile (assuming powerful Mac)
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        DOKUS_PROFILE="pro"
-        return
-    fi
+# Prompt user to select profile (first-run experience)
+prompt_profile_selection() {
+    print_gradient_header "Welcome to Dokus" "First-time setup - choose your profile"
 
-    # Everything else defaults to lite (safe for Pi, SBCs, low-end servers)
-    DOKUS_PROFILE="lite"
+    echo_e "  ${SOFT_CYAN}Select a deployment profile:${NC}"
+    echo ""
+    echo_e "  ${SOFT_MAGENTA}1${NC}   ${BOLD}Cloud${NC} ${DIM_WHITE}(Production HTTPS)${NC}"
+    echo_e "      ${DIM_WHITE}HTTPS with Let's Encrypt, domain-based routing${NC}"
+    echo_e "      ${DIM_WHITE}Best for: VPS, cloud servers with public domain${NC}"
+    echo ""
+    echo_e "  ${SOFT_GREEN}2${NC}   ${BOLD}Pro${NC} ${DIM_WHITE}(Self-Host High Performance)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap, more connections${NC}"
+    echo_e "      ${DIM_WHITE}Best for: Mac (Apple Silicon), Linux servers${NC}"
+    echo ""
+    echo_e "  ${SOFT_YELLOW}3${NC}   ${BOLD}Lite${NC} ${DIM_WHITE}(Self-Host Low Resource)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 256MB heap, minimal memory${NC}"
+    echo_e "      ${DIM_WHITE}Best for: Raspberry Pi 4/5, low-end devices${NC}"
+    echo ""
+
+    printf "  ${BOLD}Select profile ${DIM_WHITE}[1-3]:${NC} "
+    read choice
+    echo ""
+
+    case $choice in
+        1)
+            DOKUS_PROFILE="cloud"
+            ;;
+        2)
+            DOKUS_PROFILE="pro"
+            ;;
+        3|*)
+            DOKUS_PROFILE="lite"
+            ;;
+    esac
+
+    save_profile
+    set_compose_file
+    print_status success "Profile set to $(get_profile_display)"
+    print_status info "Using: $COMPOSE_FILE"
+    echo ""
 }
 
 # Save profile choice
@@ -114,6 +155,9 @@ save_profile() {
 # Get profile display name
 get_profile_display() {
     case "${DOKUS_PROFILE:-lite}" in
+        cloud)
+            echo "Cloud (Production HTTPS)"
+            ;;
         pro)
             echo "Pro (High Performance)"
             ;;
@@ -126,10 +170,10 @@ get_profile_display() {
 # Initialize profile
 load_profile
 
-# Gateway configuration
-GATEWAY_PORT="443"
+# Gateway configuration (HTTP for self-hosting)
+GATEWAY_PORT="8000"
 GATEWAY_DASHBOARD_PORT="8080"
-DEFAULT_DOMAIN="dokus.tech"
+DEFAULT_DOMAIN="localhost"
 
 # Function to get server IP address
 get_server_ip() {
@@ -155,8 +199,8 @@ get_server_ip() {
 
 # Credentials
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep -E 'DB_USERNAME|DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_USERNAME|RABBITMQ_PASSWORD' | xargs)
-    DB_USER="${DB_USERNAME:-dokus}"
+    export $(grep -v '^#' .env | grep -E 'DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_PASSWORD|MINIO_PASSWORD|JWT_SECRET|DOMAIN|ACME_EMAIL' | xargs)
+    DB_USER="dokus"
     DB_PASSWORD="${DB_PASSWORD}"
 else
     DB_USER="dokus"
@@ -379,22 +423,35 @@ show_status() {
 }
 
 print_services_info() {
-    # Load domain from .env if available
-    local DOMAIN="${DEFAULT_DOMAIN}"
-    if [ -f .env ]; then
-        source <(grep -E '^DOMAIN=' .env)
-        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
-    fi
-
     print_separator
     echo ""
-    echo_e "  ${SOFT_GREEN}${BOLD}🌐 API Gateway${NC}\n"
+    echo_e "  ${SOFT_GREEN}${BOLD}API Gateway${NC}\n"
 
-    # Gateway info box
-    echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}https://${DOMAIN}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}                   ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}https://traefik.${DOMAIN}${NC}                       ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
+    # Cloud profile uses HTTPS with domain
+    if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
+        # Load domain from .env if available
+        local DOMAIN="app.dokus.tech"
+        if [ -f .env ]; then
+            source <(grep -E '^DOMAIN=' .env 2>/dev/null || true)
+            DOMAIN="${DOMAIN:-app.dokus.tech}"
+        fi
+
+        echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}https://${DOMAIN}${NC}   ${DIM_WHITE}← Unified API Gateway (HTTPS)${NC}        ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}https://traefik.${DOMAIN}${NC}                        ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
+    else
+        # Self-hosting uses HTTP with IP
+        local SERVER_IP=$(get_server_ip)
+        if [ "$SERVER_IP" = "localhost" ]; then
+            SERVER_IP="127.0.0.1"
+        fi
+
+        echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://${SERVER_IP}:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://${SERVER_IP}:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
+    fi
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}📍 API Routes (via Gateway)${NC}\n"
@@ -499,30 +556,37 @@ access_db() {
 
 # Function to show mobile app connection info with QR code
 show_mobile_connection() {
-    print_gradient_header "📱 Mobile App Connection" "Connect your mobile app to this server"
+    print_gradient_header "Mobile App Connection" "Connect your mobile app to this server"
 
-    # Load domain from .env if available
-    local DOMAIN="${DEFAULT_DOMAIN}"
-    local SERVER_PROTOCOL="https"
-    local SERVER_PORT="443"
+    local SERVER_PROTOCOL
+    local SERVER_PORT
+    local SERVER_HOST
 
-    if [ -f .env ]; then
-        source <(grep -E '^DOMAIN=' .env)
-        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
-    fi
-
-    # If using custom domain with HTTPS, use domain; otherwise use IP
-    local SERVER_HOST="${DOMAIN}"
-    if [ "$DOMAIN" = "$DEFAULT_DOMAIN" ]; then
-        # Using default cloud domain - still use it
-        SERVER_HOST="api.${DOMAIN}"
-    else
-        # Custom domain - check if we should use IP instead
-        local SERVER_IP=$(get_server_ip)
-        if [ "$SERVER_IP" != "localhost" ]; then
-            # For self-hosted, might need to use IP if domain not configured
-            print_status info "Public/Local IP detected: ${SERVER_IP}"
+    # Cloud profile uses HTTPS with domain
+    if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
+        SERVER_PROTOCOL="https"
+        SERVER_PORT="443"
+        # Load domain from .env if available
+        SERVER_HOST="app.dokus.tech"
+        if [ -f .env ]; then
+            source <(grep -E '^DOMAIN=' .env 2>/dev/null || true)
+            SERVER_HOST="${DOMAIN:-app.dokus.tech}"
         fi
+        print_status info "Cloud domain: ${SERVER_HOST}"
+    else
+        # Self-hosting uses HTTP
+        SERVER_PROTOCOL="http"
+        SERVER_PORT="${GATEWAY_PORT}"
+
+        # Get server IP
+        local SERVER_IP=$(get_server_ip)
+        SERVER_HOST="${SERVER_IP}"
+
+        if [ "$SERVER_IP" = "localhost" ]; then
+            SERVER_HOST="127.0.0.1"
+        fi
+
+        print_status info "Detected IP: ${SERVER_HOST}"
     fi
 
     # Generate deep link URL
@@ -670,227 +734,77 @@ initial_setup() {
     fi
 
     echo ""
-    echo "  ${SOFT_BLUE}This wizard will mint fresh credentials and defaults.${NC}"
+    echo_e "  ${SOFT_BLUE}This wizard will generate secure credentials for your deployment.${NC}"
     echo ""
 
+    # Generate secure passwords
     DB_PASS=$(generate_password)
     REDIS_PASS=$(generate_password)
     RABBITMQ_PASS=$(generate_password)
     MINIO_PASS=$(generate_password)
     JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64 2>/dev/null || LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 64)
-    MONITORING_KEY=$(generate_password)
-    ADMIN_KEY=$(generate_password)
-    INTEGRATION_KEY=$(generate_password)
-    REQUEST_SIGNING_SECRET=$(generate_password)
 
-    DB_USERNAME=$(prompt_with_default "Database username:" "dokus" "DB_USERNAME")
+    # Core credentials (minimal prompts - use defaults for most)
+    print_status task "Core Credentials"
     DB_PASSWORD=$(prompt_with_default "Database password:" "$DB_PASS" "DB_PASSWORD" "true")
-
-    REDIS_HOST="redis"
-    REDIS_PORT="6379"
     REDIS_PASSWORD=$(prompt_with_default "Redis password:" "$REDIS_PASS" "REDIS_PASSWORD" "true")
-
-    RABBITMQ_USERNAME=$(prompt_with_default "RabbitMQ username:" "dokus" "RABBITMQ_USERNAME")
     RABBITMQ_PASSWORD=$(prompt_with_default "RabbitMQ password:" "$RABBITMQ_PASS" "RABBITMQ_PASSWORD" "true")
-
-    MINIO_ROOT_USER=$(prompt_with_default "MinIO root user:" "dokusadmin" "MINIO_ROOT_USER")
-    MINIO_ROOT_PASSWORD=$(prompt_with_default "MinIO root password:" "$MINIO_PASS" "MINIO_ROOT_PASSWORD" "true")
-    MINIO_BUCKET="dokus-documents"
-
+    MINIO_PASSWORD=$(prompt_with_default "MinIO password:" "$MINIO_PASS" "MINIO_PASSWORD" "true")
     JWT_SECRET_VAL=$(prompt_with_default "JWT secret (64+ chars):" "$JWT_SECRET" "JWT_SECRET" "true")
-    JWT_ISSUER="https://dokus.tech"
-    JWT_AUDIENCE="dokus-api"
 
-    CACHE_TYPE="redis"
-    MONITORING_API_KEY="$MONITORING_KEY"
-    ADMIN_API_KEY="$ADMIN_KEY"
-    INTEGRATION_API_KEY="$INTEGRATION_KEY"
-    REQUEST_SIGNING_ENABLED="true"
-    REQUEST_SIGNING_SECRET="$REQUEST_SIGNING_SECRET"
-    RATE_LIMIT_PER_MINUTE="60"
-    LOG_LEVEL="INFO"
+    # Create logs directory
+    mkdir -p logs/traefik
+    print_status success "Created logs/traefik/ directory"
 
-    EMAIL_ENABLED="false"
-    EMAIL_PROVIDER="smtp"
-    SMTP_HOST="smtp.example.com"
-    SMTP_PORT="587"
-    SMTP_USERNAME="noreply@dokus.tech"
-    SMTP_PASSWORD=""
-    SMTP_ENABLE_TLS="true"
-    SMTP_ENABLE_AUTH="true"
-    EMAIL_FROM_ADDRESS="noreply@dokus.tech"
-    EMAIL_FROM_NAME="Dokus"
-    EMAIL_REPLY_TO_ADDRESS="support@dokus.tech"
-    EMAIL_REPLY_TO_NAME="Dokus Support"
-    EMAIL_BASE_URL="https://dokus.tech"
-    EMAIL_SUPPORT_ADDRESS="support@dokus.tech"
+    # Cloud profile needs additional gateway config
+    if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
+        echo ""
+        print_status task "Cloud Gateway Configuration (Traefik + Let's Encrypt)"
 
-    METRICS_ENABLED="true"
-    METRICS_PORT="7090"
-    TRACING_ENABLED="false"
-    JAEGER_ENDPOINT=""
+        DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "app.dokus.tech" "DOMAIN")
+        ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "contact@dokus.tech" "ACME_EMAIL")
 
-    GEOIP_ENABLED="true"
-
-    # Gateway configuration
-    echo ""
-    print_status task "Configuring API Gateway (Traefik)"
-    DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "${DEFAULT_DOMAIN}" "DOMAIN")
-
-    # Generate Traefik dashboard password
-    TRAEFIK_DASHBOARD_USER="admin"
-    TRAEFIK_DASHBOARD_PASS=$(generate_password | cut -c1-16)
-    if command -v htpasswd &> /dev/null; then
-        TRAEFIK_DASHBOARD_AUTH=$(htpasswd -nb "$TRAEFIK_DASHBOARD_USER" "$TRAEFIK_DASHBOARD_PASS")
-    else
-        # Fallback: Use openssl for basic auth encoding
-        TRAEFIK_DASHBOARD_AUTH="${TRAEFIK_DASHBOARD_USER}:$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")"
-    fi
-
-    ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "admin@${DOMAIN}" "ACME_EMAIL")
-
-    # Create required directories
-    mkdir -p acme logs/traefik
-    touch acme/acme.json
-    chmod 600 acme/acme.json
-    print_status success "Created acme/ and logs/traefik/ directories"
-
-    cat > .env << EOF
+        cat > .env << EOF
 # Dokus Cloud Environment Configuration
 # Generated on $(date)
-#
-# IMPORTANT: This file contains sensitive credentials - keep it secure!
-# You can modify optional settings below after deployment.
+# Profile: Cloud (HTTPS with Let's Encrypt)
 
 # ============================================================================
-# DATABASE CONFIGURATION
+# REQUIRED - Core Credentials
 # ============================================================================
-DB_USERNAME=$DB_USERNAME
 DB_PASSWORD=$DB_PASSWORD
-
-# ============================================================================
-# REDIS CACHE CONFIGURATION
-# ============================================================================
-REDIS_HOST=$REDIS_HOST
-REDIS_PORT=$REDIS_PORT
 REDIS_PASSWORD=$REDIS_PASSWORD
-
-# ============================================================================
-# RABBITMQ MESSAGE BROKER
-# ============================================================================
-RABBITMQ_USERNAME=$RABBITMQ_USERNAME
 RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
-
-# ============================================================================
-# MINIO OBJECT STORAGE
-# ============================================================================
-MINIO_ROOT_USER=$MINIO_ROOT_USER
-MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD
-MINIO_BUCKET=$MINIO_BUCKET
-
-# ============================================================================
-# JWT AUTHENTICATION
-# ============================================================================
+MINIO_PASSWORD=$MINIO_PASSWORD
 JWT_SECRET=$JWT_SECRET_VAL
-JWT_ISSUER=$JWT_ISSUER
-JWT_AUDIENCE=$JWT_AUDIENCE
 
 # ============================================================================
-# CACHING (CRITICAL!)
-# ============================================================================
-CACHE_TYPE=$CACHE_TYPE
-
-# ============================================================================
-# SECURITY & API KEYS
-# ============================================================================
-# API Keys (auto-generated - rotate these regularly)
-MONITORING_API_KEY=$MONITORING_API_KEY
-ADMIN_API_KEY=$ADMIN_API_KEY
-INTEGRATION_API_KEY=$INTEGRATION_API_KEY
-
-# Request Signing
-REQUEST_SIGNING_ENABLED=$REQUEST_SIGNING_ENABLED
-REQUEST_SIGNING_SECRET=$REQUEST_SIGNING_SECRET
-
-# Rate Limiting
-RATE_LIMIT_PER_MINUTE=$RATE_LIMIT_PER_MINUTE
-
-# ============================================================================
-# EMAIL CONFIGURATION (Optional - currently disabled)
-# ============================================================================
-EMAIL_ENABLED=$EMAIL_ENABLED
-EMAIL_PROVIDER=$EMAIL_PROVIDER
-SMTP_HOST=$SMTP_HOST
-SMTP_PORT=$SMTP_PORT
-SMTP_USERNAME=$SMTP_USERNAME
-SMTP_PASSWORD=$SMTP_PASSWORD
-SMTP_ENABLE_TLS=$SMTP_ENABLE_TLS
-SMTP_ENABLE_AUTH=$SMTP_ENABLE_AUTH
-EMAIL_FROM_ADDRESS=$EMAIL_FROM_ADDRESS
-EMAIL_FROM_NAME=$EMAIL_FROM_NAME
-EMAIL_REPLY_TO_ADDRESS=$EMAIL_REPLY_TO_ADDRESS
-EMAIL_REPLY_TO_NAME=$EMAIL_REPLY_TO_NAME
-EMAIL_BASE_URL=$EMAIL_BASE_URL
-EMAIL_SUPPORT_ADDRESS=$EMAIL_SUPPORT_ADDRESS
-
-# ============================================================================
-# MONITORING & OBSERVABILITY (Optional)
-# ============================================================================
-METRICS_ENABLED=$METRICS_ENABLED
-METRICS_PORT=$METRICS_PORT
-TRACING_ENABLED=$TRACING_ENABLED
-JAEGER_ENDPOINT=$JAEGER_ENDPOINT
-
-# ============================================================================
-# GEOLOCATION
-# ============================================================================
-GEOIP_ENABLED=$GEOIP_ENABLED
-
-# ============================================================================
-# CORS CONFIGURATION
-# ============================================================================
-CORS_ALLOWED_HOSTS=*
-
-# ============================================================================
-# AI CONFIGURATION (Document Processing)
-# ============================================================================
-AI_DEFAULT_PROVIDER=ollama
-AI_OLLAMA_ENABLED=true
-AI_OLLAMA_MODEL=mistral:7b
-AI_OPENAI_ENABLED=false
-AI_OPENAI_API_KEY=
-AI_OPENAI_MODEL=gpt-4o-mini
-
-# Ollama Performance (adjust for your hardware)
-# Raspberry Pi 4 (4GB): OLLAMA_NUM_PARALLEL=1, OLLAMA_MAX_LOADED_MODELS=1
-# Raspberry Pi 5 (8GB): OLLAMA_NUM_PARALLEL=2, OLLAMA_MAX_LOADED_MODELS=1
-# Server with GPU: OLLAMA_NUM_PARALLEL=4, OLLAMA_MAX_LOADED_MODELS=2
-OLLAMA_NUM_PARALLEL=1
-OLLAMA_MAX_LOADED_MODELS=1
-
-# ============================================================================
-# API GATEWAY (Traefik)
+# CLOUD GATEWAY (Traefik + Let's Encrypt)
 # ============================================================================
 DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
-TRAEFIK_DASHBOARD_AUTH=$TRAEFIK_DASHBOARD_AUTH
-
-# ============================================================================
-# LOGGING
-# ============================================================================
-LOG_LEVEL=$LOG_LEVEL
 EOF
 
-    echo ""
-    print_status info "Traefik Dashboard credentials:"
-    echo "  ${DIM_WHITE}User: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_USER}${NC}"
-    echo "  ${DIM_WHITE}Password: ${SOFT_CYAN}${TRAEFIK_DASHBOARD_PASS}${NC}"
-    echo "  ${DIM_WHITE}URL: ${SOFT_CYAN}https://traefik.${DOMAIN}${NC}"
+    else
+        # Self-hosting profile (Pro/Lite) - simpler config
+        cat > .env << EOF
+# Dokus Self-Hosting Environment Configuration
+# Generated on $(date)
+# Profile: ${DOKUS_PROFILE:-lite}
+
+# ============================================================================
+# REQUIRED - Core Credentials
+# ============================================================================
+DB_PASSWORD=$DB_PASSWORD
+REDIS_PASSWORD=$REDIS_PASSWORD
+RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
+MINIO_PASSWORD=$MINIO_PASSWORD
+JWT_SECRET=$JWT_SECRET_VAL
+EOF
+    fi
 
     echo ""
-    print_status success ".env minted with fresh credentials"
-    echo ""
-    print_status info "Optional features: metrics enabled by default; email & tracing disabled."
+    print_status success ".env created with secure credentials"
 
     echo ""
     print_status task "Configuring Docker registry"
@@ -975,7 +889,7 @@ configure_registry() {
 }
 
 select_profile() {
-    print_gradient_header "⚙️  Profile Selection" "Choose resource profile for your hardware"
+    print_gradient_header "Profile Selection" "Choose deployment profile"
 
     echo_e "  ${SOFT_CYAN}Current profile: ${SOFT_GREEN}$(get_profile_display)${NC}"
     echo_e "  ${SOFT_CYAN}Using: ${DIM_WHITE}$COMPOSE_FILE${NC}"
@@ -983,31 +897,39 @@ select_profile() {
 
     echo_e "  ${SOFT_GRAY}Available profiles:${NC}"
     echo ""
-    echo_e "  ${SOFT_CYAN}1${NC}   ${BOLD}Pro${NC} ${SOFT_GREEN}(Mac/Servers)${NC}"
-    echo_e "      ${DIM_WHITE}High performance: G1GC, 1GB heap, more connections${NC}"
-    echo_e "      ${DIM_WHITE}Ollama: qwen2.5:14b-instruct, 4 parallel requests${NC}"
+    echo_e "  ${SOFT_MAGENTA}1${NC}   ${BOLD}Cloud${NC} ${DIM_WHITE}(Production HTTPS)${NC}"
+    echo_e "      ${DIM_WHITE}HTTPS with Let's Encrypt, domain-based routing${NC}"
+    echo_e "      ${DIM_WHITE}File: docker-compose.cloud.yml${NC}"
+    echo ""
+    echo_e "  ${SOFT_GREEN}2${NC}   ${BOLD}Pro${NC} ${DIM_WHITE}(Self-Host High Performance)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap, more connections${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.pro.yml${NC}"
     echo ""
-    echo_e "  ${SOFT_CYAN}2${NC}   ${BOLD}Lite${NC} ${SOFT_YELLOW}(Raspberry Pi / Default)${NC}"
-    echo_e "      ${DIM_WHITE}Low resource: SerialGC, 256MB heap, minimal connections${NC}"
-    echo_e "      ${DIM_WHITE}Ollama: qwen2:1.5b, 1 parallel request${NC}"
+    echo_e "  ${SOFT_YELLOW}3${NC}   ${BOLD}Lite${NC} ${DIM_WHITE}(Self-Host Low Resource)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 256MB heap, minimal memory${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.lite.yml${NC}"
     echo ""
     echo_e "  ${SOFT_GRAY}0${NC}   Cancel"
     echo ""
 
-    printf "  ${BOLD}Select profile ${DIM_WHITE}[0-2]:${NC} "
+    printf "  ${BOLD}Select profile ${DIM_WHITE}[0-3]:${NC} "
     read choice
     echo ""
 
     case $choice in
         1)
+            DOKUS_PROFILE="cloud"
+            COMPOSE_FILE="docker-compose.cloud.yml"
+            save_profile
+            print_status success "Profile set to Cloud"
+            ;;
+        2)
             DOKUS_PROFILE="pro"
             COMPOSE_FILE="docker-compose.pro.yml"
             save_profile
             print_status success "Profile set to Pro"
             ;;
-        2)
+        3)
             DOKUS_PROFILE="lite"
             COMPOSE_FILE="docker-compose.lite.yml"
             save_profile
@@ -1095,6 +1017,12 @@ EOF
 }
 
 show_menu() {
+    # Prompt for profile selection on first run
+    if [ -z "${DOKUS_PROFILE:-}" ]; then
+        splash_screen
+        prompt_profile_selection
+    fi
+
     splash_screen
 
     # Show current profile
@@ -1160,6 +1088,9 @@ main() {
             --profile=*)
                 DOKUS_PROFILE="${arg#*=}"
                 case "$DOKUS_PROFILE" in
+                    cloud)
+                        COMPOSE_FILE="docker-compose.cloud.yml"
+                        ;;
                     pro)
                         COMPOSE_FILE="docker-compose.pro.yml"
                         ;;
@@ -1168,7 +1099,7 @@ main() {
                         ;;
                     *)
                         print_status error "Unknown profile: $DOKUS_PROFILE"
-                        print_status info "Available profiles: pro, lite"
+                        print_status info "Available profiles: cloud, pro, lite"
                         exit 1
                         ;;
                 esac
@@ -1182,6 +1113,11 @@ main() {
                 ;;
         esac
     done
+
+    # For CLI commands that need a profile, prompt if not set
+    if [ -z "${DOKUS_PROFILE:-}" ] && [ -n "${cmd:-}" ] && [[ "$cmd" =~ ^(start|stop|restart|status|logs|setup)$ ]]; then
+        prompt_profile_selection
+    fi
 
     case ${cmd:-} in
         setup)
@@ -1214,9 +1150,10 @@ main() {
             if [ -n "${args[0]:-}" ]; then
                 # Set profile from CLI
                 case "${args[0]}" in
-                    pro|lite)
+                    cloud|pro|lite)
                         DOKUS_PROFILE="${args[0]}"
                         case "$DOKUS_PROFILE" in
+                            cloud) COMPOSE_FILE="docker-compose.cloud.yml" ;;
                             pro) COMPOSE_FILE="docker-compose.pro.yml" ;;
                             *) COMPOSE_FILE="docker-compose.lite.yml" ;;
                         esac
@@ -1226,7 +1163,7 @@ main() {
                         ;;
                     *)
                         print_status error "Unknown profile: ${args[0]}"
-                        print_status info "Available profiles: pro, lite"
+                        print_status info "Available profiles: cloud, pro, lite"
                         exit 1
                         ;;
                 esac
@@ -1235,15 +1172,15 @@ main() {
                 print_status info "Current profile: $(get_profile_display)"
                 print_status info "Using: $COMPOSE_FILE"
                 echo ""
-                print_status info "Set profile with: ./dokus.sh profile <pro|lite>"
-                print_status info "Or use --profile flag: ./dokus.sh --profile=pro start"
+                print_status info "Set profile with: ./dokus.sh profile <cloud|pro|lite>"
+                print_status info "Or use --profile flag: ./dokus.sh --profile=cloud start"
             fi
             ;;
         help|--help|-h)
             echo ""
-            echo_e "  ${BOLD}Dokus Cloud Management Script${NC}"
+            echo_e "  ${BOLD}Dokus Management Script${NC}"
             echo ""
-            echo_e "  ${SOFT_CYAN}Usage:${NC} ./dokus.sh [--profile=<pro|lite>] [command]"
+            echo_e "  ${SOFT_CYAN}Usage:${NC} ./dokus.sh [--profile=<cloud|pro|lite>] [command]"
             echo ""
             echo_e "  ${SOFT_GREEN}Commands:${NC}"
             echo_e "    setup      Guided initial setup"
@@ -1254,17 +1191,18 @@ main() {
             echo_e "    logs       View logs (optionally: logs <service>)"
             echo_e "    db         Access PostgreSQL console"
             echo_e "    connect    Show mobile app connection info"
-            echo_e "    profile    Show/set resource profile"
+            echo_e "    profile    Show/set deployment profile"
             echo ""
             echo_e "  ${SOFT_ORANGE}Profiles:${NC}"
-            echo_e "    pro        High performance (Mac/servers)"
-            echo_e "    lite       Low resource (Raspberry Pi/edge) [default]"
+            echo_e "    cloud      Production HTTPS with Let's Encrypt"
+            echo_e "    pro        Self-host high performance (Mac/servers)"
+            echo_e "    lite       Self-host low resource (Raspberry Pi) [default]"
             echo ""
             echo_e "  ${SOFT_MAGENTA}Examples:${NC}"
-            echo_e "    ./dokus.sh                     Interactive menu"
-            echo_e "    ./dokus.sh start               Start with saved profile"
-            echo_e "    ./dokus.sh --profile=pro start"
-            echo_e "    ./dokus.sh profile pro         Set and save profile"
+            echo_e "    ./dokus.sh                       Interactive menu"
+            echo_e "    ./dokus.sh start                 Start with saved profile"
+            echo_e "    ./dokus.sh --profile=cloud start Start with cloud profile"
+            echo_e "    ./dokus.sh profile cloud         Set and save profile"
             echo ""
             ;;
         *)

@@ -260,17 +260,11 @@ services:
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: dokusadminpassword
       MINIO_BUCKET: dokus-documents
-      # AI Configuration (Ollama local)
-      AI_DEFAULT_PROVIDER: ollama
-      AI_OLLAMA_ENABLED: "true"
-      AI_OLLAMA_URL: http://ollama-local:11434
-      AI_OLLAMA_MODEL: mistral:7b
-      AI_OPENAI_ENABLED: "false"
       # Peppol Configuration
       ENCRYPTION_KEY: local-peppol-encryption-key-32chars!
       PEPPOL_DEFAULT_PROVIDER: recommand
-      PEPPOL_INBOX_POLL_ENABLED: "true"
-      PEPPOL_INBOX_POLL_INTERVAL_MINUTES: "10"
+      PEPPOL_INBOX_POLLING_ENABLED: "true"
+      PEPPOL_INBOX_POLLING_INTERVAL: "600"
       LOG_LEVEL: DEBUG
     ports:
       - "15008:5005"  # Debug port only

@@ -1,0 +1,232 @@
+networks:
+  dokus-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  rabbitmq-data:
+  minio-data:
+  traefik-acme:
+
+x-jvm-cloud-defaults: &jvm-cloud-defaults
+  JAVA_OPTS: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=75
+    -XX:InitialRAMPercentage=50
+    -XX:+UseG1GC
+    -XX:MaxGCPauseMillis=100
+    -XX:+UseStringDeduplication
+    -Djava.security.egd=file:/dev/./urandom
+    -Dfile.encoding=UTF-8
+
+services:
+  # =========================================================
+  # Traefik (TLS termination + routing)
+  # =========================================================
+  traefik:
+    image: traefik:v3.2
+    container_name: dokus-traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-contact@dokus.tech}
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+
+      - --api.dashboard=true
+      - --ping=true
+
+      - --log.level=INFO
+      - --accesslog=true
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8080:8080"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/acme
+
+    networks:
+      - dokus-network
+
+    healthcheck:
+      test: [ "CMD", "traefik", "healthcheck", "--ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =========================================================
+  # Infra (not exposed publicly)
+  # =========================================================
+  postgres:
+    image: postgres:17-alpine
+    container_name: dokus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dokus
+      POSTGRES_USER: dokus
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+
+  redis:
+    image: redis:8-alpine
+    container_name: dokus-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - dokus-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-alpine
+    container_name: dokus-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: dokus
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: /dokus
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - dokus-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: dokus-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: dokus
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    command: server /data
+    volumes:
+      - minio-data:/data
+    networks:
+      - dokus-network
+
+  # =========================================================
+  # Backend services
+  # =========================================================
+  auth-service:
+    image: 94.111.226.82:5000/dokus-auth:latest
+    container_name: dokus-auth
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *jvm-cloud-defaults
+      ENVIRONMENT: cloud
+    networks:
+      - dokus-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.auth.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/server`))
+      - traefik.http.routers.auth.entrypoints=websecure
+      - traefik.http.routers.auth.tls.certresolver=letsencrypt
+      - traefik.http.services.auth.loadbalancer.server.port=8080
+
+  cashflow-service:
+    image: 94.111.226.82:5000/dokus-cashflow:latest
+    container_name: dokus-cashflow
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *jvm-cloud-defaults
+      ENVIRONMENT: cloud
+    networks:
+      - dokus-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.cashflow.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`))
+      - traefik.http.routers.cashflow.entrypoints=websecure
+      - traefik.http.routers.cashflow.tls.certresolver=letsencrypt
+      - traefik.http.services.cashflow.loadbalancer.server.port=8080
+
+  payment-service:
+    image: 94.111.226.82:5000/dokus-payment:latest
+    container_name: dokus-payment
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *jvm-cloud-defaults
+      ENVIRONMENT: cloud
+    networks:
+      - dokus-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.payment.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/payments`)
+      - traefik.http.routers.payment.entrypoints=websecure
+      - traefik.http.routers.payment.tls.certresolver=letsencrypt
+      - traefik.http.services.payment.loadbalancer.server.port=8080
+
+  banking-service:
+    image: 94.111.226.82:5000/dokus-banking:latest
+    container_name: dokus-banking
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *jvm-cloud-defaults
+      ENVIRONMENT: cloud
+    networks:
+      - dokus-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.banking.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/banking`)
+      - traefik.http.routers.banking.entrypoints=websecure
+      - traefik.http.routers.banking.tls.certresolver=letsencrypt
+      - traefik.http.services.banking.loadbalancer.server.port=8080
+
+  contacts-service:
+    image: 94.111.226.82:5000/dokus-contacts:latest
+    container_name: dokus-contacts
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *jvm-cloud-defaults
+      ENVIRONMENT: cloud
+    networks:
+      - dokus-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.contacts.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/contacts`)
+      - traefik.http.routers.contacts.entrypoints=websecure
+      - traefik.http.routers.contacts.tls.certresolver=letsencrypt
+      - traefik.http.services.contacts.loadbalancer.server.port=8080
+
+  # =========================================================
+  # Web UI
+  # =========================================================
+  web:
+    image: 94.111.226.82:5000/dokus-web:latest
+    container_name: dokus-web
+    restart: unless-stopped
+    networks:
+      - dokus-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.web.rule=Host(`${DOMAIN:-app.dokus.tech}`)
+      - traefik.http.routers.web.entrypoints=websecure
+      - traefik.http.routers.web.tls.certresolver=letsencrypt
+      - traefik.http.services.web.loadbalancer.server.port=8080
