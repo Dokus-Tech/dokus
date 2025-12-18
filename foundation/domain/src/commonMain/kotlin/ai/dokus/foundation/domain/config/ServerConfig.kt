@@ -28,15 +28,14 @@ data class ServerConfig(
     /**
      * Full base URL for API requests.
      * Examples:
-     * - "https://api.dokus.tech:443"
+     * - "https://app.dokus.tech:443"
      * - "http://192.168.1.100:8000"
      */
     val baseUrl: String
-        get() = when {
-            // Standard HTTPS port doesn't need explicit port
-            protocol == "https" && port == 443 -> "$protocol://$host"
+        get() = when (protocol) {
+            "https" if port == 443 -> "$protocol://$host"
             // Standard HTTP port doesn't need explicit port
-            protocol == "http" && port == 80 -> "$protocol://$host"
+            "http" if port == 80 -> "$protocol://$host"
             // Non-standard ports need explicit port
             else -> "$protocol://$host:$port"
         }
@@ -47,7 +46,7 @@ data class ServerConfig(
          * Used when the app is first installed or when reset to default.
          */
         val Cloud = ServerConfig(
-            host = "api.dokus.tech",
+            host = "app.dokus.tech",
             port = 443,
             protocol = "https",
             name = "Dokus Cloud",
