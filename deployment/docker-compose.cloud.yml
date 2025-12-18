@@ -144,6 +144,7 @@ services:
 
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_TYPE: redis
 
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USERNAME: dokus
@@ -173,6 +174,7 @@ services:
 
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_TYPE: redis
 
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: dokus
@@ -205,6 +207,7 @@ services:
 
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_TYPE: redis
 
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: dokus
@@ -233,6 +236,7 @@ services:
 
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_TYPE: redis
 
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: dokus
@@ -261,6 +265,7 @@ services:
 
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_TYPE: redis
 
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: dokus
