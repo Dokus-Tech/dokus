@@ -423,21 +423,35 @@ show_status() {
 }
 
 print_services_info() {
-    # Get server IP for display
-    local SERVER_IP=$(get_server_ip)
-    if [ "$SERVER_IP" = "localhost" ]; then
-        SERVER_IP="127.0.0.1"
-    fi
-
     print_separator
     echo ""
     echo_e "  ${SOFT_GREEN}${BOLD}API Gateway${NC}\n"
 
-    # Gateway info box
-    echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://${SERVER_IP}:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://${SERVER_IP}:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
+    # Cloud profile uses HTTPS with domain
+    if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
+        # Load domain from .env if available
+        local DOMAIN="app.dokus.tech"
+        if [ -f .env ]; then
+            source <(grep -E '^DOMAIN=' .env 2>/dev/null || true)
+            DOMAIN="${DOMAIN:-app.dokus.tech}"
+        fi
+
+        echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}https://${DOMAIN}${NC}   ${DIM_WHITE}← Unified API Gateway (HTTPS)${NC}        ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}https://traefik.${DOMAIN}${NC}                        ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
+    else
+        # Self-hosting uses HTTP with IP
+        local SERVER_IP=$(get_server_ip)
+        if [ "$SERVER_IP" = "localhost" ]; then
+            SERVER_IP="127.0.0.1"
+        fi
+
+        echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://${SERVER_IP}:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://${SERVER_IP}:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
+        echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
+    fi
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}📍 API Routes (via Gateway)${NC}\n"
@@ -544,19 +558,36 @@ access_db() {
 show_mobile_connection() {
     print_gradient_header "Mobile App Connection" "Connect your mobile app to this server"
 
-    # Self-hosting uses HTTP
-    local SERVER_PROTOCOL="http"
-    local SERVER_PORT="${GATEWAY_PORT}"
+    local SERVER_PROTOCOL
+    local SERVER_PORT
+    local SERVER_HOST
 
-    # Get server IP
-    local SERVER_IP=$(get_server_ip)
-    local SERVER_HOST="${SERVER_IP}"
+    # Cloud profile uses HTTPS with domain
+    if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
+        SERVER_PROTOCOL="https"
+        SERVER_PORT="443"
+        # Load domain from .env if available
+        SERVER_HOST="app.dokus.tech"
+        if [ -f .env ]; then
+            source <(grep -E '^DOMAIN=' .env 2>/dev/null || true)
+            SERVER_HOST="${DOMAIN:-app.dokus.tech}"
+        fi
+        print_status info "Cloud domain: ${SERVER_HOST}"
+    else
+        # Self-hosting uses HTTP
+        SERVER_PROTOCOL="http"
+        SERVER_PORT="${GATEWAY_PORT}"
 
-    if [ "$SERVER_IP" = "localhost" ]; then
-        SERVER_HOST="127.0.0.1"
+        # Get server IP
+        local SERVER_IP=$(get_server_ip)
+        SERVER_HOST="${SERVER_IP}"
+
+        if [ "$SERVER_IP" = "localhost" ]; then
+            SERVER_HOST="127.0.0.1"
+        fi
+
+        print_status info "Detected IP: ${SERVER_HOST}"
     fi
-
-    print_status info "Detected IP: ${SERVER_HOST}"
 
     # Generate deep link URL
     local CONNECT_URL="dokus://connect?host=${SERVER_HOST}&port=${SERVER_PORT}&protocol=${SERVER_PROTOCOL}"
