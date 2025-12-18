@@ -114,7 +114,6 @@ DB_USER="dev"
 DB_PASSWORD="devpassword"
 
 # AI/Ollama configuration
-OLLAMA_CONTAINER="ollama-local"
 OLLAMA_PORT="11434"
 OLLAMA_DEFAULT_MODELS=("mistral:7b" "llama3.1:8b")
 
@@ -437,19 +436,13 @@ start_services() {
             sleep 1
         done
 
-        # Wait for Ollama (AI)
+        # Check Ollama (AI) - runs on the host (optional)
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Ollama AI Server"
-        for i in {1..60}; do
-            if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
-                echo_e "${SOFT_GREEN}◎ Ready${NC}"
-                break
-            fi
-            if [ $i -eq 60 ]; then
-                echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
-            fi
-            echo -n "."
-            sleep 1
-        done
+        if curl -f -s http://localhost:${OLLAMA_PORT}/api/tags &>/dev/null; then
+            echo_e "${SOFT_GREEN}◎ Ready${NC}"
+        else
+            echo_e "${SOFT_YELLOW}◒ Optional${NC}"
+        fi
 
         # Wait for Traefik Gateway
         printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "Traefik Gateway"
@@ -706,7 +699,7 @@ ollama_status() {
     else
         echo_e "${SOFT_RED}⨯ Not Running${NC}"
         echo ""
-        print_status warning "Ollama is not running. Start services first."
+        print_status warning "Ollama is not running. Start Ollama on the host (e.g. Ollama app or 'ollama serve')."
         return 1
     fi
 
@@ -744,7 +737,7 @@ ollama_pull() {
 
     # Check if Ollama is running
     if ! curl -f -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null 2>&1; then
-        print_status error "Ollama is not running. Start services first with: ./dev.sh start"
+        print_status error "Ollama is not running. Start Ollama on the host (e.g. Ollama app or 'ollama serve')."
         return 1
     fi
 
@@ -782,15 +775,26 @@ pull_model() {
     print_status loading "Pulling ${model}... (this may take a while)"
     echo ""
 
-    # Pull model using Ollama API
-    docker-compose -f $COMPOSE_FILE exec -T $OLLAMA_CONTAINER ollama pull $model
+    # Pull model using Ollama HTTP API (works for host Ollama and for a container with 11434 published)
+    curl -s --no-buffer "http://localhost:${OLLAMA_PORT}/api/pull" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\":\"${model}\"}" \
+        | while IFS= read -r line; do
+            status=$(echo "$line" | sed -n 's/.*"status":"\\([^"]*\\)".*/\\1/p')
+            error=$(echo "$line" | sed -n 's/.*"error":"\\([^"]*\\)".*/\\1/p')
 
-    if [ $? -eq 0 ]; then
-        echo ""
+            if [ -n "$error" ]; then
+                echo_e "  ${SOFT_RED}${SYMBOL_ERROR}${NC} ${error}"
+            elif [ -n "$status" ]; then
+                echo_e "  ${DIM_WHITE}${status}${NC}"
+            fi
+        done
+
+    echo ""
+    if curl -s "http://localhost:${OLLAMA_PORT}/api/tags" | grep -q "\"name\":\"${model}\""; then
         print_status success "${model} pulled successfully"
     else
-        echo ""
-        print_status error "Failed to pull ${model}"
+        print_status warning "Pull finished, but ${model} not found in tags yet (it may still be downloading)"
     fi
 }
 
