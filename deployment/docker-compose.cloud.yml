@@ -156,7 +156,7 @@ services:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.cashflow.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`))
+      - traefik.http.routers.cashflow.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`))
       - traefik.http.routers.cashflow.entrypoints=websecure
       - traefik.http.routers.cashflow.tls.certresolver=letsencrypt
       - traefik.http.services.cashflow.loadbalancer.server.port=8080
