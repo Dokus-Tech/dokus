@@ -1,19 +1,20 @@
 package ai.dokus.foundation.domain.usecases.validators
 
 import ai.dokus.foundation.domain.Password
+import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase.validateDetailed
 
 /**
  * Password validation requirements.
  * Can be customized per deployment if needed.
  */
 data class PasswordRequirements(
-    val minLength: Int = 12,
-    val requireUppercase: Boolean = true,
-    val requireLowercase: Boolean = true,
-    val requireDigit: Boolean = true,
-    val requireSpecialChar: Boolean = true,
+    val minLength: Int = 8,
+    val requireUppercase: Boolean = false,
+    val requireLowercase: Boolean = false,
+    val requireDigit: Boolean = false,
+    val requireSpecialChar: Boolean = false,
     val maxConsecutiveRepeats: Int = 3,
-    val checkCommonPasswords: Boolean = true
+    val checkCommonPasswords: Boolean = false
 )
 
 /**
@@ -114,7 +115,10 @@ object ValidatePasswordUseCase : Validator<Password> {
     /**
      * Detailed validation with custom requirements.
      */
-    fun validateDetailed(value: Password, requirements: PasswordRequirements): PasswordValidationResult {
+    fun validateDetailed(
+        value: Password,
+        requirements: PasswordRequirements
+    ): PasswordValidationResult {
         val password = value.value
         val failures = mutableListOf<PasswordFailure>()
 
@@ -144,7 +148,11 @@ object ValidatePasswordUseCase : Validator<Password> {
         }
 
         // Consecutive repeats check
-        if (requirements.maxConsecutiveRepeats > 0 && hasConsecutiveRepeats(password, requirements.maxConsecutiveRepeats)) {
+        if (requirements.maxConsecutiveRepeats > 0 && hasConsecutiveRepeats(
+                password,
+                requirements.maxConsecutiveRepeats
+            )
+        ) {
             failures.add(PasswordFailure.TooManyConsecutiveRepeats)
         }
 
@@ -163,7 +171,10 @@ object ValidatePasswordUseCase : Validator<Password> {
     /**
      * Get human-readable description of a password failure.
      */
-    fun getFailureMessage(failure: PasswordFailure, requirements: PasswordRequirements = this.requirements): String {
+    fun getFailureMessage(
+        failure: PasswordFailure,
+        requirements: PasswordRequirements = this.requirements
+    ): String {
         return when (failure) {
             PasswordFailure.TooShort -> "Password must be at least ${requirements.minLength} characters"
             PasswordFailure.NoUppercase -> "Password must contain at least one uppercase letter"
