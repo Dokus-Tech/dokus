@@ -50,6 +50,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -108,7 +109,10 @@ private fun RegisterContent(
     val onContinueClick = { page: RegisterPage ->
         when (page) {
             RegisterPage.Profile -> {
-                scope.launch { pagerState.animateScrollToPage(1) }
+                scope.launch {
+                    pagerState.animateScrollToPage(1)
+                    focusManager.moveFocus(FocusDirection.Next)
+                }
             }
 
             RegisterPage.Credentials -> {
