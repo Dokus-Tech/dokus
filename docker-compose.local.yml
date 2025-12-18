@@ -19,7 +19,7 @@ services:
     networks:
       - dokus-local-network
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      test: [ "CMD", "traefik", "healthcheck", "--ping" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -88,61 +88,8 @@ services:
       timeout: 5s
       retries: 10
 
-  # Ollama LLM Server for AI inference
-  ollama-local:
-    image: ollama/ollama:latest
-    container_name: dokus-ollama-local
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-models-local:/root/.ollama
-    networks:
-      - dokus-local-network
-    environment:
-      - OLLAMA_NUM_PARALLEL=2
-      - OLLAMA_MAX_LOADED_MODELS=2
-    healthcheck:
-      test: [ "CMD", "ollama", "list" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  # Ollama Model Initialization (auto-pulls required models via API)
-  ollama-init-local:
-    image: curlimages/curl:latest
-    container_name: dokus-ollama-init-local
-    depends_on:
-      ollama-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "Checking for mistral:7b model..."
-        MODELS=$$(curl -s http://ollama-local:11434/api/tags | grep -o '"name":"mistral:7b"' || true)
-        if [ -n "$$MODELS" ]; then
-          echo "Model mistral:7b already exists, skipping download"
-        else
-          echo "Pulling mistral:7b model via API (this may take several minutes)..."
-          curl -s http://ollama-local:11434/api/pull -d '{"name": "mistral:7b"}' | while read line; do
-            echo "$$line" | grep -o '"status":"[^"]*"' | head -1 || true
-          done
-          echo "Model mistral:7b pull initiated"
-        fi
-        echo "Waiting for model to be available..."
-        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-          MODELS=$$(curl -s http://ollama-local:11434/api/tags | grep -o '"name":"mistral:7b"' || true)
-          if [ -n "$$MODELS" ]; then
-            echo "Model mistral:7b is ready!"
-            exit 0
-          fi
-          echo "  Waiting... ($$i/20)"
-          sleep 30
-        done
-        echo "Model download may still be in progress"
-    restart: "no"
+  # Ollama is expected to run on the host (http://localhost:11434),
+  # aligned with deployed profiles. Use `./dev.sh ai` to check status.
 
   # RabbitMQ Message Broker
   rabbitmq-local:
@@ -277,8 +224,6 @@ services:
         condition: service_healthy
       minio-local:
         condition: service_healthy
-      ollama-local:
-        condition: service_healthy
     networks:
       - dokus-local-network
     healthcheck:
@@ -292,8 +237,8 @@ services:
       - cashflow-storage-local:/app/storage/documents
     labels:
       - "traefik.enable=true"
-      # Cashflow routes: invoices, expenses, cashflow, documents, attachments, peppol
-      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
+      # Cashflow routes: invoices, expenses, bills, cashflow, documents, attachments, peppol
+      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
       - "traefik.http.routers.cashflow.entrypoints=web"
       - "traefik.http.routers.cashflow.service=cashflow"
       - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
@@ -450,4 +395,3 @@ volumes:
   minio-data-local:
   pgadmin-data:
   cashflow-storage-local:
-  ollama-models-local:
