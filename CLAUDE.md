@@ -118,7 +118,7 @@ The client uses **BuildKonfig** to generate compile-time configuration for diffe
 **Cloud/Production (default):**
 ```bash
 ./gradlew build
-# API_HOST: api.dokus.ai
+# API_HOST: app.dokus.tech
 # API_PORT: 443 (HTTPS)
 # API_IS_LOCAL: false
 ```
