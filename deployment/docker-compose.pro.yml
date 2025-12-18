@@ -11,6 +11,8 @@
 #   - String deduplication for memory efficiency
 #   - Container-aware memory settings
 #   - Higher connection pools
+#
+# Note: Ollama runs externally on the host machine
 
 x-jvm-mac-defaults: &jvm-mac-defaults
   JAVA_OPTS: >-
@@ -37,20 +39,18 @@ services:
   # INFRASTRUCTURE
   # ==========================================================================
 
-  # Traefik API Gateway
+  # Traefik API Gateway - HTTP only for self-hosting
   traefik:
     image: traefik:v3.2
     container_name: dokus-traefik
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"  # Dashboard
+      - "8000:8000"
+      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.cloud.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/traefik.selfhost.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
-      - ./acme:/acme
       - ./logs/traefik:/logs
     networks:
       - dokus-network
@@ -67,12 +67,9 @@ services:
       <<: *healthcheck-defaults
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN:-dokus.local}`)"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.rule=PathPrefix(`/dashboard`) || PathPrefix(`/api`)"
+      - "traefik.http.routers.dashboard.entrypoints=traefik"
       - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
 
   # PostgreSQL Database - Higher connection limits for Mac
   postgres:
@@ -80,7 +77,7 @@ services:
     container_name: dokus-postgres
     environment:
       POSTGRES_DB: dokus
-      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_USER: ${DB_USERNAME:-dokus}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       # Mac optimizations: more connections, larger buffers
       POSTGRES_INITDB_ARGS: "--encoding=UTF8"
@@ -117,7 +114,7 @@ services:
           cpus: '0.5'
           memory: 512M
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d dokus"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dokus} -d dokus"]
       <<: *healthcheck-defaults
     restart: unless-stopped
 
@@ -157,7 +154,7 @@ services:
     image: rabbitmq:3.13-management-alpine
     container_name: dokus-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-dokus}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /dokus
       RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.6
@@ -186,8 +183,8 @@ services:
     image: minio/minio:latest
     container_name: dokus-minio
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dokusadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-${MINIO_PASSWORD}}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -210,70 +207,6 @@ services:
     restart: unless-stopped
 
   # ==========================================================================
-  # OLLAMA - Mac Optimized (Metal GPU support on Apple Silicon)
-  # ==========================================================================
-  ollama:
-    image: ollama/ollama:latest
-    container_name: dokus-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-models:/root/.ollama
-    networks:
-      - dokus-network
-    environment:
-      # Mac can handle more parallelism
-      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-4}
-      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-2}
-      OLLAMA_KEEP_ALIVE: "5m"
-      # Apple Silicon uses Metal automatically
-    deploy:
-      resources:
-        limits:
-          cpus: '4.0'
-          memory: 8G
-        reservations:
-          cpus: '1.0'
-          memory: 4G
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    restart: unless-stopped
-
-  ollama-init:
-    image: curlimages/curl:latest
-    container_name: dokus-ollama-init
-    depends_on:
-      ollama:
-        condition: service_healthy
-    environment:
-      # Mac can run larger models
-      OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2.5:14b-instruct}
-    networks:
-      - dokus-network
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "Initializing Ollama model: $${OLLAMA_MODEL}..."
-        MODELS=$$(curl -s http://ollama:11434/api/tags | grep -o "\"name\":\"$${OLLAMA_MODEL}\"" || true)
-        if [ -n "$$MODELS" ]; then
-          echo "Model $${OLLAMA_MODEL} already exists"
-        else
-          echo "Pulling $${OLLAMA_MODEL}..."
-          curl -s http://ollama:11434/api/pull -d "{\"name\": \"$${OLLAMA_MODEL}\"}" | while read line; do
-            echo "$$line" | grep -o '"status":"[^"]*"' | head -1 || true
-          done
-        fi
-        # Pre-warm the model
-        echo "Pre-warming model..."
-        curl -s http://ollama:11434/api/generate -d '{"model":"'"$${OLLAMA_MODEL}"'","prompt":"hello","stream":false}' > /dev/null || true
-        echo "Model ready!"
-    restart: "no"
-
-  # ==========================================================================
   # BACKEND SERVICES - Mac Optimized JVM
   # ==========================================================================
 
@@ -283,17 +216,17 @@ services:
     environment:
       <<: *jvm-mac-defaults
       PORT: 8080
-      ENVIRONMENT: cloud
+      ENVIRONMENT: selfhost
       # Database - higher pool for Mac
       DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME}
+      DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
       DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-5}
       # JWT
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER}
-      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER:-dokus}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
       # Caching
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: redis
@@ -302,7 +235,7 @@ services:
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-dokus}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: /dokus
       # Security
@@ -335,19 +268,16 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`)"
-      - "traefik.http.routers.auth.entrypoints=websecure"
-      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.auth.entrypoints=web"
       - "traefik.http.routers.auth.service=auth"
-      - "traefik.http.routers.auth.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.routers.auth.middlewares=rate-limit@file,cors-api@file"
       - "traefik.http.services.auth.loadbalancer.server.port=8080"
       - "traefik.http.routers.health.rule=Path(`/health`)"
-      - "traefik.http.routers.health.entrypoints=websecure"
-      - "traefik.http.routers.health.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.health.entrypoints=web"
       - "traefik.http.routers.health.service=auth"
       - "traefik.http.routers.health.priority=1000"
       - "traefik.http.routers.server-info.rule=Path(`/api/v1/server/info`)"
-      - "traefik.http.routers.server-info.entrypoints=websecure"
-      - "traefik.http.routers.server-info.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.server-info.entrypoints=web"
       - "traefik.http.routers.server-info.service=auth"
       - "traefik.http.routers.server-info.priority=1000"
 
@@ -357,37 +287,37 @@ services:
     environment:
       <<: *jvm-mac-defaults
       PORT: 8080
-      ENVIRONMENT: cloud
+      ENVIRONMENT: selfhost
       DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME}
+      DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER}
-      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER:-dokus}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       # MinIO
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-dokusadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-${MINIO_PASSWORD}}
       MINIO_BUCKET: ${MINIO_BUCKET:-dokus-documents}
-      # AI
+      # AI - external Ollama on host
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
       AI_OLLAMA_ENABLED: ${AI_OLLAMA_ENABLED:-true}
-      AI_OLLAMA_URL: http://ollama:11434
+      AI_OLLAMA_URL: ${AI_OLLAMA_URL:-http://host.docker.internal:11434}
       AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2.5:14b-instruct}
       AI_OPENAI_ENABLED: ${AI_OPENAI_ENABLED:-false}
       AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
       minio:
-        condition: service_healthy
-      ollama:
         condition: service_healthy
     networks:
       - dokus-network
@@ -406,10 +336,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
-      - "traefik.http.routers.cashflow.entrypoints=websecure"
-      - "traefik.http.routers.cashflow.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.cashflow.entrypoints=web"
       - "traefik.http.routers.cashflow.service=cashflow"
-      - "traefik.http.routers.cashflow.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.routers.cashflow.middlewares=rate-limit@file,cors-api@file"
       - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
 
   payment-service:
@@ -418,14 +347,14 @@ services:
     environment:
       <<: *jvm-mac-defaults
       PORT: 8080
-      ENVIRONMENT: cloud
+      ENVIRONMENT: selfhost
       DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME}
+      DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER}
-      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER:-dokus}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -451,10 +380,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.payment.rule=PathPrefix(`/api/v1/payments`)"
-      - "traefik.http.routers.payment.entrypoints=websecure"
-      - "traefik.http.routers.payment.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.payment.entrypoints=web"
       - "traefik.http.routers.payment.service=payment"
-      - "traefik.http.routers.payment.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.routers.payment.middlewares=rate-limit@file,cors-api@file"
       - "traefik.http.services.payment.loadbalancer.server.port=8080"
 
   banking-service:
@@ -463,14 +391,14 @@ services:
     environment:
       <<: *jvm-mac-defaults
       PORT: 8080
-      ENVIRONMENT: cloud
+      ENVIRONMENT: selfhost
       DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME}
+      DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER}
-      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER:-dokus}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -496,10 +424,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.banking.rule=PathPrefix(`/api/v1/banking`)"
-      - "traefik.http.routers.banking.entrypoints=websecure"
-      - "traefik.http.routers.banking.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.banking.entrypoints=web"
       - "traefik.http.routers.banking.service=banking"
-      - "traefik.http.routers.banking.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.routers.banking.middlewares=rate-limit@file,cors-api@file"
       - "traefik.http.services.banking.loadbalancer.server.port=8080"
 
   contacts-service:
@@ -508,14 +435,14 @@ services:
     environment:
       <<: *jvm-mac-defaults
       PORT: 8080
-      ENVIRONMENT: cloud
+      ENVIRONMENT: selfhost
       DB_URL: jdbc:postgresql://postgres:5432/dokus
-      DB_USERNAME: ${DB_USERNAME}
+      DB_USERNAME: ${DB_USERNAME:-dokus}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER}
-      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER:-dokus}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-dokus-api}
       CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -541,10 +468,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.contacts.rule=PathPrefix(`/api/v1/contacts`)"
-      - "traefik.http.routers.contacts.entrypoints=websecure"
-      - "traefik.http.routers.contacts.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.contacts.entrypoints=web"
       - "traefik.http.routers.contacts.service=contacts"
-      - "traefik.http.routers.contacts.middlewares=security-headers@file,rate-limit@file,cors-api@file"
+      - "traefik.http.routers.contacts.middlewares=rate-limit@file,cors-api@file"
       - "traefik.http.services.contacts.loadbalancer.server.port=8080"
 
   # ==========================================================================
@@ -569,12 +495,11 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`${DOMAIN:-dokus.local}`) || Host(`www.${DOMAIN:-dokus.local}`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.routers.web.service=web"
       - "traefik.http.routers.web.priority=1"
-      - "traefik.http.routers.web.middlewares=security-headers@file,compress@file"
+      - "traefik.http.routers.web.middlewares=compress@file"
       - "traefik.http.services.web.loadbalancer.server.port=8080"
 
 networks:
@@ -586,4 +511,3 @@ volumes:
   redis-data:
   rabbitmq-data:
   minio-data:
-  ollama-models:
