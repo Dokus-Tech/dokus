@@ -71,7 +71,7 @@ DB_NAME="dokus"
 #   - lite: Low resource for Raspberry Pi/edge (docker-compose.lite.yml) [default]
 PROFILE_FILE=".dokus-profile"
 
-# Load saved profile or detect automatically
+# Load saved profile or prompt user to select
 load_profile() {
     if [ -f "$PROFILE_FILE" ]; then
         DOKUS_PROFILE=$(cat "$PROFILE_FILE")
@@ -79,31 +79,72 @@ load_profile() {
         # Use environment variable if set
         :
     else
-        # Auto-detect based on system
-        detect_profile
+        # No saved profile - will prompt on first interactive use
+        DOKUS_PROFILE=""
     fi
 
-    case "${DOKUS_PROFILE:-lite}" in
+    set_compose_file
+}
+
+# Set compose file based on profile
+set_compose_file() {
+    case "${DOKUS_PROFILE:-}" in
+        cloud)
+            COMPOSE_FILE="docker-compose.cloud.yml"
+            ;;
         pro)
             COMPOSE_FILE="docker-compose.pro.yml"
             ;;
-        *)
+        lite)
             COMPOSE_FILE="docker-compose.lite.yml"
-            DOKUS_PROFILE="lite"
+            ;;
+        *)
+            # Default to lite if no profile set yet
+            COMPOSE_FILE="docker-compose.lite.yml"
             ;;
     esac
 }
 
-# Auto-detect optimal profile based on hardware
-detect_profile() {
-    # macOS = pro profile (assuming powerful Mac)
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        DOKUS_PROFILE="pro"
-        return
-    fi
+# Prompt user to select profile (first-run experience)
+prompt_profile_selection() {
+    print_gradient_header "Welcome to Dokus" "First-time setup - choose your profile"
 
-    # Everything else defaults to lite (safe for Pi, SBCs, low-end servers)
-    DOKUS_PROFILE="lite"
+    echo_e "  ${SOFT_CYAN}Select a deployment profile:${NC}"
+    echo ""
+    echo_e "  ${SOFT_MAGENTA}1${NC}   ${BOLD}Cloud${NC} ${DIM_WHITE}(Production HTTPS)${NC}"
+    echo_e "      ${DIM_WHITE}HTTPS with Let's Encrypt, domain-based routing${NC}"
+    echo_e "      ${DIM_WHITE}Best for: VPS, cloud servers with public domain${NC}"
+    echo ""
+    echo_e "  ${SOFT_GREEN}2${NC}   ${BOLD}Pro${NC} ${DIM_WHITE}(Self-Host High Performance)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap, more connections${NC}"
+    echo_e "      ${DIM_WHITE}Best for: Mac (Apple Silicon), Linux servers${NC}"
+    echo ""
+    echo_e "  ${SOFT_YELLOW}3${NC}   ${BOLD}Lite${NC} ${DIM_WHITE}(Self-Host Low Resource)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 256MB heap, minimal memory${NC}"
+    echo_e "      ${DIM_WHITE}Best for: Raspberry Pi 4/5, low-end devices${NC}"
+    echo ""
+
+    printf "  ${BOLD}Select profile ${DIM_WHITE}[1-3]:${NC} "
+    read choice
+    echo ""
+
+    case $choice in
+        1)
+            DOKUS_PROFILE="cloud"
+            ;;
+        2)
+            DOKUS_PROFILE="pro"
+            ;;
+        3|*)
+            DOKUS_PROFILE="lite"
+            ;;
+    esac
+
+    save_profile
+    set_compose_file
+    print_status success "Profile set to $(get_profile_display)"
+    print_status info "Using: $COMPOSE_FILE"
+    echo ""
 }
 
 # Save profile choice
@@ -114,6 +155,9 @@ save_profile() {
 # Get profile display name
 get_profile_display() {
     case "${DOKUS_PROFILE:-lite}" in
+        cloud)
+            echo "Cloud (Production HTTPS)"
+            ;;
         pro)
             echo "Pro (High Performance)"
             ;;
@@ -126,10 +170,10 @@ get_profile_display() {
 # Initialize profile
 load_profile
 
-# Gateway configuration
-GATEWAY_PORT="443"
+# Gateway configuration (HTTP for self-hosting)
+GATEWAY_PORT="8000"
 GATEWAY_DASHBOARD_PORT="8080"
-DEFAULT_DOMAIN="dokus.tech"
+DEFAULT_DOMAIN="localhost"
 
 # Function to get server IP address
 get_server_ip() {
@@ -379,21 +423,20 @@ show_status() {
 }
 
 print_services_info() {
-    # Load domain from .env if available
-    local DOMAIN="${DEFAULT_DOMAIN}"
-    if [ -f .env ]; then
-        source <(grep -E '^DOMAIN=' .env)
-        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
+    # Get server IP for display
+    local SERVER_IP=$(get_server_ip)
+    if [ "$SERVER_IP" = "localhost" ]; then
+        SERVER_IP="127.0.0.1"
     fi
 
     print_separator
     echo ""
-    echo_e "  ${SOFT_GREEN}${BOLD}🌐 API Gateway${NC}\n"
+    echo_e "  ${SOFT_GREEN}${BOLD}API Gateway${NC}\n"
 
     # Gateway info box
     echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}https://${DOMAIN}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}                   ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}https://traefik.${DOMAIN}${NC}                       ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://${SERVER_IP}:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://${SERVER_IP}:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
 
     echo ""
@@ -499,31 +542,21 @@ access_db() {
 
 # Function to show mobile app connection info with QR code
 show_mobile_connection() {
-    print_gradient_header "📱 Mobile App Connection" "Connect your mobile app to this server"
+    print_gradient_header "Mobile App Connection" "Connect your mobile app to this server"
 
-    # Load domain from .env if available
-    local DOMAIN="${DEFAULT_DOMAIN}"
-    local SERVER_PROTOCOL="https"
-    local SERVER_PORT="443"
+    # Self-hosting uses HTTP
+    local SERVER_PROTOCOL="http"
+    local SERVER_PORT="${GATEWAY_PORT}"
 
-    if [ -f .env ]; then
-        source <(grep -E '^DOMAIN=' .env)
-        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
+    # Get server IP
+    local SERVER_IP=$(get_server_ip)
+    local SERVER_HOST="${SERVER_IP}"
+
+    if [ "$SERVER_IP" = "localhost" ]; then
+        SERVER_HOST="127.0.0.1"
     fi
 
-    # If using custom domain with HTTPS, use domain; otherwise use IP
-    local SERVER_HOST="${DOMAIN}"
-    if [ "$DOMAIN" = "$DEFAULT_DOMAIN" ]; then
-        # Using default cloud domain - still use it
-        SERVER_HOST="api.${DOMAIN}"
-    else
-        # Custom domain - check if we should use IP instead
-        local SERVER_IP=$(get_server_ip)
-        if [ "$SERVER_IP" != "localhost" ]; then
-            # For self-hosted, might need to use IP if domain not configured
-            print_status info "Public/Local IP detected: ${SERVER_IP}"
-        fi
-    fi
+    print_status info "Detected IP: ${SERVER_HOST}"
 
     # Generate deep link URL
     local CONNECT_URL="dokus://connect?host=${SERVER_HOST}&port=${SERVER_PORT}&protocol=${SERVER_PROTOCOL}"
@@ -975,7 +1008,7 @@ configure_registry() {
 }
 
 select_profile() {
-    print_gradient_header "⚙️  Profile Selection" "Choose resource profile for your hardware"
+    print_gradient_header "Profile Selection" "Choose deployment profile"
 
     echo_e "  ${SOFT_CYAN}Current profile: ${SOFT_GREEN}$(get_profile_display)${NC}"
     echo_e "  ${SOFT_CYAN}Using: ${DIM_WHITE}$COMPOSE_FILE${NC}"
@@ -983,31 +1016,39 @@ select_profile() {
 
     echo_e "  ${SOFT_GRAY}Available profiles:${NC}"
     echo ""
-    echo_e "  ${SOFT_CYAN}1${NC}   ${BOLD}Pro${NC} ${SOFT_GREEN}(Mac/Servers)${NC}"
-    echo_e "      ${DIM_WHITE}High performance: G1GC, 1GB heap, more connections${NC}"
-    echo_e "      ${DIM_WHITE}Ollama: qwen2.5:14b-instruct, 4 parallel requests${NC}"
+    echo_e "  ${SOFT_MAGENTA}1${NC}   ${BOLD}Cloud${NC} ${DIM_WHITE}(Production HTTPS)${NC}"
+    echo_e "      ${DIM_WHITE}HTTPS with Let's Encrypt, domain-based routing${NC}"
+    echo_e "      ${DIM_WHITE}File: docker-compose.cloud.yml${NC}"
+    echo ""
+    echo_e "  ${SOFT_GREEN}2${NC}   ${BOLD}Pro${NC} ${DIM_WHITE}(Self-Host High Performance)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, G1GC, 1GB heap, more connections${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.pro.yml${NC}"
     echo ""
-    echo_e "  ${SOFT_CYAN}2${NC}   ${BOLD}Lite${NC} ${SOFT_YELLOW}(Raspberry Pi / Default)${NC}"
-    echo_e "      ${DIM_WHITE}Low resource: SerialGC, 256MB heap, minimal connections${NC}"
-    echo_e "      ${DIM_WHITE}Ollama: qwen2:1.5b, 1 parallel request${NC}"
+    echo_e "  ${SOFT_YELLOW}3${NC}   ${BOLD}Lite${NC} ${DIM_WHITE}(Self-Host Low Resource)${NC}"
+    echo_e "      ${DIM_WHITE}HTTP:8000, SerialGC, 256MB heap, minimal memory${NC}"
     echo_e "      ${DIM_WHITE}File: docker-compose.lite.yml${NC}"
     echo ""
     echo_e "  ${SOFT_GRAY}0${NC}   Cancel"
     echo ""
 
-    printf "  ${BOLD}Select profile ${DIM_WHITE}[0-2]:${NC} "
+    printf "  ${BOLD}Select profile ${DIM_WHITE}[0-3]:${NC} "
     read choice
     echo ""
 
     case $choice in
         1)
+            DOKUS_PROFILE="cloud"
+            COMPOSE_FILE="docker-compose.cloud.yml"
+            save_profile
+            print_status success "Profile set to Cloud"
+            ;;
+        2)
             DOKUS_PROFILE="pro"
             COMPOSE_FILE="docker-compose.pro.yml"
             save_profile
             print_status success "Profile set to Pro"
             ;;
-        2)
+        3)
             DOKUS_PROFILE="lite"
             COMPOSE_FILE="docker-compose.lite.yml"
             save_profile
@@ -1095,6 +1136,12 @@ EOF
 }
 
 show_menu() {
+    # Prompt for profile selection on first run
+    if [ -z "${DOKUS_PROFILE:-}" ]; then
+        splash_screen
+        prompt_profile_selection
+    fi
+
     splash_screen
 
     # Show current profile
@@ -1160,6 +1207,9 @@ main() {
             --profile=*)
                 DOKUS_PROFILE="${arg#*=}"
                 case "$DOKUS_PROFILE" in
+                    cloud)
+                        COMPOSE_FILE="docker-compose.cloud.yml"
+                        ;;
                     pro)
                         COMPOSE_FILE="docker-compose.pro.yml"
                         ;;
@@ -1168,7 +1218,7 @@ main() {
                         ;;
                     *)
                         print_status error "Unknown profile: $DOKUS_PROFILE"
-                        print_status info "Available profiles: pro, lite"
+                        print_status info "Available profiles: cloud, pro, lite"
                         exit 1
                         ;;
                 esac
@@ -1182,6 +1232,11 @@ main() {
                 ;;
         esac
     done
+
+    # For CLI commands that need a profile, prompt if not set
+    if [ -z "${DOKUS_PROFILE:-}" ] && [ -n "${cmd:-}" ] && [[ "$cmd" =~ ^(start|stop|restart|status|logs|setup)$ ]]; then
+        prompt_profile_selection
+    fi
 
     case ${cmd:-} in
         setup)
@@ -1214,9 +1269,10 @@ main() {
             if [ -n "${args[0]:-}" ]; then
                 # Set profile from CLI
                 case "${args[0]}" in
-                    pro|lite)
+                    cloud|pro|lite)
                         DOKUS_PROFILE="${args[0]}"
                         case "$DOKUS_PROFILE" in
+                            cloud) COMPOSE_FILE="docker-compose.cloud.yml" ;;
                             pro) COMPOSE_FILE="docker-compose.pro.yml" ;;
                             *) COMPOSE_FILE="docker-compose.lite.yml" ;;
                         esac
@@ -1226,7 +1282,7 @@ main() {
                         ;;
                     *)
                         print_status error "Unknown profile: ${args[0]}"
-                        print_status info "Available profiles: pro, lite"
+                        print_status info "Available profiles: cloud, pro, lite"
                         exit 1
                         ;;
                 esac
@@ -1235,15 +1291,15 @@ main() {
                 print_status info "Current profile: $(get_profile_display)"
                 print_status info "Using: $COMPOSE_FILE"
                 echo ""
-                print_status info "Set profile with: ./dokus.sh profile <pro|lite>"
-                print_status info "Or use --profile flag: ./dokus.sh --profile=pro start"
+                print_status info "Set profile with: ./dokus.sh profile <cloud|pro|lite>"
+                print_status info "Or use --profile flag: ./dokus.sh --profile=cloud start"
             fi
             ;;
         help|--help|-h)
             echo ""
-            echo_e "  ${BOLD}Dokus Cloud Management Script${NC}"
+            echo_e "  ${BOLD}Dokus Management Script${NC}"
             echo ""
-            echo_e "  ${SOFT_CYAN}Usage:${NC} ./dokus.sh [--profile=<pro|lite>] [command]"
+            echo_e "  ${SOFT_CYAN}Usage:${NC} ./dokus.sh [--profile=<cloud|pro|lite>] [command]"
             echo ""
             echo_e "  ${SOFT_GREEN}Commands:${NC}"
             echo_e "    setup      Guided initial setup"
