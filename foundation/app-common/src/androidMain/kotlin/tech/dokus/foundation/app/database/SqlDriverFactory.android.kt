@@ -1,4 +1,4 @@
-package ai.dokus.app.core.database
+package tech.dokus.foundation.app.database
 
 import ai.dokus.foundation.domain.model.common.Feature
 import android.content.Context
