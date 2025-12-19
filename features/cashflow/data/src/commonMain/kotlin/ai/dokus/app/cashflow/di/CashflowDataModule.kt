@@ -5,13 +5,13 @@ import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSourceImpl
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
-import ai.dokus.foundation.network.createAuthenticatedHttpClient
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import tech.dokus.foundation.app.network.createAuthenticatedHttpClient
 
 /**
  * Koin DI module for Cashflow feature network configuration.
