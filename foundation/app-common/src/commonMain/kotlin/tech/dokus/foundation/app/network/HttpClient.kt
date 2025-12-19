@@ -57,6 +57,7 @@ fun createDynamicAuthenticatedHttpClient(
                 val accessToken = tokenManager.getValidAccessToken()
                 accessToken?.let { BearerTokens(accessToken = it, refreshToken = "") }
             }
+
             refreshTokens {
                 val newAccessToken = tokenManager.refreshToken()
                 if (newAccessToken.isNullOrEmpty()) {
