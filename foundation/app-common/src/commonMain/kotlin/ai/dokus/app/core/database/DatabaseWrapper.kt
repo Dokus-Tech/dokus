@@ -6,6 +6,8 @@ import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.db.SqlSchema
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import tech.dokus.foundation.app.database.createSqlDriver
+import tech.dokus.foundation.app.database.deleteSqlDatabase
 
 /**
  * Interface for database wrappers that handles thread-safe initialization.
