@@ -19,7 +19,6 @@ internal expect fun createDokusHttpClient(block: HttpClientConfig<*>.() -> Unit)
  */
 fun createDynamicBaseHttpClient(
     endpointProvider: DynamicDokusEndpointProvider,
-    onAuthenticationFailed: suspend () -> Unit = {},
     block: HttpClientConfig<*>.() -> Unit = {},
 ) = createDokusHttpClient {
     expectSuccess = false
@@ -27,9 +26,7 @@ fun createDynamicBaseHttpClient(
     withResources()
     withDynamicDokusEndpoint(endpointProvider)
     withLogging()
-    withResponseValidation {
-        onAuthenticationFailed()
-    }
+    withResponseValidation()
     block()
 }
 
@@ -47,6 +44,11 @@ fun createDynamicAuthenticatedHttpClient(
     endpointProvider: DynamicDokusEndpointProvider,
     tokenManager: TokenManager,
     onAuthenticationFailed: suspend () -> Unit = {}
-) = createDynamicBaseHttpClient(endpointProvider, onAuthenticationFailed) {
+) = createDynamicBaseHttpClient(endpointProvider) {
     withDynamicBearerAuth(tokenManager)
+    withUnauthorizedRefreshRetry(
+        tokenManager = tokenManager,
+        onAuthenticationFailed = onAuthenticationFailed,
+        maxRetries = 1
+    )
 }
