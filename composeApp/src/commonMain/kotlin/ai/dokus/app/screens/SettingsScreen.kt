@@ -2,11 +2,11 @@ package ai.dokus.app.screens
 
 import ai.dokus.app.auth.screen.ProfileSettingsContent
 import ai.dokus.app.cashflow.screens.settings.PeppolSettingsContent
-import ai.dokus.app.core.ModuleSettingsGroup
-import ai.dokus.app.core.ModuleSettingsSection
-import ai.dokus.app.core.local.LocalAppModules
-import ai.dokus.app.core.state.isLoading
-import ai.dokus.app.core.state.isSuccess
+import tech.dokus.foundation.app.ModuleSettingsGroup
+import tech.dokus.foundation.app.ModuleSettingsSection
+import tech.dokus.foundation.app.local.LocalAppModules
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.settings_current_workspace
 import ai.dokus.app.resources.generated.settings_select_workspace
@@ -19,7 +19,6 @@ import ai.dokus.foundation.design.components.ListSettingsItem
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.destinations.NavigationDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo

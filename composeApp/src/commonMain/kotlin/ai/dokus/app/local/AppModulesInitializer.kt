@@ -1,6 +1,6 @@
 package ai.dokus.app.local
 
-import ai.dokus.app.core.AppModule
+import tech.dokus.foundation.app.AppModule
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue

@@ -1,4 +1,4 @@
-package ai.dokus.app.core.state
+package tech.dokus.foundation.app.state
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import kotlinx.coroutines.flow.MutableStateFlow

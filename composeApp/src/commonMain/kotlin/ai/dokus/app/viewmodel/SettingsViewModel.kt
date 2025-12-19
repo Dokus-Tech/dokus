@@ -1,7 +1,7 @@
 package ai.dokus.app.viewmodel
 
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.platform.Logger
 import androidx.lifecycle.ViewModel

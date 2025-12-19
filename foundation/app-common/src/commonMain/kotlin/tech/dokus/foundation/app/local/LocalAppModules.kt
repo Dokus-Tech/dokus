@@ -1,6 +1,6 @@
-package ai.dokus.app.core.local
+package tech.dokus.foundation.app.local
 
-import ai.dokus.app.core.AppModule
+import tech.dokus.foundation.app.AppModule
 import androidx.compose.runtime.compositionLocalOf
 
 val LocalAppModules = compositionLocalOf { emptyList<AppModule>() }

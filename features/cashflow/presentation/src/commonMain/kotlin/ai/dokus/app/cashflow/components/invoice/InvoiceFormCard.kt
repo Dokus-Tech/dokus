@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard

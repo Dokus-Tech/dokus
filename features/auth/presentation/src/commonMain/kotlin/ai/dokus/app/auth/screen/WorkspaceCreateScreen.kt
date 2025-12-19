@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.foundation.app.state.DokusState
 
 @Composable
 internal fun WorkspaceCreateScreen(
@@ -89,7 +90,7 @@ internal fun WorkspaceCreateScreen(
     var displayName by remember { mutableStateOf(DisplayName("")) }
     var vatNumber by remember { mutableStateOf(VatNumber("")) }
 
-    val isSubmitting = state is ai.dokus.app.core.state.DokusState.Loading
+    val isSubmitting = state is DokusState.Loading
 
     Scaffold { contentPadding ->
         Box(

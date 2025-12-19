@@ -1,7 +1,7 @@
 package ai.dokus.app.local
 
 import ai.dokus.app.auth.database.AuthDatabase
-import ai.dokus.app.core.database.LocalDatabaseCleaner
+import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

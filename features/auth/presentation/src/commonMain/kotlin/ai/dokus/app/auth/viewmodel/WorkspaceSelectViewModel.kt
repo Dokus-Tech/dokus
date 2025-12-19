@@ -2,10 +2,10 @@ package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.SelectTenantUseCase
-import ai.dokus.app.core.state.DokusState
-import ai.dokus.app.core.state.emit
-import ai.dokus.app.core.state.emitLoading
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.emit
+import tech.dokus.foundation.app.state.emitLoading
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.platform.Logger

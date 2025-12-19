@@ -1,7 +1,7 @@
 package ai.dokus.app.screens.settings
 
-import ai.dokus.app.core.state.isLoading
-import ai.dokus.app.core.state.isSuccess
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.save_changes
 import ai.dokus.app.resources.generated.workspace_address

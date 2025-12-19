@@ -1,7 +1,7 @@
 package ai.dokus.app.screens
 
-import ai.dokus.app.core.AppModule
-import ai.dokus.app.core.local.LocalAppModules
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.local.LocalAppModules
 import ai.dokus.app.homeItems
 import ai.dokus.app.homeNavigationProviders
 import ai.dokus.app.viewmodel.HomeViewModel

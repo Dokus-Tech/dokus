@@ -2,8 +2,8 @@ package ai.dokus.app.cashflow.screens.settings
 
 import ai.dokus.app.cashflow.viewmodel.ConnectionTestState
 import ai.dokus.app.cashflow.viewmodel.PeppolSettingsViewModel
-import ai.dokus.app.core.state.isLoading
-import ai.dokus.app.core.state.isSuccess
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.peppol_api_key
 import ai.dokus.app.resources.generated.peppol_api_secret
@@ -58,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Peppol E-Invoicing settings screen with top bar.
@@ -128,7 +129,7 @@ fun PeppolSettingsContent(
                         Spacer(Modifier.height(12.dp))
 
                         val isConfigured = state.isSuccess() && state.let {
-                            (it as? ai.dokus.app.core.state.DokusState.Success)?.data != null
+                            (it as? DokusState.Success)?.data != null
                         }
 
                         Row(

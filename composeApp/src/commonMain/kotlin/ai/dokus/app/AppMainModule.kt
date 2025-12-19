@@ -1,13 +1,13 @@
 package ai.dokus.app
 
-import ai.dokus.app.core.AppDataModuleDi
-import ai.dokus.app.core.AppDomainModuleDi
-import ai.dokus.app.core.AppModule
-import ai.dokus.app.core.AppPresentationModuleDi
-import ai.dokus.app.core.DashboardWidget
-import ai.dokus.app.core.ModuleSettingsGroup
-import ai.dokus.app.core.ModuleSettingsSection
-import ai.dokus.app.core.SettingsPriority
+import tech.dokus.foundation.app.AppDataModuleDi
+import tech.dokus.foundation.app.AppDomainModuleDi
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.AppPresentationModuleDi
+import tech.dokus.foundation.app.DashboardWidget
+import tech.dokus.foundation.app.ModuleSettingsGroup
+import tech.dokus.foundation.app.ModuleSettingsSection
+import tech.dokus.foundation.app.SettingsPriority
 import ai.dokus.app.navigation.AppNavigationProvider
 import ai.dokus.app.navigation.HomeNavigationProvider
 import ai.dokus.app.resources.generated.Res

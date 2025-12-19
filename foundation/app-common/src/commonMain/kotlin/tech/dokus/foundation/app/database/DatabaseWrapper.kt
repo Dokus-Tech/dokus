@@ -1,4 +1,4 @@
-package ai.dokus.app.core.database
+package tech.dokus.foundation.app.database
 
 import ai.dokus.foundation.domain.model.common.Feature
 import app.cash.sqldelight.db.QueryResult
@@ -6,8 +6,6 @@ import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.db.SqlSchema
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import tech.dokus.foundation.app.database.createSqlDriver
-import tech.dokus.foundation.app.database.deleteSqlDatabase
 
 /**
  * Interface for database wrappers that handles thread-safe initialization.

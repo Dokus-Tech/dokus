@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.ForgotPasswordViewModel
-import ai.dokus.app.core.state.exceptionIfError
+import tech.dokus.foundation.app.state.exceptionIfError
 import ai.dokus.foundation.domain.Email
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

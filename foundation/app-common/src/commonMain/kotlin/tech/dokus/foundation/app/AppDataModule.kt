@@ -1,4 +1,4 @@
-package ai.dokus.app.core
+package tech.dokus.foundation.app
 
 import org.koin.core.module.Module
 

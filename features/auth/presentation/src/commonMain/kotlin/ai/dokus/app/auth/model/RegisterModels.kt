@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.model
 
-import ai.dokus.app.core.extensions.rememberIsValid
+import tech.dokus.foundation.app.extensions.rememberIsValid
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Password

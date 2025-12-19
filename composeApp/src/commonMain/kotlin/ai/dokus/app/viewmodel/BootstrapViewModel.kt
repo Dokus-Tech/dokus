@@ -1,7 +1,7 @@
 package ai.dokus.app.viewmodel
 
 import ai.dokus.app.auth.AuthInitializer
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import androidx.lifecycle.viewModelScope

@@ -1,4 +1,4 @@
-package ai.dokus.app.core.database
+package tech.dokus.foundation.app.database
 
 /**
  * Clears all local frontend databases.

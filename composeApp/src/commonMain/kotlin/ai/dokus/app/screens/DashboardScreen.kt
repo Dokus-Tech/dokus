@@ -1,8 +1,8 @@
 package ai.dokus.app.screens
 
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
-import ai.dokus.app.core.state.isLoading
-import ai.dokus.app.core.state.isSuccess
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.viewmodel.DashboardViewModel
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant

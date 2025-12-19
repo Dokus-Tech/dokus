@@ -105,7 +105,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.core"
+    namespace = "tech.dokus.foundation.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

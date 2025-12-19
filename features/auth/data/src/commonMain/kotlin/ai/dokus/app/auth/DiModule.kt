@@ -26,7 +26,7 @@ import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.auth.usecases.SelectTenantUseCaseImpl
 import ai.dokus.app.auth.usecases.ValidateServerUseCase
 import ai.dokus.app.auth.utils.JwtDecoder
-import ai.dokus.app.core.database.LocalDatabaseCleaner
+import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider

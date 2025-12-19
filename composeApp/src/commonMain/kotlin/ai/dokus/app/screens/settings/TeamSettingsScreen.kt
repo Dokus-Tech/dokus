@@ -1,7 +1,7 @@
 package ai.dokus.app.screens.settings
 
-import ai.dokus.app.core.state.isLoading
-import ai.dokus.app.core.state.isSuccess
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cancel
 import ai.dokus.app.resources.generated.role_admin
@@ -21,7 +21,6 @@ import ai.dokus.app.resources.generated.team_invite_member
 import ai.dokus.app.resources.generated.team_invite_role
 import ai.dokus.app.resources.generated.team_invited_by
 import ai.dokus.app.resources.generated.team_joined
-import ai.dokus.app.resources.generated.team_last_active
 import ai.dokus.app.resources.generated.team_members
 import ai.dokus.app.resources.generated.team_no_invitations
 import ai.dokus.app.resources.generated.team_no_members
@@ -41,8 +40,6 @@ import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.InvitationId
-import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.TeamMember
 import ai.dokus.foundation.domain.model.TenantInvitation
 import androidx.compose.foundation.layout.Arrangement
@@ -95,6 +92,7 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Team settings screen with top bar.
@@ -200,7 +198,7 @@ fun TeamSettingsContent(
                         }
                     }
                     membersState.isSuccess() -> {
-                        val members = (membersState as ai.dokus.app.core.state.DokusState.Success).data
+                        val members = (membersState as DokusState.Success).data
                         if (members.isEmpty()) {
                             Text(
                                 text = stringResource(Res.string.team_no_members),
@@ -252,7 +250,7 @@ fun TeamSettingsContent(
                         }
                     }
                     invitationsState.isSuccess() -> {
-                        val invitations = (invitationsState as ai.dokus.app.core.state.DokusState.Success).data
+                        val invitations = (invitationsState as DokusState.Success).data
                         if (invitations.isEmpty()) {
                             Text(
                                 text = stringResource(Res.string.team_no_invitations),

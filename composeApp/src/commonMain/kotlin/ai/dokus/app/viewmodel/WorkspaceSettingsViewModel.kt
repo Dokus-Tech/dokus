@@ -2,7 +2,7 @@ package ai.dokus.app.viewmodel
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.VatNumber

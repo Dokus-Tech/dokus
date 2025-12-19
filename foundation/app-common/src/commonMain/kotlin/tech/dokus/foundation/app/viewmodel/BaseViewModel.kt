@@ -1,4 +1,4 @@
-package ai.dokus.app.core.viewmodel
+package tech.dokus.foundation.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
