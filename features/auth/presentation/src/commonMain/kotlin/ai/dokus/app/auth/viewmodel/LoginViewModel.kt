@@ -1,10 +1,10 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.LoginUseCase
-import ai.dokus.app.core.state.DokusState
-import ai.dokus.app.core.state.emit
-import ai.dokus.app.core.state.emitLoading
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.emit
+import tech.dokus.foundation.app.state.emitLoading
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.asbtractions.TokenManager

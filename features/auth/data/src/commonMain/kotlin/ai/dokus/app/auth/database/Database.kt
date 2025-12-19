@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.database
 
-import ai.dokus.app.core.database.DatabaseWrapper
+import tech.dokus.foundation.app.database.DatabaseWrapper
 import ai.dokus.foundation.domain.model.common.Feature
 
 class AuthDb private constructor() : DatabaseWrapper<AuthDatabase> by DatabaseWrapper(

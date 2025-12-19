@@ -1,9 +1,9 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.LoginViewModel
-import ai.dokus.app.core.extensions.rememberIsValid
-import ai.dokus.app.core.state.exceptionIfError
-import ai.dokus.app.core.state.isLoading
+import tech.dokus.foundation.app.extensions.rememberIsValid
+import tech.dokus.foundation.app.state.exceptionIfError
+import tech.dokus.foundation.app.state.isLoading
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_name
 import ai.dokus.app.resources.generated.auth_email_label

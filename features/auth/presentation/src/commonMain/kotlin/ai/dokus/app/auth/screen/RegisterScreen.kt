@@ -6,8 +6,8 @@ import ai.dokus.app.auth.components.RegisterProfileFields
 import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.auth.model.RegisterPage
 import ai.dokus.app.auth.viewmodel.RegisterViewModel
-import ai.dokus.app.core.state.exceptionIfError
-import ai.dokus.app.core.state.isLoading
+import tech.dokus.foundation.app.state.exceptionIfError
+import tech.dokus.foundation.app.state.isLoading
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_has_account_prefix
 import ai.dokus.app.resources.generated.auth_login_link

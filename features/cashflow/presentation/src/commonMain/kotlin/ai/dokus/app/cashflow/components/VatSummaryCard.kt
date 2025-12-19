@@ -1,8 +1,7 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerBox
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import ai.dokus.foundation.domain.Money
 import androidx.compose.foundation.border
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
