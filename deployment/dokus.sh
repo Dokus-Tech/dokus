@@ -175,6 +175,40 @@ GATEWAY_PORT="8000"
 GATEWAY_DASHBOARD_PORT="8080"
 DEFAULT_DOMAIN="localhost"
 
+# Cloud gateway domain (used for Host-based Traefik routing)
+get_cloud_domain() {
+    local domain="app.dokus.tech"
+    if [ -f .env ]; then
+        local line
+        line=$(grep -E '^DOMAIN=' .env 2>/dev/null | head -n 1 || true)
+        if [ -n "$line" ]; then
+            domain="${line#DOMAIN=}"
+        fi
+    fi
+    echo "$domain"
+}
+
+# Get HTTP status code via the gateway for a given endpoint.
+# For cloud, Traefik routes by Host header, so we probe https://localhost with the domain header.
+gateway_http_code() {
+    local endpoint="$1"
+
+    if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
+        local domain
+        domain="$(get_cloud_domain)"
+        curl -s -o /dev/null -w "%{http_code}" -k -H "Host: ${domain}" "https://localhost${endpoint}" 2>/dev/null || echo "000"
+    else
+        curl -s -o /dev/null -w "%{http_code}" "http://localhost:${GATEWAY_PORT}${endpoint}" 2>/dev/null || echo "000"
+    fi
+}
+
+gateway_is_reachable() {
+    local endpoint="$1"
+    local code
+    code="$(gateway_http_code "$endpoint")"
+    [ -n "$code" ] && [ "$code" != "000" ]
+}
+
 # Function to get server IP address
 get_server_ip() {
     # First try to get public IP
@@ -368,28 +402,32 @@ show_status() {
     fi
 
     printf "  ${SOFT_GRAY}│${NC} RabbitMQ Broker         ${SOFT_GRAY}│${NC} "
-    if curl -f -s -u ${RABBITMQ_USERNAME:-dokus}:${RABBITMQ_PASSWORD:-localrabbitpass} http://localhost:25673/api/health/checks/alarms &>/dev/null; then
+    if docker compose -f "$COMPOSE_FILE" exec -T rabbitmq rabbitmq-diagnostics ping &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     printf "  ${SOFT_GRAY}│${NC} MinIO Storage           ${SOFT_GRAY}│${NC} "
-    if curl -f -s http://localhost:9000/minio/health/live &>/dev/null; then
+    if docker compose -f "$COMPOSE_FILE" exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        if docker compose -f "$COMPOSE_FILE" ps --status running -q minio 2>/dev/null | grep -q .; then
+            echo_e "${SOFT_YELLOW}◒ RUNNING${NC}      ${SOFT_GRAY}│${NC}"
+        else
+            echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        fi
     fi
 
     printf "  ${SOFT_GRAY}│${NC} Ollama AI               ${SOFT_GRAY}│${NC} "
     if curl -f -s http://localhost:11434/api/tags &>/dev/null; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+        echo_e "${SOFT_YELLOW}◒ OPTIONAL${NC}     ${SOFT_GRAY}│${NC}"
     fi
 
     printf "  ${SOFT_GRAY}│${NC} Traefik Gateway         ${SOFT_GRAY}│${NC} "
-    if curl -f -s -k https://localhost/health &>/dev/null 2>&1 || curl -f -s http://localhost:80/ &>/dev/null 2>&1; then
+    if gateway_is_reachable "/api/v1/server/info"; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -399,7 +437,7 @@ show_status() {
 
     # Check services via gateway (services don't expose ports directly)
     local services=(
-        "Auth Service:/api/v1/identity"
+        "Auth Service:/api/v1/server/info"
         "Cashflow Service:/api/v1/invoices"
         "Payment Service:/api/v1/payments"
         "Banking Service:/api/v1/banking"
@@ -410,8 +448,7 @@ show_status() {
     for service_info in "${services[@]}"; do
         IFS=':' read -r service_name endpoint <<< "$service_info"
         printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
-        # Check via HTTPS gateway (using -k to allow self-signed certs during testing)
-        if curl -f -s -k "https://localhost${endpoint}" > /dev/null 2>&1; then
+        if gateway_is_reachable "$endpoint"; then
             echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
         else
             echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
