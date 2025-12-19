@@ -1,4 +1,4 @@
-package ai.dokus.app.core
+package tech.dokus.foundation.app
 
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider

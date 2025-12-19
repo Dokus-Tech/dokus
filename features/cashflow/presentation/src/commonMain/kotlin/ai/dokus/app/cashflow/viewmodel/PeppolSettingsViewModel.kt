@@ -1,10 +1,11 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.app.core.state.DokusState
-import ai.dokus.app.core.state.emit
-import ai.dokus.app.core.state.emitLoading
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.emit
+import tech.dokus.foundation.app.state.emitLoading
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.platform.Logger
@@ -194,7 +195,7 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
                 onFailure = { error ->
                     logger.e(error) { "Failed to load providers" }
                     _providers.value = DokusState.error(
-                        ai.dokus.foundation.domain.exceptions.DokusException.Unknown(error)
+                        DokusException.Unknown(error)
                     ) { loadProviders() }
                 }
             )

@@ -1,6 +1,6 @@
 package ai.dokus.app
 
-import ai.dokus.app.core.navigationProviders
+import tech.dokus.foundation.app.navigationProviders
 import ai.dokus.app.local.AppModulesInitializer
 import ai.dokus.app.local.AppModulesProvided
 import ai.dokus.app.local.KoinProvided

@@ -3,9 +3,9 @@ package ai.dokus.app
 import ai.dokus.app.auth.AuthAppModule
 import ai.dokus.app.cashflow.CashflowAppModule
 import ai.dokus.app.contacts.ContactsAppModule
-import ai.dokus.app.core.AppModule
-import ai.dokus.app.core.ModuleSettingsGroup
-import ai.dokus.app.core.diModules
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.ModuleSettingsGroup
+import tech.dokus.foundation.app.diModules
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import org.jetbrains.compose.resources.StringResource

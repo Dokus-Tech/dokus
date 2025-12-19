@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.components
 
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.components.tiles.AddCompanyTile

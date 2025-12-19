@@ -1,4 +1,4 @@
-package ai.dokus.app.core
+package tech.dokus.foundation.app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable

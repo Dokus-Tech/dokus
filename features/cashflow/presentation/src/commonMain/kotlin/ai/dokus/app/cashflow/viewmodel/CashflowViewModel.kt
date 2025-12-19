@@ -9,11 +9,12 @@ import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
-import ai.dokus.app.core.state.DokusState
-import ai.dokus.app.core.state.emit
-import ai.dokus.app.core.state.emitLoading
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.emit
+import tech.dokus.foundation.app.state.emitLoading
 import kotlinx.coroutines.async
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
@@ -266,7 +267,7 @@ internal class CashflowViewModel :
         } catch (e: Exception) {
             logger.e(e) { "Failed to load VAT summary" }
             _vatSummaryState.value = DokusState.error(
-                ai.dokus.foundation.domain.exceptions.DokusException.Unknown(e)
+                DokusException.Unknown(e)
             ) { scope.launch { loadVatSummary() } }
         }
     }
@@ -284,7 +285,7 @@ internal class CashflowViewModel :
         } catch (e: Exception) {
             logger.e(e) { "Failed to load business health" }
             _businessHealthState.value = DokusState.error(
-                ai.dokus.foundation.domain.exceptions.DokusException.Unknown(e)
+                DokusException.Unknown(e)
             ) { scope.launch { loadBusinessHealth() } }
         }
     }

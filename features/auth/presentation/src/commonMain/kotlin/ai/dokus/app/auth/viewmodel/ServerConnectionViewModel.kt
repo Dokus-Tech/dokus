@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.config.ServerConfig
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.config.ServerInfo

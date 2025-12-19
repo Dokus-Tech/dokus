@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.usecases
 
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.app.core.database.LocalDatabaseCleaner
+import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import ai.dokus.foundation.platform.Logger
 
 /**

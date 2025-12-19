@@ -1,8 +1,7 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerBox
 import ai.dokus.foundation.design.components.common.ShimmerCircle
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import androidx.compose.foundation.Canvas

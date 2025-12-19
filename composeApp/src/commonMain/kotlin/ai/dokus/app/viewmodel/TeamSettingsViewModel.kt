@@ -1,7 +1,7 @@
 package ai.dokus.app.viewmodel
 
 import ai.dokus.app.auth.datasource.TeamRemoteDataSource
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.InvitationId

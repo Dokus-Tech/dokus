@@ -4,7 +4,7 @@ import ai.dokus.app.auth.AuthInitializer
 import ai.dokus.app.auth.database.AuthDatabase
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
-import ai.dokus.app.core.database.LocalDatabaseCleaner
+import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import ai.dokus.app.local.DefaultLocalDatabaseCleaner
 import ai.dokus.app.auth.datasource.TeamRemoteDataSource
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource

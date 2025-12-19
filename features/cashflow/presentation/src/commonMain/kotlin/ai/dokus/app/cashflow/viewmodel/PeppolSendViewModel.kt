@@ -1,12 +1,12 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.app.core.state.DokusState
-import ai.dokus.app.core.state.emit
-import ai.dokus.app.core.state.emitLoading
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.emitLoading
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.model.PeppolInboxPollResponse
 import ai.dokus.foundation.domain.model.PeppolTransmissionDto
@@ -368,7 +368,7 @@ private fun <T> MutableStateFlow<DokusState<T>>.emitError(
     retryHandler: () -> Unit
 ) {
     value = DokusState.error(
-        ai.dokus.foundation.domain.exceptions.DokusException.Unknown(error),
+        DokusException.Unknown(error),
         retryHandler
     )
 }

@@ -1,4 +1,4 @@
-package ai.dokus.app.core.extensions
+package tech.dokus.foundation.app.extensions
 
 import ai.dokus.foundation.domain.Validatable
 import ai.dokus.foundation.domain.ValueClass

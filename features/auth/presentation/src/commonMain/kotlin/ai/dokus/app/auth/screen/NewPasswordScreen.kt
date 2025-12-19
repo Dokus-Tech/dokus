@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.viewmodel.NewPasswordViewModel
-import ai.dokus.app.core.state.exceptionIfError
+import tech.dokus.foundation.app.state.exceptionIfError
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.components.layout.TwoPaneContainer

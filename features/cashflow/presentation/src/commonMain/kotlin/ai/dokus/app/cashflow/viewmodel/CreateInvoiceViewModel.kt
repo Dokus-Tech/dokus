@@ -1,10 +1,9 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.app.core.state.DokusState
-import ai.dokus.app.core.state.emit
-import ai.dokus.app.core.state.emitLoading
-import ai.dokus.app.core.viewmodel.BaseViewModel
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.emitLoading
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.ids.InvoiceId
@@ -16,7 +15,6 @@ import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
