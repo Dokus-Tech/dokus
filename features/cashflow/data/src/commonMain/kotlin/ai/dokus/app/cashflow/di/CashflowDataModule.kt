@@ -2,16 +2,9 @@ package ai.dokus.app.cashflow.di
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSourceImpl
-import ai.dokus.foundation.domain.asbtractions.AuthManager
-import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.config.DokusEndpoint
-import io.ktor.client.HttpClient
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.koin.core.qualifier.named
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
-import tech.dokus.foundation.app.network.createAuthenticatedHttpClient
 
 /**
  * Koin DI module for Cashflow feature network configuration.
@@ -20,24 +13,5 @@ import tech.dokus.foundation.app.network.createAuthenticatedHttpClient
  * including JWT token management.
  */
 val cashflowNetworkModule = module {
-    // Authenticated HTTP client for Cashflow service
-    single<HttpClient>(named("cashflow_http_client")) {
-        createAuthenticatedHttpClient(
-            dokusEndpoint = DokusEndpoint.Cashflow,
-            tokenManager = get<TokenManager>(),
-            onAuthenticationFailed = {
-                val authManager = get<AuthManager>()
-                CoroutineScope(Dispatchers.Default).launch {
-                    authManager.onAuthenticationFailed()
-                }
-            }
-        )
-    }
-
-    // CashflowRemoteDataSource using HTTP client
-    single<CashflowRemoteDataSource> {
-        CashflowRemoteDataSourceImpl(
-            httpClient = get<HttpClient>(named("cashflow_http_client"))
-        )
-    }
+    singleOf(::CashflowRemoteDataSourceImpl) bind CashflowRemoteDataSource::class
 }

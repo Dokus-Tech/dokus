@@ -118,6 +118,8 @@ kotlin {
             implementation(libs.lifecycle.viewmodel.compose)
 
             implementation(libs.materialKolor)
+
+            implementation(libs.ktor.client.core)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

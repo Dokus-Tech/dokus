@@ -1,13 +1,6 @@
 package ai.dokus.app
 
-import tech.dokus.foundation.app.AppDataModuleDi
-import tech.dokus.foundation.app.AppDomainModuleDi
-import tech.dokus.foundation.app.AppModule
-import tech.dokus.foundation.app.AppPresentationModuleDi
-import tech.dokus.foundation.app.DashboardWidget
-import tech.dokus.foundation.app.ModuleSettingsGroup
-import tech.dokus.foundation.app.ModuleSettingsSection
-import tech.dokus.foundation.app.SettingsPriority
+import ai.dokus.app.module.AppDataMainModuleDi
 import ai.dokus.app.navigation.AppNavigationProvider
 import ai.dokus.app.navigation.HomeNavigationProvider
 import ai.dokus.app.resources.generated.Res
@@ -24,11 +17,18 @@ import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.destinations.HomeDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
-import ai.dokus.foundation.platform.platformModule
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Palette
+import tech.dokus.foundation.app.AppDataModuleDi
+import tech.dokus.foundation.app.AppDomainModuleDi
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.AppPresentationModuleDi
+import tech.dokus.foundation.app.DashboardWidget
+import tech.dokus.foundation.app.ModuleSettingsGroup
+import tech.dokus.foundation.app.ModuleSettingsSection
+import tech.dokus.foundation.app.SettingsPriority
 
 internal object AppMainModule : AppModule {
     // Presentation layer
@@ -87,11 +87,7 @@ internal object AppMainModule : AppModule {
     }
 
     // Data layer
-    override val dataDi: AppDataModuleDi = object : AppDataModuleDi {
-        override val platform = platformModule
-        override val network = null
-        override val data = null
-    }
+    override val dataDi: AppDataModuleDi = AppDataMainModuleDi
 
     // Domain layer
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
