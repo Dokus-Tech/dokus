@@ -50,7 +50,7 @@ class TokenManagerImpl(
         when (jwtDecoder.validateToken(accessToken)) {
             TokenStatus.VALID -> updateAuthenticationState(true)
             TokenStatus.REFRESH_NEEDED, TokenStatus.EXPIRED -> {
-                val refreshed = runCatching { refreshToken() }.getOrNull()
+                val refreshed = runCatching { refreshToken(force = false) }.getOrNull()
                 updateAuthenticationState(refreshed != null)
             }
 
@@ -82,7 +82,7 @@ class TokenManagerImpl(
         return when (status) {
             TokenStatus.VALID -> currentToken
             TokenStatus.REFRESH_NEEDED, TokenStatus.EXPIRED -> {
-                refreshToken()
+                refreshToken(force = false)
             }
 
             TokenStatus.INVALID -> null
@@ -92,12 +92,12 @@ class TokenManagerImpl(
     /**
      * Refreshes the access token using the refresh token.
      */
-    override suspend fun refreshToken(): String? = refreshMutex.withLock {
+    override suspend fun refreshToken(force: Boolean): String? = refreshMutex.withLock {
         // Double-check token status after acquiring lock
         val currentToken = tokenStorage.getAccessToken() ?: return null
         val status = jwtDecoder.validateToken(currentToken)
 
-        if (status == TokenStatus.VALID) {
+        if (!force && status == TokenStatus.VALID) {
             return currentToken
         }
 
