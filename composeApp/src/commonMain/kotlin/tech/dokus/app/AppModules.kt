@@ -12,7 +12,7 @@ import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.diModules
 
-private val baseAppModules = listOf<AppModule>(
+private val baseAppModules = listOf(
     AppMainModule,
     AuthAppModule,
     CashflowAppModule,
