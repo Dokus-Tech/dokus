@@ -70,6 +70,9 @@ fun HttpClientConfig<*>.withResponseValidation(onUnauthorized: suspend () -> Uni
                             retryAfterSeconds = retryAfter ?: exception.retryAfterSeconds
                         )
                     }
+                    if (response.status == HttpStatusCode.Unauthorized) {
+                        onUnauthorized()
+                    }
                     throw exception
                 },
                 onFailure = {
