@@ -1,10 +1,12 @@
 package tech.dokus.foundation.app.network
 
+import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
 import ai.dokus.foundation.domain.exceptions.DokusException
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
@@ -118,4 +120,36 @@ fun HttpClientConfig<*>.withLogging(logLevel: LogLevel = LogLevel.ALL) {
 
 fun HttpClientConfig<*>.withResources() {
     install(Resources)
+}
+
+/**
+ * Adds an `Authorization: Bearer ...` header per-request using the latest token.
+ *
+ * This avoids in-memory token caching issues (e.g., after tenant selection the access token
+ * changes and must be used immediately for subsequent requests).
+ */
+fun HttpClientConfig<*>.withDynamicBearerAuth(tokenManager: TokenManager) {
+    install(DynamicBearerAuthPlugin) {
+        this.tokenManager = tokenManager
+    }
+}
+
+private class DynamicBearerAuthConfig {
+    lateinit var tokenManager: TokenManager
+}
+
+private val DynamicBearerAuthPlugin = createClientPlugin(
+    name = "DynamicBearerAuth",
+    createConfiguration = ::DynamicBearerAuthConfig
+) {
+    val tokenManager = pluginConfig.tokenManager
+
+    onRequest { request, _ ->
+        if (request.headers[HttpHeaders.Authorization] != null) return@onRequest
+
+        val token = runCatching { tokenManager.getValidAccessToken() }.getOrNull()
+        if (!token.isNullOrBlank()) {
+            request.headers.append(HttpHeaders.Authorization, "Bearer $token")
+        }
+    }
 }
