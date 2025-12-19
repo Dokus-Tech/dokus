@@ -1,6 +1,6 @@
 package tech.dokus.foundation.app.network
 
-import ai.dokus.foundation.domain.config.DynamicEndpoint
+import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
 import ai.dokus.foundation.domain.exceptions.DokusException
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
@@ -37,10 +37,12 @@ fun HttpClientConfig<*>.withJsonContentNegotiation() {
  * Unlike [withDokusEndpoint] which uses compile-time BuildKonfig values,
  * this function uses runtime values from the user's selected server configuration.
  *
- * @param endpoint The dynamic endpoint configuration from [ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider]
+ * @param endpointProvider Provider of the current endpoint configuration
  */
-fun HttpClientConfig<*>.withDynamicDokusEndpoint(endpoint: DynamicEndpoint) {
+fun HttpClientConfig<*>.withDynamicDokusEndpoint(endpointProvider: DynamicDokusEndpointProvider) {
     defaultRequest {
+        val endpoint = endpointProvider.currentEndpointSnapshot()
+
         host = endpoint.host
         this.port = endpoint.port
         url {

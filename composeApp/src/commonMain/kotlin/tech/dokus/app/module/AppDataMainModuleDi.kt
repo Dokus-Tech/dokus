@@ -21,13 +21,13 @@ internal object AppDataMainModuleDi : AppDataModuleDi {
 }
 
 private val networkModule = module {
-    factory<HttpClient>(SharedQualifiers.httpClientNoAuth) {
+    single<HttpClient>(SharedQualifiers.httpClientNoAuth) {
         createDynamicBaseHttpClient(
             endpointProvider = get<DynamicDokusEndpointProvider>()
         )
     }
 
-    factory<HttpClient> {
+    single<HttpClient> {
         createDynamicAuthenticatedHttpClient(
             endpointProvider = get<DynamicDokusEndpointProvider>(),
             tokenManager = get<TokenManagerMutable>(),

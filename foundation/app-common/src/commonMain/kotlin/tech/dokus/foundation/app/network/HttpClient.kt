@@ -28,7 +28,7 @@ fun createDynamicBaseHttpClient(
     expectSuccess = false
     withJsonContentNegotiation()
     withResources()
-    withDynamicDokusEndpoint(endpointProvider.currentEndpoint.value)
+    withDynamicDokusEndpoint(endpointProvider)
     withLogging()
     withResponseValidation {
         onAuthenticationFailed()
