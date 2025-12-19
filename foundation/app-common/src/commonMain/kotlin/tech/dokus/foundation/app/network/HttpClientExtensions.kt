@@ -1,17 +1,24 @@
-package ai.dokus.foundation.network
+package tech.dokus.foundation.app.network
 
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.config.DynamicEndpoint
 import ai.dokus.foundation.domain.exceptions.DokusException
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.logging.SIMPLE
 import io.ktor.client.plugins.resources.Resources
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLProtocol
+import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
