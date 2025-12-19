@@ -1,3 +1,4 @@
+import ai.dokus.utils.WebCacheBuster
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -202,5 +203,11 @@ compose.desktop {
                 perUserInstall = true
             }
         }
+    }
+}
+
+tasks.named("wasmJsBrowserDistribution") {
+    doLast {
+        WebCacheBuster.updateIndexFileForDistribution(project)
     }
 }
