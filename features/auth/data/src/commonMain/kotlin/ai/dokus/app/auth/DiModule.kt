@@ -32,8 +32,6 @@ import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.foundation.network.createDynamicAuthenticatedHttpClient
-import ai.dokus.foundation.network.createDynamicBaseHttpClient
 import ai.dokus.foundation.platform.Persistence
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.HttpClient
@@ -46,6 +44,8 @@ import org.koin.core.qualifier.named
 import org.koin.core.qualifier.qualifier
 import org.koin.dsl.binds
 import org.koin.dsl.module
+import tech.dokus.foundation.app.network.createDynamicAuthenticatedHttpClient
+import tech.dokus.foundation.app.network.createDynamicBaseHttpClient
 
 internal object Qualifiers {
     val secureStorageAuth: Qualifier = qualifier(Feature.Auth)
