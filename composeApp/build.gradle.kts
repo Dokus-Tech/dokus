@@ -163,7 +163,7 @@ dependencies {
 compose.desktop {
 
     application {
-        mainClass = "ai.dokus.app.MainKt"
+        mainClass = "tech.dokus.app.MainKt"
         val macAppStore = (project.findProperty("compose.desktop.mac.appStore") as String?)?.toBoolean() ?: false
         val macSigningEnabled = (project.findProperty("mac.signing.enabled") as String?)?.toBoolean() ?: false
         val macSigningIdentity = project.findProperty("mac.signing.identity") as String?
