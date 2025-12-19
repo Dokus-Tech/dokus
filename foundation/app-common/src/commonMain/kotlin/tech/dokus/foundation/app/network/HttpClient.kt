@@ -1,9 +1,8 @@
-package ai.dokus.foundation.network
+package tech.dokus.foundation.app.network
 
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DokusEndpoint
 import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
-import ai.dokus.foundation.domain.config.DynamicEndpoint
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.auth.Auth
