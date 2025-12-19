@@ -2,7 +2,7 @@
 
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.domain.model.ContactDto
 import androidx.compose.animation.AnimatedVisibility
@@ -38,7 +38,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme

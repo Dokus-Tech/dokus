@@ -24,7 +24,7 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.runtime.mutableStateListOf
 import kotlin.random.Random
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition

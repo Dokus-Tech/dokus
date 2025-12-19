@@ -26,86 +26,54 @@ import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.auth.usecases.SelectTenantUseCaseImpl
 import ai.dokus.app.auth.usecases.ValidateServerUseCase
 import ai.dokus.app.auth.utils.JwtDecoder
-import ai.dokus.app.core.database.LocalDatabaseCleaner
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.foundation.network.createDynamicAuthenticatedHttpClient
-import ai.dokus.foundation.network.createDynamicBaseHttpClient
 import ai.dokus.foundation.platform.Persistence
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.Qualifier
-import org.koin.core.qualifier.named
 import org.koin.core.qualifier.qualifier
 import org.koin.dsl.binds
 import org.koin.dsl.module
+import tech.dokus.foundation.app.SharedQualifiers
+import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 
 internal object Qualifiers {
     val secureStorageAuth: Qualifier = qualifier(Feature.Auth)
-    val httpClientAuth: Qualifier = named("http_client_auth")
-    val httpClientNoAuth: Qualifier = named("http_client_no_auth")
 }
 
 expect val authPlatformModule: Module
 
 val authNetworkModule = module {
-    // HTTP client without authentication (for login/register)
-    // Uses factory pattern for dynamic server support - new client created on each injection
-    factory<HttpClient>(Qualifiers.httpClientNoAuth) {
-        createDynamicBaseHttpClient(
-            endpointProvider = get<DynamicDokusEndpointProvider>()
-        )
-    }
-
-    // HTTP client with authentication (for authenticated endpoints)
-    // Uses factory pattern for dynamic server support - new client created on each injection
-    factory<HttpClient>(Qualifiers.httpClientAuth) {
-        createDynamicAuthenticatedHttpClient(
-            endpointProvider = get<DynamicDokusEndpointProvider>(),
-            tokenManager = get<TokenManagerMutable>(),
-            onAuthenticationFailed = {
-                val authManager = get<AuthManagerMutable>()
-                val tokenManager = get<TokenManagerMutable>()
-                CoroutineScope(Dispatchers.Default).launch {
-                    tokenManager.onAuthenticationFailed()
-                    authManager.onAuthenticationFailed()
-                }
-            }
-        )
-    }
-
     // IdentityRemoteDataSource (unauthenticated - uses httpClientNoAuth)
     single<IdentityRemoteDataSource> {
         IdentityRemoteDataSourceImpl(
-            httpClient = get<HttpClient>(Qualifiers.httpClientNoAuth)
+            httpClient = get<HttpClient>(SharedQualifiers.httpClientNoAuth)
         )
     }
 
     // AccountRemoteDataSource (authenticated)
     single<AccountRemoteDataSource> {
         AccountRemoteDataSourceImpl(
-            httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
+            httpClient = get<HttpClient>()
         )
     }
 
     // TenantRemoteDataSource (authenticated)
     single<TenantRemoteDataSource> {
         TenantRemoteDataSourceImpl(
-            httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
+            httpClient = get<HttpClient>()
         )
     }
 
     // TeamRemoteDataSource (authenticated)
     single<TeamRemoteDataSource> {
         TeamRemoteDataSourceImpl(
-            httpClient = get<HttpClient>(Qualifiers.httpClientAuth)
+            httpClient = get<HttpClient>()
         )
     }
 }
@@ -115,7 +83,7 @@ val authDataModule = module {
     single { AuthDb.create() }
     single { get<AuthDb>().get() }
 
-    single { AuthManagerImpl() } binds arrayOf(AuthManager::class, AuthManagerMutable::class)
+    singleOf(::AuthManagerImpl) binds arrayOf(AuthManager::class, AuthManagerMutable::class)
 
     // JWT utilities
     single<JwtDecoder> { JwtDecoder() }

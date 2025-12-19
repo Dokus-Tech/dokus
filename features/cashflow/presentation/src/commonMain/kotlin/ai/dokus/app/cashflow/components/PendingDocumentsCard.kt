@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.core.state.DokusState
+import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.pending_documents_empty
 import ai.dokus.app.resources.generated.pending_documents_need_confirmation

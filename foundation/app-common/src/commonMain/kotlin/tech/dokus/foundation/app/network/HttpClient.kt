@@ -1,0 +1,71 @@
+package tech.dokus.foundation.app.network
+
+import ai.dokus.foundation.domain.asbtractions.TokenManager
+import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
+
+internal expect fun createDokusHttpClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
+
+/**
+ * Creates a basic HTTP client using dynamic endpoint configuration.
+ *
+ * This variant supports self-hosted servers by using [DynamicDokusEndpointProvider]
+ * to get the current server configuration at runtime.
+ *
+ * @param endpointProvider Provider for dynamic endpoint configuration
+ * @param onAuthenticationFailed Callback invoked on 401 responses
+ * @param block Additional client configuration
+ */
+fun createDynamicBaseHttpClient(
+    endpointProvider: DynamicDokusEndpointProvider,
+    onAuthenticationFailed: suspend () -> Unit = {},
+    block: HttpClientConfig<*>.() -> Unit = {},
+) = createDokusHttpClient {
+    expectSuccess = false
+    withJsonContentNegotiation()
+    withResources()
+    withDynamicDokusEndpoint(endpointProvider.currentEndpoint.value)
+    withLogging()
+    withResponseValidation {
+        onAuthenticationFailed()
+    }
+    block()
+}
+
+/**
+ * Creates an authenticated HTTP client using dynamic endpoint configuration.
+ *
+ * This variant supports self-hosted servers by using [DynamicDokusEndpointProvider]
+ * to get the current server configuration at runtime.
+ *
+ * @param endpointProvider Provider for dynamic endpoint configuration
+ * @param tokenManager Manages access and refresh tokens
+ * @param onAuthenticationFailed Callback invoked on 401 responses
+ */
+fun createDynamicAuthenticatedHttpClient(
+    endpointProvider: DynamicDokusEndpointProvider,
+    tokenManager: TokenManager,
+    onAuthenticationFailed: suspend () -> Unit = {}
+) = createDynamicBaseHttpClient(endpointProvider, onAuthenticationFailed) {
+    install(Auth) {
+        bearer {
+            loadTokens {
+                val accessToken = tokenManager.getValidAccessToken()
+                accessToken?.let { BearerTokens(accessToken = it, refreshToken = "") }
+            }
+            refreshTokens {
+                val newAccessToken = tokenManager.refreshToken()
+                if (newAccessToken.isNullOrEmpty()) {
+                    onAuthenticationFailed()
+                    null
+                } else {
+                    BearerTokens(accessToken = newAccessToken, refreshToken = "")
+                }
+            }
+        }
+    }
+}

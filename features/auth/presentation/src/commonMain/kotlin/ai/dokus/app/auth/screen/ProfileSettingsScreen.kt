@@ -3,9 +3,9 @@ package ai.dokus.app.auth.screen
 import ai.dokus.app.auth.components.CurrentServerSection
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
 import ai.dokus.app.auth.viewmodel.ProfileSettingsViewModel
-import ai.dokus.app.core.state.DokusState
-import ai.dokus.app.core.state.isLoading
-import ai.dokus.app.core.state.isSuccess
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.profile_cancel
 import ai.dokus.app.resources.generated.profile_danger_zone
@@ -28,9 +28,7 @@ import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldName
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.config.ServerConfigManager
-import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
