@@ -27,34 +27,15 @@ class ServerConfigManagerImpl(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val _currentServer = MutableStateFlow(ServerConfig.Cloud)
+    private val _currentServer = MutableStateFlow(loadPersistedServerConfig() ?: ServerConfig.Cloud)
     override val currentServer: StateFlow<ServerConfig> = _currentServer.asStateFlow()
 
     override val isCloudServer: StateFlow<Boolean> = _currentServer
         .map { it.isCloud }
-        .stateIn(scope, SharingStarted.Eagerly, true)
+        .stateIn(scope, SharingStarted.Eagerly, _currentServer.value.isCloud)
 
     override suspend fun initialize() {
-        val savedHost = settings.get<String>(KEY_SERVER_HOST)
-        val savedPort = settings.get<Int>(KEY_SERVER_PORT)
-        val savedProtocol = settings.get<String>(KEY_SERVER_PROTOCOL)
-        val savedName = settings.get<String>(KEY_SERVER_NAME)
-        val savedVersion = settings.get<String>(KEY_SERVER_VERSION)
-        val isCloud = settings.get<Boolean>(KEY_SERVER_IS_CLOUD) ?: true
-
-        if (savedHost != null && savedPort != null && savedProtocol != null) {
-            _currentServer.value = ServerConfig(
-                host = savedHost,
-                port = savedPort,
-                protocol = savedProtocol,
-                name = savedName,
-                version = savedVersion,
-                isCloud = isCloud
-            )
-        } else {
-            // No saved config, use cloud default
-            _currentServer.value = ServerConfig.Cloud
-        }
+        _currentServer.value = loadPersistedServerConfig() ?: ServerConfig.Cloud
     }
 
     override suspend fun setServer(config: ServerConfig) {
@@ -72,6 +53,28 @@ class ServerConfigManagerImpl(
 
     override suspend fun resetToCloud() {
         setServer(ServerConfig.Cloud)
+    }
+
+    private fun loadPersistedServerConfig(): ServerConfig? {
+        val savedHost = settings.get<String>(KEY_SERVER_HOST)
+        val savedPort = settings.get<Int>(KEY_SERVER_PORT)
+        val savedProtocol = settings.get<String>(KEY_SERVER_PROTOCOL)
+        val savedName = settings.get<String>(KEY_SERVER_NAME)
+        val savedVersion = settings.get<String>(KEY_SERVER_VERSION)
+        val isCloud = settings.get<Boolean>(KEY_SERVER_IS_CLOUD) ?: true
+
+        return if (savedHost != null && savedPort != null && savedProtocol != null) {
+            ServerConfig(
+                host = savedHost,
+                port = savedPort,
+                protocol = savedProtocol,
+                name = savedName,
+                version = savedVersion,
+                isCloud = isCloud
+            )
+        } else {
+            null
+        }
     }
 
     companion object {
