@@ -13,10 +13,8 @@ import kotlinx.coroutines.flow.stateIn
  *
  * This provider bridges [ServerConfigManager] and the HTTP client configuration.
  * When the user switches servers, the endpoint configuration is automatically
- * updated and new HTTP clients will use the new server.
- *
- * Note: Existing HTTP client instances will NOT be updated. The factory pattern
- * ensures new clients are created with the current endpoint configuration.
+ * updated and existing HTTP clients will pick up the new server on the next request
+ * (when configured with request-time endpoint resolution).
  *
  * @property serverConfigManager The server configuration manager
  */
@@ -29,15 +27,25 @@ class DynamicDokusEndpointProvider(
      * Current endpoint configuration derived from the active server.
      *
      * This flow emits a new [DynamicEndpoint] whenever the server configuration
-     * changes. HTTP client factories should use this to configure new clients.
+     * changes. Prefer [currentEndpointSnapshot] for request-time URL resolution.
      */
     val currentEndpoint: StateFlow<DynamicEndpoint> = serverConfigManager.currentServer
         .map { DynamicEndpoint.fromServerConfig(it) }
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
-            initialValue = DynamicEndpoint.fromServerConfig(ServerConfig.Cloud)
+            initialValue = DynamicEndpoint.fromServerConfig(serverConfigManager.currentServer.value)
         )
+
+    /**
+     * Get the current endpoint snapshot synchronously.
+     *
+     * Prefer this for request-time URL resolution to avoid any transient initial
+     * values from flow initialization.
+     */
+    fun currentEndpointSnapshot(): DynamicEndpoint {
+        return DynamicEndpoint.fromServerConfig(serverConfigManager.currentServer.value)
+    }
 }
 
 /**

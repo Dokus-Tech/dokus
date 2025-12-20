@@ -4,9 +4,6 @@ import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
 
 internal expect fun createDokusHttpClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 
@@ -22,17 +19,14 @@ internal expect fun createDokusHttpClient(block: HttpClientConfig<*>.() -> Unit)
  */
 fun createDynamicBaseHttpClient(
     endpointProvider: DynamicDokusEndpointProvider,
-    onAuthenticationFailed: suspend () -> Unit = {},
     block: HttpClientConfig<*>.() -> Unit = {},
 ) = createDokusHttpClient {
     expectSuccess = false
     withJsonContentNegotiation()
     withResources()
-    withDynamicDokusEndpoint(endpointProvider.currentEndpoint.value)
+    withDynamicDokusEndpoint(endpointProvider)
     withLogging()
-    withResponseValidation {
-        onAuthenticationFailed()
-    }
+    withResponseValidation()
     block()
 }
 
@@ -50,22 +44,11 @@ fun createDynamicAuthenticatedHttpClient(
     endpointProvider: DynamicDokusEndpointProvider,
     tokenManager: TokenManager,
     onAuthenticationFailed: suspend () -> Unit = {}
-) = createDynamicBaseHttpClient(endpointProvider, onAuthenticationFailed) {
-    install(Auth) {
-        bearer {
-            loadTokens {
-                val accessToken = tokenManager.getValidAccessToken()
-                accessToken?.let { BearerTokens(accessToken = it, refreshToken = "") }
-            }
-            refreshTokens {
-                val newAccessToken = tokenManager.refreshToken()
-                if (newAccessToken.isNullOrEmpty()) {
-                    onAuthenticationFailed()
-                    null
-                } else {
-                    BearerTokens(accessToken = newAccessToken, refreshToken = "")
-                }
-            }
-        }
-    }
+) = createDynamicBaseHttpClient(endpointProvider) {
+    withDynamicBearerAuth(tokenManager)
+    withUnauthorizedRefreshRetry(
+        tokenManager = tokenManager,
+        onAuthenticationFailed = onAuthenticationFailed,
+        maxRetries = 1
+    )
 }

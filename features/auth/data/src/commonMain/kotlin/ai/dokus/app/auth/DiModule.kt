@@ -86,18 +86,13 @@ val authDataModule = module {
     singleOf(::AuthManagerImpl) binds arrayOf(AuthManager::class, AuthManagerMutable::class)
 
     // JWT utilities
-    single<JwtDecoder> { JwtDecoder() }
+    singleOf(::JwtDecoder)
 
     // Token storage and management
     single<TokenStorage> {
         TokenStorage(get<SecureStorage>(Qualifiers.secureStorageAuth))
     }
-    single {
-        TokenManagerImpl(
-            get<TokenStorage>(),
-            get<JwtDecoder>()
-        )
-    } binds arrayOf(TokenManager::class, TokenManagerMutable::class)
+    singleOf(::TokenManagerImpl) binds arrayOf(TokenManager::class, TokenManagerMutable::class)
 
     // Repositories
     single<AuthRepository> {
