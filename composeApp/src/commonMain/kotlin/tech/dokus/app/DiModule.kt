@@ -50,7 +50,13 @@ internal val diModuleApp = module {
             get<WatchPendingDocumentsUseCase>()
         )
     }
-    viewModel { HomeViewModel(SavedStateHandle.createHandle(null, null)) }
+    viewModel {
+        HomeViewModel(
+            SavedStateHandle.createHandle(null, null),
+            get<GetCurrentTenantUseCase>(),
+            get<TenantRemoteDataSource>()
+        )
+    }
     viewModel { SettingsViewModel(get<GetCurrentTenantUseCase>()) }
     viewModel {
         WorkspaceSettingsViewModel(
