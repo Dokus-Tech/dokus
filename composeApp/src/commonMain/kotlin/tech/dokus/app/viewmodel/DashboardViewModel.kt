@@ -75,6 +75,8 @@ internal class DashboardViewModel(
 
             val nextState = getCurrentTenantUseCase().fold(
                 onSuccess = { tenant ->
+                    // Use avatar from tenant (already included in response)
+                    _currentAvatar.value = tenant?.avatar
                     DokusState.success(tenant)
                 },
                 onFailure = {
@@ -83,11 +85,6 @@ internal class DashboardViewModel(
             )
 
             mutableCurrentTenantState.value = nextState
-
-            // Load avatar
-            tenantDataSource.getAvatar().onSuccess { avatar ->
-                _currentAvatar.value = avatar
-            }
         }
     }
 
