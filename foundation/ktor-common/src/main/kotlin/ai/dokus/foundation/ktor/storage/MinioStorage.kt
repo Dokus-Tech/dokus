@@ -20,10 +20,18 @@ import kotlin.time.DurationUnit
 /**
  * MinIO implementation of ObjectStorage.
  * Provides S3-compatible object storage operations.
+ *
+ * @param client The MinIO client configured with the internal endpoint
+ * @param bucketName The bucket to store objects in
+ * @param internalEndpoint The internal MinIO endpoint (e.g., http://minio:9000)
+ * @param publicUrl The public URL base for presigned URLs (e.g., https://app.dokus.tech/storage)
+ *                  If null, presigned URLs will use the internal endpoint (backward compatible)
  */
 class MinioStorage(
     private val client: MinioClient,
-    private val bucketName: String
+    private val bucketName: String,
+    private val internalEndpoint: String,
+    private val publicUrl: String?
 ) : ObjectStorage {
 
     private val logger = LoggerFactory.getLogger(MinioStorage::class.java)
@@ -123,7 +131,7 @@ class MinioStorage(
         withContext(Dispatchers.IO) {
             logger.debug("Generating signed URL for: $key, expiry=$expiry")
 
-            client.getPresignedObjectUrl(
+            val internalUrl = client.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(bucketName)
@@ -131,19 +139,31 @@ class MinioStorage(
                     .expiry(expiry.toInt(DurationUnit.SECONDS))
                     .build()
             )
+
+            // Rewrite URL to use public endpoint if configured
+            if (publicUrl != null) {
+                val rewrittenUrl = internalUrl.replace(internalEndpoint, publicUrl)
+                logger.debug("Rewrote URL from internal to public: $rewrittenUrl")
+                rewrittenUrl
+            } else {
+                internalUrl
+            }
         }
 
     companion object {
         /**
          * Create a MinioStorage instance from configuration.
+         *
+         * @param config MinIO configuration with endpoint and credentials
+         * @param publicUrl Optional public URL for presigned URLs (from AppBaseConfig.storage.publicUrl)
          */
-        fun create(config: MinioConfig): MinioStorage {
+        fun create(config: MinioConfig, publicUrl: String? = null): MinioStorage {
             val client = MinioClient.builder()
                 .endpoint(config.endpoint)
                 .credentials(config.accessKey, config.secretKey)
                 .build()
 
-            return MinioStorage(client, config.bucket)
+            return MinioStorage(client, config.bucket, config.endpoint, publicUrl)
         }
     }
 }

@@ -218,6 +218,13 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       <<: *healthcheck-pi
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio.rule=PathPrefix(`/storage`)"
+      - "traefik.http.routers.minio.entrypoints=web"
+      - "traefik.http.services.minio.loadbalancer.server.port=9000"
+      - "traefik.http.middlewares.minio-strip.stripprefix.prefixes=/storage"
+      - "traefik.http.routers.minio.middlewares=minio-strip"
 
   # ==========================================================================
   # BACKEND SERVICES - Pi Optimized JVM (SerialGC, small heap)
