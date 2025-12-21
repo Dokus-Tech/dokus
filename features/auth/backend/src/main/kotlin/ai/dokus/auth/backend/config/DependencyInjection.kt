@@ -22,6 +22,10 @@ import ai.dokus.foundation.ktor.cache.RedisClient
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig
+import ai.dokus.foundation.ktor.config.MinioConfig
+import ai.dokus.foundation.ktor.storage.AvatarStorageService
+import ai.dokus.foundation.ktor.storage.MinioStorage
+import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j
 import ai.dokus.foundation.ktor.database.DatabaseFactory
@@ -147,6 +151,46 @@ private val appModule = module {
 
     // Team management service
     single { TeamService(get(), get(), get()) }
+
+    // MinIO Object Storage (when available)
+    single<ObjectStorage> {
+        val appConfig = get<AppBaseConfig>()
+        val logger = LoggerFactory.getLogger("StorageModule")
+        val minioConfig = MinioConfig.loadOrNull(appConfig)
+        if (minioConfig != null) {
+            logger.info("MinIO storage configured: endpoint=${minioConfig.endpoint}, bucket=${minioConfig.bucket}")
+            MinioStorage.create(minioConfig)
+        } else {
+            logger.warn("MinIO not configured for avatar storage. Set MINIO_ENDPOINT to enable.")
+            NoOpAvatarStorage
+        }
+    }
+
+    // Avatar storage service
+    single { AvatarStorageService(get()) }
+}
+
+/**
+ * No-op storage implementation for when MinIO is not configured.
+ */
+private object NoOpAvatarStorage : ObjectStorage {
+    override suspend fun put(key: String, data: ByteArray, contentType: String): String {
+        throw UnsupportedOperationException("Object storage not configured. Set MINIO_ENDPOINT to enable avatar uploads.")
+    }
+
+    override suspend fun get(key: String): ByteArray {
+        throw UnsupportedOperationException("Object storage not configured.")
+    }
+
+    override suspend fun delete(key: String) {
+        // No-op for delete
+    }
+
+    override suspend fun exists(key: String): Boolean = false
+
+    override suspend fun getSignedUrl(key: String, expiry: kotlin.time.Duration): String {
+        throw UnsupportedOperationException("Object storage not configured.")
+    }
 }
 
 fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
