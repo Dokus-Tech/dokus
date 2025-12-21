@@ -36,20 +36,6 @@ value class AddressId(val value: Uuid) {
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class BusinessUserId(val value: Uuid) {
-    constructor(value: String) : this(Uuid.parse(value))
-
-    override fun toString(): String = value.toString()
-
-    companion object {
-        fun generate(): BusinessUserId = BusinessUserId(Uuid.random())
-        fun parse(value: String): BusinessUserId = BusinessUserId(Uuid.parse(value))
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-@Serializable
-@JvmInline
 value class UserId(val value: Uuid) {
     constructor(value: String) : this(Uuid.parse(value))
 

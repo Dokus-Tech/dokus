@@ -2,6 +2,7 @@ package ai.dokus.foundation.database.repository.auth
 
 import ai.dokus.foundation.database.mappers.auth.TenantMappers.toTenant
 import ai.dokus.foundation.database.mappers.auth.TenantMappers.toTenantSettings
+import ai.dokus.foundation.database.tables.auth.AddressTable
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.domain.DisplayName
@@ -15,6 +16,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
+import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.ktor.database.dbQuery
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.plus
@@ -32,6 +34,10 @@ import kotlin.uuid.toKotlinUuid
 class TenantRepository {
     private val logger = LoggerFactory.getLogger(TenantRepository::class.java)
 
+    /**
+     * Create a new tenant with required address.
+     * All operations are atomic within the same transaction.
+     */
     suspend fun create(
         type: TenantType,
         legalName: LegalName,
@@ -39,7 +45,9 @@ class TenantRepository {
         plan: TenantPlan = TenantPlan.Free,
         language: Language,
         vatNumber: VatNumber,
+        address: UpsertTenantAddressRequest,
     ): TenantId = dbQuery {
+        // Create tenant
         val tenantId = TenantTable.insertAndGetId {
             it[TenantTable.type] = type
             it[TenantTable.legalName] = legalName.value
@@ -50,22 +58,34 @@ class TenantRepository {
             it[status] = TenantStatus.Active
         }.value
 
+        // Create address (required for all tenants)
+        AddressTable.insert {
+            it[AddressTable.tenantId] = tenantId
+            it[streetLine1] = address.streetLine1
+            it[streetLine2] = address.streetLine2
+            it[city] = address.city
+            it[postalCode] = address.postalCode
+            it[country] = address.country
+        }
+
         // Create default settings for the tenant
         TenantSettingsTable.insert {
             it[TenantSettingsTable.tenantId] = tenantId
         }
 
-        logger.info("Created new tenant: $tenantId")
+        logger.info("Created new tenant: $tenantId with address")
         TenantId(tenantId.toKotlinUuid())
     }
 
     suspend fun findById(id: TenantId): Tenant? = dbQuery {
         val javaUuid = id.value.toJavaUuid()
-        TenantTable
+        val tenantRow = TenantTable
             .selectAll()
             .where { TenantTable.id eq javaUuid }
             .singleOrNull()
-            ?.toTenant()
+            ?: return@dbQuery null
+
+        tenantRow.toTenant()
     }
 
     suspend fun getSettings(tenantId: TenantId): TenantSettings = dbQuery {
@@ -86,8 +106,6 @@ class TenantRepository {
             it[defaultPaymentTerms] = settings.defaultPaymentTerms
             it[defaultVatRate] = BigDecimal(settings.defaultVatRate.value)
             it[companyName] = settings.companyName
-            it[companyAddress] = settings.companyAddress
-            it[companyVatNumber] = settings.companyVatNumber?.value
             it[companyIban] = settings.companyIban?.value
             it[companyBic] = settings.companyBic?.value
             it[companyLogoUrl] = settings.companyLogoUrl

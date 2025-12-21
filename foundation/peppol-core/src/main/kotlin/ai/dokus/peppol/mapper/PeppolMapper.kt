@@ -3,11 +3,13 @@ package ai.dokus.peppol.mapper
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
+import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.peppol.model.PeppolDocumentType
 import ai.dokus.peppol.model.PeppolInvoiceData
@@ -34,8 +36,10 @@ class PeppolMapper {
     fun toSendRequest(
         invoice: FinancialDocumentDto.InvoiceDto,
         contact: ContactDto,
+        tenant: Tenant,
         tenantSettings: TenantSettings,
-        peppolSettings: PeppolSettingsDto
+        peppolSettings: PeppolSettingsDto,
+        companyAddress: Address?
     ): PeppolSendRequest {
         val recipientPeppolId = contact.peppolId
             ?: throw IllegalArgumentException("Contact must have a Peppol ID to send via Peppol")
@@ -47,7 +51,7 @@ class PeppolMapper {
                 invoiceNumber = invoice.invoiceNumber.value,
                 issueDate = invoice.issueDate,
                 dueDate = invoice.dueDate,
-                seller = toSellerParty(tenantSettings),
+                seller = toSellerParty(tenant, tenantSettings, companyAddress),
                 buyer = toBuyerParty(contact),
                 lineItems = invoice.items.mapIndexed { index, item ->
                     toLineItem(item, index + 1)
@@ -79,16 +83,14 @@ class PeppolMapper {
     /**
      * Convert tenant settings to Peppol seller party.
      */
-    private fun toSellerParty(settings: TenantSettings): PeppolParty {
-        val parsedAddress = parseCompanyAddress(settings.companyAddress)
-
+    private fun toSellerParty(tenant: Tenant, settings: TenantSettings, companyAddress: Address?): PeppolParty {
         return PeppolParty(
-            name = settings.companyName ?: "Unknown",
-            vatNumber = settings.companyVatNumber?.value,
-            streetName = parsedAddress.street,
-            cityName = parsedAddress.city,
-            postalZone = parsedAddress.postalCode,
-            countryCode = parsedAddress.country ?: "BE"
+            name = settings.companyName ?: tenant.displayName.value,
+            vatNumber = tenant.vatNumber?.value,
+            streetName = companyAddress?.streetLine1,
+            cityName = companyAddress?.city,
+            postalZone = companyAddress?.postalCode,
+            countryCode = companyAddress?.country?.dbValue
         )
     }
 
@@ -225,66 +227,4 @@ class PeppolMapper {
         }
     }
 
-    // ========================================================================
-    // ADDRESS PARSING
-    // ========================================================================
-
-    private data class ParsedAddressComponents(
-        val street: String?,
-        val city: String?,
-        val postalCode: String?,
-        val country: String?
-    )
-
-    private fun parseCompanyAddress(address: String?): ParsedAddressComponents {
-        if (address.isNullOrBlank()) {
-            return ParsedAddressComponents(null, null, null, null)
-        }
-
-        val normalized = address.replace("\n", ", ").replace(Regex("\\s+"), " ").trim()
-        val parts = normalized.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-
-        return when {
-            parts.size >= 3 -> {
-                val (postalCode, city) = parsePostalCodeAndCity(parts[1])
-                ParsedAddressComponents(parts[0], city, postalCode, parseCountryCode(parts.getOrNull(2)))
-            }
-            parts.size == 2 -> {
-                val (postalCode, city) = parsePostalCodeAndCity(parts[1])
-                ParsedAddressComponents(parts[0], city, postalCode, null)
-            }
-            else -> {
-                val (postalCode, city) = parsePostalCodeAndCity(parts[0])
-                if (postalCode != null) {
-                    ParsedAddressComponents(null, city, postalCode, null)
-                } else {
-                    ParsedAddressComponents(parts[0], null, null, null)
-                }
-            }
-        }
-    }
-
-    private fun parsePostalCodeAndCity(text: String): Pair<String?, String?> {
-        val pattern = Regex("^(\\d{4,5}(?:\\s?[A-Z]{2})?)\\s+(.+)$")
-        val match = pattern.find(text.trim())
-        return if (match != null) {
-            Pair(match.groupValues[1], match.groupValues[2])
-        } else {
-            Pair(null, text.takeIf { it.isNotBlank() })
-        }
-    }
-
-    private fun parseCountryCode(country: String?): String? {
-        if (country.isNullOrBlank()) return null
-        val normalized = country.trim().uppercase()
-        return when {
-            normalized.length == 2 -> normalized
-            normalized in listOf("BELGIUM", "BELGIQUE", "BELGIE") -> "BE"
-            normalized in listOf("NETHERLANDS", "NEDERLAND", "PAYS-BAS") -> "NL"
-            normalized in listOf("FRANCE", "FRANKRIJK") -> "FR"
-            normalized in listOf("GERMANY", "DEUTSCHLAND", "ALLEMAGNE", "DUITSLAND") -> "DE"
-            normalized in listOf("LUXEMBOURG", "LUXEMBURG") -> "LU"
-            else -> country.take(2).uppercase()
-        }
-    }
 }

@@ -3,7 +3,6 @@ package ai.dokus.foundation.domain.model
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.Percentage
 import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.enums.AuditAction
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.enums.BillStatus
@@ -19,15 +18,12 @@ import ai.dokus.foundation.domain.enums.TenantStatus
 import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.enums.VatReturnStatus
 import ai.dokus.foundation.domain.ids.AddressId
 import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.AuditLogId
 import ai.dokus.foundation.domain.ids.BankConnectionId
 import ai.dokus.foundation.domain.ids.BankTransactionId
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.BusinessUserId
 import ai.dokus.foundation.domain.DisplayName
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.LegalName
@@ -43,7 +39,6 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.ids.VatReturnId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -90,8 +85,6 @@ data class TenantSettings(
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: VatRate = VatRate.STANDARD_BE,
     val companyName: String? = null,
-    val companyAddress: String? = null,
-    val companyVatNumber: VatNumber? = null,
     val companyIban: Iban? = null,
     val companyBic: Bic? = null,
     val companyLogoUrl: String? = null,
@@ -271,43 +264,8 @@ data class BankTransactionDto(
 )
 
 // ============================================================================
-// VAT RETURNS
-// ============================================================================
-
-@Serializable
-data class VatReturnDto(
-    val id: VatReturnId,
-    val tenantId: TenantId,
-    val quarter: Int,
-    val year: Int,
-    val salesVat: Money,
-    val purchaseVat: Money,
-    val netVat: Money,
-    val status: VatReturnStatus,
-    val filedAt: LocalDateTime? = null,
-    val paidAt: LocalDateTime? = null,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
-
-// ============================================================================
 // AUDIT & ATTACHMENTS
 // ============================================================================
-
-@Serializable
-data class AuditLogDto(
-    val id: AuditLogId,
-    val tenantId: TenantId,
-    val userId: BusinessUserId? = null,
-    val action: AuditAction,
-    val entityType: EntityType,
-    val entityId: String, // Generic entity ID as string since it could be any entity
-    val oldValues: Map<String, String>? = null,
-    val newValues: Map<String, String>? = null,
-    val ipAddress: String? = null,
-    val userAgent: String? = null,
-    val createdAt: LocalDateTime
-)
 
 @Serializable
 data class AttachmentDto(
@@ -328,7 +286,8 @@ data class AttachmentDto(
 // ============================================================================
 
 /**
- * Request DTO for creating a tenant
+ * Request DTO for creating a tenant.
+ * Address is required for all tenant types.
  */
 @Serializable
 data class CreateTenantRequest(
@@ -337,7 +296,8 @@ data class CreateTenantRequest(
     val displayName: DisplayName,
     val plan: TenantPlan = TenantPlan.Free,
     val language: Language = Language.En,
-    val vatNumber: VatNumber
+    val vatNumber: VatNumber,
+    val address: UpsertTenantAddressRequest,
 )
 
 @Serializable

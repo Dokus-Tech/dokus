@@ -1,11 +1,13 @@
 package ai.dokus.app.auth.datasource
 
 import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.AvatarUploadResponse
 import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
+import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.domain.routes.Tenants
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -67,6 +69,26 @@ internal class TenantRemoteDataSourceImpl(
                 contentType(ContentType.Application.Json)
                 setBody(settings)
             }
+        }
+    }
+
+    override suspend fun getTenantAddress(): Result<Address?> {
+        return runCatching {
+            val response: HttpResponse = httpClient.get(Tenants.Address())
+            if (response.status == HttpStatusCode.NotFound) {
+                null
+            } else {
+                response.body()
+            }
+        }
+    }
+
+    override suspend fun upsertTenantAddress(request: UpsertTenantAddressRequest): Result<Address> {
+        return runCatching {
+            httpClient.put(Tenants.Address()) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
         }
     }
 

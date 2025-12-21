@@ -15,11 +15,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Expenses table - stores all business expenses.
  *
  * OWNER: cashflow service
- * CRITICAL: All queries MUST filter by organization_id
+ * CRITICAL: All queries MUST filter by tenant_id
  */
 object ExpensesTable : UUIDTable("expenses") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id").references(
+    val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
     ).index()

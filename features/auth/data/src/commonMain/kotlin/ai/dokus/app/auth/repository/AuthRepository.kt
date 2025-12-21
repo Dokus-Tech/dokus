@@ -15,6 +15,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.model.Tenant
+import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest
@@ -113,7 +114,7 @@ class AuthRepository(
     }
 
     /**
-     * Create a tenant and scope tokens to it.
+     * Create a tenant with address and scope tokens to it.
      */
     suspend fun createTenant(
         type: TenantType,
@@ -121,7 +122,8 @@ class AuthRepository(
         displayName: DisplayName,
         plan: TenantPlan,
         language: Language,
-        vatNumber: VatNumber
+        vatNumber: VatNumber,
+        address: UpsertTenantAddressRequest,
     ): Result<Tenant> {
         logger.d { "Creating tenant: ${legalName.value}" }
         val request = CreateTenantRequest(
@@ -130,7 +132,8 @@ class AuthRepository(
             displayName = displayName,
             plan = plan,
             language = language,
-            vatNumber = vatNumber
+            vatNumber = vatNumber,
+            address = address,
         )
         return tenantDataSource.createTenant(request)
             .onSuccess { tenant ->

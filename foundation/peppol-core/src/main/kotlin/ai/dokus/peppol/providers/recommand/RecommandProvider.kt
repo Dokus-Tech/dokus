@@ -42,7 +42,9 @@ import org.slf4j.LoggerFactory
  */
 class RecommandProvider(
     private val httpClient: HttpClient,
-    private val baseUrl: String = "https://app.recommand.eu"
+    private val productionBaseUrl: String = "https://app.recommand.eu",
+    private val testBaseUrl: String = "https://test.recommand.eu",
+    private val globalTestMode: Boolean = false,
 ) : PeppolProvider {
 
     private val logger = LoggerFactory.getLogger(RecommandProvider::class.java)
@@ -58,6 +60,7 @@ class RecommandProvider(
     override val providerName = "Recommand.eu"
 
     private lateinit var credentials: RecommandCredentials
+    private var baseUrl: String = productionBaseUrl
 
     private val isConfigured: Boolean
         get() = ::credentials.isInitialized
@@ -67,6 +70,7 @@ class RecommandProvider(
             "RecommandProvider requires RecommandCredentials, got ${credentials::class.simpleName}"
         }
         this.credentials = credentials
+        baseUrl = if (globalTestMode || credentials.testMode) testBaseUrl else productionBaseUrl
         logger.debug("Configured RecommandProvider for company: ${credentials.companyId}")
     }
 

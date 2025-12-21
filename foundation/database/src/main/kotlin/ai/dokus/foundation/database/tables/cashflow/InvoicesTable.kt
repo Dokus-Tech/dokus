@@ -17,11 +17,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * Invoices table - stores all customer invoices.
  *
  * OWNER: cashflow service
- * CRITICAL: All queries MUST filter by organization_id
+ * CRITICAL: All queries MUST filter by tenant_id
  */
 object InvoicesTable : UUIDTable("invoices") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id").references(
+    val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
     ).index()
@@ -29,7 +29,7 @@ object InvoicesTable : UUIDTable("invoices") {
     // Contact (customer) reference
     val contactId = uuid("contact_id").references(
         ContactsTable.id,
-        onDelete = ReferenceOption.CASCADE
+        onDelete = ReferenceOption.RESTRICT
     ).index()
 
     // Invoice identification

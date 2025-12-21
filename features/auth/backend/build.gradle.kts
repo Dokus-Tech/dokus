@@ -43,6 +43,12 @@ dependencies {
     implementation(libs.ktor.server.swagger)
     implementation(libs.ktor.server.resources)
 
+    // Ktor Client (for external API calls like CBE)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.logging)
+
     // Database - Exposed
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)

@@ -62,6 +62,61 @@ data class SavePeppolSettingsRequest(
 )
 
 // ============================================================================
+// PEPPOL CONNECTION (RECOMMAND DISCOVERY)
+// ============================================================================
+
+@Serializable
+data class PeppolConnectRequest(
+    val apiKey: String,
+    val apiSecret: String,
+    val isEnabled: Boolean = false,
+    val testMode: Boolean = true,
+    /**
+     * Optional company ID to select when multiple matches exist.
+     * If omitted and multiple matches are found, the backend returns candidates without saving credentials.
+     */
+    val companyId: String? = null,
+    /**
+     * When true and no matching company is found, create a new company on Recommand.
+     * When false and no matching company is found, return NoCompanyFound status for user confirmation.
+     */
+    val createCompanyIfMissing: Boolean = false,
+)
+
+@Serializable
+enum class PeppolConnectStatus {
+    /** Settings saved and tenant is connected to a Recommand company. */
+    Connected,
+    /** Multiple Recommand companies match the tenant VAT; user must select one. */
+    MultipleMatches,
+    /** No matching company found; user can confirm to create one. */
+    NoCompanyFound,
+    /** No VAT configured for tenant. */
+    MissingVatNumber,
+    /** Tenant address is missing or cannot be used to create a Recommand company. */
+    MissingCompanyAddress,
+    /** Recommand rejected the provided credentials. */
+    InvalidCredentials,
+}
+
+@Serializable
+data class RecommandCompanySummary(
+    val id: String,
+    val name: String,
+    val vatNumber: String,
+    val enterpriseNumber: String,
+)
+
+@Serializable
+data class PeppolConnectResponse(
+    val status: PeppolConnectStatus,
+    val settings: PeppolSettingsDto? = null,
+    val company: RecommandCompanySummary? = null,
+    val candidates: List<RecommandCompanySummary> = emptyList(),
+    val createdCompany: Boolean = false,
+)
+
+// ============================================================================
 // PEPPOL TRANSMISSIONS
 // ============================================================================
 

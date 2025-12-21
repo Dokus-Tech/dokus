@@ -1,6 +1,5 @@
 package ai.dokus.cashflow.backend.database
 
-import ai.dokus.foundation.database.tables.cashflow.AttachmentsTable
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
@@ -54,7 +53,6 @@ object CashflowTables {
 
                 // Expense and bill tables
                 ExpensesTable,
-                AttachmentsTable,
                 BillsTable,
 
                 // Peppol e-invoicing tables

@@ -39,6 +39,12 @@ value class PeppolId(override val value: String) : ValueClass<String>, Validatab
 value class VatNumber(override val value: String) : ValueClass<String>, Validatable<VatNumber> {
     override fun toString(): String = value
 
+    val normalized: String
+        get() = value
+            .replace(".", "")
+            .replace(" ", "")
+            .uppercase()
+
     override val isValid: Boolean
         get() = ValidateVatNumberUseCase(this)
 
