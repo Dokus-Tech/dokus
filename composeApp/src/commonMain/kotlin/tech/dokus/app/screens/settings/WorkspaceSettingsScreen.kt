@@ -1,6 +1,5 @@
 package tech.dokus.app.screens.settings
 
-import tech.dokus.foundation.app.picker.rememberImagePicker
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.save_changes
 import ai.dokus.app.resources.generated.workspace_address
@@ -22,6 +21,7 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.domain.model.CompanyAvatar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,9 +61,9 @@ import tech.dokus.app.viewmodel.AvatarState
 import tech.dokus.app.viewmodel.SaveState
 import tech.dokus.app.viewmodel.WorkspaceSettingsViewModel
 import tech.dokus.foundation.app.picker.FilePickerLauncher
+import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.domain.model.CompanyAvatar
 
 /**
  * Workspace/Company settings screen with top bar.
