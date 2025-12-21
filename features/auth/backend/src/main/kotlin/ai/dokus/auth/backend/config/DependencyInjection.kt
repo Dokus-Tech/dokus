@@ -206,7 +206,13 @@ private val appModule = module {
     }
 
     // CBE API client for Belgian company lookups
-    single { CbeApiClient(get()) }
+    single {
+        val appConfig = get<AppBaseConfig>()
+        val cbeApiSecret = if (appConfig.config.hasPath("cbe.apiSecret")) {
+            appConfig.config.getString("cbe.apiSecret")
+        } else ""
+        CbeApiClient(get(), cbeApiSecret)
+    }
 }
 
 /**
