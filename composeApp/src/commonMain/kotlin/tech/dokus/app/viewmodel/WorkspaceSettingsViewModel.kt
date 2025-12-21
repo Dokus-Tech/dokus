@@ -152,23 +152,9 @@ class WorkspaceSettingsViewModel(
     // ===== Avatar Operations =====
 
     /**
-     * Called when user selects an image for cropping.
+     * Called when user selects an image - uploads directly without cropping.
      */
-    fun onImageSelected(imageBytes: ByteArray) {
-        _avatarState.value = AvatarState.Cropping(imageBytes)
-    }
-
-    /**
-     * Cancel the cropping operation.
-     */
-    fun cancelCrop() {
-        _avatarState.value = AvatarState.Idle
-    }
-
-    /**
-     * Called when user confirms the crop, starts upload.
-     */
-    fun onCropComplete(croppedImageBytes: ByteArray, filename: String = "avatar.png") {
+    fun onImageSelected(imageBytes: ByteArray, filename: String = "avatar.png") {
         viewModelScope.launch {
             logger.d { "Uploading avatar" }
             _avatarState.value = AvatarState.Uploading(0f)
@@ -181,7 +167,7 @@ class WorkspaceSettingsViewModel(
             }
 
             tenantDataSource.uploadAvatar(
-                imageBytes = croppedImageBytes,
+                imageBytes = imageBytes,
                 filename = filename,
                 contentType = contentType,
                 onProgress = { progress ->
@@ -281,7 +267,6 @@ sealed class SaveState {
  */
 sealed class AvatarState {
     data object Idle : AvatarState()
-    data class Cropping(val imageBytes: ByteArray) : AvatarState()
     data class Uploading(val progress: Float) : AvatarState()
     data object Deleting : AvatarState()
     data object Success : AvatarState()

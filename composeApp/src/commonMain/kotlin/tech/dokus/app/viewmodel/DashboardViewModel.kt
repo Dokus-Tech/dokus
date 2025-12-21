@@ -1,6 +1,5 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
@@ -18,7 +17,6 @@ import kotlinx.coroutines.launch
 internal class DashboardViewModel(
     private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
     private val watchPendingDocuments: WatchPendingDocumentsUseCase,
-    private val tenantDataSource: TenantRemoteDataSource
 ) : ViewModel() {
     private val mutableCurrentTenantState = MutableStateFlow<DokusState<Tenant?>>(DokusState.idle())
     val currentTenantState = mutableCurrentTenantState.asStateFlow()

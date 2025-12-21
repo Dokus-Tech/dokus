@@ -127,7 +127,7 @@ fun Route.tenantRoutes() {
 
         /**
          * GET /api/v1/tenants/{id}
-         * Get tenant by ID
+         * Get tenant by ID (includes avatar)
          */
         get<Tenants.Id> { route ->
             val principal = dokusPrincipal
@@ -146,7 +146,18 @@ fun Route.tenantRoutes() {
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
 
-            call.respond(HttpStatusCode.OK, tenant)
+            // Include avatar if available
+            val avatar = try {
+                val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
+                if (storageKey != null) {
+                    avatarStorageService.getAvatarUrls(storageKey)
+                } else null
+            } catch (e: Exception) {
+                logger.warn("Failed to get avatar for tenant $tenantId", e)
+                null
+            }
+
+            call.respond(HttpStatusCode.OK, tenant.copy(avatar = avatar))
         }
     }
 }
