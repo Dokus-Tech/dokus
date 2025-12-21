@@ -6,6 +6,7 @@ import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.platform.Logger
@@ -35,6 +36,12 @@ class WorkspaceSettingsViewModel(
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
+
+    private val _avatarState = MutableStateFlow<AvatarState>(AvatarState.Idle)
+    val avatarState: StateFlow<AvatarState> = _avatarState.asStateFlow()
+
+    private val _currentAvatar = MutableStateFlow<CompanyAvatar?>(null)
+    val currentAvatar: StateFlow<CompanyAvatar?> = _currentAvatar.asStateFlow()
 
     /**
      * Load workspace settings from backend.
