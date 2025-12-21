@@ -48,7 +48,6 @@ internal val diModuleApp = module {
         DashboardViewModel(
             get<GetCurrentTenantUseCase>(),
             get<WatchPendingDocumentsUseCase>(),
-            get<TenantRemoteDataSource>()
         )
     }
     viewModel { HomeViewModel(SavedStateHandle.createHandle(null, null)) }
