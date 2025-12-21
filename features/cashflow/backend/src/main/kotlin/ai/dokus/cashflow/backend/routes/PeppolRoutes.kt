@@ -6,10 +6,12 @@ import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.model.PeppolConnectRequest
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.routes.Peppol
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
+import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -38,6 +40,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
+    val peppolConnectionService by inject<PeppolConnectionService>()
     val invoiceService by inject<InvoiceService>()
     val billService by inject<BillService>()
     val contactRepository by inject<ContactRepository>()
@@ -116,6 +119,22 @@ fun Route.peppolRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to test connection: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, TestConnectionResponse(success))
+        }
+
+        /**
+         * POST /api/v1/peppol/settings/connect
+         * Matches (and if needed creates) a Recommand company by tenant VAT and saves credentials only after resolution.
+         */
+        post<Peppol.Settings.Connect> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.NotFound("Tenant not found")
+            val request = call.receive<PeppolConnectRequest>()
+
+            val result = peppolConnectionService.connectRecommand(tenant, request)
+                .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
         }
 
         // ================================================================

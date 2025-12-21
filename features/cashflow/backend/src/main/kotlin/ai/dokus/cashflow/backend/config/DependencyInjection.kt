@@ -18,6 +18,8 @@ import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.peppol.config.PeppolModuleConfig
 import ai.dokus.peppol.mapper.PeppolMapper
 import ai.dokus.peppol.provider.PeppolProviderFactory
+import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
+import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import ai.dokus.peppol.validator.PeppolValidator
 import io.ktor.client.HttpClient
@@ -150,11 +152,24 @@ fun peppolModule(appConfig: AppBaseConfig) = module {
         PeppolProviderFactory(get(), get<PeppolModuleConfig>())
     }
 
+    // Recommand companies client - used for company discovery and setup
+    single {
+        RecommandCompaniesClient(get(), get<PeppolModuleConfig>())
+    }
+
     // Peppol mapper - converts domain models to Peppol format
     single { PeppolMapper() }
 
     // Peppol validator - validates invoices for Peppol compliance
     single { PeppolValidator() }
+
+    // Peppol connection service - handles Recommand company matching/creation
+    single {
+        PeppolConnectionService(
+            settingsRepository = get(),
+            recommandCompaniesClient = get()
+        )
+    }
 
     // Main Peppol service - orchestrates all Peppol operations
     single {

@@ -85,8 +85,6 @@ class WorkspaceSettingsViewModel(
 
             val updatedSettings = currentData.settings.copy(
                 companyName = form.companyName.ifBlank { null },
-                companyAddress = form.address.ifBlank { null },
-                companyVatNumber = form.vatNumber.takeIf { it.isNotBlank() }?.let { VatNumber(it) },
                 companyIban = form.iban.takeIf { it.isNotBlank() }?.let { Iban(it) },
                 companyBic = form.bic.takeIf { it.isNotBlank() }?.let { Bic(it) },
                 invoicePrefix = form.invoicePrefix.ifBlank { "INV" },
@@ -220,10 +218,10 @@ class WorkspaceSettingsViewModel(
         _formState.value = WorkspaceFormState(
             companyName = settings.companyName ?: tenant.displayName.value,
             legalName = tenant.legalName.value,
-            vatNumber = settings.companyVatNumber?.value ?: tenant.vatNumber?.value ?: "",
+            vatNumber = tenant.vatNumber?.value ?: "",
             iban = settings.companyIban?.value ?: "",
             bic = settings.companyBic?.value ?: "",
-            address = settings.companyAddress ?: "",
+            address = tenant.companyAddress,
             invoicePrefix = settings.invoicePrefix,
             defaultPaymentTerms = settings.defaultPaymentTerms
         )
