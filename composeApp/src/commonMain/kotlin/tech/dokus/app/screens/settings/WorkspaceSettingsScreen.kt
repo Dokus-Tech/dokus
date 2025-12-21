@@ -1,6 +1,6 @@
 package tech.dokus.app.screens.settings
 
-import ai.dokus.app.auth.components.rememberAvatarPicker
+import tech.dokus.foundation.app.picker.rememberImagePicker
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.save_changes
 import ai.dokus.app.resources.generated.workspace_address
@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
@@ -103,7 +102,7 @@ fun WorkspaceSettingsContent(
     val currentAvatar by viewModel.currentAvatar.collectAsState()
 
     // Image picker
-    val avatarPicker = rememberAvatarPicker { pickedImage ->
+    val avatarPicker = rememberImagePicker { pickedImage ->
         viewModel.onImageSelected(pickedImage.bytes)
     }
 

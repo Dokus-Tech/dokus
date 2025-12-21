@@ -1,17 +1,16 @@
 package ai.dokus.app.cashflow.components
 
 import androidx.compose.runtime.Composable
+import tech.dokus.foundation.app.picker.FilePickerLauncher
+import tech.dokus.foundation.app.picker.FilePickerType
+import tech.dokus.foundation.app.picker.PickedFile
+import tech.dokus.foundation.app.picker.rememberFilePicker
 
 /**
- * Platform-agnostic file picker launcher.
- *
- * Each platform provides its own implementation:
- * - Desktop: AWT FileDialog (avoids Calf JNA issues on macOS)
- * - Android/iOS/Web: Uses Calf file picker
+ * Platform-agnostic file picker launcher for documents.
+ * This is a compatibility wrapper for the new unified FilePicker in app-common.
  */
-expect class DocumentFilePickerLauncher {
-    fun launch()
-}
+typealias DocumentFilePickerLauncher = FilePickerLauncher
 
 /**
  * Remember a file picker launcher for selecting documents.
@@ -20,6 +19,21 @@ expect class DocumentFilePickerLauncher {
  * @return A launcher that can be used to open the file picker
  */
 @Composable
-expect fun rememberDocumentFilePicker(
+fun rememberDocumentFilePicker(
     onFilesSelected: (List<DroppedFile>) -> Unit
-): DocumentFilePickerLauncher
+): DocumentFilePickerLauncher = rememberFilePicker(
+    type = FilePickerType.Document,
+    allowMultiple = true,
+    onFilesSelected = { pickedFiles ->
+        onFilesSelected(pickedFiles.map { it.toDroppedFile() })
+    }
+)
+
+/**
+ * Convert PickedFile to DroppedFile for backwards compatibility.
+ */
+private fun PickedFile.toDroppedFile(): DroppedFile = DroppedFile(
+    name = name,
+    bytes = bytes,
+    mimeType = mimeType
+)

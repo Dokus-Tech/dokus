@@ -1,8 +1,10 @@
 package tech.dokus.app.screens
 
-import ai.dokus.foundation.design.components.AvatarShape
-import ai.dokus.foundation.design.components.AvatarSize
-import ai.dokus.foundation.design.components.CompanyAvatarImage
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.local.LocalAppModules
+import tech.dokus.app.homeItems
+import tech.dokus.app.homeNavigationProviders
+import tech.dokus.app.viewmodel.HomeViewModel
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.navigation.DokusNavigationBar
 import ai.dokus.foundation.design.components.navigation.DokusNavigationRail
@@ -19,21 +21,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,11 +40,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.app.homeItems
-import tech.dokus.app.homeNavigationProviders
-import tech.dokus.app.viewmodel.HomeViewModel
-import tech.dokus.foundation.app.AppModule
-import tech.dokus.foundation.app.local.LocalAppModules
 
 @Composable
 fun HomeScreen(
@@ -66,17 +58,12 @@ fun HomeScreen(
         homeItems.find { it.destination == currentDestination }
     } ?: homeItems.first()
 
-    val currentTenant by viewModel.currentTenant.collectAsState()
-    val currentAvatar by viewModel.currentAvatar.collectAsState()
-
     Surface {
         if (LocalScreenSize.isLarge) {
             RailNavigationLayout(
                 selectedItem = selectedItem,
                 navItems = homeItems,
                 onSelectedItemChange = { homeNavController.navigateTo(it.destination) },
-                companyName = currentTenant?.displayName?.value,
-                avatarUrl = currentAvatar?.small,
                 content = {
                     HomeNavHost(
                         navHostController = homeNavController,
@@ -131,8 +118,6 @@ private fun RailNavigationLayout(
     selectedItem: HomeItem,
     navItems: List<HomeItem>,
     onSelectedItemChange: (HomeItem) -> Unit,
-    companyName: String? = null,
-    avatarUrl: String? = null,
     content: @Composable () -> Unit
 ) {
     Row(Modifier.fillMaxSize()) {
@@ -148,32 +133,7 @@ private fun RailNavigationLayout(
                     .fillMaxHeight()
                     .padding(16.dp)
             ) {
-                // Company header with avatar and name
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                ) {
-                    CompanyAvatarImage(
-                        avatarUrl = avatarUrl,
-                        initial = companyName?.take(1) ?: "D",
-                        size = AvatarSize.Small,
-                        shape = AvatarShape.RoundedSquare
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        AppNameText()
-                        if (companyName != null) {
-                            Text(
-                                text = companyName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
+                AppNameText(modifier = Modifier.padding(bottom = 32.dp))
 
                 DokusNavigationRail(
                     selectedItem = selectedItem,
