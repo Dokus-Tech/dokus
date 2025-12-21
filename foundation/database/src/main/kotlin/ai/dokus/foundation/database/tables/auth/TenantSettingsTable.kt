@@ -27,8 +27,6 @@ object TenantSettingsTable : UUIDTable("tenant_settings") {
 
     // Company info (for invoices)
     val companyName = varchar("company_name", 255).nullable()
-    val companyAddress = text("company_address").nullable()
-    val companyVatNumber = varchar("company_vat_number", 50).nullable()
     val companyIban = varchar("company_iban", 34).nullable()
     val companyBic = varchar("company_bic", 11).nullable()
     val companyLogoUrl = varchar("company_logo_url", 500).nullable()

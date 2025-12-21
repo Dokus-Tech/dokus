@@ -69,34 +69,7 @@ class TenantRepository {
             .singleOrNull()
             ?: return@dbQuery null
 
-        var tenant = tenantRow.toTenant()
-
-        // Backfill migrated fields from legacy TenantSettings columns if needed.
-        // NOTE: The DB columns may still exist even if the domain model no longer uses them.
-        val settingsRow = TenantSettingsTable
-            .selectAll()
-            .where { TenantSettingsTable.tenantId eq javaUuid }
-            .singleOrNull()
-
-        if (settingsRow != null) {
-            val legacyAddress = settingsRow[TenantSettingsTable.companyAddress]
-            if (tenant.companyAddress.isBlank() && !legacyAddress.isNullOrBlank()) {
-                TenantTable.update({ TenantTable.id eq javaUuid }) {
-                    it[companyAddress] = legacyAddress
-                }
-                tenant = tenant.copy(companyAddress = legacyAddress)
-            }
-
-            val legacyVat = settingsRow[TenantSettingsTable.companyVatNumber]
-            if (tenant.vatNumber == null && !legacyVat.isNullOrBlank()) {
-                TenantTable.update({ TenantTable.id eq javaUuid }) {
-                    it[vatNumber] = legacyVat
-                }
-                tenant = tenant.copy(vatNumber = VatNumber(legacyVat))
-            }
-        }
-
-        tenant
+        tenantRow.toTenant()
     }
 
     suspend fun getSettings(tenantId: TenantId): TenantSettings = dbQuery {
