@@ -3,6 +3,7 @@ package ai.dokus.auth.backend.database
 import ai.dokus.foundation.database.tables.auth.AddressTable
 import ai.dokus.foundation.database.tables.auth.PasswordResetTokensTable
 import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
+import ai.dokus.foundation.database.tables.auth.TenantInvitationsTable
 import ai.dokus.foundation.database.tables.auth.TenantMembersTable
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
@@ -41,6 +42,7 @@ object AuthTables {
                 TenantSettingsTable,
                 UsersTable,
                 TenantMembersTable,
+                TenantInvitationsTable,
                 RefreshTokensTable,
                 PasswordResetTokensTable,
                 AddressTable
