@@ -101,8 +101,9 @@ fun storageModule(appConfig: AppBaseConfig) = module {
     single<ObjectStorage> {
         val minioConfig = MinioConfig.loadOrNull(appConfig)
         requireNotNull(minioConfig)
-        logger.info("MinIO storage configured: endpoint=${minioConfig.endpoint}, bucket=${minioConfig.bucket}")
-        MinioStorage.create(minioConfig)
+        val publicUrl = appConfig.storage.publicUrl
+        logger.info("MinIO storage configured: endpoint=${minioConfig.endpoint}, bucket=${minioConfig.bucket}, publicUrl=$publicUrl")
+        MinioStorage.create(minioConfig, publicUrl)
     }
 
     // MinIO Document Storage Service (high-level API)
