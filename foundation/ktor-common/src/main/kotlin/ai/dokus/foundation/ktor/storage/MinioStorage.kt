@@ -185,9 +185,13 @@ class MinioStorage(
 
                     logger.info("Creating signing client: baseUrl=$baseUrl, pathPrefix=$path")
 
+                    // Set region explicitly to "us-east-1" to prevent MinIO from making
+                    // a network call to get bucket location (which would fail since the
+                    // signing client endpoint goes through Traefik, not directly to MinIO)
                     val signingClient = MinioClient.builder()
                         .endpoint(baseUrl)
                         .credentials(config.accessKey, config.secretKey)
+                        .region("us-east-1")
                         .build()
 
                     Triple(signingClient, baseUrl, path)
