@@ -28,4 +28,14 @@ class Tenants {
     @Serializable
     @Resource("{id}")
     class Id(val parent: Tenants = Tenants(), val id: String)
+
+    /**
+     * POST/GET/DELETE /api/v1/tenants/avatar
+     * POST - Upload company avatar (multipart form data)
+     * GET - Get current avatar URLs
+     * DELETE - Remove company avatar
+     */
+    @Serializable
+    @Resource("avatar")
+    class Avatar(val parent: Tenants = Tenants())
 }

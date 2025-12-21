@@ -64,4 +64,8 @@ dependencies {
 
     // MinIO object storage
     implementation(libs.minio)
+
+    // Image processing for avatar resizing
+    implementation(libs.scrimage.core)
+    implementation(libs.scrimage.webp)
 }
