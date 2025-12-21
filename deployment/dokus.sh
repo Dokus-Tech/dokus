@@ -839,10 +839,20 @@ JWT_SECRET=$JWT_SECRET_VAL
 # ============================================================================
 DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
+
+# ============================================================================
+# STORAGE - Public URL for presigned URLs (MinIO via Traefik)
+# ============================================================================
+STORAGE_PUBLIC_URL=https://$DOMAIN/storage
 EOF
 
     else
         # Self-hosting profile (Pro/Lite) - simpler config
+        local SERVER_IP=$(get_server_ip)
+        if [ "$SERVER_IP" = "localhost" ]; then
+            SERVER_IP="127.0.0.1"
+        fi
+
         cat > .env << EOF
 # Dokus Self-Hosting Environment Configuration
 # Generated on $(date)
@@ -856,6 +866,12 @@ REDIS_PASSWORD=$REDIS_PASSWORD
 RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
 MINIO_PASSWORD=$MINIO_PASSWORD
 JWT_SECRET=$JWT_SECRET_VAL
+
+# ============================================================================
+# STORAGE - Public URL for presigned URLs (MinIO via Traefik)
+# ============================================================================
+# Update this if your server IP changes or you use a custom hostname
+STORAGE_PUBLIC_URL=http://${SERVER_IP}:${GATEWAY_PORT}/storage
 EOF
     fi
 
