@@ -23,6 +23,8 @@ import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.PeppolConnectRequest
+import ai.dokus.foundation.domain.model.PeppolConnectResponse
 import ai.dokus.foundation.domain.model.PeppolInboxPollResponse
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.PeppolTransmissionDto
@@ -428,6 +430,17 @@ interface CashflowRemoteDataSource {
      * POST /api/v1/peppol/settings/test
      */
     suspend fun testPeppolConnection(): Result<Boolean>
+
+    /**
+     * Connect to Peppol by auto-discovering company via Recommand API
+     * POST /api/v1/peppol/settings/connect
+     *
+     * This endpoint:
+     * 1. Validates credentials with Recommand
+     * 2. Searches for companies matching tenant VAT
+     * 3. Returns status indicating next steps (Connected, MultipleMatches, NoCompanyFound, etc.)
+     */
+    suspend fun connectPeppol(request: PeppolConnectRequest): Result<PeppolConnectResponse>
 
     // ----- Verification & Validation -----
 
