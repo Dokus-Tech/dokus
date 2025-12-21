@@ -1,7 +1,6 @@
 package tech.dokus.app.screens.settings
 
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
+import ai.dokus.app.auth.components.rememberAvatarPicker
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.save_changes
 import ai.dokus.app.resources.generated.workspace_address
@@ -16,8 +15,9 @@ import ai.dokus.app.resources.generated.workspace_legal_name
 import ai.dokus.app.resources.generated.workspace_payment_terms
 import ai.dokus.app.resources.generated.workspace_settings_title
 import ai.dokus.app.resources.generated.workspace_vat_number
-import tech.dokus.app.viewmodel.SaveState
-import tech.dokus.app.viewmodel.WorkspaceSettingsViewModel
+import ai.dokus.foundation.design.components.AvatarSize
+import ai.dokus.foundation.design.components.CompanyAvatarImage
+import ai.dokus.foundation.design.components.ImageCropperDialog
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
@@ -26,19 +26,28 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +58,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.app.viewmodel.AvatarState
+import tech.dokus.app.viewmodel.SaveState
+import tech.dokus.app.viewmodel.WorkspaceSettingsViewModel
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 
 /**
  * Workspace/Company settings screen with top bar.
@@ -85,9 +99,27 @@ fun WorkspaceSettingsContent(
     val state by viewModel.state.collectAsState()
     val formState by viewModel.formState.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
+    val avatarState by viewModel.avatarState.collectAsState()
+    val currentAvatar by viewModel.currentAvatar.collectAsState()
+
+    // Image picker
+    val avatarPicker = rememberAvatarPicker { pickedImage ->
+        viewModel.onImageSelected(pickedImage.bytes)
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.loadWorkspaceSettings()
+    }
+
+    // Image cropper dialog
+    if (avatarState is AvatarState.Cropping) {
+        ImageCropperDialog(
+            imageData = (avatarState as AvatarState.Cropping).imageBytes,
+            onCropComplete = { croppedBytes ->
+                viewModel.onCropComplete(croppedBytes)
+            },
+            onDismiss = { viewModel.cancelCrop() }
+        )
     }
 
     when {
