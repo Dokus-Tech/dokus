@@ -72,7 +72,7 @@ internal sealed class EntityConfirmationState {
 @Stable
 internal data class WorkspaceWizardState(
     val step: WorkspaceWizardStep = WorkspaceWizardStep.TypeSelection,
-    val tenantType: TenantType = TenantType.Freelancer,
+    val tenantType: TenantType = TenantType.Company,
     val companyName: String = "",
     val lookupState: LookupState = LookupState.Idle,
     val selectedEntity: EntityLookup? = null,

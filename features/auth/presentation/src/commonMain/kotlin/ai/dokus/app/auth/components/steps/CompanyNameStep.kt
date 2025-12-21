@@ -23,6 +23,7 @@ internal fun CompanyNameStep(
     companyName: String,
     lookupState: LookupState,
     onCompanyNameChanged: (String) -> Unit,
+    onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -31,7 +32,8 @@ internal fun CompanyNameStep(
     ) {
         SectionTitle(
             text = "What's your company name?",
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Start,
+            onBackPress = onBackPress
         )
 
         Spacer(modifier = Modifier.height(8.dp))

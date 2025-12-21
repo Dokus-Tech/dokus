@@ -38,6 +38,7 @@ internal fun VatAndAddressStep(
     address: AddressFormState,
     onVatNumberChanged: (VatNumber) -> Unit,
     onAddressChanged: (AddressFormState) -> Unit,
+    onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -48,7 +49,8 @@ internal fun VatAndAddressStep(
     ) {
         SectionTitle(
             text = "Business details",
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Start,
+            onBackPress = onBackPress
         )
 
         Spacer(modifier = Modifier.height(8.dp))

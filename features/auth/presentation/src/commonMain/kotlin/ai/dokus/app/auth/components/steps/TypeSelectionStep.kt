@@ -36,6 +36,7 @@ internal fun TypeSelectionStep(
     selectedType: TenantType,
     hasFreelancerWorkspace: Boolean,
     onTypeSelected: (TenantType) -> Unit,
+    onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -44,7 +45,8 @@ internal fun TypeSelectionStep(
     ) {
         SectionTitle(
             text = "Choose your workspace type",
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Start,
+            onBackPress = onBackPress
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -61,16 +63,6 @@ internal fun TypeSelectionStep(
                     horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
                 ) {
                     TypeCard(
-                        type = TenantType.Freelancer,
-                        icon = Icons.Outlined.Person,
-                        title = "Freelancer",
-                        description = "For independent professionals managing their own business",
-                        isSelected = selectedType == TenantType.Freelancer,
-                        isEnabled = !hasFreelancerWorkspace,
-                        onClick = { onTypeSelected(TenantType.Freelancer) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TypeCard(
                         type = TenantType.Company,
                         icon = Icons.Outlined.Business,
                         title = "Company",
@@ -78,6 +70,16 @@ internal fun TypeSelectionStep(
                         isSelected = selectedType == TenantType.Company,
                         isEnabled = true,
                         onClick = { onTypeSelected(TenantType.Company) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    TypeCard(
+                        type = TenantType.Freelancer,
+                        icon = Icons.Outlined.Person,
+                        title = "Freelancer",
+                        description = "For independent professionals managing their own business",
+                        isSelected = selectedType == TenantType.Freelancer,
+                        isEnabled = !hasFreelancerWorkspace,
+                        onClick = { onTypeSelected(TenantType.Freelancer) },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -87,16 +89,6 @@ internal fun TypeSelectionStep(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     TypeCard(
-                        type = TenantType.Freelancer,
-                        icon = Icons.Outlined.Person,
-                        title = "Freelancer",
-                        description = "For independent professionals managing their own business",
-                        isSelected = selectedType == TenantType.Freelancer,
-                        isEnabled = !hasFreelancerWorkspace,
-                        onClick = { onTypeSelected(TenantType.Freelancer) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TypeCard(
                         type = TenantType.Company,
                         icon = Icons.Outlined.Business,
                         title = "Company",
@@ -104,6 +96,16 @@ internal fun TypeSelectionStep(
                         isSelected = selectedType == TenantType.Company,
                         isEnabled = true,
                         onClick = { onTypeSelected(TenantType.Company) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    TypeCard(
+                        type = TenantType.Freelancer,
+                        icon = Icons.Outlined.Person,
+                        title = "Freelancer",
+                        description = "For independent professionals managing their own business",
+                        isSelected = selectedType == TenantType.Freelancer,
+                        isEnabled = !hasFreelancerWorkspace,
+                        onClick = { onTypeSelected(TenantType.Freelancer) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
