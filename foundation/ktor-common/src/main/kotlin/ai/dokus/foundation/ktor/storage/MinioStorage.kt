@@ -21,17 +21,15 @@ import kotlin.time.DurationUnit
  * MinIO implementation of ObjectStorage.
  * Provides S3-compatible object storage operations.
  *
- * @param client The MinIO client configured with the internal endpoint
+ * @param client The MinIO client configured with the internal endpoint (for PUT/GET/DELETE operations)
+ * @param signingClient Optional MinIO client configured with the public URL endpoint (for presigned URLs).
+ *                      If null, the main client is used for signing (URLs will contain internal endpoint).
  * @param bucketName The bucket to store objects in
- * @param internalEndpoint The internal MinIO endpoint (e.g., http://minio:9000)
- * @param publicUrl The public URL base for presigned URLs (e.g., https://app.dokus.tech/storage)
- *                  If null, presigned URLs will use the internal endpoint (backward compatible)
  */
 class MinioStorage(
     private val client: MinioClient,
+    private val signingClient: MinioClient?,
     private val bucketName: String,
-    private val internalEndpoint: String,
-    private val publicUrl: String?
 ) : ObjectStorage {
 
     private val logger = LoggerFactory.getLogger(MinioStorage::class.java)
@@ -131,7 +129,11 @@ class MinioStorage(
         withContext(Dispatchers.IO) {
             logger.debug("Generating signed URL for: $key, expiry=$expiry")
 
-            val internalUrl = client.getPresignedObjectUrl(
+            // Use signingClient if available (configured with public URL endpoint)
+            // This ensures the signature is calculated for the public host, not the internal one
+            val clientForSigning = signingClient ?: client
+
+            clientForSigning.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(bucketName)
@@ -139,31 +141,40 @@ class MinioStorage(
                     .expiry(expiry.toInt(DurationUnit.SECONDS))
                     .build()
             )
-
-            // Rewrite URL to use public endpoint if configured
-            if (publicUrl != null) {
-                val rewrittenUrl = internalUrl.replace(internalEndpoint, publicUrl)
-                logger.debug("Rewrote URL from internal to public: $rewrittenUrl")
-                rewrittenUrl
-            } else {
-                internalUrl
-            }
         }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(MinioStorage::class.java)
+
         /**
          * Create a MinioStorage instance from configuration.
          *
          * @param config MinIO configuration with endpoint and credentials
-         * @param publicUrl Optional public URL for presigned URLs (from AppBaseConfig.storage.publicUrl)
+         * @param publicUrl Optional public URL for presigned URLs (e.g., http://192.168.0.44:8000/storage).
+         *                  When provided, a separate signing client is created configured with this endpoint,
+         *                  ensuring presigned URLs are signed for the public host (not the internal Docker host).
          */
         fun create(config: MinioConfig, publicUrl: String? = null): MinioStorage {
+            // Main client for PUT/GET/DELETE operations - uses internal endpoint
             val client = MinioClient.builder()
                 .endpoint(config.endpoint)
                 .credentials(config.accessKey, config.secretKey)
                 .build()
 
-            return MinioStorage(client, config.bucket, config.endpoint, publicUrl)
+            // Signing client for presigned URLs - uses public endpoint if configured
+            // This is a local operation (no network call), so it works even though
+            // the public URL points to Traefik, not directly to MinIO
+            val signingClient = if (publicUrl != null) {
+                logger.info("Creating signing client with public URL: $publicUrl")
+                MinioClient.builder()
+                    .endpoint(publicUrl)
+                    .credentials(config.accessKey, config.secretKey)
+                    .build()
+            } else {
+                null
+            }
+
+            return MinioStorage(client, signingClient, config.bucket)
         }
     }
 }
