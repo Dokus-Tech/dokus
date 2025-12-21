@@ -1,13 +1,11 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.app.state.emit
-import tech.dokus.foundation.app.state.emitLoading
-import tech.dokus.foundation.app.viewmodel.BaseViewModel
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.model.PeppolConnectRequest
+import ai.dokus.foundation.domain.model.PeppolConnectStatus
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
-import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
+import ai.dokus.foundation.domain.model.RecommandCompanySummary
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +13,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.emit
+import tech.dokus.foundation.app.state.emitLoading
+import tech.dokus.foundation.app.viewmodel.BaseViewModel
 
 /**
  * ViewModel for Peppol settings management.
  * Handles configuration, connection testing, and provider management.
+ *
+ * The connection flow:
+ * 1. User enters API Key and API Secret
+ * 2. User clicks Connect
+ * 3. Backend validates credentials and searches for matching companies
+ * 4. Possible outcomes:
+ *    - Single match → Connected
+ *    - Multiple matches → User selects one
+ *    - No matches → User confirms company creation
+ *    - Error → Show error message
  */
 class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(DokusState.idle()), KoinComponent {
 
@@ -29,9 +41,13 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
     private val _providers = MutableStateFlow<DokusState<List<String>>>(DokusState.idle())
     val providers: StateFlow<DokusState<List<String>>> = _providers.asStateFlow()
 
-    // Connection test state
-    private val _connectionTestState = MutableStateFlow<ConnectionTestState>(ConnectionTestState.Idle)
-    val connectionTestState: StateFlow<ConnectionTestState> = _connectionTestState.asStateFlow()
+    // Connection flow state
+    private val _connectionState = MutableStateFlow<PeppolConnectionState>(PeppolConnectionState.Idle)
+    val connectionState: StateFlow<PeppolConnectionState> = _connectionState.asStateFlow()
+
+    // Connected company info
+    private val _connectedCompany = MutableStateFlow<RecommandCompanySummary?>(null)
+    val connectedCompany: StateFlow<RecommandCompanySummary?> = _connectedCompany.asStateFlow()
 
     // Form state for creating/editing settings
     private val _formState = MutableStateFlow(PeppolSettingsFormState())
@@ -53,8 +69,10 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
                 onSuccess = { settings ->
                     logger.i { "Peppol settings loaded: ${if (settings != null) "configured" else "not configured"}" }
                     mutableState.value = DokusState.success(settings)
-                    // Pre-populate form if settings exist
-                    settings?.let { populateFormFromSettings(it) }
+                    if (settings != null) {
+                        populateFormFromSettings(settings)
+                        _connectionState.value = PeppolConnectionState.Connected
+                    }
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to load Peppol settings" }
@@ -65,48 +83,159 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
     }
 
     /**
-     * Save Peppol settings.
+     * Connect to Peppol by auto-discovering company via Recommand API.
+     * Only requires API Key and API Secret.
      */
-    fun saveSettings(
-        onSuccess: (PeppolSettingsDto) -> Unit = {},
-        onError: (Throwable) -> Unit = {}
-    ) {
+    fun connect() {
         val form = _formState.value
 
-        // Validate form
-        val validationErrors = validateForm(form)
+        // Validate credentials
+        val validationErrors = validateCredentials(form)
         if (validationErrors.isNotEmpty()) {
             _formState.value = form.copy(errors = validationErrors)
-            onError(IllegalArgumentException(validationErrors.values.first()))
             return
         }
 
         scope.launch {
-            logger.d { "Saving Peppol settings" }
-            mutableState.emitLoading()
+            logger.d { "Connecting to Peppol" }
+            _connectionState.value = PeppolConnectionState.Connecting
 
-            val request = SavePeppolSettingsRequest(
-                companyId = form.companyId,
+            val request = PeppolConnectRequest(
                 apiKey = form.apiKey,
                 apiSecret = form.apiSecret,
-                peppolId = form.peppolId,
                 isEnabled = form.isEnabled,
-                testMode = form.testMode
+                testMode = form.testMode,
+                createCompanyIfMissing = false
             )
 
-            dataSource.savePeppolSettings(request).fold(
-                onSuccess = { settings ->
-                    logger.i { "Peppol settings saved successfully" }
-                    mutableState.value = DokusState.success(settings)
-                    populateFormFromSettings(settings)
-                    onSuccess(settings)
+            dataSource.connectPeppol(request).fold(
+                onSuccess = { response ->
+                    handleConnectResponse(response.status, response.settings, response.company, response.candidates)
                 },
                 onFailure = { error ->
-                    logger.e(error) { "Failed to save Peppol settings" }
-                    mutableState.emit(error) { saveSettings(onSuccess, onError) }
-                    onError(error)
+                    logger.e(error) { "Failed to connect to Peppol" }
+                    _connectionState.value = PeppolConnectionState.Error(
+                        error.message ?: "Connection failed"
+                    )
                 }
             )
+        }
+    }
+
+    /**
+     * Select a company from multiple matches.
+     */
+    fun selectCompany(companyId: String) {
+        val form = _formState.value
+
+        scope.launch {
+            logger.d { "Selecting company: $companyId" }
+            _connectionState.value = PeppolConnectionState.Connecting
+
+            val request = PeppolConnectRequest(
+                apiKey = form.apiKey,
+                apiSecret = form.apiSecret,
+                isEnabled = form.isEnabled,
+                testMode = form.testMode,
+                companyId = companyId,
+                createCompanyIfMissing = false
+            )
+
+            dataSource.connectPeppol(request).fold(
+                onSuccess = { response ->
+                    handleConnectResponse(response.status, response.settings, response.company, response.candidates)
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to select company" }
+                    _connectionState.value = PeppolConnectionState.Error(
+                        error.message ?: "Failed to select company"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Confirm company creation on Recommand when no matching company exists.
+     */
+    fun confirmCreateCompany() {
+        val form = _formState.value
+
+        scope.launch {
+            logger.d { "Creating company on Recommand" }
+            _connectionState.value = PeppolConnectionState.Connecting
+
+            val request = PeppolConnectRequest(
+                apiKey = form.apiKey,
+                apiSecret = form.apiSecret,
+                isEnabled = form.isEnabled,
+                testMode = form.testMode,
+                createCompanyIfMissing = true
+            )
+
+            dataSource.connectPeppol(request).fold(
+                onSuccess = { response ->
+                    handleConnectResponse(response.status, response.settings, response.company, response.candidates)
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to create company" }
+                    _connectionState.value = PeppolConnectionState.Error(
+                        error.message ?: "Failed to create company"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Cancel the connection process.
+     */
+    fun cancelConnection() {
+        _connectionState.value = PeppolConnectionState.Idle
+    }
+
+    private fun handleConnectResponse(
+        status: PeppolConnectStatus,
+        settings: PeppolSettingsDto?,
+        company: RecommandCompanySummary?,
+        candidates: List<RecommandCompanySummary>
+    ) {
+        when (status) {
+            PeppolConnectStatus.Connected -> {
+                logger.i { "Connected to Peppol" }
+                _connectionState.value = PeppolConnectionState.Connected
+                _connectedCompany.value = company
+                settings?.let {
+                    mutableState.value = DokusState.success(it)
+                    populateFormFromSettings(it)
+                }
+            }
+            PeppolConnectStatus.MultipleMatches -> {
+                logger.i { "Multiple companies found: ${candidates.size}" }
+                _connectionState.value = PeppolConnectionState.SelectCompany(candidates)
+            }
+            PeppolConnectStatus.NoCompanyFound -> {
+                logger.i { "No matching company found, asking for confirmation" }
+                _connectionState.value = PeppolConnectionState.ConfirmCreateCompany
+            }
+            PeppolConnectStatus.MissingVatNumber -> {
+                logger.w { "Tenant VAT number is missing" }
+                _connectionState.value = PeppolConnectionState.Error(
+                    "Please configure your company VAT number in workspace settings first"
+                )
+            }
+            PeppolConnectStatus.MissingCompanyAddress -> {
+                logger.w { "Tenant company address is missing" }
+                _connectionState.value = PeppolConnectionState.Error(
+                    "Please configure your company address in workspace settings first"
+                )
+            }
+            PeppolConnectStatus.InvalidCredentials -> {
+                logger.w { "Invalid Peppol credentials" }
+                _connectionState.value = PeppolConnectionState.Error(
+                    "Invalid API credentials. Please check your API Key and Secret."
+                )
+            }
         }
     }
 
@@ -126,6 +255,8 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
                     logger.i { "Peppol settings deleted" }
                     mutableState.value = DokusState.success(null)
                     resetForm()
+                    _connectionState.value = PeppolConnectionState.Idle
+                    _connectedCompany.value = null
                     onSuccess()
                 },
                 onFailure = { error ->
@@ -135,44 +266,6 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
                 }
             )
         }
-    }
-
-    // ========================================================================
-    // CONNECTION TEST
-    // ========================================================================
-
-    /**
-     * Test the Peppol connection with current credentials.
-     */
-    fun testConnection() {
-        scope.launch {
-            logger.d { "Testing Peppol connection" }
-            _connectionTestState.value = ConnectionTestState.Testing
-
-            dataSource.testPeppolConnection().fold(
-                onSuccess = { success ->
-                    logger.i { "Connection test result: $success" }
-                    _connectionTestState.value = if (success) {
-                        ConnectionTestState.Success
-                    } else {
-                        ConnectionTestState.Failed("Connection test failed")
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Connection test error" }
-                    _connectionTestState.value = ConnectionTestState.Failed(
-                        error.message ?: "Unknown error"
-                    )
-                }
-            )
-        }
-    }
-
-    /**
-     * Reset connection test state.
-     */
-    fun resetConnectionTestState() {
-        _connectionTestState.value = ConnectionTestState.Idle
     }
 
     // ========================================================================
@@ -206,16 +299,6 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
     // FORM MANAGEMENT
     // ========================================================================
 
-    /**
-     * Update form field values.
-     */
-    fun updateCompanyId(value: String) {
-        _formState.value = _formState.value.copy(
-            companyId = value,
-            errors = _formState.value.errors - "companyId"
-        )
-    }
-
     fun updateApiKey(value: String) {
         _formState.value = _formState.value.copy(
             apiKey = value,
@@ -227,13 +310,6 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
         _formState.value = _formState.value.copy(
             apiSecret = value,
             errors = _formState.value.errors - "apiSecret"
-        )
-    }
-
-    fun updatePeppolId(value: String) {
-        _formState.value = _formState.value.copy(
-            peppolId = value,
-            errors = _formState.value.errors - "peppolId"
         )
     }
 
@@ -252,79 +328,74 @@ class PeppolSettingsViewModel : BaseViewModel<DokusState<PeppolSettingsDto?>>(Do
         _formState.value = PeppolSettingsFormState()
     }
 
+    /**
+     * Reset connection state to idle.
+     */
+    fun resetConnectionState() {
+        _connectionState.value = PeppolConnectionState.Idle
+    }
+
     // ========================================================================
     // HELPERS
     // ========================================================================
 
     private fun populateFormFromSettings(settings: PeppolSettingsDto) {
         _formState.value = PeppolSettingsFormState(
-            companyId = settings.companyId,
             apiKey = "", // Never returned from server
             apiSecret = "", // Never returned from server
-            peppolId = settings.peppolId.value,
             isEnabled = settings.isEnabled,
             testMode = settings.testMode,
-            isEditing = true
+            isConnected = true
         )
     }
 
-    private fun validateForm(form: PeppolSettingsFormState): Map<String, String> {
+    private fun validateCredentials(form: PeppolSettingsFormState): Map<String, String> {
         val errors = mutableMapOf<String, String>()
 
-        if (form.companyId.isBlank()) {
-            errors["companyId"] = "Company ID is required"
+        if (form.apiKey.isBlank()) {
+            errors["apiKey"] = "API Key is required"
         }
 
-        // Only validate API credentials if not editing (new setup) or if provided
-        if (!form.isEditing || form.apiKey.isNotBlank()) {
-            if (form.apiKey.isBlank()) {
-                errors["apiKey"] = "API Key is required"
-            }
-        }
-
-        if (!form.isEditing || form.apiSecret.isNotBlank()) {
-            if (form.apiSecret.isBlank()) {
-                errors["apiSecret"] = "API Secret is required"
-            }
-        }
-
-        if (form.peppolId.isBlank()) {
-            errors["peppolId"] = "Peppol ID is required"
-        } else if (!isValidPeppolIdFormat(form.peppolId)) {
-            errors["peppolId"] = "Invalid Peppol ID format (expected: scheme:identifier)"
+        if (form.apiSecret.isBlank()) {
+            errors["apiSecret"] = "API Secret is required"
         }
 
         return errors
-    }
-
-    private fun isValidPeppolIdFormat(peppolId: String): Boolean {
-        // Basic validation: should contain scheme:identifier format
-        // Example: 0208:BE0123456789
-        val parts = peppolId.split(":")
-        return parts.size == 2 && parts[0].isNotBlank() && parts[1].isNotBlank()
     }
 }
 
 /**
  * Form state for Peppol settings.
+ * Simplified to only require API credentials for new connections.
  */
 data class PeppolSettingsFormState(
-    val companyId: String = "",
     val apiKey: String = "",
     val apiSecret: String = "",
-    val peppolId: String = "",
     val isEnabled: Boolean = false,
     val testMode: Boolean = true,
-    val isEditing: Boolean = false,
+    val isConnected: Boolean = false,
     val errors: Map<String, String> = emptyMap()
 )
 
 /**
- * Connection test state.
+ * Connection flow state.
  */
-sealed class ConnectionTestState {
-    data object Idle : ConnectionTestState()
-    data object Testing : ConnectionTestState()
-    data object Success : ConnectionTestState()
-    data class Failed(val message: String) : ConnectionTestState()
+sealed class PeppolConnectionState {
+    /** Initial state, not connected */
+    data object Idle : PeppolConnectionState()
+
+    /** Connection in progress */
+    data object Connecting : PeppolConnectionState()
+
+    /** Successfully connected */
+    data object Connected : PeppolConnectionState()
+
+    /** Multiple companies found, user must select one */
+    data class SelectCompany(val candidates: List<RecommandCompanySummary>) : PeppolConnectionState()
+
+    /** No matching company found, asking user to confirm creation */
+    data object ConfirmCreateCompany : PeppolConnectionState()
+
+    /** Error occurred */
+    data class Error(val message: String) : PeppolConnectionState()
 }
