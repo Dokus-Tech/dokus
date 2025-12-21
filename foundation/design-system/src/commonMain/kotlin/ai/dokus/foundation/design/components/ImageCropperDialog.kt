@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -83,6 +85,7 @@ fun ImageCropperDialog(
     ) {
         Surface(
             modifier = Modifier
+                .widthIn(max = 400.dp)
                 .fillMaxWidth(0.9f)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
@@ -117,6 +120,7 @@ fun ImageCropperDialog(
                 // Image crop area
                 Box(
                     modifier = Modifier
+                        .sizeIn(maxWidth = 320.dp, maxHeight = 320.dp)
                         .fillMaxWidth()
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(8.dp))
