@@ -32,6 +32,7 @@ object TenantMapper {
         subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
         language = this[TenantTable.language],
         vatNumber = this[TenantTable.vatNumber]?.let { VatNumber(it) },
+        companyAddress = this[TenantTable.companyAddress],
         createdAt = this[TenantTable.createdAt],
         updatedAt = this[TenantTable.updatedAt]
     )
@@ -43,8 +44,6 @@ object TenantMapper {
         defaultPaymentTerms = this[TenantSettingsTable.defaultPaymentTerms],
         defaultVatRate = VatRate(this[TenantSettingsTable.defaultVatRate].toString()),
         companyName = this[TenantSettingsTable.companyName],
-        companyAddress = this[TenantSettingsTable.companyAddress],
-        companyVatNumber = this[TenantSettingsTable.companyVatNumber]?.let { VatNumber(it) },
         companyIban = this[TenantSettingsTable.companyIban]?.let { Iban(it) },
         companyBic = this[TenantSettingsTable.companyBic]?.let { Bic(it) },
         companyLogoUrl = this[TenantSettingsTable.companyLogoUrl],

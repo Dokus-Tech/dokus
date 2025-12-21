@@ -62,6 +62,8 @@ data class Tenant(
     val status: TenantStatus,
     val language: Language,
     val vatNumber: VatNumber? = null,
+    /** Company address used for invoices and Peppol (free-form, but should include street, postal code, city, country). */
+    val companyAddress: String = "",
     val trialEndsAt: LocalDateTime? = null,
     val subscriptionStartedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
@@ -90,8 +92,6 @@ data class TenantSettings(
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: VatRate = VatRate.STANDARD_BE,
     val companyName: String? = null,
-    val companyAddress: String? = null,
-    val companyVatNumber: VatNumber? = null,
     val companyIban: Iban? = null,
     val companyBic: Bic? = null,
     val companyLogoUrl: String? = null,
@@ -337,7 +337,8 @@ data class CreateTenantRequest(
     val displayName: DisplayName,
     val plan: TenantPlan = TenantPlan.Free,
     val language: Language = Language.En,
-    val vatNumber: VatNumber
+    val vatNumber: VatNumber,
+    val companyAddress: String = ""
 )
 
 @Serializable

@@ -39,6 +39,7 @@ class TenantRepository {
         plan: TenantPlan = TenantPlan.Free,
         language: Language,
         vatNumber: VatNumber,
+        companyAddress: String = "",
     ): TenantId = dbQuery {
         val tenantId = TenantTable.insertAndGetId {
             it[TenantTable.type] = type
@@ -47,6 +48,7 @@ class TenantRepository {
             it[TenantTable.plan] = plan
             it[TenantTable.language] = language
             it[TenantTable.vatNumber] = vatNumber.value
+            it[TenantTable.companyAddress] = companyAddress
             it[status] = TenantStatus.Active
         }.value
 
@@ -61,11 +63,40 @@ class TenantRepository {
 
     suspend fun findById(id: TenantId): Tenant? = dbQuery {
         val javaUuid = id.value.toJavaUuid()
-        TenantTable
+        val tenantRow = TenantTable
             .selectAll()
             .where { TenantTable.id eq javaUuid }
             .singleOrNull()
-            ?.toTenant()
+            ?: return@dbQuery null
+
+        var tenant = tenantRow.toTenant()
+
+        // Backfill migrated fields from legacy TenantSettings columns if needed.
+        // NOTE: The DB columns may still exist even if the domain model no longer uses them.
+        val settingsRow = TenantSettingsTable
+            .selectAll()
+            .where { TenantSettingsTable.tenantId eq javaUuid }
+            .singleOrNull()
+
+        if (settingsRow != null) {
+            val legacyAddress = settingsRow[TenantSettingsTable.companyAddress]
+            if (tenant.companyAddress.isBlank() && !legacyAddress.isNullOrBlank()) {
+                TenantTable.update({ TenantTable.id eq javaUuid }) {
+                    it[companyAddress] = legacyAddress
+                }
+                tenant = tenant.copy(companyAddress = legacyAddress)
+            }
+
+            val legacyVat = settingsRow[TenantSettingsTable.companyVatNumber]
+            if (tenant.vatNumber == null && !legacyVat.isNullOrBlank()) {
+                TenantTable.update({ TenantTable.id eq javaUuid }) {
+                    it[vatNumber] = legacyVat
+                }
+                tenant = tenant.copy(vatNumber = VatNumber(legacyVat))
+            }
+        }
+
+        tenant
     }
 
     suspend fun getSettings(tenantId: TenantId): TenantSettings = dbQuery {
@@ -86,8 +117,6 @@ class TenantRepository {
             it[defaultPaymentTerms] = settings.defaultPaymentTerms
             it[defaultVatRate] = BigDecimal(settings.defaultVatRate.value)
             it[companyName] = settings.companyName
-            it[companyAddress] = settings.companyAddress
-            it[companyVatNumber] = settings.companyVatNumber?.value
             it[companyIban] = settings.companyIban?.value
             it[companyBic] = settings.companyBic?.value
             it[companyLogoUrl] = settings.companyLogoUrl
