@@ -139,6 +139,11 @@ services:
       RABBITMQ_USERNAME: dokus
       RABBITMQ_PASSWORD: localrabbitpass
       RABBITMQ_VHOST: /dokus
+      # MinIO Storage
+      MINIO_ENDPOINT: http://minio-local:9000
+      MINIO_ACCESS_KEY: dokusadmin
+      MINIO_SECRET_KEY: dokusadminpassword
+      MINIO_BUCKET: dokus-auth
       GEOIP_DATABASE_PATH: resources/GeoLite2-City.mmdb
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
