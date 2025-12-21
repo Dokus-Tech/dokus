@@ -6,6 +6,7 @@ import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.PeppolValidationError
 import ai.dokus.foundation.domain.model.PeppolValidationResult
 import ai.dokus.foundation.domain.model.PeppolValidationWarning
+import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 
 /**
@@ -25,6 +26,7 @@ class PeppolValidator {
     fun validateForSending(
         invoice: FinancialDocumentDto.InvoiceDto,
         contact: ContactDto,
+        tenant: Tenant,
         tenantSettings: TenantSettings,
         peppolSettings: PeppolSettingsDto
     ): PeppolValidationResult {
@@ -79,19 +81,19 @@ class PeppolValidator {
             ))
         }
 
-        if (tenantSettings.companyVatNumber == null) {
+        if (tenant.vatNumber == null) {
             warnings.add(PeppolValidationWarning(
                 code = "MISSING_SELLER_VAT",
                 message = "Company VAT number is recommended for Peppol compliance",
-                field = "tenantSettings.companyVatNumber"
+                field = "tenant.vatNumber"
             ))
         }
 
-        if (tenantSettings.companyAddress.isNullOrBlank()) {
+        if (tenant.companyAddress.isBlank()) {
             warnings.add(PeppolValidationWarning(
                 code = "MISSING_SELLER_ADDRESS",
                 message = "Company address is recommended for Peppol compliance",
-                field = "tenantSettings.companyAddress"
+                field = "tenant.companyAddress"
             ))
         }
 

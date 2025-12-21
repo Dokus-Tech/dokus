@@ -37,7 +37,4 @@ object TenantTable : UUIDTable("tenants") {
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
-
-    init {
-    }
 }
