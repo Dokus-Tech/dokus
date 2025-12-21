@@ -61,6 +61,8 @@ amqpClient = "5.28.0"
 resilience4j = "2.3.0"
 minio = "8.6.0"
 koog = "0.5.4"
+scrimage = "4.3.0"
+coil = "3.0.4"
 
 datastore = "1.2.0"
 datastoreCoreJvm = "1.2.0"
@@ -153,6 +155,15 @@ javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javaMail" }
 
 amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqpClient" }
 minio = { module = "io.minio:minio", version.ref = "minio" }
+
+# Image Processing (server-side)
+scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
+scrimage-webp = { module = "com.sksamuel.scrimage:scrimage-webp", version.ref = "scrimage" }
+
+# Coil Image Loading (multiplatform)
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
+coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 
 # JetBrains Koog AI Framework
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }

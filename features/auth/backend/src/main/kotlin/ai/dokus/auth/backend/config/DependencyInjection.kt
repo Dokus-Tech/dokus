@@ -1,10 +1,6 @@
 package ai.dokus.auth.backend.config
 
 import ai.dokus.auth.backend.database.AuthTables
-import ai.dokus.foundation.database.di.repositoryModuleAuth
-import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
-import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.auth.backend.services.AuthService
 import ai.dokus.auth.backend.services.DisabledEmailService
@@ -17,26 +13,64 @@ import ai.dokus.auth.backend.services.RateLimitServiceInterface
 import ai.dokus.auth.backend.services.RedisRateLimitService
 import ai.dokus.auth.backend.services.SmtpEmailService
 import ai.dokus.auth.backend.services.TeamService
+import ai.dokus.foundation.database.di.repositoryModuleAuth
+import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
+import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
+import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.ktor.DokusRabbitMq
 import ai.dokus.foundation.ktor.cache.RedisClient
 import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redisModule
 import ai.dokus.foundation.ktor.config.AppBaseConfig
+import ai.dokus.foundation.ktor.config.MinioConfig
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j
 import ai.dokus.foundation.ktor.database.DatabaseFactory
+import ai.dokus.foundation.ktor.security.InMemoryTokenBlacklistService
 import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.foundation.ktor.security.InMemoryTokenBlacklistService
 import ai.dokus.foundation.ktor.security.RedisTokenBlacklistService
 import ai.dokus.foundation.ktor.security.TokenBlacklistService
+import ai.dokus.foundation.ktor.storage.AvatarStorageService
+import ai.dokus.foundation.ktor.storage.MinioStorage
+import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.foundation.messaging.integration.createDefaultRabbitMqConfig
 import ai.dokus.foundation.messaging.integration.messagingModule
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
+
+fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
+    // Load RabbitMQ configuration from typed config
+    val rabbitMq = DokusRabbitMq.from(appConfig.rabbitmq)
+    val rabbitmqConfig = createDefaultRabbitMqConfig(
+        host = rabbitMq.host,
+        port = rabbitMq.port,
+        username = rabbitMq.username,
+        password = rabbitMq.password,
+        virtualHost = rabbitMq.virtualHost,
+        serviceName = "auth-service"
+    )
+
+    install(Koin) {
+        modules(
+            coreModule(appConfig),
+            repositoryModuleAuth,
+            storageModule(appConfig),
+            appModule,
+            redisModule(appConfig, RedisNamespace.Auth),
+            messagingModule(rabbitmqConfig, "auth")
+        )
+    }
+}
+
+private fun coreModule(appConfig: AppBaseConfig) = module {
+    single { appConfig } bind AppBaseConfig::class
+}
 
 private val appModule = module {
     // Database - connect and initialize auth-owned tables only
@@ -149,29 +183,21 @@ private val appModule = module {
     single { TeamService(get(), get(), get()) }
 }
 
-fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
-    val coreModule = module {
-        single<AppBaseConfig> { appConfig }
+/**
+ * Storage module - object storage configuration
+ */
+fun storageModule(appConfig: AppBaseConfig) = module {
+    val logger = LoggerFactory.getLogger("StorageModule")
+
+    // MinIO Object Storage (when available)
+    single<ObjectStorage> {
+        val minioConfig = MinioConfig.loadOrNull(appConfig)
+        requireNotNull(minioConfig)
+        val publicUrl = appConfig.storage.publicUrl
+        logger.info("MinIO storage configured: endpoint=${minioConfig.endpoint}, bucket=${minioConfig.bucket}, publicUrl=$publicUrl")
+        MinioStorage.create(minioConfig, publicUrl)
     }
 
-    // Load RabbitMQ configuration from typed config
-    val rabbitMq = DokusRabbitMq.from(appConfig.rabbitmq)
-    val rabbitmqConfig = createDefaultRabbitMqConfig(
-        host = rabbitMq.host,
-        port = rabbitMq.port,
-        username = rabbitMq.username,
-        password = rabbitMq.password,
-        virtualHost = rabbitMq.virtualHost,
-        serviceName = "auth-service"
-    )
-
-    install(Koin) {
-        modules(
-            coreModule,
-            repositoryModuleAuth,
-            appModule,
-            redisModule(appConfig, RedisNamespace.Auth),
-            messagingModule(rabbitmqConfig, "auth")
-        )
-    }
+    // Avatar storage service
+    single { AvatarStorageService(get()) }
 }

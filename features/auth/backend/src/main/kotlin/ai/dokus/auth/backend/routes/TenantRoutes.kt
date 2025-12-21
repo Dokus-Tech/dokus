@@ -10,6 +10,7 @@ import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.routes.Tenants
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
+import ai.dokus.foundation.ktor.storage.AvatarStorageService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -18,6 +19,7 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -26,15 +28,19 @@ import kotlin.uuid.Uuid
  * - Get tenant by ID
  * - Get/update tenant settings
  */
+private val logger = LoggerFactory.getLogger("TenantRoutes")
+
 @OptIn(ExperimentalUuidApi::class)
 fun Route.tenantRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val userRepository by inject<UserRepository>()
+    val avatarStorageService by inject<AvatarStorageService>()
 
     authenticateJwt {
         /**
          * GET /api/v1/tenants
          * List all tenants the authenticated user belongs to.
+         * Includes avatar URLs (small size) for each tenant that has an avatar.
          */
         get<Tenants> {
             val principal = dokusPrincipal
@@ -43,7 +49,19 @@ fun Route.tenantRoutes() {
                 for (membership in userRepository.getUserTenants(principal.userId)) {
                     if (!membership.isActive) continue
                     val tenant = tenantRepository.findById(membership.tenantId) ?: continue
-                    add(tenant)
+
+                    // Try to get avatar for this tenant
+                    val avatar = try {
+                        val storageKey = tenantRepository.getAvatarStorageKey(tenant.id)
+                        if (storageKey != null) {
+                            avatarStorageService.getAvatarUrls(storageKey)
+                        } else null
+                    } catch (e: Exception) {
+                        logger.warn("Failed to get avatar for tenant ${tenant.id}", e)
+                        null
+                    }
+
+                    add(tenant.copy(avatar = avatar))
                 }
             }
 
@@ -109,7 +127,7 @@ fun Route.tenantRoutes() {
 
         /**
          * GET /api/v1/tenants/{id}
-         * Get tenant by ID
+         * Get tenant by ID (includes avatar)
          */
         get<Tenants.Id> { route ->
             val principal = dokusPrincipal
@@ -128,7 +146,18 @@ fun Route.tenantRoutes() {
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
 
-            call.respond(HttpStatusCode.OK, tenant)
+            // Include avatar if available
+            val avatar = try {
+                val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
+                if (storageKey != null) {
+                    avatarStorageService.getAvatarUrls(storageKey)
+                } else null
+            } catch (e: Exception) {
+                logger.warn("Failed to get avatar for tenant $tenantId", e)
+                null
+            }
+
+            call.respond(HttpStatusCode.OK, tenant.copy(avatar = avatar))
         }
     }
 }

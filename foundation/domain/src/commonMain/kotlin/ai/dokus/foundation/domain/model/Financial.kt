@@ -65,7 +65,8 @@ data class Tenant(
     val trialEndsAt: LocalDateTime? = null,
     val subscriptionStartedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val updatedAt: LocalDateTime,
+    val avatar: CompanyAvatar? = null,
 )
 
 @Serializable

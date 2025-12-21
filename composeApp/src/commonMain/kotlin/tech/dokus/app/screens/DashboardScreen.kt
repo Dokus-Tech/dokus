@@ -1,12 +1,9 @@
 package tech.dokus.app.screens
 
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.app.viewmodel.DashboardViewModel
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PButtonVariant
-import ai.dokus.foundation.design.components.PIconPosition
+import ai.dokus.foundation.design.components.AvatarShape
+import ai.dokus.foundation.design.components.AvatarSize
+import ai.dokus.foundation.design.components.CompanyAvatarImage
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
@@ -20,18 +17,26 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,6 +51,9 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.app.viewmodel.DashboardViewModel
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 
 @Composable
 internal fun DashboardScreen(
@@ -59,6 +67,7 @@ internal fun DashboardScreen(
 
     val currentTenantState by viewModel.currentTenantState.collectAsState()
     val currentTenant = currentTenantState.let { if (it.isSuccess()) it.data else null }
+    val currentAvatar by viewModel.currentAvatar.collectAsState()
 
     // Pending documents state (for mobile only) - includes loading, success, and error states
     val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
@@ -106,14 +115,32 @@ internal fun DashboardScreen(
                     }
                 },
                 actions = {
-                    PButton(
-                        text = currentTenant?.displayName?.value ?: "Select Tenant",
-                        variant = PButtonVariant.Outline,
-                        icon = Icons.Default.SwitchAccount,
-                        iconPosition = PIconPosition.Trailing,
-                        isLoading = currentTenantState.isLoading(),
-                        onClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) }
-                    )
+                    // Workspace selector button with avatar inside
+                    OutlinedButton(
+                        onClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
+                        modifier = Modifier.height(42.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(start = 8.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+                    ) {
+                        CompanyAvatarImage(
+                            avatarUrl = currentAvatar?.small,
+                            initial = currentTenant?.displayName?.value?.take(1) ?: "D",
+                            size = AvatarSize.ExtraSmall,
+                            shape = AvatarShape.RoundedSquare,
+                            onClick = null // Button handles the click
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = currentTenant?.displayName?.value ?: "Select Workspace",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.SwitchAccount,
+                            contentDescription = "Switch workspace",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             )
         }
