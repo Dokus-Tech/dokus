@@ -1,13 +1,12 @@
 package ai.dokus.foundation.database.di
 
-import ai.dokus.foundation.database.repository.audit.AuditRepository
+import ai.dokus.foundation.database.repository.auth.AddressRepository
 import ai.dokus.foundation.database.repository.auth.InvitationRepository
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.repository.banking.BankingRepository
-import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
@@ -20,7 +19,6 @@ import ai.dokus.foundation.database.repository.payment.PaymentRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
-import ai.dokus.foundation.database.repository.reporting.ReportingRepository
 import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import org.koin.dsl.module
 
@@ -30,6 +28,7 @@ import org.koin.dsl.module
  */
 val repositoryModuleAuth = module {
     single { TenantRepository() }
+    single { AddressRepository() }
     single { UserRepository(get()) }
     single { RefreshTokenRepository() }
     single { PasswordResetTokenRepository() }
@@ -41,7 +40,6 @@ val repositoryModuleAuth = module {
  * Provides repositories for invoices, expenses, bills, clients, and documents.
  */
 val repositoryModuleCashflow = module {
-    single { AttachmentRepository() }
     single { DocumentRepository() }
     single { DocumentProcessingRepository() }
     single { InvoiceRepository() }
@@ -74,10 +72,6 @@ val repositoryModuleProcessor = module {
  * Audit repositories module.
  * Provides repositories for audit logging.
  */
-val repositoryModuleAudit = module {
-    single { AuditRepository() }
-}
-
 /**
  * Banking repositories module.
  * Provides repositories for bank connections and transactions.
@@ -98,10 +92,6 @@ val repositoryModulePayment = module {
  * Reporting repositories module.
  * Provides repositories for VAT returns and reporting.
  */
-val repositoryModuleReporting = module {
-    single { ReportingRepository() }
-}
-
 /**
  * Contacts repositories module.
  * Provides repositories for unified contact management (customers AND vendors).
@@ -133,10 +123,8 @@ val repositoryModules = module {
         repositoryModuleCashflow,
         repositoryModulePeppol,
         repositoryModuleProcessor,
-        repositoryModuleAudit,
         repositoryModuleBanking,
         repositoryModulePayment,
-        repositoryModuleReporting,
         repositoryModuleContacts
     )
 }

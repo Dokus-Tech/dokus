@@ -1,6 +1,9 @@
 package ai.dokus.foundation.database.tables.cashflow
 
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.datetime
 
 /**
  * Invoice items table - line items for each invoice.
@@ -10,7 +13,9 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
  */
 object InvoiceItemsTable : UUIDTable("invoice_items") {
     // Foreign key to invoice
-    val invoiceId = uuid("invoice_id").references(InvoicesTable.id).index()
+    val invoiceId = uuid("invoice_id")
+        .references(InvoicesTable.id, onDelete = ReferenceOption.CASCADE)
+        .index()
 
     // Item details
     val description = text("description")
@@ -25,5 +30,7 @@ object InvoiceItemsTable : UUIDTable("invoice_items") {
     // Ordering
     val sortOrder = integer("sort_order").default(0)
 
-    init {}
+    // Timestamps
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+    val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 }

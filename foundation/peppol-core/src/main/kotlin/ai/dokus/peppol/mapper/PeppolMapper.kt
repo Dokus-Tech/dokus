@@ -3,6 +3,7 @@ package ai.dokus.peppol.mapper
 import ai.dokus.foundation.domain.Money
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
@@ -17,7 +18,6 @@ import ai.dokus.peppol.model.PeppolParty
 import ai.dokus.peppol.model.PeppolPaymentInfo
 import ai.dokus.peppol.model.PeppolReceivedDocument
 import ai.dokus.peppol.model.PeppolSendRequest
-import ai.dokus.peppol.util.CompanyAddressParser
 import kotlinx.datetime.LocalDate
 import org.slf4j.LoggerFactory
 
@@ -38,7 +38,8 @@ class PeppolMapper {
         contact: ContactDto,
         tenant: Tenant,
         tenantSettings: TenantSettings,
-        peppolSettings: PeppolSettingsDto
+        peppolSettings: PeppolSettingsDto,
+        companyAddress: Address?
     ): PeppolSendRequest {
         val recipientPeppolId = contact.peppolId
             ?: throw IllegalArgumentException("Contact must have a Peppol ID to send via Peppol")
@@ -50,7 +51,7 @@ class PeppolMapper {
                 invoiceNumber = invoice.invoiceNumber.value,
                 issueDate = invoice.issueDate,
                 dueDate = invoice.dueDate,
-                seller = toSellerParty(tenant, tenantSettings),
+                seller = toSellerParty(tenant, tenantSettings, companyAddress),
                 buyer = toBuyerParty(contact),
                 lineItems = invoice.items.mapIndexed { index, item ->
                     toLineItem(item, index + 1)
@@ -82,16 +83,14 @@ class PeppolMapper {
     /**
      * Convert tenant settings to Peppol seller party.
      */
-    private fun toSellerParty(tenant: Tenant, settings: TenantSettings): PeppolParty {
-        val parsedAddress = CompanyAddressParser.parse(tenant.companyAddress)
-
+    private fun toSellerParty(tenant: Tenant, settings: TenantSettings, companyAddress: Address?): PeppolParty {
         return PeppolParty(
             name = settings.companyName ?: tenant.displayName.value,
             vatNumber = tenant.vatNumber?.value,
-            streetName = parsedAddress.street,
-            cityName = parsedAddress.city,
-            postalZone = parsedAddress.postalCode,
-            countryCode = parsedAddress.country ?: "BE"
+            streetName = companyAddress?.streetLine1,
+            cityName = companyAddress?.city,
+            postalZone = companyAddress?.postalCode,
+            countryCode = companyAddress?.country?.dbValue
         )
     }
 

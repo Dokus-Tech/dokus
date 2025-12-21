@@ -19,7 +19,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object PasswordResetTokensTable : UUIDTable("password_reset_tokens") {
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
-    val token = varchar("token", 255).uniqueIndex()
+    val tokenHash = varchar("token_hash", 64).uniqueIndex()
     val expiresAt = datetime("expires_at").index()
     val isUsed = bool("is_used").default(false)
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

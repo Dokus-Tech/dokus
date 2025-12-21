@@ -39,7 +39,6 @@ class TenantRepository {
         plan: TenantPlan = TenantPlan.Free,
         language: Language,
         vatNumber: VatNumber,
-        companyAddress: String = "",
     ): TenantId = dbQuery {
         val tenantId = TenantTable.insertAndGetId {
             it[TenantTable.type] = type
@@ -48,7 +47,6 @@ class TenantRepository {
             it[TenantTable.plan] = plan
             it[TenantTable.language] = language
             it[TenantTable.vatNumber] = vatNumber.value
-            it[TenantTable.companyAddress] = companyAddress
             it[status] = TenantStatus.Active
         }.value
 
