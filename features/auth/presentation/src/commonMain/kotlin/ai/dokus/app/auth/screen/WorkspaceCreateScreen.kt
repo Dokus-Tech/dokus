@@ -21,7 +21,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -178,7 +177,11 @@ internal fun WorkspaceCreateScreen(
                                             TypeSelectionStep(
                                                 selectedType = wizardState.tenantType,
                                                 hasFreelancerWorkspace = hasFreelancerWorkspace,
-                                                onTypeSelected = viewModel::onTypeSelected,
+                                                onTypeSelected = { type ->
+                                                    viewModel.onTypeSelected(type)
+                                                    viewModel.goNext()
+                                                },
+                                                onBackPress = { navController.navigateUp() },
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         }
@@ -187,6 +190,7 @@ internal fun WorkspaceCreateScreen(
                                                 companyName = wizardState.companyName,
                                                 lookupState = wizardState.lookupState,
                                                 onCompanyNameChanged = viewModel::onCompanyNameChanged,
+                                                onBackPress = { viewModel.goBack() },
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         }
@@ -196,6 +200,7 @@ internal fun WorkspaceCreateScreen(
                                                 address = wizardState.address,
                                                 onVatNumberChanged = viewModel::onVatNumberChanged,
                                                 onAddressChanged = viewModel::onAddressChanged,
+                                                onBackPress = { viewModel.goBack() },
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         }
@@ -203,28 +208,18 @@ internal fun WorkspaceCreateScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(24.dp))
+                            // Navigation buttons (not needed for TypeSelection step)
+                            if (wizardState.step != WorkspaceWizardStep.TypeSelection) {
+                                Spacer(modifier = Modifier.height(24.dp))
 
-                            // Navigation buttons
-                            PPrimaryButton(
-                                text = when (wizardState.step) {
-                                    WorkspaceWizardStep.VatAndAddress -> if (isSubmitting) "Creating..." else "Create workspace"
-                                    else -> "Continue"
-                                },
-                                enabled = wizardState.canProceed && !isSubmitting,
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = { viewModel.goNext() }
-                            )
-
-                            if (viewModel.canGoBack()) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = "Back",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .clickable(enabled = !isSubmitting) { viewModel.goBack() }
-                                        .padding(8.dp)
+                                PPrimaryButton(
+                                    text = when (wizardState.step) {
+                                        WorkspaceWizardStep.VatAndAddress -> if (isSubmitting) "Creating..." else "Create workspace"
+                                        else -> "Continue"
+                                    },
+                                    enabled = wizardState.canProceed && !isSubmitting,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = { viewModel.goNext() }
                                 )
                             }
                         }
