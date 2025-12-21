@@ -1,9 +1,8 @@
 package ai.dokus.foundation.design.components.tiles
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,16 +22,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
+import ai.dokus.foundation.design.components.AvatarShape
+import ai.dokus.foundation.design.components.AvatarSize
+import ai.dokus.foundation.design.components.CompanyAvatarImage
 
 /**
- * Small square tile showing a company's initial with its name below.
+ * Small square tile showing a company's avatar (or initial if no avatar) with its name below.
  * Uses Material theme shapes and color scheme.
+ *
+ * @param initial The initial letter to display as fallback (typically first letter of company name)
+ * @param label The company name to display below the avatar
+ * @param avatarUrl Optional URL of the company avatar image
+ * @param onClick Click handler for the tile
+ * @param modifier Modifier to be applied to the tile
  */
 @Composable
 fun CompanyTile(
     modifier: Modifier = Modifier,
     initial: String,
     label: String,
+    avatarUrl: String? = null,
     onClick: () -> Unit
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -40,23 +49,17 @@ fun CompanyTile(
             onClick = onClick,
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = Color.Transparent
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = initial,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+            CompanyAvatarImage(
+                avatarUrl = avatarUrl,
+                initial = initial,
+                size = AvatarSize.Medium,
+                shape = AvatarShape.RoundedSquare,
+                modifier = Modifier.size(72.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
