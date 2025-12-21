@@ -145,7 +145,7 @@ class TenantRepository {
     suspend fun getAvatarStorageKey(tenantId: TenantId): String? = dbQuery {
         val javaUuid = tenantId.value.toJavaUuid()
         TenantSettingsTable
-            .select(TenantSettingsTable.companyLogoUrl)
+            .selectAll()
             .where { TenantSettingsTable.tenantId eq javaUuid }
             .singleOrNull()
             ?.get(TenantSettingsTable.companyLogoUrl)
