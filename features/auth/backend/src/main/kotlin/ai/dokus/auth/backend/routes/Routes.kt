@@ -27,6 +27,7 @@ fun Application.configureRoutes() {
         // Authenticated routes
         accountRoutes()
         tenantRoutes()
+        avatarRoutes()
         teamRoutes()
     }
 }
