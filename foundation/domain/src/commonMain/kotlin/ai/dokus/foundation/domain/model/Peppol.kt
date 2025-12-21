@@ -24,6 +24,24 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 // ============================================================================
+// PEPPOL PROVIDERS
+// ============================================================================
+
+/**
+ * Supported Peppol Access Point providers.
+ * Currently only Recommand is supported.
+ */
+@Serializable
+enum class PeppolProvider(val displayName: String) {
+    Recommand("Recommand");
+
+    companion object {
+        fun fromName(name: String): PeppolProvider? =
+            entries.find { it.name.equals(name, ignoreCase = true) }
+    }
+}
+
+// ============================================================================
 // PEPPOL SETTINGS
 // ============================================================================
 
