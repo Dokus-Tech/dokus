@@ -176,6 +176,10 @@ fun Route.peppolRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
+            // Get tenant
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.InternalError("Tenant not found")
+
             // Get tenant settings
             val tenantSettings = tenantRepository.getSettings(tenantId)
                 ?: throw DokusException.InternalError("Tenant settings not found")
@@ -194,7 +198,7 @@ fun Route.peppolRoutes() {
             }
 
             // Send invoice via Peppol
-            val result = peppolService.sendInvoice(invoice, contact, tenantSettings, tenantId)
+            val result = peppolService.sendInvoice(invoice, contact, tenant, tenantSettings, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to send invoice via Peppol: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, SendInvoiceResponse(
@@ -221,6 +225,10 @@ fun Route.peppolRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
+            // Get tenant
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.InternalError("Tenant not found")
+
             // Get tenant settings
             val tenantSettings = tenantRepository.getSettings(tenantId)
                 ?: throw DokusException.InternalError("Tenant settings not found")
@@ -231,7 +239,7 @@ fun Route.peppolRoutes() {
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 
             // Validate invoice for Peppol
-            val validationResult = peppolService.validateInvoice(invoice, contact, tenantSettings, tenantId)
+            val validationResult = peppolService.validateInvoice(invoice, contact, tenant, tenantSettings, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to validate invoice: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, validationResult)
