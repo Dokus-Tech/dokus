@@ -1,9 +1,9 @@
 package tech.dokus.app.screens
 
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.app.viewmodel.DashboardViewModel
+import ai.dokus.foundation.design.components.AvatarShape
+import ai.dokus.foundation.design.components.AvatarSize
+import ai.dokus.foundation.design.components.CompanyAvatarImage
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
@@ -46,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.app.viewmodel.DashboardViewModel
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 
 @Composable
 internal fun DashboardScreen(
@@ -59,6 +62,7 @@ internal fun DashboardScreen(
 
     val currentTenantState by viewModel.currentTenantState.collectAsState()
     val currentTenant = currentTenantState.let { if (it.isSuccess()) it.data else null }
+    val currentAvatar by viewModel.currentAvatar.collectAsState()
 
     // Pending documents state (for mobile only) - includes loading, success, and error states
     val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
@@ -106,14 +110,26 @@ internal fun DashboardScreen(
                     }
                 },
                 actions = {
-                    PButton(
-                        text = currentTenant?.displayName?.value ?: "Select Tenant",
-                        variant = PButtonVariant.Outline,
-                        icon = Icons.Default.SwitchAccount,
-                        iconPosition = PIconPosition.Trailing,
-                        isLoading = currentTenantState.isLoading(),
-                        onClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) }
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CompanyAvatarImage(
+                            avatarUrl = currentAvatar?.small,
+                            initial = currentTenant?.displayName?.value?.take(1) ?: "D",
+                            size = AvatarSize.Small,
+                            shape = AvatarShape.RoundedSquare,
+                            onClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) }
+                        )
+                        PButton(
+                            text = currentTenant?.displayName?.value ?: "Select Tenant",
+                            variant = PButtonVariant.Outline,
+                            icon = Icons.Default.SwitchAccount,
+                            iconPosition = PIconPosition.Trailing,
+                            isLoading = currentTenantState.isLoading(),
+                            onClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) }
+                        )
+                    }
                 }
             )
         }

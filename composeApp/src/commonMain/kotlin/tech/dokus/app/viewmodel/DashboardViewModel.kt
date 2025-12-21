@@ -1,8 +1,10 @@
 package tech.dokus.app.viewmodel
 
+import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
+import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.common.PaginationState
@@ -15,10 +17,14 @@ import kotlinx.coroutines.launch
 
 internal class DashboardViewModel(
     private val getCurrentTenantUseCase: GetCurrentTenantUseCase,
-    private val watchPendingDocuments: WatchPendingDocumentsUseCase
+    private val watchPendingDocuments: WatchPendingDocumentsUseCase,
+    private val tenantDataSource: TenantRemoteDataSource
 ) : ViewModel() {
     private val mutableCurrentTenantState = MutableStateFlow<DokusState<Tenant?>>(DokusState.idle())
     val currentTenantState = mutableCurrentTenantState.asStateFlow()
+
+    private val _currentAvatar = MutableStateFlow<CompanyAvatar?>(null)
+    val currentAvatar: StateFlow<CompanyAvatar?> = _currentAvatar.asStateFlow()
 
     // Pending documents state using PaginationState (lazy loading)
     private val _allPendingDocuments = MutableStateFlow<List<DocumentProcessingDto>>(emptyList())
@@ -77,6 +83,11 @@ internal class DashboardViewModel(
             )
 
             mutableCurrentTenantState.value = nextState
+
+            // Load avatar
+            tenantDataSource.getAvatar().onSuccess { avatar ->
+                _currentAvatar.value = avatar
+            }
         }
     }
 
