@@ -2,6 +2,7 @@ package ai.dokus.peppol.validator
 
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.PeppolValidationError
 import ai.dokus.foundation.domain.model.PeppolValidationResult
@@ -27,6 +28,7 @@ class PeppolValidator {
         invoice: FinancialDocumentDto.InvoiceDto,
         contact: ContactDto,
         tenant: Tenant,
+        companyAddress: Address?,
         tenantSettings: TenantSettings,
         peppolSettings: PeppolSettingsDto
     ): PeppolValidationResult {
@@ -89,11 +91,11 @@ class PeppolValidator {
             ))
         }
 
-        if (tenant.companyAddress.isBlank()) {
+        if (companyAddress == null) {
             warnings.add(PeppolValidationWarning(
                 code = "MISSING_SELLER_ADDRESS",
                 message = "Company address is recommended for Peppol compliance",
-                field = "tenant.companyAddress"
+                field = "tenantAddress"
             ))
         }
 

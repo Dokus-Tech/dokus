@@ -74,10 +74,11 @@ class RefreshTokenRepository {
     ): Result<Unit> = runCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
+            val tokenHash = tokenHash(token)
 
             RefreshTokensTable.insert {
                 it[RefreshTokensTable.userId] = userUuid
-                it[RefreshTokensTable.token] = token
+                it[RefreshTokensTable.tokenHash] = tokenHash
                 it[RefreshTokensTable.expiresAt] = expiresAt.toLocalDateTime(TimeZone.UTC)
                 it[RefreshTokensTable.isRevoked] = false
             }
@@ -85,7 +86,7 @@ class RefreshTokenRepository {
             logger.debug(
                 "Saved refresh token for user: {}, token hash: {}, expires: {}",
                 userId.value,
-                hashToken(token),
+                tokenHash.take(8),
                 expiresAt
             )
         }
@@ -106,10 +107,12 @@ class RefreshTokenRepository {
      */
     suspend fun validateAndRotate(oldToken: String): Result<UserId> = runCatching {
         dbQuery {
+            val oldTokenHash = tokenHash(oldToken)
+
             // Find the token
             val tokenRow = RefreshTokensTable
                 .selectAll()
-                .where { RefreshTokensTable.token eq oldToken }
+                .where { RefreshTokensTable.tokenHash eq oldTokenHash }
                 .singleOrNull()
                 ?: throw IllegalArgumentException("Refresh token not found")
 
@@ -121,7 +124,7 @@ class RefreshTokenRepository {
             // Security checks
             if (isRevoked) {
                 logger.warn(
-                    "Attempt to use revoked token (ID: $tokenId, hash: ${hashToken(oldToken)})"
+                    "Attempt to use revoked token (ID: $tokenId, hash: ${oldTokenHash.take(8)})"
                 )
                 throw SecurityException("Refresh token has been revoked")
             }
@@ -131,7 +134,7 @@ class RefreshTokenRepository {
 
             if (now > expiresAtInstant) {
                 logger.warn(
-                    "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${hashToken(oldToken)})"
+                    "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${oldTokenHash.take(8)})"
                 )
                 throw IllegalArgumentException("Refresh token has expired")
             }
@@ -176,18 +179,19 @@ class RefreshTokenRepository {
      */
     suspend fun revokeToken(token: String): Result<Unit> = runCatching {
         dbQuery {
+            val tokenHash = tokenHash(token)
             val updated = RefreshTokensTable.update(
-                { RefreshTokensTable.token eq token }
+                { RefreshTokensTable.tokenHash eq tokenHash }
             ) {
                 it[RefreshTokensTable.isRevoked] = true
             }
 
             if (updated == 0) {
-                logger.warn("Attempted to revoke non-existent token (hash: ${hashToken(token)})")
+                logger.warn("Attempted to revoke non-existent token (hash: ${tokenHash.take(8)})")
                 throw IllegalArgumentException("Refresh token not found")
             }
 
-            logger.info("Revoked refresh token (hash: ${hashToken(token)}, count: $updated)")
+            logger.info("Revoked refresh token (hash: ${tokenHash.take(8)}, count: $updated)")
         }
     }.onFailure { error ->
         if (error !is IllegalArgumentException) {
@@ -357,14 +361,14 @@ class RefreshTokenRepository {
      * @param token The token to hash
      * @return First 8 characters of SHA-256 hash
      */
-    private fun hashToken(token: String): String {
+    private fun tokenHash(token: String): String {
         return try {
             val digest = MessageDigest.getInstance("SHA-256")
             val hashBytes = digest.digest(token.toByteArray())
-            hashBytes.joinToString("") { "%02x".format(it) }.take(8)
+            hashBytes.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
             logger.error("Failed to hash token", e)
-            "********" // Fallback to masked value
+            throw e
         }
     }
 }

@@ -1,19 +1,23 @@
 package ai.dokus.cashflow.backend.routes
 
-import ai.dokus.foundation.database.repository.cashflow.AttachmentRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.AttachmentId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.model.AttachmentDto
+import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.routes.Attachments
 import ai.dokus.foundation.domain.routes.Expenses
 import ai.dokus.foundation.domain.routes.Invoices
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
+import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.request.*
@@ -43,8 +47,9 @@ import kotlin.uuid.Uuid
  */
 @OptIn(ExperimentalUuidApi::class)
 fun Route.attachmentRoutes() {
-    val attachmentRepository by inject<AttachmentRepository>()
+    val documentRepository by inject<DocumentRepository>()
     val documentStorageService by inject<DocumentStorageService>()
+    val minioStorage by inject<MinioDocumentStorageService>()
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
     val logger = LoggerFactory.getLogger("AttachmentRoutes")
@@ -80,33 +85,39 @@ fun Route.attachmentRoutes() {
                 throw DokusException.BadRequest()
             }
 
-            // Store file
-            val storageKey = documentStorageService.storeFileLocally(
-                tenantId, "invoice", invoiceId.toString(), filename, fileBytes
-            )
-                .onFailure {
-                    logger.error("Failed to store file for invoice: $invoiceId", it)
-                    throw DokusException.InternalError("Failed to store file: ${it.message}")
-                }
-                .getOrThrow()
+            val uploadResult = try {
+                minioStorage.uploadDocument(
+                    tenantId = tenantId,
+                    prefix = "invoices",
+                    filename = filename,
+                    data = fileBytes,
+                    contentType = contentType
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to upload file for invoice: $invoiceId", e)
+                throw DokusException.InternalError("Failed to upload file: ${e.message}")
+            }
 
-            // Save attachment metadata
-            val attachmentId = attachmentRepository.uploadAttachment(
+            val documentId = documentRepository.create(
                 tenantId = tenantId,
-                entityType = EntityType.Invoice,
-                entityId = invoiceId.toString(),
-                filename = filename,
-                mimeType = contentType,
-                sizeBytes = fileBytes.size.toLong(),
-                s3Key = storageKey,
-                s3Bucket = "local"
+                filename = uploadResult.filename,
+                contentType = uploadResult.contentType,
+                sizeBytes = uploadResult.sizeBytes,
+                storageKey = uploadResult.key
             )
-                .onSuccess { logger.info("Invoice document uploaded: $it for invoice: $invoiceId") }
-                .onFailure {
-                    logger.error("Failed to save attachment for invoice: $invoiceId", it)
-                    throw DokusException.InternalError("Failed to save attachment: ${it.message}")
-                }
-                .getOrThrow()
+
+            val linked = documentRepository.linkToEntity(
+                tenantId = tenantId,
+                documentId = documentId,
+                entityType = EntityType.Invoice,
+                entityId = invoiceId.toString()
+            )
+            if (!linked) {
+                throw DokusException.InternalError("Failed to link document to invoice")
+            }
+
+            val attachmentId = AttachmentId.parse(documentId.toString())
+            logger.info("Invoice document uploaded: $attachmentId for invoice: $invoiceId")
 
             call.respond(HttpStatusCode.Created, UploadAttachmentResponse(attachmentId))
         }
@@ -127,17 +138,15 @@ fun Route.attachmentRoutes() {
                 .getOrThrow()
                 ?: throw DokusException.BadRequest()
 
-            val attachments = attachmentRepository.getAttachments(
-                tenantId = tenantId,
-                entityType = EntityType.Invoice,
-                entityId = invoiceId.toString()
-            )
-                .onSuccess { logger.info("Retrieved ${it.size} attachments for invoice: $invoiceId") }
-                .onFailure {
-                    logger.error("Failed to get attachments for invoice: $invoiceId", it)
-                    throw DokusException.InternalError("Failed to get attachments: ${it.message}")
-                }
-                .getOrThrow()
+            val attachments = documentRepository
+                .listByEntity(
+                    tenantId = tenantId,
+                    entityType = EntityType.Invoice,
+                    entityId = invoiceId.toString()
+                )
+                .map { it.toAttachmentDto() }
+
+            logger.info("Retrieved ${attachments.size} attachments for invoice: $invoiceId")
 
             call.respond(HttpStatusCode.OK, attachments)
         }
@@ -172,33 +181,39 @@ fun Route.attachmentRoutes() {
                 throw DokusException.BadRequest()
             }
 
-            // Store file
-            val storageKey = documentStorageService.storeFileLocally(
-                tenantId, "expense", expenseId.toString(), filename, fileBytes
-            )
-                .onFailure {
-                    logger.error("Failed to store file for expense: $expenseId", it)
-                    throw DokusException.InternalError("Failed to store file: ${it.message}")
-                }
-                .getOrThrow()
+            val uploadResult = try {
+                minioStorage.uploadDocument(
+                    tenantId = tenantId,
+                    prefix = "expenses",
+                    filename = filename,
+                    data = fileBytes,
+                    contentType = contentType
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to upload file for expense: $expenseId", e)
+                throw DokusException.InternalError("Failed to upload file: ${e.message}")
+            }
 
-            // Save attachment metadata
-            val attachmentId = attachmentRepository.uploadAttachment(
+            val documentId = documentRepository.create(
                 tenantId = tenantId,
-                entityType = EntityType.Expense,
-                entityId = expenseId.toString(),
-                filename = filename,
-                mimeType = contentType,
-                sizeBytes = fileBytes.size.toLong(),
-                s3Key = storageKey,
-                s3Bucket = "local"
+                filename = uploadResult.filename,
+                contentType = uploadResult.contentType,
+                sizeBytes = uploadResult.sizeBytes,
+                storageKey = uploadResult.key
             )
-                .onSuccess { logger.info("Expense receipt uploaded: $it for expense: $expenseId") }
-                .onFailure {
-                    logger.error("Failed to save attachment for expense: $expenseId", it)
-                    throw DokusException.InternalError("Failed to save attachment: ${it.message}")
-                }
-                .getOrThrow()
+
+            val linked = documentRepository.linkToEntity(
+                tenantId = tenantId,
+                documentId = documentId,
+                entityType = EntityType.Expense,
+                entityId = expenseId.toString()
+            )
+            if (!linked) {
+                throw DokusException.InternalError("Failed to link document to expense")
+            }
+
+            val attachmentId = AttachmentId.parse(documentId.toString())
+            logger.info("Expense receipt uploaded: $attachmentId for expense: $expenseId")
 
             call.respond(HttpStatusCode.Created, UploadAttachmentResponse(attachmentId))
         }
@@ -219,17 +234,15 @@ fun Route.attachmentRoutes() {
                 .getOrThrow()
                 ?: throw DokusException.BadRequest()
 
-            val attachments = attachmentRepository.getAttachments(
-                tenantId = tenantId,
-                entityType = EntityType.Expense,
-                entityId = expenseId.toString()
-            )
-                .onSuccess { logger.info("Retrieved ${it.size} attachments for expense: $expenseId") }
-                .onFailure {
-                    logger.error("Failed to get attachments for expense: $expenseId", it)
-                    throw DokusException.InternalError("Failed to get attachments: ${it.message}")
-                }
-                .getOrThrow()
+            val attachments = documentRepository
+                .listByEntity(
+                    tenantId = tenantId,
+                    entityType = EntityType.Expense,
+                    entityId = expenseId.toString()
+                )
+                .map { it.toAttachmentDto() }
+
+            logger.info("Retrieved ${attachments.size} attachments for expense: $expenseId")
 
             call.respond(HttpStatusCode.OK, attachments)
         }
@@ -242,19 +255,14 @@ fun Route.attachmentRoutes() {
         get<Attachments.Id.Url> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val attachmentId = AttachmentId(Uuid.parse(route.parent.id))
+            val documentId = DocumentId.parse(route.parent.id)
 
             logger.info("Getting download URL for attachment: $attachmentId")
 
-            val attachment = attachmentRepository.getAttachment(attachmentId, tenantId)
-                .onFailure {
-                    logger.error("Failed to get attachment: $attachmentId", it)
-                    throw DokusException.InternalError("Failed to get attachment: ${it.message}")
-                }
-                .getOrThrow()
+            val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.BadRequest()
 
-            val downloadUrl = documentStorageService.generateDownloadUrl(attachment.s3Key)
-            logger.info("Generated download URL for attachment: $attachmentId")
+            val downloadUrl = minioStorage.getDownloadUrl(document.storageKey)
 
             call.respond(HttpStatusCode.OK, DownloadUrlResponse(downloadUrl))
         }
@@ -263,38 +271,44 @@ fun Route.attachmentRoutes() {
         delete<Attachments.Id> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val attachmentId = AttachmentId(Uuid.parse(route.id))
+            val documentId = DocumentId.parse(route.id)
 
             logger.info("Deleting attachment: $attachmentId")
 
-            // First get the attachment to know the storage key
-            val attachment = attachmentRepository.getAttachment(attachmentId, tenantId)
-                .onFailure {
-                    logger.error("Failed to get attachment: $attachmentId", it)
-                    throw DokusException.InternalError("Failed to get attachment: ${it.message}")
-                }
-                .getOrThrow()
+            val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.BadRequest()
 
-            // Delete from storage
-            documentStorageService.deleteFileLocally(attachment.s3Key)
-                .onFailure {
-                    logger.error("Failed to delete file for attachment: $attachmentId", it)
-                    throw DokusException.InternalError("Failed to delete file: ${it.message}")
-                }
-                .getOrThrow()
+            try {
+                minioStorage.deleteDocument(document.storageKey)
+            } catch (e: Exception) {
+                logger.warn("Failed to delete document from MinIO: ${e.message}")
+            }
 
-            // Delete from database
-            attachmentRepository.deleteAttachment(attachmentId, tenantId)
-                .onSuccess { logger.info("Attachment deleted: $attachmentId") }
-                .onFailure {
-                    logger.error("Failed to delete attachment from database: $attachmentId", it)
-                    throw DokusException.InternalError("Failed to delete attachment: ${it.message}")
-                }
-                .getOrThrow()
+            val deleted = documentRepository.delete(tenantId, documentId)
+            if (!deleted) {
+                throw DokusException.InternalError("Failed to delete document from database")
+            }
+
+            logger.info("Attachment deleted: $attachmentId")
 
             call.respond(HttpStatusCode.NoContent)
         }
     }
+}
+
+private fun DocumentDto.toAttachmentDto(): AttachmentDto {
+    return AttachmentDto(
+        id = AttachmentId.parse(id.toString()),
+        tenantId = tenantId,
+        entityType = entityType ?: EntityType.Attachment,
+        entityId = entityId.orEmpty(),
+        filename = filename,
+        mimeType = contentType,
+        sizeBytes = sizeBytes,
+        s3Key = storageKey,
+        s3Bucket = "minio",
+        uploadedAt = uploadedAt
+    )
 }
 
 // Helper function to extract file upload data

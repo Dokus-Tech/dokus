@@ -13,7 +13,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
  */
 object RefreshTokensTable : UUIDTable("refresh_tokens") {
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
-    val token = varchar("token", 500).uniqueIndex()
+    val tokenHash = varchar("token_hash", 64).uniqueIndex()
     val expiresAt = datetime("expires_at").index()
     val isRevoked = bool("is_revoked").default(false)
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

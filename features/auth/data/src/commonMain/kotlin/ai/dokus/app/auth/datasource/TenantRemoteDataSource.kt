@@ -4,8 +4,10 @@ import ai.dokus.foundation.domain.model.AvatarUploadResponse
 import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
+import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 
 /**
  * Remote data source for tenant management operations.
@@ -44,6 +46,18 @@ interface TenantRemoteDataSource {
      * @return Result indicating success or failure
      */
     suspend fun updateTenantSettings(settings: TenantSettings): Result<Unit>
+
+    /**
+     * Get company address for the current tenant.
+     * @return Result containing Address or null if not configured.
+     */
+    suspend fun getTenantAddress(): Result<Address?>
+
+    /**
+     * Upsert company address for the current tenant.
+     * @return Result containing the saved Address.
+     */
+    suspend fun upsertTenantAddress(request: UpsertTenantAddressRequest): Result<Address>
 
     // ===== Avatar Operations =====
 

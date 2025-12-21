@@ -2,6 +2,7 @@ package ai.dokus.peppol.service
 
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.PeppolConnectRequest
 import ai.dokus.foundation.domain.model.PeppolConnectResponse
 import ai.dokus.foundation.domain.model.PeppolConnectStatus
@@ -12,7 +13,6 @@ import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
 import ai.dokus.peppol.providers.recommand.RecommandCompany
 import ai.dokus.peppol.providers.recommand.RecommandCreateCompanyRequest
 import ai.dokus.peppol.providers.recommand.RecommandUnauthorizedException
-import ai.dokus.peppol.util.CompanyAddressParser
 import org.slf4j.LoggerFactory
 
 class PeppolConnectionService(
@@ -23,6 +23,7 @@ class PeppolConnectionService(
 
     suspend fun connectRecommand(
         tenant: Tenant,
+        companyAddress: Address?,
         request: PeppolConnectRequest,
     ): Result<PeppolConnectResponse> = runCatching {
         val tenantVat = tenant.vatNumber
@@ -65,7 +66,7 @@ class PeppolConnectionService(
 
         val resolvedCompany = selectedCompany ?: run {
             try {
-                createCompanyForTenant(tenant, tenantVat, request)
+                createCompanyForTenant(tenant, tenantVat, companyAddress, request)
             } catch (_: MissingCompanyAddressException) {
                 return@runCatching PeppolConnectResponse(PeppolConnectStatus.MissingCompanyAddress)
             }
@@ -96,15 +97,16 @@ class PeppolConnectionService(
     private suspend fun createCompanyForTenant(
         tenant: Tenant,
         vatNumber: VatNumber,
+        companyAddress: Address?,
         request: PeppolConnectRequest,
     ): RecommandCompany {
-        val parsedAddress = CompanyAddressParser.parse(tenant.companyAddress)
-        val street = parsedAddress.street
-        val postalCode = parsedAddress.postalCode
-        val city = parsedAddress.city
-        val country = parsedAddress.country ?: "BE"
+        val address = companyAddress ?: throw MissingCompanyAddressException()
+        val street = address.streetLine1
+        val postalCode = address.postalCode
+        val city = address.city
+        val country = address.country.dbValue
 
-        if (street.isNullOrBlank() || postalCode.isNullOrBlank() || city.isNullOrBlank()) {
+        if (street.isBlank() || postalCode.isBlank() || city.isBlank()) {
             throw MissingCompanyAddressException()
         }
 

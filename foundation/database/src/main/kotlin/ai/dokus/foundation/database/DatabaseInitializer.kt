@@ -1,6 +1,5 @@
 package ai.dokus.foundation.database
 
-import ai.dokus.foundation.database.tables.audit.AuditLogsTable
 import ai.dokus.foundation.database.tables.auth.AddressTable
 import ai.dokus.foundation.database.tables.auth.PasswordResetTokensTable
 import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
@@ -11,7 +10,6 @@ import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
-import ai.dokus.foundation.database.tables.cashflow.AttachmentsTable
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.contacts.ContactNotesTable
@@ -23,7 +21,6 @@ import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
-import ai.dokus.foundation.database.tables.reporting.VatReturnsTable
 import ai.dokus.foundation.ktor.database.dbQuery
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.slf4j.LoggerFactory
@@ -37,8 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - CashflowTables.initialize() - cashflow service
  * - ContactsTables.initialize() - contacts service
  * - PaymentTables.initialize() - payment service
- * - ReportingTables.initialize() - reporting service
- * - AuditTables.initialize() - audit service
  * - BankingTables.initialize() - banking service
  *
  * This centralizer should only be used for:
@@ -62,7 +57,7 @@ object DatabaseInitializer {
      * Tables are created in dependency order:
      * 1. Auth tables (tenants, users, memberships, tokens)
      * 2. Cashflow tables (documents, invoices, expenses, bills)
-     * 3. Other domain tables (payments, reports, audit, banking, peppol)
+     * 3. Other domain tables (payments, banking, peppol)
      *
      * This method is safe to call multiple times - it will only execute once
      * per JVM instance.
@@ -94,17 +89,10 @@ object DatabaseInitializer {
                     InvoicesTable,        // depends on TenantTable, DocumentsTable, ContactsTable
                     InvoiceItemsTable,    // depends on InvoicesTable
                     ExpensesTable,        // depends on TenantTable, DocumentsTable
-                    AttachmentsTable,     // depends on TenantTable
                     BillsTable,           // depends on TenantTable, DocumentsTable
 
                     // ===== Payment Tables =====
                     PaymentsTable,        // depends on TenantTable, InvoicesTable
-
-                    // ===== Reporting Tables =====
-                    VatReturnsTable,      // depends on TenantTable
-
-                    // ===== Audit Tables =====
-                    AuditLogsTable,       // depends on TenantTable
 
                     // ===== Banking Tables =====
                     BankConnectionsTable, // depends on TenantTable

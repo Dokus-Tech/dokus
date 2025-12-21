@@ -20,11 +20,11 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * This is different from Expenses which are direct purchases/receipts.
  *
  * OWNER: cashflow service
- * CRITICAL: All queries MUST filter by organization_id for tenant isolation.
+ * CRITICAL: All queries MUST filter by tenant_id for tenant isolation.
  */
 object BillsTable : UUIDTable("bills") {
     // Multi-tenancy (CRITICAL)
-    val tenantId = uuid("organization_id").references(
+    val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
     ).index()

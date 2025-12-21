@@ -32,7 +32,6 @@ object TenantMappers {
         subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
         language = this[TenantTable.language],
         vatNumber = this[TenantTable.vatNumber]?.let { VatNumber(it) },
-        companyAddress = this[TenantTable.companyAddress],
         createdAt = this[TenantTable.createdAt],
         updatedAt = this[TenantTable.updatedAt]
     )

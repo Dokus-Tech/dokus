@@ -6,6 +6,7 @@ import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.DocumentDto
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNull
@@ -93,6 +94,25 @@ class DocumentRepository {
             }
             .map { it.toDocumentDto() }
             .singleOrNull()
+    }
+
+    /**
+     * Get all documents linked to a specific entity.
+     * CRITICAL: Must filter by tenantId.
+     */
+    suspend fun listByEntity(
+        tenantId: TenantId,
+        entityType: EntityType,
+        entityId: String
+    ): List<DocumentDto> = newSuspendedTransaction {
+        DocumentsTable.selectAll()
+            .where {
+                (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString())) and
+                (DocumentsTable.entityType eq entityType) and
+                (DocumentsTable.entityId eq entityId)
+            }
+            .orderBy(DocumentsTable.uploadedAt, SortOrder.DESC)
+            .map { it.toDocumentDto() }
     }
 
     /**
