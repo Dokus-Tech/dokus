@@ -11,6 +11,7 @@ import io.ktor.server.routing.*
  * - /api/v1/account - Authenticated account operations (me, logout, etc.)
  * - /api/v1/tenants - Tenant management operations
  * - /api/v1/team - Team management operations (members, invitations)
+ * - /api/v1/lookup - External data lookups (CBE company search)
  *
  * Usage in Application.kt:
  * ```kotlin
@@ -29,5 +30,6 @@ fun Application.configureRoutes() {
         tenantRoutes()
         avatarRoutes()
         teamRoutes()
+        lookupRoutes()
     }
 }

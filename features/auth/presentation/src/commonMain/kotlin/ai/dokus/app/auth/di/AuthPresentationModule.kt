@@ -3,6 +3,7 @@ package ai.dokus.app.auth.di
 import ai.dokus.app.auth.AuthInitializer
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.repository.AuthRepository
+import ai.dokus.app.auth.repository.LookupRepository
 import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.auth.viewmodel.WorkspaceCreateViewModel
 import ai.dokus.app.auth.viewmodel.WorkspaceSelectViewModel
@@ -24,7 +25,7 @@ val authPresentationModule = module {
     viewModel { ForgotPasswordViewModel() }
     viewModel { NewPasswordViewModel() }
     viewModel { WorkspaceSelectViewModel(get<TenantRemoteDataSource>(), get<SelectTenantUseCase>()) }
-    viewModel { WorkspaceCreateViewModel(get<AuthRepository>()) }
+    viewModel { WorkspaceCreateViewModel(get<AuthRepository>(), get<LookupRepository>()) }
     viewModel { ProfileSettingsViewModel() }
     viewModel { (initialConfig: ServerConfig?) -> ServerConnectionViewModel(initialConfig) }
 }
