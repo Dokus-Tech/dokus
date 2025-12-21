@@ -66,7 +66,8 @@ private fun StateDrivenContent(
                         // Let tiles grow but keep a sensible minimum so rows wrap nicely on mobile.
                         modifier = Modifier.widthInWorkspaceItem(),
                         initial = tenant.displayName.initialOrEmpty,
-                        label = tenant.displayName.value
+                        label = tenant.displayName.value,
+                        avatarUrl = tenant.avatar?.small
                     ) { onTenantClick(tenant) }
                 }
                 // Always provide an option to add a tenant; participates in the flow like others.

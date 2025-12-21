@@ -20,10 +20,20 @@ import kotlin.time.DurationUnit
 /**
  * MinIO implementation of ObjectStorage.
  * Provides S3-compatible object storage operations.
+ *
+ * @param client The MinIO client configured with the internal endpoint (for PUT/GET/DELETE operations)
+ * @param signingClient Optional MinIO client configured with the public base URL (for presigned URLs).
+ *                      If null, the main client is used for signing (URLs will contain internal endpoint).
+ * @param signingBaseUrl The base URL used for the signing client (e.g., http://192.168.0.44:8000)
+ * @param publicPathPrefix Optional path prefix to insert in presigned URLs (e.g., /storage)
+ * @param bucketName The bucket to store objects in
  */
 class MinioStorage(
     private val client: MinioClient,
-    private val bucketName: String
+    private val signingClient: MinioClient?,
+    private val signingBaseUrl: String?,
+    private val publicPathPrefix: String?,
+    private val bucketName: String,
 ) : ObjectStorage {
 
     private val logger = LoggerFactory.getLogger(MinioStorage::class.java)
@@ -123,7 +133,11 @@ class MinioStorage(
         withContext(Dispatchers.IO) {
             logger.debug("Generating signed URL for: $key, expiry=$expiry")
 
-            client.getPresignedObjectUrl(
+            // Use signingClient if available (configured with public base URL)
+            // This ensures the signature is calculated for the public host, not the internal one
+            val clientForSigning = signingClient ?: client
+
+            val url = clientForSigning.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(bucketName)
@@ -131,19 +145,65 @@ class MinioStorage(
                     .expiry(expiry.toInt(DurationUnit.SECONDS))
                     .build()
             )
+
+            // If we have a path prefix (e.g., /storage), insert it after the base URL
+            // URL format: http://host:port/bucket/key?signature -> http://host:port/storage/bucket/key?signature
+            if (signingClient != null && publicPathPrefix != null && signingBaseUrl != null) {
+                url.replace(signingBaseUrl, "$signingBaseUrl$publicPathPrefix")
+            } else {
+                url
+            }
         }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(MinioStorage::class.java)
+
         /**
          * Create a MinioStorage instance from configuration.
+         *
+         * @param config MinIO configuration with endpoint and credentials
+         * @param publicUrl Optional public URL for presigned URLs (e.g., http://192.168.0.44:8000/storage).
+         *                  When provided, a separate signing client is created configured with this endpoint,
+         *                  ensuring presigned URLs are signed for the public host (not the internal Docker host).
          */
-        fun create(config: MinioConfig): MinioStorage {
+        fun create(config: MinioConfig, publicUrl: String? = null): MinioStorage {
+            // Main client for PUT/GET/DELETE operations - uses internal endpoint
             val client = MinioClient.builder()
                 .endpoint(config.endpoint)
                 .credentials(config.accessKey, config.secretKey)
                 .build()
 
-            return MinioStorage(client, config.bucket)
+            // Parse public URL to extract base URL and path prefix
+            // MinIO client doesn't allow paths in the endpoint, so we need to:
+            // 1. Create signing client with just the base URL (scheme://host:port)
+            // 2. Insert the path prefix into the generated URL afterward
+            val (signingClient, signingBaseUrl, pathPrefix) = if (publicUrl != null) {
+                try {
+                    val url = java.net.URL(publicUrl)
+                    val baseUrl = "${url.protocol}://${url.host}${if (url.port != -1) ":${url.port}" else ""}"
+                    val path = url.path.takeIf { it.isNotEmpty() && it != "/" }
+
+                    logger.info("Creating signing client: baseUrl=$baseUrl, pathPrefix=$path")
+
+                    // Set region explicitly to "us-east-1" to prevent MinIO from making
+                    // a network call to get bucket location (which would fail since the
+                    // signing client endpoint goes through Traefik, not directly to MinIO)
+                    val signingClient = MinioClient.builder()
+                        .endpoint(baseUrl)
+                        .credentials(config.accessKey, config.secretKey)
+                        .region("us-east-1")
+                        .build()
+
+                    Triple(signingClient, baseUrl, path)
+                } catch (e: Exception) {
+                    logger.warn("Failed to parse public URL '$publicUrl', falling back to internal endpoint", e)
+                    Triple(null, null, null)
+                }
+            } else {
+                Triple(null, null, null)
+            }
+
+            return MinioStorage(client, signingClient, signingBaseUrl, pathPrefix, config.bucket)
         }
     }
 }

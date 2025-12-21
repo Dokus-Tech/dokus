@@ -121,6 +121,14 @@ services:
       - minio-data:/data
     networks:
       - dokus-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/storage`)"
+      - "traefik.http.routers.minio.entrypoints=websecure"
+      - "traefik.http.routers.minio.tls.certresolver=letsencrypt"
+      - "traefik.http.services.minio.loadbalancer.server.port=9000"
+      - "traefik.http.middlewares.minio-strip.stripprefix.prefixes=/storage"
+      - "traefik.http.routers.minio.middlewares=minio-strip"
 
   # =========================================================
   # Backend services

@@ -64,6 +64,11 @@ kotlin {
             api(compose.materialIconsExtended)
 
             api(libs.materialKolor)
+
+            // Coil - Remote image loading
+            api(libs.coil.compose)
+            api(libs.coil.compose.core)
+            api(libs.coil.network.ktor3)
         }
         desktopMain.dependencies {
             api(compose.desktop.currentOs)

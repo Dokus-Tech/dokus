@@ -87,6 +87,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio.rule=PathPrefix(`/storage`)"
+      - "traefik.http.routers.minio.entrypoints=web"
+      - "traefik.http.services.minio.loadbalancer.server.port=9000"
+      - "traefik.http.middlewares.minio-strip.stripprefix.prefixes=/storage"
+      - "traefik.http.routers.minio.middlewares=minio-strip"
 
   # Ollama is expected to run on the host (http://localhost:11434),
   # aligned with deployed profiles. Use `./dev.sh ai` to check status.
@@ -139,6 +146,12 @@ services:
       RABBITMQ_USERNAME: dokus
       RABBITMQ_PASSWORD: localrabbitpass
       RABBITMQ_VHOST: /dokus
+      # MinIO Storage
+      MINIO_ENDPOINT: http://minio-local:9000
+      MINIO_ACCESS_KEY: dokusadmin
+      MINIO_SECRET_KEY: dokusadminpassword
+      MINIO_BUCKET: dokus-auth
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:8000/storage}
       GEOIP_DATABASE_PATH: resources/GeoLite2-City.mmdb
       LOG_LEVEL: DEBUG
       LOG_PATH: /app/logs
@@ -207,6 +220,7 @@ services:
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: dokusadminpassword
       MINIO_BUCKET: dokus-documents
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:8000/storage}
       # Peppol Configuration
       ENCRYPTION_KEY: local-peppol-encryption-key-32chars!
       PEPPOL_DEFAULT_PROVIDER: recommand

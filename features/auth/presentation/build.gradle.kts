@@ -46,6 +46,9 @@ kotlin {
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)
+
+            // File picker for avatar selection
+            implementation(libs.calf.filePicker)
         }
         desktopMain.dependencies {
         }

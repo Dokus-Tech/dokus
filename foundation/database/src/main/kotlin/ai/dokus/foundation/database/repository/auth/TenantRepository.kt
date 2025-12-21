@@ -123,4 +123,31 @@ class TenantRepository {
             .where { TenantTable.status eq TenantStatus.Active }
             .map { it.toTenant() }
     }
+
+    /**
+     * Update the company avatar storage key.
+     * @param tenantId The tenant to update
+     * @param avatarStorageKey The MinIO storage key prefix for the avatar, or null to remove
+     */
+    suspend fun updateAvatarStorageKey(tenantId: TenantId, avatarStorageKey: String?): Unit = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
+            it[companyLogoUrl] = avatarStorageKey
+        }
+        logger.info("Updated avatar for tenant: $tenantId, key=$avatarStorageKey")
+    }
+
+    /**
+     * Get the company avatar storage key for a tenant.
+     * @param tenantId The tenant to query
+     * @return The storage key prefix, or null if no avatar is set
+     */
+    suspend fun getAvatarStorageKey(tenantId: TenantId): String? = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        TenantSettingsTable
+            .selectAll()
+            .where { TenantSettingsTable.tenantId eq javaUuid }
+            .singleOrNull()
+            ?.get(TenantSettingsTable.companyLogoUrl)
+    }
 }

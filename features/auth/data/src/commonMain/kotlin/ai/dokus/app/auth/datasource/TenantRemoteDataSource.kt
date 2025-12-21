@@ -1,5 +1,7 @@
 package ai.dokus.app.auth.datasource
 
+import ai.dokus.foundation.domain.model.AvatarUploadResponse
+import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.Tenant
@@ -42,4 +44,33 @@ interface TenantRemoteDataSource {
      * @return Result indicating success or failure
      */
     suspend fun updateTenantSettings(settings: TenantSettings): Result<Unit>
+
+    // ===== Avatar Operations =====
+
+    /**
+     * Upload a company avatar image.
+     * @param imageBytes The image data
+     * @param filename Original filename
+     * @param contentType MIME type of the image
+     * @param onProgress Progress callback (0.0 to 1.0)
+     * @return Result containing the upload response with avatar URLs
+     */
+    suspend fun uploadAvatar(
+        imageBytes: ByteArray,
+        filename: String,
+        contentType: String,
+        onProgress: (Float) -> Unit = {}
+    ): Result<AvatarUploadResponse>
+
+    /**
+     * Get current avatar URLs for the tenant.
+     * @return Result containing CompanyAvatar or null if no avatar is set
+     */
+    suspend fun getAvatar(): Result<CompanyAvatar?>
+
+    /**
+     * Delete the company avatar.
+     * @return Result indicating success or failure
+     */
+    suspend fun deleteAvatar(): Result<Unit>
 }

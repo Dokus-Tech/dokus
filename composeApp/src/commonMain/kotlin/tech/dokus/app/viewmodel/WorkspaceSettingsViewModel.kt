@@ -6,6 +6,7 @@ import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.platform.Logger
@@ -36,6 +37,12 @@ class WorkspaceSettingsViewModel(
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
+    private val _avatarState = MutableStateFlow<AvatarState>(AvatarState.Idle)
+    val avatarState: StateFlow<AvatarState> = _avatarState.asStateFlow()
+
+    private val _currentAvatar = MutableStateFlow<CompanyAvatar?>(null)
+    val currentAvatar: StateFlow<CompanyAvatar?> = _currentAvatar.asStateFlow()
+
     /**
      * Load workspace settings from backend.
      */
@@ -54,6 +61,8 @@ class WorkspaceSettingsViewModel(
                 logger.i { "Workspace settings loaded for ${tenant.displayName.value}" }
                 _state.value = DokusState.success(WorkspaceSettingsData(tenant, settings))
                 populateFormFromSettings(tenant, settings)
+                // Use avatar from tenant (already included in response)
+                _currentAvatar.value = tenant.avatar
             } else {
                 val error = tenantResult.exceptionOrNull() ?: settingsResult.exceptionOrNull()
                     ?: IllegalStateException("Failed to load workspace settings")
@@ -140,6 +149,73 @@ class WorkspaceSettingsViewModel(
         }
     }
 
+    // ===== Avatar Operations =====
+
+    /**
+     * Called when user selects an image - uploads directly without cropping.
+     */
+    fun onImageSelected(imageBytes: ByteArray, filename: String = "avatar.png") {
+        viewModelScope.launch {
+            logger.d { "Uploading avatar" }
+            _avatarState.value = AvatarState.Uploading(0f)
+
+            val contentType = when {
+                filename.endsWith(".png", ignoreCase = true) -> "image/png"
+                filename.endsWith(".gif", ignoreCase = true) -> "image/gif"
+                filename.endsWith(".webp", ignoreCase = true) -> "image/webp"
+                else -> "image/jpeg"
+            }
+
+            tenantDataSource.uploadAvatar(
+                imageBytes = imageBytes,
+                filename = filename,
+                contentType = contentType,
+                onProgress = { progress ->
+                    _avatarState.value = AvatarState.Uploading(progress)
+                }
+            ).fold(
+                onSuccess = { response ->
+                    logger.i { "Avatar uploaded successfully" }
+                    _currentAvatar.value = response.avatar
+                    _avatarState.value = AvatarState.Success
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to upload avatar" }
+                    _avatarState.value = AvatarState.Error(error.message ?: "Failed to upload avatar")
+                }
+            )
+        }
+    }
+
+    /**
+     * Delete the current avatar.
+     */
+    fun deleteAvatar() {
+        viewModelScope.launch {
+            logger.d { "Deleting avatar" }
+            _avatarState.value = AvatarState.Deleting
+
+            tenantDataSource.deleteAvatar().fold(
+                onSuccess = {
+                    logger.i { "Avatar deleted" }
+                    _currentAvatar.value = null
+                    _avatarState.value = AvatarState.Idle
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to delete avatar" }
+                    _avatarState.value = AvatarState.Error(error.message ?: "Failed to delete avatar")
+                }
+            )
+        }
+    }
+
+    /**
+     * Reset avatar state to idle.
+     */
+    fun resetAvatarState() {
+        _avatarState.value = AvatarState.Idle
+    }
+
     private fun populateFormFromSettings(tenant: Tenant, settings: TenantSettings) {
         _formState.value = WorkspaceFormState(
             companyName = settings.companyName ?: tenant.displayName.value,
@@ -184,4 +260,15 @@ sealed class SaveState {
     data object Saving : SaveState()
     data object Success : SaveState()
     data class Error(val message: String) : SaveState()
+}
+
+/**
+ * Avatar upload/delete operation state.
+ */
+sealed class AvatarState {
+    data object Idle : AvatarState()
+    data class Uploading(val progress: Float) : AvatarState()
+    data object Deleting : AvatarState()
+    data object Success : AvatarState()
+    data class Error(val message: String) : AvatarState()
 }
