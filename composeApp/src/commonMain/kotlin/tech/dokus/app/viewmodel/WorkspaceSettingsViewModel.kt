@@ -61,7 +61,8 @@ class WorkspaceSettingsViewModel(
                 logger.i { "Workspace settings loaded for ${tenant.displayName.value}" }
                 _state.value = DokusState.success(WorkspaceSettingsData(tenant, settings))
                 populateFormFromSettings(tenant, settings)
-                loadAvatar()
+                // Use avatar from tenant (already included in response)
+                _currentAvatar.value = tenant.avatar
             } else {
                 val error = tenantResult.exceptionOrNull() ?: settingsResult.exceptionOrNull()
                     ?: IllegalStateException("Failed to load workspace settings")
@@ -220,20 +221,6 @@ class WorkspaceSettingsViewModel(
                 }
             )
         }
-    }
-
-    /**
-     * Load current avatar URLs.
-     */
-    private suspend fun loadAvatar() {
-        tenantDataSource.getAvatar().fold(
-            onSuccess = { avatar ->
-                _currentAvatar.value = avatar
-            },
-            onFailure = { error ->
-                logger.w { "Failed to load avatar: ${error.message}" }
-            }
-        )
     }
 
     /**
