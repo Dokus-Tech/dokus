@@ -7,8 +7,6 @@ import com.sksamuel.scrimage.webp.WebpWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -90,10 +88,7 @@ class AvatarStorageService(
         for ((sizeName, dimension) in AVATAR_SIZES) {
             val resizedImage = originalImage.cover(dimension, dimension)
 
-            val webpData = ByteArrayOutputStream().use { output ->
-                resizedImage.output(WebpWriter.DEFAULT, output)
-                output.toByteArray()
-            }
+            val webpData = resizedImage.bytes(WebpWriter.DEFAULT)
 
             val key = "${keyPrefix}_$sizeName.webp"
             storage.put(key, webpData, CONTENT_TYPE_WEBP)
