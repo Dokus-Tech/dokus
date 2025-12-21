@@ -18,15 +18,14 @@ import org.slf4j.LoggerFactory
  * Client for CBE (Crossroads Bank for Enterprises) API.
  * Provides company lookup functionality for Belgian enterprises.
  *
- * API Documentation: https://cbeapi.be
+ * API Documentation: https://cbeapi.be/docs/api
  */
 class CbeApiClient(
     private val httpClient: HttpClient,
-    private val appId: String = "63NY0WSQ",
-    private val appSecret: String = "rK1Enmltoey8DYnw5raPnPNFN1xuoGxG",
+    private val apiSecret: String,
 ) {
     private val logger = LoggerFactory.getLogger(CbeApiClient::class.java)
-    private val baseUrl = "https://api.cbeapi.be"
+    private val baseUrl = "https://cbeapi.be/api"
 
     /**
      * Search for companies by name.
@@ -36,16 +35,15 @@ class CbeApiClient(
     suspend fun searchByName(name: String): Result<List<EntityLookup>> = runCatching {
         logger.debug("Searching CBE for company: $name")
 
-        val response = httpClient.get("$baseUrl/v2/search") {
+        val response = httpClient.get("$baseUrl/v1/company/search") {
             parameter("name", name)
-            header("X-App-Id", appId)
-            header("X-App-Secret", appSecret)
+            header("Authorization", "Bearer $apiSecret")
         }
 
         val cbeResponse = response.body<CbeSearchResponse>()
-        logger.debug("CBE returned ${cbeResponse.enterprises.size} results for '$name'")
+        logger.debug("CBE returned ${cbeResponse.data.size} results for '$name'")
 
-        cbeResponse.enterprises.map { it.toEntityLookup() }
+        cbeResponse.data.map { it.toEntityLookup() }
     }.onFailure { e ->
         logger.error("CBE API search failed for '$name'", e)
     }
@@ -57,15 +55,19 @@ class CbeApiClient(
 
 @Serializable
 private data class CbeSearchResponse(
-    val enterprises: List<CbeEnterprise> = emptyList(),
-    val total: Int = 0,
+    val data: List<CbeCompany> = emptyList(),
 )
 
 @Serializable
-private data class CbeEnterprise(
-    @SerialName("enterprise_number")
-    val enterpriseNumber: String,
-    val name: String,
+private data class CbeCompany(
+    @SerialName("cbe_number")
+    val cbeNumber: String,
+    @SerialName("cbe_number_formatted")
+    val cbeNumberFormatted: String? = null,
+    val denomination: String? = null,
+    @SerialName("commercial_name")
+    val commercialName: String? = null,
+    val abbreviation: String? = null,
     val status: String? = null,
     val address: CbeAddress? = null,
 )
@@ -73,36 +75,41 @@ private data class CbeEnterprise(
 @Serializable
 private data class CbeAddress(
     val street: String? = null,
-    @SerialName("house_number")
-    val houseNumber: String? = null,
-    @SerialName("box_number")
-    val boxNumber: String? = null,
+    @SerialName("street_number")
+    val streetNumber: String? = null,
+    val box: String? = null,
+    @SerialName("post_code")
+    val postCode: String? = null,
     val city: String? = null,
-    @SerialName("postal_code")
-    val postalCode: String? = null,
-    val country: String? = null,
+    @SerialName("country_code")
+    val countryCode: String? = null,
+    @SerialName("full_address")
+    val fullAddress: String? = null,
 )
 
 // ============================================================================
 // Mapping Functions
 // ============================================================================
 
-private fun CbeEnterprise.toEntityLookup(): EntityLookup {
+private fun CbeCompany.toEntityLookup(): EntityLookup {
     // Format enterprise number to VAT number (BE + digits only)
-    val vatNumber = enterpriseNumber
+    val vatNumber = cbeNumber
         .replace(".", "")
         .replace(" ", "")
         .let { "BE$it" }
         .let { VatNumber(it) }
 
+    // Use denomination, commercial name, or abbreviation as the name
+    val companyName = denomination ?: commercialName ?: abbreviation ?: cbeNumber
+
     return EntityLookup(
-        enterpriseNumber = enterpriseNumber,
+        enterpriseNumber = cbeNumberFormatted ?: cbeNumber,
         vatNumber = vatNumber,
-        name = name,
+        name = companyName,
         address = address?.toEntityAddress(),
         status = when (status?.lowercase()) {
-            "active", "ac" -> EntityStatus.Active
-            "inactive", "stopped", "st" -> EntityStatus.Inactive
+            "active" -> EntityStatus.Active
+            "inactive", "stopped" -> EntityStatus.Inactive
             else -> EntityStatus.Unknown
         }
     )
@@ -114,18 +121,18 @@ private fun CbeAddress.toEntityAddress(): EntityAddress? {
 
     val streetLine1 = buildString {
         append(street)
-        if (!houseNumber.isNullOrBlank()) {
-            append(" $houseNumber")
+        if (!streetNumber.isNullOrBlank()) {
+            append(" $streetNumber")
         }
     }
 
-    val streetLine2 = boxNumber?.takeIf { it.isNotBlank() }?.let { "Box $it" }
+    val streetLine2 = box?.takeIf { it.isNotBlank() }?.let { "Box $it" }
 
     return EntityAddress(
         streetLine1 = streetLine1,
         streetLine2 = streetLine2,
         city = city,
-        postalCode = postalCode ?: "",
+        postalCode = postCode ?: "",
         country = Country.Belgium, // CBE is Belgium-only
     )
 }
