@@ -121,6 +121,22 @@ OLLAMA_DEFAULT_MODELS=("mistral:7b" "llama3.1:8b")
 GATEWAY_PORT="8000"
 GATEWAY_DASHBOARD_PORT="8080"
 
+# Function to get local IP address (defined early for STORAGE_PUBLIC_URL)
+_get_local_ip() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        ipconfig getifaddr en0 2>/dev/null || \
+        ipconfig getifaddr en1 2>/dev/null || \
+        ipconfig getifaddr en2 2>/dev/null || \
+        echo "localhost"
+    else
+        hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost"
+    fi
+}
+
+# Storage public URL (for presigned URLs accessible from home network)
+LOCAL_IP=$(_get_local_ip)
+export STORAGE_PUBLIC_URL="http://${LOCAL_IP}:${GATEWAY_PORT}/storage"
+
 # Function to capitalize first letter (Bash 3.2 compatible)
 capitalize() {
     local str=$1
@@ -943,8 +959,9 @@ print_services_info() {
 
     # Gateway info box
     echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://localhost:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← Unified API Gateway${NC}               ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://localhost:${GATEWAY_DASHBOARD_PORT}${NC}                          ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${BOLD}${SOFT_CYAN}http://${LOCAL_IP}:${GATEWAY_PORT}${NC}   ${DIM_WHITE}← API Gateway (network)${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Dashboard: ${SOFT_ORANGE}http://localhost:${GATEWAY_DASHBOARD_PORT}${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC}  ${DIM_WHITE}Storage:   ${SOFT_YELLOW}${STORAGE_PUBLIC_URL}${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────────────────────────────────────────────────┘${NC}"
 
     echo ""
