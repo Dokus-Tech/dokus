@@ -65,6 +65,10 @@ class PeppolConnectionService(
         }
 
         val resolvedCompany = selectedCompany ?: run {
+            // If no matching company and user hasn't confirmed creation, ask for confirmation
+            if (!request.createCompanyIfMissing) {
+                return@runCatching PeppolConnectResponse(PeppolConnectStatus.NoCompanyFound)
+            }
             try {
                 createCompanyForTenant(tenant, tenantVat, companyAddress, request)
             } catch (_: MissingCompanyAddressException) {

@@ -76,6 +76,11 @@ data class PeppolConnectRequest(
      * If omitted and multiple matches are found, the backend returns candidates without saving credentials.
      */
     val companyId: String? = null,
+    /**
+     * When true and no matching company is found, create a new company on Recommand.
+     * When false and no matching company is found, return NoCompanyFound status for user confirmation.
+     */
+    val createCompanyIfMissing: Boolean = false,
 )
 
 @Serializable
@@ -84,6 +89,8 @@ enum class PeppolConnectStatus {
     Connected,
     /** Multiple Recommand companies match the tenant VAT; user must select one. */
     MultipleMatches,
+    /** No matching company found; user can confirm to create one. */
+    NoCompanyFound,
     /** No VAT configured for tenant. */
     MissingVatNumber,
     /** Tenant address is missing or cannot be used to create a Recommand company. */
