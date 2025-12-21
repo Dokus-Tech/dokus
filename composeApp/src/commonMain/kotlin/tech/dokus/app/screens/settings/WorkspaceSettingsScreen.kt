@@ -16,7 +16,6 @@ import ai.dokus.app.resources.generated.workspace_settings_title
 import ai.dokus.app.resources.generated.workspace_vat_number
 import ai.dokus.foundation.design.components.AvatarSize
 import ai.dokus.foundation.design.components.CompanyAvatarImage
-import ai.dokus.foundation.design.components.ImageCropperDialog
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
@@ -103,24 +102,13 @@ fun WorkspaceSettingsContent(
     val avatarState by viewModel.avatarState.collectAsState()
     val currentAvatar by viewModel.currentAvatar.collectAsState()
 
-    // Image picker
+    // Image picker - uploads directly without cropping
     val avatarPicker = rememberImagePicker { pickedImage ->
-        viewModel.onImageSelected(pickedImage.bytes)
+        viewModel.onImageSelected(pickedImage.bytes, pickedImage.name)
     }
 
     LaunchedEffect(viewModel) {
         viewModel.loadWorkspaceSettings()
-    }
-
-    // Image cropper dialog
-    if (avatarState is AvatarState.Cropping) {
-        ImageCropperDialog(
-            imageData = (avatarState as AvatarState.Cropping).imageBytes,
-            onCropComplete = { croppedBytes ->
-                viewModel.onCropComplete(croppedBytes)
-            },
-            onDismiss = { viewModel.cancelCrop() }
-        )
     }
 
     when {
