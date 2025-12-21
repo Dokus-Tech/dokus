@@ -6,6 +6,7 @@ import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
@@ -53,14 +54,16 @@ class WorkspaceSettingsViewModel(
 
             val tenantResult = getCurrentTenantUseCase()
             val settingsResult = tenantDataSource.getTenantSettings()
+            val addressResult = tenantDataSource.getTenantAddress()
 
             val tenant = tenantResult.getOrNull()
             val settings = settingsResult.getOrNull()
+            val address = addressResult.getOrNull()
 
             if (tenant != null && settings != null) {
                 logger.i { "Workspace settings loaded for ${tenant.displayName.value}" }
                 _state.value = DokusState.success(WorkspaceSettingsData(tenant, settings))
-                populateFormFromSettings(tenant, settings)
+                populateFormFromSettings(tenant, settings, address)
                 // Use avatar from tenant (already included in response)
                 _currentAvatar.value = tenant.avatar
             } else {
@@ -85,8 +88,6 @@ class WorkspaceSettingsViewModel(
 
             val updatedSettings = currentData.settings.copy(
                 companyName = form.companyName.ifBlank { null },
-                companyAddress = form.address.ifBlank { null },
-                companyVatNumber = form.vatNumber.takeIf { it.isNotBlank() }?.let { VatNumber(it) },
                 companyIban = form.iban.takeIf { it.isNotBlank() }?.let { Iban(it) },
                 companyBic = form.bic.takeIf { it.isNotBlank() }?.let { Bic(it) },
                 invoicePrefix = form.invoicePrefix.ifBlank { "INV" },
@@ -216,18 +217,29 @@ class WorkspaceSettingsViewModel(
         _avatarState.value = AvatarState.Idle
     }
 
-    private fun populateFormFromSettings(tenant: Tenant, settings: TenantSettings) {
+    private fun populateFormFromSettings(tenant: Tenant, settings: TenantSettings, address: Address?) {
         _formState.value = WorkspaceFormState(
             companyName = settings.companyName ?: tenant.displayName.value,
             legalName = tenant.legalName.value,
-            vatNumber = settings.companyVatNumber?.value ?: tenant.vatNumber?.value ?: "",
+            vatNumber = tenant.vatNumber?.value ?: "",
             iban = settings.companyIban?.value ?: "",
             bic = settings.companyBic?.value ?: "",
-            address = settings.companyAddress ?: "",
+            address = address?.toDisplayString().orEmpty(),
             invoicePrefix = settings.invoicePrefix,
             defaultPaymentTerms = settings.defaultPaymentTerms
         )
     }
+}
+
+private fun Address.toDisplayString(): String {
+    val parts = buildList {
+        add(streetLine1)
+        streetLine2?.takeIf { it.isNotBlank() }?.let { add(it) }
+        val cityLine = listOf(postalCode, city).filter { it.isNotBlank() }.joinToString(" ")
+        if (cityLine.isNotBlank()) add(cityLine)
+        add(country.dbValue)
+    }
+    return parts.joinToString(", ")
 }
 
 /**

@@ -5,6 +5,8 @@ import ai.dokus.app.auth.datasource.AccountRemoteDataSource
 import ai.dokus.app.auth.datasource.AccountRemoteDataSourceImpl
 import ai.dokus.app.auth.datasource.IdentityRemoteDataSource
 import ai.dokus.app.auth.datasource.IdentityRemoteDataSourceImpl
+import ai.dokus.app.auth.datasource.LookupRemoteDataSource
+import ai.dokus.app.auth.datasource.LookupRemoteDataSourceImpl
 import ai.dokus.app.auth.datasource.TeamRemoteDataSource
 import ai.dokus.app.auth.datasource.TeamRemoteDataSourceImpl
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
@@ -14,6 +16,7 @@ import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.app.auth.repository.AuthRepository
+import ai.dokus.app.auth.repository.LookupRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
@@ -76,6 +79,13 @@ val authNetworkModule = module {
             httpClient = get<HttpClient>()
         )
     }
+
+    // LookupRemoteDataSource (authenticated)
+    single<LookupRemoteDataSource> {
+        LookupRemoteDataSourceImpl(
+            httpClient = get<HttpClient>()
+        )
+    }
 }
 
 val authDataModule = module {
@@ -104,6 +114,9 @@ val authDataModule = module {
             tenantDataSource = get<TenantRemoteDataSource>()
         )
     }
+
+    // Lookup repository for CBE company search
+    single { LookupRepository(get<LookupRemoteDataSource>()) }
 }
 
 val authDomainModule = module {

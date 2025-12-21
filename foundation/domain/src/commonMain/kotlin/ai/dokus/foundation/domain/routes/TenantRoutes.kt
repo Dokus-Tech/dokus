@@ -22,6 +22,15 @@ class Tenants {
     class Settings(val parent: Tenants = Tenants())
 
     /**
+     * GET/PUT /api/v1/tenants/address
+     * GET - Get company address for current tenant
+     * PUT - Upsert company address for current tenant
+     */
+    @Serializable
+    @Resource("address")
+    class Address(val parent: Tenants = Tenants())
+
+    /**
      * GET /api/v1/tenants/{id}
      * Get tenant by ID
      */

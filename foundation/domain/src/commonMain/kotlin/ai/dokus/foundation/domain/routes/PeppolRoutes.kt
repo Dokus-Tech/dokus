@@ -37,6 +37,14 @@ class Peppol {
         @Serializable
         @Resource("connection-tests")
         class ConnectionTests(val parent: Settings)
+
+        /**
+         * POST /api/v1/peppol/settings/connect
+         * Connects tenant to Recommand by matching (and optionally creating) company by VAT.
+         */
+        @Serializable
+        @Resource("connect")
+        class Connect(val parent: Settings)
     }
 
     /**

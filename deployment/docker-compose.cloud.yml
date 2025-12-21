@@ -146,7 +146,7 @@ services:
       - dokus-network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.auth.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/server`))
+      - traefik.http.routers.auth.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/server`) || PathPrefix(`/api/v1/lookup`))
       - traefik.http.routers.auth.entrypoints=websecure
       - traefik.http.routers.auth.tls.certresolver=letsencrypt
       - traefik.http.services.auth.loadbalancer.server.port=8080

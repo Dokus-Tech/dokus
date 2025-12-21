@@ -3,6 +3,7 @@ package ai.dokus.auth.backend.config
 import ai.dokus.auth.backend.database.AuthTables
 import ai.dokus.auth.backend.jobs.RateLimitCleanupJob
 import ai.dokus.auth.backend.services.AuthService
+import ai.dokus.foundation.ktor.lookup.CbeApiClient
 import ai.dokus.auth.backend.services.DisabledEmailService
 import ai.dokus.auth.backend.services.EmailConfig
 import ai.dokus.auth.backend.services.EmailService
@@ -36,9 +37,16 @@ import ai.dokus.foundation.ktor.storage.MinioStorage
 import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.foundation.messaging.integration.createDefaultRabbitMqConfig
 import ai.dokus.foundation.messaging.integration.messagingModule
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -181,6 +189,30 @@ private val appModule = module {
 
     // Team management service
     single { TeamService(get(), get(), get()) }
+
+    // HTTP client for external APIs (CBE, etc.)
+    single {
+        HttpClient(CIO) {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+            install(Logging) {
+                level = LogLevel.INFO
+            }
+        }
+    }
+
+    // CBE API client for Belgian company lookups
+    single {
+        val appConfig = get<AppBaseConfig>()
+        val cbeApiSecret = if (appConfig.config.hasPath("cbe.apiSecret")) {
+            appConfig.config.getString("cbe.apiSecret")
+        } else ""
+        CbeApiClient(get(), cbeApiSecret)
+    }
 }
 
 /**

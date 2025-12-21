@@ -2,14 +2,17 @@ package ai.dokus.cashflow.backend.routes
 
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.InvoiceService
+import ai.dokus.foundation.database.repository.auth.AddressRepository
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvoiceId
+import ai.dokus.foundation.domain.model.PeppolConnectRequest
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.routes.Peppol
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
+import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -38,10 +41,12 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
+    val peppolConnectionService by inject<PeppolConnectionService>()
     val invoiceService by inject<InvoiceService>()
     val billService by inject<BillService>()
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
+    val addressRepository by inject<AddressRepository>()
 
     authenticateJwt {
         // ================================================================
@@ -118,6 +123,23 @@ fun Route.peppolRoutes() {
             call.respond(HttpStatusCode.OK, TestConnectionResponse(success))
         }
 
+        /**
+         * POST /api/v1/peppol/settings/connect
+         * Matches (and if needed creates) a Recommand company by tenant VAT and saves credentials only after resolution.
+         */
+        post<Peppol.Settings.Connect> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.NotFound("Tenant not found")
+            val companyAddress = addressRepository.getCompanyAddress(tenantId)
+            val request = call.receive<PeppolConnectRequest>()
+
+            val result = peppolConnectionService.connectRecommand(tenant, companyAddress, request)
+                .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
         // ================================================================
         // VERIFICATION
         // ================================================================
@@ -157,6 +179,11 @@ fun Route.peppolRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
+            // Get tenant
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.InternalError("Tenant not found")
+            val companyAddress = addressRepository.getCompanyAddress(tenantId)
+
             // Get tenant settings
             val tenantSettings = tenantRepository.getSettings(tenantId)
                 ?: throw DokusException.InternalError("Tenant settings not found")
@@ -175,7 +202,7 @@ fun Route.peppolRoutes() {
             }
 
             // Send invoice via Peppol
-            val result = peppolService.sendInvoice(invoice, contact, tenantSettings, tenantId)
+            val result = peppolService.sendInvoice(invoice, contact, tenant, companyAddress, tenantSettings, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to send invoice via Peppol: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, SendInvoiceResponse(
@@ -202,6 +229,11 @@ fun Route.peppolRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
+            // Get tenant
+            val tenant = tenantRepository.findById(tenantId)
+                ?: throw DokusException.InternalError("Tenant not found")
+            val companyAddress = addressRepository.getCompanyAddress(tenantId)
+
             // Get tenant settings
             val tenantSettings = tenantRepository.getSettings(tenantId)
                 ?: throw DokusException.InternalError("Tenant settings not found")
@@ -212,7 +244,8 @@ fun Route.peppolRoutes() {
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 
             // Validate invoice for Peppol
-            val validationResult = peppolService.validateInvoice(invoice, contact, tenantSettings, tenantId)
+            val validationResult =
+                peppolService.validateInvoice(invoice, contact, tenant, companyAddress, tenantSettings, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to validate invoice: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, validationResult)

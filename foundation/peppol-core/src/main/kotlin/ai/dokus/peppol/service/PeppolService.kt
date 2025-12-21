@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
@@ -19,6 +20,7 @@ import ai.dokus.foundation.domain.model.PeppolValidationResult
 import ai.dokus.foundation.domain.model.ProcessedPeppolDocument
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
+import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.peppol.mapper.PeppolMapper
 import ai.dokus.peppol.model.PeppolVerifyResponse
@@ -112,6 +114,8 @@ class PeppolService(
     suspend fun validateInvoice(
         invoice: FinancialDocumentDto.InvoiceDto,
         contact: ContactDto,
+        tenant: Tenant,
+        companyAddress: Address?,
         tenantSettings: TenantSettings,
         tenantId: TenantId
     ): Result<PeppolValidationResult> {
@@ -121,7 +125,7 @@ class PeppolService(
             val peppolSettings = settingsRepository.getSettings(tenantId).getOrThrow()
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
-            validator.validateForSending(invoice, contact, tenantSettings, peppolSettings)
+            validator.validateForSending(invoice, contact, tenant, companyAddress, tenantSettings, peppolSettings)
         }
     }
 
@@ -150,6 +154,8 @@ class PeppolService(
     suspend fun sendInvoice(
         invoice: FinancialDocumentDto.InvoiceDto,
         contact: ContactDto,
+        tenant: Tenant,
+        companyAddress: Address?,
         tenantSettings: TenantSettings,
         tenantId: TenantId
     ): Result<SendInvoiceViaPeppolResponse> {
@@ -165,7 +171,7 @@ class PeppolService(
 
             // Validate
             val validationResult = validator.validateForSending(
-                invoice, contact, tenantSettings, peppolSettings
+                invoice, contact, tenant, companyAddress, tenantSettings, peppolSettings
             )
 
             if (!validationResult.isValid) {
@@ -186,7 +192,8 @@ class PeppolService(
             ).getOrThrow()
 
             // Build and send request
-            val sendRequest = mapper.toSendRequest(invoice, contact, tenantSettings, peppolSettings)
+            val sendRequest =
+                mapper.toSendRequest(invoice, contact, tenant, tenantSettings, peppolSettings, companyAddress)
             val rawRequest = provider.serializeRequest(sendRequest)
 
             val response = provider.sendDocument(sendRequest).getOrThrow()

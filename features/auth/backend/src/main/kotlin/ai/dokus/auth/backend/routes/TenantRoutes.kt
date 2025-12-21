@@ -1,12 +1,14 @@
 package ai.dokus.auth.backend.routes
 
 import ai.dokus.foundation.database.repository.auth.TenantRepository
+import ai.dokus.foundation.database.repository.auth.AddressRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.CreateTenantRequest
+import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.domain.routes.Tenants
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
@@ -33,6 +35,7 @@ private val logger = LoggerFactory.getLogger("TenantRoutes")
 @OptIn(ExperimentalUuidApi::class)
 fun Route.tenantRoutes() {
     val tenantRepository by inject<TenantRepository>()
+    val addressRepository by inject<AddressRepository>()
     val userRepository by inject<UserRepository>()
     val avatarStorageService by inject<AvatarStorageService>()
 
@@ -83,6 +86,7 @@ fun Route.tenantRoutes() {
                 plan = request.plan,
                 language = request.language,
                 vatNumber = request.vatNumber,
+                address = request.address,
             )
 
             userRepository.addToTenant(
@@ -106,6 +110,31 @@ fun Route.tenantRoutes() {
             val tenantId = principal.requireTenantId()
             val settings = tenantRepository.getSettings(tenantId)
             call.respond(HttpStatusCode.OK, settings)
+        }
+
+        /**
+         * GET /api/v1/tenants/address
+         * Get company address for current tenant.
+         */
+        get<Tenants.Address> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val address = addressRepository.getCompanyAddress(tenantId)
+            if (address == null) {
+                call.respond(HttpStatusCode.NotFound, mapOf("message" to "Company address not configured"))
+            } else {
+                call.respond(HttpStatusCode.OK, address)
+            }
+        }
+
+        /**
+         * PUT /api/v1/tenants/address
+         * Upsert company address for current tenant.
+         */
+        put<Tenants.Address> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val request = call.receive<UpsertTenantAddressRequest>()
+            val address = addressRepository.upsertCompanyAddress(tenantId, request)
+            call.respond(HttpStatusCode.OK, address)
         }
 
         /**

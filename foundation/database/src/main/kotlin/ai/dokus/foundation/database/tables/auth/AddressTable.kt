@@ -18,7 +18,7 @@ object AddressTable : UUIDTable("addresses") {
         name = "tenant_id",
         foreign = TenantTable,
         onDelete = ReferenceOption.CASCADE
-    ).index()
+    ).uniqueIndex()
 
     val streetLine1 = varchar("street_line_1", 255)
     val streetLine2 = varchar("street_line_2", 255).nullable()

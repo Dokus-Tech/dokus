@@ -17,6 +17,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.slf4j.LoggerFactory
+import java.security.MessageDigest
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -66,10 +67,11 @@ class PasswordResetTokenRepository {
     ): Result<Unit> = runCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
+            val tokenHash = tokenHash(token)
 
             PasswordResetTokensTable.insert {
                 it[PasswordResetTokensTable.userId] = userUuid
-                it[PasswordResetTokensTable.token] = token
+                it[PasswordResetTokensTable.tokenHash] = tokenHash
                 it[PasswordResetTokensTable.expiresAt] = expiresAt.toLocalDateTime(TimeZone.UTC)
                 it[PasswordResetTokensTable.isUsed] = false
             }
@@ -88,9 +90,10 @@ class PasswordResetTokenRepository {
      */
     suspend fun findByToken(token: String): PasswordResetTokenInfo? = try {
         dbQuery {
+            val tokenHash = tokenHash(token)
             PasswordResetTokensTable
                 .selectAll()
-                .where { PasswordResetTokensTable.token eq token }
+                .where { PasswordResetTokensTable.tokenHash eq tokenHash }
                 .singleOrNull()
                 ?.let { row ->
                     PasswordResetTokenInfo(
@@ -147,5 +150,16 @@ class PasswordResetTokenRepository {
         }
     }.onFailure { error ->
         logger.error("Failed to cleanup expired password reset tokens", error)
+    }
+
+    private fun tokenHash(token: String): String {
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            val hashBytes = digest.digest(token.toByteArray())
+            hashBytes.joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            logger.error("Failed to hash password reset token", e)
+            throw e
+        }
     }
 }

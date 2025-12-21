@@ -98,35 +98,5 @@ buildkonfig {
     }
     defaultConfigs("local") {
         buildConfigField(STRING, "env", "local")
-
-        // Gateway endpoint (for external clients via Traefik) - Local
-        buildConfigField(STRING, "gatewayHost", "0.0.0.0")
-        buildConfigField(INT, "gatewayPort", "8000")
-        buildConfigField(STRING, "gatewayProtocol", "http")
-
-        // RabbitMQ Configuration - Local (credentials from env vars at runtime)
-        buildConfigField(STRING, "rabbitmqHost", "localhost")
-        buildConfigField(INT, "rabbitmqPort", "5672")
-        buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
-
-        // Internal endpoints (for inter-service communication in Docker)
-        buildConfigField(STRING, "authInternalHost", "auth-service-local")
-        buildConfigField(INT, "authInternalPort", "8080")
-        buildConfigField(STRING, "cashflowInternalHost", "cashflow-service-local")
-        buildConfigField(INT, "cashflowInternalPort", "8080")
-        buildConfigField(STRING, "paymentInternalHost", "payment-service-local")
-        buildConfigField(INT, "paymentInternalPort", "8080")
-        buildConfigField(STRING, "bankingInternalHost", "banking-service-local")
-        buildConfigField(INT, "bankingInternalPort", "8080")
-        buildConfigField(STRING, "contactsInternalHost", "contacts-service-local")
-        buildConfigField(INT, "contactsInternalPort", "8080")
-        buildConfigField(STRING, "mediaInternalHost", "media-service-local")
-        buildConfigField(INT, "mediaInternalPort", "8080")
-    }
-    targetConfigs("local") {
-        create("wasmJs") {
-            // WASM runs in browser, needs to connect via localhost
-            buildConfigField(STRING, "gatewayHost", "localhost")
-        }
     }
 }
