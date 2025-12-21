@@ -86,6 +86,7 @@ fun Route.tenantRoutes() {
                 plan = request.plan,
                 language = request.language,
                 vatNumber = request.vatNumber,
+                address = request.address,
             )
 
             userRepository.addToTenant(

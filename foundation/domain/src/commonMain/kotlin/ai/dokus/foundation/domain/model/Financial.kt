@@ -286,7 +286,8 @@ data class AttachmentDto(
 // ============================================================================
 
 /**
- * Request DTO for creating a tenant
+ * Request DTO for creating a tenant.
+ * Address is required for all tenant types.
  */
 @Serializable
 data class CreateTenantRequest(
@@ -295,7 +296,8 @@ data class CreateTenantRequest(
     val displayName: DisplayName,
     val plan: TenantPlan = TenantPlan.Free,
     val language: Language = Language.En,
-    val vatNumber: VatNumber
+    val vatNumber: VatNumber,
+    val address: UpsertTenantAddressRequest,
 )
 
 @Serializable
