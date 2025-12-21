@@ -61,6 +61,7 @@ class WorkspaceSettingsViewModel(
                 logger.i { "Workspace settings loaded for ${tenant.displayName.value}" }
                 _state.value = DokusState.success(WorkspaceSettingsData(tenant, settings))
                 populateFormFromSettings(tenant, settings)
+                loadAvatar()
             } else {
                 val error = tenantResult.exceptionOrNull() ?: settingsResult.exceptionOrNull()
                     ?: IllegalStateException("Failed to load workspace settings")
@@ -147,6 +148,101 @@ class WorkspaceSettingsViewModel(
         }
     }
 
+    // ===== Avatar Operations =====
+
+    /**
+     * Called when user selects an image for cropping.
+     */
+    fun onImageSelected(imageBytes: ByteArray) {
+        _avatarState.value = AvatarState.Cropping(imageBytes)
+    }
+
+    /**
+     * Cancel the cropping operation.
+     */
+    fun cancelCrop() {
+        _avatarState.value = AvatarState.Idle
+    }
+
+    /**
+     * Called when user confirms the crop, starts upload.
+     */
+    fun onCropComplete(croppedImageBytes: ByteArray, filename: String = "avatar.png") {
+        viewModelScope.launch {
+            logger.d { "Uploading avatar" }
+            _avatarState.value = AvatarState.Uploading(0f)
+
+            val contentType = when {
+                filename.endsWith(".png", ignoreCase = true) -> "image/png"
+                filename.endsWith(".gif", ignoreCase = true) -> "image/gif"
+                filename.endsWith(".webp", ignoreCase = true) -> "image/webp"
+                else -> "image/jpeg"
+            }
+
+            tenantDataSource.uploadAvatar(
+                imageBytes = croppedImageBytes,
+                filename = filename,
+                contentType = contentType,
+                onProgress = { progress ->
+                    _avatarState.value = AvatarState.Uploading(progress)
+                }
+            ).fold(
+                onSuccess = { response ->
+                    logger.i { "Avatar uploaded successfully" }
+                    _currentAvatar.value = response.avatar
+                    _avatarState.value = AvatarState.Success
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to upload avatar" }
+                    _avatarState.value = AvatarState.Error(error.message ?: "Failed to upload avatar")
+                }
+            )
+        }
+    }
+
+    /**
+     * Delete the current avatar.
+     */
+    fun deleteAvatar() {
+        viewModelScope.launch {
+            logger.d { "Deleting avatar" }
+            _avatarState.value = AvatarState.Deleting
+
+            tenantDataSource.deleteAvatar().fold(
+                onSuccess = {
+                    logger.i { "Avatar deleted" }
+                    _currentAvatar.value = null
+                    _avatarState.value = AvatarState.Idle
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to delete avatar" }
+                    _avatarState.value = AvatarState.Error(error.message ?: "Failed to delete avatar")
+                }
+            )
+        }
+    }
+
+    /**
+     * Load current avatar URLs.
+     */
+    private suspend fun loadAvatar() {
+        tenantDataSource.getAvatar().fold(
+            onSuccess = { avatar ->
+                _currentAvatar.value = avatar
+            },
+            onFailure = { error ->
+                logger.w { "Failed to load avatar: ${error.message}" }
+            }
+        )
+    }
+
+    /**
+     * Reset avatar state to idle.
+     */
+    fun resetAvatarState() {
+        _avatarState.value = AvatarState.Idle
+    }
+
     private fun populateFormFromSettings(tenant: Tenant, settings: TenantSettings) {
         _formState.value = WorkspaceFormState(
             companyName = settings.companyName ?: tenant.displayName.value,
@@ -191,4 +287,16 @@ sealed class SaveState {
     data object Saving : SaveState()
     data object Success : SaveState()
     data class Error(val message: String) : SaveState()
+}
+
+/**
+ * Avatar upload/delete operation state.
+ */
+sealed class AvatarState {
+    data object Idle : AvatarState()
+    data class Cropping(val imageBytes: ByteArray) : AvatarState()
+    data class Uploading(val progress: Float) : AvatarState()
+    data object Deleting : AvatarState()
+    data object Success : AvatarState()
+    data class Error(val message: String) : AvatarState()
 }
