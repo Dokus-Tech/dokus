@@ -173,7 +173,7 @@ class AvatarStorageService(
     private fun validateImage(imageData: ByteArray, contentType: String) {
         require(imageData.isNotEmpty()) { "Image data cannot be empty" }
         require(imageData.size <= MAX_FILE_SIZE) {
-            "Image size ${imageData.size} exceeds maximum ${MAX_FILE_SIZE} bytes"
+            "Image size ${imageData.size} exceeds maximum $MAX_FILE_SIZE bytes"
         }
         require(contentType in ALLOWED_CONTENT_TYPES) {
             "Content type $contentType is not allowed. Allowed types: $ALLOWED_CONTENT_TYPES"
