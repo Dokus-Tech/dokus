@@ -137,7 +137,7 @@ internal class WorkspaceCreateViewModel(
     }
 
     fun onEntitySelected(entity: EntityLookup) {
-        // Prefill form with entity data
+        // Prefill state with entity data and create workspace directly
         mutableWizardState.update { state ->
             state.copy(
                 selectedEntity = entity,
@@ -155,7 +155,7 @@ internal class WorkspaceCreateViewModel(
             )
         }
         dismissConfirmation()
-        goToStep(WorkspaceWizardStep.VatAndAddress)
+        createWorkspace()
     }
 
     fun onEnterManually() {
