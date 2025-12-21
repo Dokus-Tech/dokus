@@ -70,12 +70,8 @@ private fun storageModule(appConfig: AppBaseConfig) = module {
     // MinIO Object Storage
     single<ObjectStorage> {
         val minioConfig = MinioConfig.loadOrNull(appConfig)
-        if (minioConfig != null) {
-            logger.info("MinIO storage configured: endpoint=${minioConfig.endpoint}, bucket=${minioConfig.bucket}")
-            MinioStorage.create(minioConfig)
-        } else {
-            throw IllegalStateException("MinIO not configured. Processor requires object storage.")
-        }
+        requireNotNull(minioConfig)
+        MinioStorage.create(minioConfig)
     }
 
     // MinIO Document Storage Service (high-level API)
