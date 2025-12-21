@@ -26,6 +26,7 @@ import kotlin.math.abs
  * Size variants for company avatars.
  */
 enum class AvatarSize(val dp: Dp) {
+    ExtraSmall(24.dp),
     Small(32.dp),
     Medium(64.dp),
     Large(128.dp),
@@ -61,9 +62,15 @@ fun CompanyAvatarImage(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
+    val cornerRadius = when (size) {
+        AvatarSize.ExtraSmall -> 6.dp
+        AvatarSize.Small -> 8.dp
+        else -> 12.dp
+    }
+
     val clipShape = when (shape) {
         AvatarShape.Circle -> CircleShape
-        AvatarShape.RoundedSquare -> RoundedCornerShape(12.dp)
+        AvatarShape.RoundedSquare -> RoundedCornerShape(cornerRadius)
     }
 
     val clickModifier = if (onClick != null) {
@@ -121,15 +128,22 @@ private fun AvatarFallback(
     size: AvatarSize,
     shape: AvatarShape
 ) {
+    val cornerRadius = when (size) {
+        AvatarSize.ExtraSmall -> 6.dp
+        AvatarSize.Small -> 8.dp
+        else -> 12.dp
+    }
+
     val clipShape = when (shape) {
         AvatarShape.Circle -> CircleShape
-        AvatarShape.RoundedSquare -> RoundedCornerShape(12.dp)
+        AvatarShape.RoundedSquare -> RoundedCornerShape(cornerRadius)
     }
 
     val backgroundColor = MaterialTheme.colorScheme.primaryContainer
     val textColor = MaterialTheme.colorScheme.primary
 
     val fontSize = when (size) {
+        AvatarSize.ExtraSmall -> 10.sp
         AvatarSize.Small -> 14.sp
         AvatarSize.Medium -> 24.sp
         AvatarSize.Large -> 48.sp
