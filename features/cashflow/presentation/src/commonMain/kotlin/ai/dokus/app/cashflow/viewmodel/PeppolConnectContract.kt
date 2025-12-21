@@ -2,12 +2,13 @@ package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.foundation.domain.model.PeppolProvider
 import ai.dokus.foundation.domain.model.RecommandCompanySummary
+import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 
 /**
- * FlowMVI contract for Peppol provider connection screen.
+ * Contract for Peppol provider connection screen.
  *
  * Flow:
  * 1. EnteringCredentials → User enters API Key and Secret
@@ -22,6 +23,7 @@ import pro.respawn.flowmvi.api.MVIState
 // STATE
 // ============================================================================
 
+@Immutable
 sealed interface PeppolConnectState : MVIState {
     val provider: PeppolProvider
     val apiKey: String
@@ -100,6 +102,7 @@ sealed interface PeppolConnectState : MVIState {
 // INTENTS (User Actions)
 // ============================================================================
 
+@Immutable
 sealed interface PeppolConnectIntent : MVIIntent {
     /** User typed in API key field */
     data class UpdateApiKey(val value: String) : PeppolConnectIntent
@@ -127,6 +130,7 @@ sealed interface PeppolConnectIntent : MVIIntent {
 // ACTIONS (Side Effects)
 // ============================================================================
 
+@Immutable
 sealed interface PeppolConnectAction : MVIAction {
     /** Navigate back to previous screen */
     data object NavigateBack : PeppolConnectAction

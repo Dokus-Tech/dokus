@@ -5,7 +5,7 @@ import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.model.PeppolProvider
-import ai.dokus.foundation.navigation.LocalNavController
+import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement

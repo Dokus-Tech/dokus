@@ -10,6 +10,7 @@ import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldPassword
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.design.components.layout.TwoPaneContainer
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
@@ -17,7 +18,7 @@ import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.model.PeppolProvider
 import ai.dokus.foundation.domain.model.RecommandCompanySummary
-import ai.dokus.foundation.navigation.LocalNavController
+import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,11 +55,11 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 
 /**
  * Peppol provider connection screen using FlowMVI.
@@ -70,11 +71,11 @@ fun PeppolConnectScreen(
     providerName: String,
 ) {
     val provider = PeppolProvider.fromName(providerName) ?: PeppolProvider.Recommand
-    val container: PeppolConnectContainer = koinViewModel { parametersOf(provider) }
+    val peppolContainer: PeppolConnectContainer = container { parametersOf(provider) }
     val navController = LocalNavController.current
     val isLarge = LocalScreenSize.isLarge
 
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
+    val state by peppolContainer.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             PeppolConnectAction.NavigateBack -> navController.navigateUp()
             PeppolConnectAction.NavigateToSettings -> {
@@ -97,12 +98,12 @@ fun PeppolConnectScreen(
                 modifier = Modifier.padding(contentPadding),
                 middleEffect = { EnhancedFloatingBubbles() },
                 left = {
-                    with(container.store) {
+                    with(peppolContainer.store) {
                         CredentialsPane(state)
                     }
                 },
                 right = {
-                    with(container.store) {
+                    with(peppolContainer.store) {
                         RightPane(state)
                     }
                 }
@@ -110,7 +111,7 @@ fun PeppolConnectScreen(
         } else {
             // Mobile: single pane, content changes based on state
             Box(modifier = Modifier.padding(contentPadding).fillMaxSize()) {
-                with(container.store) {
+                with(peppolContainer.store) {
                     when (state) {
                         is PeppolConnectState.EnteringCredentials,
                         is PeppolConnectState.LoadingCompanies -> {
@@ -174,26 +175,24 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
             Spacer(Modifier.height(32.dp))
 
             // API Key field
+            val apiKeyError = (state as? PeppolConnectState.EnteringCredentials)?.apiKeyError
             PTextFieldStandard(
                 fieldName = "API Key",
                 value = state.apiKey,
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiKey(it)) },
-                error = (state as? PeppolConnectState.EnteringCredentials)?.apiKeyError,
-                enabled = state is PeppolConnectState.EnteringCredentials,
+                error = apiKeyError?.let { DokusException.Validation.Generic(it) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(16.dp))
 
             // API Secret field
+            val apiSecretError = (state as? PeppolConnectState.EnteringCredentials)?.apiSecretError
             PTextFieldPassword(
                 fieldName = "API Secret",
                 value = ai.dokus.foundation.domain.Password(state.apiSecret),
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiSecret(it.value)) },
-                error = (state as? PeppolConnectState.EnteringCredentials)?.apiSecretError?.let {
-                    Exception(it)
-                },
-                enabled = state is PeppolConnectState.EnteringCredentials,
+                error = apiSecretError?.let { DokusException.Validation.Generic(it) },
                 modifier = Modifier.fillMaxWidth()
             )
 
