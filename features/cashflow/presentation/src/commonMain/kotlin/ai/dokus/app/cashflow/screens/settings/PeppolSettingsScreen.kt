@@ -1,13 +1,10 @@
 package ai.dokus.app.cashflow.screens.settings
 
-import ai.dokus.app.cashflow.viewmodel.ConnectionTestState
+import ai.dokus.app.cashflow.viewmodel.PeppolConnectionState
 import ai.dokus.app.cashflow.viewmodel.PeppolSettingsViewModel
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.peppol_api_key
 import ai.dokus.app.resources.generated.peppol_api_secret
-import ai.dokus.app.resources.generated.peppol_company_id
 import ai.dokus.app.resources.generated.peppol_configuration
 import ai.dokus.app.resources.generated.peppol_connected
 import ai.dokus.app.resources.generated.peppol_connection_status
@@ -15,17 +12,16 @@ import ai.dokus.app.resources.generated.peppol_credentials
 import ai.dokus.app.resources.generated.peppol_delete_settings
 import ai.dokus.app.resources.generated.peppol_enabled
 import ai.dokus.app.resources.generated.peppol_not_configured
-import ai.dokus.app.resources.generated.peppol_participant_id
 import ai.dokus.app.resources.generated.peppol_settings_title
-import ai.dokus.app.resources.generated.peppol_test_connection
 import ai.dokus.app.resources.generated.peppol_test_mode
 import ai.dokus.app.resources.generated.profile_danger_zone
-import ai.dokus.app.resources.generated.save_changes
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.domain.model.RecommandCompanySummary
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,23 +38,32 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 
 /**
  * Peppol E-Invoicing settings screen with top bar.
@@ -94,10 +99,35 @@ fun PeppolSettingsContent(
 ) {
     val state by viewModel.state.collectAsState()
     val formState by viewModel.formState.collectAsState()
-    val connectionTestState by viewModel.connectionTestState.collectAsState()
+    val connectionState by viewModel.connectionState.collectAsState()
+    val connectedCompany by viewModel.connectedCompany.collectAsState()
 
     LaunchedEffect(viewModel) {
         viewModel.loadSettings()
+    }
+
+    // Handle connection dialogs
+    when (val connState = connectionState) {
+        is PeppolConnectionState.SelectCompany -> {
+            CompanySelectionDialog(
+                candidates = connState.candidates,
+                onSelect = { viewModel.selectCompany(it.id) },
+                onDismiss = { viewModel.cancelConnection() }
+            )
+        }
+        is PeppolConnectionState.ConfirmCreateCompany -> {
+            CreateCompanyConfirmationDialog(
+                onConfirm = { viewModel.confirmCreateCompany() },
+                onDismiss = { viewModel.cancelConnection() }
+            )
+        }
+        is PeppolConnectionState.Error -> {
+            ErrorDialog(
+                message = connState.message,
+                onDismiss = { viewModel.resetConnectionState() }
+            )
+        }
+        else -> {}
     }
 
     when {
@@ -110,6 +140,8 @@ fun PeppolSettingsContent(
             }
         }
         else -> {
+            val isConnected = connectionState is PeppolConnectionState.Connected
+
             Column(
                 modifier = modifier
                     .fillMaxSize()
@@ -128,102 +160,92 @@ fun PeppolSettingsContent(
 
                         Spacer(Modifier.height(12.dp))
 
-                        val isConfigured = state.isSuccess() && state.let {
-                            (it as? DokusState.Success)?.data != null
-                        }
-
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = if (isConfigured) Icons.Default.Check else Icons.Default.Close,
+                                imageVector = if (isConnected) Icons.Default.Check else Icons.Default.Close,
                                 contentDescription = null,
-                                tint = if (isConfigured) MaterialTheme.colorScheme.primary
+                                tint = if (isConnected) MaterialTheme.colorScheme.primary
                                        else MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
                                 text = stringResource(
-                                    if (isConfigured) Res.string.peppol_connected
+                                    if (isConnected) Res.string.peppol_connected
                                     else Res.string.peppol_not_configured
                                 ),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isConfigured) MaterialTheme.colorScheme.primary
+                                color = if (isConnected) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        // Show connected company info
+                        connectedCompany?.let { company ->
+                            Spacer(Modifier.height(12.dp))
+                            HorizontalDivider()
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text = "Connected to:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = company.name,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "VAT: ${company.vatNumber}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
 
-                // Credentials Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(Res.string.peppol_credentials),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Spacer(Modifier.height(16.dp))
-
-                        PTextFieldStandard(
-                            fieldName = stringResource(Res.string.peppol_company_id),
-                            value = formState.companyId,
-                            onValueChange = { viewModel.updateCompanyId(it) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        formState.errors["companyId"]?.let {
-                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                        }
-
-                        Spacer(Modifier.height(12.dp))
-
-                        PTextFieldStandard(
-                            fieldName = stringResource(Res.string.peppol_participant_id),
-                            value = formState.peppolId,
-                            onValueChange = { viewModel.updatePeppolId(it) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        formState.errors["peppolId"]?.let {
-                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                        }
-
-                        Spacer(Modifier.height(12.dp))
-
-                        PTextFieldStandard(
-                            fieldName = stringResource(Res.string.peppol_api_key),
-                            value = formState.apiKey,
-                            onValueChange = { viewModel.updateApiKey(it) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        if (formState.isEditing) {
+                // Credentials Section - Only show if not connected
+                if (!isConnected) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Leave blank to keep existing key",
+                                text = stringResource(Res.string.peppol_credentials),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Spacer(Modifier.height(8.dp))
+
+                            Text(
+                                text = "Enter your Recommand API credentials to connect to Peppol. Your company will be automatically matched by VAT number.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
-                        formState.errors["apiKey"]?.let {
-                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                        }
 
-                        Spacer(Modifier.height(12.dp))
+                            Spacer(Modifier.height(16.dp))
 
-                        PTextFieldStandard(
-                            fieldName = stringResource(Res.string.peppol_api_secret),
-                            value = formState.apiSecret,
-                            onValueChange = { viewModel.updateApiSecret(it) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        if (formState.isEditing) {
-                            Text(
-                                text = "Leave blank to keep existing secret",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            PTextFieldStandard(
+                                fieldName = stringResource(Res.string.peppol_api_key),
+                                value = formState.apiKey,
+                                onValueChange = { viewModel.updateApiKey(it) },
+                                modifier = Modifier.fillMaxWidth()
                             )
-                        }
-                        formState.errors["apiSecret"]?.let {
-                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                            formState.errors["apiKey"]?.let {
+                                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                            }
+
+                            Spacer(Modifier.height(12.dp))
+
+                            PTextFieldStandard(
+                                fieldName = stringResource(Res.string.peppol_api_secret),
+                                value = formState.apiSecret,
+                                onValueChange = { viewModel.updateApiSecret(it) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            formState.errors["apiSecret"]?.let {
+                                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }
@@ -272,59 +294,35 @@ fun PeppolSettingsContent(
                     }
                 }
 
-                // Test Connection & Save Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    POutlinedButton(
-                        text = stringResource(Res.string.peppol_test_connection),
-                        enabled = connectionTestState !is ConnectionTestState.Testing,
-                        onClick = { viewModel.testConnection() },
-                        modifier = Modifier.weight(1f)
-                    )
+                // Connect Button - Only show if not connected
+                if (!isConnected) {
+                    val isConnecting = connectionState is PeppolConnectionState.Connecting
 
                     PPrimaryButton(
-                        text = stringResource(Res.string.save_changes),
-                        enabled = !state.isLoading(),
-                        onClick = { viewModel.saveSettings() },
-                        modifier = Modifier.weight(1f)
+                        text = if (isConnecting) "Connecting..." else "Connect",
+                        enabled = !isConnecting && !state.isLoading(),
+                        onClick = { viewModel.connect() },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
 
-                // Connection Test Result
-                when (connectionTestState) {
-                    is ConnectionTestState.Testing -> {
+                    if (isConnecting) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                             Text(
-                                text = "Testing connection...",
-                                modifier = Modifier.padding(start = 8.dp)
+                                text = "Connecting to Peppol...",
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
-                    is ConnectionTestState.Success -> {
-                        Text(
-                            text = "Connection successful!",
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                    }
-                    is ConnectionTestState.Failed -> {
-                        Text(
-                            text = (connectionTestState as ConnectionTestState.Failed).message,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                    }
-                    else -> {}
                 }
 
-                // Danger Zone - Delete Settings
-                if (formState.isEditing) {
+                // Danger Zone - Delete Settings (only when connected)
+                if (isConnected) {
                     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
@@ -336,7 +334,7 @@ fun PeppolSettingsContent(
                             Spacer(Modifier.height(12.dp))
 
                             Text(
-                                text = "Deleting Peppol settings will disable e-invoicing capabilities.",
+                                text = "Disconnecting Peppol will disable e-invoicing capabilities.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -356,4 +354,132 @@ fun PeppolSettingsContent(
             }
         }
     }
+}
+
+/**
+ * Dialog for selecting a company when multiple matches are found.
+ */
+@Composable
+private fun CompanySelectionDialog(
+    candidates: List<RecommandCompanySummary>,
+    onSelect: (RecommandCompanySummary) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selectedCompany by remember { mutableStateOf<RecommandCompanySummary?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Company") },
+        text = {
+            Column {
+                Text(
+                    text = "Multiple companies found matching your VAT number. Please select one:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                candidates.forEach { company ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedCompany = company }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedCompany == company,
+                            onClick = { selectedCompany = company }
+                        )
+                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                            Text(
+                                text = company.name,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "VAT: ${company.vatNumber}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { selectedCompany?.let { onSelect(it) } },
+                enabled = selectedCompany != null
+            ) {
+                Text("Select")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+/**
+ * Dialog for confirming company creation on Recommand.
+ */
+@Composable
+private fun CreateCompanyConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Create Company") },
+        text = {
+            Column {
+                Text(
+                    text = "No company found on Recommand matching your VAT number.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Would you like Dokus to create one using your company information?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "The company will be created with your legal name, VAT number, and address from your workspace settings.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Create & Connect")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+/**
+ * Dialog for showing error messages.
+ */
+@Composable
+private fun ErrorDialog(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Connection Error") },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
 }
