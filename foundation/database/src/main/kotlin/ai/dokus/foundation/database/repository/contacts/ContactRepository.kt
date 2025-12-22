@@ -548,48 +548,48 @@ class ContactRepository {
         tenantId: TenantId
     ): Result<ContactActivitySummary> = runCatching {
         dbQuery {
-        val contactUuid = UUID.fromString(contactId.toString())
-        val tenantUuid = UUID.fromString(tenantId.toString())
+            val contactUuid = UUID.fromString(contactId.toString())
+            val tenantUuid = UUID.fromString(tenantId.toString())
 
-        // Get invoice count and total using simple queries
-        val invoices = InvoicesTable.selectAll().where {
-            (InvoicesTable.tenantId eq tenantUuid) and (InvoicesTable.contactId eq contactUuid)
-        }.toList()
+            // Get invoice count and total using simple queries
+            val invoices = InvoicesTable.selectAll().where {
+                (InvoicesTable.tenantId eq tenantUuid) and (InvoicesTable.contactId eq contactUuid)
+            }.toList()
 
-        val invoiceCount = invoices.size.toLong()
-        val invoiceTotal = invoices.fold(BigDecimal.ZERO) { acc, row ->
-            acc + (row[InvoicesTable.totalAmount] ?: BigDecimal.ZERO)
-        }
-        val invoiceLastDate = invoices.maxOfOrNull { it[InvoicesTable.createdAt] }
+            val invoiceCount = invoices.size.toLong()
+            val invoiceTotal = invoices.fold(BigDecimal.ZERO) { acc, row ->
+                acc + (row[InvoicesTable.totalAmount] ?: BigDecimal.ZERO)
+            }
+            val invoiceLastDate = invoices.maxOfOrNull { it[InvoicesTable.createdAt] }
 
-        // Get bill count and total
-        val bills = BillsTable.selectAll().where {
-            (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq contactUuid)
-        }.toList()
+            // Get bill count and total
+            val bills = BillsTable.selectAll().where {
+                (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq contactUuid)
+            }.toList()
 
-        val billCount = bills.size.toLong()
-        val billTotal = bills.fold(BigDecimal.ZERO) { acc, row ->
-            acc + (row[BillsTable.amount] ?: BigDecimal.ZERO)
-        }
-        val billLastDate = bills.maxOfOrNull { it[BillsTable.createdAt] }
+            val billCount = bills.size.toLong()
+            val billTotal = bills.fold(BigDecimal.ZERO) { acc, row ->
+                acc + (row[BillsTable.amount] ?: BigDecimal.ZERO)
+            }
+            val billLastDate = bills.maxOfOrNull { it[BillsTable.createdAt] }
 
-        // Get expense count and total
-        val expenses = ExpensesTable.selectAll().where {
-            (ExpensesTable.tenantId eq tenantUuid) and (ExpensesTable.contactId eq contactUuid)
-        }.toList()
+            // Get expense count and total
+            val expenses = ExpensesTable.selectAll().where {
+                (ExpensesTable.tenantId eq tenantUuid) and (ExpensesTable.contactId eq contactUuid)
+            }.toList()
 
-        val expenseCount = expenses.size.toLong()
-        val expenseTotal = expenses.fold(BigDecimal.ZERO) { acc, row ->
-            acc + (row[ExpensesTable.amount] ?: BigDecimal.ZERO)
-        }
-        val expenseLastDate = expenses.maxOfOrNull { it[ExpensesTable.createdAt] }
+            val expenseCount = expenses.size.toLong()
+            val expenseTotal = expenses.fold(BigDecimal.ZERO) { acc, row ->
+                acc + (row[ExpensesTable.amount] ?: BigDecimal.ZERO)
+            }
+            val expenseLastDate = expenses.maxOfOrNull { it[ExpensesTable.createdAt] }
 
-        // Find the most recent activity date
-        val lastActivityDate = listOfNotNull(invoiceLastDate, billLastDate, expenseLastDate)
-            .maxOrNull()
+            // Find the most recent activity date
+            val lastActivityDate = listOfNotNull(invoiceLastDate, billLastDate, expenseLastDate)
+                .maxOrNull()
 
-        // TODO: Count pending approval items (documents with this contact as suggested)
-        val pendingApprovalCount = 0L
+            // TODO: Count pending approval items (documents with this contact as suggested)
+            val pendingApprovalCount = 0L
 
             ContactActivitySummary(
                 contactId = contactId,
