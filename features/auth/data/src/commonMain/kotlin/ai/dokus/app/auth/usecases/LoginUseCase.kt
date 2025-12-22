@@ -17,6 +17,24 @@ class LoginUseCase(
 ) {
     private val logger = Logger.forClass<LoginUseCase>()
 
+    /**
+     * Authenticates the user with the provided email and password.
+     *
+     * Performs client-side validation of credential formats before attempting authentication
+     * with the backend. On successful login, the user's authentication tokens are stored
+     * locally, enabling offline access and automatic session restoration.
+     *
+     * @param email The user's email address wrapped in an [Email] value object.
+     *              Must pass [Email.isValid] validation (proper email format).
+     * @param password The user's password wrapped in a [Password] value object.
+     *                 Must pass [Password.isValid] validation (minimum 8 characters).
+     * @return [Result.success] with [Unit] if authentication succeeded and tokens were stored.
+     *         [Result.failure] with:
+     *         - [IllegalArgumentException] if email format is invalid
+     *         - [IllegalArgumentException] if password is less than 8 characters
+     *         - Network or server errors if the authentication request fails
+     *         - Authentication errors if credentials are rejected by the server
+     */
     suspend operator fun invoke(email: Email, password: Password): Result<Unit> {
         logger.d { "Executing login use case" }
 
