@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
+import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
@@ -72,6 +73,13 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
     val confirmedEntityType = dbEnumeration<EntityType>("confirmed_entity_type").nullable()
     val confirmedEntityId = uuid("confirmed_entity_id").nullable()
 
+    // Contact suggestion from AI matching (populated after extraction)
+    val suggestedContactId = uuid("suggested_contact_id")
+        .references(ContactsTable.id, onDelete = ReferenceOption.SET_NULL)
+        .nullable()
+    val contactSuggestionConfidence = float("contact_suggestion_confidence").nullable()
+    val contactSuggestionReason = varchar("contact_suggestion_reason", 255).nullable()
+
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
@@ -85,5 +93,8 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
 
         // For cleanup: find old unconfirmed documents
         index(false, tenantId, confirmedAt)
+
+        // For contact activity queries: find documents suggested for a contact
+        index(false, tenantId, suggestedContactId)
     }
 }
