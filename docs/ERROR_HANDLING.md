@@ -32,6 +32,15 @@ This document provides a comprehensive reference for error handling in the Dokus
   - [Token Refresh on 401](#token-refresh-on-401)
   - [DokusState Error Handling Pattern](#dokusstate-error-handling-pattern)
   - [Retry Handler Pattern](#retry-handler-pattern)
+- [Rate Limiting Integration](#rate-limiting-integration)
+  - [Overview](#overview-1)
+  - [Exception Details](#exception-details)
+  - [Backend Configuration](#backend-configuration)
+  - [Client Handling Patterns](#client-handling-patterns)
+  - [Retry Strategies](#retry-strategies)
+  - [UI Considerations](#ui-considerations)
+  - [Testing Rate Limiting](#testing-rate-limiting)
+  - [Best Practices](#best-practices)
 
 ---
 
@@ -1519,6 +1528,368 @@ fun ContentWithError(state: DokusState<Data>) {
 2. **Capture necessary state**: The retry lambda should capture all parameters needed to retry
 3. **Check recoverable flag**: Only show retry UI for `exception.recoverable == true`
 4. **Use localized messages**: Display `exception.localized` for user-facing messages
+
+---
+
+## Rate Limiting Integration
+
+This section provides a comprehensive guide for handling `TooManyLoginAttempts` exceptions, including client retry strategies, UI patterns, and integration with the backend rate limiting system.
+
+### Overview
+
+The `TooManyLoginAttempts` exception (HTTP 429) is thrown when a user exceeds the maximum number of login attempts within a time window. Unlike most errors, this exception:
+
+- Is **recoverable** after a waiting period
+- Includes a `retryAfterSeconds` field indicating when to retry
+- Has a corresponding `Retry-After` HTTP header for standard client handling
+- Requires special UI treatment (countdown timer, disabled login button)
+
+### Exception Details
+
+| Property | Value |
+|----------|-------|
+| **Error Code** | `TOO_MANY_LOGIN_ATTEMPTS` |
+| **HTTP Status** | 429 |
+| **Recoverable** | Yes |
+| **Default Message** | "Too many login attempts. Please try again later." |
+| **Additional Fields** | `retryAfterSeconds: Int` (default: 60) |
+
+### Backend Configuration
+
+The auth service implements the following rate limiting defaults:
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Maximum Attempts | 5 | Failed attempts before lockout |
+| Attempt Window | 15 minutes | Rolling window for counting failures |
+| Lockout Duration | 15 minutes | How long the account is locked |
+
+For detailed backend configuration and deployment considerations, see [RATE_LIMITING.md](../features/auth/backend/docs/RATE_LIMITING.md).
+
+### Client Handling Patterns
+
+#### Basic Error Detection
+
+```kotlin
+try {
+    authService.login(email, password)
+} catch (e: DokusException.TooManyLoginAttempts) {
+    // Handle rate limit
+    val seconds = e.retryAfterSeconds
+    showRateLimitMessage(seconds)
+}
+```
+
+#### Reading the Retry-After Header
+
+The client automatically parses the `Retry-After` header when present:
+
+```kotlin
+// HttpClientExtensions handles this automatically
+// The retryAfterSeconds value is populated from:
+// 1. Retry-After header (if present)
+// 2. Response body retryAfterSeconds field
+// 3. Default value (60 seconds)
+```
+
+#### Complete Login Flow with Rate Limit Handling
+
+```kotlin
+class LoginViewModel : BaseViewModel<LoginState>(LoginState.Idle) {
+
+    fun login(email: Email, password: Password) {
+        viewModelScope.launch {
+            mutableState.emitLoading()
+
+            loginUseCase(email, password).fold(
+                onSuccess = { tokens ->
+                    mutableState.emit(LoginState.Success(tokens))
+                },
+                onFailure = { error ->
+                    when (error) {
+                        is DokusException.TooManyLoginAttempts -> {
+                            // Set rate-limited state with countdown
+                            mutableState.emit(
+                                LoginState.RateLimited(
+                                    retryAfterSeconds = error.retryAfterSeconds,
+                                    lockedUntil = Clock.System.now() + error.retryAfterSeconds.seconds
+                                )
+                            )
+                        }
+                        else -> {
+                            mutableState.emit(error) { login(email, password) }
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+sealed interface LoginState {
+    data object Idle : LoginState
+    data object Loading : LoginState
+    data class Success(val tokens: Tokens) : LoginState
+    data class RateLimited(
+        val retryAfterSeconds: Int,
+        val lockedUntil: Instant
+    ) : LoginState
+    data class Error(
+        val exception: DokusException,
+        val retryHandler: RetryHandler
+    ) : LoginState
+}
+```
+
+### Retry Strategies
+
+#### Simple Countdown Retry
+
+Wait for the exact duration specified, then allow retry:
+
+```kotlin
+class RateLimitHandler(
+    private val retryAfterSeconds: Int,
+    private val onUnlocked: () -> Unit
+) {
+    private var job: Job? = null
+
+    fun startCountdown(scope: CoroutineScope) {
+        job = scope.launch {
+            delay(retryAfterSeconds.seconds)
+            onUnlocked()
+        }
+    }
+
+    fun cancel() {
+        job?.cancel()
+    }
+}
+```
+
+#### Exponential Backoff for Repeated Rate Limits
+
+If users repeatedly hit rate limits, consider implementing exponential backoff:
+
+```kotlin
+class ExponentialBackoffHandler {
+    private var consecutiveRateLimits = 0
+    private val baseDelay = 60.seconds
+    private val maxDelay = 30.minutes
+
+    fun handleRateLimit(serverRetryAfter: Int): Duration {
+        consecutiveRateLimits++
+
+        // Use server's retry-after as base, but increase for repeated violations
+        val multiplier = 2.0.pow(consecutiveRateLimits - 1).toInt()
+        val calculatedDelay = (serverRetryAfter * multiplier).seconds
+
+        return minOf(calculatedDelay, maxDelay)
+    }
+
+    fun reset() {
+        consecutiveRateLimits = 0
+    }
+}
+```
+
+#### Automatic Retry with Delay
+
+For background operations, implement automatic retry:
+
+```kotlin
+suspend fun <T> retryWithRateLimit(
+    maxRetries: Int = 3,
+    block: suspend () -> T
+): T {
+    var lastException: DokusException.TooManyLoginAttempts? = null
+
+    repeat(maxRetries) { attempt ->
+        try {
+            return block()
+        } catch (e: DokusException.TooManyLoginAttempts) {
+            lastException = e
+            if (attempt < maxRetries - 1) {
+                delay(e.retryAfterSeconds.seconds)
+            }
+        }
+    }
+
+    throw lastException!!
+}
+```
+
+### UI Considerations
+
+#### Countdown Timer Display
+
+Show a live countdown timer when rate limited:
+
+```kotlin
+@Composable
+fun RateLimitCountdown(
+    lockedUntil: Instant,
+    onUnlocked: () -> Unit
+) {
+    var remainingSeconds by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(lockedUntil) {
+        while (true) {
+            val now = Clock.System.now()
+            val remaining = (lockedUntil - now).inWholeSeconds.toInt()
+
+            if (remaining <= 0) {
+                onUnlocked()
+                break
+            }
+
+            remainingSeconds = remaining
+            delay(1.seconds)
+        }
+    }
+
+    Text(
+        text = "Too many login attempts. Try again in ${formatDuration(remainingSeconds)}",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.error
+    )
+}
+
+private fun formatDuration(seconds: Int): String {
+    val minutes = seconds / 60
+    val remainingSeconds = seconds % 60
+
+    return when {
+        minutes > 0 -> "$minutes min $remainingSeconds sec"
+        else -> "$seconds seconds"
+    }
+}
+```
+
+#### Disabled Login Button
+
+Disable the login button while rate limited:
+
+```kotlin
+@Composable
+fun LoginScreen(viewModel: LoginViewModel) {
+    val state by viewModel.state.collectAsState()
+
+    val isRateLimited = state is LoginState.RateLimited
+    val isLoading = state is LoginState.Loading
+
+    Button(
+        onClick = { viewModel.login(email, password) },
+        enabled = !isRateLimited && !isLoading
+    ) {
+        Text(
+            if (isRateLimited) "Please wait..." else "Login"
+        )
+    }
+
+    if (state is LoginState.RateLimited) {
+        val rateLimitState = state as LoginState.RateLimited
+        RateLimitCountdown(
+            lockedUntil = rateLimitState.lockedUntil,
+            onUnlocked = { viewModel.clearRateLimitState() }
+        )
+    }
+}
+```
+
+#### Progress Indicator
+
+Optionally show remaining time as a progress indicator:
+
+```kotlin
+@Composable
+fun RateLimitProgress(
+    totalSeconds: Int,
+    remainingSeconds: Int
+) {
+    val progress = 1f - (remainingSeconds.toFloat() / totalSeconds)
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        CircularProgressIndicator(
+            progress = { progress },
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("$remainingSeconds seconds remaining")
+    }
+}
+```
+
+#### Error Message Localization
+
+The rate limit error has localized messages in all supported languages:
+
+| Locale | Message |
+|--------|---------|
+| English | "Too many login attempts. Please try again later." |
+| French | "Trop de tentatives de connexion. Veuillez réessayer plus tard." |
+| Dutch | "Te veel inlogpogingen. Probeer het later opnieuw." |
+| German | "Zu viele Anmeldeversuche. Bitte versuchen Sie es später erneut." |
+
+Use the standard localization pattern:
+
+```kotlin
+// Displays the localized message
+Text(exception.localized)
+```
+
+### Testing Rate Limiting
+
+#### Manual Testing
+
+```bash
+# Make 6 rapid login attempts with wrong password
+for i in {1..6}; do
+  curl -X POST http://localhost:8000/api/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"test@example.com","password":"wrong"}' \
+    -w "\nHTTP Status: %{http_code}\n"
+  echo "---"
+done
+```
+
+Expected behavior:
+- Attempts 1-5: HTTP 401 Unauthorized
+- Attempt 6+: HTTP 429 Too Many Requests with `Retry-After` header
+
+#### Unit Testing
+
+```kotlin
+@Test
+fun `should handle rate limit exception with retry countdown`() = runTest {
+    // Arrange
+    val exception = DokusException.TooManyLoginAttempts(retryAfterSeconds = 120)
+    whenever(loginUseCase(any(), any())).thenReturn(Result.failure(exception))
+
+    // Act
+    viewModel.login(email, password)
+
+    // Assert
+    val state = viewModel.state.value
+    assertTrue(state is LoginState.RateLimited)
+    assertEquals(120, (state as LoginState.RateLimited).retryAfterSeconds)
+}
+```
+
+### Best Practices
+
+1. **Always show remaining time**: Users should know exactly how long they need to wait
+2. **Disable the form**: Prevent users from making additional requests while locked
+3. **Preserve entered data**: Don't clear the email field—only the password
+4. **Use server time**: Trust `retryAfterSeconds` from the response, not local calculations
+5. **Handle clock skew**: Add a small buffer (5 seconds) when re-enabling the form
+6. **Log for support**: Log rate limit events for customer support investigations
+7. **Consider UX copy**: Use friendly language that doesn't blame the user
+
+### Related Documentation
+
+- **Backend Rate Limiting Details**: [features/auth/backend/docs/RATE_LIMITING.md](../features/auth/backend/docs/RATE_LIMITING.md)
+- **Exception Definition**: [foundation/domain/.../DokusException.kt](../foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/exceptions/DokusException.kt) (see `TooManyLoginAttempts`)
 
 ---
 
