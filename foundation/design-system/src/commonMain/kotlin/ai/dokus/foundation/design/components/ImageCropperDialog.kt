@@ -1,5 +1,11 @@
 package ai.dokus.foundation.design.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.image_cropper_apply
+import ai.dokus.app.resources.generated.image_cropper_content_description
+import ai.dokus.app.resources.generated.image_cropper_hint
+import ai.dokus.app.resources.generated.image_cropper_title
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -55,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A dialog for cropping images to a square aspect ratio.
@@ -105,11 +112,11 @@ fun ImageCropperDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel"
+                            contentDescription = stringResource(Res.string.action_cancel)
                         )
                     }
                     Text(
-                        text = "Crop Image",
+                        text = stringResource(Res.string.image_cropper_title),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.width(48.dp))
@@ -141,7 +148,7 @@ fun ImageCropperDialog(
                     // Image with transformations
                     AsyncImage(
                         model = imageData,
-                        contentDescription = "Image to crop",
+                        contentDescription = stringResource(Res.string.image_cropper_content_description),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
@@ -166,7 +173,7 @@ fun ImageCropperDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Pinch to zoom, drag to pan",
+                    text = stringResource(Res.string.image_cropper_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -182,7 +189,7 @@ fun ImageCropperDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(Res.string.action_cancel))
                     }
                     Button(
                         onClick = {
@@ -199,7 +206,7 @@ fun ImageCropperDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Apply")
+                        Text(stringResource(Res.string.image_cropper_apply))
                     }
                 }
             }

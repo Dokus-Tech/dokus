@@ -34,4 +34,13 @@
     <string name="save_changes">Wijzigingen opslaan</string>
     <string name="cancel">Annuleren</string>
     <string name="delete">Verwijderen</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Afbeelding bijsnijden</string>
+    <string name="image_cropper_apply">Toepassen</string>
+    <string name="image_cropper_hint">Knijp om te zoomen, sleep om te verschuiven</string>
+    <string name="image_cropper_content_description">Afbeelding om bij te snijden</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Bedrijfsavatar</string>
 </resources>

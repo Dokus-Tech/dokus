@@ -34,4 +34,13 @@
     <string name="save_changes">Enregistrer les modifications</string>
     <string name="cancel">Annuler</string>
     <string name="delete">Supprimer</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Recadrer l\'image</string>
+    <string name="image_cropper_apply">Appliquer</string>
+    <string name="image_cropper_hint">Pincez pour zoomer, faites glisser pour déplacer</string>
+    <string name="image_cropper_content_description">Image à recadrer</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Avatar de l\'entreprise</string>
 </resources>

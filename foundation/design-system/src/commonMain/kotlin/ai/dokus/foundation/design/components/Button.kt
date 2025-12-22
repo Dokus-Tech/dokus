@@ -1,6 +1,7 @@
 package ai.dokus.foundation.design.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_back
 import ai.dokus.app.resources.generated.arrow_left
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 enum class PButtonVariant {
     Default,
@@ -175,7 +177,7 @@ fun PBackButton(
 ) {
     Icon(
         painter = painterResource(Res.drawable.arrow_left),
-        contentDescription = "Back",
+        contentDescription = stringResource(Res.string.action_back),
         modifier = modifier.clickable { onBackPress() }.size(24.dp)
     )
 }
