@@ -292,3 +292,22 @@ data class ContactActivitySummary(
     val lastActivityDate: LocalDateTime? = null,
     val pendingApprovalCount: Long = 0   // Documents with this contact as suggested
 )
+
+// ============================================================================
+// MERGE / DEDUPE
+// ============================================================================
+
+/**
+ * Result of merging two contacts.
+ * Contains counts of reassigned items for UI feedback.
+ */
+@Serializable
+data class ContactMergeResult(
+    val sourceContactId: ContactId,
+    val targetContactId: ContactId,
+    val invoicesReassigned: Int,
+    val billsReassigned: Int,
+    val expensesReassigned: Int,
+    val notesReassigned: Int,
+    val sourceArchived: Boolean
+)
