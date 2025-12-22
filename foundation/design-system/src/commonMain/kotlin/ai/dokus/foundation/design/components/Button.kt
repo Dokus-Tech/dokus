@@ -69,6 +69,9 @@ fun PButton(
                 contentPadding = PaddingValues(
                     horizontal = Constrains.Spacing.large,
                     vertical = Constrains.Spacing.small
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
                 if (icon != null && iconPosition == PIconPosition.Leading) {
@@ -158,7 +161,10 @@ fun POutlinedButton(
         onClick = onClick,
         modifier = modifier.height(Constrains.Height.button),
         shape = MaterialTheme.shapes.small,
-        enabled = enabled
+        enabled = enabled,
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Text(
             text = text,
