@@ -136,13 +136,14 @@ internal fun PeppolConnectScreen(
 
                         is PeppolConnectState.Error -> {
                             // For field-level errors, show credentials pane so user can edit
-                            val exception = state.exception
+                            val errorState = state as PeppolConnectState.Error
+                            val exception = errorState.exception
                             if (exception is DokusException.Validation.ApiKeyRequired ||
                                 exception is DokusException.Validation.ApiSecretRequired ||
                                 exception is DokusException.Validation.InvalidApiCredentials) {
                                 CredentialsPane(state)
                             } else {
-                                ErrorPane(state as PeppolConnectState.Error)
+                                ErrorPane(errorState)
                             }
                         }
                     }
