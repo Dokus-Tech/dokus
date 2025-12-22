@@ -3,6 +3,7 @@ package ai.dokus.foundation.database.repository.contacts
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
+import ai.dokus.foundation.database.tables.contacts.ContactNotesTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
@@ -13,11 +14,15 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.ContactActivitySummary
 import ai.dokus.foundation.domain.model.ContactDto
+import ai.dokus.foundation.domain.model.ContactMergeResult
 import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactRequest
 import ai.dokus.foundation.ktor.database.dbQuery
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -29,6 +34,7 @@ import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
@@ -601,6 +607,129 @@ class ContactRepository {
                 expenseTotal = expenseTotal.toPlainString(),
                 lastActivityDate = lastActivityDate,
                 pendingApprovalCount = pendingApprovalCount
+            )
+        }
+    }
+
+    // =========================================================================
+    // MERGE / DEDUPE
+    // =========================================================================
+
+    /**
+     * Merge source contact into target contact.
+     *
+     * Process:
+     * 1. Validate both contacts exist and belong to tenant
+     * 2. Verify no VAT number conflict (both have different non-null VAT)
+     * 3. Reassign all invoices, bills, expenses from source to target
+     * 4. Move notes from source to target
+     * 5. Add system note documenting the merge
+     * 6. Soft-delete (deactivate) source contact
+     *
+     * CRITICAL: Must filter by tenantId for multi-tenant isolation.
+     *
+     * @param sourceContactId The contact to merge FROM (will be deactivated)
+     * @param targetContactId The contact to merge INTO (will receive all items)
+     * @param tenantId Tenant isolation
+     * @param mergedByEmail Email of user performing the merge (for audit note)
+     * @return MergeResult with counts of reassigned items
+     */
+    suspend fun mergeContacts(
+        sourceContactId: ContactId,
+        targetContactId: ContactId,
+        tenantId: TenantId,
+        mergedByEmail: String
+    ): Result<ContactMergeResult> = runCatching {
+        dbQuery {
+            val sourceUuid = UUID.fromString(sourceContactId.toString())
+            val targetUuid = UUID.fromString(targetContactId.toString())
+            val tenantUuid = UUID.fromString(tenantId.toString())
+
+            // 1. Fetch both contacts and validate
+            val sourceContact = ContactsTable.selectAll().where {
+                (ContactsTable.id eq sourceUuid) and (ContactsTable.tenantId eq tenantUuid)
+            }.singleOrNull() ?: throw IllegalArgumentException("Source contact not found")
+
+            val targetContact = ContactsTable.selectAll().where {
+                (ContactsTable.id eq targetUuid) and (ContactsTable.tenantId eq tenantUuid)
+            }.singleOrNull() ?: throw IllegalArgumentException("Target contact not found")
+
+            // 2. Verify no VAT conflict
+            val sourceVat = sourceContact[ContactsTable.vatNumber]
+            val targetVat = targetContact[ContactsTable.vatNumber]
+            if (!sourceVat.isNullOrBlank() && !targetVat.isNullOrBlank() && sourceVat != targetVat) {
+                throw IllegalArgumentException("Cannot merge contacts with different VAT numbers: $sourceVat vs $targetVat")
+            }
+
+            // 3. Check if source is a system contact
+            if (sourceContact[ContactsTable.isSystemContact]) {
+                throw IllegalArgumentException("Cannot merge system contact (Unknown / Unassigned)")
+            }
+
+            val sourceName = sourceContact[ContactsTable.name]
+
+            // 4. Reassign invoices
+            val invoicesReassigned = InvoicesTable.update({
+                (InvoicesTable.tenantId eq tenantUuid) and (InvoicesTable.contactId eq sourceUuid)
+            }) {
+                it[InvoicesTable.contactId] = targetUuid
+            }
+
+            // 5. Reassign bills
+            val billsReassigned = BillsTable.update({
+                (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq sourceUuid)
+            }) {
+                it[BillsTable.contactId] = targetUuid
+            }
+
+            // 6. Reassign expenses
+            val expensesReassigned = ExpensesTable.update({
+                (ExpensesTable.tenantId eq tenantUuid) and (ExpensesTable.contactId eq sourceUuid)
+            }) {
+                it[ExpensesTable.contactId] = targetUuid
+            }
+
+            // 7. Move notes from source to target
+            val notesReassigned = ContactNotesTable.update({
+                (ContactNotesTable.tenantId eq tenantUuid) and (ContactNotesTable.contactId eq sourceUuid)
+            }) {
+                it[ContactNotesTable.contactId] = targetUuid
+            }
+
+            // 8. Add system note documenting the merge
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val mergeNote = buildString {
+                appendLine("[SYSTEM] Contact merged from \"$sourceName\" (ID: $sourceContactId)")
+                appendLine("- Reassigned: $invoicesReassigned invoices, $billsReassigned bills, $expensesReassigned expenses")
+                appendLine("- Notes moved: $notesReassigned")
+                appendLine("- Merged by: $mergedByEmail at $now")
+                appendLine("- Source contact archived")
+            }
+
+            ContactNotesTable.insert {
+                it[ContactNotesTable.tenantId] = tenantUuid
+                it[ContactNotesTable.contactId] = targetUuid
+                it[content] = mergeNote
+                it[authorName] = "System"
+                it[createdAt] = now
+                it[updatedAt] = now
+            }
+
+            // 9. Soft-delete (deactivate) source contact
+            ContactsTable.update({
+                (ContactsTable.id eq sourceUuid) and (ContactsTable.tenantId eq tenantUuid)
+            }) {
+                it[isActive] = false
+            }
+
+            ContactMergeResult(
+                sourceContactId = sourceContactId,
+                targetContactId = targetContactId,
+                invoicesReassigned = invoicesReassigned,
+                billsReassigned = billsReassigned,
+                expensesReassigned = expensesReassigned,
+                notesReassigned = notesReassigned,
+                sourceArchived = true
             )
         }
     }
