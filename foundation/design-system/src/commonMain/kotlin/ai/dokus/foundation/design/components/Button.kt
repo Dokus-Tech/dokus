@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -55,6 +57,8 @@ fun PButton(
             icon = icon,
             contentDescription = contentDescription,
             iconPosition = iconPosition,
+            isLoading = isLoading,
+            isEnabled = isEnabled,
             modifier = modifier,
             onClick = onClick
         )
@@ -63,7 +67,7 @@ fun PButton(
         PButtonVariant.Outline -> {
             OutlinedButton(
                 onClick = onClick,
-                enabled = isEnabled,
+                enabled = isEnabled && !isLoading,
                 modifier = modifier.height(Constrains.Height.button),
                 shape = MaterialTheme.shapes.small,
                 contentPadding = PaddingValues(
@@ -74,23 +78,31 @@ fun PButton(
                     contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
-                if (icon != null && iconPosition == PIconPosition.Leading) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = contentDescription,
-                        modifier = Modifier.size(Constrains.IconSize.medium).padding(end = Constrains.Spacing.small)
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 2.dp
                     )
-                }
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                if (icon != null && iconPosition == PIconPosition.Trailing) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = contentDescription,
-                        modifier = Modifier.size(Constrains.IconSize.medium).padding(start = Constrains.Spacing.small)
+                } else {
+                    if (icon != null && iconPosition == PIconPosition.Leading) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = contentDescription,
+                            modifier = Modifier.size(Constrains.IconSize.medium).padding(end = Constrains.Spacing.small)
+                        )
+                    }
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
+                    if (icon != null && iconPosition == PIconPosition.Trailing) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = contentDescription,
+                            modifier = Modifier.size(Constrains.IconSize.medium).padding(start = Constrains.Spacing.small)
+                        )
+                    }
                 }
             }
         }
@@ -103,24 +115,38 @@ private fun PButtonDefault(
     icon: ImageVector? = PButtonDefaults.icon,
     contentDescription: String? = PButtonDefaults.contentDescription,
     iconPosition: PIconPosition = PButtonDefaults.iconPosition,
+    isLoading: Boolean = false,
+    isEnabled: Boolean = true,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Button(modifier = modifier, onClick = onClick) {
-        if (icon != null && iconPosition == PIconPosition.Leading) {
-            Icon(
-                icon,
-                modifier = Modifier.padding(end = Constrains.Spacing.small),
-                contentDescription = contentDescription
+    Button(
+        modifier = modifier,
+        onClick = onClick,
+        enabled = isEnabled && !isLoading
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = 2.dp
             )
-        }
-        Text(text, modifier = Modifier.padding(Constrains.Spacing.xSmall))
-        if (icon != null && iconPosition == PIconPosition.Trailing) {
-            Icon(
-                icon,
-                modifier = Modifier.padding(start = Constrains.Spacing.small),
-                contentDescription = contentDescription
-            )
+        } else {
+            if (icon != null && iconPosition == PIconPosition.Leading) {
+                Icon(
+                    icon,
+                    modifier = Modifier.padding(end = Constrains.Spacing.small),
+                    contentDescription = contentDescription
+                )
+            }
+            Text(text, modifier = Modifier.padding(Constrains.Spacing.xSmall))
+            if (icon != null && iconPosition == PIconPosition.Trailing) {
+                Icon(
+                    icon,
+                    modifier = Modifier.padding(start = Constrains.Spacing.small),
+                    contentDescription = contentDescription
+                )
+            }
         }
     }
 }
@@ -130,23 +156,32 @@ fun PPrimaryButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
         modifier = modifier.height(Constrains.Height.button),
         shape = MaterialTheme.shapes.small,
-        enabled = enabled,
+        enabled = enabled && !isLoading,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         )
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
-        )
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -155,22 +190,31 @@ fun POutlinedButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.height(Constrains.Height.button),
         shape = MaterialTheme.shapes.small,
-        enabled = enabled,
+        enabled = enabled && !isLoading,
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
-        )
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(Constrains.IconSize.buttonLoading),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
