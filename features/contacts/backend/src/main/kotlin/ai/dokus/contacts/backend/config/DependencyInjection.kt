@@ -1,5 +1,6 @@
 package ai.dokus.contacts.backend.config
 
+import ai.dokus.contacts.backend.service.ContactMatchingService
 import ai.dokus.contacts.backend.service.ContactNoteService
 import ai.dokus.contacts.backend.service.ContactService
 import ai.dokus.contacts.backend.database.ContactsTables
@@ -55,4 +56,5 @@ val databaseModule = module {
 val serviceModule = module {
     single { ContactService(get()) }
     single { ContactNoteService(get()) }
+    single { ContactMatchingService(get()) }
 }

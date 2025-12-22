@@ -3,6 +3,7 @@ package ai.dokus.foundation.domain.model
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -49,6 +50,23 @@ data class DocumentProcessingDto(
 
     /** Which AI provider was used (koog_local, openai, anthropic) */
     val aiProvider: String? = null,
+
+    // =========================================================================
+    // Contact Suggestion (populated after AI extraction)
+    // =========================================================================
+
+    /** Suggested contact ID from matching (null if no match found) */
+    val suggestedContactId: ContactId? = null,
+
+    /** Confidence of contact match (0.0 - 1.0) */
+    val contactSuggestionConfidence: Float? = null,
+
+    /** Reason for contact match (e.g., "Matched VAT: BE0123456789") */
+    val contactSuggestionReason: String? = null,
+
+    // =========================================================================
+    // Confirmation
+    // =========================================================================
 
     /** When user confirmed the extraction */
     val confirmedAt: LocalDateTime? = null,

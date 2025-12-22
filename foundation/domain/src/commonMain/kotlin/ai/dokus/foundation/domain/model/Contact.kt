@@ -4,9 +4,9 @@ import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ClientType
-import ai.dokus.foundation.domain.enums.ContactType
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ContactNoteId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.ids.VatNumber
@@ -29,7 +29,6 @@ data class ContactDto(
     val name: Name,
     val email: Email? = null,
     val vatNumber: VatNumber? = null,
-    val contactType: ContactType = ContactType.Customer,
     val businessType: ClientType = ClientType.Business,
     val addressLine1: String? = null,
     val addressLine2: String? = null,
@@ -51,7 +50,16 @@ data class ContactDto(
     val invoiceCount: Long = 0,
     val billCount: Long = 0,
     val expenseCount: Long = 0,
-    val notesCount: Long = 0
+    val notesCount: Long = 0,
+    // UI Contract: New fields for contacts module extension
+    /** Computed roles from cashflow items (customer, supplier, vendor) */
+    val derivedRoles: DerivedContactRoles? = null,
+    /** Full activity summary (optional, populated on demand for detail views) */
+    val activitySummary: ContactActivitySummary? = null,
+    /** True for system-managed contacts like "Unknown / Unassigned" */
+    val isSystemContact: Boolean = false,
+    /** Source document ID if contact was created from AI extraction */
+    val createdFromDocumentId: DocumentId? = null
 )
 
 /**
@@ -83,7 +91,6 @@ data class CreateContactRequest(
     val email: String? = null,
     val phone: String? = null,
     val vatNumber: String? = null,
-    val contactType: ContactType = ContactType.Customer,
     val businessType: ClientType = ClientType.Business,
     val addressLine1: String? = null,
     val addressLine2: String? = null,
@@ -110,7 +117,6 @@ data class UpdateContactRequest(
     val email: String? = null,
     val phone: String? = null,
     val vatNumber: String? = null,
-    val contactType: ContactType? = null,
     val businessType: ClientType? = null,
     val addressLine1: String? = null,
     val addressLine2: String? = null,
@@ -203,3 +209,115 @@ sealed class ContactEvent {
     @SerialName("ContactEvent.NoteDeleted")
     data class NoteDeleted(val contactId: ContactId, val noteId: ContactNoteId) : ContactEvent()
 }
+
+// ============================================================================
+// DERIVED ROLES (Computed from cashflow items)
+// ============================================================================
+
+/**
+ * Contact role derived from actual usage in cashflow items.
+ */
+@Serializable
+enum class ContactRole {
+    @SerialName("customer")
+    Customer,  // Has outgoing invoices
+
+    @SerialName("supplier")
+    Supplier,  // Has incoming bills
+
+    @SerialName("vendor")
+    Vendor     // Has expenses
+}
+
+/**
+ * Derived roles computed from cashflow items (invoices, bills, expenses).
+ * Replaces the manual ContactType field.
+ */
+@Serializable
+data class DerivedContactRoles(
+    val isCustomer: Boolean = false,   // Has outgoing invoices
+    val isSupplier: Boolean = false,   // Has incoming bills
+    val isVendor: Boolean = false,     // Has expenses
+    val primaryRole: ContactRole? = null  // Most common role by transaction count
+)
+
+// ============================================================================
+// CONTACT MATCHING (AI suggestion workflow)
+// ============================================================================
+
+/**
+ * Reason for how a contact match was determined.
+ */
+@Serializable
+enum class ContactMatchReason {
+    @SerialName("vat_number")
+    VatNumber,     // Matched by VAT number (high confidence)
+
+    @SerialName("peppol_id")
+    PeppolId,      // Matched by Peppol participant ID (high confidence)
+
+    @SerialName("company_number")
+    CompanyNumber, // Matched by company registration number
+
+    @SerialName("name_country")
+    NameAndCountry, // Matched by name + country (medium confidence)
+
+    @SerialName("name_only")
+    NameOnly,      // Matched by name only (low confidence)
+
+    @SerialName("no_match")
+    NoMatch        // No existing contact matched
+}
+
+/**
+ * Contact suggestion result from AI matching during document processing.
+ * Used when AI extracts counterparty info and attempts to match to existing contacts.
+ */
+@Serializable
+data class ContactSuggestion(
+    val contactId: ContactId?,           // Matched contact ID (null if no match)
+    val contact: ContactDto?,            // Full contact details if matched
+    val confidence: Float,               // 0.0 - 1.0 confidence score
+    val matchReason: ContactMatchReason, // How the match was determined
+    val matchDetails: String? = null     // Human-readable explanation (e.g., "Matched VAT: BE0123456789")
+)
+
+// ============================================================================
+// ACTIVITY VIEWS
+// ============================================================================
+
+/**
+ * Summary of a contact's activity across all cashflow item types.
+ * Used for contact detail views and dashboards.
+ */
+@Serializable
+data class ContactActivitySummary(
+    val contactId: ContactId,
+    val invoiceCount: Long = 0,
+    val invoiceTotal: String = "0.00",   // Decimal as string for precision
+    val billCount: Long = 0,
+    val billTotal: String = "0.00",
+    val expenseCount: Long = 0,
+    val expenseTotal: String = "0.00",
+    val lastActivityDate: LocalDateTime? = null,
+    val pendingApprovalCount: Long = 0   // Documents with this contact as suggested
+)
+
+// ============================================================================
+// MERGE / DEDUPE
+// ============================================================================
+
+/**
+ * Result of merging two contacts.
+ * Contains counts of reassigned items for UI feedback.
+ */
+@Serializable
+data class ContactMergeResult(
+    val sourceContactId: ContactId,
+    val targetContactId: ContactId,
+    val invoicesReassigned: Int,
+    val billsReassigned: Int,
+    val expensesReassigned: Int,
+    val notesReassigned: Int,
+    val sourceArchived: Boolean
+)

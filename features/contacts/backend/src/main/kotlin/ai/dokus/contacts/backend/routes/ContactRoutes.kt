@@ -2,6 +2,7 @@ package ai.dokus.contacts.backend.routes
 
 import ai.dokus.contacts.backend.service.ContactNoteService
 import ai.dokus.contacts.backend.service.ContactService
+import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ContactNoteId
@@ -39,6 +40,7 @@ import org.koin.ktor.ext.inject
 fun Route.contactRoutes() {
     val contactService by inject<ContactService>()
     val contactNoteService by inject<ContactNoteService>()
+    val contactRepository by inject<ContactRepository>()
 
     authenticateJwt {
         // ================================================================
@@ -63,7 +65,6 @@ fun Route.contactRoutes() {
 
             val contacts = contactService.listContacts(
                 tenantId = tenantId,
-                contactType = route.type,
                 isActive = route.active,
                 peppolEnabled = route.peppolEnabled,
                 searchQuery = route.search,
@@ -205,6 +206,72 @@ fun Route.contactRoutes() {
             ).getOrElse { throw DokusException.InternalError("Failed to update contact Peppol settings: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, contact)
+        }
+
+        // ================================================================
+        // ACTIVITY OPERATIONS
+        // ================================================================
+
+        /**
+         * GET /api/v1/contacts/{id}/activity
+         * Get activity summary for a contact (counts and totals of invoices, bills, expenses).
+         */
+        get<Contacts.Id.Activity> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val contactId = ContactId.parse(route.parent.id)
+
+            val activity = contactRepository.getContactActivitySummary(contactId, tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to get contact activity: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, activity)
+        }
+
+        // ================================================================
+        // MERGE OPERATIONS
+        // ================================================================
+
+        /**
+         * POST /api/v1/contacts/{id}/merge-into/{targetId}
+         * Merge source contact into target contact.
+         *
+         * All cashflow items (invoices, bills, expenses) and notes from the source
+         * contact are reassigned to the target contact. The source contact is archived
+         * (deactivated). A system note is added to the target documenting the merge.
+         *
+         * Error cases:
+         * - Source or target contact not found: 404
+         * - Both contacts have different non-null VAT numbers: 400
+         * - Source is a system contact (Unknown / Unassigned): 400
+         */
+        post<Contacts.Id.MergeInto> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val principal = dokusPrincipal
+            val sourceContactId = ContactId.parse(route.parent.id)
+            val targetContactId = ContactId.parse(route.targetId)
+
+            // Validate source != target
+            if (sourceContactId == targetContactId) {
+                throw DokusException.BadRequest("Cannot merge a contact into itself")
+            }
+
+            val result = contactRepository.mergeContacts(
+                sourceContactId = sourceContactId,
+                targetContactId = targetContactId,
+                tenantId = tenantId,
+                mergedByEmail = principal.email
+            ).getOrElse { ex ->
+                when {
+                    ex.message?.contains("not found") == true ->
+                        throw DokusException.NotFound(ex.message ?: "Contact not found")
+                    ex.message?.contains("VAT numbers") == true ||
+                    ex.message?.contains("system contact") == true ->
+                        throw DokusException.BadRequest(ex.message ?: "Merge not allowed")
+                    else ->
+                        throw DokusException.InternalError("Failed to merge contacts: ${ex.message}")
+                }
+            }
+
+            call.respond(HttpStatusCode.OK, result)
         }
 
         // ================================================================

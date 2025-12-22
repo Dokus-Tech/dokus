@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database.tables.contacts
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.domain.enums.ClientType
-import ai.dokus.foundation.domain.enums.ContactType
 import ai.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
@@ -33,8 +33,7 @@ object ContactsTable : UUIDTable("contacts") {
     val vatNumber = varchar("vat_number", 50).nullable()
     val companyNumber = varchar("company_number", 50).nullable()
 
-    // Contact type (Customer/Vendor/Both)
-    val contactType = dbEnumeration<ContactType>("contact_type").default(ContactType.Customer).index()
+    // Business type (Individual/Business/Government) - role is now derived from cashflow items
     val businessType = dbEnumeration<ClientType>("business_type").default(ClientType.Business)
 
     // Peppol e-invoicing (Belgium 2026 mandate)
@@ -56,6 +55,12 @@ object ContactsTable : UUIDTable("contacts") {
     val tags = text("tags").nullable()
     val isActive = bool("is_active").default(true)
 
+    // System contact tracking
+    val isSystemContact = bool("is_system_contact").default(false) // "Unknown Contact" placeholder
+    val createdFromDocumentId = uuid("created_from_document_id")
+        .references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL)
+        .nullable() // Track which document led to this contact's creation (user-confirmed)
+
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
@@ -65,6 +70,7 @@ object ContactsTable : UUIDTable("contacts") {
         uniqueIndex(tenantId, vatNumber)
         // Composite indexes for common queries
         index(false, tenantId, isActive)
-        index(false, tenantId, contactType, isActive)
+        // For filtering system contacts (Unknown Contact placeholder)
+        index(false, tenantId, isSystemContact)
     }
 }
