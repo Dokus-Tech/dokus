@@ -76,6 +76,9 @@ object BillsTable : UUIDTable("bills") {
         index(false, tenantId, dueDate)
         index(false, tenantId, category)
 
+        // For contact activity queries: find all bills for a contact
+        index(false, tenantId, contactId)
+
         // Avoid duplicate supplier invoice numbers per tenant when provided
         uniqueIndex(tenantId, invoiceNumber)
     }
