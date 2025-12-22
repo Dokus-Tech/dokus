@@ -3,11 +3,13 @@ package ai.dokus.auth.backend.routes
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.AddressRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
+import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.CreateTenantRequest
+import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.domain.routes.Tenants
 import ai.dokus.foundation.ktor.security.authenticateJwt
@@ -38,6 +40,7 @@ fun Route.tenantRoutes() {
     val addressRepository by inject<AddressRepository>()
     val userRepository by inject<UserRepository>()
     val avatarStorageService by inject<AvatarStorageService>()
+    val invoiceNumberGenerator by inject<InvoiceNumberGenerator>()
 
     authenticateJwt {
         /**
@@ -110,6 +113,18 @@ fun Route.tenantRoutes() {
             val tenantId = principal.requireTenantId()
             val settings = tenantRepository.getSettings(tenantId)
             call.respond(HttpStatusCode.OK, settings)
+        }
+
+        /**
+         * GET /api/v1/tenants/invoice-number-preview
+         * Preview the next invoice number without consuming it.
+         */
+        get<Tenants.InvoiceNumberPreview> {
+            val tenantId = dokusPrincipal.requireTenantId()
+            val preview = invoiceNumberGenerator.previewNextInvoiceNumber(tenantId).getOrElse {
+                throw DokusException.InternalError("Failed to generate invoice number preview")
+            }
+            call.respond(HttpStatusCode.OK, InvoiceNumberPreviewResponse(invoiceNumber = preview))
         }
 
         /**

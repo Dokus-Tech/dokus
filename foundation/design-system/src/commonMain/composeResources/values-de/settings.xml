@@ -63,6 +63,25 @@
     <string name="workspace_display_name">Anzeigename</string>
     <string name="workspace_select_title">Wählen Sie Ihren Arbeitsbereich</string>
 
+    <!-- Invoice Settings Descriptions -->
+    <string name="workspace_invoice_settings_description">Konfigurieren Sie, wie Ihre Rechnungen nummeriert und formatiert werden</string>
+    <string name="workspace_invoice_prefix_description">Erscheint am Anfang der Rechnungsnummern (z.B. INV-2025-001)</string>
+    <string name="workspace_payment_days_description">Standardanzahl der Tage bis zur Fälligkeit der Zahlung</string>
+
+    <!-- Invoice Numbering Section -->
+    <string name="workspace_invoice_numbering">Rechnungsnummerierung</string>
+    <string name="workspace_invoice_numbering_description">Steuern Sie das automatische Nummerierungsformat</string>
+    <string name="workspace_invoice_include_year">Jahr in Nummer einbeziehen</string>
+    <string name="workspace_invoice_yearly_reset">Nummerierung jährlich zurücksetzen</string>
+    <string name="workspace_invoice_padding">Nummern-Padding (Ziffern)</string>
+    <string name="workspace_invoice_preview">Vorschau</string>
+
+    <!-- Payment Terms Section -->
+    <string name="workspace_payment_terms_section">Zahlungsbedingungen</string>
+    <string name="workspace_payment_terms_text">Rechtliche Zahlungsbedingungen</string>
+    <string name="workspace_payment_terms_description">Optionale rechtliche Bedingungen auf Rechnungen (Verzugszinsen, Inkassokosten, etc.)</string>
+    <string name="workspace_payment_terms_placeholder">z.B. Bei Nichtzahlung wird ein Zinssatz von 8% pro Jahr berechnet...</string>
+
     <!-- Peppol Settings -->
     <string name="peppol_settings_title">Peppol E-Rechnung</string>
     <string name="peppol_connection_status">Verbindungsstatus</string>

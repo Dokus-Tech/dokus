@@ -63,6 +63,25 @@
     <string name="workspace_display_name">Nombre para mostrar</string>
     <string name="workspace_select_title">Selecciona tu espacio de trabajo</string>
 
+    <!-- Invoice Settings Descriptions -->
+    <string name="workspace_invoice_settings_description">Configura cómo se numeran y formatean tus facturas</string>
+    <string name="workspace_invoice_prefix_description">Aparece al inicio de los números de factura (ej: INV-2025-001)</string>
+    <string name="workspace_payment_days_description">Número predeterminado de días hasta el vencimiento del pago</string>
+
+    <!-- Invoice Numbering Section -->
+    <string name="workspace_invoice_numbering">Numeración de facturas</string>
+    <string name="workspace_invoice_numbering_description">Controla el formato de numeración automática</string>
+    <string name="workspace_invoice_include_year">Incluir año en el número</string>
+    <string name="workspace_invoice_yearly_reset">Reiniciar numeración cada año</string>
+    <string name="workspace_invoice_padding">Relleno de número (dígitos)</string>
+    <string name="workspace_invoice_preview">Vista previa</string>
+
+    <!-- Payment Terms Section -->
+    <string name="workspace_payment_terms_section">Términos de pago</string>
+    <string name="workspace_payment_terms_text">Términos legales de pago</string>
+    <string name="workspace_payment_terms_description">Términos legales opcionales impresos en facturas (intereses por mora, costos de cobranza, etc.)</string>
+    <string name="workspace_payment_terms_placeholder">ej: En caso de impago, se aplicará un interés del 8% anual...</string>
+
     <!-- Peppol Settings -->
     <string name="peppol_settings_title">Facturación electrónica Peppol</string>
     <string name="peppol_connection_status">Estado de conexión</string>

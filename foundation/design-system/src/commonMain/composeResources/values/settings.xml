@@ -62,6 +62,25 @@
     <string name="workspace_display_name">Display name</string>
     <string name="workspace_select_title">Select your workspace</string>
 
+    <!-- Invoice Settings Descriptions -->
+    <string name="workspace_invoice_settings_description">Configure how your invoices are numbered and formatted</string>
+    <string name="workspace_invoice_prefix_description">Appears at the start of invoice numbers (e.g., INV-2025-001)</string>
+    <string name="workspace_payment_days_description">Default number of days until payment is due</string>
+
+    <!-- Invoice Numbering Section -->
+    <string name="workspace_invoice_numbering">Invoice Numbering</string>
+    <string name="workspace_invoice_numbering_description">Control the automatic numbering format</string>
+    <string name="workspace_invoice_include_year">Include year in number</string>
+    <string name="workspace_invoice_yearly_reset">Reset numbering each year</string>
+    <string name="workspace_invoice_padding">Number padding (digits)</string>
+    <string name="workspace_invoice_preview">Preview</string>
+
+    <!-- Payment Terms Section -->
+    <string name="workspace_payment_terms_section">Payment Terms</string>
+    <string name="workspace_payment_terms_text">Legal Payment Terms</string>
+    <string name="workspace_payment_terms_description">Optional legal terms printed on invoices (late payment fees, collection costs, etc.)</string>
+    <string name="workspace_payment_terms_placeholder">e.g., In the event of non-payment, an interest rate of 8% per year will be charged...</string>
+
     <!-- Peppol Settings -->
     <string name="peppol_settings_title">Peppol E-Invoicing</string>
     <string name="peppol_connection_status">Connection Status</string>

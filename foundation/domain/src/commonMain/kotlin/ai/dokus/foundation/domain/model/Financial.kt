@@ -84,6 +84,10 @@ data class TenantSettings(
     val nextInvoiceNumber: Int = 1,
     val defaultPaymentTerms: Int = 30,
     val defaultVatRate: VatRate = VatRate.STANDARD_BE,
+    val invoiceYearlyReset: Boolean = true,
+    val invoicePadding: Int = 4,
+    val invoiceIncludeYear: Boolean = true,
+    val invoiceTimezone: String = "Europe/Brussels",
     val companyName: String? = null,
     val companyIban: Iban? = null,
     val companyBic: Bic? = null,
@@ -93,6 +97,7 @@ data class TenantSettings(
     val emailWeeklyReports: Boolean = false,
     val enableBankSync: Boolean = false,
     val enablePeppol: Boolean = false,
+    val paymentTermsText: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
@@ -474,6 +479,15 @@ data class BillCorrections(
 data class CreatedFromDocumentResponse<T>(
     val entity: T,
     val documentId: DocumentId
+)
+
+/**
+ * Response for invoice number preview.
+ * Used to show the next expected invoice number before creation.
+ */
+@Serializable
+data class InvoiceNumberPreviewResponse(
+    val invoiceNumber: String
 )
 
 // NOTE: CashflowOverview, CashflowPeriod, CashInSummary, CashOutSummary

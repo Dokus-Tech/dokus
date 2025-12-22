@@ -63,6 +63,25 @@
     <string name="workspace_display_name">Weergavenaam</string>
     <string name="workspace_select_title">Selecteer uw werkruimte</string>
 
+    <!-- Invoice Settings Descriptions -->
+    <string name="workspace_invoice_settings_description">Configureer hoe uw facturen genummerd en opgemaakt worden</string>
+    <string name="workspace_invoice_prefix_description">Verschijnt aan het begin van factuurnummers (bijv. INV-2025-001)</string>
+    <string name="workspace_payment_days_description">Standaard aantal dagen tot betaling verschuldigd is</string>
+
+    <!-- Invoice Numbering Section -->
+    <string name="workspace_invoice_numbering">Factuurnummering</string>
+    <string name="workspace_invoice_numbering_description">Beheer het automatische nummeringsformaat</string>
+    <string name="workspace_invoice_include_year">Jaar opnemen in nummer</string>
+    <string name="workspace_invoice_yearly_reset">Nummering jaarlijks resetten</string>
+    <string name="workspace_invoice_padding">Nummer padding (cijfers)</string>
+    <string name="workspace_invoice_preview">Voorbeeld</string>
+
+    <!-- Payment Terms Section -->
+    <string name="workspace_payment_terms_section">Betalingsvoorwaarden</string>
+    <string name="workspace_payment_terms_text">Juridische betalingsvoorwaarden</string>
+    <string name="workspace_payment_terms_description">Optionele juridische voorwaarden op facturen (vertragingsrente, incassokosten, etc.)</string>
+    <string name="workspace_payment_terms_placeholder">bijv. Bij niet-betaling wordt een rente van 8% per jaar in rekening gebracht...</string>
+
     <!-- Peppol Settings -->
     <string name="peppol_settings_title">Peppol E-facturering</string>
     <string name="peppol_connection_status">Verbindingsstatus</string>
