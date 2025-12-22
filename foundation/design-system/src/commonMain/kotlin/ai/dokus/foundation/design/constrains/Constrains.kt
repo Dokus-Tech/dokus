@@ -77,6 +77,7 @@ object Constrains {
         val large = 32.dp    // Prominent icons
         val xLarge = 48.dp   // Featured icons
         val xxLarge = 64.dp  // Hero icons
+        val buttonLoading = 20.dp // Loading indicator inside buttons
     }
 
     /**
