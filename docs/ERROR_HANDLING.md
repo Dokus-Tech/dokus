@@ -17,6 +17,14 @@ This document provides a comprehensive reference for error handling in the Dokus
   - [503 Service Unavailable](#503-service-unavailable)
 - [Error Response Format](#error-response-format)
 - [Exception Properties](#exception-properties)
+- [Backend Error Handling Configuration](#backend-error-handling-configuration)
+  - [Installation](#installation)
+  - [StatusPages Plugin Configuration](#statuspages-plugin-configuration)
+  - [Exception Handler Priority](#exception-handler-priority)
+  - [Standard Exception Mappings](#standard-exception-mappings)
+  - [Rate Limiting with Retry-After Header](#rate-limiting-with-retry-after-header)
+  - [Logging Patterns](#logging-patterns)
+  - [JSON Serialization](#json-serialization)
 
 ---
 
@@ -889,6 +897,247 @@ ERR-550e8400-e29b-41d4-a716-446655440000
 ```
 
 Use this ID when investigating errors in logs or when users report issues.
+
+---
+
+## Backend Error Handling Configuration
+
+Backend services use Ktor's [StatusPages](https://ktor.io/docs/status-pages.html) plugin to convert exceptions into consistent JSON error responses. This section documents how to configure error handling in your backend service.
+
+### Location
+
+```
+foundation/ktor-common/src/main/kotlin/ai/dokus/foundation/ktor/configure/ErrorHandling.kt
+```
+
+### Installation
+
+To enable error handling in your Ktor application, call `configureErrorHandling()` during application setup:
+
+```kotlin
+fun Application.module() {
+    // Configure error handling first to catch all exceptions
+    configureErrorHandling()
+
+    // Other configuration...
+    configureSerialization()
+    configureRouting()
+}
+```
+
+### StatusPages Plugin Configuration
+
+The `configureErrorHandling()` function installs the StatusPages plugin with exception handlers in a specific priority order. The order matters because Ktor uses the most specific handler that matches the thrown exception.
+
+```kotlin
+fun Application.configureErrorHandling() {
+    val logger = LoggerFactory.getLogger("ErrorHandler")
+
+    install(StatusPages) {
+        // 1. Rate limiting with special Retry-After header
+        exception<DokusException.TooManyLoginAttempts> { call, cause ->
+            logger.warn("Rate limit exceeded: ${cause.message}")
+            call.response.headers.append(HttpHeaders.RetryAfter, cause.retryAfterSeconds.toString())
+            call.respond<DokusException>(HttpStatusCode.TooManyRequests, cause)
+        }
+
+        // 2. All other DokusException types
+        exception<DokusException> { call, cause ->
+            logger.warn("DokusException: ${cause.message}")
+            call.respond<DokusException>(
+                HttpStatusCode.fromValue(cause.httpStatusCode),
+                cause,
+            )
+        }
+
+        // 3. Map Java/Kotlin standard exceptions
+        exception<IllegalArgumentException> { call, cause -> ... }
+        exception<NoSuchElementException> { call, cause -> ... }
+
+        // 4. Map network/connection exceptions
+        exception<ConnectException> { call, cause -> ... }
+        exception<SocketTimeoutException> { call, cause -> ... }
+
+        // 5. Catch-all for unexpected exceptions
+        exception<Throwable> { call, cause -> ... }
+    }
+}
+```
+
+### Exception Handler Priority
+
+Handlers are matched in order of specificity. More specific exception types should be registered before their parent types:
+
+| Priority | Exception Type | Why First? |
+|----------|----------------|------------|
+| 1 | `DokusException.TooManyLoginAttempts` | Adds special `Retry-After` header |
+| 2 | `DokusException` | All custom application exceptions |
+| 3 | `IllegalArgumentException` | Common validation failures from stdlib |
+| 4 | `NoSuchElementException` | Collection access failures |
+| 5 | `ConnectException` | Downstream service connection failures |
+| 6 | `SocketTimeoutException` | Downstream service timeouts |
+| 7 | `Throwable` | Catch-all for unexpected errors |
+
+### Standard Exception Mappings
+
+The error handler automatically maps common Java/Kotlin exceptions to appropriate DokusException types:
+
+#### IllegalArgumentException → BadRequest (400)
+
+When business logic throws `IllegalArgumentException` (e.g., from `require()` calls), it's mapped to a `BadRequest`:
+
+```kotlin
+// In your service code:
+fun createInvoice(amount: BigDecimal) {
+    require(amount > BigDecimal.ZERO) { "Amount must be positive" }
+    // ...
+}
+
+// If requirement fails, client receives:
+// HTTP 400
+// {
+//   "httpStatusCode": 400,
+//   "errorCode": "BAD_REQUEST",
+//   "recoverable": false,
+//   "errorId": "ERR-...",
+//   "message": "Amount must be positive"
+// }
+```
+
+#### NoSuchElementException → NotFound (404)
+
+When code throws `NoSuchElementException` (e.g., from `.first()`, `.single()`, or `Map.getValue()`), it's mapped to `NotFound`:
+
+```kotlin
+// In your repository code:
+fun getById(id: UUID): Entity =
+    entities.first { it.id == id }  // Throws NoSuchElementException if not found
+
+// Client receives:
+// HTTP 404
+// {
+//   "httpStatusCode": 404,
+//   "errorCode": "RESOURCE_NOT_FOUND",
+//   "recoverable": false,
+//   "errorId": "ERR-...",
+//   "message": "Resource was not found"
+// }
+```
+
+#### ConnectException → ServiceUnavailable (503)
+
+Connection failures to downstream services (database, external APIs) are mapped to `ConnectionError`:
+
+```kotlin
+// If database connection fails:
+// HTTP 503
+// {
+//   "httpStatusCode": 503,
+//   "errorCode": "CONNECTION_ERROR",
+//   "recoverable": true,
+//   "errorId": "ERR-...",
+//   "message": "Downstream service is unavailable"
+// }
+```
+
+#### SocketTimeoutException → GatewayTimeout (504)
+
+Request timeouts to downstream services are mapped to a gateway timeout:
+
+```kotlin
+// If external API times out:
+// HTTP 504
+// {
+//   "httpStatusCode": 503,
+//   "errorCode": "CONNECTION_ERROR",
+//   "recoverable": true,
+//   "errorId": "ERR-...",
+//   "message": "Downstream service timed out"
+// }
+```
+
+> **Note**: The error code is `CONNECTION_ERROR` with HTTP 504, indicating a transient issue that may succeed on retry.
+
+#### Throwable → InternalError (500)
+
+Any unhandled exception is caught and wrapped in an `InternalError`:
+
+```kotlin
+// Any unexpected exception:
+// HTTP 500
+// {
+//   "httpStatusCode": 500,
+//   "errorCode": "INTERNAL_ERROR",
+//   "recoverable": true,
+//   "errorId": "ERR-...",
+//   "message": "An unexpected error occurred"
+// }
+```
+
+### Rate Limiting with Retry-After Header
+
+The `TooManyLoginAttempts` exception receives special handling to include the HTTP `Retry-After` header:
+
+```kotlin
+exception<DokusException.TooManyLoginAttempts> { call, cause ->
+    call.response.headers.append(HttpHeaders.RetryAfter, cause.retryAfterSeconds.toString())
+    call.respond<DokusException>(HttpStatusCode.TooManyRequests, cause)
+}
+```
+
+**Response Headers:**
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+Content-Type: application/json
+```
+
+**Response Body:**
+```json
+{
+  "httpStatusCode": 429,
+  "errorCode": "TOO_MANY_LOGIN_ATTEMPTS",
+  "recoverable": true,
+  "errorId": "ERR-...",
+  "message": "Too many login attempts. Please try again later.",
+  "retryAfterSeconds": 60
+}
+```
+
+Clients should read the `Retry-After` header (or `retryAfterSeconds` field) to know when to retry.
+
+### Logging Patterns
+
+All exceptions are logged with appropriate severity levels:
+
+| Log Level | Exception Types | Reason |
+|-----------|-----------------|--------|
+| `warn` | `DokusException`, `IllegalArgumentException`, `NoSuchElementException` | Expected client errors |
+| `error` | `ConnectException`, `SocketTimeoutException`, `Throwable` | Infrastructure or unexpected errors |
+
+Log messages include the error ID for correlation:
+
+```kotlin
+logger.warn("DokusException: ${cause.message}")  // Logs error ID in message
+logger.error("Unhandled exception", cause)       // Includes full stack trace
+```
+
+### JSON Serialization
+
+Responses use Kotlinx Serialization. Ensure your application has serialization configured:
+
+```kotlin
+fun Application.configureSerialization() {
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = false
+            encodeDefaults = true
+        })
+    }
+}
+```
+
+The `DokusException` class is annotated with `@Serializable`, ensuring all subclasses serialize correctly with their additional fields (e.g., `retryAfterSeconds`, `maxSessions`).
 
 ---
 
