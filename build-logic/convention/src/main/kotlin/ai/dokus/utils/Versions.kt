@@ -10,7 +10,7 @@ package ai.dokus.utils
  */
 object AppVersion {
     /** Default version name for development builds */
-    const val NAME = "0.0.0-dev"
+    const val NAME = "1.0.0"
 
     /** Version code: git commit count (set by CI) */
     const val CODE = 1
