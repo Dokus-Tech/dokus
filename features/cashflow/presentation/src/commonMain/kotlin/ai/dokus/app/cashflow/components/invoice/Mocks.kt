@@ -5,7 +5,6 @@ import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.enums.ContactType
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
@@ -27,7 +26,6 @@ object Mocks {
         name = Name("Acme Corporation"),
         email = Email("billing@acme.com"),
         vatNumber = VatNumber("BE0123456789"),
-        contactType = ContactType.Customer,
         peppolId = "0208:0123456789",
         peppolEnabled = true,
         addressLine1 = "123 Business Street",
@@ -46,7 +44,6 @@ object Mocks {
         name = Name("Local Business BVBA"),
         email = Email("contact@localbusiness.be"),
         vatNumber = VatNumber("BE9876543210"),
-        contactType = ContactType.Customer,
         peppolId = null,
         peppolEnabled = false,
         addressLine1 = "456 Commerce Lane",
