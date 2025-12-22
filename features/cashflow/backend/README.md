@@ -370,7 +370,11 @@ curl -X POST \
 
 ## Error Handling
 
-Standard HTTP status codes and `DokusException` types:
+This service uses the standard DokusException error handling system. For comprehensive documentation including all exception types, error codes, client handling patterns, and troubleshooting, see the **[Error Handling Guide](../../../docs/ERROR_HANDLING.md)**.
+
+### Quick Reference
+
+Standard HTTP status codes and `DokusException` types used by this service:
 
 | Status | Exception | Meaning |
 |--------|-----------|---------|
@@ -382,6 +386,13 @@ Standard HTTP status codes and `DokusException` types:
 | 403 | `NotAuthorized` | Permission denied |
 | 404 | `NotFound` | Resource not found |
 | 500 | `InternalError` | Server error |
+
+### Additional Resources
+
+- **[Complete Exception Reference](../../../docs/ERROR_HANDLING.md#exception-types-reference)** - All 40+ DokusException types with error codes
+- **[Backend Configuration](../../../docs/ERROR_HANDLING.md#backend-error-handling-configuration)** - StatusPages plugin setup
+- **[Client-Side Handling](../../../docs/ERROR_HANDLING.md#client-side-error-handling)** - Frontend error handling patterns
+- **[Troubleshooting](../../../docs/ERROR_HANDLING.md#troubleshooting)** - Common error scenarios and debugging
 
 ## Related Services
 
