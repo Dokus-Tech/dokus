@@ -89,12 +89,12 @@ jobs:
           cd ..
 
           # Show contents
-          echo "Package contents:"
+          echo "📦 Package contents:"
           unzip -l dokus-quick-deploy.zip
 
           # Get file size
           SIZE=$(du -h dokus-quick-deploy.zip | cut -f1)
-          echo "Package size: $SIZE"
+          echo "📊 Package size: $SIZE"
 
       - name: 📝 Generate changelog
         id: changelog
