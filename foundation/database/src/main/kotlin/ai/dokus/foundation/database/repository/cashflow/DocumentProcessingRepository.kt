@@ -5,6 +5,7 @@ import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
+import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -324,6 +325,35 @@ class DocumentProcessingRepository {
             it[processingStartedAt] = null
             it[lastProcessedAt] = null
             it[aiProvider] = null
+            // Reset contact suggestion
+            it[suggestedContactId] = null
+            it[contactSuggestionConfidence] = null
+            it[contactSuggestionReason] = null
+            it[updatedAt] = now
+        } > 0
+    }
+
+    /**
+     * Update the suggested contact for a processing record.
+     * Called after AI extraction to populate contact suggestion.
+     */
+    suspend fun updateContactSuggestion(
+        processingId: DocumentProcessingId,
+        tenantId: TenantId,
+        suggestedContactId: ContactId?,
+        confidence: Float?,
+        reason: String?
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        DocumentProcessingTable.update({
+            (DocumentProcessingTable.id eq UUID.fromString(processingId.toString())) and
+                    (DocumentProcessingTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[DocumentProcessingTable.suggestedContactId] = suggestedContactId?.let { id ->
+                UUID.fromString(id.toString())
+            }
+            it[contactSuggestionConfidence] = confidence
+            it[contactSuggestionReason] = reason
             it[updatedAt] = now
         } > 0
     }
@@ -392,6 +422,12 @@ class DocumentProcessingRepository {
             processingStartedAt = this[DocumentProcessingTable.processingStartedAt],
             errorMessage = this[DocumentProcessingTable.errorMessage],
             aiProvider = this[DocumentProcessingTable.aiProvider],
+            // Contact suggestion fields
+            suggestedContactId = this[DocumentProcessingTable.suggestedContactId]?.let {
+                ContactId.parse(it.toString())
+            },
+            contactSuggestionConfidence = this[DocumentProcessingTable.contactSuggestionConfidence],
+            contactSuggestionReason = this[DocumentProcessingTable.contactSuggestionReason],
             confirmedAt = this[DocumentProcessingTable.confirmedAt],
             confirmedEntityType = this[DocumentProcessingTable.confirmedEntityType],
             confirmedEntityId = this[DocumentProcessingTable.confirmedEntityId]?.toString(),
