@@ -1,3 +1,18 @@
+## [0.1.1] - 22/12/2025
+
+### ✨ New Features
+- 🎨 **Design System**: Implement calm, minimal visual baseline for improved UI consistency and aesthetics
+- 🏷️ **Release Workflow**: Implement tag-based release workflow with automated deployment package creation
+- Loading indicator added to PButton component for enhanced user feedback during async operations
+
+### 🔧 Changed
+- Frontend apps now use version from git tags instead of manual version management
+- Release process moved from CI workflow to dedicated tag-triggered release workflow
+
+### 🐛 Fixed
+- Remove unused major/minor/build version components
+- Build and import issues
+
 # Changelog
 
 All notable changes to Dokus are documented here.
