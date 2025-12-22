@@ -14,8 +14,10 @@ import ai.dokus.foundation.database.repository.contacts.ContactNoteRepository
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
+import ai.dokus.foundation.database.repository.cashflow.InvoiceNumberRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import ai.dokus.foundation.database.repository.payment.PaymentRepository
+import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
@@ -42,7 +44,9 @@ val repositoryModuleAuth = module {
 val repositoryModuleCashflow = module {
     single { DocumentRepository() }
     single { DocumentProcessingRepository() }
-    single { InvoiceRepository() }
+    single { InvoiceNumberRepository() }
+    single { InvoiceNumberGenerator(get()) }
+    single { InvoiceRepository(get()) }
     single { ExpenseRepository() }
     single { BillRepository() }
     single { CashflowRepository(get(), get()) }
