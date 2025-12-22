@@ -4,6 +4,7 @@ import ai.dokus.app.cashflow.screens.AddDocumentScreen
 import ai.dokus.app.cashflow.screens.CreateInvoiceScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolConnectScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
+import ai.dokus.foundation.domain.model.PeppolProvider
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
@@ -24,7 +25,8 @@ internal object CashflowNavigationProvider : NavigationProvider {
         }
         composable<SettingsDestination.PeppolConfiguration.Connect> { backStackEntry ->
             val route = backStackEntry.toRoute<SettingsDestination.PeppolConfiguration.Connect>()
-            PeppolConnectScreen(provider = route.provider)
+            val provider = PeppolProvider.fromName(route.providerName) ?: PeppolProvider.Recommand
+            PeppolConnectScreen(provider = provider)
         }
     }
 }

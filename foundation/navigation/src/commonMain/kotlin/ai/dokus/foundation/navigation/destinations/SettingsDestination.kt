@@ -1,6 +1,5 @@
 package ai.dokus.foundation.navigation.destinations
 
-import ai.dokus.foundation.domain.model.PeppolProvider
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -24,7 +23,7 @@ sealed interface SettingsDestination : NavigationDestination {
     sealed interface PeppolConfiguration : SettingsDestination {
         @Serializable
         @SerialName("settings/peppol/connect")
-        data class Connect(val provider: PeppolProvider) : PeppolConfiguration
+        data class Connect(val providerName: String) : PeppolConfiguration
     }
 
     @Serializable
