@@ -36,6 +36,18 @@ pipelines:
       macos-build-dmg:
         depends_on:
           - tests
+  release-all:
+    workflows:
+      tests: {}
+      android-build-aab:
+        depends_on:
+          - tests
+      ios-build:
+        depends_on:
+          - tests
+      macos-build-dmg:
+        depends_on:
+          - tests
 workflows:
   tests:
     title: Run All Tests
