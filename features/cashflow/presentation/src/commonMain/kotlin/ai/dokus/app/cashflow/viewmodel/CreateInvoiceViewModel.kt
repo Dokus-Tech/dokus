@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.viewmodel
 
+import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.cashflow.usecase.SubmitInvoiceUseCase
 import ai.dokus.app.cashflow.usecase.ValidateInvoiceUseCase
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
@@ -38,6 +39,10 @@ internal class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocume
     private val logger = Logger.forClass<CreateInvoiceViewModel>()
     private val validateInvoice: ValidateInvoiceUseCase by inject()
     private val submitInvoice: SubmitInvoiceUseCase by inject()
+    private val tenantDataSource: TenantRemoteDataSource by inject()
+
+    private val _invoiceNumberPreview = MutableStateFlow<String?>(null)
+    val invoiceNumberPreview: StateFlow<String?> = _invoiceNumberPreview.asStateFlow()
 
     private val _clientsState = MutableStateFlow<DokusState<List<ContactDto>>>(DokusState.idle())
     val clientsState: StateFlow<DokusState<List<ContactDto>>> = _clientsState.asStateFlow()
@@ -63,7 +68,18 @@ internal class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocume
         )
     }
 
-    init { loadClients() }
+    init {
+        loadClients()
+        loadInvoiceNumberPreview()
+    }
+
+    private fun loadInvoiceNumberPreview() {
+        scope.launch {
+            tenantDataSource.getInvoiceNumberPreview()
+                .onSuccess { _invoiceNumberPreview.value = it }
+                .onFailure { logger.w { "Could not load invoice number preview" } }
+        }
+    }
 
     fun loadClients() {
         scope.launch {
@@ -190,5 +206,6 @@ internal class CreateInvoiceViewModel : BaseViewModel<DokusState<FinancialDocume
         _uiState.value = CreateInvoiceUiState(expandedItemId = firstItem.id)
         _createdInvoiceId.value = null
         mutableState.value = DokusState.idle()
+        loadInvoiceNumberPreview()
     }
 }

@@ -91,7 +91,11 @@ class WorkspaceSettingsViewModel(
                 companyIban = form.iban.takeIf { it.isNotBlank() }?.let { Iban(it) },
                 companyBic = form.bic.takeIf { it.isNotBlank() }?.let { Bic(it) },
                 invoicePrefix = form.invoicePrefix.ifBlank { "INV" },
-                defaultPaymentTerms = form.defaultPaymentTerms
+                defaultPaymentTerms = form.defaultPaymentTerms,
+                invoiceYearlyReset = form.invoiceYearlyReset,
+                invoicePadding = form.invoicePadding,
+                invoiceIncludeYear = form.invoiceIncludeYear,
+                invoiceTimezone = form.invoiceTimezone
             )
 
             tenantDataSource.updateTenantSettings(updatedSettings).fold(
