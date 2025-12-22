@@ -55,6 +55,7 @@ object TenantMappers {
         emailWeeklyReports = this[TenantSettingsTable.emailWeeklyReports],
         enableBankSync = this[TenantSettingsTable.enableBankSync],
         enablePeppol = this[TenantSettingsTable.enablePeppol],
+        paymentTermsText = this[TenantSettingsTable.paymentTermsText],
         createdAt = this[TenantSettingsTable.createdAt],
         updatedAt = this[TenantSettingsTable.updatedAt]
     )
