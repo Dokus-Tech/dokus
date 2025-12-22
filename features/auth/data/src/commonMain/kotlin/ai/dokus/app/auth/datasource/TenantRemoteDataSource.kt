@@ -87,4 +87,10 @@ interface TenantRemoteDataSource {
      * @return Result indicating success or failure
      */
     suspend fun deleteAvatar(): Result<Unit>
+
+    /**
+     * Preview the next invoice number without consuming it.
+     * @return Result containing the preview invoice number string
+     */
+    suspend fun getInvoiceNumberPreview(): Result<String>
 }

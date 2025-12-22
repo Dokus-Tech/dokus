@@ -150,6 +150,22 @@ class WorkspaceSettingsViewModel(
         }
     }
 
+    fun updateInvoiceYearlyReset(value: Boolean) {
+        _formState.value = _formState.value.copy(invoiceYearlyReset = value)
+    }
+
+    fun updateInvoicePadding(value: Int) {
+        _formState.value = _formState.value.copy(invoicePadding = value.coerceIn(1, 8))
+    }
+
+    fun updateInvoiceIncludeYear(value: Boolean) {
+        _formState.value = _formState.value.copy(invoiceIncludeYear = value)
+    }
+
+    fun updateInvoiceTimezone(value: String) {
+        _formState.value = _formState.value.copy(invoiceTimezone = value)
+    }
+
     // ===== Avatar Operations =====
 
     /**
@@ -226,7 +242,11 @@ class WorkspaceSettingsViewModel(
             bic = settings.companyBic?.value ?: "",
             address = address?.toDisplayString().orEmpty(),
             invoicePrefix = settings.invoicePrefix,
-            defaultPaymentTerms = settings.defaultPaymentTerms
+            defaultPaymentTerms = settings.defaultPaymentTerms,
+            invoiceYearlyReset = settings.invoiceYearlyReset,
+            invoicePadding = settings.invoicePadding,
+            invoiceIncludeYear = settings.invoiceIncludeYear,
+            invoiceTimezone = settings.invoiceTimezone
         )
     }
 }
@@ -261,7 +281,12 @@ data class WorkspaceFormState(
     val bic: String = "",
     val address: String = "",
     val invoicePrefix: String = "INV",
-    val defaultPaymentTerms: Int = 30
+    val defaultPaymentTerms: Int = 30,
+    // Invoice numbering configuration
+    val invoiceYearlyReset: Boolean = true,
+    val invoicePadding: Int = 4,
+    val invoiceIncludeYear: Boolean = true,
+    val invoiceTimezone: String = "Europe/Brussels"
 )
 
 /**
