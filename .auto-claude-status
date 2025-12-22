@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "004-standardize-material-theme-with-shared-constraints",
+  "spec": "012-implement-tag-based-release-workflow",
   "state": "building",
   "subtasks": {
-    "completed": 19,
-    "total": 22,
+    "completed": 2,
+    "total": 10,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Refactor Complex Components",
+    "current": "Create Release Workflow",
     "id": null,
-    "total": 2
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 20,
-    "started_at": "2025-12-22T15:13:42.016403"
+    "number": 3,
+    "started_at": "2025-12-22T17:29:13.504801"
   },
-  "last_update": "2025-12-22T15:50:25.808494"
+  "last_update": "2025-12-22T17:33:11.189177"
 }
