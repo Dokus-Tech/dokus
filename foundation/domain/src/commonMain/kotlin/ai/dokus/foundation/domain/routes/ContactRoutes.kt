@@ -1,6 +1,5 @@
 package ai.dokus.foundation.domain.routes
 
-import ai.dokus.foundation.domain.enums.ContactType
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
 
@@ -9,12 +8,12 @@ import kotlinx.serialization.Serializable
  * Base path: /api/v1/contacts
  *
  * SECURITY: All operations are scoped to the authenticated user's tenant via JWT.
+ * NOTE: ContactType was removed - roles are now derived from cashflow items.
  */
 @Serializable
 @Resource("/api/v1/contacts")
 class Contacts(
     val search: String? = null,
-    val type: ContactType? = null,
     val active: Boolean? = null,
     val peppolEnabled: Boolean? = null,
     val limit: Int = 50,

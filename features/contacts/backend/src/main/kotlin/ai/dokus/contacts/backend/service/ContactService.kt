@@ -1,7 +1,6 @@
 package ai.dokus.contacts.backend.service
 
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
-import ai.dokus.foundation.domain.enums.ContactType
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactDto
@@ -30,7 +29,7 @@ class ContactService(
         tenantId: TenantId,
         request: CreateContactRequest
     ): Result<ContactDto> {
-        logger.info("Creating contact for tenant: $tenantId, name: ${request.name}, type: ${request.contactType}")
+        logger.info("Creating contact for tenant: $tenantId, name: ${request.name}")
         return contactRepository.createContact(tenantId, request)
             .onSuccess { logger.info("Contact created: ${it.id}") }
             .onFailure { logger.error("Failed to create contact for tenant: $tenantId", it) }
@@ -53,15 +52,14 @@ class ContactService(
      */
     suspend fun listContacts(
         tenantId: TenantId,
-        contactType: ContactType? = null,
         isActive: Boolean? = null,
         peppolEnabled: Boolean? = null,
         searchQuery: String? = null,
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> {
-        logger.debug("Listing contacts for tenant: $tenantId (type=$contactType, isActive=$isActive, peppolEnabled=$peppolEnabled, limit=$limit, offset=$offset)")
-        return contactRepository.listContacts(tenantId, contactType, isActive, peppolEnabled, searchQuery, limit, offset)
+        logger.debug("Listing contacts for tenant: $tenantId (isActive=$isActive, peppolEnabled=$peppolEnabled, limit=$limit, offset=$offset)")
+        return contactRepository.listContacts(tenantId, isActive, peppolEnabled, searchQuery, limit, offset)
             .onSuccess { logger.debug("Retrieved ${it.items.size} contacts (total=${it.total})") }
             .onFailure { logger.error("Failed to list contacts for tenant: $tenantId", it) }
     }

@@ -137,16 +137,8 @@ enum class ClientType(override val dbValue: String) : DbEnum {
 // CONTACT ENUMS
 // ============================================================================
 
-/**
- * Contact type for unified contacts management.
- * A contact can be a customer (receives invoices), vendor (sends bills), or both.
- */
-@Serializable
-enum class ContactType(override val dbValue: String) : DbEnum {
-    Customer("CUSTOMER"),  // Receives invoices (revenue)
-    Vendor("VENDOR"),      // Sends bills/expenses (costs)
-    Both("BOTH")           // Can be both customer and vendor
-}
+// ContactType removed - roles are now derived from cashflow items
+// See Contact.kt for DerivedContactRoles
 
 // ============================================================================
 // INVOICE ENUMS

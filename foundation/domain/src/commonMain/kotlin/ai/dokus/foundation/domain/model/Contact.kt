@@ -4,7 +4,6 @@ import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ClientType
-import ai.dokus.foundation.domain.enums.ContactType
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ContactNoteId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -29,7 +28,6 @@ data class ContactDto(
     val name: Name,
     val email: Email? = null,
     val vatNumber: VatNumber? = null,
-    val contactType: ContactType = ContactType.Customer,
     val businessType: ClientType = ClientType.Business,
     val addressLine1: String? = null,
     val addressLine2: String? = null,
@@ -83,7 +81,6 @@ data class CreateContactRequest(
     val email: String? = null,
     val phone: String? = null,
     val vatNumber: String? = null,
-    val contactType: ContactType = ContactType.Customer,
     val businessType: ClientType = ClientType.Business,
     val addressLine1: String? = null,
     val addressLine2: String? = null,
@@ -110,7 +107,6 @@ data class UpdateContactRequest(
     val email: String? = null,
     val phone: String? = null,
     val vatNumber: String? = null,
-    val contactType: ContactType? = null,
     val businessType: ClientType? = null,
     val addressLine1: String? = null,
     val addressLine2: String? = null,

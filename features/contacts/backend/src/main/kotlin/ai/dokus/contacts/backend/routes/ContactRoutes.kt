@@ -63,7 +63,6 @@ fun Route.contactRoutes() {
 
             val contacts = contactService.listContacts(
                 tenantId = tenantId,
-                contactType = route.type,
                 isActive = route.active,
                 peppolEnabled = route.peppolEnabled,
                 searchQuery = route.search,
