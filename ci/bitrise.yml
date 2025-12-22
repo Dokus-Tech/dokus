@@ -229,10 +229,18 @@ workflows:
                 #!/bin/bash
                 set -ex
 
+                # Determine artifact prefix based on build type
+                if [ "$IS_RELEASE" = "true" ]; then
+                  ARTIFACT_PREFIX="dokus-release"
+                else
+                  ARTIFACT_PREFIX="dokus-dev"
+                fi
+                echo "Artifact prefix: $ARTIFACT_PREFIX (IS_RELEASE=$IS_RELEASE)"
+
                 # Rename AAB
                 if [ -n "$BITRISE_SIGNED_AAB_PATH" ]; then
                   AAB_DIR=$(dirname "$BITRISE_SIGNED_AAB_PATH")
-                  NEW_AAB="$AAB_DIR/dokus-release-$VERSION_NAME.aab"
+                  NEW_AAB="$AAB_DIR/${ARTIFACT_PREFIX}-${VERSION_NAME}.aab"
                   mv "$BITRISE_SIGNED_AAB_PATH" "$NEW_AAB"
                   envman add --key BITRISE_SIGNED_AAB_PATH --value "$NEW_AAB"
                   echo "Renamed AAB to: $NEW_AAB"
@@ -241,7 +249,7 @@ workflows:
                 # Rename APK
                 if [ -n "$BITRISE_SIGNED_APK_PATH" ]; then
                   APK_DIR=$(dirname "$BITRISE_SIGNED_APK_PATH")
-                  NEW_APK="$APK_DIR/dokus-release-$VERSION_NAME.apk"
+                  NEW_APK="$APK_DIR/${ARTIFACT_PREFIX}-${VERSION_NAME}.apk"
                   mv "$BITRISE_SIGNED_APK_PATH" "$NEW_APK"
                   envman add --key BITRISE_SIGNED_APK_PATH --value "$NEW_APK"
                   echo "Renamed APK to: $NEW_APK"
