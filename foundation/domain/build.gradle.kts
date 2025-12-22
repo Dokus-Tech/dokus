@@ -64,11 +64,9 @@ android {
 buildkonfig {
     packageName = "ai.dokus.foundation.domain.config"
     defaultConfigs {
+        // Version info - name comes from git tag during releases (e.g., "1.2.3")
         buildConfigField(STRING, "appVersionName", appVersion.name)
         buildConfigField(INT, "appVersionCode", appVersion.code.toString())
-        buildConfigField(INT, "appVersionMajor", appVersion.major.toString())
-        buildConfigField(INT, "appVersionMinor", appVersion.minor.toString())
-        buildConfigField(INT, "appVersionBuild", appVersion.build.toString())
 
         buildConfigField(STRING, "env", "cloud")
 

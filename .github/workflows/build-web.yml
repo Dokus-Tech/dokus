@@ -8,6 +8,8 @@ on:
       - 'application/**'
       - 'foundation/**'
       - '.github/workflows/build-web.yml'
+    tags:
+      - 'v*'  # Also trigger on version tags for release builds
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -48,6 +50,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: 🏷️ Extract version from tag
+        id: version
+        run: |
+          # Check if this is a tag-triggered build
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION_TAG="${GITHUB_REF#refs/tags/}"
+            VERSION_NAME="${VERSION_TAG#v}"  # Remove 'v' prefix
+            echo "Building release version: $VERSION_NAME (from tag $VERSION_TAG)"
+            echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
+            echo "is-release=true" >> $GITHUB_OUTPUT
+          else
+            echo "Building development version"
+            echo "is-release=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
@@ -59,8 +76,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build WASM production bundle
+        env:
+          # Set version name for release builds (from tag without 'v' prefix)
+          APP_VERSION_NAME: ${{ steps.version.outputs.version-name }}
         run: |
-          echo "Building Kotlin/WASM production bundle..."
+          if [ -n "$APP_VERSION_NAME" ]; then
+            echo "Building Kotlin/WASM production bundle with version: $APP_VERSION_NAME"
+          else
+            echo "Building Kotlin/WASM production bundle (dev version)..."
+          fi
           ./gradlew :composeApp:wasmJsBrowserDistribution -x test
 
       - name: Verify build output
@@ -95,19 +119,33 @@ jobs:
           # Image name
           IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
 
-          # Build tags
-          TAGS="${IMAGE_NAME}:${BRANCH_NAME}-${SHORT_SHA}"
-          TAGS="${TAGS},${IMAGE_NAME}:${BRANCH_NAME}-latest"
+          # Check if this is a release build (from version tag)
+          IS_RELEASE="${{ steps.version.outputs.is-release }}"
+          VERSION_NAME="${{ steps.version.outputs.version-name }}"
 
-          # Add 'latest' tag for main branch
-          if [ "${{ github.ref_name }}" == "main" ]; then
+          if [ "$IS_RELEASE" == "true" ] && [ -n "$VERSION_NAME" ]; then
+            # Release build: use version tag
+            TAGS="${IMAGE_NAME}:${VERSION_NAME}"
+            TAGS="${TAGS},${IMAGE_NAME}:${VERSION_NAME}-${SHORT_SHA}"
             TAGS="${TAGS},${IMAGE_NAME}:latest"
+            echo "Release build - using version tags"
+          else
+            # Development build: use branch-based tags
+            TAGS="${IMAGE_NAME}:${BRANCH_NAME}-${SHORT_SHA}"
+            TAGS="${TAGS},${IMAGE_NAME}:${BRANCH_NAME}-latest"
+
+            # Add 'latest' tag for main branch
+            if [ "${{ github.ref_name }}" == "main" ]; then
+              TAGS="${TAGS},${IMAGE_NAME}:latest"
+            fi
           fi
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "image-name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
           echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "is-release=${IS_RELEASE}" >> $GITHUB_OUTPUT
 
           echo "Image: ${IMAGE_NAME}"
           echo "Tags: ${TAGS}"
@@ -140,7 +178,7 @@ jobs:
             org.opencontainers.image.description=Dokus Web Application (WASM)
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ steps.meta.outputs.branch }}-${{ steps.meta.outputs.short-sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.is-release == 'true' && steps.meta.outputs.version || format('{0}-{1}', steps.meta.outputs.branch, steps.meta.outputs.short-sha) }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
@@ -150,7 +188,10 @@ jobs:
         run: |
           echo "# Web Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.meta.outputs.is-release }}" == "true" ]; then
+            echo "**🏷️ Release Version:** ${{ steps.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "**Branch/Tag:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Registry:** ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
