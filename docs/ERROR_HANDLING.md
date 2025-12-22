@@ -25,6 +25,13 @@ This document provides a comprehensive reference for error handling in the Dokus
   - [Rate Limiting with Retry-After Header](#rate-limiting-with-retry-after-header)
   - [Logging Patterns](#logging-patterns)
   - [JSON Serialization](#json-serialization)
+- [Client-Side Error Handling](#client-side-error-handling)
+  - [HTTP Client Configuration](#http-client-configuration)
+  - [Response Validation](#response-validation)
+  - [Rate Limit Handling](#rate-limit-handling)
+  - [Token Refresh on 401](#token-refresh-on-401)
+  - [DokusState Error Handling Pattern](#dokusstate-error-handling-pattern)
+  - [Retry Handler Pattern](#retry-handler-pattern)
 
 ---
 
@@ -1141,6 +1148,380 @@ The `DokusException` class is annotated with `@Serializable`, ensuring all subcl
 
 ---
 
+## Client-Side Error Handling
+
+The KMP frontend uses Ktor's HTTP client with custom plugins to handle errors consistently across all platforms (Android, iOS, Desktop, Web). This section documents how to configure and use client-side error handling.
+
+### Location
+
+```
+foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/network/HttpClientExtensions.kt
+foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/network/HttpClient.kt
+```
+
+### HTTP Client Configuration
+
+Two HTTP client factory functions are provided:
+
+#### Basic HTTP Client
+
+For unauthenticated requests (login, registration, password reset):
+
+```kotlin
+val client = createDynamicBaseHttpClient(endpointProvider)
+```
+
+This client includes:
+- JSON content negotiation
+- Type-safe resources
+- Dynamic endpoint configuration (self-hosted server support)
+- Logging
+- Response validation (error conversion)
+
+#### Authenticated HTTP Client
+
+For authenticated API requests:
+
+```kotlin
+val client = createDynamicAuthenticatedHttpClient(
+    endpointProvider = endpointProvider,
+    tokenManager = tokenManager,
+    onAuthenticationFailed = {
+        // Navigate to login screen
+        navigator.navigateToLogin()
+    }
+)
+```
+
+This client adds:
+- Dynamic bearer authentication (token attached per-request)
+- Automatic token refresh on 401
+- Callback for permanent authentication failure
+
+### Response Validation
+
+The `withResponseValidation()` extension configures an `HttpResponseValidator` that converts HTTP error responses into `DokusException` instances.
+
+```kotlin
+fun HttpClientConfig<*>.withResponseValidation() {
+    HttpResponseValidator {
+        validateResponse { response: HttpResponse ->
+            if (response.status.isSuccess()) return@validateResponse
+
+            // Try to parse the response body as DokusException
+            runCatching { response.body<DokusException>() }.fold(
+                onSuccess = { exception -> throw exception },
+                onFailure = {
+                    // Fallback for non-JSON responses
+                    when (response.status) {
+                        HttpStatusCode.Unauthorized -> throw DokusException.NotAuthenticated()
+                        HttpStatusCode.Forbidden -> throw DokusException.NotAuthorized()
+                        HttpStatusCode.NotFound -> throw DokusException.NotFound()
+                        HttpStatusCode.TooManyRequests -> throw DokusException.TooManyLoginAttempts()
+                        else -> throw DokusException.Unknown(it)
+                    }
+                }
+            )
+        }
+    }
+}
+```
+
+#### How It Works
+
+1. **Success responses (2xx)**: Pass through without modification
+2. **Error responses with JSON body**: Deserialize the body as `DokusException` and throw it
+3. **Error responses without JSON body**: Map the HTTP status code to an appropriate `DokusException`:
+
+| HTTP Status | Fallback Exception |
+|-------------|-------------------|
+| 401 | `NotAuthenticated` |
+| 403 | `NotAuthorized` |
+| 404 | `NotFound` |
+| 429 | `TooManyLoginAttempts` |
+| Other | `Unknown` |
+
+### Rate Limit Handling
+
+When a rate limit response (429) is received, the client extracts the `Retry-After` header to determine how long to wait before retrying.
+
+```kotlin
+// Special handling for TooManyLoginAttempts
+if (exception is DokusException.TooManyLoginAttempts) {
+    val retryAfter = parseRetryAfterHeader(response)
+    throw DokusException.TooManyLoginAttempts(
+        retryAfterSeconds = retryAfter ?: exception.retryAfterSeconds
+    )
+}
+```
+
+#### Retry-After Header Parsing
+
+```kotlin
+private fun parseRetryAfterHeader(response: HttpResponse): Int? {
+    val retryAfter = response.headers[HttpHeaders.RetryAfter] ?: return null
+    return retryAfter.toIntOrNull()
+}
+```
+
+The header value is expected to be an integer representing seconds. If the header is missing or invalid, the default value from the exception (`60` seconds) is used.
+
+#### UI Usage Example
+
+```kotlin
+when (val state = loginState.value) {
+    is DokusState.Error -> {
+        val exception = state.exception
+        if (exception is DokusException.TooManyLoginAttempts) {
+            Text("Too many attempts. Try again in ${exception.retryAfterSeconds} seconds.")
+        } else {
+            Text(exception.localized)
+        }
+    }
+    // ...
+}
+```
+
+### Token Refresh on 401
+
+The `withUnauthorizedRefreshRetry()` plugin automatically handles 401 responses by refreshing the access token and retrying the request. This prevents users from being logged out when their access token expires during normal usage.
+
+```kotlin
+fun HttpClientConfig<*>.withUnauthorizedRefreshRetry(
+    tokenManager: TokenManager,
+    onAuthenticationFailed: suspend () -> Unit = {},
+    maxRetries: Int = 1,
+)
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `tokenManager` | `TokenManager` | Manages access and refresh tokens |
+| `onAuthenticationFailed` | `suspend () -> Unit` | Called when retry fails (user must re-login) |
+| `maxRetries` | `Int` | Maximum retry attempts (default: 1) |
+
+#### Retry Flow
+
+```
+Request → 401 Response → Token Refresh → Retry Request
+                              ↓
+                         If refresh fails
+                              ↓
+                    onAuthenticationFailed()
+                              ↓
+                       Throw original exception
+```
+
+1. **Initial Request**: Make the API request with current access token
+2. **401 Response**: Access token is invalid/expired
+3. **Check Retries**: If retry limit reached, call `onAuthenticationFailed()` and throw
+4. **Token Comparison**: Check if token has already been refreshed by another request
+5. **Token Refresh**: Call `tokenManager.refreshToken(force = true)` to get new token
+6. **Retry Request**: Retry the original request with the new token
+
+#### Concurrent Request Handling
+
+When multiple requests fail with 401 simultaneously, the plugin handles this efficiently:
+
+```kotlin
+val tokenUsedForFailedRequest = extractBearerToken(request.headers[HttpHeaders.Authorization])
+val latestValidToken = tokenManager.getValidAccessToken()
+
+val tokenForRetry = if (latestValidToken != tokenUsedForFailedRequest) {
+    // Another request already refreshed the token
+    latestValidToken
+} else {
+    // This request needs to trigger the refresh
+    tokenManager.refreshToken(force = true)
+}
+```
+
+This prevents multiple simultaneous refresh requests when several API calls fail at once.
+
+#### Implementation Details
+
+The plugin uses a custom Ktor plugin that intercepts the `HttpSend` pipeline:
+
+```kotlin
+private val UnauthorizedRefreshRetryPlugin = createClientPlugin(
+    name = "UnauthorizedRefreshRetry",
+    createConfiguration = ::UnauthorizedRefreshRetryConfig
+) {
+    client.plugin(HttpSend).intercept { request ->
+        executeWithUnauthorizedRefreshRetry(
+            request = request,
+            tokenManager = tokenManager,
+            maxRetries = maxRetries,
+            onAuthenticationFailed = onAuthenticationFailed
+        )
+    }
+}
+```
+
+### DokusState Error Handling Pattern
+
+The KMP frontend uses `DokusState<T>` as a type-safe state machine for all async operations. Errors are wrapped in `DokusException` and paired with a `RetryHandler` for user-initiated retries.
+
+#### Location
+
+```
+foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/state/DokusState.kt
+foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/state/DokusStateSimple.kt
+```
+
+#### State Types
+
+```kotlin
+interface DokusState<DataType> {
+    /** Initial state before any operation starts */
+    interface Idle<DataType> : DokusState<DataType>
+
+    /** Operation in progress */
+    interface Loading<DataType> : DokusState<DataType>
+
+    /** Operation completed successfully with data */
+    interface Success<DataType> : DokusState<DataType> {
+        val data: DataType
+    }
+
+    /** Operation failed with exception and retry capability */
+    interface Error<DataType> : DokusState<DataType> {
+        val exception: DokusException
+        val retryHandler: RetryHandler
+    }
+}
+```
+
+#### Creating States
+
+Use the companion object factory methods:
+
+```kotlin
+// Initial state
+val idle = DokusState.idle<User>()
+
+// Loading state
+val loading = DokusState.loading<User>()
+
+// Success state with data
+val success = DokusState.success(user)
+
+// Error state with exception and retry handler
+val error = DokusState.error(exception) { retryOperation() }
+
+// Error from any Throwable (auto-converts to DokusException)
+val error = DokusState.error(throwable) { retryOperation() }
+```
+
+#### ViewModel Usage Pattern
+
+```kotlin
+class LoginViewModel : BaseViewModel<DokusState<Unit>>(DokusState.idle()) {
+
+    fun login(email: Email, password: Password) {
+        scope.launch {
+            mutableState.emitLoading()
+
+            val result = loginUseCase(email, password)
+
+            result.fold(
+                onSuccess = {
+                    mutableState.emit(Unit)
+                    // Navigate to next screen
+                },
+                onFailure = { error ->
+                    // Emit error with retry handler
+                    mutableState.emit(error) { login(email, password) }
+                }
+            )
+        }
+    }
+}
+```
+
+#### Flow Extension Functions
+
+Convenient extensions for emitting states to `MutableStateFlow`:
+
+```kotlin
+// Emit idle state
+mutableState.emitIdle()
+
+// Emit loading state
+mutableState.emitLoading()
+
+// Emit success state with data
+mutableState.emit(data)
+
+// Emit error state with throwable and retry handler
+mutableState.emit(error) { retryOperation() }
+```
+
+#### State Checking Extensions
+
+Use type-safe extension functions to check state:
+
+```kotlin
+val state: DokusState<User> = ...
+
+if (state.isIdle()) { /* Initial state */ }
+if (state.isLoading()) { /* Show loading indicator */ }
+if (state.isSuccess()) { /* Use state.data */ }
+if (state.isError()) { /* Show error with state.exception */ }
+
+// Get exception if in error state
+val exception: DokusException? = state.exceptionIfError()
+```
+
+### Retry Handler Pattern
+
+The `RetryHandler` is a functional interface that encapsulates the retry action for failed operations:
+
+```kotlin
+fun interface RetryHandler {
+    fun retry()
+}
+```
+
+#### Why RetryHandler?
+
+1. **Decoupling**: UI components don't need to know how to retry—they just call `retry()`
+2. **State Encapsulation**: Retry logic captures the original parameters
+3. **Consistency**: Standard retry pattern across all error states
+
+#### UI Usage Example (Compose)
+
+```kotlin
+@Composable
+fun ContentWithError(state: DokusState<Data>) {
+    when (state) {
+        is DokusState.Error -> {
+            Column {
+                DokusErrorText(state.exception)
+
+                if (state.exception.recoverable) {
+                    Button(onClick = { state.retryHandler.retry() }) {
+                        Text("Retry")
+                    }
+                }
+            }
+        }
+        // ... other states
+    }
+}
+```
+
+#### Best Practices
+
+1. **Always provide a retry handler**: Even for non-recoverable errors, provide a no-op handler
+2. **Capture necessary state**: The retry lambda should capture all parameters needed to retry
+3. **Check recoverable flag**: Only show retry UI for `exception.recoverable == true`
+4. **Use localized messages**: Display `exception.localized` for user-facing messages
+
+---
+
 ## Quick Reference Table
 
 | HTTP Status | Exception Type | Error Code | Recoverable |
@@ -1183,3 +1564,6 @@ The `DokusException` class is annotated with `@Serializable`, ensuring all subcl
 - **DokusException Source**: [foundation/domain/.../DokusException.kt](../foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/exceptions/DokusException.kt)
 - **Backend Error Handler**: [foundation/ktor-common/.../ErrorHandling.kt](../foundation/ktor-common/src/main/kotlin/ai/dokus/foundation/ktor/configure/ErrorHandling.kt)
 - **Client Error Handler**: [foundation/app-common/.../HttpClientExtensions.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/network/HttpClientExtensions.kt)
+- **HTTP Client Factory**: [foundation/app-common/.../HttpClient.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/network/HttpClient.kt)
+- **DokusState**: [foundation/app-common/.../DokusState.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/state/DokusState.kt)
+- **RetryHandler**: [foundation/domain/.../RetryHandler.kt](../foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/asbtractions/RetryHandler.kt)
