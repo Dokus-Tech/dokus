@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "003-replace-hardcoded-strings-with-translations",
+  "spec": "004-standardize-material-theme-with-shared-constraints",
   "state": "building",
   "subtasks": {
-    "completed": 13,
-    "total": 16,
+    "completed": 19,
+    "total": 22,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Build and Verification",
+    "current": "Refactor Complex Components",
     "id": null,
-    "total": 3
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 14,
-    "started_at": "2025-12-22T15:13:39.594013"
+    "number": 20,
+    "started_at": "2025-12-22T15:13:42.016403"
   },
-  "last_update": "2025-12-22T15:30:22.651194"
+  "last_update": "2025-12-22T15:50:25.808494"
 }

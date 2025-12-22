@@ -1,6 +1,7 @@
 package ai.dokus.foundation.design.components.common
 
 import ai.dokus.foundation.design.components.PIcon
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
@@ -37,7 +36,7 @@ fun PSearchFieldCompact(
     modifier: Modifier = Modifier,
     fieldName: String = "Search",
 ) {
-    val shape = RoundedCornerShape(8.dp)
+    val shape = MaterialTheme.shapes.small
     val textStyle: TextStyle = LocalTextStyle.current.copy(
         fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
@@ -46,13 +45,13 @@ fun PSearchFieldCompact(
 
     Row(
         modifier = modifier
-            .widthIn(min = 200.dp, max = 360.dp)
-            .height(42.dp)
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .widthIn(min = Constrains.SearchField.minWidth, max = Constrains.SearchField.maxWidth)
+            .height(Constrains.Height.button)
+            .border(Constrains.Stroke.thin, MaterialTheme.colorScheme.outline, shape)
             .background(MaterialTheme.colorScheme.surface, shape)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = Constrains.Spacing.medium),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
     ) {
         PIcon(icon = FeatherIcons.Search, description = fieldName)
         Box(Modifier.weight(1f)) {

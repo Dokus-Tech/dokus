@@ -6,6 +6,7 @@ import ai.dokus.app.resources.generated.image_cropper_apply
 import ai.dokus.app.resources.generated.image_cropper_content_description
 import ai.dokus.app.resources.generated.image_cropper_hint
 import ai.dokus.app.resources.generated.image_cropper_title
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -23,13 +24,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,17 +45,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
@@ -92,15 +86,15 @@ fun ImageCropperDialog(
     ) {
         Surface(
             modifier = Modifier
-                .widthIn(max = 400.dp)
+                .widthIn(max = Constrains.DialogSize.maxWidth)
                 .fillMaxWidth(0.9f)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
+                .padding(Constrains.Spacing.large),
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
+            tonalElevation = Constrains.Elevation.medium
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(Constrains.Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Title bar
@@ -119,18 +113,18 @@ fun ImageCropperDialog(
                         text = stringResource(Res.string.image_cropper_title),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Spacer(modifier = Modifier.width(48.dp))
+                    Spacer(modifier = Modifier.width(Constrains.Spacing.xxxLarge))
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
                 // Image crop area
                 Box(
                     modifier = Modifier
-                        .sizeIn(maxWidth = 320.dp, maxHeight = 320.dp)
+                        .sizeIn(maxWidth = Constrains.DialogSize.cropAreaMax, maxHeight = Constrains.DialogSize.cropAreaMax)
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(Color.Black)
                         .onSizeChanged { containerSize = it }
                         .clipToBounds()
@@ -170,7 +164,7 @@ fun ImageCropperDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Constrains.Spacing.small))
 
                 Text(
                     text = stringResource(Res.string.image_cropper_hint),
@@ -178,12 +172,12 @@ fun ImageCropperDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
@@ -203,9 +197,9 @@ fun ImageCropperDialog(
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(Constrains.IconSize.small)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
                         Text(stringResource(Res.string.image_cropper_apply))
                     }
                 }
@@ -219,9 +213,9 @@ fun ImageCropperDialog(
  */
 private fun DrawScope.drawCropOverlay(overlayColor: Color) {
     // For a simple implementation, we just draw corner guides
-    val strokeWidth = 3.dp.toPx()
-    val cornerLength = 40.dp.toPx()
-    val padding = 24.dp.toPx()
+    val strokeWidth = Constrains.Stroke.cropGuide.toPx()
+    val cornerLength = Constrains.CropGuide.cornerLength.toPx()
+    val padding = Constrains.Spacing.xLarge.toPx()
 
     val left = padding
     val top = padding
