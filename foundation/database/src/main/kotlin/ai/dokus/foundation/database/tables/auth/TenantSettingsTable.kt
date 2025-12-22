@@ -25,6 +25,12 @@ object TenantSettingsTable : UUIDTable("tenant_settings") {
     val defaultVatRate = decimal("default_vat_rate", 5, 2)
         .default(java.math.BigDecimal("21.00"))
 
+    // Invoice numbering configuration (for gap-less sequential numbering)
+    val invoiceYearlyReset = bool("invoice_yearly_reset").default(true)
+    val invoicePadding = integer("invoice_padding").default(4)
+    val invoiceIncludeYear = bool("invoice_include_year").default(true)
+    val invoiceTimezone = varchar("invoice_timezone", 50).default("Europe/Brussels")
+
     // Company info (for invoices)
     val companyName = varchar("company_name", 255).nullable()
     val companyIban = varchar("company_iban", 34).nullable()
