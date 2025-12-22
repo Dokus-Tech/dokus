@@ -357,27 +357,41 @@ workflows:
           inputs:
             - set_java_version: '21'
       - script@1:
-          title: Set build number in Versions.kt
+          title: Set build number and extract version from tag
           inputs:
             - content: |
                 #!/bin/bash
                 set -ex
 
+                # Build number from git commit count
                 BUILD_NUMBER=$(git rev-list --count HEAD)
 
                 # Update BUILD in Versions.kt
                 VERSIONS_FILE="build-logic/convention/src/main/kotlin/ai/dokus/utils/Versions.kt"
                 sed -i '' "s/const val BUILD = [0-9]*/const val BUILD = $BUILD_NUMBER/" "$VERSIONS_FILE"
 
-                # Extract version
-                MAJOR=$(grep 'const val MAJOR' "$VERSIONS_FILE" | sed 's/.*= //')
-                MINOR=$(grep 'const val MINOR' "$VERSIONS_FILE" | sed 's/.*= //')
-                VERSION_NAME="$MAJOR.$MINOR.$BUILD_NUMBER"
+                # Check if this is a tag-triggered build
+                if [[ "$BITRISE_GIT_TAG" =~ ^v.+ ]]; then
+                  # Extract version from tag (remove 'v' prefix)
+                  VERSION_NAME="${BITRISE_GIT_TAG#v}"
+                  IS_RELEASE="true"
+                  echo "Building RELEASE version: $VERSION_NAME (from tag $BITRISE_GIT_TAG)"
+                else
+                  # Extract default version name from Versions.kt
+                  DEFAULT_VERSION=$(grep 'const val NAME' "$VERSIONS_FILE" | sed 's/.*"\(.*\)".*/\1/')
+                  VERSION_NAME="$DEFAULT_VERSION"
+                  IS_RELEASE="false"
+                  echo "Building DEV version: $VERSION_NAME (BUILD=$BUILD_NUMBER)"
+                fi
 
+                # Export variables for use in subsequent steps
                 envman add --key BUILD_NUMBER --value "$BUILD_NUMBER"
                 envman add --key VERSION_NAME --value "$VERSION_NAME"
+                envman add --key IS_RELEASE --value "$IS_RELEASE"
+                envman add --key APP_VERSION_NAME --value "$VERSION_NAME"
 
-                echo "Building macOS v$VERSION_NAME"
+                echo "Building macOS v$VERSION_NAME (BUILD=$BUILD_NUMBER, RELEASE=$IS_RELEASE)"
+                cat "$VERSIONS_FILE"
       - certificate-and-profile-installer@1:
           title: Install Developer ID Certificate
           run_if: '{{getenv "MAC_DEVELOPER_ID_APP_CERT" | ne ""}}'
