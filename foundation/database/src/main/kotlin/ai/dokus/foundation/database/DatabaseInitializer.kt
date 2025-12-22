@@ -12,6 +12,7 @@ import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.cashflow.InvoiceNumberSequencesTable
 import ai.dokus.foundation.database.tables.contacts.ContactNotesTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
@@ -86,6 +87,7 @@ object DatabaseInitializer {
                     ContactsTable,        // depends on TenantTable (unified contacts - customers AND vendors)
                     ContactNotesTable,    // depends on TenantTable, ContactsTable, UsersTable
 
+                    InvoiceNumberSequencesTable, // depends on TenantTable (gap-less invoice numbering)
                     InvoicesTable,        // depends on TenantTable, DocumentsTable, ContactsTable
                     InvoiceItemsTable,    // depends on InvoicesTable
                     ExpensesTable,        // depends on TenantTable, DocumentsTable
