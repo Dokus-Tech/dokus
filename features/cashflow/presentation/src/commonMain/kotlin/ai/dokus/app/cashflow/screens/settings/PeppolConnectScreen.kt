@@ -57,6 +57,7 @@ import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.exceptionIfError
 
 /**
  * Peppol provider connection screen using FlowMVI.
@@ -86,10 +87,6 @@ internal fun PeppolConnectScreen(
                     }
                     launchSingleTop = true
                 }
-            }
-
-            is PeppolConnectAction.ShowError -> {
-                // Handle snackbar if needed
             }
         }
     }
@@ -138,7 +135,15 @@ internal fun PeppolConnectScreen(
                         }
 
                         is PeppolConnectState.Error -> {
-                            ErrorPane(state as PeppolConnectState.Error)
+                            // For field-level errors, show credentials pane so user can edit
+                            val exception = state.exception
+                            if (exception is DokusException.Validation.ApiKeyRequired ||
+                                exception is DokusException.Validation.ApiSecretRequired ||
+                                exception is DokusException.Validation.InvalidApiCredentials) {
+                                CredentialsPane(state)
+                            } else {
+                                ErrorPane(state as PeppolConnectState.Error)
+                            }
                         }
                     }
                 }
@@ -154,6 +159,9 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
     val isLoading = state is PeppolConnectState.LoadingCompanies ||
             state is PeppolConnectState.Connecting ||
             state is PeppolConnectState.CreatingCompany
+
+    // Single error source - extracts exception from Error state
+    val fieldsError = state.exceptionIfError()
 
     Box(
         modifier = Modifier
@@ -184,37 +192,38 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
 
             Spacer(Modifier.height(32.dp))
 
-            // API Key field
-            val apiKeyError = (state as? PeppolConnectState.EnteringCredentials)?.apiKeyError
+            // API Key field - shows error if ApiKeyRequired
             PTextFieldStandard(
                 fieldName = "API Key",
                 value = state.apiKey,
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiKey(it)) },
-                error = apiKeyError?.let { DokusException.Validation.Generic(it) },
+                error = fieldsError.takeIf { it is DokusException.Validation.ApiKeyRequired },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(16.dp))
 
-            // API Secret field
-            val apiSecretError = (state as? PeppolConnectState.EnteringCredentials)?.apiSecretError
+            // API Secret field - shows error if ApiSecretRequired or InvalidApiCredentials
             PTextFieldPassword(
                 fieldName = "API Secret",
                 value = ai.dokus.foundation.domain.Password(state.apiSecret),
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiSecret(it.value)) },
-                error = apiSecretError?.let { DokusException.Validation.Generic(it) },
+                error = fieldsError.takeIf {
+                    it is DokusException.Validation.ApiSecretRequired ||
+                    it is DokusException.Validation.InvalidApiCredentials
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(32.dp))
 
-            // Continue button
+            // Continue button - enabled in EnteringCredentials or Error state (for retry)
             PPrimaryButton(
                 text = when {
                     isLoading -> "Connecting..."
                     else -> "Continue"
                 },
-                enabled = state is PeppolConnectState.EnteringCredentials,
+                enabled = state is PeppolConnectState.EnteringCredentials || state is PeppolConnectState.Error,
                 onClick = { intent(PeppolConnectIntent.ContinueClicked) },
                 modifier = Modifier.fillMaxWidth()
             )

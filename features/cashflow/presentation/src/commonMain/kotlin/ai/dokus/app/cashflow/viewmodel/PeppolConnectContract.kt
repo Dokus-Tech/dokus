@@ -39,8 +39,6 @@ sealed interface PeppolConnectState : MVIState, DokusState<Nothing> {
         override val provider: PeppolProvider,
         override val apiKey: String = "",
         override val apiSecret: String = "",
-        val apiKeyError: String? = null,
-        val apiSecretError: String? = null,
     ) : PeppolConnectState
 
     /**
@@ -138,7 +136,4 @@ sealed interface PeppolConnectAction : MVIAction {
 
     /** Navigate to settings after successful connection */
     data object NavigateToSettings : PeppolConnectAction
-
-    /** Show snackbar error message */
-    data class ShowError(val message: String) : PeppolConnectAction
 }
