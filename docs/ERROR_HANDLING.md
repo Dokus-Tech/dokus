@@ -47,6 +47,7 @@ This document provides a comprehensive reference for error handling in the Dokus
   - [Using the Localized Property](#using-the-localized-property)
   - [Localized Message Examples](#localized-message-examples)
   - [Adding New Translations](#adding-new-translations)
+  - [Error UI Components](#error-ui-components)
 
 ---
 
@@ -2192,6 +2193,255 @@ All exception string keys follow the pattern `exception_{snake_case_name}`:
 
 For the complete list, refer to `foundation/design-system/src/commonMain/composeResources/values/exceptions.xml`.
 
+### Error UI Components
+
+The design system provides ready-to-use error display components that handle localization, styling, and retry functionality automatically.
+
+#### Location
+
+```
+foundation/design-system/src/commonMain/kotlin/ai/dokus/foundation/design/components/common/ErrorBox.kt
+```
+
+#### DokusErrorText
+
+A simple text component for displaying error messages with proper error styling.
+
+```kotlin
+@Composable
+fun DokusErrorText(
+    text: String,
+    modifier: Modifier = Modifier.padding(all = Constrains.Spacing.large)
+)
+
+// Convenience overload that uses localized message
+@Composable
+fun DokusErrorText(
+    exception: DokusException,
+    modifier: Modifier = Modifier.padding(all = Constrains.Spacing.large)
+)
+```
+
+**Features:**
+- Displays text with `MaterialTheme.colorScheme.error` color
+- Center-aligned text
+- Default padding for consistent spacing
+
+**Usage Example:**
+
+```kotlin
+@Composable
+fun LoginError(exception: DokusException) {
+    // Option 1: Pass the exception directly (uses localized message)
+    DokusErrorText(exception)
+
+    // Option 2: Pass custom text
+    DokusErrorText("An error occurred during login")
+}
+```
+
+#### DokusErrorContent
+
+A comprehensive error display component with icon, optional title, message, and retry button.
+
+```kotlin
+@Composable
+fun DokusErrorContent(
+    text: String,
+    retryHandler: RetryHandler?,
+    title: String? = null,
+    compact: Boolean = false,
+    modifier: Modifier = Modifier.fillMaxWidth()
+)
+
+// Convenience overload for DokusException
+@Composable
+fun DokusErrorContent(
+    exception: DokusException,
+    retryHandler: RetryHandler?,
+    title: String? = null,
+    compact: Boolean = false,
+    modifier: Modifier = Modifier.fillMaxWidth()
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `text` / `exception` | `String` / `DokusException` | Error message to display (or exception for auto-localization) |
+| `retryHandler` | `RetryHandler?` | Callback for retry button (hidden if null) |
+| `title` | `String?` | Optional title displayed above the message |
+| `compact` | `Boolean` | Use compact layout for inline display (default: false) |
+| `modifier` | `Modifier` | Layout modifier (default: fillMaxWidth) |
+
+**Full Mode (compact = false):**
+- Large error icon (xxLarge size)
+- Optional headline title in error color
+- Body text for error message
+- Retry button (if handler provided)
+- Vertical layout with generous spacing
+- Best for: Full-screen error states, empty state errors
+
+**Compact Mode (compact = true):**
+- Medium error icon
+- Smaller body text
+- Retry button (if handler provided)
+- Minimal spacing
+- Best for: Card-inline errors, section errors, constrained spaces
+
+#### The Recoverable Flag and Retry Button
+
+The `DokusErrorContent` component intelligently handles the retry button based on the exception's `recoverable` property:
+
+```kotlin
+// When using the DokusException overload:
+DokusErrorContent(
+    exception = exception,
+    retryHandler = state.retryHandler,  // May be non-null
+    compact = true
+)
+
+// Internally, the component does:
+retryHandler = retryHandler.takeIf { exception.recoverable }
+```
+
+**How it works:**
+1. You always pass the `retryHandler` from `DokusState.Error`
+2. The component checks `exception.recoverable`
+3. If `recoverable = false`, the retry button is hidden
+4. If `recoverable = true`, the retry button is shown
+
+**Recoverable Exceptions** (retry button shown):
+- `ConnectionError` - Network may become available
+- `InternalError` - Server issue may be transient
+- `TenantCreationFailed` - May succeed on retry
+- `TooManyLoginAttempts` - After waiting period
+- `SessionExpired` - Re-authentication possible
+- `TooManySessions` - After logging out elsewhere
+
+**Non-Recoverable Exceptions** (no retry button):
+- `InvalidCredentials` - Wrong password won't become right
+- `UserAlreadyExists` - Email is taken
+- `NotAuthorized` - Permission denied
+- `Validation.*` - Invalid input needs correction
+- `TokenInvalid` - Requires re-authentication
+
+#### Usage Examples
+
+##### Full-Screen Error State
+
+```kotlin
+@Composable
+fun DataScreen(viewModel: DataViewModel) {
+    val state by viewModel.state.collectAsState()
+
+    when (state) {
+        is DokusState.Error -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                DokusErrorContent(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                    title = "Unable to Load Data"
+                )
+            }
+        }
+        // ... other states
+    }
+}
+```
+
+##### Card-Inline Error (Compact)
+
+```kotlin
+@Composable
+fun VatSummaryCard(state: DokusState<VatSummaryData>) {
+    Card {
+        when (state) {
+            is DokusState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    DokusErrorContent(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                        compact = true  // Use compact mode for cards
+                    )
+                }
+            }
+            is DokusState.Success -> {
+                VatSummaryContent(state.data)
+            }
+            // ... other states
+        }
+    }
+}
+```
+
+##### With DokusState Pattern
+
+```kotlin
+@Composable
+fun WorkspaceSelection(state: DokusState<List<Workspace>>) {
+    when (state) {
+        is DokusState.Idle, is DokusState.Loading -> {
+            CircularProgressIndicator()
+        }
+        is DokusState.Success -> {
+            WorkspaceList(state.data)
+        }
+        is DokusState.Error -> {
+            // Simple inline usage - component handles everything
+            DokusErrorContent(state.exception, state.retryHandler)
+        }
+    }
+}
+```
+
+##### Custom Error with Text-Only Display
+
+```kotlin
+@Composable
+fun LoginForm(errorState: DokusException?) {
+    Column {
+        // Form fields...
+
+        // Show error message below form (no retry button, no icon)
+        if (errorState != null) {
+            DokusErrorText(errorState)
+        }
+
+        // Login button
+        Button(onClick = { /* submit */ }) {
+            Text("Login")
+        }
+    }
+}
+```
+
+#### Component Selection Guide
+
+| Scenario | Component | Mode |
+|----------|-----------|------|
+| Full-screen error | `DokusErrorContent` | Full (default) |
+| Error inside a card | `DokusErrorContent` | Compact |
+| Form validation error | `DokusErrorText` | — |
+| Inline error message | `DokusErrorText` | — |
+| Error with retry option | `DokusErrorContent` | Full or Compact |
+| Non-recoverable error | `DokusErrorContent` | Any (button auto-hidden) |
+
+#### Best Practices
+
+1. **Use the DokusException overload** when possible—it handles localization and recoverable flag automatically
+2. **Match compact mode to context**: Full for dedicated error screens, compact for inline/card errors
+3. **Always pass the retryHandler** from `DokusState.Error`—the component will hide it if not recoverable
+4. **Add a title for clarity** when the error is shown in a prominent location
+5. **Use DokusErrorText for forms** where you want just the message without the icon and button
+
 ---
 
 ## Quick Reference Table
@@ -2240,4 +2490,5 @@ For the complete list, refer to `foundation/design-system/src/commonMain/compose
 - **DokusState**: [foundation/app-common/.../DokusState.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/state/DokusState.kt)
 - **RetryHandler**: [foundation/domain/.../RetryHandler.kt](../foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/asbtractions/RetryHandler.kt)
 - **Localized Error Messages**: [foundation/design-system/.../DokusExceptionExtensions.kt](../foundation/design-system/src/commonMain/kotlin/ai/dokus/foundation/design/extensions/DokusExceptionExtensions.kt)
+- **Error UI Components**: [foundation/design-system/.../ErrorBox.kt](../foundation/design-system/src/commonMain/kotlin/ai/dokus/foundation/design/components/common/ErrorBox.kt)
 - **Exception String Resources**: [foundation/design-system/.../composeResources/values/exceptions.xml](../foundation/design-system/src/commonMain/composeResources/values/exceptions.xml)
