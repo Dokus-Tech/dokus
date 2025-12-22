@@ -23,10 +23,6 @@ sealed interface SettingsDestination : NavigationDestination {
 
     sealed interface PeppolConfiguration : SettingsDestination {
         @Serializable
-        @SerialName("settings/peppol/providers")
-        data object Providers : PeppolConfiguration
-
-        @Serializable
         @SerialName("settings/peppol/connect")
         data class Connect(val provider: PeppolProvider) : PeppolConfiguration
     }
