@@ -1,5 +1,6 @@
 package ai.dokus.foundation.design.components.navigation
 
+import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.model.HomeItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -20,7 +20,7 @@ fun ColumnScope.DokusNavigationRail(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
         val mainItems = navItems.dropLast(1)
         mainItems.forEach { item ->

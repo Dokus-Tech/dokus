@@ -1,5 +1,6 @@
 package ai.dokus.foundation.design.components.navigation
 
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.unit.dp
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cashflow
 import ai.dokus.app.resources.generated.chart_bar_trend_up
@@ -124,7 +124,7 @@ fun NavigationBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(Constrains.Height.navigationBar)
             .background(MaterialTheme.colorScheme.background),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
@@ -136,13 +136,13 @@ fun NavigationBar(
             onClick = onFabClick,
             shape = CircleShape,
             containerColor = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.size(46.dp)
+            modifier = Modifier.size(Constrains.Navigation.fabSize)
         ) {
             Icon(
                 painter = fabItem.icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(Constrains.IconSize.medium)
             )
         }
         secondHalf.forEach {
@@ -163,7 +163,7 @@ fun AppNavBarItem(
         MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
     }
     Column(
-        modifier = Modifier.padding(horizontal = 8.dp),
+        modifier = Modifier.padding(horizontal = Constrains.Spacing.small),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         IconButton(
@@ -173,13 +173,16 @@ fun AppNavBarItem(
                 painter = item.icon,
                 contentDescription = item.title,
                 tint = color,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(Constrains.IconSize.medium)
             )
         }
         if (isSelected) {
             Box(
                 modifier = Modifier
-                    .size(width = 24.dp, height = 2.dp)
+                    .size(
+                        width = Constrains.Navigation.indicatorWidth,
+                        height = Constrains.Navigation.indicatorHeight
+                    )
                     .background(color = color, shape = CircleShape)
             )
         }

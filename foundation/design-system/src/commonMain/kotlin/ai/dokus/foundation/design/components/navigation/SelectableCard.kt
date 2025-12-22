@@ -1,5 +1,6 @@
 package ai.dokus.foundation.design.components.navigation
 
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.unit.dp
 
 @Composable
 fun SelectableCard(
@@ -33,7 +32,7 @@ fun SelectableCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.surfaceVariant
@@ -41,13 +40,13 @@ fun SelectableCard(
                 Color.Transparent
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = Constrains.Elevation.none)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onClick() }
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -59,9 +58,9 @@ fun SelectableCard(
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 },
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(Constrains.IconSize.small)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
@@ -84,9 +83,9 @@ fun SelectableOutlineCard(
 ) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         border = BorderStroke(
-            1.dp,
+            Constrains.Stroke.thin,
             MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         ),
         colors = CardDefaults.outlinedCardColors(
@@ -101,7 +100,7 @@ fun SelectableOutlineCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onClick() }
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -109,9 +108,9 @@ fun SelectableOutlineCard(
                 painter = icon,
                 contentDescription = title,
                 tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(Constrains.IconSize.small),
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,

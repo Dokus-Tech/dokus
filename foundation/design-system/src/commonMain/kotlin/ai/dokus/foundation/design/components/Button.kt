@@ -3,12 +3,12 @@ package ai.dokus.foundation.design.components
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_back
 import ai.dokus.app.resources.generated.arrow_left
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -65,18 +64,18 @@ fun PButton(
             OutlinedButton(
                 onClick = onClick,
                 enabled = isEnabled,
-                modifier = modifier.height(42.dp),
-                shape = RoundedCornerShape(8.dp),
+                modifier = modifier.height(Constrains.Height.button),
+                shape = MaterialTheme.shapes.small,
                 contentPadding = PaddingValues(
-                    horizontal = 16.dp,
-                    vertical = 8.dp
+                    horizontal = Constrains.Spacing.large,
+                    vertical = Constrains.Spacing.small
                 )
             ) {
                 if (icon != null && iconPosition == PIconPosition.Leading) {
                     Icon(
                         imageVector = icon,
                         contentDescription = contentDescription,
-                        modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                        modifier = Modifier.size(Constrains.IconSize.medium).padding(end = Constrains.Spacing.small)
                     )
                 }
                 Text(
@@ -87,7 +86,7 @@ fun PButton(
                     Icon(
                         imageVector = icon,
                         contentDescription = contentDescription,
-                        modifier = Modifier.size(24.dp).padding(start = 8.dp)
+                        modifier = Modifier.size(Constrains.IconSize.medium).padding(start = Constrains.Spacing.small)
                     )
                 }
             }
@@ -108,15 +107,15 @@ private fun PButtonDefault(
         if (icon != null && iconPosition == PIconPosition.Leading) {
             Icon(
                 icon,
-                modifier = Modifier.padding(end = 8.dp),
+                modifier = Modifier.padding(end = Constrains.Spacing.small),
                 contentDescription = contentDescription
             )
         }
-        Text(text, modifier = Modifier.padding(4.dp))
+        Text(text, modifier = Modifier.padding(Constrains.Spacing.xSmall))
         if (icon != null && iconPosition == PIconPosition.Trailing) {
             Icon(
                 icon,
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier.padding(start = Constrains.Spacing.small),
                 contentDescription = contentDescription
             )
         }
@@ -132,8 +131,8 @@ fun PPrimaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(42.dp),
-        shape = RoundedCornerShape(8.dp),
+        modifier = modifier.height(Constrains.Height.button),
+        shape = MaterialTheme.shapes.small,
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
@@ -157,8 +156,8 @@ fun POutlinedButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(42.dp),
-        shape = RoundedCornerShape(8.dp),
+        modifier = modifier.height(Constrains.Height.button),
+        shape = MaterialTheme.shapes.small,
         enabled = enabled
     ) {
         Text(
@@ -178,6 +177,6 @@ fun PBackButton(
     Icon(
         painter = painterResource(Res.drawable.arrow_left),
         contentDescription = stringResource(Res.string.action_back),
-        modifier = modifier.clickable { onBackPress() }.size(24.dp)
+        modifier = modifier.clickable { onBackPress() }.size(Constrains.IconSize.medium)
     )
 }

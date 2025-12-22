@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.components.steps
 
-import ai.dokus.foundation.design.components.common.Breakpoints
 import ai.dokus.foundation.design.components.text.SectionTitle
+import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.domain.enums.TenantType
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
@@ -55,7 +54,7 @@ internal fun TypeSelectionStep(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            val isWide = maxWidth > Breakpoints.SMALL.dp
+            val isWide = maxWidth > Constrains.Breakpoint.SMALL.dp
 
             if (isWide) {
                 Row(

@@ -2,12 +2,12 @@ package ai.dokus.foundation.design.components
 
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.company_avatar_content_description
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,22 +18,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import kotlin.math.abs
 import org.jetbrains.compose.resources.stringResource
 
 /**
  * Size variants for company avatars.
+ * References centralized values from [Constrains.AvatarSize].
  */
-enum class AvatarSize(val dp: Dp) {
-    ExtraSmall(24.dp),
-    Small(32.dp),
-    Medium(64.dp),
-    Large(128.dp),
-    ExtraLarge(256.dp)
+enum class AvatarSize(val value: Dp) {
+    ExtraSmall(Constrains.AvatarSize.extraSmall),
+    Small(Constrains.AvatarSize.small),
+    Medium(Constrains.AvatarSize.medium),
+    Large(Constrains.AvatarSize.large),
+    ExtraLarge(Constrains.AvatarSize.extraLarge)
 }
 
 /**
@@ -65,15 +64,13 @@ fun CompanyAvatarImage(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    val cornerRadius = when (size) {
-        AvatarSize.ExtraSmall -> 6.dp
-        AvatarSize.Small -> 8.dp
-        else -> 12.dp
-    }
-
     val clipShape = when (shape) {
         AvatarShape.Circle -> CircleShape
-        AvatarShape.RoundedSquare -> RoundedCornerShape(cornerRadius)
+        AvatarShape.RoundedSquare -> when (size) {
+            AvatarSize.ExtraSmall -> MaterialTheme.shapes.extraSmall
+            AvatarSize.Small -> MaterialTheme.shapes.small
+            else -> MaterialTheme.shapes.medium
+        }
     }
 
     val clickModifier = if (onClick != null) {
@@ -84,7 +81,7 @@ fun CompanyAvatarImage(
 
     Box(
         modifier = modifier
-            .size(size.dp)
+            .size(size.value)
             .clip(clipShape)
             .then(clickModifier),
         contentAlignment = Alignment.Center
@@ -95,7 +92,7 @@ fun CompanyAvatarImage(
                 contentDescription = stringResource(Res.string.company_avatar_content_description),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(size.dp)
+                    .size(size.value)
                     .clip(clipShape),
                 loading = {
                     AvatarFallback(
@@ -131,15 +128,13 @@ private fun AvatarFallback(
     size: AvatarSize,
     shape: AvatarShape
 ) {
-    val cornerRadius = when (size) {
-        AvatarSize.ExtraSmall -> 6.dp
-        AvatarSize.Small -> 8.dp
-        else -> 12.dp
-    }
-
     val clipShape = when (shape) {
         AvatarShape.Circle -> CircleShape
-        AvatarShape.RoundedSquare -> RoundedCornerShape(cornerRadius)
+        AvatarShape.RoundedSquare -> when (size) {
+            AvatarSize.ExtraSmall -> MaterialTheme.shapes.extraSmall
+            AvatarSize.Small -> MaterialTheme.shapes.small
+            else -> MaterialTheme.shapes.medium
+        }
     }
 
     val backgroundColor = MaterialTheme.colorScheme.primaryContainer
@@ -155,7 +150,7 @@ private fun AvatarFallback(
 
     Box(
         modifier = Modifier
-            .size(size.dp)
+            .size(size.value)
             .clip(clipShape)
             .background(backgroundColor),
         contentAlignment = Alignment.Center
