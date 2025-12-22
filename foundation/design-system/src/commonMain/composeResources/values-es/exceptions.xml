@@ -21,6 +21,11 @@
     <string name="exception_invalid_city">Ciudad no válida</string>
     <string name="exception_invalid_postal_code">Código postal no válido</string>
     <string name="exception_invalid_country">País no válido</string>
+    <string name="exception_api_key_required">La clave API es obligatoria</string>
+    <string name="exception_api_secret_required">El secreto API es obligatorio</string>
+    <string name="exception_invalid_api_credentials">Credenciales API no válidas. Comprueba tu clave y secreto API.</string>
+    <string name="exception_missing_vat_number">Configura primero tu número de IVA en los ajustes del espacio de trabajo</string>
+    <string name="exception_missing_company_address">Configura primero la dirección de tu empresa en los ajustes del espacio de trabajo</string>
 
     <!-- 401 Authentication Errors -->
     <string name="exception_not_authenticated">Inicia sesión para continuar</string>

@@ -21,6 +21,11 @@
     <string name="exception_invalid_city">Ungültige Stadt</string>
     <string name="exception_invalid_postal_code">Ungültige Postleitzahl</string>
     <string name="exception_invalid_country">Ungültiges Land</string>
+    <string name="exception_api_key_required">API-Schlüssel ist erforderlich</string>
+    <string name="exception_api_secret_required">API-Geheimnis ist erforderlich</string>
+    <string name="exception_invalid_api_credentials">Ungültige API-Anmeldedaten. Bitte überprüfen Sie Ihren API-Schlüssel und Ihr Geheimnis.</string>
+    <string name="exception_missing_vat_number">Bitte konfigurieren Sie zuerst Ihre Umsatzsteuer-Identifikationsnummer in den Arbeitsbereichseinstellungen</string>
+    <string name="exception_missing_company_address">Bitte konfigurieren Sie zuerst Ihre Firmenadresse in den Arbeitsbereichseinstellungen</string>
 
     <!-- 401 Authentifizierungsfehler -->
     <string name="exception_not_authenticated">Bitte melden Sie sich an, um fortzufahren</string>
