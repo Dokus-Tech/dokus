@@ -10,11 +10,12 @@ import ai.dokus.app.resources.generated.peppol_not_configured
 import ai.dokus.app.resources.generated.peppol_settings_title
 import ai.dokus.app.resources.generated.profile_danger_zone
 import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.domain.model.PeppolProvider
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,10 +28,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Receipt
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +49,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -167,7 +175,7 @@ fun PeppolSettingsContent(
                     }
                 }
 
-                // Connect Provider Button - Only show if not connected
+                // Provider Selection - Only show if not connected
                 if (!isConnected) {
                     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -179,16 +187,33 @@ fun PeppolSettingsContent(
                             Spacer(Modifier.height(8.dp))
 
                             Text(
-                                text = "Connect your Peppol Access Point provider to enable e-invoicing.",
+                                text = "Select your e-invoicing provider to get started.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
                             Spacer(Modifier.height(16.dp))
 
-                            PPrimaryButton(
-                                text = "Connect Provider",
-                                onClick = { navController.navigate(SettingsDestination.PeppolProviders) },
+                            // Provider cards
+                            ProviderCard(
+                                provider = PeppolProvider.Recommand,
+                                icon = Icons.Outlined.Receipt,
+                                description = "Belgian Peppol Access Point for e-invoicing",
+                                onClick = {
+                                    navController.navigate(
+                                        SettingsDestination.PeppolConfiguration.Connect(PeppolProvider.Recommand)
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Text(
+                                text = "More providers coming soon",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -230,3 +255,52 @@ fun PeppolSettingsContent(
     }
 }
 
+@Composable
+private fun ProviderCard(
+    provider: PeppolProvider,
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val containerColor = MaterialTheme.colorScheme.surface
+    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
+
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(width = 1.dp, color = borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = provider.displayName,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = provider.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
