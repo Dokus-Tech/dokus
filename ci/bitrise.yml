@@ -491,6 +491,14 @@ workflows:
                 #!/bin/bash
                 set -ex
 
+                # Determine artifact prefix based on build type
+                if [ "$IS_RELEASE" = "true" ]; then
+                  ARTIFACT_PREFIX="dokus-macos-release"
+                else
+                  ARTIFACT_PREFIX="dokus-macos-dev"
+                fi
+                echo "Artifact prefix: $ARTIFACT_PREFIX (IS_RELEASE=$IS_RELEASE)"
+
                 # Find DMG (check both release and main directories)
                 DMG_PATH=$(find composeApp/build/compose/binaries -name "*.dmg" -type f | head -1)
 
@@ -500,7 +508,7 @@ workflows:
                 fi
 
                 DMG_DIR=$(dirname "$DMG_PATH")
-                NEW_DMG="$DMG_DIR/dokus-macos-$VERSION_NAME.dmg"
+                NEW_DMG="$DMG_DIR/${ARTIFACT_PREFIX}-${VERSION_NAME}.dmg"
                 mv "$DMG_PATH" "$NEW_DMG"
 
                 envman add --key BITRISE_DMG_PATH --value "$NEW_DMG"
