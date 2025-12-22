@@ -5,8 +5,8 @@ import ai.dokus.app.cashflow.components.invoice.InvoiceClientSidePanel
 import ai.dokus.app.cashflow.components.invoice.InvoiceSendOptionsPanel
 import ai.dokus.app.cashflow.components.invoice.InvoiceSendOptionsStep
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceViewModel
-import ai.dokus.app.cashflow.viewmodel.DatePickerTarget
-import ai.dokus.app.cashflow.viewmodel.InvoiceCreationStep
+import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
+import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PDatePickerDialog

@@ -1,5 +1,19 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.cashflow.components.upload.CancelUploadAction
+import ai.dokus.app.cashflow.components.upload.DeleteDocumentAction
+import ai.dokus.app.cashflow.components.upload.DeletingFileIcon
+import ai.dokus.app.cashflow.components.upload.DeletingFileInfo
+import ai.dokus.app.cashflow.components.upload.DeletionProgressIndicator
+import ai.dokus.app.cashflow.components.upload.FailedOverlay
+import ai.dokus.app.cashflow.components.upload.FailedUploadActions
+import ai.dokus.app.cashflow.components.upload.FileIconWithOverlay
+import ai.dokus.app.cashflow.components.upload.PendingOverlay
+import ai.dokus.app.cashflow.components.upload.UndoDeleteAction
+import ai.dokus.app.cashflow.components.upload.UploadItemRow
+import ai.dokus.app.cashflow.components.upload.UploadProgressIndicator
+import ai.dokus.app.cashflow.components.upload.UploadedOverlay
+import ai.dokus.app.cashflow.components.upload.UploadingOverlay
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadDisplayState
@@ -8,45 +22,24 @@ import ai.dokus.app.cashflow.state.DocumentUploadItemState
 import ai.dokus.app.cashflow.state.rememberDocumentUploadItemState
 import ai.dokus.foundation.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Undo
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 /**
@@ -59,6 +52,9 @@ import androidx.compose.ui.unit.dp
  *
  * Each item manages its own state via [DocumentUploadItemState], making it independent
  * of the parent ViewModel for actions like retry, cancel, and delete.
+ *
+ * Uses extracted components from [ai.dokus.app.cashflow.components.upload] for consistent
+ * styling and reduced code duplication.
  */
 @Composable
 fun DocumentUploadItem(
@@ -172,24 +168,10 @@ private fun PendingContent(
         subtitle = "Waiting...",
         subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
         icon = {
-            FileIconWithOverlay(
-                overlay = {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(40.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                    )
-                }
-            )
+            FileIconWithOverlay { PendingOverlay() }
         },
         actions = {
-            IconButton(onClick = onCancel) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            CancelUploadAction(onClick = onCancel)
         },
         modifier = modifier
     )
@@ -205,43 +187,16 @@ private fun UploadingContent(
         fileName = state.fileName,
         subtitle = null,
         icon = {
-            FileIconWithOverlay(
-                overlay = {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(40.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            )
+            FileIconWithOverlay { UploadingOverlay() }
         },
         actions = {
-            IconButton(onClick = onCancel) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            CancelUploadAction(onClick = onCancel)
         },
         subtitleContent = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                LinearProgressIndicator(
-                    progress = { state.progress },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp),
-                    strokeCap = StrokeCap.Round
-                )
-                Text(
-                    text = "${state.progressPercent}%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            UploadProgressIndicator(
+                progress = state.progress,
+                progressPercent = state.progressPercent
+            )
         },
         modifier = modifier
     )
@@ -259,46 +214,14 @@ private fun FailedContent(
         subtitle = state.error,
         subtitleColor = MaterialTheme.colorScheme.error,
         icon = {
-            FileIconWithOverlay(
-                overlay = {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(16.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surface,
-                                MaterialTheme.shapes.extraSmall
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Error,
-                            contentDescription = "Failed",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            )
+            FileIconWithOverlay { FailedOverlay() }
         },
         actions = {
-            Row {
-                if (state.canRetry) {
-                    IconButton(onClick = onRetry) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Retry",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                IconButton(onClick = onCancel) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Remove",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            FailedUploadActions(
+                canRetry = state.canRetry,
+                onRetry = onRetry,
+                onCancel = onCancel
+            )
         },
         modifier = modifier
     )
@@ -315,35 +238,10 @@ private fun UploadedContent(
         subtitle = state.formattedSize,
         subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
         icon = {
-            FileIconWithOverlay(
-                overlay = {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(16.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surface,
-                                MaterialTheme.shapes.extraSmall
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Uploaded",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            )
+            FileIconWithOverlay { UploadedOverlay() }
         },
         actions = {
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+            DeleteDocumentAction(onClick = onDelete)
         },
         modifier = modifier
     )
@@ -355,12 +253,6 @@ private fun DeletingContent(
     onUndo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = state.progress,
-        animationSpec = tween(durationMillis = 100),
-        label = "deletion-progress"
-    )
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -372,121 +264,14 @@ private fun DeletingContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // File icon (dimmed)
-            Box(
-                modifier = Modifier.size(40.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.InsertDriveFile,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-                )
-            }
-
-            // File info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = state.fileName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "Deleting...",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            // Undo button
-            IconButton(onClick = onUndo) {
-                Icon(
-                    imageVector = Icons.Default.Undo,
-                    contentDescription = "Undo delete",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        // Countdown progress bar
-        LinearProgressIndicator(
-            progress = { animatedProgress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp),
-            color = MaterialTheme.colorScheme.error,
-            trackColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
-            strokeCap = StrokeCap.Round
-        )
-    }
-}
-
-// --- Shared components ---
-
-@Composable
-private fun UploadItemRow(
-    fileName: String,
-    subtitle: String?,
-    subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    icon: @Composable () -> Unit,
-    actions: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    subtitleContent: (@Composable () -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        icon()
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = fileName,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+            DeletingFileIcon()
+            DeletingFileInfo(
+                fileName = state.fileName,
+                modifier = Modifier.weight(1f)
             )
-
-            if (subtitleContent != null) {
-                subtitleContent()
-            } else if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = subtitleColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            UndoDeleteAction(onClick = onUndo)
         }
 
-        actions()
-    }
-}
-
-@Composable
-private fun FileIconWithOverlay(
-    overlay: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit
-) {
-    Box(
-        modifier = Modifier.size(40.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.InsertDriveFile,
-            contentDescription = null,
-            modifier = Modifier.size(32.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        overlay()
+        DeletionProgressIndicator(progress = state.progress)
     }
 }

@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
-import ai.dokus.app.cashflow.viewmodel.CreateInvoiceUiState
-import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
+import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
+import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
+import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.enums.ContactType

@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
-import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
+import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
+import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.invoice_amount
 import ai.dokus.app.resources.generated.invoice_bill_to

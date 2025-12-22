@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
+import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.DeliveryMethodOption
-import ai.dokus.app.cashflow.viewmodel.InvoiceDeliveryMethod
+import ai.dokus.app.cashflow.viewmodel.model.InvoiceDeliveryMethod
 import ai.dokus.app.cashflow.viewmodel.deliveryMethod
 import ai.dokus.app.cashflow.viewmodel.iconized
 import ai.dokus.app.cashflow.viewmodel.isComingSoon

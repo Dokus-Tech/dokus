@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
+import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

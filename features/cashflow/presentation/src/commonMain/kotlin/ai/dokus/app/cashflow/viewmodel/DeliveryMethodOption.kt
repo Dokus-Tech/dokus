@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.viewmodel
 
+import ai.dokus.app.cashflow.viewmodel.model.InvoiceDeliveryMethod
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.delivery_email_description
 import ai.dokus.app.resources.generated.delivery_export_pdf
