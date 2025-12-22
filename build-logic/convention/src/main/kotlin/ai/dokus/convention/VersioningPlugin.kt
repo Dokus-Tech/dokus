@@ -70,11 +70,12 @@ class VersioningPlugin : Plugin<Project> {
  *
  * Version name can be overridden via system property, Gradle property,
  * or environment variable (see VersioningPlugin for details).
+ *
+ * Note: Individual major/minor/patch components are not exposed separately
+ * because the version name from git tags is the single source of truth.
+ * Use `name` for the full version string (e.g., "1.2.3").
  */
 open class AppVersionExtension(private val versionNameOverride: String? = null) {
-    val major: Int = AppVersion.MAJOR
-    val minor: Int = AppVersion.MINOR
-    val build: Int = AppVersion.BUILD
     val name: String = versionNameOverride ?: AppVersion.NAME
     val code: Int = AppVersion.CODE
 }
