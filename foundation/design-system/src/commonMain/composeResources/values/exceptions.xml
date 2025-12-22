@@ -21,6 +21,11 @@
     <string name="exception_invalid_city">Invalid city</string>
     <string name="exception_invalid_postal_code">Invalid postal code</string>
     <string name="exception_invalid_country">Invalid country</string>
+    <string name="exception_api_key_required">API Key is required</string>
+    <string name="exception_api_secret_required">API Secret is required</string>
+    <string name="exception_invalid_api_credentials">Invalid API credentials. Please check your API Key and Secret.</string>
+    <string name="exception_missing_vat_number">Please configure your company VAT number in workspace settings first</string>
+    <string name="exception_missing_company_address">Please configure your company address in workspace settings first</string>
 
     <!-- 401 Authentication Errors -->
     <string name="exception_not_authenticated">Please log in to continue</string>

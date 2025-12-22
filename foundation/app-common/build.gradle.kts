@@ -71,6 +71,10 @@ kotlin {
             api(libs.koin.viewmodel)
             api(libs.koin.navigation)
 
+            // FlowMVI for state management
+            api(libs.flowmvi.core)
+            api(libs.flowmvi.compose)
+
             implementation(libs.calf.permissions)
             implementation(libs.calf.filePicker)
 

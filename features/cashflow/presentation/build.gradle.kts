@@ -49,6 +49,10 @@ kotlin {
 
             implementation(libs.calf.core)
             implementation(libs.calf.filePicker)
+
+            // FlowMVI for state management
+            implementation(libs.flowmvi.core)
+            implementation(libs.flowmvi.compose)
         }
         desktopMain.dependencies {
         }
