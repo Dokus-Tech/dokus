@@ -546,7 +546,8 @@ class ContactRepository {
     suspend fun getContactActivitySummary(
         contactId: ContactId,
         tenantId: TenantId
-    ): Result<ContactActivitySummary> = dbQuery {
+    ): Result<ContactActivitySummary> = runCatching {
+        dbQuery {
         val contactUuid = UUID.fromString(contactId.toString())
         val tenantUuid = UUID.fromString(tenantId.toString())
 
@@ -590,17 +591,18 @@ class ContactRepository {
         // TODO: Count pending approval items (documents with this contact as suggested)
         val pendingApprovalCount = 0L
 
-        ContactActivitySummary(
-            contactId = contactId,
-            invoiceCount = invoiceCount,
-            invoiceTotal = invoiceTotal.toPlainString(),
-            billCount = billCount,
-            billTotal = billTotal.toPlainString(),
-            expenseCount = expenseCount,
-            expenseTotal = expenseTotal.toPlainString(),
-            lastActivityDate = lastActivityDate,
-            pendingApprovalCount = pendingApprovalCount
-        )
+            ContactActivitySummary(
+                contactId = contactId,
+                invoiceCount = invoiceCount,
+                invoiceTotal = invoiceTotal.toPlainString(),
+                billCount = billCount,
+                billTotal = billTotal.toPlainString(),
+                expenseCount = expenseCount,
+                expenseTotal = expenseTotal.toPlainString(),
+                lastActivityDate = lastActivityDate,
+                pendingApprovalCount = pendingApprovalCount
+            )
+        }
     }
 
     // =========================================================================
