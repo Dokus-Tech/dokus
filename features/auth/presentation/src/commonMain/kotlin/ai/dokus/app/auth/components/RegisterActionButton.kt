@@ -33,7 +33,8 @@ internal fun RegisterActionButton(
     }
     PPrimaryButton(
         text = text,
-        enabled = canContinue && !isLoading,
+        enabled = canContinue,
+        isLoading = isLoading,
         modifier = modifier,
     ) { onContinueClick(page) }
 }
