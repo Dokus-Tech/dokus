@@ -10,6 +10,7 @@ import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.VatRate
 // ContactType removed - roles are now derived from cashflow items
 import ai.dokus.foundation.domain.ids.ContactId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.ContactActivitySummary
@@ -764,7 +765,13 @@ class ContactRepository {
             tags = row[ContactsTable.tags],
             isActive = row[ContactsTable.isActive],
             createdAt = row[ContactsTable.createdAt],
-            updatedAt = row[ContactsTable.updatedAt]
+            updatedAt = row[ContactsTable.updatedAt],
+            // UI Contract fields
+            isSystemContact = row[ContactsTable.isSystemContact],
+            createdFromDocumentId = row[ContactsTable.createdFromDocumentId]?.let {
+                DocumentId.parse(it.toString())
+            }
+            // derivedRoles and activitySummary are populated by service layer on demand
         )
     }
 }
