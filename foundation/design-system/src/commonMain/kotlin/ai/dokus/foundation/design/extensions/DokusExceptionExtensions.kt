@@ -12,6 +12,11 @@ import ai.dokus.app.resources.generated.exception_invalid_bic
 import ai.dokus.app.resources.generated.exception_invalid_city
 import ai.dokus.app.resources.generated.exception_invalid_country
 import ai.dokus.app.resources.generated.exception_invalid_credentials
+import ai.dokus.app.resources.generated.exception_api_key_required
+import ai.dokus.app.resources.generated.exception_api_secret_required
+import ai.dokus.app.resources.generated.exception_invalid_api_credentials
+import ai.dokus.app.resources.generated.exception_missing_vat_number
+import ai.dokus.app.resources.generated.exception_missing_company_address
 import ai.dokus.app.resources.generated.exception_invalid_email
 import ai.dokus.app.resources.generated.exception_invalid_first_name
 import ai.dokus.app.resources.generated.exception_invalid_iban
@@ -96,6 +101,11 @@ val DokusException.localized: String
         is DokusException.Validation.InvalidCity -> stringResource(Res.string.exception_invalid_city)
         is DokusException.Validation.InvalidPostalCode -> stringResource(Res.string.exception_invalid_postal_code)
         is DokusException.Validation.InvalidCountry -> stringResource(Res.string.exception_invalid_country)
+        is DokusException.Validation.ApiKeyRequired -> stringResource(Res.string.exception_api_key_required)
+        is DokusException.Validation.ApiSecretRequired -> stringResource(Res.string.exception_api_secret_required)
+        is DokusException.Validation.InvalidApiCredentials -> stringResource(Res.string.exception_invalid_api_credentials)
+        is DokusException.Validation.MissingVatNumber -> stringResource(Res.string.exception_missing_vat_number)
+        is DokusException.Validation.MissingCompanyAddress -> stringResource(Res.string.exception_missing_company_address)
         is DokusException.Validation -> stringResource(Res.string.exception_validation_error)
         is DokusException.BadRequest -> message
 

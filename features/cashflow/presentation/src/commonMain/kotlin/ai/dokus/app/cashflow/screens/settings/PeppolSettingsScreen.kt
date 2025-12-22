@@ -3,25 +3,19 @@ package ai.dokus.app.cashflow.screens.settings
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectionState
 import ai.dokus.app.cashflow.viewmodel.PeppolSettingsViewModel
 import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.peppol_api_key
-import ai.dokus.app.resources.generated.peppol_api_secret
-import ai.dokus.app.resources.generated.peppol_configuration
 import ai.dokus.app.resources.generated.peppol_connected
 import ai.dokus.app.resources.generated.peppol_connection_status
-import ai.dokus.app.resources.generated.peppol_credentials
 import ai.dokus.app.resources.generated.peppol_delete_settings
-import ai.dokus.app.resources.generated.peppol_enabled
 import ai.dokus.app.resources.generated.peppol_not_configured
 import ai.dokus.app.resources.generated.peppol_settings_title
-import ai.dokus.app.resources.generated.peppol_test_mode
 import ai.dokus.app.resources.generated.profile_danger_zone
 import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.model.RecommandCompanySummary
-import androidx.compose.foundation.clickable
+import ai.dokus.foundation.domain.model.PeppolProvider
+import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,36 +28,34 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.outlined.Receipt
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
 
 /**
  * Peppol E-Invoicing settings screen with top bar.
@@ -89,7 +81,8 @@ fun PeppolSettingsScreen(
 
 /**
  * Peppol settings content without scaffold.
- * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
+ * Simplified version - shows connection status and connect/disconnect buttons.
+ * The actual credentials entry is handled in PeppolConnectScreen.
  */
 @Composable
 fun PeppolSettingsContent(
@@ -97,37 +90,13 @@ fun PeppolSettingsContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
+    val navController = LocalNavController.current
     val state by viewModel.state.collectAsState()
-    val formState by viewModel.formState.collectAsState()
     val connectionState by viewModel.connectionState.collectAsState()
     val connectedCompany by viewModel.connectedCompany.collectAsState()
 
     LaunchedEffect(viewModel) {
         viewModel.loadSettings()
-    }
-
-    // Handle connection dialogs
-    when (val connState = connectionState) {
-        is PeppolConnectionState.SelectCompany -> {
-            CompanySelectionDialog(
-                candidates = connState.candidates,
-                onSelect = { viewModel.selectCompany(it.id) },
-                onDismiss = { viewModel.cancelConnection() }
-            )
-        }
-        is PeppolConnectionState.ConfirmCreateCompany -> {
-            CreateCompanyConfirmationDialog(
-                onConfirm = { viewModel.confirmCreateCompany() },
-                onDismiss = { viewModel.cancelConnection() }
-            )
-        }
-        is PeppolConnectionState.Error -> {
-            ErrorDialog(
-                message = connState.message,
-                onDismiss = { viewModel.resetConnectionState() }
-            )
-        }
-        else -> {}
     }
 
     when {
@@ -206,116 +175,46 @@ fun PeppolSettingsContent(
                     }
                 }
 
-                // Credentials Section - Only show if not connected
+                // Provider Selection - Only show if not connected
                 if (!isConnected) {
                     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = stringResource(Res.string.peppol_credentials),
+                                text = "Connect to Peppol",
                                 style = MaterialTheme.typography.titleMedium
                             )
 
                             Spacer(Modifier.height(8.dp))
 
                             Text(
-                                text = "Enter your Recommand API credentials to connect to Peppol. Your company will be automatically matched by VAT number.",
+                                text = "Select your e-invoicing provider to get started.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
                             Spacer(Modifier.height(16.dp))
 
-                            PTextFieldStandard(
-                                fieldName = stringResource(Res.string.peppol_api_key),
-                                value = formState.apiKey,
-                                onValueChange = { viewModel.updateApiKey(it) },
+                            // Provider cards
+                            ProviderCard(
+                                provider = PeppolProvider.Recommand,
+                                icon = Icons.Outlined.Receipt,
+                                description = "Belgian Peppol Access Point for e-invoicing",
+                                onClick = {
+                                    navController.navigate(
+                                        SettingsDestination.PeppolConfiguration.Connect(PeppolProvider.Recommand.name)
+                                    )
+                                },
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            formState.errors["apiKey"]?.let {
-                                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                            }
 
                             Spacer(Modifier.height(12.dp))
 
-                            PTextFieldStandard(
-                                fieldName = stringResource(Res.string.peppol_api_secret),
-                                value = formState.apiSecret,
-                                onValueChange = { viewModel.updateApiSecret(it) },
+                            Text(
+                                text = "More providers coming soon",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()
-                            )
-                            formState.errors["apiSecret"]?.let {
-                                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                    }
-                }
-
-                // Configuration Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(Res.string.peppol_configuration),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Spacer(Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.peppol_enabled),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Switch(
-                                checked = formState.isEnabled,
-                                onCheckedChange = { viewModel.updateIsEnabled(it) }
-                            )
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.peppol_test_mode),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Switch(
-                                checked = formState.testMode,
-                                onCheckedChange = { viewModel.updateTestMode(it) }
-                            )
-                        }
-                    }
-                }
-
-                // Connect Button - Only show if not connected
-                if (!isConnected) {
-                    val isConnecting = connectionState is PeppolConnectionState.Connecting
-
-                    PPrimaryButton(
-                        text = if (isConnecting) "Connecting..." else "Connect",
-                        enabled = !isConnecting && !state.isLoading(),
-                        onClick = { viewModel.connect() },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    if (isConnecting) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            Text(
-                                text = "Connecting to Peppol...",
-                                modifier = Modifier.padding(start = 8.dp),
-                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
@@ -356,130 +255,52 @@ fun PeppolSettingsContent(
     }
 }
 
-/**
- * Dialog for selecting a company when multiple matches are found.
- */
 @Composable
-private fun CompanySelectionDialog(
-    candidates: List<RecommandCompanySummary>,
-    onSelect: (RecommandCompanySummary) -> Unit,
-    onDismiss: () -> Unit
+private fun ProviderCard(
+    provider: PeppolProvider,
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    var selectedCompany by remember { mutableStateOf<RecommandCompanySummary?>(null) }
+    val containerColor = MaterialTheme.colorScheme.surface
+    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Company") },
-        text = {
-            Column {
-                Text(
-                    text = "Multiple companies found matching your VAT number. Please select one:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                candidates.forEach { company ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedCompany = company }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedCompany == company,
-                            onClick = { selectedCompany = company }
-                        )
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(
-                                text = company.name,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Text(
-                                text = "VAT: ${company.vatNumber}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { selectedCompany?.let { onSelect(it) } },
-                enabled = selectedCompany != null
-            ) {
-                Text("Select")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(width = 1.dp, color = borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = provider.displayName,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = provider.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
         }
-    )
-}
-
-/**
- * Dialog for confirming company creation on Recommand.
- */
-@Composable
-private fun CreateCompanyConfirmationDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Create Company") },
-        text = {
-            Column {
-                Text(
-                    text = "No company found on Recommand matching your VAT number.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Would you like Dokus to create one using your company information?",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = "The company will be created with your legal name, VAT number, and address from your workspace settings.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Create & Connect")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-/**
- * Dialog for showing error messages.
- */
-@Composable
-private fun ErrorDialog(
-    message: String,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Connection Error") },
-        text = { Text(message) },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("OK")
-            }
-        }
-    )
+    }
 }

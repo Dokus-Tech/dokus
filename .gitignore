@@ -20,3 +20,6 @@ captures
 /logs/
 /features/auth/backend/logs/
 /logs-local/
+
+# Auto Claude data directory
+.auto-claude/
