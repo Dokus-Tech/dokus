@@ -2,6 +2,7 @@ package ai.dokus.foundation.design.components.fields
 
 import ai.dokus.foundation.design.components.PErrorText
 import ai.dokus.foundation.design.components.PIcon
+import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
@@ -51,7 +50,7 @@ fun PTextField(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
         horizontalAlignment = Alignment.Start
     ) {
         Row(
@@ -62,7 +61,7 @@ fun PTextField(
                 PIcon(
                     it,
                     "",
-                    modifier = Modifier.padding(end = 4.dp).size(iconSizeDp)
+                    modifier = Modifier.padding(end = Constrains.Spacing.xSmall).size(iconSizeDp)
                 )
             }
             Text(
@@ -77,15 +76,15 @@ fun PTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .border(
-                    width = 1.dp,
+                    width = Constrains.Stroke.thin,
                     color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = MaterialTheme.shapes.small
                 )
                 .background(
                     color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = MaterialTheme.shapes.small
                 )
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.medium)
         ) {
             BasicTextField(
                 value = value,

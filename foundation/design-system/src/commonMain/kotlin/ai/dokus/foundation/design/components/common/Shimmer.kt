@@ -1,5 +1,6 @@
 package ai.dokus.foundation.design.components.common
 
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 /**
  * Creates an animated shimmer brush effect.
@@ -72,7 +71,7 @@ fun shimmerBrush(
 @Composable
 fun ShimmerBox(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(4.dp)
+    shape: Shape = MaterialTheme.shapes.extraSmall
 ) {
     Box(
         modifier = modifier
@@ -110,11 +109,11 @@ fun ShimmerCircle(
 @Composable
 fun ShimmerLine(
     modifier: Modifier = Modifier,
-    height: Dp = 14.dp
+    height: Dp = Constrains.Height.shimmerLine
 ) {
     ShimmerBox(
         modifier = modifier.height(height),
-        shape = RoundedCornerShape(2.dp)
+        shape = MaterialTheme.shapes.extraSmall
     )
 }
 
@@ -122,6 +121,6 @@ fun ShimmerLine(
  * A spacer that can be used between shimmer elements.
  */
 @Composable
-fun ShimmerSpacer(height: Dp = 8.dp) {
+fun ShimmerSpacer(height: Dp = Constrains.Spacing.small) {
     Spacer(modifier = Modifier.height(height))
 }

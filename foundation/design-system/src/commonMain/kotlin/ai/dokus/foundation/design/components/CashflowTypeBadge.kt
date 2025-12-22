@@ -2,12 +2,11 @@ package ai.dokus.foundation.design.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import ai.dokus.foundation.design.constrains.Constrains
 
 /**
  * Type of cashflow transaction badge
@@ -51,8 +50,8 @@ fun CashflowTypeBadge(
         modifier = modifier
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(12.dp)
+                shape = MaterialTheme.shapes.medium
             )
-            .padding(horizontal = 12.dp, vertical = 2.dp)
+            .padding(horizontal = Constrains.Spacing.medium, vertical = Constrains.Spacing.xxSmall)
     )
 }
