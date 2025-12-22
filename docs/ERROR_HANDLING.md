@@ -53,6 +53,11 @@ This document provides a comprehensive reference for error handling in the Dokus
   - [Backend: Exception Chaining with asDokusException](#backend-exception-chaining-with-asdokusexception)
   - [Frontend: Error Handling Patterns](#frontend-error-handling-patterns)
   - [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
+- [Troubleshooting](#troubleshooting)
+  - [Error ID Tracking](#error-id-tracking)
+  - [Common Error Scenarios](#common-error-scenarios)
+  - [Logging Patterns for Investigation](#logging-patterns-for-investigation)
+  - [Debugging Checklist](#debugging-checklist)
 
 ---
 
@@ -2993,6 +2998,376 @@ fun loadProfile(): Result<Profile> {
         }
 }
 ```
+
+---
+
+## Troubleshooting
+
+This section provides practical guidance for debugging errors in the Dokus platform, including how to use error IDs for tracking, common error scenarios, and logging patterns for investigation.
+
+### Error ID Tracking
+
+Every `DokusException` instance is automatically assigned a unique error ID in the format `ERR-{UUID}`. This ID is generated when the exception is created and persists through serialization, making it invaluable for tracking errors across the stack.
+
+#### How Error IDs Are Generated
+
+```kotlin
+// In DokusException.kt
+@OptIn(ExperimentalUuidApi::class)
+fun generateErrorId(): String =
+    "ERR-${Uuid.random()}"
+```
+
+Example error ID: `ERR-550e8400-e29b-41d4-a716-446655440000`
+
+#### Using Error IDs for Support
+
+When users report issues, ask them to provide the error ID displayed in the UI:
+
+```kotlin
+@Composable
+fun ErrorDetails(exception: DokusException) {
+    Column {
+        Text(
+            text = exception.localized,
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        // Show error ID for support reference
+        Text(
+            text = "Error ID: ${exception.errorId}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+```
+
+#### Correlating Error IDs in Logs
+
+To find an error in backend logs:
+
+```bash
+# Search for a specific error ID in logs
+grep "ERR-550e8400-e29b-41d4-a716-446655440000" /var/log/dokus/*.log
+
+# Search across all services with kubectl
+kubectl logs -l app=dokus-auth --all-containers | grep "ERR-550e8400"
+
+# Using structured logging query (if using JSON logs)
+jq 'select(.errorId == "ERR-550e8400-e29b-41d4-a716-446655440000")' logs.json
+```
+
+### Common Error Scenarios
+
+#### Scenario 1: "401 Unauthorized" After Login
+
+**Symptoms**: User logs in successfully but subsequent requests return 401.
+
+**Investigation Steps**:
+
+1. **Check token storage**: Verify the access token was stored after login
+   ```kotlin
+   // Debug logging in TokenManager
+   println("Stored access token: ${accessToken.take(20)}...")
+   ```
+
+2. **Verify token is being sent**: Enable HTTP logging
+   ```kotlin
+   withLogging(LogLevel.HEADERS)  // Shows Authorization header
+   ```
+
+3. **Check token expiry**: Access tokens may be expired
+   ```kotlin
+   // Log token expiry during validation
+   logger.debug("Token expires at: ${tokenClaims.expiresAt}")
+   ```
+
+4. **Verify refresh logic**: Check if refresh token is valid
+   ```kotlin
+   // In TokenManager
+   logger.debug("Attempting token refresh, current token valid: $isValid")
+   ```
+
+**Common Causes**:
+- Token not being attached to requests (missing `withDynamicBearerAuth`)
+- Clock skew between client and server
+- Refresh token revoked on another device
+
+---
+
+#### Scenario 2: "ConnectionError" on Mobile
+
+**Symptoms**: App shows "Connection error. Please try again later." intermittently.
+
+**Investigation Steps**:
+
+1. **Check network state**: Verify device connectivity
+   ```kotlin
+   // Before making request
+   if (!connectivityManager.isNetworkAvailable()) {
+       // Show offline UI instead of making request
+   }
+   ```
+
+2. **Review error message details**: The `ConnectionError` message often contains useful info
+   ```kotlin
+   when (val ex = error.asDokusException) {
+       is DokusException.ConnectionError -> {
+           logger.debug("Connection error: ${ex.message}")
+           // Message might be: "Failed to connect to api.dokus.ai:443"
+       }
+   }
+   ```
+
+3. **Check server health**: Verify the API is reachable
+   ```bash
+   curl -I https://api.dokus.ai/health
+   ```
+
+**Common Causes**:
+- Poor network connectivity
+- Server downtime or deployment in progress
+- Firewall or proxy blocking requests
+- DNS resolution issues
+
+---
+
+#### Scenario 3: Validation Errors Not Displaying
+
+**Symptoms**: Form shows generic error instead of specific validation message.
+
+**Investigation Steps**:
+
+1. **Check exception type**: Ensure backend throws specific validation exception
+   ```kotlin
+   // Backend should throw:
+   throw DokusException.Validation.InvalidEmail
+
+   // NOT:
+   throw DokusException.BadRequest("Email is invalid")
+   ```
+
+2. **Verify UI handles the type**: Check the when clause covers the exception
+   ```kotlin
+   when (exception) {
+       is DokusException.Validation.InvalidEmail -> {
+           // This should display inline with the email field
+       }
+       is DokusException.BadRequest -> {
+           // This shows as generic error
+       }
+   }
+   ```
+
+3. **Check serialization**: Ensure response body deserializes correctly
+   ```kotlin
+   // Enable verbose logging
+   withLogging(LogLevel.BODY)
+   // Check: {"type":"DokusException.Validation.InvalidEmail",...}
+   ```
+
+**Common Causes**:
+- Backend throwing generic `BadRequest` instead of specific validation type
+- UI `when` clause missing the specific validation type
+- Missing `@SerialName` annotation on exception class
+
+---
+
+#### Scenario 4: Rate Limiting Not Showing Countdown
+
+**Symptoms**: User sees "Too many login attempts" but no countdown timer.
+
+**Investigation Steps**:
+
+1. **Check Retry-After header**: Verify backend sends the header
+   ```bash
+   curl -i -X POST https://api.dokus.ai/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"test@test.com","password":"wrong"}'
+   # Look for: Retry-After: 120
+   ```
+
+2. **Verify header parsing**: Check client extracts the value
+   ```kotlin
+   // In HttpClientExtensions.kt
+   val retryAfter = parseRetryAfterHeader(response)
+   println("Retry-After header: $retryAfter")
+   ```
+
+3. **Check UI state handling**: Ensure view model stores the countdown value
+   ```kotlin
+   is DokusException.TooManyLoginAttempts -> {
+       println("Rate limited for ${exception.retryAfterSeconds} seconds")
+       // Update UI state with this value
+   }
+   ```
+
+**Common Causes**:
+- Missing `Retry-After` header in response
+- Header value not being parsed (check for string vs int issues)
+- UI not observing the rate limit state
+
+---
+
+#### Scenario 5: "Unknown Error" in Production
+
+**Symptoms**: User sees "An unexpected error occurred" with an error ID.
+
+**Investigation Steps**:
+
+1. **Find the error in logs**: Use the error ID
+   ```bash
+   # The error ID is in the exception
+   grep "ERR-abc123" /var/log/dokus/auth.log
+   ```
+
+2. **Check for stack trace**: Look for "Unhandled exception" in logs
+   ```bash
+   grep -A 50 "Unhandled exception" /var/log/dokus/auth.log
+   ```
+
+3. **Review the original exception**: The `Unknown` wrapper preserves it
+   ```kotlin
+   // The throwable field contains the original exception
+   if (exception is DokusException.Unknown) {
+       logger.error("Original exception", exception.throwable)
+   }
+   ```
+
+**Common Causes**:
+- Unhandled exception in business logic
+- Third-party service returning unexpected response
+- Database connection issues
+- Null pointer or other runtime exceptions
+
+### Logging Patterns for Investigation
+
+#### Backend Logging Levels
+
+The `ErrorHandling.kt` uses different log levels based on exception severity:
+
+```kotlin
+// WARN for expected/client errors (DokusException)
+logger.warn("DokusException: ${cause.message}")
+
+// ERROR for unexpected/server errors (Throwable)
+logger.error("Unhandled exception", cause)
+```
+
+#### Structured Logging Best Practices
+
+For better searchability, include the error ID and error code in structured log fields:
+
+```kotlin
+// Using SLF4J with MDC (Mapped Diagnostic Context)
+MDC.put("errorId", exception.errorId)
+MDC.put("errorCode", exception.errorCode)
+MDC.put("httpStatus", exception.httpStatusCode.toString())
+
+logger.warn("Request failed", exception)
+
+MDC.clear()
+```
+
+This enables queries like:
+
+```bash
+# Find all authentication failures
+jq 'select(.errorCode == "INVALID_CREDENTIALS")' logs.json
+
+# Find all 5xx errors
+jq 'select(.httpStatus | startswith("5"))' logs.json
+```
+
+#### Client-Side Error Logging
+
+For debugging mobile/desktop apps, implement structured error logging:
+
+```kotlin
+class ErrorLogger(private val analytics: Analytics) {
+
+    fun log(exception: DokusException, context: String) {
+        val properties = mapOf(
+            "error_id" to exception.errorId,
+            "error_code" to exception.errorCode,
+            "http_status" to exception.httpStatusCode,
+            "recoverable" to exception.recoverable,
+            "context" to context
+        )
+
+        analytics.track("error_occurred", properties)
+
+        // Also log to console in debug builds
+        if (BuildConfig.DEBUG) {
+            println("[ERROR] $context: ${exception.errorCode} - ${exception.message}")
+        }
+    }
+}
+```
+
+#### Request Correlation
+
+For tracing errors across services, use request correlation IDs:
+
+```kotlin
+// Add correlation ID to all requests
+install(DefaultRequest) {
+    header("X-Correlation-ID", UUID.randomUUID().toString())
+}
+
+// In backend, log the correlation ID with errors
+val correlationId = call.request.header("X-Correlation-ID")
+logger.warn("Error [correlationId=$correlationId]: ${cause.message}")
+```
+
+### Debugging Checklist
+
+Use this checklist when investigating production errors:
+
+#### 1. Gather Information
+
+- [ ] Error ID from user report: `ERR-________________`
+- [ ] Error code: `________________` (e.g., `INVALID_CREDENTIALS`)
+- [ ] HTTP status code: `___` (e.g., 401, 500)
+- [ ] Approximate time of occurrence: `________________`
+- [ ] User identifier (if available): `________________`
+- [ ] Platform (iOS/Android/Web): `________________`
+
+#### 2. Backend Investigation
+
+- [ ] Search logs for error ID: `grep "ERR-..." logs`
+- [ ] Check for stack traces near the error
+- [ ] Verify exception type thrown matches what client received
+- [ ] Check database connectivity at time of error
+- [ ] Review recent deployments that might have introduced the issue
+
+#### 3. Client Investigation
+
+- [ ] Check if error is reproducible
+- [ ] Verify network connectivity during error
+- [ ] Check if token/session is valid
+- [ ] Review HTTP response body and headers
+- [ ] Check if `asDokusException` conversion preserved the original type
+
+#### 4. Common Fixes
+
+| Error Code | Quick Fix |
+|------------|-----------|
+| `NOT_AUTHENTICATED` | Check token is being sent; try logging in again |
+| `NOT_AUTHORIZED` | Verify user has required permissions |
+| `CONNECTION_ERROR` | Check network and server availability |
+| `INTERNAL_ERROR` | Review backend logs for root cause |
+| `TOO_MANY_LOGIN_ATTEMPTS` | Wait for `retryAfterSeconds` to elapse |
+| `VALIDATION_ERROR` | Check input data format matches expected schema |
+| `TOKEN_EXPIRED` | Trigger token refresh; check if refresh token is valid |
+
+#### 5. Escalation Path
+
+1. **Tier 1**: Check quick fixes above
+2. **Tier 2**: Search logs, reproduce locally
+3. **Tier 3**: Involve backend developer with error ID and logs
+4. **Tier 4**: Production debugging with tracing enabled
 
 ---
 
