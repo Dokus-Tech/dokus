@@ -333,9 +333,17 @@ workflows:
                 #!/bin/bash
                 set -ex
 
+                # Determine artifact prefix based on build type
+                if [ "$IS_RELEASE" = "true" ]; then
+                  ARTIFACT_PREFIX="dokus-ios-release"
+                else
+                  ARTIFACT_PREFIX="dokus-ios-dev"
+                fi
+                echo "Artifact prefix: $ARTIFACT_PREFIX (IS_RELEASE=$IS_RELEASE)"
+
                 if [ -n "$BITRISE_IPA_PATH" ]; then
                   IPA_DIR=$(dirname "$BITRISE_IPA_PATH")
-                  NEW_IPA="$IPA_DIR/dokus-ios-$VERSION_NAME.ipa"
+                  NEW_IPA="$IPA_DIR/${ARTIFACT_PREFIX}-${VERSION_NAME}.ipa"
                   mv "$BITRISE_IPA_PATH" "$NEW_IPA"
                   envman add --key BITRISE_IPA_PATH --value "$NEW_IPA"
                   echo "Renamed IPA to: $NEW_IPA"
