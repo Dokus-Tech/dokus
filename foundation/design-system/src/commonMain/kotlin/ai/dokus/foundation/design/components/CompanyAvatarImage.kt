@@ -1,5 +1,7 @@
 package ai.dokus.foundation.design.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.company_avatar_content_description
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -21,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import kotlin.math.abs
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Size variants for company avatars.
@@ -89,7 +92,7 @@ fun CompanyAvatarImage(
         if (avatarUrl != null) {
             SubcomposeAsyncImage(
                 model = avatarUrl,
-                contentDescription = "Company avatar",
+                contentDescription = stringResource(Res.string.company_avatar_content_description),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(size.dp)

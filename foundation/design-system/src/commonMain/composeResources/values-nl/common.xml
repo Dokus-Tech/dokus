@@ -27,6 +27,16 @@
 
     <!-- Server Connection -->
     <string name="connect_to_server">Verbinden met server</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Afbeelding bijsnijden</string>
+    <string name="image_cropper_apply">Toepassen</string>
+    <string name="image_cropper_hint">Knijp om te zoomen, sleep om te verplaatsen</string>
+    <string name="image_cropper_content_description">Afbeelding om bij te snijden</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Bedrijfsavatar</string>
+
     <!-- Legacy aliases for backward compatibility -->
     <string name="back">Terug</string>
     <string name="approve">Goedkeuren</string>

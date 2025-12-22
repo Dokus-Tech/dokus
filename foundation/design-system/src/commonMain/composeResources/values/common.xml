@@ -35,4 +35,13 @@
 
     <!-- Server Connection -->
     <string name="connect_to_server">Connect to server</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Crop Image</string>
+    <string name="image_cropper_apply">Apply</string>
+    <string name="image_cropper_hint">Pinch to zoom, drag to pan</string>
+    <string name="image_cropper_content_description">Image to crop</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Company avatar</string>
 </resources>

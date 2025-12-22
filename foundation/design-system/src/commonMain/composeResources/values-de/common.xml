@@ -27,6 +27,16 @@
 
     <!-- Server Connection -->
     <string name="connect_to_server">Mit Server verbinden</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Bild zuschneiden</string>
+    <string name="image_cropper_apply">Anwenden</string>
+    <string name="image_cropper_hint">Zum Zoomen kneifen, zum Verschieben ziehen</string>
+    <string name="image_cropper_content_description">Zuzuschneidendes Bild</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Firmen-Avatar</string>
+
     <!-- Legacy aliases for backward compatibility -->
     <string name="back">Zurück</string>
     <string name="approve">Genehmigen</string>

@@ -1,5 +1,7 @@
 package ai.dokus.foundation.design.components.common
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.state_retry
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.tooling.PreviewParameters
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 
@@ -102,7 +105,7 @@ private fun DokusErrorContentFull(
         if (retryHandler != null) {
             Spacer(modifier = Modifier.height(16.dp))
             POutlinedButton(
-                text = "Retry",
+                text = stringResource(Res.string.state_retry),
                 onClick = { retryHandler.retry() }
             )
         }
@@ -138,7 +141,7 @@ private fun DokusErrorContentCompact(
         )
         if (retryHandler != null) {
             POutlinedButton(
-                text = "Retry",
+                text = stringResource(Res.string.state_retry),
                 onClick = { retryHandler.retry() }
             )
         }

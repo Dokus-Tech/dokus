@@ -34,4 +34,13 @@
     <string name="save_changes">Сохранить изменения</string>
     <string name="cancel">Отмена</string>
     <string name="delete">Удалить</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Обрезать изображение</string>
+    <string name="image_cropper_apply">Применить</string>
+    <string name="image_cropper_hint">Сожмите для масштабирования, перетащите для перемещения</string>
+    <string name="image_cropper_content_description">Изображение для обрезки</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Аватар компании</string>
 </resources>

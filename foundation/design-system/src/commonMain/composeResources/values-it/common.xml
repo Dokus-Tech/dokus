@@ -27,6 +27,16 @@
 
     <!-- Server Connection -->
     <string name="connect_to_server">Connetti al server</string>
+
+    <!-- Image Cropper -->
+    <string name="image_cropper_title">Ritaglia immagine</string>
+    <string name="image_cropper_apply">Applica</string>
+    <string name="image_cropper_hint">Pizzica per ingrandire, trascina per spostare</string>
+    <string name="image_cropper_content_description">Immagine da ritagliare</string>
+
+    <!-- Company Avatar -->
+    <string name="company_avatar_content_description">Avatar aziendale</string>
+
     <!-- Legacy aliases for backward compatibility -->
     <string name="back">Indietro</string>
     <string name="approve">Approva</string>
