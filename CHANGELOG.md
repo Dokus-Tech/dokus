@@ -1,3 +1,32 @@
+## [0.1.2] - 22-12-2025
+
+### 📚 Documentation
+
+- 🎉 **Comprehensive error handling guide**: Created detailed ERROR_HANDLING.md documenting DokusException patterns, client-side error handling via HttpClientExtensions, and backend error configuration
+- Added rate limiting documentation for authentication module
+- Added error handling section to cashflow backend README
+- Documented common error scenarios and debugging approaches
+- Added section documenting DokusErrorContent and DokusErrorText components
+- Added dedicated documentation for TooManyLoginAttempts exception
+- Documented DokusExceptionExtensions.localized functionality
+
+### ✨ Code Documentation
+
+- 🔍 **Enhanced API documentation**: Added comprehensive KDoc to core use cases and domain layer with detailed @param and @return documentation
+- Added comprehensive KDoc to SelectTenantUseCase interface
+- Added comprehensive KDoc to GetCurrentTenantUseCase
+- Added @param and @return documentation to LoginUseCase invoke method
+- Added @return documentation to LogoutUseCase invoke method
+- Added @param and @return documentation to RegisterAndLoginUseCase
+- Added @param and @return documentation to SelectTenantUseCaseImpl
+- Added @return documentation to GetCurrentTenantUseCaseImpl
+- Added comprehensive @param and @return documentation to additional use cases
+- Added comprehensive KDoc to RegisterFormFields class with best practices and anti-patterns section
+
+### 🔧 Maintenance
+
+- Updated .gitignore
+
 ## [0.1.1] - 22/12/2025
 
 ### ✨ New Features
