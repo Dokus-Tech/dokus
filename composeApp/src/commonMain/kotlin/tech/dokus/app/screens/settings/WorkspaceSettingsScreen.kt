@@ -8,16 +8,29 @@ import ai.dokus.app.resources.generated.workspace_bic
 import ai.dokus.app.resources.generated.workspace_company_info
 import ai.dokus.app.resources.generated.workspace_company_name
 import ai.dokus.app.resources.generated.workspace_iban
+import ai.dokus.app.resources.generated.workspace_invoice_include_year
+import ai.dokus.app.resources.generated.workspace_invoice_numbering
+import ai.dokus.app.resources.generated.workspace_invoice_numbering_description
+import ai.dokus.app.resources.generated.workspace_invoice_padding
 import ai.dokus.app.resources.generated.workspace_invoice_prefix
+import ai.dokus.app.resources.generated.workspace_invoice_prefix_description
+import ai.dokus.app.resources.generated.workspace_invoice_preview
 import ai.dokus.app.resources.generated.workspace_invoice_settings
+import ai.dokus.app.resources.generated.workspace_invoice_settings_description
+import ai.dokus.app.resources.generated.workspace_invoice_yearly_reset
 import ai.dokus.app.resources.generated.workspace_legal_name
+import ai.dokus.app.resources.generated.workspace_payment_days_description
 import ai.dokus.app.resources.generated.workspace_payment_terms
+import ai.dokus.app.resources.generated.workspace_payment_terms_description
+import ai.dokus.app.resources.generated.workspace_payment_terms_section
+import ai.dokus.app.resources.generated.workspace_payment_terms_text
 import ai.dokus.app.resources.generated.workspace_settings_title
 import ai.dokus.app.resources.generated.workspace_vat_number
 import ai.dokus.foundation.design.components.AvatarSize
 import ai.dokus.foundation.design.components.CompanyAvatarImage
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
+import ai.dokus.foundation.design.components.fields.PTextFieldFree
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
 import ai.dokus.foundation.domain.model.CompanyAvatar
@@ -39,8 +52,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -128,7 +144,7 @@ fun WorkspaceSettingsContent(
                     .verticalScroll(rememberScrollState())
                     .padding(contentPadding)
                     .withContentPaddingForScrollable(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Company Information Section
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
@@ -138,7 +154,7 @@ fun WorkspaceSettingsContent(
                             style = MaterialTheme.typography.titleMedium
                         )
 
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(12.dp))
 
                         // Company Avatar Section
                         CompanyAvatarSection(
@@ -150,7 +166,7 @@ fun WorkspaceSettingsContent(
                             onResetAvatarState = { viewModel.resetAvatarState() }
                         )
 
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(12.dp))
 
                         // Legal Name (read-only)
                         Text(
@@ -163,7 +179,7 @@ fun WorkspaceSettingsContent(
                             style = MaterialTheme.typography.bodyLarge
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_company_name),
@@ -172,7 +188,7 @@ fun WorkspaceSettingsContent(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_vat_number),
@@ -181,7 +197,7 @@ fun WorkspaceSettingsContent(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_address),
@@ -200,7 +216,7 @@ fun WorkspaceSettingsContent(
                             style = MaterialTheme.typography.titleMedium
                         )
 
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(12.dp))
 
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_iban),
@@ -209,7 +225,7 @@ fun WorkspaceSettingsContent(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_bic),
@@ -227,9 +243,21 @@ fun WorkspaceSettingsContent(
                             text = stringResource(Res.string.workspace_invoice_settings),
                             style = MaterialTheme.typography.titleMedium
                         )
+                        Text(
+                            text = stringResource(Res.string.workspace_invoice_settings_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(12.dp))
 
+                        // Invoice Prefix
+                        Text(
+                            text = stringResource(Res.string.workspace_invoice_prefix_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(4.dp))
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_invoice_prefix),
                             value = formState.invoicePrefix,
@@ -237,8 +265,15 @@ fun WorkspaceSettingsContent(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(8.dp))
 
+                        // Payment Terms (Days)
+                        Text(
+                            text = stringResource(Res.string.workspace_payment_days_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(4.dp))
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_payment_terms),
                             value = formState.defaultPaymentTerms.toString(),
@@ -247,12 +282,17 @@ fun WorkspaceSettingsContent(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(Modifier.height(16.dp))
+                        // Divider
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-                        // Invoice Numbering Configuration
+                        // Invoice Numbering Subsection
                         Text(
-                            text = "Invoice Numbering",
-                            style = MaterialTheme.typography.titleSmall,
+                            text = stringResource(Res.string.workspace_invoice_numbering),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = stringResource(Res.string.workspace_invoice_numbering_description),
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
@@ -268,7 +308,7 @@ fun WorkspaceSettingsContent(
                                 onCheckedChange = { viewModel.updateInvoiceIncludeYear(it) }
                             )
                             Text(
-                                text = "Include year in number",
+                                text = stringResource(Res.string.workspace_invoice_include_year),
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.weight(1f)
                             )
@@ -284,7 +324,7 @@ fun WorkspaceSettingsContent(
                                 onCheckedChange = { viewModel.updateInvoiceYearlyReset(it) }
                             )
                             Text(
-                                text = "Reset numbering each year",
+                                text = stringResource(Res.string.workspace_invoice_yearly_reset),
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.weight(1f)
                             )
@@ -294,7 +334,7 @@ fun WorkspaceSettingsContent(
 
                         // Number Padding Selector
                         Text(
-                            text = "Number padding (digits)",
+                            text = stringResource(Res.string.workspace_invoice_padding),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -319,11 +359,56 @@ fun WorkspaceSettingsContent(
 
                         Spacer(Modifier.height(8.dp))
 
-                        // Preview
+                        // Preview in highlighted card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.workspace_invoice_preview),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = generateInvoiceNumberPreview(
+                                        formState.invoicePrefix,
+                                        formState.invoiceIncludeYear,
+                                        formState.invoicePadding
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        // Divider
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                        // Payment Terms Subsection
                         Text(
-                            text = "Preview: ${generateInvoiceNumberPreview(formState.invoicePrefix, formState.invoiceIncludeYear, formState.invoicePadding)}",
+                            text = stringResource(Res.string.workspace_payment_terms_section),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = stringResource(Res.string.workspace_payment_terms_description),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        PTextFieldFree(
+                            fieldName = stringResource(Res.string.workspace_payment_terms_text),
+                            value = formState.paymentTermsText,
+                            onValueChange = { viewModel.updatePaymentTermsText(it) },
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }

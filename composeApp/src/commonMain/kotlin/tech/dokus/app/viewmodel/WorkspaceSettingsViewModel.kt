@@ -95,7 +95,8 @@ class WorkspaceSettingsViewModel(
                 invoiceYearlyReset = form.invoiceYearlyReset,
                 invoicePadding = form.invoicePadding,
                 invoiceIncludeYear = form.invoiceIncludeYear,
-                invoiceTimezone = form.invoiceTimezone
+                invoiceTimezone = form.invoiceTimezone,
+                paymentTermsText = form.paymentTermsText.ifBlank { null }
             )
 
             tenantDataSource.updateTenantSettings(updatedSettings).fold(
@@ -168,6 +169,10 @@ class WorkspaceSettingsViewModel(
 
     fun updateInvoiceTimezone(value: String) {
         _formState.value = _formState.value.copy(invoiceTimezone = value)
+    }
+
+    fun updatePaymentTermsText(value: String) {
+        _formState.value = _formState.value.copy(paymentTermsText = value)
     }
 
     // ===== Avatar Operations =====
@@ -250,7 +255,8 @@ class WorkspaceSettingsViewModel(
             invoiceYearlyReset = settings.invoiceYearlyReset,
             invoicePadding = settings.invoicePadding,
             invoiceIncludeYear = settings.invoiceIncludeYear,
-            invoiceTimezone = settings.invoiceTimezone
+            invoiceTimezone = settings.invoiceTimezone,
+            paymentTermsText = settings.paymentTermsText ?: ""
         )
     }
 }
@@ -290,7 +296,9 @@ data class WorkspaceFormState(
     val invoiceYearlyReset: Boolean = true,
     val invoicePadding: Int = 4,
     val invoiceIncludeYear: Boolean = true,
-    val invoiceTimezone: String = "Europe/Brussels"
+    val invoiceTimezone: String = "Europe/Brussels",
+    // Legal payment terms text
+    val paymentTermsText: String = ""
 )
 
 /**
