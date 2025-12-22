@@ -40,4 +40,9 @@ dependencies {
 
     // Logging
     implementation(libs.logback)
+
+    // Testing
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutinesTest)
+    testImplementation(libs.h2) // In-memory database for testing
 }

@@ -30,6 +30,20 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
+/**
+ * Configuration for invoice number generation.
+ *
+ * This data class holds all tenant-specific settings for generating
+ * invoice numbers in the required format for Belgian tax compliance.
+ */
+data class TenantInvoiceConfig(
+    val prefix: String,
+    val yearlyReset: Boolean,
+    val padding: Int,
+    val includeYear: Boolean,
+    val timezone: String
+)
+
 @OptIn(ExperimentalUuidApi::class)
 class TenantRepository {
     private val logger = LoggerFactory.getLogger(TenantRepository::class.java)
@@ -167,5 +181,34 @@ class TenantRepository {
             .where { TenantSettingsTable.tenantId eq javaUuid }
             .singleOrNull()
             ?.get(TenantSettingsTable.companyLogoUrl)
+    }
+
+    /**
+     * Fetch invoice numbering configuration for a tenant.
+     *
+     * This method retrieves all the settings needed for generating
+     * invoice numbers according to Belgian tax compliance requirements.
+     *
+     * @param tenantId The tenant to fetch configuration for
+     * @return Result containing the invoice config, or failure if not found
+     */
+    suspend fun getInvoiceConfig(tenantId: TenantId): Result<TenantInvoiceConfig> = runCatching {
+        dbQuery {
+            val javaUuid = tenantId.value.toJavaUuid()
+
+            val row = TenantSettingsTable
+                .selectAll()
+                .where { TenantSettingsTable.tenantId eq javaUuid }
+                .singleOrNull()
+                ?: throw IllegalArgumentException("No settings found for tenant: $tenantId")
+
+            TenantInvoiceConfig(
+                prefix = row[TenantSettingsTable.invoicePrefix],
+                yearlyReset = row[TenantSettingsTable.invoiceYearlyReset],
+                padding = row[TenantSettingsTable.invoicePadding],
+                includeYear = row[TenantSettingsTable.invoiceIncludeYear],
+                timezone = row[TenantSettingsTable.invoiceTimezone]
+            )
+        }
     }
 }

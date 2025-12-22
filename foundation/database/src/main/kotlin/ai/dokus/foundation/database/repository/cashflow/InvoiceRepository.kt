@@ -1,5 +1,6 @@
 package ai.dokus.foundation.database.repository.cashflow
 
+import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.domain.Money
@@ -42,7 +43,9 @@ import java.util.UUID
  * 2. NEVER return invoices from different tenants
  * 3. All operations must be tenant-isolated
  */
-class InvoiceRepository {
+class InvoiceRepository(
+    private val invoiceNumberGenerator: InvoiceNumberGenerator
+) {
 
     /**
      * Create a new invoice with its items
@@ -52,11 +55,12 @@ class InvoiceRepository {
         tenantId: TenantId,
         request: CreateInvoiceRequest
     ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
-        dbQuery {
-            // Generate invoice number
-            // TODO: Implement proper invoice number generation (fetch from tenant settings)
-            val invoiceNumber = "INV-${System.currentTimeMillis()}"
+        // Generate invoice number atomically BEFORE creating the invoice.
+        // This ensures gap-less numbering as required by Belgian tax law.
+        // The number is consumed even if invoice creation fails.
+        val invoiceNumber = invoiceNumberGenerator.generateInvoiceNumber(tenantId).getOrThrow()
 
+        dbQuery {
             // Insert invoice
             val invoiceId = InvoicesTable.insertAndGetId {
                 it[InvoicesTable.tenantId] = UUID.fromString(tenantId.toString())
