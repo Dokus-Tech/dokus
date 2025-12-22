@@ -4,6 +4,8 @@
 
 The auth service implements rate limiting to prevent brute force attacks on the login endpoint. The implementation tracks failed login attempts per email address and temporarily locks accounts after too many failures.
 
+> **Note**: Rate limiting is part of the platform's unified error handling system. When rate limits are exceeded, the service throws a `DokusException.TooManyLoginAttempts` exception that follows the standard error response format. For comprehensive error handling documentation, see the **[Error Handling Guide](../../../../docs/ERROR_HANDLING.md)**.
+
 ## Features
 
 - **Failed Attempt Tracking**: Tracks login failures per email address (case-insensitive)
@@ -236,6 +238,16 @@ See `/features/auth/backend/src/test/kotlin/ai/dokus/auth/backend/services/RateL
 6. **Notification System**: Alert users when their account is locked
 7. **Redis Backend**: For distributed deployments
 8. **Metrics Dashboard**: Real-time monitoring of rate limit events
+
+## Related Documentation
+
+For comprehensive error handling documentation including client-side handling patterns, UI considerations, and troubleshooting:
+
+- **[Error Handling Guide](../../../../docs/ERROR_HANDLING.md)** - Central error handling documentation for the platform
+  - **[Rate Limiting Integration](../../../../docs/ERROR_HANDLING.md#rate-limiting-integration)** - Detailed client handling patterns for rate limit errors
+  - **[TooManyLoginAttempts Exception](../../../../docs/ERROR_HANDLING.md#429-too-many-requests)** - Exception details and error codes
+  - **[Retry Strategies](../../../../docs/ERROR_HANDLING.md#retry-strategies)** - Client-side retry implementation patterns
+  - **[UI Considerations](../../../../docs/ERROR_HANDLING.md#ui-considerations)** - Countdown timers, disabled buttons, and localization
 
 ## Related Files
 
