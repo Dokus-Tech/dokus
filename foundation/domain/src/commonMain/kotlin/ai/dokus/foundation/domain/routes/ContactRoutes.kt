@@ -62,6 +62,14 @@ class Contacts(
     class Id(val parent: Contacts = Contacts(), val id: String) {
 
         /**
+         * GET /api/v1/contacts/{id}/activity
+         * Get activity summary for this contact (counts and totals of invoices, bills, expenses)
+         */
+        @Serializable
+        @Resource("activity")
+        class Activity(val parent: Id)
+
+        /**
          * GET/PUT /api/v1/contacts/{id}/peppol
          * GET - Get Peppol configuration for contact
          * PUT - Update Peppol configuration
@@ -69,6 +77,15 @@ class Contacts(
         @Serializable
         @Resource("peppol")
         class Peppol(val parent: Id)
+
+        /**
+         * POST /api/v1/contacts/{id}/merge-into/{targetId}
+         * Merge this contact into another contact.
+         * All cashflow items are reassigned to target, this contact is archived.
+         */
+        @Serializable
+        @Resource("merge-into/{targetId}")
+        class MergeInto(val parent: Id, val targetId: String)
 
         /**
          * GET/POST /api/v1/contacts/{id}/notes

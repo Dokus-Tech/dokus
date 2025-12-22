@@ -2,6 +2,7 @@ package ai.dokus.contacts.backend.routes
 
 import ai.dokus.contacts.backend.service.ContactNoteService
 import ai.dokus.contacts.backend.service.ContactService
+import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ContactNoteId
@@ -39,6 +40,7 @@ import org.koin.ktor.ext.inject
 fun Route.contactRoutes() {
     val contactService by inject<ContactService>()
     val contactNoteService by inject<ContactNoteService>()
+    val cashflowRepository by inject<CashflowRepository>()
 
     authenticateJwt {
         // ================================================================
@@ -204,6 +206,24 @@ fun Route.contactRoutes() {
             ).getOrElse { throw DokusException.InternalError("Failed to update contact Peppol settings: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, contact)
+        }
+
+        // ================================================================
+        // ACTIVITY OPERATIONS
+        // ================================================================
+
+        /**
+         * GET /api/v1/contacts/{id}/activity
+         * Get activity summary for a contact (counts and totals of invoices, bills, expenses).
+         */
+        get<Contacts.Id.Activity> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val contactId = ContactId.parse(route.parent.id)
+
+            val activity = cashflowRepository.getContactActivitySummary(contactId, tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to get contact activity: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, activity)
         }
 
         // ================================================================
