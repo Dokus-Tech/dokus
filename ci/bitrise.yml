@@ -431,6 +431,8 @@ workflows:
 trigger_map:
   - push_branch: main
     pipeline: build-all
+  - tag: "v*"
+    pipeline: release-all
   - pull_request_source_branch: "*"
     pipeline: test-only
 app:
