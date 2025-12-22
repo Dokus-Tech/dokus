@@ -16,6 +16,23 @@ class LogoutUseCase(
 ) {
     private val logger = Logger.forClass<LogoutUseCase>()
 
+    /**
+     * Executes the logout flow by clearing local data and notifying the backend.
+     *
+     * Local cleanup is performed **first** to ensure user data is wiped even if the
+     * network call to the backend fails. This guarantees the device is always cleaned
+     * when logout is requested, preventing stale or sensitive data from persisting.
+     *
+     * The operation continues to notify the backend after local cleanup regardless of
+     * whether cleanup succeeded, ensuring best-effort server notification.
+     *
+     * @return [Result.success] with [Unit] if both local cleanup and backend logout succeeded.
+     *         [Result.failure] with:
+     *         - The local cleanup exception if only local cleanup failed
+     *         - The backend logout exception if only backend logout failed
+     *         - The local cleanup exception (with backend exception as suppressed) if both failed.
+     *           Access the suppressed backend exception via [Throwable.suppressed].
+     */
     suspend operator fun invoke(): Result<Unit> {
         logger.d { "Executing logout use case" }
 

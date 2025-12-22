@@ -19,6 +19,32 @@ class RegisterAndLoginUseCase(
 ) {
     private val logger = Logger.forClass<RegisterAndLoginUseCase>()
 
+    /**
+     * Registers a new user account and automatically logs them in.
+     *
+     * Performs client-side validation of all registration fields before sending the request
+     * to the backend. On successful registration, the user is automatically authenticated
+     * and their session tokens are stored locally, providing immediate access without
+     * requiring a separate login step.
+     *
+     * @param email The user's email address wrapped in an [Email] value object.
+     *              Must pass [Email.isValid] validation (proper email format).
+     *              Will be used as the account identifier for future logins.
+     * @param password The user's chosen password wrapped in a [Password] value object.
+     *                 Must pass [Password.isValid] validation (minimum 8 characters).
+     * @param firstName The user's first name wrapped in a [Name] value object.
+     *                  Must pass [Name.isValid] validation (non-empty).
+     * @param lastName The user's last name wrapped in a [Name] value object.
+     *                 Must pass [Name.isValid] validation (non-empty).
+     * @return [Result.success] with [Unit] if registration and auto-login succeeded.
+     *         [Result.failure] with:
+     *         - [IllegalArgumentException] if email format is invalid
+     *         - [IllegalArgumentException] if password is less than 8 characters
+     *         - [IllegalArgumentException] if first name is empty/invalid
+     *         - [IllegalArgumentException] if last name is empty/invalid
+     *         - Network or server errors if the registration request fails
+     *         - Registration errors if the email is already in use or rejected by the server
+     */
     suspend operator fun invoke(
         email: Email,
         password: Password,
