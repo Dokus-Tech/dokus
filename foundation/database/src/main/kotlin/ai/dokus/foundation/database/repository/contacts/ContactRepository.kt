@@ -550,56 +550,38 @@ class ContactRepository {
         val contactUuid = UUID.fromString(contactId.toString())
         val tenantUuid = UUID.fromString(tenantId.toString())
 
-        // Get invoice stats
-        val invoiceStats = InvoicesTable
-            .select(
-                InvoicesTable.id.count(),
-                InvoicesTable.totalAmount.sum(),
-                InvoicesTable.createdAt.max()
-            )
-            .where {
-                (InvoicesTable.tenantId eq tenantUuid) and
-                        (InvoicesTable.contactId eq contactUuid)
-            }
-            .singleOrNull()
+        // Get invoice count and total using simple queries
+        val invoices = InvoicesTable.selectAll().where {
+            (InvoicesTable.tenantId eq tenantUuid) and (InvoicesTable.contactId eq contactUuid)
+        }.toList()
 
-        val invoiceCount = invoiceStats?.get(InvoicesTable.id.count()) ?: 0L
-        val invoiceTotal = invoiceStats?.get(InvoicesTable.totalAmount.sum()) ?: BigDecimal.ZERO
-        val invoiceLastDate = invoiceStats?.get(InvoicesTable.createdAt.max())
+        val invoiceCount = invoices.size.toLong()
+        val invoiceTotal = invoices.fold(BigDecimal.ZERO) { acc, row ->
+            acc + (row[InvoicesTable.totalAmount] ?: BigDecimal.ZERO)
+        }
+        val invoiceLastDate = invoices.maxOfOrNull { it[InvoicesTable.createdAt] }
 
-        // Get bill stats
-        val billStats = BillsTable
-            .select(
-                BillsTable.id.count(),
-                BillsTable.amount.sum(),
-                BillsTable.createdAt.max()
-            )
-            .where {
-                (BillsTable.tenantId eq tenantUuid) and
-                        (BillsTable.contactId eq contactUuid)
-            }
-            .singleOrNull()
+        // Get bill count and total
+        val bills = BillsTable.selectAll().where {
+            (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq contactUuid)
+        }.toList()
 
-        val billCount = billStats?.get(BillsTable.id.count()) ?: 0L
-        val billTotal = billStats?.get(BillsTable.amount.sum()) ?: BigDecimal.ZERO
-        val billLastDate = billStats?.get(BillsTable.createdAt.max())
+        val billCount = bills.size.toLong()
+        val billTotal = bills.fold(BigDecimal.ZERO) { acc, row ->
+            acc + (row[BillsTable.amount] ?: BigDecimal.ZERO)
+        }
+        val billLastDate = bills.maxOfOrNull { it[BillsTable.createdAt] }
 
-        // Get expense stats
-        val expenseStats = ExpensesTable
-            .select(
-                ExpensesTable.id.count(),
-                ExpensesTable.amount.sum(),
-                ExpensesTable.createdAt.max()
-            )
-            .where {
-                (ExpensesTable.tenantId eq tenantUuid) and
-                        (ExpensesTable.contactId eq contactUuid)
-            }
-            .singleOrNull()
+        // Get expense count and total
+        val expenses = ExpensesTable.selectAll().where {
+            (ExpensesTable.tenantId eq tenantUuid) and (ExpensesTable.contactId eq contactUuid)
+        }.toList()
 
-        val expenseCount = expenseStats?.get(ExpensesTable.id.count()) ?: 0L
-        val expenseTotal = expenseStats?.get(ExpensesTable.amount.sum()) ?: BigDecimal.ZERO
-        val expenseLastDate = expenseStats?.get(ExpensesTable.createdAt.max())
+        val expenseCount = expenses.size.toLong()
+        val expenseTotal = expenses.fold(BigDecimal.ZERO) { acc, row ->
+            acc + (row[ExpensesTable.amount] ?: BigDecimal.ZERO)
+        }
+        val expenseLastDate = expenses.maxOfOrNull { it[ExpensesTable.createdAt] }
 
         // Find the most recent activity date
         val lastActivityDate = listOfNotNull(invoiceLastDate, billLastDate, expenseLastDate)
