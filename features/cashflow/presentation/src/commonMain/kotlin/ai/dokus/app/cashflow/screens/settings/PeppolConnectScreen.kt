@@ -79,8 +79,13 @@ internal fun PeppolConnectScreen(
         when (action) {
             PeppolConnectAction.NavigateBack -> navController.navigateUp()
             PeppolConnectAction.NavigateToSettings -> {
-                // Pop back to peppol settings
-                navController.popBackStack(SettingsDestination.PeppolSettings, inclusive = false)
+                // Navigate to PeppolSettings and clear the connect flow from back stack
+                navController.navigate(SettingsDestination.PeppolSettings) {
+                    popUpTo(SettingsDestination.PeppolSettings) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
             }
 
             is PeppolConnectAction.ShowError -> {
@@ -461,7 +466,7 @@ private fun LoadingPane(message: String) {
 }
 
 @Composable
-private fun IntentReceiver<PeppolConnectIntent>.ErrorPane(
+private fun ErrorPane(
     state: PeppolConnectState.Error
 ) {
     Box(
