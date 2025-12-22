@@ -1,5 +1,6 @@
 package ai.dokus.foundation.design.components
 
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,23 +13,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 /**
  * A dashed horizontal divider line.
  *
  * @param modifier Modifier for the divider
  * @param color Color of the dashes (default: MaterialTheme.colorScheme.outlineVariant)
- * @param dashWidth Width of each dash (default: 6.dp)
- * @param dashHeight Height/thickness of the dashes (default: 1.dp)
+ * @param dashWidth Width of each dash (default: Constrains.Stroke.dashWidth)
+ * @param dashHeight Height/thickness of the dashes (default: Constrains.Stroke.thin)
  * @param dashCount Number of dashes to display (default: 30)
  */
 @Composable
 fun PDashedDivider(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.outlineVariant,
-    dashWidth: Dp = 6.dp,
-    dashHeight: Dp = 1.dp,
+    dashWidth: Dp = Constrains.Stroke.dashWidth,
+    dashHeight: Dp = Constrains.Stroke.thin,
     dashCount: Int = 30
 ) {
     Row(
