@@ -48,6 +48,11 @@ This document provides a comprehensive reference for error handling in the Dokus
   - [Localized Message Examples](#localized-message-examples)
   - [Adding New Translations](#adding-new-translations)
   - [Error UI Components](#error-ui-components)
+- [Best Practices and Anti-Patterns](#best-practices-and-anti-patterns)
+  - [Backend: Choosing the Right Exception Type](#backend-choosing-the-right-exception-type)
+  - [Backend: Exception Chaining with asDokusException](#backend-exception-chaining-with-asdokusexception)
+  - [Frontend: Error Handling Patterns](#frontend-error-handling-patterns)
+  - [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
 
 ---
 
@@ -2444,6 +2449,553 @@ fun LoginForm(errorState: DokusException?) {
 
 ---
 
+## Best Practices and Anti-Patterns
+
+This section provides practical guidance for developers on throwing exceptions in backend code and handling them in frontend code.
+
+### Backend: Choosing the Right Exception Type
+
+Selecting the correct exception type ensures consistent API responses and proper client handling. Use this guide when deciding which exception to throw.
+
+#### Decision Tree
+
+```
+Is the request malformed or missing required fields?
+├── Yes → BadRequest("specific message")
+└── No ↓
+
+Is a specific field invalid (email, password, IBAN, etc.)?
+├── Yes → Validation.InvalidEmail, Validation.InvalidIban, etc.
+└── No ↓
+
+Is the user not authenticated (no token, expired token)?
+├── Yes → NotAuthenticated, TokenExpired, or TokenInvalid
+└── No ↓
+
+Is the user authenticated but lacks permission?
+├── Yes → NotAuthorized
+└── No ↓
+
+Does the requested resource not exist?
+├── Yes → NotFound or UserNotFound
+└── No ↓
+
+Is there a conflict with existing data (duplicate email)?
+├── Yes → UserAlreadyExists
+└── No ↓
+
+Is this a rate limiting issue?
+├── Yes → TooManyLoginAttempts(retryAfterSeconds = ...)
+└── No ↓
+
+Is this an external service failure (database, API)?
+├── Yes → ConnectionError or InternalError
+└── No ↓
+
+Is this feature not yet implemented?
+├── Yes → NotImplemented
+└── No → InternalError("specific message")
+```
+
+#### Exception Selection by Scenario
+
+| Scenario | Exception | Example |
+|----------|-----------|---------|
+| Invalid request body | `BadRequest` | `throw DokusException.BadRequest("Missing 'amount' field")` |
+| Email format invalid | `Validation.InvalidEmail` | `throw DokusException.Validation.InvalidEmail` |
+| Password too weak | `Validation.WeakPassword` | `throw DokusException.Validation.WeakPassword` |
+| Custom validation failed | `Validation.Generic` | `throw DokusException.Validation.Generic("Invoice date must be in the past")` |
+| No auth token provided | `NotAuthenticated` | `throw DokusException.NotAuthenticated()` |
+| Wrong email/password | `InvalidCredentials` | `throw DokusException.InvalidCredentials()` |
+| Access token expired | `TokenExpired` | `throw DokusException.TokenExpired()` |
+| Refresh token expired | `RefreshTokenExpired` | `throw DokusException.RefreshTokenExpired()` |
+| User lacks permission | `NotAuthorized` | `throw DokusException.NotAuthorized()` |
+| Account deactivated | `AccountInactive` | `throw DokusException.AccountInactive()` |
+| Resource ID not found | `NotFound` | `throw DokusException.NotFound()` |
+| User ID not found | `UserNotFound` | `throw DokusException.UserNotFound()` |
+| Email already registered | `UserAlreadyExists` | `throw DokusException.UserAlreadyExists()` |
+| Too many failed logins | `TooManyLoginAttempts` | `throw DokusException.TooManyLoginAttempts(retryAfterSeconds = 900)` |
+| Database connection failed | `ConnectionError` | `throw DokusException.ConnectionError()` |
+| Unexpected server error | `InternalError` | `throw DokusException.InternalError("Payment processor unavailable")` |
+| Feature in development | `NotImplemented` | `throw DokusException.NotImplemented()` |
+
+#### Using `require()` vs Throwing DokusException
+
+Kotlin's `require()` function is automatically mapped to `BadRequest` by the error handler, but throwing specific `DokusException` types provides better client experience:
+
+```kotlin
+// ❌ Less specific - client sees generic "BAD_REQUEST"
+fun createInvoice(amount: BigDecimal) {
+    require(amount > BigDecimal.ZERO) { "Amount must be positive" }
+}
+
+// ✅ More specific - client can handle validation specifically
+fun createInvoice(amount: BigDecimal) {
+    if (amount <= BigDecimal.ZERO) {
+        throw DokusException.Validation.InvalidMoney
+    }
+}
+
+// ✅ For custom validation that doesn't fit existing types
+fun createInvoice(date: LocalDate) {
+    if (date.isAfter(LocalDate.now())) {
+        throw DokusException.Validation.Generic("Invoice date cannot be in the future")
+    }
+}
+```
+
+**When to use `require()`:**
+- Internal assertions that indicate programming errors
+- Preconditions that should never fail if the API is used correctly
+
+**When to throw `DokusException`:**
+- User input validation
+- Business rule violations
+- Any error the client needs to handle specifically
+
+### Backend: Exception Chaining with asDokusException
+
+The `asDokusException` extension property converts any `Throwable` to an appropriate `DokusException`. This is essential for consistent error handling across the stack.
+
+#### Location
+
+```
+foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/exceptions/DokusExceptionExtensions.kt
+```
+
+#### How It Works
+
+```kotlin
+val Throwable?.asDokusException: DokusException
+    get() {
+        return when (this) {
+            // Already a DokusException - return as-is
+            is DokusException -> this
+
+            // Null - wrap in Unknown
+            null -> DokusException.Unknown(this)
+
+            // Try to match known error patterns
+            else -> {
+                val message = this.message?.lowercase()
+                when {
+                    message?.contains("failed to connect to") == true -> DokusException.ConnectionError(message)
+                    message?.contains("connection refused") == true -> DokusException.ConnectionError(message)
+                    message?.contains("connection reset") == true -> DokusException.ConnectionError(message)
+                    message?.contains("network is unreachable") == true -> DokusException.ConnectionError(message)
+                    // ... other patterns
+                    else -> DokusException.Unknown(this)
+                }
+            }
+        }
+    }
+```
+
+#### Usage in ViewModel/UseCase
+
+Use `asDokusException` when emitting error states to ensure consistent exception types:
+
+```kotlin
+class InvoiceViewModel : BaseViewModel<DokusState<Invoice>>(DokusState.idle()) {
+
+    fun loadInvoice(id: String) {
+        viewModelScope.launch {
+            mutableState.emitLoading()
+
+            invoiceRepository.getById(id).fold(
+                onSuccess = { invoice ->
+                    mutableState.emit(invoice)
+                },
+                onFailure = { error ->
+                    // Convert any error to DokusException
+                    mutableState.emit(error.asDokusException) { loadInvoice(id) }
+                }
+            )
+        }
+    }
+}
+```
+
+#### Usage with Result
+
+The extension also works on `Result<*>`:
+
+```kotlin
+val result: Result<Invoice> = invoiceRepository.getById(id)
+
+if (result.isFailure) {
+    val dokusException = result.asDokusException
+    // dokusException is guaranteed to be a DokusException
+}
+```
+
+#### Error Pattern Matching
+
+The `asDokusException` extension automatically detects common network errors and converts them to `ConnectionError`:
+
+| Error Message Pattern | Resulting Exception |
+|----------------------|---------------------|
+| "failed to connect to..." | `ConnectionError` |
+| "connection refused" | `ConnectionError` |
+| "connection reset" | `ConnectionError` |
+| "could not connect to the server" | `ConnectionError` |
+| "websocket connection" | `ConnectionError` |
+| "network is unreachable" | `ConnectionError` |
+| "io.ktor.serialization.jsonconvertexception" | `InternalError("Serialization error")` |
+| (other) | `Unknown(originalThrowable)` |
+
+#### Best Practices for Exception Chaining
+
+1. **Always use `asDokusException` at the boundary**: Convert exceptions when they cross module boundaries (e.g., repository → use case → viewmodel)
+
+2. **Preserve the original exception**: The `Unknown` wrapper preserves the original throwable for debugging:
+   ```kotlin
+   catch (e: Exception) {
+       val dokus = e.asDokusException
+       // dokus.throwable contains the original exception (if Unknown)
+   }
+   ```
+
+3. **Don't double-wrap**: The extension handles `DokusException` inputs gracefully by returning them as-is
+
+4. **Use in error state emission**: Always convert before emitting to `DokusState.Error`:
+   ```kotlin
+   mutableState.emit(error.asDokusException) { retry() }
+   // NOT: mutableState.emit(error as? DokusException ?: DokusException.Unknown(error)) { retry() }
+   ```
+
+### Frontend: Error Handling Patterns
+
+#### Structured Error Handling in ViewModels
+
+Always handle errors in a structured way that allows the UI to display appropriate messages:
+
+```kotlin
+class ProfileViewModel : BaseViewModel<DokusState<Profile>>(DokusState.idle()) {
+
+    fun loadProfile() {
+        viewModelScope.launch {
+            mutableState.emitLoading()
+
+            profileUseCase().fold(
+                onSuccess = { profile ->
+                    mutableState.emit(profile)
+                },
+                onFailure = { error ->
+                    // Always convert to DokusException
+                    val exception = error.asDokusException
+
+                    // Special handling for specific errors
+                    when (exception) {
+                        is DokusException.NotAuthenticated,
+                        is DokusException.SessionExpired -> {
+                            // Navigate to login
+                            navigator.navigateToLogin()
+                        }
+                        else -> {
+                            // Emit error state with retry handler
+                            mutableState.emit(exception) { loadProfile() }
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+```
+
+#### Handling Multiple Exception Types in UI
+
+```kotlin
+@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    val state by viewModel.state.collectAsState()
+
+    when (state) {
+        is DokusState.Error -> {
+            val errorState = state as DokusState.Error<Profile>
+            val exception = errorState.exception
+
+            when (exception) {
+                is DokusException.ConnectionError -> {
+                    // Show offline indicator with retry
+                    OfflineContent(
+                        message = exception.localized,
+                        onRetry = { errorState.retryHandler.retry() }
+                    )
+                }
+                is DokusException.NotAuthorized -> {
+                    // Show permission denied without retry
+                    PermissionDeniedContent(message = exception.localized)
+                }
+                else -> {
+                    // Default error display
+                    DokusErrorContent(
+                        exception = exception,
+                        retryHandler = errorState.retryHandler
+                    )
+                }
+            }
+        }
+        // ... other states
+    }
+}
+```
+
+#### Form Validation Error Handling
+
+For forms, display validation errors inline with the fields:
+
+```kotlin
+@Composable
+fun RegistrationForm(
+    onSubmit: (Email, Password) -> Unit,
+    errorState: DokusException?
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Column {
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            isError = errorState is DokusException.Validation.InvalidEmail ||
+                      errorState is DokusException.UserAlreadyExists,
+            supportingText = {
+                when (errorState) {
+                    is DokusException.Validation.InvalidEmail -> Text(errorState.localized)
+                    is DokusException.UserAlreadyExists -> Text(errorState.localized)
+                    else -> {}
+                }
+            }
+        )
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            isError = errorState is DokusException.Validation.WeakPassword,
+            supportingText = {
+                if (errorState is DokusException.Validation.WeakPassword) {
+                    Text(errorState.localized)
+                }
+            },
+            visualTransformation = PasswordVisualTransformation()
+        )
+
+        // Show general errors that aren't field-specific
+        errorState?.let { error ->
+            if (error !is DokusException.Validation && error !is DokusException.UserAlreadyExists) {
+                DokusErrorText(error)
+            }
+        }
+
+        Button(onClick = { onSubmit(Email(email), Password(password)) }) {
+            Text("Register")
+        }
+    }
+}
+```
+
+#### Retry Handler Best Practices
+
+1. **Always capture parameters in the retry lambda**:
+   ```kotlin
+   // ✅ Correct - captures the parameters
+   fun loadData(id: String) {
+       // ...
+       mutableState.emit(error) { loadData(id) }
+   }
+
+   // ❌ Incorrect - references potentially stale state
+   var currentId: String? = null
+   fun loadData(id: String) {
+       currentId = id
+       // ...
+       mutableState.emit(error) { loadData(currentId!!) }
+   }
+   ```
+
+2. **Check the recoverable flag before showing retry UI**:
+   ```kotlin
+   if (exception.recoverable) {
+       Button(onClick = { retryHandler.retry() }) {
+           Text("Try Again")
+       }
+   }
+   ```
+
+3. **Provide feedback during retry**:
+   ```kotlin
+   Button(
+       onClick = {
+           viewModel.setRetrying(true)
+           retryHandler.retry()
+       },
+       enabled = !isRetrying
+   ) {
+       if (isRetrying) {
+           CircularProgressIndicator(Modifier.size(16.dp))
+       } else {
+           Text("Retry")
+       }
+   }
+   ```
+
+### Anti-Patterns to Avoid
+
+#### 1. Catching and Suppressing Exceptions
+
+```kotlin
+// ❌ BAD: Exception is lost, no way to debug
+try {
+    apiService.fetchData()
+} catch (e: Exception) {
+    // Silently ignored
+}
+
+// ✅ GOOD: Exception is converted and handled properly
+try {
+    apiService.fetchData()
+} catch (e: Exception) {
+    mutableState.emit(e.asDokusException) { retry() }
+}
+```
+
+#### 2. Logging Sensitive Information in Error Messages
+
+```kotlin
+// ❌ BAD: Password in error message
+throw DokusException.BadRequest("Invalid password: $password")
+
+// ✅ GOOD: No sensitive data
+throw DokusException.InvalidCredentials()
+```
+
+#### 3. Using Generic Exceptions for Specific Errors
+
+```kotlin
+// ❌ BAD: Generic exception, client can't handle specifically
+throw DokusException.BadRequest("Email is invalid")
+
+// ✅ GOOD: Specific exception, client can show inline validation
+throw DokusException.Validation.InvalidEmail
+```
+
+#### 4. Throwing Exceptions for Expected Business Logic
+
+```kotlin
+// ❌ BAD: Using exceptions for flow control
+fun findUser(email: String): User {
+    val user = userRepository.findByEmail(email)
+    if (user == null) {
+        throw DokusException.UserNotFound()  // Expensive stack trace
+    }
+    return user
+}
+
+// ✅ GOOD: Return nullable or Result for expected cases
+fun findUser(email: String): User? {
+    return userRepository.findByEmail(email)
+}
+
+// ✅ ALSO GOOD: Use Result<T> for operations that can fail
+fun findUser(email: String): Result<User> {
+    val user = userRepository.findByEmail(email)
+    return if (user != null) Result.success(user)
+           else Result.failure(DokusException.UserNotFound())
+}
+```
+
+#### 5. Ignoring the Recoverable Flag
+
+```kotlin
+// ❌ BAD: Showing retry for non-recoverable errors
+Button(onClick = { retry() }) {
+    Text("Retry")  // Shows for InvalidCredentials, which won't help
+}
+
+// ✅ GOOD: Check recoverable flag
+if (exception.recoverable) {
+    Button(onClick = { retry() }) {
+        Text("Retry")
+    }
+}
+```
+
+#### 6. Not Using Localized Messages
+
+```kotlin
+// ❌ BAD: Using raw exception message
+Text(exception.message ?: "An error occurred")
+
+// ✅ GOOD: Using localized message
+Text(exception.localized)
+```
+
+#### 7. Creating DokusException on the Client Side
+
+```kotlin
+// ❌ BAD: Client fabricating server errors
+throw DokusException.InternalError("Something went wrong")
+
+// ✅ GOOD: Client uses asDokusException for unknown errors
+val exception = error.asDokusException
+// The server's exception type is preserved
+```
+
+#### 8. Double-Wrapping Exceptions
+
+```kotlin
+// ❌ BAD: Wrapping DokusException in Unknown
+catch (e: Exception) {
+    throw DokusException.Unknown(DokusException.Unknown(e))
+}
+
+// ✅ GOOD: Use asDokusException which handles this
+catch (e: Exception) {
+    throw e.asDokusException  // If already DokusException, returns as-is
+}
+```
+
+#### 9. Not Providing Retry Handler
+
+```kotlin
+// ❌ BAD: Error state without retry capability
+sealed class ScreenState {
+    data class Error(val message: String) : ScreenState()  // No way to retry
+}
+
+// ✅ GOOD: Use DokusState which includes RetryHandler
+DokusState.error(exception) { loadData() }
+```
+
+#### 10. Mixing Exception Handling Styles
+
+```kotlin
+// ❌ BAD: Inconsistent error handling
+fun loadProfile(): Profile {
+    try {
+        return api.getProfile()
+    } catch (e: IOException) {
+        throw e  // Raw exception
+    } catch (e: HttpException) {
+        throw RuntimeException("HTTP error")  // Different wrapper
+    }
+}
+
+// ✅ GOOD: Consistent DokusException handling
+fun loadProfile(): Result<Profile> {
+    return runCatching { api.getProfile() }
+        .recoverCatching { e ->
+            throw e.asDokusException  // All errors are DokusException
+        }
+}
+```
+
+---
+
 ## Quick Reference Table
 
 | HTTP Status | Exception Type | Error Code | Recoverable |
@@ -2484,6 +3036,7 @@ fun LoginForm(errorState: DokusException?) {
 
 - **Rate Limiting**: [features/auth/backend/docs/RATE_LIMITING.md](../features/auth/backend/docs/RATE_LIMITING.md)
 - **DokusException Source**: [foundation/domain/.../DokusException.kt](../foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/exceptions/DokusException.kt)
+- **Exception Chaining (asDokusException)**: [foundation/domain/.../DokusExceptionExtensions.kt](../foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/exceptions/DokusExceptionExtensions.kt)
 - **Backend Error Handler**: [foundation/ktor-common/.../ErrorHandling.kt](../foundation/ktor-common/src/main/kotlin/ai/dokus/foundation/ktor/configure/ErrorHandling.kt)
 - **Client Error Handler**: [foundation/app-common/.../HttpClientExtensions.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/network/HttpClientExtensions.kt)
 - **HTTP Client Factory**: [foundation/app-common/.../HttpClient.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/network/HttpClient.kt)
