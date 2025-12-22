@@ -47,7 +47,7 @@ internal object AppMainModule : AppModule {
             titleRes = Res.string.home_settings,
             iconRes = Res.drawable.user,
             destination = HomeDestination.Settings,
-            showTopBar = true,
+            showTopBar = false,
             priority = HomeItemPriority.Low,
         ),
     )

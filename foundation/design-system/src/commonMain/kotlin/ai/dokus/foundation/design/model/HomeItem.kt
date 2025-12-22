@@ -10,7 +10,7 @@ data class HomeItem(
     val titleRes: StringResource,
     val iconRes: DrawableResource,
     val destination: HomeDestination,
-    val showTopBar: Boolean = true,
+    val showTopBar: Boolean = false,
     val priority: HomeItemPriority = HomeItemPriority.Medium,
 )
 

@@ -91,7 +91,12 @@ class WorkspaceSettingsViewModel(
                 companyIban = form.iban.takeIf { it.isNotBlank() }?.let { Iban(it) },
                 companyBic = form.bic.takeIf { it.isNotBlank() }?.let { Bic(it) },
                 invoicePrefix = form.invoicePrefix.ifBlank { "INV" },
-                defaultPaymentTerms = form.defaultPaymentTerms
+                defaultPaymentTerms = form.defaultPaymentTerms,
+                invoiceYearlyReset = form.invoiceYearlyReset,
+                invoicePadding = form.invoicePadding,
+                invoiceIncludeYear = form.invoiceIncludeYear,
+                invoiceTimezone = form.invoiceTimezone,
+                paymentTermsText = form.paymentTermsText.ifBlank { null }
             )
 
             tenantDataSource.updateTenantSettings(updatedSettings).fold(
@@ -148,6 +153,26 @@ class WorkspaceSettingsViewModel(
         if (terms in 0..365) {
             _formState.value = _formState.value.copy(defaultPaymentTerms = terms)
         }
+    }
+
+    fun updateInvoiceYearlyReset(value: Boolean) {
+        _formState.value = _formState.value.copy(invoiceYearlyReset = value)
+    }
+
+    fun updateInvoicePadding(value: Int) {
+        _formState.value = _formState.value.copy(invoicePadding = value.coerceIn(1, 8))
+    }
+
+    fun updateInvoiceIncludeYear(value: Boolean) {
+        _formState.value = _formState.value.copy(invoiceIncludeYear = value)
+    }
+
+    fun updateInvoiceTimezone(value: String) {
+        _formState.value = _formState.value.copy(invoiceTimezone = value)
+    }
+
+    fun updatePaymentTermsText(value: String) {
+        _formState.value = _formState.value.copy(paymentTermsText = value)
     }
 
     // ===== Avatar Operations =====
@@ -226,7 +251,12 @@ class WorkspaceSettingsViewModel(
             bic = settings.companyBic?.value ?: "",
             address = address?.toDisplayString().orEmpty(),
             invoicePrefix = settings.invoicePrefix,
-            defaultPaymentTerms = settings.defaultPaymentTerms
+            defaultPaymentTerms = settings.defaultPaymentTerms,
+            invoiceYearlyReset = settings.invoiceYearlyReset,
+            invoicePadding = settings.invoicePadding,
+            invoiceIncludeYear = settings.invoiceIncludeYear,
+            invoiceTimezone = settings.invoiceTimezone,
+            paymentTermsText = settings.paymentTermsText ?: ""
         )
     }
 }
@@ -261,7 +291,14 @@ data class WorkspaceFormState(
     val bic: String = "",
     val address: String = "",
     val invoicePrefix: String = "INV",
-    val defaultPaymentTerms: Int = 30
+    val defaultPaymentTerms: Int = 30,
+    // Invoice numbering configuration
+    val invoiceYearlyReset: Boolean = true,
+    val invoicePadding: Int = 4,
+    val invoiceIncludeYear: Boolean = true,
+    val invoiceTimezone: String = "Europe/Brussels",
+    // Legal payment terms text
+    val paymentTermsText: String = ""
 )
 
 /**

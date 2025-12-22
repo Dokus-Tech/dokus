@@ -55,6 +55,7 @@ internal fun CreateInvoiceScreen(
     val uiState by viewModel.uiState.collectAsState()
     val clientsState by viewModel.clientsState.collectAsState()
     val createdInvoiceId by viewModel.createdInvoiceId.collectAsState()
+    val invoiceNumberPreview by viewModel.invoiceNumberPreview.collectAsState()
 
     // Navigate back when invoice is created
     LaunchedEffect(createdInvoiceId) {
@@ -71,6 +72,7 @@ internal fun CreateInvoiceScreen(
             if (isLargeScreen) {
                 DesktopLayout(
                     contentPadding = contentPadding,
+                    invoiceNumberPreview = invoiceNumberPreview,
                     onBackPress = { navController.popBackStack() },
                     invoiceContent = {
                         InteractiveInvoiceDocument(
@@ -116,6 +118,7 @@ internal fun CreateInvoiceScreen(
                     InvoiceCreationStep.EDIT_INVOICE -> {
                         MobileEditLayout(
                             contentPadding = contentPadding,
+                            invoiceNumberPreview = invoiceNumberPreview,
                             onBackPress = { navController.popBackStack() },
                             invoiceContent = {
                                 InteractiveInvoiceDocument(
@@ -191,6 +194,7 @@ internal fun CreateInvoiceScreen(
 @Composable
 private fun DesktopLayout(
     contentPadding: PaddingValues,
+    invoiceNumberPreview: String?,
     onBackPress: () -> Unit,
     invoiceContent: @Composable () -> Unit,
     sendOptionsContent: @Composable () -> Unit
@@ -214,6 +218,13 @@ private fun DesktopLayout(
                 text = "Create Invoice",
                 onBackPress = onBackPress
             )
+            if (invoiceNumberPreview != null) {
+                Text(
+                    text = "Invoice #: $invoiceNumberPreview",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Text(
                 text = "Click on any element to edit it. The invoice updates in real-time.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -239,6 +250,7 @@ private fun DesktopLayout(
 @Composable
 private fun MobileEditLayout(
     contentPadding: PaddingValues,
+    invoiceNumberPreview: String?,
     onBackPress: () -> Unit,
     invoiceContent: @Composable () -> Unit,
     onNextClick: () -> Unit,
@@ -261,6 +273,13 @@ private fun MobileEditLayout(
                 text = "Create Invoice",
                 onBackPress = onBackPress
             )
+            if (invoiceNumberPreview != null) {
+                Text(
+                    text = "Invoice #: $invoiceNumberPreview",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Text(
                 text = "Tap any element to edit it.",
                 style = MaterialTheme.typography.bodySmall,

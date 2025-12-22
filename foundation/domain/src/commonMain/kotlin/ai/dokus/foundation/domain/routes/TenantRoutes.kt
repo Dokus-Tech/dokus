@@ -47,4 +47,12 @@ class Tenants {
     @Serializable
     @Resource("avatar")
     class Avatar(val parent: Tenants = Tenants())
+
+    /**
+     * GET /api/v1/tenants/invoice-number-preview
+     * Preview the next invoice number without consuming it.
+     */
+    @Serializable
+    @Resource("invoice-number-preview")
+    class InvoiceNumberPreview(val parent: Tenants = Tenants())
 }
