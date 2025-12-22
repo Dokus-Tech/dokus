@@ -190,6 +190,78 @@ Add your entry to the `[Unreleased]` section:
 - Your security improvement here
 ```
 
+### Creating a Release
+
+Dokus uses **tag-based releases**. GitHub releases are only created when you push a version tag.
+
+**How it works:**
+1. Pushing code to `main` runs tests and builds but does NOT create a release
+2. Pushing a version tag (e.g., `v1.0.0`) triggers the release workflow
+3. The release version comes from the tag name, not auto-generated
+
+**Creating a release:**
+
+```bash
+# 1. Make sure you're on main and CI is passing
+git checkout main
+git pull origin main
+
+# 2. Create an annotated tag with semantic version
+git tag v1.0.0 -a -m "Release v1.0.0: Description of changes"
+
+# 3. Push the tag to trigger the release workflow
+git push origin v1.0.0
+
+# 4. Monitor the release in GitHub Actions
+```
+
+**Semantic Versioning:**
+
+We follow [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
+
+| Version Bump | When to Use | Example |
+|--------------|-------------|---------|
+| MAJOR (`v2.0.0`) | Breaking changes, incompatible API changes | Removing features, changing data formats |
+| MINOR (`v1.1.0`) | New features, backward-compatible additions | New endpoints, new UI features |
+| PATCH (`v1.0.1`) | Bug fixes, backward-compatible fixes | Security patches, crash fixes |
+
+**Pre-release Tags:**
+
+For testing releases before production:
+
+```bash
+# Beta release
+git tag v1.0.0-beta.1 -a -m "Beta release for testing"
+
+# Release candidate
+git tag v1.0.0-rc.1 -a -m "Release candidate 1"
+```
+
+Pre-release tags (containing `-alpha`, `-beta`, or `-rc`) are automatically marked as pre-release in GitHub.
+
+**Fixing Tag Mistakes:**
+
+If you pushed a tag with the wrong version or message:
+
+```bash
+# Delete the tag locally
+git tag -d v1.0.0
+
+# Delete the tag from remote
+git push origin :refs/tags/v1.0.0
+
+# Delete the release from GitHub UI (if created)
+# Then create the correct tag
+git tag v1.0.1 -a -m "Correct version"
+git push origin v1.0.1
+```
+
+**Important Notes:**
+- Always ensure CI passes on `main` before creating a release tag
+- Use annotated tags (`-a` flag) with descriptive messages
+- Don't use auto-generated commit-count versions (e.g., v0.0.123)
+- Release notes are auto-generated from commits since the last release
+
 ## 🎯 Priority Areas
 
 Given our deadline, we're focusing on:
