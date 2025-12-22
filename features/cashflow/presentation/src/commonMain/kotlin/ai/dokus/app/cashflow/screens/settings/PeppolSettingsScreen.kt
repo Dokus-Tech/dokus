@@ -201,7 +201,7 @@ fun PeppolSettingsContent(
                                 description = "Belgian Peppol Access Point for e-invoicing",
                                 onClick = {
                                     navController.navigate(
-                                        SettingsDestination.PeppolConfiguration.Connect(PeppolProvider.Recommand)
+                                        SettingsDestination.PeppolConfiguration.Connect(PeppolProvider.Recommand.name)
                                     )
                                 },
                                 modifier = Modifier.fillMaxWidth()
