@@ -1,31 +1,45 @@
 package ai.dokus.foundation.database.repository.contacts
 
+import ai.dokus.foundation.database.tables.cashflow.BillsTable
+import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
+import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
+import ai.dokus.foundation.database.tables.contacts.ContactNotesTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.enums.ContactType
+// ContactType removed - roles are now derived from cashflow items
 import ai.dokus.foundation.domain.ids.ContactId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.ContactActivitySummary
 import ai.dokus.foundation.domain.model.ContactDto
+import ai.dokus.foundation.domain.model.ContactMergeResult
 import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactRequest
 import ai.dokus.foundation.ktor.database.dbQuery
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import java.math.BigDecimal
 import java.util.UUID
 
 /**
@@ -53,7 +67,7 @@ class ContactRepository {
                 it[email] = request.email
                 it[phone] = request.phone
                 it[vatNumber] = request.vatNumber
-                it[contactType] = request.contactType
+                // contactType removed - roles are derived from cashflow items
                 it[businessType] = request.businessType
                 it[addressLine1] = request.addressLine1
                 it[addressLine2] = request.addressLine2
@@ -100,10 +114,10 @@ class ContactRepository {
     /**
      * List contacts for a tenant with optional filters
      * CRITICAL: MUST filter by tenant_id
+     * Note: contactType removed - use derived roles for filtering by role
      */
     suspend fun listContacts(
         tenantId: TenantId,
-        contactType: ContactType? = null,
         isActive: Boolean? = null,
         peppolEnabled: Boolean? = null,
         searchQuery: String? = null,
@@ -115,10 +129,7 @@ class ContactRepository {
                 ContactsTable.tenantId eq UUID.fromString(tenantId.toString())
             }
 
-            // Apply filters
-            if (contactType != null) {
-                query = query.andWhere { ContactsTable.contactType eq contactType }
-            }
+            // Apply filters (contactType removed - roles are derived)
             if (isActive != null) {
                 query = query.andWhere { ContactsTable.isActive eq isActive }
             }
@@ -150,7 +161,9 @@ class ContactRepository {
     }
 
     /**
-     * List customers only (ContactType.Customer or ContactType.Both)
+     * List customers - contacts with outgoing invoices.
+     * TODO: Implement proper derived role filtering with JOIN to InvoicesTable
+     * For now, returns all active contacts (caller should filter by derived roles)
      * CRITICAL: MUST filter by tenant_id
      */
     suspend fun listCustomers(
@@ -159,34 +172,15 @@ class ContactRepository {
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
-        dbQuery {
-            var query = ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                ((ContactsTable.contactType eq ContactType.Customer) or (ContactsTable.contactType eq ContactType.Both))
-            }
-
-            if (isActive != null) {
-                query = query.andWhere { ContactsTable.isActive eq isActive }
-            }
-
-            val total = query.count()
-
-            val items = query.orderBy(ContactsTable.name to SortOrder.ASC)
-                .limit(limit + offset)
-                .map { row -> mapRowToContactDto(row) }
-                .drop(offset)
-
-            PaginatedResponse(
-                items = items,
-                total = total,
-                limit = limit,
-                offset = offset
-            )
-        }
+        // TODO: Proper implementation requires JOIN with InvoicesTable to find contacts with invoices
+        // For now, delegate to listContacts
+        listContacts(tenantId, isActive, null, null, limit, offset).getOrThrow()
     }
 
     /**
-     * List vendors only (ContactType.Vendor or ContactType.Both)
+     * List vendors - contacts with incoming bills/expenses.
+     * TODO: Implement proper derived role filtering with JOIN to BillsTable/ExpensesTable
+     * For now, returns all active contacts (caller should filter by derived roles)
      * CRITICAL: MUST filter by tenant_id
      */
     suspend fun listVendors(
@@ -195,30 +189,9 @@ class ContactRepository {
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
-        dbQuery {
-            var query = ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                ((ContactsTable.contactType eq ContactType.Vendor) or (ContactsTable.contactType eq ContactType.Both))
-            }
-
-            if (isActive != null) {
-                query = query.andWhere { ContactsTable.isActive eq isActive }
-            }
-
-            val total = query.count()
-
-            val items = query.orderBy(ContactsTable.name to SortOrder.ASC)
-                .limit(limit + offset)
-                .map { row -> mapRowToContactDto(row) }
-                .drop(offset)
-
-            PaginatedResponse(
-                items = items,
-                total = total,
-                limit = limit,
-                offset = offset
-            )
-        }
+        // TODO: Proper implementation requires JOIN with BillsTable/ExpensesTable
+        // For now, delegate to listContacts
+        listContacts(tenantId, isActive, null, null, limit, offset).getOrThrow()
     }
 
     /**
@@ -250,7 +223,7 @@ class ContactRepository {
                 request.email?.let { value -> it[email] = value }
                 request.phone?.let { value -> it[phone] = value }
                 request.vatNumber?.let { value -> it[vatNumber] = value }
-                request.contactType?.let { value -> it[contactType] = value }
+                // contactType removed - roles are derived from cashflow items
                 request.businessType?.let { value -> it[businessType] = value }
                 request.addressLine1?.let { value -> it[addressLine1] = value }
                 request.addressLine2?.let { value -> it[addressLine2] = value }
@@ -401,13 +374,12 @@ class ContactRepository {
             val activeContacts = allContacts.copy().andWhere { ContactsTable.isActive eq true }.count()
             val inactiveContacts = totalContacts - activeContacts
             val peppolEnabledContacts = allContacts.copy().andWhere { ContactsTable.peppolEnabled eq true }.count()
-            val customerCount = allContacts.copy().andWhere {
-                (ContactsTable.contactType eq ContactType.Customer) or (ContactsTable.contactType eq ContactType.Both)
-            }.count()
-            val vendorCount = allContacts.copy().andWhere {
-                (ContactsTable.contactType eq ContactType.Vendor) or (ContactsTable.contactType eq ContactType.Both)
-            }.count()
-            val bothCount = allContacts.copy().andWhere { ContactsTable.contactType eq ContactType.Both }.count()
+
+            // TODO: customer/vendor/both counts require JOIN with cashflow tables to derive from actual usage
+            // For now, return 0 - these will be computed from derived roles
+            val customerCount = 0L
+            val vendorCount = 0L
+            val bothCount = 0L
 
             ContactStats(
                 totalContacts = totalContacts,
@@ -436,6 +408,337 @@ class ContactRepository {
         }
     }
 
+    // =========================================================================
+    // CONTACT MATCHING (for AI document processing)
+    // =========================================================================
+
+    /**
+     * Find a contact by VAT number (case-insensitive, normalized)
+     * Returns the first active match.
+     */
+    suspend fun findByVatNumber(
+        tenantId: TenantId,
+        vatNumber: String
+    ): Result<ContactDto?> = runCatching {
+        dbQuery {
+            val normalized = vatNumber.uppercase().replace(" ", "").replace(".", "")
+            // Search for both normalized and original format
+            ContactsTable.selectAll().where {
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ContactsTable.isActive eq true)
+            }.filter { row ->
+                // Case-insensitive comparison on the result
+                val storedVat = row[ContactsTable.vatNumber]?.uppercase()?.replace(" ", "")?.replace(".", "")
+                storedVat == normalized
+            }.firstOrNull()?.let { row ->
+                mapRowToContactDto(row)
+            }
+        }
+    }
+
+    /**
+     * Find a contact by Peppol ID (exact match)
+     * Returns the first active match.
+     */
+    suspend fun findByPeppolId(
+        tenantId: TenantId,
+        peppolId: String
+    ): Result<ContactDto?> = runCatching {
+        dbQuery {
+            ContactsTable.selectAll().where {
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ContactsTable.peppolId eq peppolId) and
+                (ContactsTable.isActive eq true)
+            }.singleOrNull()?.let { row ->
+                mapRowToContactDto(row)
+            }
+        }
+    }
+
+    /**
+     * Find a contact by company number (exact match)
+     * Returns the first active match.
+     */
+    suspend fun findByCompanyNumber(
+        tenantId: TenantId,
+        companyNumber: String
+    ): Result<ContactDto?> = runCatching {
+        dbQuery {
+            ContactsTable.selectAll().where {
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ContactsTable.companyNumber eq companyNumber) and
+                (ContactsTable.isActive eq true)
+            }.singleOrNull()?.let { row ->
+                mapRowToContactDto(row)
+            }
+        }
+    }
+
+    /**
+     * Find contacts by name (case-insensitive partial match)
+     * Returns up to [limit] active matches sorted by name.
+     */
+    suspend fun findByName(
+        tenantId: TenantId,
+        name: String,
+        country: String? = null,
+        limit: Int = 5
+    ): Result<List<ContactDto>> = runCatching {
+        dbQuery {
+            val searchTerm = "%${name.lowercase()}%"
+            var query = ContactsTable.selectAll().where {
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ContactsTable.name like searchTerm) and
+                (ContactsTable.isActive eq true)
+            }
+
+            if (country != null) {
+                query = query.andWhere {
+                    ContactsTable.country eq country.uppercase()
+                }
+            }
+
+            // Filter in-memory for case-insensitive matching and limit
+            query.orderBy(ContactsTable.name to SortOrder.ASC)
+                .filter { row ->
+                    row[ContactsTable.name].lowercase().contains(name.lowercase())
+                }
+                .take(limit)
+                .map { row -> mapRowToContactDto(row) }
+        }
+    }
+
+    /**
+     * Get or create the "Unknown Contact" system placeholder for a tenant.
+     * This contact is used when no match is found and user assigns to unknown.
+     */
+    suspend fun getOrCreateUnknownContact(tenantId: TenantId): Result<ContactDto> = runCatching {
+        dbQuery {
+            // Check if system contact already exists
+            val existing = ContactsTable.selectAll().where {
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ContactsTable.isSystemContact eq true)
+            }.singleOrNull()
+
+            if (existing != null) {
+                mapRowToContactDto(existing)
+            } else {
+                // Create the Unknown Contact placeholder
+                val contactId = ContactsTable.insertAndGetId {
+                    it[ContactsTable.tenantId] = UUID.fromString(tenantId.toString())
+                    it[ContactsTable.name] = "Unknown / Unassigned"
+                    it[ContactsTable.isSystemContact] = true
+                    it[ContactsTable.isActive] = true
+                }
+
+                ContactsTable.selectAll().where {
+                    ContactsTable.id eq contactId.value
+                }.single().let { row ->
+                    mapRowToContactDto(row)
+                }
+            }
+        }
+    }
+
+    // =========================================================================
+    // ACTIVITY SUMMARY
+    // =========================================================================
+
+    /**
+     * Get activity summary for a specific contact.
+     * Returns counts and totals of invoices, bills, and expenses linked to this contact.
+     *
+     * CRITICAL: MUST filter by tenantId for multi-tenant isolation.
+     */
+    suspend fun getContactActivitySummary(
+        contactId: ContactId,
+        tenantId: TenantId
+    ): Result<ContactActivitySummary> = runCatching {
+        dbQuery {
+            val contactUuid = UUID.fromString(contactId.toString())
+            val tenantUuid = UUID.fromString(tenantId.toString())
+
+            // Get invoice count and total using simple queries
+            val invoices = InvoicesTable.selectAll().where {
+                (InvoicesTable.tenantId eq tenantUuid) and (InvoicesTable.contactId eq contactUuid)
+            }.toList()
+
+            val invoiceCount = invoices.size.toLong()
+            val invoiceTotal = invoices.fold(BigDecimal.ZERO) { acc, row ->
+                acc + (row[InvoicesTable.totalAmount] ?: BigDecimal.ZERO)
+            }
+            val invoiceLastDate = invoices.maxOfOrNull { it[InvoicesTable.createdAt] }
+
+            // Get bill count and total
+            val bills = BillsTable.selectAll().where {
+                (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq contactUuid)
+            }.toList()
+
+            val billCount = bills.size.toLong()
+            val billTotal = bills.fold(BigDecimal.ZERO) { acc, row ->
+                acc + (row[BillsTable.amount] ?: BigDecimal.ZERO)
+            }
+            val billLastDate = bills.maxOfOrNull { it[BillsTable.createdAt] }
+
+            // Get expense count and total
+            val expenses = ExpensesTable.selectAll().where {
+                (ExpensesTable.tenantId eq tenantUuid) and (ExpensesTable.contactId eq contactUuid)
+            }.toList()
+
+            val expenseCount = expenses.size.toLong()
+            val expenseTotal = expenses.fold(BigDecimal.ZERO) { acc, row ->
+                acc + (row[ExpensesTable.amount] ?: BigDecimal.ZERO)
+            }
+            val expenseLastDate = expenses.maxOfOrNull { it[ExpensesTable.createdAt] }
+
+            // Find the most recent activity date
+            val lastActivityDate = listOfNotNull(invoiceLastDate, billLastDate, expenseLastDate)
+                .maxOrNull()
+
+            // TODO: Count pending approval items (documents with this contact as suggested)
+            val pendingApprovalCount = 0L
+
+            ContactActivitySummary(
+                contactId = contactId,
+                invoiceCount = invoiceCount,
+                invoiceTotal = invoiceTotal.toPlainString(),
+                billCount = billCount,
+                billTotal = billTotal.toPlainString(),
+                expenseCount = expenseCount,
+                expenseTotal = expenseTotal.toPlainString(),
+                lastActivityDate = lastActivityDate,
+                pendingApprovalCount = pendingApprovalCount
+            )
+        }
+    }
+
+    // =========================================================================
+    // MERGE / DEDUPE
+    // =========================================================================
+
+    /**
+     * Merge source contact into target contact.
+     *
+     * Process:
+     * 1. Validate both contacts exist and belong to tenant
+     * 2. Verify no VAT number conflict (both have different non-null VAT)
+     * 3. Reassign all invoices, bills, expenses from source to target
+     * 4. Move notes from source to target
+     * 5. Add system note documenting the merge
+     * 6. Soft-delete (deactivate) source contact
+     *
+     * CRITICAL: Must filter by tenantId for multi-tenant isolation.
+     *
+     * @param sourceContactId The contact to merge FROM (will be deactivated)
+     * @param targetContactId The contact to merge INTO (will receive all items)
+     * @param tenantId Tenant isolation
+     * @param mergedByEmail Email of user performing the merge (for audit note)
+     * @return MergeResult with counts of reassigned items
+     */
+    suspend fun mergeContacts(
+        sourceContactId: ContactId,
+        targetContactId: ContactId,
+        tenantId: TenantId,
+        mergedByEmail: String
+    ): Result<ContactMergeResult> = runCatching {
+        dbQuery {
+            val sourceUuid = UUID.fromString(sourceContactId.toString())
+            val targetUuid = UUID.fromString(targetContactId.toString())
+            val tenantUuid = UUID.fromString(tenantId.toString())
+
+            // 1. Fetch both contacts and validate
+            val sourceContact = ContactsTable.selectAll().where {
+                (ContactsTable.id eq sourceUuid) and (ContactsTable.tenantId eq tenantUuid)
+            }.singleOrNull() ?: throw IllegalArgumentException("Source contact not found")
+
+            val targetContact = ContactsTable.selectAll().where {
+                (ContactsTable.id eq targetUuid) and (ContactsTable.tenantId eq tenantUuid)
+            }.singleOrNull() ?: throw IllegalArgumentException("Target contact not found")
+
+            // 2. Verify no VAT conflict
+            val sourceVat = sourceContact[ContactsTable.vatNumber]
+            val targetVat = targetContact[ContactsTable.vatNumber]
+            if (!sourceVat.isNullOrBlank() && !targetVat.isNullOrBlank() && sourceVat != targetVat) {
+                throw IllegalArgumentException("Cannot merge contacts with different VAT numbers: $sourceVat vs $targetVat")
+            }
+
+            // 3. Check if source is a system contact
+            if (sourceContact[ContactsTable.isSystemContact]) {
+                throw IllegalArgumentException("Cannot merge system contact (Unknown / Unassigned)")
+            }
+
+            val sourceName = sourceContact[ContactsTable.name]
+
+            // 4. Reassign invoices
+            val invoicesReassigned = InvoicesTable.update({
+                (InvoicesTable.tenantId eq tenantUuid) and (InvoicesTable.contactId eq sourceUuid)
+            }) {
+                it[InvoicesTable.contactId] = targetUuid
+            }
+
+            // 5. Reassign bills
+            val billsReassigned = BillsTable.update({
+                (BillsTable.tenantId eq tenantUuid) and (BillsTable.contactId eq sourceUuid)
+            }) {
+                it[BillsTable.contactId] = targetUuid
+            }
+
+            // 6. Reassign expenses
+            val expensesReassigned = ExpensesTable.update({
+                (ExpensesTable.tenantId eq tenantUuid) and (ExpensesTable.contactId eq sourceUuid)
+            }) {
+                it[ExpensesTable.contactId] = targetUuid
+            }
+
+            // 7. Move notes from source to target
+            val notesReassigned = ContactNotesTable.update({
+                (ContactNotesTable.tenantId eq tenantUuid) and (ContactNotesTable.contactId eq sourceUuid)
+            }) {
+                it[ContactNotesTable.contactId] = targetUuid
+            }
+
+            // 8. Add system note documenting the merge
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val mergeNote = buildString {
+                appendLine("[SYSTEM] Contact merged from \"$sourceName\" (ID: $sourceContactId)")
+                appendLine("- Reassigned: $invoicesReassigned invoices, $billsReassigned bills, $expensesReassigned expenses")
+                appendLine("- Notes moved: $notesReassigned")
+                appendLine("- Merged by: $mergedByEmail at $now")
+                appendLine("- Source contact archived")
+            }
+
+            ContactNotesTable.insert {
+                it[ContactNotesTable.tenantId] = tenantUuid
+                it[ContactNotesTable.contactId] = targetUuid
+                it[content] = mergeNote
+                it[authorName] = "System"
+                it[createdAt] = now
+                it[updatedAt] = now
+            }
+
+            // 9. Soft-delete (deactivate) source contact
+            ContactsTable.update({
+                (ContactsTable.id eq sourceUuid) and (ContactsTable.tenantId eq tenantUuid)
+            }) {
+                it[isActive] = false
+            }
+
+            ContactMergeResult(
+                sourceContactId = sourceContactId,
+                targetContactId = targetContactId,
+                invoicesReassigned = invoicesReassigned,
+                billsReassigned = billsReassigned,
+                expensesReassigned = expensesReassigned,
+                notesReassigned = notesReassigned,
+                sourceArchived = true
+            )
+        }
+    }
+
+    // =========================================================================
+    // MAPPING
+    // =========================================================================
+
     /**
      * Map a database row to ContactDto
      */
@@ -446,7 +749,6 @@ class ContactRepository {
             name = Name(row[ContactsTable.name]),
             email = row[ContactsTable.email]?.let { Email(it) },
             vatNumber = row[ContactsTable.vatNumber]?.let { VatNumber(it) },
-            contactType = row[ContactsTable.contactType],
             businessType = row[ContactsTable.businessType],
             addressLine1 = row[ContactsTable.addressLine1],
             addressLine2 = row[ContactsTable.addressLine2],
@@ -463,7 +765,13 @@ class ContactRepository {
             tags = row[ContactsTable.tags],
             isActive = row[ContactsTable.isActive],
             createdAt = row[ContactsTable.createdAt],
-            updatedAt = row[ContactsTable.updatedAt]
+            updatedAt = row[ContactsTable.updatedAt],
+            // UI Contract fields
+            isSystemContact = row[ContactsTable.isSystemContact],
+            createdFromDocumentId = row[ContactsTable.createdFromDocumentId]?.let {
+                DocumentId.parse(it.toString())
+            }
+            // derivedRoles and activitySummary are populated by service layer on demand
         )
     }
 }

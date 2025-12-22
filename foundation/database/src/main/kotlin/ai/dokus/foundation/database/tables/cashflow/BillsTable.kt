@@ -54,8 +54,11 @@ object BillsTable : UUIDTable("bills") {
     // Document attachment (references DocumentsTable)
     val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
 
-    // Contact (vendor) reference
-    val contactId = uuid("contact_id").references(ContactsTable.id).nullable().index()
+    // Contact (vendor) reference - RESTRICT prevents deleting contacts with linked bills
+    val contactId = uuid("contact_id")
+        .references(ContactsTable.id, onDelete = ReferenceOption.RESTRICT)
+        .nullable()
+        .index()
 
     // Payment tracking
     val paidAt = datetime("paid_at").nullable()
@@ -75,6 +78,9 @@ object BillsTable : UUIDTable("bills") {
         index(false, tenantId, status)
         index(false, tenantId, dueDate)
         index(false, tenantId, category)
+
+        // For contact activity queries: find all bills for a contact
+        index(false, tenantId, contactId)
 
         // Avoid duplicate supplier invoice numbers per tenant when provided
         uniqueIndex(tenantId, invoiceNumber)
