@@ -15,6 +15,24 @@ class GetCurrentTenantUseCaseImpl(
 ) : GetCurrentTenantUseCase {
     private val logger = Logger.forClass<GetCurrentTenantUseCaseImpl>()
 
+    /**
+     * Retrieves the currently scoped tenant from the user's JWT claims.
+     *
+     * Extracts the tenant scope from the current JWT token via [TokenManager], then
+     * fetches the full tenant details from the [TenantRemoteDataSource]. If no tenant
+     * is present in the claims (user hasn't selected a tenant yet), returns `null`
+     * without making a network request.
+     *
+     * @return [Result.success] containing:
+     *         - [Tenant] with full tenant details if a tenant is scoped in the session
+     *         - `null` if no tenant is present in the JWT claims (tenant not yet selected)
+     *
+     *         [Result.failure] if retrieval failed, which may occur if:
+     *         - Network error when fetching tenant details from the remote data source
+     *         - Server error from the tenant API
+     *         - The tenant ID in the claims no longer exists or is inaccessible
+     * @see GetCurrentTenantUseCase.invoke for the interface contract
+     */
     override suspend operator fun invoke(): Result<Tenant?> {
         val claims = tokenManager.getCurrentClaims()
         val tenantScope = claims?.tenant
