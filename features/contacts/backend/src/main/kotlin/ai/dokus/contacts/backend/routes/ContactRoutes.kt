@@ -227,6 +227,54 @@ fun Route.contactRoutes() {
         }
 
         // ================================================================
+        // MERGE OPERATIONS
+        // ================================================================
+
+        /**
+         * POST /api/v1/contacts/{id}/merge-into/{targetId}
+         * Merge source contact into target contact.
+         *
+         * All cashflow items (invoices, bills, expenses) and notes from the source
+         * contact are reassigned to the target contact. The source contact is archived
+         * (deactivated). A system note is added to the target documenting the merge.
+         *
+         * Error cases:
+         * - Source or target contact not found: 404
+         * - Both contacts have different non-null VAT numbers: 400
+         * - Source is a system contact (Unknown / Unassigned): 400
+         */
+        post<Contacts.Id.MergeInto> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val principal = dokusPrincipal
+            val sourceContactId = ContactId.parse(route.parent.id)
+            val targetContactId = ContactId.parse(route.targetId)
+
+            // Validate source != target
+            if (sourceContactId == targetContactId) {
+                throw DokusException.BadRequest("Cannot merge a contact into itself")
+            }
+
+            val result = contactRepository.mergeContacts(
+                sourceContactId = sourceContactId,
+                targetContactId = targetContactId,
+                tenantId = tenantId,
+                mergedByEmail = principal.email
+            ).getOrElse { ex ->
+                when {
+                    ex.message?.contains("not found") == true ->
+                        throw DokusException.NotFound(ex.message ?: "Contact not found")
+                    ex.message?.contains("VAT numbers") == true ||
+                    ex.message?.contains("system contact") == true ->
+                        throw DokusException.BadRequest(ex.message ?: "Merge not allowed")
+                    else ->
+                        throw DokusException.InternalError("Failed to merge contacts: ${ex.message}")
+                }
+            }
+
+            call.respond(HttpStatusCode.OK, result)
+        }
+
+        // ================================================================
         // NOTES OPERATIONS
         // ================================================================
 
