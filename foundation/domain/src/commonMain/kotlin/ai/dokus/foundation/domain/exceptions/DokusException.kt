@@ -182,6 +182,37 @@ sealed class DokusException(
         data class Generic(
             val errorMessage: String,
         ) : Validation(message = errorMessage)
+
+        // Peppol/API Credential Validation Errors
+        @Serializable
+        @SerialName("DokusException.Validation.ApiKeyRequired")
+        data object ApiKeyRequired : Validation(
+            message = "API Key is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.ApiSecretRequired")
+        data object ApiSecretRequired : Validation(
+            message = "API Secret is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.InvalidApiCredentials")
+        data object InvalidApiCredentials : Validation(
+            message = "Invalid API credentials",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.MissingVatNumber")
+        data object MissingVatNumber : Validation(
+            message = "VAT number is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.MissingCompanyAddress")
+        data object MissingCompanyAddress : Validation(
+            message = "Company address is required",
+        )
     }
 
     // 401 Unauthorized - Authentication Errors

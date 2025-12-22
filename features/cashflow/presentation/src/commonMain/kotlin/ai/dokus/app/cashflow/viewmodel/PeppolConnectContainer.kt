@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.PeppolConnectRequest
 import ai.dokus.foundation.domain.model.PeppolConnectStatus
@@ -12,7 +13,6 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
-import pro.respawn.flowmvi.dsl.updateState
 import pro.respawn.flowmvi.plugins.reduce
 
 internal typealias Ctx = PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>
@@ -51,41 +51,58 @@ internal class PeppolConnectContainer(
         }
 
     private suspend fun Ctx.handleUpdateApiKey(value: String) {
-        updateState<PeppolConnectState.EnteringCredentials, _> {
-            copy(
-                apiKey = value,
-                apiKeyError = null
-            )
+        updateState {
+            when (this) {
+                is PeppolConnectState.EnteringCredentials -> copy(apiKey = value)
+                is PeppolConnectState.Error -> PeppolConnectState.EnteringCredentials(
+                    provider = provider,
+                    apiKey = value,
+                    apiSecret = apiSecret
+                )
+                else -> this
+            }
         }
     }
 
     private suspend fun Ctx.handleUpdateApiSecret(value: String) {
-        updateState<PeppolConnectState.EnteringCredentials, _> {
-            copy(
-                apiSecret = value,
-                apiSecretError = null
-            )
+        updateState {
+            when (this) {
+                is PeppolConnectState.EnteringCredentials -> copy(apiSecret = value)
+                is PeppolConnectState.Error -> PeppolConnectState.EnteringCredentials(
+                    provider = provider,
+                    apiKey = apiKey,
+                    apiSecret = value
+                )
+                else -> this
+            }
         }
     }
 
     private suspend fun Ctx.handleContinue() {
         withState<PeppolConnectState.EnteringCredentials, _> {
-            // Validate
-            var hasErrors = false
-            var apiKeyError: String? = null
-            var apiSecretError: String? = null
-
+            // Validate - transition to Error state if validation fails
             if (apiKey.isBlank()) {
-                apiKeyError = "API Key is required"
-                hasErrors = true
+                updateState {
+                    PeppolConnectState.Error(
+                        provider = provider,
+                        apiKey = apiKey,
+                        apiSecret = apiSecret,
+                        exception = DokusException.Validation.ApiKeyRequired,
+                        retryHandler = { intent(PeppolConnectIntent.ContinueClicked) }
+                    )
+                }
+                return@withState
             }
             if (apiSecret.isBlank()) {
-                apiSecretError = "API Secret is required"
-                hasErrors = true
-            }
-
-            if (hasErrors) {
-                updateState { copy(apiKeyError = apiKeyError, apiSecretError = apiSecretError) }
+                updateState {
+                    PeppolConnectState.Error(
+                        provider = provider,
+                        apiKey = apiKey,
+                        apiSecret = apiSecret,
+                        exception = DokusException.Validation.ApiSecretRequired,
+                        retryHandler = { intent(PeppolConnectIntent.ContinueClicked) }
+                    )
+                }
                 return@withState
             }
 
@@ -128,7 +145,7 @@ internal class PeppolConnectContainer(
                             apiKey = currentApiKey,
                             apiSecret = currentApiSecret,
                             exception = error.asDokusException,
-                            retryHandler = { intent(PeppolConnectIntent.CreateCompanyClicked) }
+                            retryHandler = { intent(PeppolConnectIntent.ContinueClicked) }
                         )
                     }
                 }
@@ -177,7 +194,8 @@ internal class PeppolConnectContainer(
                         provider = provider,
                         apiKey = apiKey,
                         apiSecret = apiSecret,
-                        message = "Please configure your company VAT number in workspace settings first"
+                        exception = DokusException.Validation.MissingVatNumber,
+                        retryHandler = { intent(PeppolConnectIntent.ContinueClicked) }
                     )
                 }
             }
@@ -188,7 +206,8 @@ internal class PeppolConnectContainer(
                         provider = provider,
                         apiKey = apiKey,
                         apiSecret = apiSecret,
-                        message = "Please configure your company address in workspace settings first"
+                        exception = DokusException.Validation.MissingCompanyAddress,
+                        retryHandler = { intent(PeppolConnectIntent.ContinueClicked) }
                     )
                 }
             }
@@ -199,7 +218,8 @@ internal class PeppolConnectContainer(
                         provider = provider,
                         apiKey = apiKey,
                         apiSecret = apiSecret,
-                        message = "Invalid API credentials. Please check your API Key and Secret."
+                        exception = DokusException.Validation.InvalidApiCredentials,
+                        retryHandler = { intent(PeppolConnectIntent.ContinueClicked) }
                     )
                 }
             }
@@ -302,7 +322,8 @@ internal class PeppolConnectContainer(
                             provider = provider,
                             apiKey = apiKey,
                             apiSecret = apiSecret,
-                            message = error.message ?: "Failed to create company"
+                            exception = error.asDokusException,
+                            retryHandler = { intent(PeppolConnectIntent.CreateCompanyClicked) }
                         )
                     }
                 }
