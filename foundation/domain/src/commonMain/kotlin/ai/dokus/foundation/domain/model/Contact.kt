@@ -203,3 +203,96 @@ sealed class ContactEvent {
     @SerialName("ContactEvent.NoteDeleted")
     data class NoteDeleted(val contactId: ContactId, val noteId: ContactNoteId) : ContactEvent()
 }
+
+// ============================================================================
+// DERIVED ROLES (Computed from cashflow items)
+// ============================================================================
+
+/**
+ * Contact role derived from actual usage in cashflow items.
+ */
+@Serializable
+enum class ContactRole {
+    @SerialName("customer")
+    Customer,  // Has outgoing invoices
+
+    @SerialName("supplier")
+    Supplier,  // Has incoming bills
+
+    @SerialName("vendor")
+    Vendor     // Has expenses
+}
+
+/**
+ * Derived roles computed from cashflow items (invoices, bills, expenses).
+ * Replaces the manual ContactType field.
+ */
+@Serializable
+data class DerivedContactRoles(
+    val isCustomer: Boolean = false,   // Has outgoing invoices
+    val isSupplier: Boolean = false,   // Has incoming bills
+    val isVendor: Boolean = false,     // Has expenses
+    val primaryRole: ContactRole? = null  // Most common role by transaction count
+)
+
+// ============================================================================
+// CONTACT MATCHING (AI suggestion workflow)
+// ============================================================================
+
+/**
+ * Reason for how a contact match was determined.
+ */
+@Serializable
+enum class ContactMatchReason {
+    @SerialName("vat_number")
+    VatNumber,     // Matched by VAT number (high confidence)
+
+    @SerialName("peppol_id")
+    PeppolId,      // Matched by Peppol participant ID (high confidence)
+
+    @SerialName("company_number")
+    CompanyNumber, // Matched by company registration number
+
+    @SerialName("name_country")
+    NameAndCountry, // Matched by name + country (medium confidence)
+
+    @SerialName("name_only")
+    NameOnly,      // Matched by name only (low confidence)
+
+    @SerialName("no_match")
+    NoMatch        // No existing contact matched
+}
+
+/**
+ * Contact suggestion result from AI matching during document processing.
+ * Used when AI extracts counterparty info and attempts to match to existing contacts.
+ */
+@Serializable
+data class ContactSuggestion(
+    val contactId: ContactId?,           // Matched contact ID (null if no match)
+    val contact: ContactDto?,            // Full contact details if matched
+    val confidence: Float,               // 0.0 - 1.0 confidence score
+    val matchReason: ContactMatchReason, // How the match was determined
+    val matchDetails: String? = null     // Human-readable explanation (e.g., "Matched VAT: BE0123456789")
+)
+
+// ============================================================================
+// ACTIVITY VIEWS
+// ============================================================================
+
+/**
+ * Summary of a contact's activity across all cashflow item types.
+ * Used for contact detail views and dashboards.
+ */
+@Serializable
+data class ContactActivitySummary(
+    val contactId: ContactId,
+    val invoiceCount: Long = 0,
+    val invoiceTotal: String = "0.00",   // Decimal as string for precision
+    val billCount: Long = 0,
+    val billTotal: String = "0.00",
+    val expenseCount: Long = 0,
+    val expenseTotal: String = "0.00",
+    val lastActivityDate: LocalDateTime? = null,
+    val pendingApprovalCount: Long = 0   // Documents with this contact as suggested
+)
