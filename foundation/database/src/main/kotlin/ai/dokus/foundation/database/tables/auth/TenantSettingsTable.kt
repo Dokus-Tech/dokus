@@ -46,6 +46,9 @@ object TenantSettingsTable : UUIDTable("tenant_settings") {
     val enableBankSync = bool("enable_bank_sync").default(false)
     val enablePeppol = bool("enable_peppol").default(false)
 
+    // Legal payment terms text (for invoices)
+    val paymentTermsText = text("payment_terms_text").nullable()
+
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 }

@@ -132,6 +132,7 @@ class TenantRepository {
             it[emailWeeklyReports] = settings.emailWeeklyReports
             it[enableBankSync] = settings.enableBankSync
             it[enablePeppol] = settings.enablePeppol
+            it[paymentTermsText] = settings.paymentTermsText
         }
     }
 

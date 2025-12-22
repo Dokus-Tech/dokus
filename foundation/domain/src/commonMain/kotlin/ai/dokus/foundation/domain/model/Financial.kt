@@ -97,6 +97,7 @@ data class TenantSettings(
     val emailWeeklyReports: Boolean = false,
     val enableBankSync: Boolean = false,
     val enablePeppol: Boolean = false,
+    val paymentTermsText: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

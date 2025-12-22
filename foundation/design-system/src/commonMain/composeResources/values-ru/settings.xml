@@ -63,6 +63,25 @@
     <string name="workspace_display_name">Отображаемое имя</string>
     <string name="workspace_select_title">Выберите рабочее пространство</string>
 
+    <!-- Invoice Settings Descriptions -->
+    <string name="workspace_invoice_settings_description">Настройте нумерацию и формат ваших счетов</string>
+    <string name="workspace_invoice_prefix_description">Отображается в начале номеров счетов (напр.: INV-2025-001)</string>
+    <string name="workspace_payment_days_description">Количество дней по умолчанию до срока оплаты</string>
+
+    <!-- Invoice Numbering Section -->
+    <string name="workspace_invoice_numbering">Нумерация счетов</string>
+    <string name="workspace_invoice_numbering_description">Управление форматом автоматической нумерации</string>
+    <string name="workspace_invoice_include_year">Включить год в номер</string>
+    <string name="workspace_invoice_yearly_reset">Сбрасывать нумерацию каждый год</string>
+    <string name="workspace_invoice_padding">Отступ номера (цифры)</string>
+    <string name="workspace_invoice_preview">Предпросмотр</string>
+
+    <!-- Payment Terms Section -->
+    <string name="workspace_payment_terms_section">Условия оплаты</string>
+    <string name="workspace_payment_terms_text">Юридические условия оплаты</string>
+    <string name="workspace_payment_terms_description">Необязательные юридические условия на счетах (пени за просрочку, расходы на взыскание и т.д.)</string>
+    <string name="workspace_payment_terms_placeholder">напр.: В случае неоплаты будет начислена процентная ставка 8% годовых...</string>
+
     <!-- Peppol Settings -->
     <string name="peppol_settings_title">Электронные счета Peppol</string>
     <string name="peppol_connection_status">Статус подключения</string>
