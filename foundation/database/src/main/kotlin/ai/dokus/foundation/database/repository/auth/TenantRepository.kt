@@ -119,6 +119,10 @@ class TenantRepository {
             it[nextInvoiceNumber] = settings.nextInvoiceNumber
             it[defaultPaymentTerms] = settings.defaultPaymentTerms
             it[defaultVatRate] = BigDecimal(settings.defaultVatRate.value)
+            it[invoiceYearlyReset] = settings.invoiceYearlyReset
+            it[invoicePadding] = settings.invoicePadding
+            it[invoiceIncludeYear] = settings.invoiceIncludeYear
+            it[invoiceTimezone] = settings.invoiceTimezone
             it[companyName] = settings.companyName
             it[companyIban] = settings.companyIban?.value
             it[companyBic] = settings.companyBic?.value

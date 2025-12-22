@@ -8,6 +8,7 @@ import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
+import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
 import ai.dokus.foundation.domain.routes.Tenants
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -143,6 +144,13 @@ internal class TenantRemoteDataSourceImpl(
     override suspend fun deleteAvatar(): Result<Unit> {
         return runCatching {
             httpClient.delete(Tenants.Avatar())
+        }
+    }
+
+    override suspend fun getInvoiceNumberPreview(): Result<String> {
+        return runCatching {
+            val response: InvoiceNumberPreviewResponse = httpClient.get(Tenants.InvoiceNumberPreview()).body()
+            response.invoiceNumber
         }
     }
 }
