@@ -41,6 +41,12 @@ This document provides a comprehensive reference for error handling in the Dokus
   - [UI Considerations](#ui-considerations)
   - [Testing Rate Limiting](#testing-rate-limiting)
   - [Best Practices](#best-practices)
+- [Frontend Error Display Patterns](#frontend-error-display-patterns)
+  - [Localized Error Messages](#localized-error-messages)
+  - [Supported Locales](#supported-locales)
+  - [Using the Localized Property](#using-the-localized-property)
+  - [Localized Message Examples](#localized-message-examples)
+  - [Adding New Translations](#adding-new-translations)
 
 ---
 
@@ -1893,6 +1899,301 @@ fun `should handle rate limit exception with retry countdown`() = runTest {
 
 ---
 
+## Frontend Error Display Patterns
+
+This section documents how to display localized error messages in the Compose UI, including the `DokusException.localized` extension property and supported locales.
+
+### Localized Error Messages
+
+The `DokusException.localized` extension property provides user-friendly, localized error messages for all exception types. It uses Compose Multiplatform's string resources to automatically select the appropriate translation based on the user's device locale settings.
+
+#### Location
+
+```
+foundation/design-system/src/commonMain/kotlin/ai/dokus/foundation/design/extensions/DokusExceptionExtensions.kt
+```
+
+#### How It Works
+
+The `localized` property is a Composable extension that:
+
+1. **Maps each exception type to a string resource**: Every `DokusException` subtype has a corresponding string resource key (e.g., `exception_invalid_email`, `exception_not_authenticated`)
+2. **Automatically resolves the locale**: Uses Compose Multiplatform's `stringResource()` function which reads the device/system locale
+3. **Falls back gracefully**: For exceptions with dynamic messages (like `BadRequest`, `InternalError`), uses the exception's `message` property directly
+
+```kotlin
+val DokusException.localized: String
+    @Composable get() = when (this) {
+        // Validation errors → localized string resources
+        is DokusException.Validation.InvalidEmail -> stringResource(Res.string.exception_invalid_email)
+        is DokusException.Validation.WeakPassword -> stringResource(Res.string.exception_weak_password)
+        // ... other specific types
+
+        // Dynamic messages → use the exception's message property
+        is DokusException.BadRequest -> message
+        is DokusException.InternalError -> errorMessage
+
+        // Unknown errors → fallback to localized generic message
+        is DokusException.Unknown -> message ?: stringResource(Res.string.exception_unknown)
+    }
+```
+
+### Supported Locales
+
+The platform currently supports error message translations for the following locales:
+
+| Locale Code | Language | Region |
+|-------------|----------|--------|
+| `values/` (default) | English | — |
+| `values-de/` | German | Germany |
+| `values-es/` | Spanish | Spain |
+| `values-fr/` | French | France |
+| `values-fr-rBE/` | French | Belgium |
+| `values-it/` | Italian | Italy |
+| `values-nl/` | Dutch | Netherlands |
+| `values-nl-rBE/` | Dutch | Belgium |
+| `values-ru/` | Russian | Russia |
+
+#### Resource File Structure
+
+Exception strings are stored in separate `exceptions.xml` files within each locale directory:
+
+```
+foundation/design-system/src/commonMain/composeResources/
+├── values/
+│   └── exceptions.xml         # English (default)
+├── values-de/
+│   └── exceptions.xml         # German
+├── values-fr/
+│   └── exceptions.xml         # French
+├── values-nl/
+│   └── exceptions.xml         # Dutch
+└── ...
+```
+
+### Using the Localized Property
+
+#### Basic Usage in Composable
+
+The simplest way to display an error message:
+
+```kotlin
+@Composable
+fun ErrorMessage(exception: DokusException) {
+    Text(
+        text = exception.localized,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.error
+    )
+}
+```
+
+#### Usage with DokusState
+
+When using the `DokusState` pattern:
+
+```kotlin
+@Composable
+fun ContentScreen(viewModel: MyViewModel) {
+    val state by viewModel.state.collectAsState()
+
+    when (state) {
+        is DokusState.Error -> {
+            val errorState = state as DokusState.Error<MyData>
+
+            Column {
+                // Display localized error message
+                Text(
+                    text = errorState.exception.localized,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                // Show retry button if error is recoverable
+                if (errorState.exception.recoverable) {
+                    Button(onClick = { errorState.retryHandler.retry() }) {
+                        Text("Retry")
+                    }
+                }
+            }
+        }
+        is DokusState.Success -> { /* ... */ }
+        is DokusState.Loading -> { /* ... */ }
+        is DokusState.Idle -> { /* ... */ }
+    }
+}
+```
+
+#### Usage in Forms
+
+For validation errors in forms:
+
+```kotlin
+@Composable
+fun LoginForm(
+    onLogin: (Email, Password) -> Unit,
+    errorState: DokusException?
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Column {
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            isError = errorState is DokusException.Validation.InvalidEmail,
+            supportingText = {
+                if (errorState is DokusException.Validation.InvalidEmail) {
+                    Text(errorState.localized)
+                }
+            }
+        )
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            isError = errorState is DokusException.InvalidCredentials,
+            visualTransformation = PasswordVisualTransformation()
+        )
+
+        // Show general error message
+        errorState?.let { error ->
+            Text(
+                text = error.localized,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
+        Button(
+            onClick = { onLogin(Email(email), Password(password)) }
+        ) {
+            Text("Login")
+        }
+    }
+}
+```
+
+#### Usage with Snackbar
+
+For transient error notifications:
+
+```kotlin
+@Composable
+fun ScreenWithSnackbar(viewModel: MyViewModel) {
+    val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show snackbar when error occurs
+    LaunchedEffect(state) {
+        if (state is DokusState.Error) {
+            val error = (state as DokusState.Error<*>).exception
+            snackbarHostState.showSnackbar(
+                message = error.localized,
+                actionLabel = if (error.recoverable) "Retry" else null
+            )
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        // Screen content
+    }
+}
+```
+
+### Localized Message Examples
+
+Here's a sample of how the same error appears in different languages:
+
+#### Invalid Email (Validation.InvalidEmail)
+
+| Locale | Message |
+|--------|---------|
+| English | "Invalid email address" |
+| French | "Adresse e-mail invalide" |
+| German | "Ungültige E-Mail-Adresse" |
+| Dutch | "Ongeldig e-mailadres" |
+| Spanish | "Dirección de correo electrónico inválida" |
+
+#### Invalid Credentials (InvalidCredentials)
+
+| Locale | Message |
+|--------|---------|
+| English | "Invalid email or password" |
+| French | "E-mail ou mot de passe invalide" |
+| German | "Ungültige E-Mail oder Passwort" |
+| Dutch | "Ongeldige e-mail of wachtwoord" |
+| Spanish | "Correo electrónico o contraseña inválidos" |
+
+#### Too Many Login Attempts (TooManyLoginAttempts)
+
+| Locale | Message |
+|--------|---------|
+| English | "Too many login attempts. Please try again later." |
+| French | "Trop de tentatives de connexion. Veuillez réessayer plus tard." |
+| German | "Zu viele Anmeldeversuche. Bitte versuchen Sie es später erneut." |
+| Dutch | "Te veel inlogpogingen. Probeer het later opnieuw." |
+| Spanish | "Demasiados intentos de inicio de sesión. Por favor, inténtelo más tarde." |
+
+#### Session Expired (SessionExpired)
+
+| Locale | Message |
+|--------|---------|
+| English | "Your session has expired. Please log in again." |
+| French | "Votre session a expiré. Veuillez vous reconnecter." |
+| German | "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an." |
+| Dutch | "Uw sessie is verlopen. Gelieve opnieuw in te loggen." |
+| Spanish | "Su sesión ha expirado. Por favor, inicie sesión de nuevo." |
+
+### Adding New Translations
+
+To add translations for a new locale:
+
+1. **Create the locale directory** under `composeResources/`:
+   ```
+   foundation/design-system/src/commonMain/composeResources/values-{locale}/
+   ```
+
+2. **Create `exceptions.xml`** with all exception strings:
+   ```xml
+   <resources>
+       <!-- 400 Validation Errors -->
+       <string name="exception_validation_error">Translated message</string>
+       <string name="exception_invalid_email">Translated message</string>
+       <!-- ... all other exception strings -->
+   </resources>
+   ```
+
+3. **Copy all keys from the English `exceptions.xml`** and translate each value
+
+4. **Test the translations** by changing your device/emulator locale
+
+#### Exception String Keys Reference
+
+All exception string keys follow the pattern `exception_{snake_case_name}`:
+
+| Exception Type | String Key |
+|---------------|------------|
+| `Validation.InvalidEmail` | `exception_invalid_email` |
+| `Validation.WeakPassword` | `exception_weak_password` |
+| `Validation.PasswordDoNotMatch` | `exception_password_do_not_match` |
+| `NotAuthenticated` | `exception_not_authenticated` |
+| `InvalidCredentials` | `exception_invalid_credentials` |
+| `TokenExpired` | `exception_token_expired` |
+| `SessionExpired` | `exception_session_expired` |
+| `NotAuthorized` | `exception_not_authorized` |
+| `NotFound` | `exception_not_found` |
+| `TooManyLoginAttempts` | `exception_too_many_login_attempts` |
+| `ConnectionError` | `exception_connection_error` |
+| `Unknown` | `exception_unknown` |
+
+For the complete list, refer to `foundation/design-system/src/commonMain/composeResources/values/exceptions.xml`.
+
+---
+
 ## Quick Reference Table
 
 | HTTP Status | Exception Type | Error Code | Recoverable |
@@ -1938,3 +2239,5 @@ fun `should handle rate limit exception with retry countdown`() = runTest {
 - **HTTP Client Factory**: [foundation/app-common/.../HttpClient.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/network/HttpClient.kt)
 - **DokusState**: [foundation/app-common/.../DokusState.kt](../foundation/app-common/src/commonMain/kotlin/tech/dokus/foundation/app/state/DokusState.kt)
 - **RetryHandler**: [foundation/domain/.../RetryHandler.kt](../foundation/domain/src/commonMain/kotlin/ai/dokus/foundation/domain/asbtractions/RetryHandler.kt)
+- **Localized Error Messages**: [foundation/design-system/.../DokusExceptionExtensions.kt](../foundation/design-system/src/commonMain/kotlin/ai/dokus/foundation/design/extensions/DokusExceptionExtensions.kt)
+- **Exception String Resources**: [foundation/design-system/.../composeResources/values/exceptions.xml](../foundation/design-system/src/commonMain/composeResources/values/exceptions.xml)
