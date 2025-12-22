@@ -6,6 +6,7 @@ import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ContactNoteId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.ids.VatNumber
@@ -49,7 +50,16 @@ data class ContactDto(
     val invoiceCount: Long = 0,
     val billCount: Long = 0,
     val expenseCount: Long = 0,
-    val notesCount: Long = 0
+    val notesCount: Long = 0,
+    // UI Contract: New fields for contacts module extension
+    /** Computed roles from cashflow items (customer, supplier, vendor) */
+    val derivedRoles: DerivedContactRoles? = null,
+    /** Full activity summary (optional, populated on demand for detail views) */
+    val activitySummary: ContactActivitySummary? = null,
+    /** True for system-managed contacts like "Unknown / Unassigned" */
+    val isSystemContact: Boolean = false,
+    /** Source document ID if contact was created from AI extraction */
+    val createdFromDocumentId: DocumentId? = null
 )
 
 /**
