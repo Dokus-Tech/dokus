@@ -246,6 +246,85 @@ fun WorkspaceSettingsContent(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
                         )
+
+                        Spacer(Modifier.height(16.dp))
+
+                        // Invoice Numbering Configuration
+                        Text(
+                            text = "Invoice Numbering",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        // Include Year in Number
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = formState.invoiceIncludeYear,
+                                onCheckedChange = { viewModel.updateInvoiceIncludeYear(it) }
+                            )
+                            Text(
+                                text = "Include year in number",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        // Reset Numbering Each Year
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = formState.invoiceYearlyReset,
+                                onCheckedChange = { viewModel.updateInvoiceYearlyReset(it) }
+                            )
+                            Text(
+                                text = "Reset numbering each year",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        // Number Padding Selector
+                        Text(
+                            text = "Number padding (digits)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(3, 4, 5, 6).forEach { padding ->
+                                TextButton(
+                                    onClick = { viewModel.updateInvoicePadding(padding) }
+                                ) {
+                                    Text(
+                                        text = padding.toString(),
+                                        color = if (formState.invoicePadding == padding)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        // Preview
+                        Text(
+                            text = "Preview: ${generateInvoiceNumberPreview(formState.invoicePrefix, formState.invoiceIncludeYear, formState.invoicePadding)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
 
@@ -429,5 +508,22 @@ private fun SaveStateFeedback(
             )
         }
         else -> {}
+    }
+}
+
+/**
+ * Generate a preview of the invoice number format based on current settings.
+ */
+private fun generateInvoiceNumberPreview(
+    prefix: String,
+    includeYear: Boolean,
+    padding: Int
+): String {
+    val effectivePrefix = prefix.ifBlank { "INV" }
+    val paddedNumber = "1".padStart(padding, '0')
+    return if (includeYear) {
+        "$effectivePrefix-2025-$paddedNumber"
+    } else {
+        "$effectivePrefix-$paddedNumber"
     }
 }
