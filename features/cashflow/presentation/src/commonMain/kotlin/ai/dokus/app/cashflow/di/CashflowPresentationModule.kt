@@ -1,7 +1,13 @@
 package ai.dokus.app.cashflow.di
 
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
+import ai.dokus.app.cashflow.usecase.FilterDocumentsUseCase
+import ai.dokus.app.cashflow.usecase.LoadBusinessHealthUseCase
+import ai.dokus.app.cashflow.usecase.LoadCashflowDocumentsUseCase
+import ai.dokus.app.cashflow.usecase.LoadVatSummaryUseCase
 import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
+import ai.dokus.app.cashflow.usecase.SubmitInvoiceUseCase
+import ai.dokus.app.cashflow.usecase.ValidateInvoiceUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
@@ -20,7 +26,13 @@ val cashflowViewModelModule = module {
     single { DocumentUploadManager(dataSource = get()) }
 
     factory { SearchCashflowDocumentsUseCase() }
+    factory { FilterDocumentsUseCase() }
+    factory { LoadCashflowDocumentsUseCase(dataSource = get()) }
     factory { WatchPendingDocumentsUseCase(dataSource = get()) }
+    factory { LoadVatSummaryUseCase() }
+    factory { LoadBusinessHealthUseCase() }
+    factory { ValidateInvoiceUseCase() }
+    factory { SubmitInvoiceUseCase(dataSource = get()) }
     viewModel { CashflowViewModel() }
     viewModel { AddDocumentViewModel() }
     viewModel { CreateInvoiceViewModel() }

@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.cashflow.viewmodel.InvoiceLineItem
+import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically

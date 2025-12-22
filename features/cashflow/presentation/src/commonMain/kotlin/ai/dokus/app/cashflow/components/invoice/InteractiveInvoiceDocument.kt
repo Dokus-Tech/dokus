@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.cashflow.viewmodel.CreateInvoiceFormState
-import ai.dokus.app.cashflow.viewmodel.CreateInvoiceUiState
+import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
+import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
