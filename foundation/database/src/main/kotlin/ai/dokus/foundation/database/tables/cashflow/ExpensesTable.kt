@@ -38,8 +38,11 @@ object ExpensesTable : UUIDTable("expenses") {
     // Document attachment (references DocumentsTable)
     val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
 
-    // Contact (vendor) reference
-    val contactId = uuid("contact_id").references(ContactsTable.id).nullable().index()
+    // Contact (vendor) reference - RESTRICT prevents deleting contacts with linked expenses
+    val contactId = uuid("contact_id")
+        .references(ContactsTable.id, onDelete = ReferenceOption.RESTRICT)
+        .nullable()
+        .index()
 
     // Tax deduction
     val isDeductible = bool("is_deductible").default(true)
@@ -62,5 +65,8 @@ object ExpensesTable : UUIDTable("expenses") {
         // Composite index for common queries
         index(false, tenantId, category)
         index(false, tenantId, date)
+
+        // For contact activity queries: find all expenses for a contact
+        index(false, tenantId, contactId)
     }
 }

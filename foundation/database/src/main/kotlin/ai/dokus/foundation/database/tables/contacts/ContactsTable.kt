@@ -55,12 +55,11 @@ object ContactsTable : UUIDTable("contacts") {
     val tags = text("tags").nullable()
     val isActive = bool("is_active").default(true)
 
-    // AI/System contact tracking
-    val isAiCreated = bool("is_ai_created").default(false)
+    // System contact tracking
     val isSystemContact = bool("is_system_contact").default(false) // "Unknown Contact" placeholder
     val createdFromDocumentId = uuid("created_from_document_id")
         .references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL)
-        .nullable()
+        .nullable() // Track which document led to this contact's creation (user-confirmed)
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

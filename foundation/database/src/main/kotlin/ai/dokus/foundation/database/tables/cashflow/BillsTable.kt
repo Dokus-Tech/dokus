@@ -54,8 +54,11 @@ object BillsTable : UUIDTable("bills") {
     // Document attachment (references DocumentsTable)
     val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
 
-    // Contact (vendor) reference
-    val contactId = uuid("contact_id").references(ContactsTable.id).nullable().index()
+    // Contact (vendor) reference - RESTRICT prevents deleting contacts with linked bills
+    val contactId = uuid("contact_id")
+        .references(ContactsTable.id, onDelete = ReferenceOption.RESTRICT)
+        .nullable()
+        .index()
 
     // Payment tracking
     val paidAt = datetime("paid_at").nullable()
