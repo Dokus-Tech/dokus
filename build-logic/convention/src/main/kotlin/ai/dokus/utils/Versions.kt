@@ -3,18 +3,17 @@ package ai.dokus.utils
 /**
  * Single source of truth for app versioning.
  *
- * CI updates BUILD before each build using sed.
+ * During releases, the version name is overridden from the git tag
+ * via the APP_VERSION_NAME environment variable (see VersioningPlugin).
+ *
+ * The values here are development defaults only.
  */
 object AppVersion {
-    const val MAJOR = 1
-    const val MINOR = 1
-    const val BUILD = 1  // CI sets this to git commit count
+    /** Default version name for development builds */
+    const val NAME = "0.0.0-dev"
 
-    /** Version string: "MAJOR.MINOR.BUILD" */
-    const val NAME = "$MAJOR.$MINOR.$BUILD"
-
-    /** Version code: just the build number (git commit count) */
-    const val CODE = BUILD
+    /** Version code: git commit count (set by CI) */
+    const val CODE = 1
 }
 
 /**
