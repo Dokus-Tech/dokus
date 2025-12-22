@@ -23,12 +23,13 @@ internal object CashflowNavigationProvider : NavigationProvider {
         composable<SettingsDestination.PeppolSettings> {
             PeppolSettingsScreen()
         }
-        composable<SettingsDestination.PeppolProviders> {
+        composable<SettingsDestination.PeppolConfiguration.Providers> {
             PeppolProvidersScreen()
         }
-        composable<SettingsDestination.PeppolConnect> { backStackEntry ->
-            val route = backStackEntry.toRoute<SettingsDestination.PeppolConnect>()
-            PeppolConnectScreen(providerName = route.provider)
+        composable<SettingsDestination.PeppolConfiguration.Connect> { backStackEntry ->
+            val route =
+                backStackEntry.toRoute<SettingsDestination.PeppolConfiguration.Connect>()
+            PeppolConnectScreen(provider = route.provider)
         }
     }
 }

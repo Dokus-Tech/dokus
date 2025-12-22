@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
+import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.model.PeppolConnectRequest
 import ai.dokus.foundation.domain.model.PeppolConnectStatus
 import ai.dokus.foundation.domain.model.PeppolProvider
@@ -10,7 +11,11 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.dsl.updateState
 import pro.respawn.flowmvi.plugins.reduce
+
+internal typealias Ctx = PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>
 
 /**
  * Container for Peppol provider connection using FlowMVI.
@@ -18,10 +23,16 @@ import pro.respawn.flowmvi.plugins.reduce
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
-class PeppolConnectContainer(
-    private val provider: PeppolProvider,
+internal class PeppolConnectContainer(
+    provider: PeppolProvider,
     private val dataSource: CashflowRemoteDataSource,
 ) : Container<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> {
+
+    companion object {
+        data class Params(
+            val provider: PeppolProvider
+        )
+    }
 
     private val logger = Logger.forClass<PeppolConnectContainer>()
 
@@ -34,36 +45,31 @@ class PeppolConnectContainer(
                     is PeppolConnectIntent.ContinueClicked -> handleContinue()
                     is PeppolConnectIntent.SelectCompany -> handleSelectCompany(intent.companyId)
                     is PeppolConnectIntent.CreateCompanyClicked -> handleCreateCompany()
-                    is PeppolConnectIntent.RetryClicked -> handleRetry()
                     is PeppolConnectIntent.BackClicked -> action(PeppolConnectAction.NavigateBack)
                 }
             }
         }
 
-    private suspend fun PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>.handleUpdateApiKey(
-        value: String
-    ) {
-        withState {
-            if (this is PeppolConnectState.EnteringCredentials) {
-                updateState { copy(apiKey = value, apiKeyError = null) }
-            }
+    private suspend fun Ctx.handleUpdateApiKey(value: String) {
+        updateState<PeppolConnectState.EnteringCredentials, _> {
+            copy(
+                apiKey = value,
+                apiKeyError = null
+            )
         }
     }
 
-    private suspend fun PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>.handleUpdateApiSecret(
-        value: String
-    ) {
-        withState {
-            if (this is PeppolConnectState.EnteringCredentials) {
-                updateState { copy(apiSecret = value, apiSecretError = null) }
-            }
+    private suspend fun Ctx.handleUpdateApiSecret(value: String) {
+        updateState<PeppolConnectState.EnteringCredentials, _> {
+            copy(
+                apiSecret = value,
+                apiSecretError = null
+            )
         }
     }
 
-    private suspend fun PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>.handleContinue() {
-        withState {
-            if (this !is PeppolConnectState.EnteringCredentials) return@withState
-
+    private suspend fun Ctx.handleContinue() {
+        withState<PeppolConnectState.EnteringCredentials, _> {
             // Validate
             var hasErrors = false
             var apiKeyError: String? = null
@@ -121,7 +127,8 @@ class PeppolConnectContainer(
                             provider = provider,
                             apiKey = currentApiKey,
                             apiSecret = currentApiSecret,
-                            message = error.message ?: "Connection failed"
+                            exception = error.asDokusException,
+                            retryHandler = { intent(PeppolConnectIntent.CreateCompanyClicked) }
                         )
                     }
                 }
@@ -129,7 +136,7 @@ class PeppolConnectContainer(
         }
     }
 
-    private suspend fun PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>.handleConnectResponse(
+    private suspend fun Ctx.handleConnectResponse(
         status: PeppolConnectStatus,
         companies: List<RecommandCompanySummary>,
         apiKey: String,
@@ -140,6 +147,7 @@ class PeppolConnectContainer(
                 logger.i { "Connected to Peppol" }
                 action(PeppolConnectAction.NavigateToSettings)
             }
+
             PeppolConnectStatus.MultipleMatches -> {
                 logger.i { "Multiple companies found: ${companies.size}" }
                 updateState {
@@ -151,6 +159,7 @@ class PeppolConnectContainer(
                     )
                 }
             }
+
             PeppolConnectStatus.NoCompanyFound -> {
                 logger.i { "No matching company found" }
                 updateState {
@@ -161,6 +170,7 @@ class PeppolConnectContainer(
                     )
                 }
             }
+
             PeppolConnectStatus.MissingVatNumber -> {
                 updateState {
                     PeppolConnectState.Error(
@@ -171,6 +181,7 @@ class PeppolConnectContainer(
                     )
                 }
             }
+
             PeppolConnectStatus.MissingCompanyAddress -> {
                 updateState {
                     PeppolConnectState.Error(
@@ -181,6 +192,7 @@ class PeppolConnectContainer(
                     )
                 }
             }
+
             PeppolConnectStatus.InvalidCredentials -> {
                 updateState {
                     PeppolConnectState.Error(
@@ -194,12 +206,10 @@ class PeppolConnectContainer(
         }
     }
 
-    private suspend fun PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>.handleSelectCompany(
+    private suspend fun Ctx.handleSelectCompany(
         companyId: String
     ) {
-        withState {
-            if (this !is PeppolConnectState.SelectingCompany) return@withState
-
+        withState<PeppolConnectState.SelectingCompany, _> {
             val currentApiKey = apiKey
             val currentApiSecret = apiSecret
 
@@ -243,7 +253,8 @@ class PeppolConnectContainer(
                             provider = provider,
                             apiKey = currentApiKey,
                             apiSecret = currentApiSecret,
-                            message = error.message ?: "Failed to connect to company"
+                            exception = error.asDokusException,
+                            retryHandler = { intent(PeppolConnectIntent.SelectCompany(companyId)) }
                         )
                     }
                 }
@@ -251,25 +262,20 @@ class PeppolConnectContainer(
         }
     }
 
-    private suspend fun PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>.handleCreateCompany() {
-        withState {
-            if (this !is PeppolConnectState.NoCompaniesFound) return@withState
-
-            val currentApiKey = apiKey
-            val currentApiSecret = apiSecret
-
+    private suspend fun Ctx.handleCreateCompany() {
+        withState<PeppolConnectState.NoCompaniesFound, _> {
             updateState {
                 PeppolConnectState.CreatingCompany(
                     provider = provider,
-                    apiKey = currentApiKey,
-                    apiSecret = currentApiSecret
+                    apiKey = apiKey,
+                    apiSecret = apiSecret
                 )
             }
 
             logger.d { "Creating company on Recommand" }
             val request = PeppolConnectRequest(
-                apiKey = currentApiKey,
-                apiSecret = currentApiSecret,
+                apiKey = apiKey,
+                apiSecret = apiSecret,
                 isEnabled = true,
                 testMode = false,
                 createCompanyIfMissing = true
@@ -284,8 +290,8 @@ class PeppolConnectContainer(
                         handleConnectResponse(
                             status = response.status,
                             companies = response.candidates,
-                            apiKey = currentApiKey,
-                            apiSecret = currentApiSecret
+                            apiKey = apiKey,
+                            apiSecret = apiSecret
                         )
                     }
                 },
@@ -294,25 +300,13 @@ class PeppolConnectContainer(
                     updateState {
                         PeppolConnectState.Error(
                             provider = provider,
-                            apiKey = currentApiKey,
-                            apiSecret = currentApiSecret,
+                            apiKey = apiKey,
+                            apiSecret = apiSecret,
                             message = error.message ?: "Failed to create company"
                         )
                     }
                 }
             )
-        }
-    }
-
-    private suspend fun PipelineContext<PeppolConnectState, PeppolConnectIntent, PeppolConnectAction>.handleRetry() {
-        withState {
-            updateState {
-                PeppolConnectState.EnteringCredentials(
-                    provider = provider,
-                    apiKey = apiKey,
-                    apiSecret = apiSecret
-                )
-            }
         }
     }
 }

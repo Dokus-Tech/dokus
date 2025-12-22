@@ -1,11 +1,14 @@
 package ai.dokus.app.cashflow.viewmodel
 
+import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.PeppolProvider
 import ai.dokus.foundation.domain.model.RecommandCompanySummary
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for Peppol provider connection screen.
@@ -24,7 +27,7 @@ import pro.respawn.flowmvi.api.MVIState
 // ============================================================================
 
 @Immutable
-sealed interface PeppolConnectState : MVIState {
+sealed interface PeppolConnectState : MVIState, DokusState<Nothing> {
     val provider: PeppolProvider
     val apiKey: String
     val apiSecret: String
@@ -94,8 +97,9 @@ sealed interface PeppolConnectState : MVIState {
         override val provider: PeppolProvider,
         override val apiKey: String,
         override val apiSecret: String,
-        val message: String,
-    ) : PeppolConnectState
+        override val exception: DokusException,
+        override val retryHandler: RetryHandler,
+    ) : PeppolConnectState, DokusState.Error<Nothing>
 }
 
 // ============================================================================
@@ -118,9 +122,6 @@ sealed interface PeppolConnectIntent : MVIIntent {
 
     /** User clicked to create company on Recommand */
     data object CreateCompanyClicked : PeppolConnectIntent
-
-    /** User clicked retry after error */
-    data object RetryClicked : PeppolConnectIntent
 
     /** User clicked back button */
     data object BackClicked : PeppolConnectIntent

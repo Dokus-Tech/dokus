@@ -12,7 +12,6 @@ import ai.dokus.app.cashflow.viewmodel.PeppolConnectIntent
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectState
 import ai.dokus.app.cashflow.viewmodel.PeppolSendViewModel
 import ai.dokus.app.cashflow.viewmodel.PeppolSettingsViewModel
-import ai.dokus.foundation.domain.model.PeppolProvider
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import tech.dokus.foundation.app.mvi.container
@@ -29,9 +28,8 @@ val cashflowViewModelModule = module {
     viewModel { PeppolSendViewModel() }
 
     // FlowMVI Container for Peppol connection
-    container<PeppolConnectContainer, PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> { params ->
-        val provider: PeppolProvider = params.get()
-        PeppolConnectContainer(provider = provider, dataSource = get())
+    container<PeppolConnectContainer, PeppolConnectState, PeppolConnectIntent, PeppolConnectAction> { (params: PeppolConnectContainer.Companion.Params) ->
+        PeppolConnectContainer(provider = params.provider, dataSource = get())
     }
 }
 

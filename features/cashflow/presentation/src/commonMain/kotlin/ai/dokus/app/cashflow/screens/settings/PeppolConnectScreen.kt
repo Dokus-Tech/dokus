@@ -4,27 +4,25 @@ import ai.dokus.app.cashflow.viewmodel.PeppolConnectAction
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectContainer
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectIntent
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectState
-import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
+import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldPassword
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.design.components.layout.TwoPaneContainer
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.PeppolProvider
 import ai.dokus.foundation.domain.model.RecommandCompanySummary
-import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
-import androidx.compose.foundation.clickable
+import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,7 +35,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
-import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -67,21 +64,25 @@ import tech.dokus.foundation.app.mvi.container
  * Right pane: Instructions or company list (on large screens)
  */
 @Composable
-fun PeppolConnectScreen(
-    providerName: String,
+internal fun PeppolConnectScreen(
+    provider: PeppolProvider,
+    container: PeppolConnectContainer = container {
+        parametersOf(
+            PeppolConnectContainer.Companion.Params(provider)
+        )
+    }
 ) {
-    val provider = PeppolProvider.fromName(providerName) ?: PeppolProvider.Recommand
-    val peppolContainer: PeppolConnectContainer = container { parametersOf(provider) }
     val navController = LocalNavController.current
     val isLarge = LocalScreenSize.isLarge
 
-    val state by peppolContainer.store.subscribe(DefaultLifecycle) { action ->
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             PeppolConnectAction.NavigateBack -> navController.navigateUp()
             PeppolConnectAction.NavigateToSettings -> {
                 // Pop back to peppol settings
                 navController.popBackStack(SettingsDestination.PeppolSettings, inclusive = false)
             }
+
             is PeppolConnectAction.ShowError -> {
                 // Handle snackbar if needed
             }
@@ -98,12 +99,12 @@ fun PeppolConnectScreen(
                 modifier = Modifier.padding(contentPadding),
                 middleEffect = { EnhancedFloatingBubbles() },
                 left = {
-                    with(peppolContainer.store) {
+                    with(container.store) {
                         CredentialsPane(state)
                     }
                 },
                 right = {
-                    with(peppolContainer.store) {
+                    with(container.store) {
                         RightPane(state)
                     }
                 }
@@ -111,22 +112,26 @@ fun PeppolConnectScreen(
         } else {
             // Mobile: single pane, content changes based on state
             Box(modifier = Modifier.padding(contentPadding).fillMaxSize()) {
-                with(peppolContainer.store) {
+                with(container.store) {
                     when (state) {
                         is PeppolConnectState.EnteringCredentials,
                         is PeppolConnectState.LoadingCompanies -> {
                             CredentialsPane(state)
                         }
+
                         is PeppolConnectState.SelectingCompany -> {
                             CompanyListPane(state as PeppolConnectState.SelectingCompany)
                         }
+
                         is PeppolConnectState.NoCompaniesFound -> {
                             NoCompaniesPane(state)
                         }
+
                         is PeppolConnectState.CreatingCompany,
                         is PeppolConnectState.Connecting -> {
                             LoadingPane("Connecting...")
                         }
+
                         is PeppolConnectState.Error -> {
                             ErrorPane(state as PeppolConnectState.Error)
                         }
@@ -226,16 +231,20 @@ private fun IntentReceiver<PeppolConnectIntent>.RightPane(
         is PeppolConnectState.LoadingCompanies -> {
             InstructionsPane(state.provider)
         }
+
         is PeppolConnectState.SelectingCompany -> {
             CompanyListPane(state)
         }
+
         is PeppolConnectState.NoCompaniesFound -> {
             NoCompaniesPane(state)
         }
+
         is PeppolConnectState.CreatingCompany,
         is PeppolConnectState.Connecting -> {
             LoadingPane("Connecting...")
         }
+
         is PeppolConnectState.Error -> {
             ErrorPane(state)
         }
@@ -465,38 +474,7 @@ private fun IntentReceiver<PeppolConnectIntent>.ErrorPane(
             modifier = Modifier.limitWidthCenteredContent(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Error,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(64.dp)
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "Connection Error",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.error
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = state.message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(32.dp))
-
-            POutlinedButton(
-                text = "Try Again",
-                onClick = { intent(PeppolConnectIntent.RetryClicked) },
-                modifier = Modifier.fillMaxWidth()
-            )
+            DokusErrorContent(state.exception, state.retryHandler)
         }
     }
 }
