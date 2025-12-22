@@ -21,6 +21,11 @@
     <string name="exception_invalid_city">Неверный город</string>
     <string name="exception_invalid_postal_code">Неверный почтовый индекс</string>
     <string name="exception_invalid_country">Неверная страна</string>
+    <string name="exception_api_key_required">Требуется API-ключ</string>
+    <string name="exception_api_secret_required">Требуется секрет API</string>
+    <string name="exception_invalid_api_credentials">Недействительные учётные данные API. Проверьте свой API-ключ и секрет.</string>
+    <string name="exception_missing_vat_number">Сначала настройте номер НДС вашей компании в настройках рабочего пространства</string>
+    <string name="exception_missing_company_address">Сначала настройте адрес вашей компании в настройках рабочего пространства</string>
 
     <!-- 401 Authentication Errors -->
     <string name="exception_not_authenticated">Пожалуйста, войдите, чтобы продолжить</string>

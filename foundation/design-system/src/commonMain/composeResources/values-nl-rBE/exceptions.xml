@@ -21,6 +21,11 @@
     <string name="exception_invalid_city">Ongeldige stad</string>
     <string name="exception_invalid_postal_code">Ongeldige postcode</string>
     <string name="exception_invalid_country">Ongeldig land</string>
+    <string name="exception_api_key_required">API-sleutel is vereist</string>
+    <string name="exception_api_secret_required">API-geheim is vereist</string>
+    <string name="exception_invalid_api_credentials">Ongeldige API-referenties. Controleer uw API-sleutel en geheim.</string>
+    <string name="exception_missing_vat_number">Configureer eerst uw BTW-nummer in de werkruimte-instellingen</string>
+    <string name="exception_missing_company_address">Configureer eerst uw bedrijfsadres in de werkruimte-instellingen</string>
 
     <!-- 401 Authenticatiefouten -->
     <string name="exception_not_authenticated">Log in om verder te gaan</string>
