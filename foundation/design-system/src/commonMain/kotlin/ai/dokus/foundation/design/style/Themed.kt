@@ -6,6 +6,7 @@ import ai.dokus.foundation.platform.isWeb
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleAlpha
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -46,7 +47,14 @@ fun Themed(
         if (activePlatform.isWeb) this
         else withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay)
     }
-    CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration(color = colorScheme.rippleColor)) {
+    // Calm ripple configuration: neutral color with low alpha (≤ 0.12) for subtle feedback
+    val calmRippleAlpha = RippleAlpha(
+        pressedAlpha = 0.10f,
+        focusedAlpha = 0.10f,
+        draggedAlpha = 0.08f,
+        hoveredAlpha = 0.06f
+    )
+    CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration(color = colorScheme.rippleColor, rippleAlpha = calmRippleAlpha)) {
         MaterialTheme(colorScheme = colorScheme, typography = typography) {
             content()
         }

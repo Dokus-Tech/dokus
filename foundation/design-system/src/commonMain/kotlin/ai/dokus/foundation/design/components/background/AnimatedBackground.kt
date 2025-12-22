@@ -70,8 +70,8 @@ fun SpotlightEffect() {
             brush = Brush.radialGradient(
                 colors = listOf(
                     Color(0xFFD4AF37).copy(alpha = pulseAlpha * 0.7f),
-                    Color(0xFFFFE4A0).copy(alpha = pulseAlpha * 0.4f),
-                    Color(0xFFFFE4A0).copy(alpha = pulseAlpha * 0.15f),
+                    Color(0xFFC0C0C0).copy(alpha = pulseAlpha * 0.4f),
+                    Color(0xFFC0C0C0).copy(alpha = pulseAlpha * 0.15f),
                     Color.Transparent
                 ),
                 center = Offset(centerX, topY),
@@ -83,7 +83,7 @@ fun SpotlightEffect() {
         drawRect(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    Color(0xFFFFE4A0).copy(alpha = pulseAlpha * 0.8f),
+                    Color(0xFFE0E0E0).copy(alpha = pulseAlpha * 0.8f),
                     Color(0xFFD4AF37).copy(alpha = pulseAlpha * 0.3f),
                     Color.Transparent
                 ),
@@ -156,9 +156,9 @@ fun EnhancedFloatingBubbles() {
                     size = Random.nextFloat() * 1.5f + 0.3f,
                     speed = Random.nextFloat() * 0.15f + 0.05f,
                     color = listOf(
-                        Color(0xFFB8D4E3), // Pale blue
-                        Color(0xFFE3D4FF), // Pale purple
-                        Color(0xFFFFE4E1)  // Pale pink
+                        Color(0xFFE8E8E8), // Light silver
+                        Color(0xFFDCDCDC), // Gainsboro
+                        Color(0xFFD3D3D3)  // Light gray
                     ).random(),
                     pulsePhase = Random.nextFloat() * 6.28f,
                     orbitRadius = 0f
@@ -177,10 +177,10 @@ fun EnhancedFloatingBubbles() {
                     size = Random.nextFloat() * 4f + 2f,
                     speed = Random.nextFloat() * 0.25f + 0.1f,
                     color = listOf(
-                        Color(0xFF7B68EE), // Medium slate blue
-                        Color(0xFF9370DB), // Medium purple
-                        Color(0xFF40E0D0), // Turquoise
-                        Color(0xFFDDA0DD), // Plum
+                        Color(0xFFC0C0C0), // Silver
+                        Color(0xFFB8B8B8), // Medium silver
+                        Color(0xFFA9A9A9), // Dark gray
+                        Color(0xFFBDBDBD), // Gray
                     ).random(),
                     pulsePhase = Random.nextFloat() * 6.28f,
                     orbitRadius = Random.nextFloat() * 30f + 10f
@@ -199,9 +199,9 @@ fun EnhancedFloatingBubbles() {
                     size = Random.nextFloat() * 2f + 1f,
                     speed = Random.nextFloat() * 0.3f + 0.15f,
                     color = listOf(
-                        Color(0xFFFFD700), // Gold
-                        Color(0xFFFFA500), // Orange
-                        Color(0xFF00CED1), // Dark turquoise
+                        Color(0xFFE0E0E0), // Light gray
+                        Color(0xFFCCCCCC), // Silver gray
+                        Color(0xFFD4D4D4), // Neutral silver
                     ).random(),
                     pulsePhase = Random.nextFloat() * 6.28f,
                     orbitRadius = Random.nextFloat() * 50f + 20f
@@ -279,13 +279,13 @@ fun EnhancedFloatingBubbles() {
                     // Crystal refraction effect - multiple color layers
                     val rotation = globalTime * 2f + particle.pulsePhase * 57.3f
 
-                    // Prismatic light splitting
+                    // Neutral shimmer effect (replacing prismatic colors)
                     val prismColors = listOf(
-                        Color(0xFFFF6B6B), // Red
-                        Color(0xFF4ECDC4), // Cyan
-                        Color(0xFF95E77E), // Green
-                        Color(0xFFF7DC6F), // Yellow
-                        Color(0xFFBB8FCE), // Purple
+                        Color(0xFFE8E8E8), // Light silver
+                        Color(0xFFDCDCDC), // Gainsboro
+                        Color(0xFFD3D3D3), // Light gray
+                        Color(0xFFC8C8C8), // Medium light gray
+                        Color(0xFFBDBDBD), // Gray
                     )
 
                     prismColors.forEachIndexed { index, prismColor ->
@@ -437,9 +437,9 @@ fun EnhancedFloatingBubbles() {
                     drawLine(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFF9370DB).copy(alpha = connectionAlpha),
-                                Color(0xFF9370DB).copy(alpha = connectionAlpha * 0.3f),
-                                Color(0xFF9370DB).copy(alpha = connectionAlpha)
+                                Color(0xFFC0C0C0).copy(alpha = connectionAlpha), // Neutral silver
+                                Color(0xFFC0C0C0).copy(alpha = connectionAlpha * 0.3f),
+                                Color(0xFFC0C0C0).copy(alpha = connectionAlpha)
                             ),
                             start = pos1,
                             end = pos2
@@ -518,9 +518,9 @@ fun WarpJumpEffect(
                 speed = Random.nextFloat() * 0.5f + 0.5f,
                 color = listOf(
                     Color.White,
-                    Color(0xFFB8D4FF), // Light blue
-                    Color(0xFFFFE4B8), // Light yellow
-                    Color(0xFFE4B8FF)  // Light purple
+                    Color(0xFFE8E8E8), // Light silver
+                    Color(0xFFDCDCDC), // Gainsboro
+                    Color(0xFFD3D3D3)  // Light gray
                 ).random()
             )
         }
@@ -541,8 +541,8 @@ fun WarpJumpEffect(
                 brush = Brush.radialGradient(
                     colors = listOf(
                         Color.White.copy(alpha = (1f - burstPhase) * 0.9f),
-                        Color(0xFF3498DB).copy(alpha = (1f - burstPhase) * 0.5f),
-                        Color(0xFF9B59B6).copy(alpha = (1f - burstPhase) * 0.3f),
+                        Color(0xFFE0E0E0).copy(alpha = (1f - burstPhase) * 0.5f),
+                        Color(0xFFC0C0C0).copy(alpha = (1f - burstPhase) * 0.3f),
                         Color.Transparent
                     ),
                     center = centerPoint,
@@ -611,7 +611,7 @@ fun WarpJumpEffect(
                     val ringAlpha = ringProgress * (1f - ring * 0.1f) * 0.5f
 
                     drawCircle(
-                        color = Color(0xFF00CED1).copy(alpha = ringAlpha),
+                        color = Color(0xFFBDBDBD).copy(alpha = ringAlpha),
                         radius = ringRadius,
                         center = warpCenter,
                         style = Stroke(
@@ -626,9 +626,9 @@ fun WarpJumpEffect(
                 brush = Brush.radialGradient(
                     colors = listOf(
                         Color.White.copy(alpha = tunnelPhase * 0.9f),
-                        Color(0xFF00CED1).copy(alpha = tunnelPhase * 0.5f),
-                        Color(0xFF3498DB).copy(alpha = tunnelPhase * 0.3f),
-                        Color(0xFF9B59B6).copy(alpha = tunnelPhase * 0.1f),
+                        Color(0xFFE0E0E0).copy(alpha = tunnelPhase * 0.5f),
+                        Color(0xFFCCCCCC).copy(alpha = tunnelPhase * 0.3f),
+                        Color(0xFFB8B8B8).copy(alpha = tunnelPhase * 0.1f),
                         Color.Transparent
                     ),
                     center = warpCenter,
