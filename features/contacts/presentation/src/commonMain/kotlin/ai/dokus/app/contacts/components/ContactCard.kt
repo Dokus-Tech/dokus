@@ -1,12 +1,12 @@
 package ai.dokus.app.contacts.components
 
-import ai.dokus.foundation.design.Res
-import ai.dokus.foundation.design.contacts_active
-import ai.dokus.foundation.design.contacts_customer
-import ai.dokus.foundation.design.contacts_inactive
-import ai.dokus.foundation.design.contacts_peppol
-import ai.dokus.foundation.design.contacts_supplier
-import ai.dokus.foundation.design.contacts_vendor
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_active
+import ai.dokus.app.resources.generated.contacts_customer
+import ai.dokus.app.resources.generated.contacts_inactive
+import ai.dokus.app.resources.generated.contacts_peppol
+import ai.dokus.app.resources.generated.contacts_supplier
+import ai.dokus.app.resources.generated.contacts_vendor
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.DerivedContactRoles
 import androidx.compose.foundation.layout.Arrangement

@@ -9,10 +9,10 @@ import ai.dokus.app.contacts.viewmodel.ContactActiveFilter
 import ai.dokus.app.contacts.viewmodel.ContactRoleFilter
 import ai.dokus.app.contacts.viewmodel.ContactSortOption
 import ai.dokus.app.contacts.viewmodel.ContactsViewModel
-import ai.dokus.foundation.design.Res
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_select_contact
+import ai.dokus.app.resources.generated.contacts_select_contact_hint
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
-import ai.dokus.foundation.design.contacts_select_contact
-import ai.dokus.foundation.design.contacts_select_contact_hint
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactDto
@@ -143,7 +143,7 @@ internal fun ContactsScreen(
                 contentPadding = contentPadding,
                 onContactClick = { contact ->
                     navController.navigateTo(
-                        ContactsDestination.ContactDetails(contact.id.value.toString())
+                        ContactsDestination.ContactDetails(contact.id.toString())
                     )
                 },
                 onLoadMore = viewModel::loadNextPage,

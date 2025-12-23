@@ -1,7 +1,6 @@
 package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.repository.ContactRepository
-import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactActivitySummary
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.ContactMergeResult
@@ -115,7 +114,7 @@ internal fun ContactMergeDialog(
     contactRepository: ContactRepository = koinInject()
 ) {
     val scope = rememberCoroutineScope()
-    val logger = remember { Logger.forClass("ContactMergeDialog") }
+    val logger = remember { Logger.withTag("ContactMergeDialog") }
 
     // Dialog state
     var currentStep by remember { mutableStateOf(
@@ -341,7 +340,7 @@ private fun SelectTargetStep(
     contactRepository: ContactRepository
 ) {
     val scope = rememberCoroutineScope()
-    val logger = remember { Logger.forClass("ContactMergeDialog") }
+    val logger = remember { Logger.withTag("ContactMergeDialog") }
 
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<ContactDto>>(emptyList()) }

@@ -45,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 
@@ -90,7 +89,7 @@ internal fun ContactFormScreen(
 
     // Navigate when contact is saved successfully
     LaunchedEffect(savedContactId, state) {
-        if (savedContactId != null && state.isSuccess) {
+        if (savedContactId != null && state.isSuccess()) {
             // Navigate back - the contact list will refresh and show the new/updated contact
             navController.popBackStack()
         }
@@ -109,7 +108,7 @@ internal fun ContactFormScreen(
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             // Loading state for edit mode (loading existing contact)
-            if (isEditMode && state.isLoading && formState.name.isEmpty()) {
+            if (isEditMode && state.isLoading() && formState.name.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -152,7 +151,7 @@ internal fun ContactFormScreen(
                         onMergeWithExisting = { duplicate ->
                             // Navigate to the duplicate contact's details page for merging
                             navController.navigateTo(
-                                ContactsDestination.ContactDetails(duplicate.contact.id.value.toString())
+                                ContactsDestination.ContactDetails(duplicate.contact.id.toString())
                             )
                         }
                     )
@@ -189,7 +188,7 @@ internal fun ContactFormScreen(
                         onMergeWithExisting = { duplicate ->
                             // Navigate to the duplicate contact's details page for merging
                             navController.navigateTo(
-                                ContactsDestination.ContactDetails(duplicate.contact.id.value.toString())
+                                ContactsDestination.ContactDetails(duplicate.contact.id.toString())
                             )
                         }
                     )

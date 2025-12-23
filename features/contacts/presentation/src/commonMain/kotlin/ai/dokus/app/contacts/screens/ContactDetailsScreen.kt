@@ -118,7 +118,7 @@ internal fun ContactDetailsScreen(
                 hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
                 onBackClick = { navController.popBackStack() },
                 onEditClick = {
-                    navController.navigateTo(ContactsDestination.EditContact(contactId.value.toString()))
+                    navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
                 },
                 onEnrichmentClick = viewModel::showEnrichmentPanel,
                 onMergeClick = viewModel::showMergeDialog
@@ -198,7 +198,7 @@ internal fun ContactDetailsScreen(
                 onMergeComplete = { result ->
                     // Navigate to the merged (target) contact
                     navController.navigateTo(
-                        ContactsDestination.ContactDetails(result.targetContactId.value.toString())
+                        ContactsDestination.ContactDetails(result.targetContactId.toString())
                     )
                 },
                 onDismiss = viewModel::hideMergeDialog
