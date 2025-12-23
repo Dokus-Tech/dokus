@@ -37,7 +37,10 @@ data class ContactDetailsUiState(
     val deletingNote: ContactNoteDto? = null,
     val showMergeDialog: Boolean = false,
     val showEnrichmentPanel: Boolean = false,
-    val noteContent: String = ""
+    val noteContent: String = "",
+    // Notes pane/sheet visibility states (responsive UI)
+    val showNotesSidePanel: Boolean = false,
+    val showNotesBottomSheet: Boolean = false
 )
 
 /**
@@ -294,6 +297,56 @@ internal class ContactDetailsViewModel :
             it.copy(
                 showDeleteNoteConfirmation = false,
                 deletingNote = null
+            )
+        }
+    }
+
+    // ============================================================================
+    // NOTES PANE/SHEET VISIBILITY
+    // ============================================================================
+
+    /**
+     * Show the notes side panel (desktop).
+     */
+    fun showNotesSidePanel() {
+        _uiState.update { it.copy(showNotesSidePanel = true) }
+    }
+
+    /**
+     * Hide the notes side panel (desktop).
+     */
+    fun hideNotesSidePanel() {
+        _uiState.update {
+            it.copy(
+                showNotesSidePanel = false,
+                // Also reset any note editing state when closing
+                showAddNoteDialog = false,
+                showEditNoteDialog = false,
+                editingNote = null,
+                noteContent = ""
+            )
+        }
+    }
+
+    /**
+     * Show the notes bottom sheet (mobile).
+     */
+    fun showNotesBottomSheet() {
+        _uiState.update { it.copy(showNotesBottomSheet = true) }
+    }
+
+    /**
+     * Hide the notes bottom sheet (mobile).
+     */
+    fun hideNotesBottomSheet() {
+        _uiState.update {
+            it.copy(
+                showNotesBottomSheet = false,
+                // Also reset any note editing state when closing
+                showAddNoteDialog = false,
+                showEditNoteDialog = false,
+                editingNote = null,
+                noteContent = ""
             )
         }
     }

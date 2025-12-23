@@ -1,12 +1,11 @@
 package ai.dokus.app.contacts.screens
 
+import ai.dokus.app.contacts.components.ContactFormActionButtonsCompact
+import ai.dokus.app.contacts.components.ContactFormContent
 import ai.dokus.app.contacts.components.ContactFormFields
 import ai.dokus.app.contacts.components.DuplicateWarningBanner
 import ai.dokus.app.contacts.viewmodel.ContactFormViewModel
 import ai.dokus.app.contacts.viewmodel.DuplicateContact
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PButtonVariant
-import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.ids.ContactId
@@ -24,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -213,7 +211,7 @@ internal fun ContactFormScreen(
 
 /**
  * Desktop layout for the contact form.
- * Centered content with max width for readability.
+ * Uses ContactFormContent with additional horizontal padding for desktop.
  */
 @Composable
 private fun DesktopFormLayout(
@@ -247,95 +245,46 @@ private fun DesktopFormLayout(
     onDismissDuplicates: () -> Unit,
     onMergeWithExisting: (DuplicateContact) -> Unit
 ) {
-    Column(
+    ContactFormContent(
+        isEditMode = isEditMode,
+        formState = formState,
+        duplicates = duplicates,
+        showBackButton = true,
+        onBackPress = onBackPress,
+        onNameChange = onNameChange,
+        onEmailChange = onEmailChange,
+        onPhoneChange = onPhoneChange,
+        onContactPersonChange = onContactPersonChange,
+        onVatNumberChange = onVatNumberChange,
+        onCompanyNumberChange = onCompanyNumberChange,
+        onBusinessTypeChange = onBusinessTypeChange,
+        onAddressLine1Change = onAddressLine1Change,
+        onAddressLine2Change = onAddressLine2Change,
+        onCityChange = onCityChange,
+        onPostalCodeChange = onPostalCodeChange,
+        onCountryChange = onCountryChange,
+        onPeppolIdChange = onPeppolIdChange,
+        onPeppolEnabledChange = onPeppolEnabledChange,
+        onDefaultPaymentTermsChange = onDefaultPaymentTermsChange,
+        onDefaultVatRateChange = onDefaultVatRateChange,
+        onTagsChange = onTagsChange,
+        onInitialNoteChange = onInitialNoteChange,
+        onIsActiveChange = onIsActiveChange,
+        onSave = onSave,
+        onCancel = onCancel,
+        onDelete = onDelete,
+        onDismissDuplicates = onDismissDuplicates,
+        onMergeWithExisting = onMergeWithExisting,
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(horizontal = 32.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = 800.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Header with back button
-            SectionTitle(
-                text = if (isEditMode) "Edit Contact" else "Create Contact",
-                onBackPress = onBackPress
-            )
-
-            // Description
-            Text(
-                text = if (isEditMode) {
-                    "Update contact information. Changes are saved when you click Save."
-                } else {
-                    "Fill in the contact details below. Required fields are marked with *."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Duplicate warning banner
-            if (duplicates.isNotEmpty()) {
-                DuplicateWarningBanner(
-                    duplicates = duplicates,
-                    onContinueAnyway = onDismissDuplicates,
-                    onMergeWithExisting = onMergeWithExisting,
-                    onCancel = onCancel
-                )
-            }
-
-            // Form fields
-            ContactFormFields(
-                formState = formState,
-                onNameChange = onNameChange,
-                onEmailChange = onEmailChange,
-                onPhoneChange = onPhoneChange,
-                onContactPersonChange = onContactPersonChange,
-                onVatNumberChange = onVatNumberChange,
-                onCompanyNumberChange = onCompanyNumberChange,
-                onBusinessTypeChange = onBusinessTypeChange,
-                onAddressLine1Change = onAddressLine1Change,
-                onAddressLine2Change = onAddressLine2Change,
-                onCityChange = onCityChange,
-                onPostalCodeChange = onPostalCodeChange,
-                onCountryChange = onCountryChange,
-                onPeppolIdChange = onPeppolIdChange,
-                onPeppolEnabledChange = onPeppolEnabledChange,
-                onDefaultPaymentTermsChange = onDefaultPaymentTermsChange,
-                onDefaultVatRateChange = onDefaultVatRateChange,
-                onTagsChange = onTagsChange,
-                onInitialNoteChange = onInitialNoteChange,
-                onIsActiveChange = onIsActiveChange,
-                showInitialNote = !isEditMode
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Action buttons
-            FormActionButtons(
-                isEditMode = isEditMode,
-                isSaving = formState.isSaving,
-                isDeleting = formState.isDeleting,
-                isValid = formState.isValid,
-                onSave = onSave,
-                onCancel = onCancel,
-                onDelete = onDelete
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
+            .padding(horizontal = 16.dp)
+    )
 }
 
 /**
  * Mobile layout for the contact form.
- * Full-width content with appropriate padding.
+ * Full-width content with fixed bottom action bar.
  */
 @Composable
 private fun MobileFormLayout(
@@ -374,6 +323,7 @@ private fun MobileFormLayout(
             .fillMaxSize()
             .padding(contentPadding)
     ) {
+        // Scrollable form content
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -439,97 +389,18 @@ private fun MobileFormLayout(
         }
 
         // Bottom action bar (fixed at bottom for mobile)
-        Row(
+        ContactFormActionButtonsCompact(
+            isEditMode = isEditMode,
+            isSaving = formState.isSaving,
+            isDeleting = formState.isDeleting,
+            isValid = formState.isValid,
+            onSave = onSave,
+            onCancel = onCancel,
+            onDelete = onDelete,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Delete button (edit mode only, left-aligned)
-            if (isEditMode) {
-                POutlinedButton(
-                    text = if (formState.isDeleting) "Deleting..." else "Delete",
-                    onClick = onDelete,
-                    enabled = !formState.isSaving && !formState.isDeleting,
-                    isLoading = formState.isDeleting,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Cancel button
-            PButton(
-                text = "Cancel",
-                variant = PButtonVariant.Outline,
-                onClick = onCancel,
-                isEnabled = !formState.isSaving && !formState.isDeleting,
-                modifier = Modifier.weight(1f)
-            )
-
-            // Save button
-            PButton(
-                text = if (formState.isSaving) "Saving..." else "Save",
-                variant = PButtonVariant.Default,
-                onClick = onSave,
-                isEnabled = formState.isValid && !formState.isSaving && !formState.isDeleting,
-                isLoading = formState.isSaving,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-/**
- * Action buttons for the form (desktop layout).
- * Positioned at the end of the form with proper spacing.
- */
-@Composable
-private fun FormActionButtons(
-    isEditMode: Boolean,
-    isSaving: Boolean,
-    isDeleting: Boolean,
-    isValid: Boolean,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Delete button (edit mode only, left side)
-        if (isEditMode) {
-            POutlinedButton(
-                text = if (isDeleting) "Deleting..." else "Delete Contact",
-                onClick = onDelete,
-                enabled = !isSaving && !isDeleting,
-                isLoading = isDeleting
-            )
-        } else {
-            // Empty spacer to maintain layout
-            Spacer(modifier = Modifier.weight(1f))
-        }
-
-        // Save/Cancel buttons (right side)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            PButton(
-                text = "Cancel",
-                variant = PButtonVariant.Outline,
-                onClick = onCancel,
-                isEnabled = !isSaving && !isDeleting
-            )
-
-            PButton(
-                text = if (isSaving) "Saving..." else "Save Contact",
-                variant = PButtonVariant.Default,
-                onClick = onSave,
-                isEnabled = isValid && !isSaving && !isDeleting,
-                isLoading = isSaving
-            )
-        }
+                .padding(16.dp)
+        )
     }
 }
 
