@@ -20,8 +20,13 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -44,6 +49,7 @@ fun PTextField(
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
 ) {
+    var isFocused by remember { mutableStateOf(false) }
     val labelTextStyle = MaterialTheme.typography.bodyMedium
     val density = LocalDensity.current
     val iconSizeDp = with(density) { labelTextStyle.fontSize.toDp() }
@@ -75,9 +81,16 @@ fun PTextField(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    isFocused = focusState.hasFocus
+                }
                 .border(
                     width = Constrains.Stroke.thin,
-                    color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                    color = when {
+                        error != null -> MaterialTheme.colorScheme.error
+                        isFocused -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.outline
+                    },
                     shape = MaterialTheme.shapes.small
                 )
                 .background(
