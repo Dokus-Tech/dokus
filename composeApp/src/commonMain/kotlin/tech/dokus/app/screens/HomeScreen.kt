@@ -1,10 +1,5 @@
 package tech.dokus.app.screens
 
-import tech.dokus.foundation.app.AppModule
-import tech.dokus.foundation.app.local.LocalAppModules
-import tech.dokus.app.homeItems
-import tech.dokus.app.homeNavigationProviders
-import tech.dokus.app.viewmodel.HomeViewModel
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.navigation.DokusNavigationBar
 import ai.dokus.foundation.design.components.navigation.DokusNavigationRail
@@ -40,6 +35,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.app.homeItems
+import tech.dokus.app.homeNavigationProviders
+import tech.dokus.app.viewmodel.HomeViewModel
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.local.LocalAppModules
 
 @Composable
 fun HomeScreen(
