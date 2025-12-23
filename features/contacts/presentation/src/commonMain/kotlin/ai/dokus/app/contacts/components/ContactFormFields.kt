@@ -1,7 +1,9 @@
 package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.viewmodel.ContactFormState
+import ai.dokus.foundation.design.components.fields.PTextFieldPhone
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import ai.dokus.foundation.domain.PhoneNumber
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.clickable
@@ -104,14 +106,10 @@ internal fun ContactFormFields(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Phone
-            PTextFieldStandard(
+            PTextFieldPhone(
                 fieldName = "Phone",
-                value = formState.phone,
-                onValueChange = onPhoneChange,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Next
-                ),
+                value = PhoneNumber(formState.phone),
+                onValueChange = { onPhoneChange(it.value) },
                 modifier = Modifier.fillMaxWidth()
             )
 

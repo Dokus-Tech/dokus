@@ -51,6 +51,12 @@ sealed class DokusException(
         )
 
         @Serializable
+        @SerialName("DokusException.Validation.InvalidPhoneNumber")
+        data object InvalidPhoneNumber : Validation(
+            message = "Invalid phone number",
+        )
+
+        @Serializable
         @SerialName("DokusException.Validation.WeakPassword")
         data object WeakPassword : Validation(
             message = "Password does not meet security requirements",
