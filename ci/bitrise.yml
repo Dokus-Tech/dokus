@@ -59,7 +59,7 @@ workflows:
     steps:
       - git-clone@8:
           inputs:
-            - reset_repository: "true"
+            - reset_repository: "Yes"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -155,7 +155,7 @@ workflows:
     steps:
       - git-clone@8:
           inputs:
-            - reset_repository: "true"
+            - reset_repository: "Yes"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -271,7 +271,7 @@ workflows:
     steps:
       - git-clone@8:
           inputs:
-            - reset_repository: "true"
+            - reset_repository: "Yes"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -376,7 +376,7 @@ workflows:
     steps:
       - git-clone@8:
           inputs:
-            - reset_repository: "true"
+            - reset_repository: "Yes"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
