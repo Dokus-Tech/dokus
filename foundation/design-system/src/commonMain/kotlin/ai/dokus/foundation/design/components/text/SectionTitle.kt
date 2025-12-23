@@ -1,11 +1,9 @@
 package ai.dokus.foundation.design.components.text
 
 import ai.dokus.foundation.design.components.PBackButton
-import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +24,7 @@ fun SectionTitle(
         modifier = modifier.fillMaxWidth()
     ) {
         if (onBackPress != null) {
-            PBackButton(modifier = Modifier.padding(end = Constrains.Spacing.medium), onBackPress = onBackPress)
+            PBackButton(onBackPress = onBackPress)
         }
         Text(
             text = text,
