@@ -14,6 +14,7 @@ import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.animation.TransitionsProvider
+import ai.dokus.foundation.navigation.local.NavControllerProvided
 import ai.dokus.foundation.navigation.navigateTo
 import ai.dokus.foundation.navigation.rememberSelectedDestination
 import androidx.compose.foundation.BorderStroke
@@ -96,18 +97,20 @@ private fun HomeNavHost(
     selectedItem: HomeItem,
 ) {
     val transitionsProvider: TransitionsProvider = remember { TransitionsProvider.forTabs() }
-    NavHost(
-        navHostController,
-        startDestination = selectedItem.destination,
-        enterTransition = { with(transitionsProvider) { enterTransition } },
-        exitTransition = { with(transitionsProvider) { exitTransition } },
-        popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
-        popExitTransition = { with(transitionsProvider) { popExitTransition } },
-        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-    ) {
-        homeNavProviders.forEach { navProvider ->
-            with(navProvider) {
-                registerGraph()
+    NavControllerProvided(navHostController) {
+        NavHost(
+            navHostController,
+            startDestination = selectedItem.destination,
+            enterTransition = { with(transitionsProvider) { enterTransition } },
+            exitTransition = { with(transitionsProvider) { exitTransition } },
+            popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
+            popExitTransition = { with(transitionsProvider) { popExitTransition } },
+            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        ) {
+            homeNavProviders.forEach { navProvider ->
+                with(navProvider) {
+                    registerGraph()
+                }
             }
         }
     }
