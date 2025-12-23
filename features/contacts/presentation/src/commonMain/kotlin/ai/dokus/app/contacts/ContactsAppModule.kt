@@ -3,12 +3,7 @@ package ai.dokus.app.contacts
 import ai.dokus.app.contacts.di.contactsPresentationModule
 import ai.dokus.app.contacts.di.contactsViewModelModule
 import ai.dokus.app.contacts.navigation.ContactsHomeNavigationProvider
-import tech.dokus.foundation.app.AppDataModuleDi
-import tech.dokus.foundation.app.AppDomainModuleDi
-import tech.dokus.foundation.app.AppModule
-import tech.dokus.foundation.app.AppPresentationModuleDi
-import tech.dokus.foundation.app.DashboardWidget
-import tech.dokus.foundation.app.ModuleSettingsGroup
+import ai.dokus.app.contacts.navigation.ContactsNavigationProvider
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.contacts_title
 import ai.dokus.app.resources.generated.users
@@ -16,6 +11,12 @@ import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.HomeDestination
+import tech.dokus.foundation.app.AppDataModuleDi
+import tech.dokus.foundation.app.AppDomainModuleDi
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.AppPresentationModuleDi
+import tech.dokus.foundation.app.DashboardWidget
+import tech.dokus.foundation.app.ModuleSettingsGroup
 
 /**
  * Contacts module registration for dependency injection.
@@ -24,7 +25,7 @@ import ai.dokus.foundation.navigation.destinations.HomeDestination
  */
 object ContactsAppModule : AppModule {
     // Presentation layer
-    override val navigationProvider: NavigationProvider? = null
+    override val navigationProvider: NavigationProvider = ContactsNavigationProvider
     override val homeNavigationProvider: NavigationProvider = ContactsHomeNavigationProvider
     override val homeItems: List<HomeItem> = listOf(
         HomeItem(
