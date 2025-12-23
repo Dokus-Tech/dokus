@@ -3,12 +3,13 @@ package ai.dokus.app.contacts.screens
 import ai.dokus.app.contacts.components.ActivitySummarySection
 import ai.dokus.app.contacts.components.ContactInfoSection
 import ai.dokus.app.contacts.components.ContactMergeDialog
+import ai.dokus.app.contacts.components.NotesBottomSheet
 import ai.dokus.app.contacts.components.NotesSection
+import ai.dokus.app.contacts.components.NotesSidePanel
 import ai.dokus.app.contacts.viewmodel.ContactDetailsViewModel
 import ai.dokus.app.contacts.viewmodel.EnrichmentSuggestion
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.design.components.fields.PTextFieldFree
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactActivitySummary
 import ai.dokus.foundation.domain.model.ContactDto
@@ -18,6 +19,7 @@ import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -34,10 +36,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MergeType
-import androidx.compose.material.icons.filled.Note
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Checkbox
@@ -110,68 +110,89 @@ internal fun ContactDetailsScreen(
         viewModel.loadContact(contactId)
     }
 
-    Scaffold(
-        topBar = {
-            ContactDetailsTopBar(
+    // Use BoxWithConstraints to detect viewport size for responsive notes UI
+    BoxWithConstraints {
+        val isDesktop = maxWidth >= 600.dp
+
+        Scaffold(
+            topBar = {
+                ContactDetailsTopBar(
+                    contactState = contactState,
+                    showBackButton = showBackButton,
+                    hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
+                    onBackClick = { navController.popBackStack() },
+                    onEditClick = {
+                        navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
+                    },
+                    onEnrichmentClick = viewModel::showEnrichmentPanel,
+                    onMergeClick = viewModel::showMergeDialog
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { contentPadding ->
+            ContactDetailsContent(
                 contactState = contactState,
-                showBackButton = showBackButton,
-                hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
-                onBackClick = { navController.popBackStack() },
-                onEditClick = {
-                    navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
+                activityState = activityState,
+                notesState = notesState,
+                isTogglingPeppol = isTogglingPeppol,
+                contentPadding = contentPadding,
+                onPeppolToggle = viewModel::togglePeppol,
+                onAddNote = {
+                    // Show notes panel (desktop) or bottom sheet (mobile)
+                    if (isDesktop) {
+                        viewModel.showNotesSidePanel()
+                    } else {
+                        viewModel.showNotesBottomSheet()
+                    }
                 },
-                onEnrichmentClick = viewModel::showEnrichmentPanel,
-                onMergeClick = viewModel::showMergeDialog
+                onEditNote = viewModel::showEditNoteDialog,
+                onDeleteNote = viewModel::showDeleteNoteConfirmation,
+                onRetry = viewModel::refresh
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { contentPadding ->
-        ContactDetailsContent(
-            contactState = contactState,
-            activityState = activityState,
-            notesState = notesState,
-            isTogglingPeppol = isTogglingPeppol,
-            contentPadding = contentPadding,
-            onPeppolToggle = viewModel::togglePeppol,
-            onAddNote = viewModel::showAddNoteDialog,
-            onEditNote = viewModel::showEditNoteDialog,
-            onDeleteNote = viewModel::showDeleteNoteConfirmation,
-            onRetry = viewModel::refresh
-        )
-    }
+        }
 
-    // Add Note Dialog
-    if (uiState.showAddNoteDialog) {
-        NoteDialog(
-            title = "Add Note",
-            noteContent = uiState.noteContent,
-            onNoteContentChange = viewModel::updateNoteContent,
-            isSaving = isSavingNote,
-            onSave = viewModel::addNote,
-            onDismiss = viewModel::hideAddNoteDialog
-        )
-    }
-
-    // Edit Note Dialog
-    if (uiState.showEditNoteDialog && uiState.editingNote != null) {
-        NoteDialog(
-            title = "Edit Note",
-            noteContent = uiState.noteContent,
-            onNoteContentChange = viewModel::updateNoteContent,
-            isSaving = isSavingNote,
-            onSave = viewModel::updateNote,
-            onDismiss = viewModel::hideEditNoteDialog
-        )
-    }
-
-    // Delete Note Confirmation Dialog
-    if (uiState.showDeleteNoteConfirmation && uiState.deletingNote != null) {
-        DeleteNoteConfirmationDialog(
-            note = uiState.deletingNote!!,
-            isDeleting = isDeletingNote,
-            onConfirm = viewModel::deleteNote,
-            onDismiss = viewModel::hideDeleteNoteConfirmation
-        )
+        // Responsive Notes UI - Side panel for desktop, bottom sheet for mobile
+        if (isDesktop) {
+            // Desktop: Notes Side Panel
+            NotesSidePanel(
+                isVisible = uiState.showNotesSidePanel,
+                onDismiss = viewModel::hideNotesSidePanel,
+                notesState = notesState,
+                noteContent = uiState.noteContent,
+                onNoteContentChange = viewModel::updateNoteContent,
+                isSavingNote = isSavingNote,
+                isDeletingNote = isDeletingNote,
+                editingNote = uiState.editingNote,
+                onAddNote = viewModel::addNote,
+                onUpdateNote = viewModel::updateNote,
+                onDeleteNote = { note ->
+                    viewModel.showDeleteNoteConfirmation(note)
+                    viewModel.deleteNote()
+                },
+                onEditNoteClick = viewModel::showEditNoteDialog,
+                onCancelEdit = viewModel::hideEditNoteDialog
+            )
+        } else {
+            // Mobile: Notes Bottom Sheet
+            NotesBottomSheet(
+                isVisible = uiState.showNotesBottomSheet,
+                onDismiss = viewModel::hideNotesBottomSheet,
+                notesState = notesState,
+                noteContent = uiState.noteContent,
+                onNoteContentChange = viewModel::updateNoteContent,
+                isSavingNote = isSavingNote,
+                isDeletingNote = isDeletingNote,
+                editingNote = uiState.editingNote,
+                onAddNote = viewModel::addNote,
+                onUpdateNote = viewModel::updateNote,
+                onDeleteNote = { note ->
+                    viewModel.showDeleteNoteConfirmation(note)
+                    viewModel.deleteNote()
+                },
+                onEditNoteClick = viewModel::showEditNoteDialog,
+                onCancelEdit = viewModel::hideEditNoteDialog
+            )
+        }
     }
 
     // Enrichment Panel Dialog (simplified for now)
@@ -375,178 +396,6 @@ private fun ContactDetailsContent(
     }
 }
 
-/**
- * Dialog for adding or editing a note.
- */
-@Composable
-private fun NoteDialog(
-    title: String,
-    noteContent: String,
-    onNoteContentChange: (String) -> Unit,
-    isSaving: Boolean,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = { if (!isSaving) onDismiss() },
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Note,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column {
-                PTextFieldFree(
-                    fieldName = "Note",
-                    value = noteContent,
-                    onValueChange = onNoteContentChange,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            if (isSaving) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Text(
-                        text = "Saving...",
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            } else {
-                TextButton(
-                    onClick = onSave,
-                    enabled = noteContent.isNotBlank()
-                ) {
-                    Text(
-                        text = "Save",
-                        fontWeight = FontWeight.Medium,
-                        color = if (noteContent.isNotBlank()) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-            }
-        },
-        dismissButton = {
-            if (!isSaving) {
-                TextButton(onClick = onDismiss) {
-                    Text(
-                        text = "Cancel",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    )
-}
-
-/**
- * Confirmation dialog for deleting a note.
- */
-@Composable
-private fun DeleteNoteConfirmationDialog(
-    note: ContactNoteDto,
-    isDeleting: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = { if (!isDeleting) onDismiss() },
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error
-            )
-        },
-        title = {
-            Text(
-                text = "Delete Note",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column {
-                Text(
-                    text = "Are you sure you want to delete this note?",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = note.content.take(100) + if (note.content.length > 100) "..." else "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "This action cannot be undone.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            if (isDeleting) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Text(
-                        text = "Deleting...",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            } else {
-                TextButton(onClick = onConfirm) {
-                    Text(
-                        text = "Delete",
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        },
-        dismissButton = {
-            if (!isDeleting) {
-                TextButton(onClick = onDismiss) {
-                    Text(
-                        text = "Cancel",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    )
-}
 
 /**
  * Dialog displaying enrichment suggestions with individual selection.
