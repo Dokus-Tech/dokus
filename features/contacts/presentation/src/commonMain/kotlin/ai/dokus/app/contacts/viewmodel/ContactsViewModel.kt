@@ -1,6 +1,7 @@
 package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.app.contacts.repository.ContactRepository
+import ai.dokus.foundation.design.components.dropdown.FilterOption
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.common.PaginationState
@@ -20,7 +21,7 @@ import tech.dokus.foundation.app.viewmodel.BaseViewModel
 /**
  * Sort options for contacts list.
  */
-enum class ContactSortOption(val displayName: String) {
+enum class ContactSortOption(override val displayName: String) : FilterOption {
     Default("Default"),
     NameAsc("Name (A-Z)"),
     NameDesc("Name (Z-A)"),
@@ -32,7 +33,7 @@ enum class ContactSortOption(val displayName: String) {
 /**
  * Filter options for contact role.
  */
-enum class ContactRoleFilter(val displayName: String) {
+enum class ContactRoleFilter(override val displayName: String) : FilterOption {
     All("All"),
     Customers("Customers"),
     Vendors("Vendors")
@@ -41,7 +42,7 @@ enum class ContactRoleFilter(val displayName: String) {
 /**
  * Filter options for active status.
  */
-enum class ContactActiveFilter(val displayName: String) {
+enum class ContactActiveFilter(override val displayName: String) : FilterOption {
     All("All"),
     Active("Active"),
     Inactive("Inactive")
