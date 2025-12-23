@@ -57,7 +57,9 @@ workflows:
       - Android unit tests (:composeApp:testDebugUnitTest)
       - Backend tests (if test sources exist)
     steps:
-      - git-clone@8: {}
+      - git-clone@8:
+          inputs:
+            - reset_repository: "true"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -151,7 +153,9 @@ workflows:
       - Signed release AAB (App Bundle)
       - Signed release APK (for direct distribution)
     steps:
-      - git-clone@8: {}
+      - git-clone@8:
+          inputs:
+            - reset_repository: "true"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -265,7 +269,9 @@ workflows:
       - Signed IPA (App Store distribution)
       Uses automatic code signing with App Store Connect API key
     steps:
-      - git-clone@8: {}
+      - git-clone@8:
+          inputs:
+            - reset_repository: "true"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -368,7 +374,9 @@ workflows:
     envs:
       - MAC_BUNDLE_ID: vision.invoid.dokus
     steps:
-      - git-clone@8: {}
+      - git-clone@8:
+          inputs:
+            - reset_repository: "true"
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
