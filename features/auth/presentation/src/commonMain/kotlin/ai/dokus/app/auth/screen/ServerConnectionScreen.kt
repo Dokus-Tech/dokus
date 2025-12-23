@@ -120,7 +120,6 @@ internal fun ServerConnectionScreen(
                 },
                 navigationIcon = {
                     PBackButton(
-                        modifier = Modifier.padding(start = 8.dp),
                         onBackPress = { viewModel.navigateBack() }
                     )
                 },
