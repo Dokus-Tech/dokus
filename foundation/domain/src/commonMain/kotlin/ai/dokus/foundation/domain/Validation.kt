@@ -5,6 +5,7 @@ import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidateLegalNameUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidateNameUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase
+import ai.dokus.foundation.domain.usecases.validators.ValidatePhoneNumberUseCase
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 
@@ -78,4 +79,15 @@ value class DisplayName(override val value: String) : ValueClass<String>, Valida
 
     override val validOrThrows: DisplayName
         get() = if (isValid) this else throw DokusException.Validation.InvalidDisplayName
+}
+
+@Serializable
+@JvmInline
+value class PhoneNumber(override val value: String) : ValueClass<String>, Validatable<PhoneNumber> {
+    override fun toString(): String = value
+
+    override val isValid get() = ValidatePhoneNumberUseCase(this)
+
+    override val validOrThrows: PhoneNumber
+        get() = if (isValid) this else throw DokusException.Validation.InvalidPhoneNumber
 }
