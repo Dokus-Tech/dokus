@@ -9,6 +9,7 @@ import ai.dokus.foundation.domain.model.ContactNoteDto
 import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactNoteRequest
 import ai.dokus.foundation.domain.model.CreateContactRequest
+import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactNoteRequest
 import ai.dokus.foundation.domain.model.UpdateContactPeppolRequest
 import ai.dokus.foundation.domain.model.UpdateContactRequest
@@ -61,7 +62,7 @@ class ContactRepository(
     ): Result<List<ContactDto>> {
         logger.d { "Listing contacts: search=$search, active=$isActive, limit=$limit, offset=$offset" }
         return runCatching {
-            httpClient.get(
+            val response = httpClient.get(
                 Contacts(
                     search = search,
                     active = isActive,
@@ -69,7 +70,8 @@ class ContactRepository(
                     limit = limit,
                     offset = offset
                 )
-            ).body<List<ContactDto>>()
+            ).body<PaginatedResponse<ContactDto>>()
+            response.items
         }.onSuccess { contacts ->
             logger.i { "Listed ${contacts.size} contacts" }
         }.onFailure { error ->
@@ -92,13 +94,14 @@ class ContactRepository(
     ): Result<List<ContactDto>> {
         logger.d { "Listing customers: active=$isActive, limit=$limit, offset=$offset" }
         return runCatching {
-            httpClient.get(
+            val response = httpClient.get(
                 Contacts.Customers(
                     active = isActive,
                     limit = limit,
                     offset = offset
                 )
-            ).body<List<ContactDto>>()
+            ).body<PaginatedResponse<ContactDto>>()
+            response.items
         }.onSuccess { contacts ->
             logger.i { "Listed ${contacts.size} customers" }
         }.onFailure { error ->
@@ -121,13 +124,14 @@ class ContactRepository(
     ): Result<List<ContactDto>> {
         logger.d { "Listing vendors: active=$isActive, limit=$limit, offset=$offset" }
         return runCatching {
-            httpClient.get(
+            val response = httpClient.get(
                 Contacts.Vendors(
                     active = isActive,
                     limit = limit,
                     offset = offset
                 )
-            ).body<List<ContactDto>>()
+            ).body<PaginatedResponse<ContactDto>>()
+            response.items
         }.onSuccess { contacts ->
             logger.i { "Listed ${contacts.size} vendors" }
         }.onFailure { error ->
@@ -343,13 +347,14 @@ class ContactRepository(
         logger.d { "Listing notes for contact: $contactId, limit=$limit, offset=$offset" }
         return runCatching {
             val contactIdRoute = Contacts.Id(id = contactId.toString())
-            httpClient.get(
+            val response = httpClient.get(
                 Contacts.Id.Notes(
                     parent = contactIdRoute,
                     limit = limit,
                     offset = offset
                 )
-            ).body<List<ContactNoteDto>>()
+            ).body<PaginatedResponse<ContactNoteDto>>()
+            response.items
         }.onSuccess { notes ->
             logger.i { "Listed ${notes.size} notes for contact: $contactId" }
         }.onFailure { error ->
