@@ -80,6 +80,10 @@ internal class ContactsViewModel :
     private val _selectedContactId = MutableStateFlow<ContactId?>(null)
     val selectedContactId: StateFlow<ContactId?> = _selectedContactId.asStateFlow()
 
+    // Form pane visibility for desktop create/edit
+    private val _showCreateContactPane = MutableStateFlow(false)
+    val showCreateContactPane: StateFlow<Boolean> = _showCreateContactPane.asStateFlow()
+
     /**
      * Update the sort option and re-emit the current data sorted.
      */
@@ -117,6 +121,20 @@ internal class ContactsViewModel :
      */
     fun selectContact(contactId: ContactId?) {
         _selectedContactId.value = contactId
+    }
+
+    /**
+     * Show the create contact form pane (desktop only).
+     */
+    fun showCreateContactPane() {
+        _showCreateContactPane.value = true
+    }
+
+    /**
+     * Hide the create contact form pane.
+     */
+    fun hideCreateContactPane() {
+        _showCreateContactPane.value = false
     }
 
     /**
