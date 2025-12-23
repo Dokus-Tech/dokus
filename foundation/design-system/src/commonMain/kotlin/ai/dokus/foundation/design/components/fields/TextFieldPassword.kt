@@ -37,6 +37,8 @@ fun PTextFieldPassword(
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldPasswordDefaults.visualTransformation,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
+    showClearButton: Boolean = false,
     onValueChange: (Password) -> Unit,
 ) {
     PTextField(
@@ -50,6 +52,8 @@ fun PTextFieldPassword(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
+        onClear = onClear,
+        showClearButton = showClearButton,
         onValueChange = {
             onValueChange(Password(it))
         }
