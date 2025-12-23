@@ -1,3 +1,21 @@
+## [0.1.3] - 23-12-2025
+
+### ✨ New Features
+- 🎉 **Contacts Management**: Implement comprehensive contacts management UI with desktop panes and mobile bottom sheets for enhanced user experience across all platforms
+- 🎉 **Folder Drag-and-Drop**: Enable folder drag-and-drop uploads for desktop, streamlining the file upload experience
+- **Tag-Based Release Workflow**: Add tag-based release pipeline to Bitrise with automated artifact naming for Android, iOS, and macOS platforms
+
+### 🔧 Improvements
+- **Design System Enhancements**: Add TextFieldPhone component and generic PFilterDropdown component for consistent UI patterns
+- **TextField Focus States**: Add focus border color to TextField for improved accessibility and visual feedback
+- **Button Touch Targets**: Increase PBackButton touch target to 44dp for better mobile usability
+- **Navigation Refactoring**: Separate navigation providers and simplify invoice exit flow by providing LocalNavController in Home screen
+- **Auth Loading State**: Pass isLoading prop to PPrimaryButton for better user feedback during authentication flows
+- Resource cleanup and import resolution
+
+### 🔨 Other Changes
+- Repository reset and workflow cleanup for CI/CD optimization
+
 ## [0.1.2] - 22-12-2025
 
 ### 📚 Documentation
