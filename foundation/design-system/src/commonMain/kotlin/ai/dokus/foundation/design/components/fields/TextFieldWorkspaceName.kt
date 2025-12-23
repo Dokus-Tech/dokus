@@ -36,6 +36,7 @@ fun PTextFieldWorkspaceName(
     visualTransformation: VisualTransformation = PTextFieldWorkspaceNameDefaults.visualTransformation,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
     PTextField(
@@ -50,6 +51,7 @@ fun PTextFieldWorkspaceName(
         visualTransformation = visualTransformation,
         enabled = enabled,
         modifier = modifier,
+        onClear = onClear,
         onValueChange = onValueChange
     )
 }

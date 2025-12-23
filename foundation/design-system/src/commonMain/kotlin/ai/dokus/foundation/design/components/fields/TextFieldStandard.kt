@@ -33,6 +33,7 @@ fun PTextFieldStandard(
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldStandardDefaults.visualTransformation,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
     PTextField(
@@ -46,6 +47,7 @@ fun PTextFieldStandard(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
+        onClear = onClear,
         onValueChange = onValueChange
     )
 }

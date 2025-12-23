@@ -33,6 +33,7 @@ fun PTextFieldFree(
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldFreeDefaults.visualTransformation,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
     PTextField(
@@ -46,6 +47,7 @@ fun PTextFieldFree(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
+        onClear = onClear,
         onValueChange = onValueChange
     )
 }

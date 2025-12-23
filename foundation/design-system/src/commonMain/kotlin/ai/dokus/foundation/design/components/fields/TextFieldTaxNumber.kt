@@ -35,6 +35,7 @@ fun PTextFieldTaxNumber(
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldTaxNumberDefaults.visualTransformation,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
     PTextField(
@@ -48,6 +49,7 @@ fun PTextFieldTaxNumber(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
+        onClear = onClear,
         onValueChange = onValueChange
     )
 }
