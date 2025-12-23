@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +36,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
@@ -47,6 +52,8 @@ fun PTextField(
     visualTransformation: VisualTransformation,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
+    showClearButton: Boolean = true,
     onValueChange: (String) -> Unit,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -78,7 +85,7 @@ fun PTextField(
             )
         }
 
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { focusState ->
@@ -97,7 +104,9 @@ fun PTextField(
                     color = MaterialTheme.colorScheme.surface,
                     shape = MaterialTheme.shapes.small
                 )
-                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.medium)
+                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
         ) {
             BasicTextField(
                 value = value,
@@ -120,11 +129,26 @@ fun PTextField(
                 keyboardOptions = keyboardOptions,
                 visualTransformation = visualTransformation,
                 enabled = enabled,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
                 decorationBox = { innerTextField ->
                     innerTextField()
                 }
             )
+
+            // Clear button - shown when showClearButton is true, value is not empty, and onClear is provided
+            if (showClearButton && value.isNotEmpty() && onClear != null) {
+                IconButton(
+                    onClick = onClear,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Clear",
+                        modifier = Modifier.size(Constrains.IconSize.xSmall),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
 
         if (error != null) {

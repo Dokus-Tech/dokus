@@ -38,6 +38,7 @@ fun PTextFieldName(
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldNameDefaults.visualTransformation,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
     onValueChange: (Name) -> Unit,
 ) {
     val locale = Locale.current
@@ -52,6 +53,7 @@ fun PTextFieldName(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
+        onClear = onClear,
         onValueChange = { value -> onValueChange(Name(value.capitalize(locale))) }
     )
 }

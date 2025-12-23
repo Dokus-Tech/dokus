@@ -36,6 +36,7 @@ fun PTextFieldEmail(
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldEmailDefaults.visualTransformation,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
     onValueChange: (Email) -> Unit,
 ) {
     PTextField(
@@ -49,6 +50,7 @@ fun PTextFieldEmail(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
+        onClear = onClear,
         onValueChange = { onValueChange(Email(it.lowercase())) }
     )
 }
