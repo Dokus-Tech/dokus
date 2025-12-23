@@ -145,7 +145,7 @@ private fun ContactsListContent(
     ) {
         items(
             items = contacts,
-            key = { it.id.value.toString() }
+            key = { it.id.toString() }
         ) { contact ->
             ContactCard(
                 contact = contact,

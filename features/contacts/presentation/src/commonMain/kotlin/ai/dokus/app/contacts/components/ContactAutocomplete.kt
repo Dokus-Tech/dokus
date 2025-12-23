@@ -28,7 +28,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -127,7 +126,7 @@ fun ContactAutocomplete(
     contactRepository: ContactRepository = koinInject()
 ) {
     val scope = rememberCoroutineScope()
-    val logger = remember { Logger.forClass("ContactAutocomplete") }
+    val logger = remember { Logger.withTag("ContactAutocomplete") }
     val focusManager = LocalFocusManager.current
 
     // State

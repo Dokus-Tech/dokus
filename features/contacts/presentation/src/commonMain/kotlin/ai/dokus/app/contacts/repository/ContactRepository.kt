@@ -69,7 +69,7 @@ class ContactRepository(
                     limit = limit,
                     offset = offset
                 )
-            ).body()
+            ).body<List<ContactDto>>()
         }.onSuccess { contacts ->
             logger.i { "Listed ${contacts.size} contacts" }
         }.onFailure { error ->
@@ -98,7 +98,7 @@ class ContactRepository(
                     limit = limit,
                     offset = offset
                 )
-            ).body()
+            ).body<List<ContactDto>>()
         }.onSuccess { contacts ->
             logger.i { "Listed ${contacts.size} customers" }
         }.onFailure { error ->
@@ -127,7 +127,7 @@ class ContactRepository(
                     limit = limit,
                     offset = offset
                 )
-            ).body()
+            ).body<List<ContactDto>>()
         }.onSuccess { contacts ->
             logger.i { "Listed ${contacts.size} vendors" }
         }.onFailure { error ->

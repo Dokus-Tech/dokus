@@ -72,7 +72,8 @@ internal class ContactDetailsViewModel :
     val contactId: StateFlow<ContactId?> = _contactId.asStateFlow()
 
     // Activity summary state
-    private val _activityState = MutableStateFlow<DokusState<ContactActivitySummary>>(DokusState.idle())
+    private val _activityState =
+        MutableStateFlow<DokusState<ContactActivitySummary>>(DokusState.idle())
     val activityState: StateFlow<DokusState<ContactActivitySummary>> = _activityState.asStateFlow()
 
     // Notes state
@@ -81,7 +82,8 @@ internal class ContactDetailsViewModel :
 
     // Enrichment suggestions state (for future backend integration)
     private val _enrichmentSuggestions = MutableStateFlow<List<EnrichmentSuggestion>>(emptyList())
-    val enrichmentSuggestions: StateFlow<List<EnrichmentSuggestion>> = _enrichmentSuggestions.asStateFlow()
+    val enrichmentSuggestions: StateFlow<List<EnrichmentSuggestion>> =
+        _enrichmentSuggestions.asStateFlow()
 
     // UI state
     private val _uiState = MutableStateFlow(ContactDetailsUiState())
@@ -203,7 +205,10 @@ internal class ContactDetailsViewModel :
         scope.launch {
             logger.d { "Toggling Peppol: $enabled for contact $contactId" }
 
-            val request = UpdateContactPeppolRequest(peppolEnabled = enabled)
+            val request = UpdateContactPeppolRequest(
+                peppolId = currentContact.peppolId,
+                peppolEnabled = enabled
+            )
             contactRepository.updateContactPeppol(contactId, request).fold(
                 onSuccess = { updatedContact ->
                     logger.i { "Peppol updated: ${updatedContact.peppolEnabled}" }
