@@ -34,6 +34,7 @@ fun PTextFieldPhone(
     error: DokusException? = null,
     visualTransformation: VisualTransformation = PTextFieldPhoneDefaults.visualTransformation,
     modifier: Modifier = Modifier,
+    onClear: (() -> Unit)? = null,
     onValueChange: (PhoneNumber) -> Unit,
 ) {
     PTextField(
@@ -47,6 +48,7 @@ fun PTextFieldPhone(
         error = error,
         visualTransformation = visualTransformation,
         modifier = modifier,
+        onClear = onClear,
         onValueChange = { onValueChange(PhoneNumber(it)) }
     )
 }
