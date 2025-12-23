@@ -200,6 +200,7 @@ private fun LoginContent(
                 PPrimaryButton(
                     text = stringResource(Res.string.auth_sign_in_button),
                     enabled = canLogin && !state.isLoading(),
+                    isLoading = state.isLoading(),
                     onClick = {
                         focusManager.clearFocus()
                         viewModel.login(email, password)
