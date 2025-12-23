@@ -162,7 +162,7 @@ internal class ContactDetailsViewModel :
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load activity: $contactId" }
-                _activityState.emit(error) { loadActivityData(contactId) }
+                emitActivityError(error) { loadActivityData(contactId) }
             }
         )
     }
@@ -178,7 +178,7 @@ internal class ContactDetailsViewModel :
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load notes: $contactId" }
-                _notesState.emit(error) { loadNotesData(contactId) }
+                emitNotesError(error) { loadNotesData(contactId) }
             }
         )
     }
@@ -470,22 +470,16 @@ internal class ContactDetailsViewModel :
     // ============================================================================
 
     /**
-     * Extension to emit error state for activity StateFlow.
+     * Emit error state for activity StateFlow.
      */
-    private suspend fun MutableStateFlow<DokusState<ContactActivitySummary>>.emit(
-        error: Throwable,
-        retry: suspend () -> Unit
-    ) {
-        this.value = DokusState.error(error) { scope.launch { retry() } }
+    private fun emitActivityError(error: Throwable, retry: suspend () -> Unit) {
+        _activityState.value = DokusState.error(error) { scope.launch { retry() } }
     }
 
     /**
-     * Extension to emit error state for notes StateFlow.
+     * Emit error state for notes StateFlow.
      */
-    private suspend fun MutableStateFlow<DokusState<List<ContactNoteDto>>>.emit(
-        error: Throwable,
-        retry: suspend () -> Unit
-    ) {
-        this.value = DokusState.error(error) { scope.launch { retry() } }
+    private fun emitNotesError(error: Throwable, retry: suspend () -> Unit) {
+        _notesState.value = DokusState.error(error) { scope.launch { retry() } }
     }
 }
