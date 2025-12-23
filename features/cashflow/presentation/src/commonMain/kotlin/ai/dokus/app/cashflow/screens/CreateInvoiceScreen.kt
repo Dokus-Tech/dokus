@@ -14,8 +14,8 @@ import ai.dokus.foundation.design.components.PDatePickerDialog
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
+import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -71,7 +71,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 internal fun CreateInvoiceScreen(
     viewModel: CreateInvoiceViewModel = koinViewModel(),
-    onInvoiceCreated: () -> Unit = {}
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -84,7 +83,6 @@ internal fun CreateInvoiceScreen(
     // Navigate back when invoice is created
     LaunchedEffect(createdInvoiceId) {
         if (createdInvoiceId != null) {
-            onInvoiceCreated()
             navController.popBackStack()
         }
     }
@@ -202,7 +200,8 @@ internal fun CreateInvoiceScreen(
                                 val paymentTerms = autoFillData.defaultPaymentTerms
                                 if (paymentTerms > 0) {
                                     formState.issueDate?.let { issueDate ->
-                                        val newDueDate = issueDate.plus(paymentTerms, DateTimeUnit.DAY)
+                                        val newDueDate =
+                                            issueDate.plus(paymentTerms, DateTimeUnit.DAY)
                                         viewModel.updateDueDate(newDueDate)
                                     }
                                 }
@@ -501,7 +500,9 @@ private fun ContactSelectionPanel(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                                        alpha = 0.5f
+                                    )
                                 )
                             ) {
                                 Column(
@@ -522,14 +523,18 @@ private fun ContactSelectionPanel(
                                         Text(
                                             text = email.value,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                                alpha = 0.7f
+                                            )
                                         )
                                     }
                                     selectedContact.vatNumber?.let { vat ->
                                         Text(
                                             text = "VAT: ${vat.value}",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                                alpha = 0.7f
+                                            )
                                         )
                                     }
                                 }
