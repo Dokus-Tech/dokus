@@ -38,6 +38,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.features.cashflow.data)
             implementation(projects.features.auth.data)
+            implementation(projects.features.contacts.presentation)
             implementation(projects.foundation.domain)
 
             implementation(projects.foundation.navigation)
