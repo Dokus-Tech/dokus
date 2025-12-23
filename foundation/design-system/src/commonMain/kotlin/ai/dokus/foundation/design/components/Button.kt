@@ -4,7 +4,6 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_back
 import ai.dokus.app.resources.generated.arrow_left
 import ai.dokus.foundation.design.constrains.Constrains
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -221,12 +221,17 @@ fun POutlinedButton(
 
 @Composable
 fun PBackButton(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     onBackPress: () -> Unit,
 ) {
-    Icon(
-        painter = painterResource(Res.drawable.arrow_left),
-        contentDescription = stringResource(Res.string.action_back),
-        modifier = modifier.clickable { onBackPress() }.size(Constrains.IconSize.medium)
-    )
+    IconButton(
+        onClick = onBackPress,
+        modifier = modifier
+    ) {
+        Icon(
+            painter = painterResource(Res.drawable.arrow_left),
+            contentDescription = stringResource(Res.string.action_back),
+            modifier = Modifier.size(Constrains.IconSize.medium)
+        )
+    }
 }
