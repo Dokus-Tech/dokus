@@ -65,7 +65,7 @@ fun DocumentUploadZone(
     }
 
     val displayText = if (isDragging) {
-        "Drop files here"
+        "Drop files or folders here"
     } else {
         title
     }
@@ -141,7 +141,7 @@ fun DocumentUploadZone(
                 if (isDragDropSupported && !isDragging) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "or drag files here",
+                        text = "or drag files or folders here",
                         style = MaterialTheme.typography.bodySmall,
                         color = borderColor.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
@@ -234,7 +234,7 @@ fun DocumentUploadZone(
                 if (isDragDropSupported) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "or drag files here",
+                        text = "or drag files or folders here",
                         style = MaterialTheme.typography.bodySmall,
                         color = borderColor.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
