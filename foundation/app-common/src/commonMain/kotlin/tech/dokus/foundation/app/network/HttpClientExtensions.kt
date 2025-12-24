@@ -269,3 +269,41 @@ private fun extractBearerToken(authorizationHeader: String?): String? {
     val token = headerValue.substring(spaceIndex + 1).trim()
     return token.takeIf { it.isNotBlank() }
 }
+
+/**
+ * Installs connection monitoring that tracks successful/failed requests.
+ *
+ * When requests succeed, [ServerConnectionMonitor.reportSuccess] is called.
+ * When requests fail with network errors, [ServerConnectionMonitor.reportNetworkError] is called.
+ *
+ * This allows reactive connection state tracking without health endpoint polling.
+ */
+fun HttpClientConfig<*>.withConnectionMonitoring(monitor: ServerConnectionMonitor) {
+    install(ConnectionMonitorPlugin) {
+        this.monitor = monitor
+    }
+}
+
+private class ConnectionMonitorConfig {
+    lateinit var monitor: ServerConnectionMonitor
+}
+
+private val ConnectionMonitorPlugin = createClientPlugin(
+    name = "ConnectionMonitor",
+    createConfiguration = ::ConnectionMonitorConfig
+) {
+    val monitor = pluginConfig.monitor
+
+    client.plugin(HttpSend).intercept { request ->
+        try {
+            val call = execute(request)
+            // Request succeeded - we're connected
+            monitor.reportSuccess()
+            call
+        } catch (cause: Throwable) {
+            // Check if it's a network error
+            monitor.reportNetworkError(cause)
+            throw cause
+        }
+    }
+}

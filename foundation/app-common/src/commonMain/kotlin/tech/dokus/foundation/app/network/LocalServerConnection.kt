@@ -65,13 +65,13 @@ fun ServerConnectionProvided(
     content: @Composable () -> Unit
 ) {
     val isConnected by monitor.isConnected.collectAsState()
-    val lastCheckTime by monitor.lastCheckTime.collectAsState()
+    val lastSuccessTime by monitor.lastSuccessTime.collectAsState()
     val scope = rememberCoroutineScope()
 
-    val state = remember(isConnected, lastCheckTime) {
+    val state = remember(isConnected, lastSuccessTime) {
         ServerConnectionState(
             isConnected = isConnected,
-            lastCheckTime = lastCheckTime,
+            lastCheckTime = lastSuccessTime,
             onRetry = { scope.launch { monitor.checkConnection() } }
         )
     }

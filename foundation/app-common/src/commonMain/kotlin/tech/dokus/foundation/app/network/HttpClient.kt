@@ -14,11 +14,12 @@ internal expect fun createDokusHttpClient(block: HttpClientConfig<*>.() -> Unit)
  * to get the current server configuration at runtime.
  *
  * @param endpointProvider Provider for dynamic endpoint configuration
- * @param onAuthenticationFailed Callback invoked on 401 responses
+ * @param connectionMonitor Optional monitor for tracking connection state based on request results
  * @param block Additional client configuration
  */
 fun createDynamicBaseHttpClient(
     endpointProvider: DynamicDokusEndpointProvider,
+    connectionMonitor: ServerConnectionMonitor? = null,
     block: HttpClientConfig<*>.() -> Unit = {},
 ) = createDokusHttpClient {
     expectSuccess = false
@@ -27,6 +28,7 @@ fun createDynamicBaseHttpClient(
     withDynamicDokusEndpoint(endpointProvider)
     withLogging()
     withResponseValidation()
+    connectionMonitor?.let { withConnectionMonitoring(it) }
     block()
 }
 
@@ -38,13 +40,15 @@ fun createDynamicBaseHttpClient(
  *
  * @param endpointProvider Provider for dynamic endpoint configuration
  * @param tokenManager Manages access and refresh tokens
+ * @param connectionMonitor Optional monitor for tracking connection state based on request results
  * @param onAuthenticationFailed Callback invoked on 401 responses
  */
 fun createDynamicAuthenticatedHttpClient(
     endpointProvider: DynamicDokusEndpointProvider,
     tokenManager: TokenManager,
+    connectionMonitor: ServerConnectionMonitor? = null,
     onAuthenticationFailed: suspend () -> Unit = {}
-) = createDynamicBaseHttpClient(endpointProvider) {
+) = createDynamicBaseHttpClient(endpointProvider, connectionMonitor) {
     withDynamicBearerAuth(tokenManager)
     withUnauthorizedRefreshRetry(
         tokenManager = tokenManager,

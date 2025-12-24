@@ -11,7 +11,6 @@ import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.design.style.Themed
 import ai.dokus.foundation.navigation.local.NavControllerProvided
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -33,15 +32,9 @@ fun App(
             val themeManager = koinInject<ThemeManager>()
             val serverConnectionMonitor = koinInject<ServerConnectionMonitor>()
 
-            // Start/stop server connection monitoring with app lifecycle
-            DisposableEffect(serverConnectionMonitor) {
-                serverConnectionMonitor.startMonitoring()
-                onDispose {
-                    serverConnectionMonitor.stopMonitoring()
-                }
-            }
-
             // Provide server connection state to entire app
+            // Note: Connection monitoring is now event-driven - the monitor is notified
+            // automatically when HTTP requests succeed or fail with network errors
             ServerConnectionProvided(serverConnectionMonitor) {
                 ThemeManagerProvided(themeManager) {
                     Themed {
