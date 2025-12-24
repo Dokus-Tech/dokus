@@ -90,12 +90,14 @@ fun CashflowHeaderSearch(
  *
  * @param onUploadClick Callback when upload button is clicked
  * @param onCreateInvoiceClick Callback when create invoice button is clicked
+ * @param isOffline Whether the device is currently offline (disables create actions)
  * @param modifier Optional modifier for the component
  */
 @Composable
 fun CashflowHeaderActions(
     onUploadClick: () -> Unit,
     onCreateInvoiceClick: () -> Unit,
+    isOffline: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -104,21 +106,31 @@ fun CashflowHeaderActions(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Upload icon button (secondary action - drag & drop is primary)
-        IconButton(onClick = onUploadClick) {
+        // Disabled when offline since uploads require network
+        IconButton(
+            onClick = onUploadClick,
+            enabled = !isOffline
+        ) {
             Icon(
                 imageVector = FeatherIcons.UploadCloud,
                 contentDescription = "Upload document",
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = if (isOffline) {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
             )
         }
 
         // Create Invoice button (primary action)
+        // Disabled when offline since creating invoices requires network
         PButton(
             text = "Create Invoice",
             variant = PButtonVariant.Outline,
             icon = Icons.Default.Add,
             iconPosition = PIconPosition.Trailing,
-            onClick = onCreateInvoiceClick
+            onClick = onCreateInvoiceClick,
+            isEnabled = !isOffline
         )
     }
 }

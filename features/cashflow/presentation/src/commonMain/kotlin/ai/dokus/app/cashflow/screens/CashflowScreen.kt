@@ -12,12 +12,14 @@ import ai.dokus.app.cashflow.components.SpaceUploadOverlay
 import ai.dokus.app.cashflow.components.fileDropTarget
 import ai.dokus.app.cashflow.components.isDragDropSupported
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
+import ai.dokus.foundation.design.components.SyncStatusBanner
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -66,6 +68,10 @@ internal fun CashflowScreen(
     val vatSummaryState by viewModel.vatSummaryState.collectAsState()
     val businessHealthState by viewModel.businessHealthState.collectAsState()
     val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
+
+    // Offline support
+    val isOffline by viewModel.isOffline.collectAsState()
+    val lastSyncTime by viewModel.lastSyncTime.collectAsState()
 
     val isLargeScreen = LocalScreenSize.current.isLarge
 
@@ -154,37 +160,48 @@ internal fun CashflowScreen(
                             },
                             onCreateInvoiceClick = {
                                 navController.navigateTo(CashFlowDestination.CreateInvoice)
-                            }
+                            },
+                            isOffline = isOffline
                         )
                     }
                 )
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
-            if (isLargeScreen) {
-                DesktopCashflowContent(
-                    documentsState = documentsState,
-                    vatSummaryState = vatSummaryState,
-                    businessHealthState = businessHealthState,
-                    pendingDocumentsState = pendingDocumentsState,
-                    sortOption = sortOption,
-                    contentPadding = contentPadding,
-                    onSortOptionSelected = viewModel::updateSortOption,
-                    onDocumentClick = { /* TODO: Navigate to document detail */ },
-                    onMoreClick = { /* TODO: Show context menu */ },
-                    onLoadMore = viewModel::loadNextPage,
-                    onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
-                    onPendingLoadMore = viewModel::pendingDocumentsLoadMore
+            Column {
+                // Offline status banner
+                SyncStatusBanner(
+                    isOffline = isOffline,
+                    lastSyncTimeMillis = lastSyncTime,
+                    onRetryClick = { viewModel.refresh() }
                 )
-            } else {
-                MobileCashflowContent(
-                    documentsState = documentsState,
-                    sortOption = sortOption,
-                    contentPadding = contentPadding,
-                    onSortOptionSelected = viewModel::updateSortOption,
-                    onDocumentClick = { /* TODO: Navigate to document detail */ },
-                    onLoadMore = viewModel::loadNextPage
-                )
+
+                // Main content
+                if (isLargeScreen) {
+                    DesktopCashflowContent(
+                        documentsState = documentsState,
+                        vatSummaryState = vatSummaryState,
+                        businessHealthState = businessHealthState,
+                        pendingDocumentsState = pendingDocumentsState,
+                        sortOption = sortOption,
+                        contentPadding = contentPadding,
+                        onSortOptionSelected = viewModel::updateSortOption,
+                        onDocumentClick = { /* TODO: Navigate to document detail */ },
+                        onMoreClick = { /* TODO: Show context menu */ },
+                        onLoadMore = viewModel::loadNextPage,
+                        onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                        onPendingLoadMore = viewModel::pendingDocumentsLoadMore
+                    )
+                } else {
+                    MobileCashflowContent(
+                        documentsState = documentsState,
+                        sortOption = sortOption,
+                        contentPadding = contentPadding,
+                        onSortOptionSelected = viewModel::updateSortOption,
+                        onDocumentClick = { /* TODO: Navigate to document detail */ },
+                        onLoadMore = viewModel::loadNextPage
+                    )
+                }
             }
         }
 

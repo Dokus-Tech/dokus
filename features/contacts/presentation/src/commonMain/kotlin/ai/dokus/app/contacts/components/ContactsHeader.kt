@@ -86,11 +86,13 @@ internal fun ContactsHeaderSearch(
  * Displays an "Add contact" button that navigates to the contact creation form.
  *
  * @param onAddContactClick Callback when add contact button is clicked
+ * @param isOffline Whether the device is currently offline (disables create actions)
  * @param modifier Optional modifier for the component
  */
 @Composable
 internal fun ContactsHeaderActions(
     onAddContactClick: () -> Unit,
+    isOffline: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -99,12 +101,14 @@ internal fun ContactsHeaderActions(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Add Contact button (primary action)
+        // Disabled when offline since creating contacts requires network
         PButton(
             text = "Add contact",
             variant = PButtonVariant.Outline,
             icon = Icons.Default.Add,
             iconPosition = PIconPosition.Trailing,
-            onClick = onAddContactClick
+            onClick = onAddContactClick,
+            isEnabled = !isOffline
         )
     }
 }

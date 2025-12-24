@@ -10,7 +10,9 @@ import ai.dokus.foundation.design.local.ThemeManagerProvided
 import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.design.style.Themed
 import ai.dokus.foundation.navigation.local.NavControllerProvided
+import ai.dokus.foundation.platform.NetworkMonitor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -28,6 +30,16 @@ fun App(
     AppModulesProvided(modules) {
         KoinProvided(diModules) {
             val themeManager = koinInject<ThemeManager>()
+            val networkMonitor = koinInject<NetworkMonitor>()
+
+            // Start/stop network monitoring with app lifecycle
+            DisposableEffect(networkMonitor) {
+                networkMonitor.startMonitoring()
+                onDispose {
+                    networkMonitor.stopMonitoring()
+                }
+            }
+
             ThemeManagerProvided(themeManager) {
                 Themed {
                     AppModulesInitializer(modules) {
