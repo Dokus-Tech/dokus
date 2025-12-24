@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.UploadCloud
+import tech.dokus.foundation.app.network.rememberIsOnline
 
 /**
  * Search content for the Cashflow screen top app bar.
@@ -88,6 +89,8 @@ fun CashflowHeaderSearch(
  * Displays upload and create invoice actions. The upload button opens
  * the sidebar on desktop or navigates to the add document screen on mobile.
  *
+ * Automatically disables buttons when server is unreachable using [rememberIsOnline].
+ *
  * @param onUploadClick Callback when upload button is clicked
  * @param onCreateInvoiceClick Callback when create invoice button is clicked
  * @param modifier Optional modifier for the component
@@ -98,27 +101,39 @@ fun CashflowHeaderActions(
     onCreateInvoiceClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isOnline = rememberIsOnline()
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Upload icon button (secondary action - drag & drop is primary)
-        IconButton(onClick = onUploadClick) {
+        // Disabled when server is unreachable since uploads require network
+        IconButton(
+            onClick = onUploadClick,
+            enabled = isOnline
+        ) {
             Icon(
                 imageVector = FeatherIcons.UploadCloud,
                 contentDescription = "Upload document",
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = if (!isOnline) {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
             )
         }
 
         // Create Invoice button (primary action)
+        // Disabled when server is unreachable since creating invoices requires network
         PButton(
             text = "Create Invoice",
             variant = PButtonVariant.Outline,
             icon = Icons.Default.Add,
             iconPosition = PIconPosition.Trailing,
-            onClick = onCreateInvoiceClick
+            onClick = onCreateInvoiceClick,
+            isEnabled = isOnline
         )
     }
 }

@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.koin.compose.koinInject
+import tech.dokus.foundation.app.network.ServerConnectionMonitor
+import tech.dokus.foundation.app.network.ServerConnectionProvided
 
 @Composable
 fun App(
@@ -28,16 +30,23 @@ fun App(
     AppModulesProvided(modules) {
         KoinProvided(diModules) {
             val themeManager = koinInject<ThemeManager>()
-            ThemeManagerProvided(themeManager) {
-                Themed {
-                    AppModulesInitializer(modules) {
-                        ScreenSizeProvided {
-                            NavControllerProvided(navController) {
-                                DokusNavHost(
-                                    navController = navController,
-                                    navigationProvider = navigationProviders,
-                                    onNavHostReady = onNavHostReady
-                                )
+            val serverConnectionMonitor = koinInject<ServerConnectionMonitor>()
+
+            // Provide server connection state to entire app
+            // Note: Connection monitoring is now event-driven - the monitor is notified
+            // automatically when HTTP requests succeed or fail with network errors
+            ServerConnectionProvided(serverConnectionMonitor) {
+                ThemeManagerProvided(themeManager) {
+                    Themed {
+                        AppModulesInitializer(modules) {
+                            ScreenSizeProvided {
+                                NavControllerProvided(navController) {
+                                    DokusNavHost(
+                                        navController = navController,
+                                        navigationProvider = navigationProviders,
+                                        onNavHostReady = onNavHostReady
+                                    )
+                                }
                             }
                         }
                     }

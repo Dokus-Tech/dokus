@@ -48,4 +48,10 @@ enum class Feature(
         poolName = "dokus-media",
         frontendDbName = "dokus_media"
     ),
+    Contacts(
+        serviceName = "contacts",
+        fullPackageName = "ai.dokus.contacts",
+        poolName = "dokus-contacts",
+        frontendDbName = "dokus_contacts"
+    ),
 }

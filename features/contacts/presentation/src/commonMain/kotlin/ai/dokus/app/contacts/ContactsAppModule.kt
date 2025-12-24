@@ -1,5 +1,6 @@
 package ai.dokus.app.contacts
 
+import ai.dokus.app.contacts.cache.ContactsDb
 import ai.dokus.app.contacts.di.contactsPresentationModule
 import ai.dokus.app.contacts.di.contactsViewModelModule
 import ai.dokus.app.contacts.navigation.ContactsHomeNavigationProvider
@@ -17,13 +18,15 @@ import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.AppPresentationModuleDi
 import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Contacts module registration for dependency injection.
  *
  * This module provides access to the Contacts management features.
  */
-object ContactsAppModule : AppModule {
+object ContactsAppModule : AppModule, KoinComponent {
     // Presentation layer
     override val navigationProvider: NavigationProvider = ContactsNavigationProvider
     override val homeNavigationProvider: NavigationProvider = ContactsHomeNavigationProvider
@@ -54,5 +57,10 @@ object ContactsAppModule : AppModule {
     // Domain layer - not yet needed
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
         override val useCases = null
+    }
+
+    override suspend fun initializeData() {
+        val contactsDb: ContactsDb by inject()
+        contactsDb.initialize()
     }
 }
