@@ -10,13 +10,14 @@ import ai.dokus.foundation.design.local.ThemeManagerProvided
 import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.design.style.Themed
 import ai.dokus.foundation.navigation.local.NavControllerProvided
-import ai.dokus.foundation.platform.NetworkMonitor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.koin.compose.koinInject
+import tech.dokus.foundation.app.network.ServerConnectionMonitor
+import tech.dokus.foundation.app.network.ServerConnectionProvided
 
 @Composable
 fun App(
@@ -30,26 +31,29 @@ fun App(
     AppModulesProvided(modules) {
         KoinProvided(diModules) {
             val themeManager = koinInject<ThemeManager>()
-            val networkMonitor = koinInject<NetworkMonitor>()
+            val serverConnectionMonitor = koinInject<ServerConnectionMonitor>()
 
-            // Start/stop network monitoring with app lifecycle
-            DisposableEffect(networkMonitor) {
-                networkMonitor.startMonitoring()
+            // Start/stop server connection monitoring with app lifecycle
+            DisposableEffect(serverConnectionMonitor) {
+                serverConnectionMonitor.startMonitoring()
                 onDispose {
-                    networkMonitor.stopMonitoring()
+                    serverConnectionMonitor.stopMonitoring()
                 }
             }
 
-            ThemeManagerProvided(themeManager) {
-                Themed {
-                    AppModulesInitializer(modules) {
-                        ScreenSizeProvided {
-                            NavControllerProvided(navController) {
-                                DokusNavHost(
-                                    navController = navController,
-                                    navigationProvider = navigationProviders,
-                                    onNavHostReady = onNavHostReady
-                                )
+            // Provide server connection state to entire app
+            ServerConnectionProvided(serverConnectionMonitor) {
+                ThemeManagerProvided(themeManager) {
+                    Themed {
+                        AppModulesInitializer(modules) {
+                            ScreenSizeProvided {
+                                NavControllerProvided(navController) {
+                                    DokusNavHost(
+                                        navController = navController,
+                                        navigationProvider = navigationProviders,
+                                        onNavHostReady = onNavHostReady
+                                    )
+                                }
                             }
                         }
                     }

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.UploadCloud
+import tech.dokus.foundation.app.network.rememberIsOnline
 
 /**
  * Search content for the Cashflow screen top app bar.
@@ -88,33 +89,35 @@ fun CashflowHeaderSearch(
  * Displays upload and create invoice actions. The upload button opens
  * the sidebar on desktop or navigates to the add document screen on mobile.
  *
+ * Automatically disables buttons when server is unreachable using [rememberIsOnline].
+ *
  * @param onUploadClick Callback when upload button is clicked
  * @param onCreateInvoiceClick Callback when create invoice button is clicked
- * @param isOffline Whether the device is currently offline (disables create actions)
  * @param modifier Optional modifier for the component
  */
 @Composable
 fun CashflowHeaderActions(
     onUploadClick: () -> Unit,
     onCreateInvoiceClick: () -> Unit,
-    isOffline: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val isOnline = rememberIsOnline()
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Upload icon button (secondary action - drag & drop is primary)
-        // Disabled when offline since uploads require network
+        // Disabled when server is unreachable since uploads require network
         IconButton(
             onClick = onUploadClick,
-            enabled = !isOffline
+            enabled = isOnline
         ) {
             Icon(
                 imageVector = FeatherIcons.UploadCloud,
                 contentDescription = "Upload document",
-                tint = if (isOffline) {
+                tint = if (!isOnline) {
                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 } else {
                     MaterialTheme.colorScheme.onSurface
@@ -123,14 +126,14 @@ fun CashflowHeaderActions(
         }
 
         // Create Invoice button (primary action)
-        // Disabled when offline since creating invoices requires network
+        // Disabled when server is unreachable since creating invoices requires network
         PButton(
             text = "Create Invoice",
             variant = PButtonVariant.Outline,
             icon = Icons.Default.Add,
             iconPosition = PIconPosition.Trailing,
             onClick = onCreateInvoiceClick,
-            isEnabled = !isOffline
+            isEnabled = isOnline
         )
     }
 }
