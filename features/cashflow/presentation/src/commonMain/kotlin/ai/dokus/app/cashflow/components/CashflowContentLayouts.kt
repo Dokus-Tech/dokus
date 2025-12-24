@@ -51,7 +51,8 @@ fun DesktopCashflowContent(
     onMoreClick: (FinancialDocumentDto) -> Unit,
     onLoadMore: () -> Unit,
     onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
-    onPendingLoadMore: () -> Unit
+    onPendingLoadMore: () -> Unit,
+    isOnline: Boolean = true
 ) {
     val listState = rememberLazyListState()
 
@@ -89,7 +90,8 @@ fun DesktopCashflowContent(
                 businessHealthState = businessHealthState,
                 pendingDocumentsState = pendingDocumentsState,
                 onPendingDocumentClick = onPendingDocumentClick,
-                onPendingLoadMore = onPendingLoadMore
+                onPendingLoadMore = onPendingLoadMore,
+                isOnline = isOnline
             )
         }
 

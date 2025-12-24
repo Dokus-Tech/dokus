@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.koin.compose.viewmodel.koinViewModel
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
+import tech.dokus.foundation.app.network.rememberIsOnline
 import kotlin.random.Random
 
 /**
@@ -75,6 +76,9 @@ internal fun CashflowScreen(
     // Snackbar for connection status changes
     val snackbarHostState = remember { SnackbarHostState() }
     ConnectionSnackbarEffect(snackbarHostState)
+
+    // Check connection status for offline UI
+    val isOnline = rememberIsOnline()
 
     // Search expansion state for mobile
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
@@ -182,7 +186,8 @@ internal fun CashflowScreen(
                         onMoreClick = { /* TODO: Show context menu */ },
                         onLoadMore = viewModel::loadNextPage,
                         onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
-                        onPendingLoadMore = viewModel::pendingDocumentsLoadMore
+                        onPendingLoadMore = viewModel::pendingDocumentsLoadMore,
+                        isOnline = isOnline
                     )
                 } else {
                     MobileCashflowContent(
