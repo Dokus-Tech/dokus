@@ -6,7 +6,6 @@ import ai.dokus.foundation.domain.model.ContactDto
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -33,7 +32,7 @@ internal class ContactLocalDataSourceImpl(
     override fun observeAll(tenantId: TenantId): Flow<List<ContactDto>> {
         return contactQueries.selectAllByTenant(tenantId.value.toString())
             .asFlow()
-            .mapToList(Dispatchers.IO)
+            .mapToList(Dispatchers.Default)
             .map { rows ->
                 rows.mapNotNull { row ->
                     runCatching { json.decodeFromString<ContactDto>(row.data_) }.getOrNull()
@@ -41,7 +40,7 @@ internal class ContactLocalDataSourceImpl(
             }
     }
 
-    override suspend fun getAll(tenantId: TenantId): List<ContactDto> = withContext(Dispatchers.IO) {
+    override suspend fun getAll(tenantId: TenantId): List<ContactDto> = withContext(Dispatchers.Default) {
         contactQueries.selectAllByTenant(tenantId.value.toString())
             .executeAsList()
             .mapNotNull { row ->
@@ -49,7 +48,7 @@ internal class ContactLocalDataSourceImpl(
             }
     }
 
-    override suspend fun getById(id: ContactId): ContactDto? = withContext(Dispatchers.IO) {
+    override suspend fun getById(id: ContactId): ContactDto? = withContext(Dispatchers.Default) {
         contactQueries.selectById(id.value.toString())
             .executeAsOneOrNull()
             ?.let { row ->
@@ -58,7 +57,7 @@ internal class ContactLocalDataSourceImpl(
     }
 
     override suspend fun upsertAll(tenantId: TenantId, contacts: List<ContactDto>) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             val now = Clock.System.now().toEpochMilliseconds()
             val tenantIdStr = tenantId.value.toString()
             database.transaction {
@@ -90,24 +89,24 @@ internal class ContactLocalDataSourceImpl(
     }
 
     override suspend fun deleteAll(tenantId: TenantId) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             contactQueries.deleteAllByTenant(tenantId.value.toString())
         }
     }
 
     override suspend fun deleteById(id: ContactId) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             contactQueries.deleteById(id.value.toString())
         }
     }
 
-    override suspend fun getLastSyncTime(tenantId: TenantId): Long? = withContext(Dispatchers.IO) {
+    override suspend fun getLastSyncTime(tenantId: TenantId): Long? = withContext(Dispatchers.Default) {
         metadataQueries.getLastSyncTime(ENTITY_TYPE, tenantId.value.toString())
             .executeAsOneOrNull()
     }
 
     override suspend fun setLastSyncTime(tenantId: TenantId, timeMillis: Long) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             val tenantIdStr = tenantId.value.toString()
             val count = contactQueries.countByTenant(tenantIdStr).executeAsOne()
             metadataQueries.upsert(
@@ -119,7 +118,7 @@ internal class ContactLocalDataSourceImpl(
         }
     }
 
-    override suspend fun getCount(tenantId: TenantId): Long = withContext(Dispatchers.IO) {
+    override suspend fun getCount(tenantId: TenantId): Long = withContext(Dispatchers.Default) {
         contactQueries.countByTenant(tenantId.value.toString()).executeAsOne()
     }
 

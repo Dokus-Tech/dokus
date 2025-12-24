@@ -6,7 +6,6 @@ import ai.dokus.foundation.domain.model.FinancialDocumentDto.InvoiceDto
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -33,7 +32,7 @@ internal class InvoiceLocalDataSourceImpl(
     override fun observeAll(tenantId: TenantId): Flow<List<InvoiceDto>> {
         return invoiceQueries.selectAllByTenant(tenantId.value.toString())
             .asFlow()
-            .mapToList(Dispatchers.IO)
+            .mapToList(Dispatchers.Default)
             .map { rows ->
                 rows.mapNotNull { row ->
                     runCatching { json.decodeFromString<InvoiceDto>(row.data_) }.getOrNull()
@@ -41,7 +40,7 @@ internal class InvoiceLocalDataSourceImpl(
             }
     }
 
-    override suspend fun getAll(tenantId: TenantId): List<InvoiceDto> = withContext(Dispatchers.IO) {
+    override suspend fun getAll(tenantId: TenantId): List<InvoiceDto> = withContext(Dispatchers.Default) {
         invoiceQueries.selectAllByTenant(tenantId.value.toString())
             .executeAsList()
             .mapNotNull { row ->
@@ -49,7 +48,7 @@ internal class InvoiceLocalDataSourceImpl(
             }
     }
 
-    override suspend fun getById(id: InvoiceId): InvoiceDto? = withContext(Dispatchers.IO) {
+    override suspend fun getById(id: InvoiceId): InvoiceDto? = withContext(Dispatchers.Default) {
         invoiceQueries.selectById(id.value.toString())
             .executeAsOneOrNull()
             ?.let { row ->
@@ -58,7 +57,7 @@ internal class InvoiceLocalDataSourceImpl(
     }
 
     override suspend fun upsertAll(tenantId: TenantId, invoices: List<InvoiceDto>) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             val now = Clock.System.now().toEpochMilliseconds()
             val tenantIdStr = tenantId.value.toString()
             database.transaction {
@@ -90,24 +89,24 @@ internal class InvoiceLocalDataSourceImpl(
     }
 
     override suspend fun deleteAll(tenantId: TenantId) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             invoiceQueries.deleteAllByTenant(tenantId.value.toString())
         }
     }
 
     override suspend fun deleteById(id: InvoiceId) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             invoiceQueries.deleteById(id.value.toString())
         }
     }
 
-    override suspend fun getLastSyncTime(tenantId: TenantId): Long? = withContext(Dispatchers.IO) {
+    override suspend fun getLastSyncTime(tenantId: TenantId): Long? = withContext(Dispatchers.Default) {
         metadataQueries.getLastSyncTime(ENTITY_TYPE, tenantId.value.toString())
             .executeAsOneOrNull()
     }
 
     override suspend fun setLastSyncTime(tenantId: TenantId, timeMillis: Long) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             val tenantIdStr = tenantId.value.toString()
             val count = invoiceQueries.countByTenant(tenantIdStr).executeAsOne()
             metadataQueries.upsert(
@@ -119,7 +118,7 @@ internal class InvoiceLocalDataSourceImpl(
         }
     }
 
-    override suspend fun getCount(tenantId: TenantId): Long = withContext(Dispatchers.IO) {
+    override suspend fun getCount(tenantId: TenantId): Long = withContext(Dispatchers.Default) {
         invoiceQueries.countByTenant(tenantId.value.toString()).executeAsOne()
     }
 

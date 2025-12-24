@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.bundles.koin.compose)
 
             implementation(libs.kotlinx.serialization)
+            implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.bundles.sqldelight)
             implementation(libs.kotlinx.datetime)
 
