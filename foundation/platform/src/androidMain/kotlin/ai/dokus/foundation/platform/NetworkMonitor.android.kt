@@ -1,5 +1,6 @@
 package ai.dokus.foundation.platform
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
@@ -11,7 +12,11 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Android implementation of NetworkMonitor using ConnectivityManager.
+ *
+ * Requires ACCESS_NETWORK_STATE permission in AndroidManifest.xml:
+ * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
  */
+@SuppressLint("MissingPermission")
 actual class NetworkMonitor(
     private val context: Context
 ) {
