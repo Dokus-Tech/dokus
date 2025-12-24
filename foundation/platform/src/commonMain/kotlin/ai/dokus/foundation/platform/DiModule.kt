@@ -9,6 +9,7 @@ import org.koin.dsl.module
  * Includes:
  * - [Settings] - Multiplatform settings storage
  * - [Persistence] - User data persistence
+ * - [NetworkMonitor] - Network connectivity monitoring
  *
  * Note: ServerConfigManager and DynamicDokusEndpointProvider are registered
  * in the app's infrastructure module to avoid circular dependencies.
@@ -19,4 +20,7 @@ val platformModule = module {
 
     // User persistence (uses settings)
     single<Persistence> { Persistence(get<Settings>()) }
+
+    // Network connectivity monitoring
+    single { NetworkMonitor() }
 }
