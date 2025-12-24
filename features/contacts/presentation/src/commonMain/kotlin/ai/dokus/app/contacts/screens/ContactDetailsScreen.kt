@@ -1,6 +1,7 @@
 package ai.dokus.app.contacts.screens
 
 import ai.dokus.app.contacts.components.ActivitySummarySection
+import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.app.contacts.components.ContactInfoSection
 import ai.dokus.app.contacts.components.ContactMergeDialog
 import ai.dokus.app.contacts.components.NotesBottomSheet
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -110,6 +112,9 @@ internal fun ContactDetailsScreen(
         viewModel.loadContact(contactId)
     }
 
+    // Check connection status for disabling offline actions
+    val isOnline = rememberIsOnline()
+
     // Use BoxWithConstraints to detect viewport size for responsive notes UI
     BoxWithConstraints {
         val isDesktop = maxWidth >= 600.dp
@@ -125,7 +130,8 @@ internal fun ContactDetailsScreen(
                         navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
                     },
                     onEnrichmentClick = viewModel::showEnrichmentPanel,
-                    onMergeClick = viewModel::showMergeDialog
+                    onMergeClick = viewModel::showMergeDialog,
+                    isOnline = isOnline
                 )
             },
             containerColor = MaterialTheme.colorScheme.background
@@ -135,6 +141,7 @@ internal fun ContactDetailsScreen(
                 activityState = activityState,
                 notesState = notesState,
                 isTogglingPeppol = isTogglingPeppol,
+                isOnline = isOnline,
                 contentPadding = contentPadding,
                 onPeppolToggle = viewModel::togglePeppol,
                 onAddNote = {
@@ -240,7 +247,8 @@ private fun ContactDetailsTopBar(
     onBackClick: () -> Unit,
     onEditClick: () -> Unit,
     onEnrichmentClick: () -> Unit,
-    onMergeClick: () -> Unit
+    onMergeClick: () -> Unit,
+    isOnline: Boolean = true
 ) {
     Column {
         TopAppBar(
@@ -295,16 +303,22 @@ private fun ContactDetailsTopBar(
                     }
                 }
 
-                // Merge button (simplified - full merge dialog in phase 5)
-                IconButton(onClick = onMergeClick) {
+                // Merge button (disabled when offline - requires network)
+                IconButton(
+                    onClick = onMergeClick,
+                    enabled = isOnline
+                ) {
                     Icon(
                         imageVector = Icons.Default.MergeType,
                         contentDescription = "Merge contacts"
                     )
                 }
 
-                // Edit button
-                IconButton(onClick = onEditClick) {
+                // Edit button (disabled when offline - requires network)
+                IconButton(
+                    onClick = onEditClick,
+                    enabled = isOnline
+                ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit contact"
@@ -336,6 +350,7 @@ private fun ContactDetailsContent(
     activityState: DokusState<ContactActivitySummary>,
     notesState: DokusState<List<ContactNoteDto>>,
     isTogglingPeppol: Boolean,
+    isOnline: Boolean,
     contentPadding: PaddingValues,
     onPeppolToggle: (Boolean) -> Unit,
     onAddNote: () -> Unit,
@@ -376,18 +391,28 @@ private fun ContactDetailsContent(
                     isTogglingPeppol = isTogglingPeppol
                 )
 
-                // Activity Summary Section
-                ActivitySummarySection(
-                    state = activityState
-                )
+                // Activity Summary Section - requires network connection
+                OfflineOverlay(
+                    isOffline = !isOnline,
+                    message = "Activity unavailable offline"
+                ) {
+                    ActivitySummarySection(
+                        state = activityState
+                    )
+                }
 
-                // Notes Section
-                NotesSection(
-                    state = notesState,
-                    onAddNote = onAddNote,
-                    onEditNote = onEditNote,
-                    onDeleteNote = onDeleteNote
-                )
+                // Notes Section - requires network connection
+                OfflineOverlay(
+                    isOffline = !isOnline,
+                    message = "Notes require connection"
+                ) {
+                    NotesSection(
+                        state = notesState,
+                        onAddNote = onAddNote,
+                        onEditNote = onEditNote,
+                        onDeleteNote = onDeleteNote
+                    )
+                }
 
                 // Bottom spacing
                 Spacer(modifier = Modifier.height(16.dp))

@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -37,6 +39,7 @@ fun CashflowSummarySection(
     pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
     onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
     onPendingLoadMore: () -> Unit,
+    isOnline: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     // Fixed height for the row - LazyColumn doesn't support intrinsic measurements
@@ -53,30 +56,46 @@ fun CashflowSummarySection(
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // VAT Summary Card at top (handles its own loading/error)
-            VatSummaryCard(
-                state = vatSummaryState,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // VAT Summary Card at top (requires network connection)
+            OfflineOverlay(
+                isOffline = !isOnline,
+                message = "Unavailable offline"
+            ) {
+                VatSummaryCard(
+                    state = vatSummaryState,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
-            // Business Health Card below - fills remaining space (handles its own loading/error)
-            BusinessHealthCard(
-                state = businessHealthState,
+            // Business Health Card below - fills remaining space (requires network connection)
+            OfflineOverlay(
+                isOffline = !isOnline,
+                message = "Unavailable offline",
                 modifier = Modifier
-                    .fillMaxWidth()
                     .defaultMinSize(minHeight = 120.dp)
                     .weight(1f)
-            )
+            ) {
+                BusinessHealthCard(
+                    state = businessHealthState,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
-        // Right side: Pending Documents Card (handles its own loading/error)
-        PendingDocumentsCard(
-            state = pendingDocumentsState,
-            onDocumentClick = onPendingDocumentClick,
-            onLoadMore = onPendingLoadMore,
+        // Right side: Pending Documents Card (requires network connection)
+        OfflineOverlay(
+            isOffline = !isOnline,
+            message = "Unavailable offline",
             modifier = Modifier
                 .weight(2f)
                 .fillMaxHeight()
-        )
+        ) {
+            PendingDocumentsCard(
+                state = pendingDocumentsState,
+                onDocumentClick = onPendingDocumentClick,
+                onLoadMore = onPendingLoadMore,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }

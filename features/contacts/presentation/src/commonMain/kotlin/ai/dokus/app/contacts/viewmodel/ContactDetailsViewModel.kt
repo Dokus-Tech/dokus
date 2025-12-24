@@ -1,5 +1,7 @@
 package ai.dokus.app.contacts.viewmodel
 
+import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
+import ai.dokus.app.contacts.cache.ContactLocalDataSource
 import ai.dokus.app.contacts.repository.ContactRepository
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactActivitySummary
@@ -69,6 +71,8 @@ internal class ContactDetailsViewModel :
 
     private val logger = Logger.forClass<ContactDetailsViewModel>()
     private val contactRepository: ContactRepository by inject()
+    private val localDataSource: ContactLocalDataSource by inject()
+    private val getCurrentTenantId: GetCurrentTenantIdUseCase by inject()
 
     // Contact ID being viewed
     private val _contactId = MutableStateFlow<ContactId?>(null)
@@ -139,19 +143,59 @@ internal class ContactDetailsViewModel :
     }
 
     /**
-     * Load contact data from API.
+     * Load contact data with cache-first pattern.
+     * Shows cached data immediately, then refreshes from network.
      */
     private suspend fun loadContactData(contactId: ContactId) {
+        // Try cache first for immediate display
+        val cached = loadContactFromCache(contactId)
+        if (cached != null) {
+            logger.d { "Loaded contact from cache: ${cached.name}" }
+            mutableState.value = DokusState.success(cached)
+        }
+
+        // Then try network refresh
         contactRepository.getContact(contactId).fold(
             onSuccess = { contact ->
-                logger.i { "Loaded contact: ${contact.name}" }
+                logger.i { "Loaded contact from network: ${contact.name}" }
                 mutableState.value = DokusState.success(contact)
+                // Update cache with fresh data
+                cacheContact(contact)
             },
             onFailure = { error ->
-                logger.e(error) { "Failed to load contact: $contactId" }
-                mutableState.emit(error) { refresh() }
+                logger.e(error) { "Failed to load contact from network: $contactId" }
+                // Only show error if we have no cached data
+                if (cached == null) {
+                    mutableState.emit(error) { refresh() }
+                }
+                // If we have cached data, silently keep showing it
             }
         )
+    }
+
+    /**
+     * Load contact from local cache.
+     */
+    private suspend fun loadContactFromCache(contactId: ContactId): ContactDto? {
+        return try {
+            localDataSource.getById(contactId)
+        } catch (e: Exception) {
+            logger.e(e) { "Failed to load contact from cache" }
+            null
+        }
+    }
+
+    /**
+     * Cache contact for offline access.
+     */
+    private suspend fun cacheContact(contact: ContactDto) {
+        val tenantId = getCurrentTenantId() ?: return
+        try {
+            localDataSource.upsertAll(tenantId, listOf(contact))
+            logger.d { "Cached contact: ${contact.name}" }
+        } catch (e: Exception) {
+            logger.w(e) { "Failed to cache contact" }
+        }
     }
 
     /**
