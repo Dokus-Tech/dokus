@@ -14,6 +14,7 @@ import ai.dokus.app.contacts.viewmodel.ContactsViewModel
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.contacts_select_contact
 import ai.dokus.app.resources.generated.contacts_select_contact_hint
+import ai.dokus.foundation.design.components.SyncStatusBanner
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.ids.ContactId
@@ -79,6 +80,10 @@ internal fun ContactsScreen(
     val showCreateContactPane by viewModel.showCreateContactPane.collectAsState()
     val navController = LocalNavController.current
 
+    // Offline support
+    val isOffline by viewModel.isOffline.collectAsState()
+    val lastSyncTime by viewModel.lastSyncTime.collectAsState()
+
     // Form state for ContactFormPane
     val formState by formViewModel.formState.collectAsState()
     val duplicates by formViewModel.duplicates.collectAsState()
@@ -140,15 +145,24 @@ internal fun ContactsScreen(
                                 // Mobile: Navigate to full-screen form
                                 navController.navigateTo(ContactsDestination.CreateContact)
                             }
-                        }
+                        },
+                        isOffline = isOffline
                     )
                 }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (isLargeScreen) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Offline status banner
+            SyncStatusBanner(
+                isOffline = isOffline,
+                lastSyncTimeMillis = lastSyncTime,
+                onRetryClick = { viewModel.refresh() }
+            )
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (isLargeScreen) {
                 // Desktop: Master-detail layout
                 DesktopContactsContent(
                     contactsState = contactsState,
@@ -224,6 +238,7 @@ internal fun ContactsScreen(
                     onRoleFilterSelected = viewModel::updateRoleFilter,
                     onActiveFilterSelected = viewModel::updateActiveFilter
                 )
+            }
             }
         }
     }

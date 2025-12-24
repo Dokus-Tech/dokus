@@ -58,4 +58,9 @@ object ContactsAppModule : AppModule, KoinComponent {
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
         override val useCases = null
     }
+
+    override suspend fun initializeData() {
+        val contactsDb: ContactsDb by inject()
+        contactsDb.initialize()
+    }
 }
