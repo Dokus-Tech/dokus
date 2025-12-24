@@ -36,6 +36,9 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutinesCore)
         }
+        androidMain.dependencies {
+            implementation(libs.koin.android)
+        }
         jvmMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)
         }
