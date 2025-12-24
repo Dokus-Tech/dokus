@@ -2,47 +2,44 @@ package ai.dokus.foundation.design.components.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * A reusable overlay component that blurs content when offline and shows a message.
+ * A reusable overlay component that blurs content when offline and shows an indicator.
  *
  * Features:
  * - Shows content normally when [isOffline] is false
  * - Applies blur effect and gray overlay when [isOffline] is true
- * - Displays a centered message indicating the content is unavailable offline
+ * - Displays an offline icon at the top-right corner
  * - Maintains the same layout size regardless of online/offline state
  *
  * Usage:
  * ```kotlin
  * OfflineOverlay(
- *     isOffline = !isOnline,
- *     message = "Activity unavailable offline"
+ *     isOffline = !isOnline
  * ) {
  *     ActivitySummarySection(state = activityState)
  * }
  * ```
  *
  * @param isOffline Whether the device is offline and overlay should be shown
- * @param message The message to display when offline
  * @param modifier Optional modifier for the component
  * @param content The content to display (will be blurred when offline)
  */
 @Composable
 fun OfflineOverlay(
     isOffline: Boolean,
-    message: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -66,18 +63,23 @@ fun OfflineOverlay(
                     .background(
                         MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
                     ),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.TopEnd
             ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(8.dp)
+                // Offline icon badge at top-right
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = CircleShape
+                        )
+                        .padding(6.dp)
                 ) {
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    Icon(
+                        imageVector = Icons.Default.CloudOff,
+                        contentDescription = "Offline",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
