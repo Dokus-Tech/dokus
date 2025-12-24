@@ -14,7 +14,6 @@ import ai.dokus.app.contacts.viewmodel.ContactsViewModel
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.contacts_select_contact
 import ai.dokus.app.resources.generated.contacts_select_contact_hint
-import ai.dokus.foundation.design.components.SyncStatusBanner
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.ids.ContactId
@@ -40,12 +39,15 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -80,10 +83,6 @@ internal fun ContactsScreen(
     val showCreateContactPane by viewModel.showCreateContactPane.collectAsState()
     val navController = LocalNavController.current
 
-    // Offline support
-    val isOffline by viewModel.isOffline.collectAsState()
-    val lastSyncTime by viewModel.lastSyncTime.collectAsState()
-
     // Form state for ContactFormPane
     val formState by formViewModel.formState.collectAsState()
     val duplicates by formViewModel.duplicates.collectAsState()
@@ -91,6 +90,10 @@ internal fun ContactsScreen(
     val formSaveState by formViewModel.state.collectAsState()
 
     val isLargeScreen = LocalScreenSize.current.isLarge
+
+    // Snackbar for connection status changes
+    val snackbarHostState = remember { SnackbarHostState() }
+    ConnectionSnackbarEffect(snackbarHostState)
 
     // Search expansion state for mobile
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
@@ -145,24 +148,15 @@ internal fun ContactsScreen(
                                 // Mobile: Navigate to full-screen form
                                 navController.navigateTo(ContactsDestination.CreateContact)
                             }
-                        },
-                        isOffline = isOffline
+                        }
                     )
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Offline status banner
-            SyncStatusBanner(
-                isOffline = isOffline,
-                lastSyncTimeMillis = lastSyncTime,
-                onRetryClick = { viewModel.refresh() }
-            )
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (isLargeScreen) {
+        if (isLargeScreen) {
                 // Desktop: Master-detail layout
                 DesktopContactsContent(
                     contactsState = contactsState,
@@ -239,8 +233,6 @@ internal fun ContactsScreen(
                     onActiveFilterSelected = viewModel::updateActiveFilter
                 )
             }
-            }
-        }
     }
 }
 

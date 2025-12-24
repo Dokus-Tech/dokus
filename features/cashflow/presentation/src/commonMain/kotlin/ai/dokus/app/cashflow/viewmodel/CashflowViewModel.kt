@@ -22,17 +22,12 @@ import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
-import ai.dokus.foundation.platform.NetworkMonitor
 import androidx.lifecycle.viewModelScope
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -46,7 +41,6 @@ internal class CashflowViewModel :
     KoinComponent {
 
     private val logger = Logger.forClass<CashflowViewModel>()
-    private val networkMonitor: NetworkMonitor by inject()
 
     private val loadDocuments: LoadCashflowDocumentsUseCase by inject()
     private val searchDocuments: SearchCashflowDocumentsUseCase by inject()
@@ -55,14 +49,6 @@ internal class CashflowViewModel :
     private val loadVatSummary: LoadVatSummaryUseCase by inject()
     private val loadBusinessHealth: LoadBusinessHealthUseCase by inject()
     private val uploadManager: DocumentUploadManager by inject()
-
-    // Offline support
-    val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
-        .map { !it }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    private val _lastSyncTime = MutableStateFlow<Long?>(null)
-    val lastSyncTime: StateFlow<Long?> = _lastSyncTime.asStateFlow()
 
     private val loadedDocuments = MutableStateFlow<List<FinancialDocumentDto>>(emptyList())
     private val paginationState = MutableStateFlow(PaginationState<FinancialDocumentDto>(pageSize = PAGE_SIZE))
@@ -207,7 +193,6 @@ internal class CashflowViewModel :
                     currentPage = page, isLoadingMore = false,
                     hasMorePages = response.hasMore, pageSize = PAGE_SIZE
                 )
-                _lastSyncTime.value = Clock.System.now().toEpochMilliseconds()
                 emitSuccess()
             },
             onFailure = { error ->
@@ -228,7 +213,6 @@ internal class CashflowViewModel :
                         currentPage = allDocuments.size / PAGE_SIZE,
                         isLoadingMore = false, hasMorePages = false, pageSize = PAGE_SIZE
                     )
-                    _lastSyncTime.value = Clock.System.now().toEpochMilliseconds()
                     emitSuccess()
                 },
                 onFailure = { error ->

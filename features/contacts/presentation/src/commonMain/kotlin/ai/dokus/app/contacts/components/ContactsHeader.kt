@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
+import tech.dokus.foundation.app.network.rememberIsOnline
 
 /**
  * Search content for the Contacts screen top app bar.
@@ -85,30 +86,32 @@ internal fun ContactsHeaderSearch(
  *
  * Displays an "Add contact" button that navigates to the contact creation form.
  *
+ * Automatically disables buttons when server is unreachable using [rememberIsOnline].
+ *
  * @param onAddContactClick Callback when add contact button is clicked
- * @param isOffline Whether the device is currently offline (disables create actions)
  * @param modifier Optional modifier for the component
  */
 @Composable
 internal fun ContactsHeaderActions(
     onAddContactClick: () -> Unit,
-    isOffline: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val isOnline = rememberIsOnline()
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Add Contact button (primary action)
-        // Disabled when offline since creating contacts requires network
+        // Disabled when server is unreachable since creating contacts requires network
         PButton(
             text = "Add contact",
             variant = PButtonVariant.Outline,
             icon = Icons.Default.Add,
             iconPosition = PIconPosition.Trailing,
             onClick = onAddContactClick,
-            isEnabled = !isOffline
+            isEnabled = isOnline
         )
     }
 }

@@ -6,17 +6,11 @@ import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
-import ai.dokus.foundation.platform.NetworkMonitor
-import androidx.lifecycle.viewModelScope
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -66,15 +60,6 @@ internal class ContactsViewModel :
     private val logger = Logger.forClass<ContactsViewModel>()
 
     private val contactRepository: ContactRepository by inject()
-    private val networkMonitor: NetworkMonitor by inject()
-
-    // Offline support
-    val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
-        .map { !it }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    private val _lastSyncTime = MutableStateFlow<Long?>(null)
-    val lastSyncTime: StateFlow<Long?> = _lastSyncTime.asStateFlow()
 
     private val loadedContacts = MutableStateFlow<List<ContactDto>>(emptyList())
     private val paginationState = MutableStateFlow(PaginationState<ContactDto>(pageSize = PAGE_SIZE))
@@ -253,7 +238,6 @@ internal class ContactsViewModel :
                     hasMorePages = contacts.size >= PAGE_SIZE,
                     pageSize = PAGE_SIZE
                 )
-                _lastSyncTime.value = Clock.System.now().toEpochMilliseconds()
                 emitSuccess()
             },
             onFailure = { error ->

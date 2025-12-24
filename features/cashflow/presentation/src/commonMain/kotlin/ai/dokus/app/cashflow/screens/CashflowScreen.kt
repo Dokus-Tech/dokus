@@ -12,17 +12,17 @@ import ai.dokus.app.cashflow.components.SpaceUploadOverlay
 import ai.dokus.app.cashflow.components.fileDropTarget
 import ai.dokus.app.cashflow.components.isDragDropSupported
 import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
-import ai.dokus.foundation.design.components.SyncStatusBanner
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import kotlin.random.Random
 
 /**
@@ -69,11 +70,11 @@ internal fun CashflowScreen(
     val businessHealthState by viewModel.businessHealthState.collectAsState()
     val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
 
-    // Offline support
-    val isOffline by viewModel.isOffline.collectAsState()
-    val lastSyncTime by viewModel.lastSyncTime.collectAsState()
-
     val isLargeScreen = LocalScreenSize.current.isLarge
+
+    // Snackbar for connection status changes
+    val snackbarHostState = remember { SnackbarHostState() }
+    ConnectionSnackbarEffect(snackbarHostState)
 
     // Search expansion state for mobile
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
@@ -160,24 +161,15 @@ internal fun CashflowScreen(
                             },
                             onCreateInvoiceClick = {
                                 navController.navigateTo(CashFlowDestination.CreateInvoice)
-                            },
-                            isOffline = isOffline
+                            }
                         )
                     }
                 )
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
-            Column {
-                // Offline status banner
-                SyncStatusBanner(
-                    isOffline = isOffline,
-                    lastSyncTimeMillis = lastSyncTime,
-                    onRetryClick = { viewModel.refresh() }
-                )
-
-                // Main content
-                if (isLargeScreen) {
+            if (isLargeScreen) {
                     DesktopCashflowContent(
                         documentsState = documentsState,
                         vatSummaryState = vatSummaryState,
@@ -202,7 +194,6 @@ internal fun CashflowScreen(
                         onLoadMore = viewModel::loadNextPage
                     )
                 }
-            }
         }
 
         // Upload sidebar (desktop only)
