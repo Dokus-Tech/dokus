@@ -1,7 +1,5 @@
 package tech.dokus.foundation.app.state
 
-import kotlinx.datetime.Instant
-
 /**
  * Represents the state of cached data with network sync status.
  *
@@ -12,25 +10,31 @@ import kotlinx.datetime.Instant
  * - [Empty] -> [Loading] -> [Fresh] (first load, no cache)
  * - [Cached] -> [Refreshing] -> [Fresh] (cache hit, successful refresh)
  * - [Cached] -> [Refreshing] -> [Stale] (cache hit, refresh failed)
+ *
+ * Timestamps are stored as epoch milliseconds (Long) for simplicity.
  */
 sealed class CacheState<out T> {
 
     /**
      * Fresh data just loaded from the network.
      * This is the ideal state - data is current and reliable.
+     *
+     * @param fetchedAtMillis Epoch milliseconds when data was fetched
      */
     data class Fresh<T>(
         val data: T,
-        val fetchedAt: Instant
+        val fetchedAtMillis: Long
     ) : CacheState<T>()
 
     /**
      * Data loaded from local cache.
      * May be outdated but available for immediate display.
+     *
+     * @param cachedAtMillis Epoch milliseconds when data was cached (null if unknown)
      */
     data class Cached<T>(
         val data: T,
-        val cachedAt: Instant?
+        val cachedAtMillis: Long?
     ) : CacheState<T>()
 
     /**
@@ -44,10 +48,12 @@ sealed class CacheState<out T> {
     /**
      * Network refresh failed, showing cached data.
      * Contains the error for display/logging.
+     *
+     * @param cachedAtMillis Epoch milliseconds when data was cached (null if unknown)
      */
     data class Stale<T>(
         val data: T,
-        val cachedAt: Instant?,
+        val cachedAtMillis: Long?,
         val error: Throwable
     ) : CacheState<T>()
 
@@ -73,7 +79,7 @@ sealed class CacheState<out T> {
     /**
      * Returns true if currently fetching from network.
      */
-    fun isLoading(): Boolean = when (this) {
+    fun isRefreshing(): Boolean = when (this) {
         is Refreshing -> true
         is Empty -> isLoading
         else -> false
@@ -123,10 +129,10 @@ sealed class CacheState<out T> {
  * Transform the data inside a CacheState while preserving the state type.
  */
 inline fun <T, R> CacheState<T>.map(transform: (T) -> R): CacheState<R> = when (this) {
-    is CacheState.Fresh -> CacheState.Fresh(transform(data), fetchedAt)
-    is CacheState.Cached -> CacheState.Cached(transform(data), cachedAt)
+    is CacheState.Fresh -> CacheState.Fresh(transform(data), fetchedAtMillis)
+    is CacheState.Cached -> CacheState.Cached(transform(data), cachedAtMillis)
     is CacheState.Refreshing -> CacheState.Refreshing(staleData?.let(transform))
-    is CacheState.Stale -> CacheState.Stale(transform(data), cachedAt, error)
+    is CacheState.Stale -> CacheState.Stale(transform(data), cachedAtMillis, error)
     is CacheState.Empty -> this
 }
 
