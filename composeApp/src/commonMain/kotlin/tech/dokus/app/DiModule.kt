@@ -23,11 +23,8 @@ import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.flags.FeatureFlagService
 import androidx.lifecycle.SavedStateHandle
 import com.russhwolf.settings.Settings
-import io.ktor.client.HttpClient
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
-import tech.dokus.foundation.app.SharedQualifiers
-import tech.dokus.foundation.app.network.ServerConnectionMonitor
 
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
@@ -36,8 +33,8 @@ internal val diModuleApp = module {
     // Dynamic endpoint provider (bridges server config to HTTP clients)
     single<DynamicDokusEndpointProvider> { DynamicDokusEndpointProvider(get<ServerConfigManager>()) }
 
-    // Server connection monitor (uses unauthenticated HTTP client to ping health endpoint)
-    single { ServerConnectionMonitor(get<HttpClient>(SharedQualifiers.httpClientNoAuth)) }
+    // Note: ServerConnectionMonitor is now registered in AppDataMainModuleDi
+    // and wired into HTTP clients for event-driven connection tracking
 
     // Theme management (singleton)
     single { ThemeManager() }

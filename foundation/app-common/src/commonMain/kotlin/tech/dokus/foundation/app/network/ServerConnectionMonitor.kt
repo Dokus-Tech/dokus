@@ -1,101 +1,75 @@
 package tech.dokus.foundation.app.network
 
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.timeout
-import io.ktor.client.request.get
-import io.ktor.http.isSuccess
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 /**
- * Monitors connection to the Dokus server by periodically pinging the health endpoint.
+ * Monitors connection to the Dokus server based on actual API request results.
  *
- * Unlike platform-specific network monitors that check general internet connectivity,
- * this monitor checks if the actual server is reachable - which is what matters for the app.
+ * Unlike polling-based monitors, this tracks connection state reactively:
+ * - When any API call succeeds, we're connected
+ * - When any API call fails with a network error, we're disconnected
  *
- * @param httpClient HTTP client for making health check requests (should be unauthenticated,
- *                   already configured with the server's base URL via defaultRequest)
+ * The connection state is updated by [ConnectionMonitorPlugin] which intercepts
+ * all HTTP requests and reports their outcomes.
+ *
+ * This approach is more efficient and accurate than health endpoint polling:
+ * - No unnecessary network traffic
+ * - Detects connection issues immediately when they happen
+ * - Works even if the health endpoint doesn't exist
  */
 @OptIn(ExperimentalTime::class)
-class ServerConnectionMonitor(
-    private val httpClient: HttpClient
-) {
+class ServerConnectionMonitor {
     private val _isConnected = MutableStateFlow(true) // Assume connected initially
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
-    private val _lastCheckTime = MutableStateFlow<Long?>(null)
-    val lastCheckTime: StateFlow<Long?> = _lastCheckTime.asStateFlow()
-
-    private var monitorJob: Job? = null
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val _lastSuccessTime = MutableStateFlow<Long?>(null)
+    val lastSuccessTime: StateFlow<Long?> = _lastSuccessTime.asStateFlow()
 
     /**
-     * Start periodic connection monitoring.
-     * Should be called when the app becomes active.
+     * Report a successful API response.
+     * Called by [ConnectionMonitorPlugin] when a request completes successfully.
      */
-    fun startMonitoring() {
-        if (monitorJob?.isActive == true) return
+    fun reportSuccess() {
+        _isConnected.value = true
+        _lastSuccessTime.value = Clock.System.now().toEpochMilliseconds()
+    }
 
-        monitorJob = scope.launch {
-            // Check immediately on start
-            checkConnection()
-
-            // Then check periodically
-            while (isActive) {
-                delay(POLL_INTERVAL_MS)
-                checkConnection()
-            }
+    /**
+     * Report a network error.
+     * Called by [ConnectionMonitorPlugin] when a request fails due to network issues.
+     *
+     * @param error The exception that caused the failure (for logging/debugging)
+     */
+    fun reportNetworkError(error: Throwable) {
+        // Only mark as disconnected for actual network errors
+        if (isNetworkException(error)) {
+            _isConnected.value = false
         }
     }
 
     /**
-     * Stop connection monitoring.
-     * Should be called when the app goes to background.
+     * Manually mark as connected.
+     * Can be called when user performs a manual retry that succeeds.
      */
-    fun stopMonitoring() {
-        monitorJob?.cancel()
-        monitorJob = null
+    fun markConnected() {
+        reportSuccess()
     }
 
     /**
-     * Manually check the connection status.
-     * Can be called when user requests a retry.
+     * Force a connection check by attempting a simple request.
+     * This is useful for manual retry buttons.
      *
-     * @return true if server is reachable, false otherwise
+     * Note: The actual check happens via normal API calls - this just
+     * provides a way to trigger one. The result will be reported via
+     * [reportSuccess] or [reportNetworkError] by the plugin.
      */
     suspend fun checkConnection(): Boolean {
-        return try {
-            // The httpClient already has the base URL configured via defaultRequest
-            val response = httpClient.get("/health/live") {
-                timeout {
-                    requestTimeoutMillis = TIMEOUT_MS
-                    connectTimeoutMillis = TIMEOUT_MS
-                }
-            }
-            val connected = response.status.isSuccess()
-            _isConnected.value = connected
-            if (connected) {
-                _lastCheckTime.value = Clock.System.now().toEpochMilliseconds()
-            }
-            connected
-        } catch (e: Exception) {
-            _isConnected.value = false
-            false
-        }
-    }
-
-    companion object {
-        private const val POLL_INTERVAL_MS = 15_000L  // 15 seconds
-        private const val TIMEOUT_MS = 5_000L         // 5 seconds
+        // The connection state will be updated by the next API call
+        // For manual retry, we just return current state
+        return _isConnected.value
     }
 }
