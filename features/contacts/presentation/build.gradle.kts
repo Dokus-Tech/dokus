@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinPluginSerialization)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -19,9 +21,15 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.all {
+            linkerOpts("-lsqlite3")
+        }
+    }
 
     jvm("desktop")
 
@@ -44,6 +52,10 @@ kotlin {
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)
+
+            implementation(libs.kotlinx.serialization)
+            implementation(libs.bundles.sqldelight)
+            implementation(libs.kotlinx.datetime)
 
             // Ktor client for repository API calls
             implementation(libs.ktor.client.core)
@@ -82,4 +94,13 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+sqldelight {
+    databases {
+        create("ContactsCacheDatabase") {
+            packageName.set("ai.dokus.app.contacts.cache")
+            generateAsync.set(true)
+        }
+    }
 }
