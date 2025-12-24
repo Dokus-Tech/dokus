@@ -10,15 +10,18 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * SQLDelight implementation of InvoiceLocalDataSource.
  * Stores invoices as JSON blobs for simplicity and flexibility.
  */
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
 internal class InvoiceLocalDataSourceImpl(
     private val database: CashflowCacheDatabase,
     private val json: Json = Json { ignoreUnknownKeys = true }
@@ -28,7 +31,7 @@ internal class InvoiceLocalDataSourceImpl(
     private val metadataQueries get() = database.cacheMetadataQueries
 
     override fun observeAll(tenantId: TenantId): Flow<List<InvoiceDto>> {
-        return invoiceQueries.selectAllByTenant(tenantId.value)
+        return invoiceQueries.selectAllByTenant(tenantId.value.toString())
             .asFlow()
             .mapToList(Dispatchers.IO)
             .map { rows ->
@@ -39,7 +42,7 @@ internal class InvoiceLocalDataSourceImpl(
     }
 
     override suspend fun getAll(tenantId: TenantId): List<InvoiceDto> = withContext(Dispatchers.IO) {
-        invoiceQueries.selectAllByTenant(tenantId.value)
+        invoiceQueries.selectAllByTenant(tenantId.value.toString())
             .executeAsList()
             .mapNotNull { row ->
                 runCatching { json.decodeFromString<InvoiceDto>(row.data_) }.getOrNull()
@@ -47,65 +50,77 @@ internal class InvoiceLocalDataSourceImpl(
     }
 
     override suspend fun getById(id: InvoiceId): InvoiceDto? = withContext(Dispatchers.IO) {
-        invoiceQueries.selectById(id.value)
+        invoiceQueries.selectById(id.value.toString())
             .executeAsOneOrNull()
             ?.let { row ->
                 runCatching { json.decodeFromString<InvoiceDto>(row.data_) }.getOrNull()
             }
     }
 
-    override suspend fun upsertAll(tenantId: TenantId, invoices: List<InvoiceDto>) = withContext(Dispatchers.IO) {
-        val now = Clock.System.now().toEpochMilliseconds()
-        database.transaction {
-            invoices.forEach { invoice ->
-                val jsonData = json.encodeToString(invoice)
-                invoiceQueries.upsert(
-                    id = invoice.id.value,
-                    tenant_id = tenantId.value,
-                    data_ = jsonData,
-                    cached_at = now,
-                    server_updated_at = invoice.updatedAt.toInstant(kotlinx.datetime.TimeZone.UTC).toEpochMilliseconds()
-                )
+    override suspend fun upsertAll(tenantId: TenantId, invoices: List<InvoiceDto>) {
+        withContext(Dispatchers.IO) {
+            val now = Clock.System.now().toEpochMilliseconds()
+            val tenantIdStr = tenantId.value.toString()
+            database.transaction {
+                invoices.forEach { invoice ->
+                    val jsonData = json.encodeToString(invoice)
+                    // Use createdAt as fallback since updatedAt may require experimental APIs
+                    val serverUpdatedAt = runCatching {
+                        invoice.updatedAt.toInstant(TimeZone.UTC).toEpochMilliseconds()
+                    }.getOrElse { now }
+                    invoiceQueries.upsert(
+                        id = invoice.id.value.toString(),
+                        tenant_id = tenantIdStr,
+                        data_ = jsonData,
+                        cached_at = now,
+                        server_updated_at = serverUpdatedAt
+                    )
+                }
             }
+
+            // Update metadata
+            val count = invoiceQueries.countByTenant(tenantIdStr).executeAsOne()
+            metadataQueries.upsert(
+                entity_type = ENTITY_TYPE,
+                tenant_id = tenantIdStr,
+                last_synced_at = now,
+                item_count = count
+            )
         }
-
-        // Update metadata
-        val count = invoiceQueries.countByTenant(tenantId.value).executeAsOne()
-        metadataQueries.upsert(
-            entity_type = ENTITY_TYPE,
-            tenant_id = tenantId.value,
-            last_synced_at = now,
-            item_count = count
-        )
     }
 
-    override suspend fun deleteAll(tenantId: TenantId) = withContext(Dispatchers.IO) {
-        invoiceQueries.deleteAllByTenant(tenantId.value)
+    override suspend fun deleteAll(tenantId: TenantId) {
+        withContext(Dispatchers.IO) {
+            invoiceQueries.deleteAllByTenant(tenantId.value.toString())
+        }
     }
 
-    override suspend fun deleteById(id: InvoiceId) = withContext(Dispatchers.IO) {
-        invoiceQueries.deleteById(id.value)
+    override suspend fun deleteById(id: InvoiceId) {
+        withContext(Dispatchers.IO) {
+            invoiceQueries.deleteById(id.value.toString())
+        }
     }
 
-    override suspend fun getLastSyncTime(tenantId: TenantId): Instant? = withContext(Dispatchers.IO) {
-        metadataQueries.getLastSyncTime(ENTITY_TYPE, tenantId.value)
+    override suspend fun getLastSyncTime(tenantId: TenantId): Long? = withContext(Dispatchers.IO) {
+        metadataQueries.getLastSyncTime(ENTITY_TYPE, tenantId.value.toString())
             .executeAsOneOrNull()
-            ?.last_synced_at
-            ?.let { Instant.fromEpochMilliseconds(it) }
     }
 
-    override suspend fun setLastSyncTime(tenantId: TenantId, time: Instant) = withContext(Dispatchers.IO) {
-        val count = invoiceQueries.countByTenant(tenantId.value).executeAsOne()
-        metadataQueries.upsert(
-            entity_type = ENTITY_TYPE,
-            tenant_id = tenantId.value,
-            last_synced_at = time.toEpochMilliseconds(),
-            item_count = count
-        )
+    override suspend fun setLastSyncTime(tenantId: TenantId, timeMillis: Long) {
+        withContext(Dispatchers.IO) {
+            val tenantIdStr = tenantId.value.toString()
+            val count = invoiceQueries.countByTenant(tenantIdStr).executeAsOne()
+            metadataQueries.upsert(
+                entity_type = ENTITY_TYPE,
+                tenant_id = tenantIdStr,
+                last_synced_at = timeMillis,
+                item_count = count
+            )
+        }
     }
 
     override suspend fun getCount(tenantId: TenantId): Long = withContext(Dispatchers.IO) {
-        invoiceQueries.countByTenant(tenantId.value).executeAsOne()
+        invoiceQueries.countByTenant(tenantId.value.toString()).executeAsOne()
     }
 
     companion object {
