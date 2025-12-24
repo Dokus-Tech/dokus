@@ -1,0 +1,62 @@
+package ai.dokus.app.contacts.cache
+
+import ai.dokus.foundation.domain.ids.ContactId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.ContactDto
+import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Instant
+
+/**
+ * Local data source for cached contacts.
+ * Provides offline access to previously fetched contacts stored in SQLDelight.
+ */
+interface ContactLocalDataSource {
+
+    /**
+     * Observe all cached contacts for a tenant as a Flow.
+     * Emits whenever the cache changes.
+     */
+    fun observeAll(tenantId: TenantId): Flow<List<ContactDto>>
+
+    /**
+     * Get all cached contacts for a tenant (one-shot).
+     */
+    suspend fun getAll(tenantId: TenantId): List<ContactDto>
+
+    /**
+     * Get a single cached contact by ID.
+     */
+    suspend fun getById(id: ContactId): ContactDto?
+
+    /**
+     * Insert or update contacts in the cache.
+     * Existing contacts with the same ID are replaced.
+     */
+    suspend fun upsertAll(tenantId: TenantId, contacts: List<ContactDto>)
+
+    /**
+     * Delete all cached contacts for a tenant.
+     * Used before a full refresh.
+     */
+    suspend fun deleteAll(tenantId: TenantId)
+
+    /**
+     * Delete a specific cached contact.
+     */
+    suspend fun deleteById(id: ContactId)
+
+    /**
+     * Get the last sync time for contacts.
+     */
+    suspend fun getLastSyncTime(tenantId: TenantId): Instant?
+
+    /**
+     * Update the last sync time for contacts.
+     */
+    suspend fun setLastSyncTime(tenantId: TenantId, time: Instant)
+
+    /**
+     * Get the number of cached contacts for a tenant.
+     */
+    suspend fun getCount(tenantId: TenantId): Long
+}
