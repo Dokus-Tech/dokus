@@ -159,4 +159,13 @@ class CachedContactRepository(
     suspend fun clearCache(tenantId: TenantId) {
         localDataSource.deleteAll(tenantId)
     }
+
+    /**
+     * Manually cache contacts (useful when contacts are fetched through other means).
+     */
+    suspend fun cacheContacts(tenantId: TenantId, contacts: List<ContactDto>) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        localDataSource.upsertAll(tenantId, contacts)
+        localDataSource.setLastSyncTime(tenantId, now)
+    }
 }

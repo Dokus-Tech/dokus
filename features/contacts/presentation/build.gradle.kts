@@ -49,6 +49,7 @@ kotlin {
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.designSystem)
             implementation(projects.foundation.platform)
+            implementation(projects.features.auth.domain)
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)

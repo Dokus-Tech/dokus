@@ -1,8 +1,11 @@
 package ai.dokus.app.contacts.viewmodel
 
+import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
+import ai.dokus.app.contacts.repository.CachedContactRepository
 import ai.dokus.app.contacts.repository.ContactRepository
 import ai.dokus.foundation.design.components.dropdown.FilterOption
 import ai.dokus.foundation.domain.ids.ContactId
+import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
@@ -60,6 +63,8 @@ internal class ContactsViewModel :
     private val logger = Logger.forClass<ContactsViewModel>()
 
     private val contactRepository: ContactRepository by inject()
+    private val cachedContactRepository: CachedContactRepository by inject()
+    private val getCurrentTenantId: GetCurrentTenantIdUseCase by inject()
 
     private val loadedContacts = MutableStateFlow<List<ContactDto>>(emptyList())
     private val paginationState = MutableStateFlow(PaginationState<ContactDto>(pageSize = PAGE_SIZE))
@@ -197,6 +202,7 @@ internal class ContactsViewModel :
 
     /**
      * Load a specific page of contacts from the API.
+     * Falls back to cached data when offline.
      */
     private suspend fun loadPage(page: Int, reset: Boolean) {
         val activeFilter = when (_activeFilter.value) {
@@ -238,18 +244,66 @@ internal class ContactsViewModel :
                     hasMorePages = contacts.size >= PAGE_SIZE,
                     pageSize = PAGE_SIZE
                 )
+                // Cache the contacts for offline access
+                cacheContacts(contacts)
                 emitSuccess()
             },
             onFailure = { error ->
-                logger.e(error) { "Failed to load contacts" }
+                logger.e(error) { "Failed to load contacts from network" }
                 paginationState.value = paginationState.value.copy(isLoadingMore = false, hasMorePages = false)
+
+                // Try to load from cache when network fails
                 if (loadedContacts.value.isEmpty()) {
-                    mutableState.emit(error) { refresh() }
+                    val cachedContacts = loadFromCache()
+                    if (cachedContacts.isNotEmpty()) {
+                        logger.i { "Loaded ${cachedContacts.size} contacts from cache (offline mode)" }
+                        loadedContacts.value = cachedContacts
+                        paginationState.value = paginationState.value.copy(
+                            currentPage = 0,
+                            hasMorePages = false // All cached data loaded at once
+                        )
+                        emitSuccess()
+                    } else {
+                        mutableState.emit(error) { refresh() }
+                    }
                 } else {
                     emitSuccess()
                 }
             }
         )
+    }
+
+    /**
+     * Load contacts from local cache.
+     */
+    private suspend fun loadFromCache(): List<ContactDto> {
+        val tenantId = getTenantId() ?: return emptyList()
+        return try {
+            cachedContactRepository.getCachedContacts(tenantId)
+        } catch (e: Exception) {
+            logger.e(e) { "Failed to load contacts from cache" }
+            emptyList()
+        }
+    }
+
+    /**
+     * Cache contacts for offline access.
+     */
+    private suspend fun cacheContacts(contacts: List<ContactDto>) {
+        val tenantId = getTenantId() ?: return
+        try {
+            cachedContactRepository.cacheContacts(tenantId, contacts)
+            logger.d { "Cached ${contacts.size} contacts for offline access" }
+        } catch (e: Exception) {
+            logger.w(e) { "Failed to cache contacts" }
+        }
+    }
+
+    /**
+     * Get current tenant ID from local JWT claims (no network call).
+     */
+    private suspend fun getTenantId(): TenantId? {
+        return getCurrentTenantId()
     }
 
     /**
