@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,6 +34,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.koin.compose.viewmodel.koinViewModel
+import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
+import tech.dokus.foundation.app.network.rememberIsOnline
 import kotlin.random.Random
 
 /**
@@ -68,6 +72,13 @@ internal fun CashflowScreen(
     val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
 
     val isLargeScreen = LocalScreenSize.current.isLarge
+
+    // Snackbar for connection status changes
+    val snackbarHostState = remember { SnackbarHostState() }
+    ConnectionSnackbarEffect(snackbarHostState)
+
+    // Check connection status for offline UI
+    val isOnline = rememberIsOnline()
 
     // Search expansion state for mobile
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
@@ -159,33 +170,35 @@ internal fun CashflowScreen(
                     }
                 )
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
             if (isLargeScreen) {
-                DesktopCashflowContent(
-                    documentsState = documentsState,
-                    vatSummaryState = vatSummaryState,
-                    businessHealthState = businessHealthState,
-                    pendingDocumentsState = pendingDocumentsState,
-                    sortOption = sortOption,
-                    contentPadding = contentPadding,
-                    onSortOptionSelected = viewModel::updateSortOption,
-                    onDocumentClick = { /* TODO: Navigate to document detail */ },
-                    onMoreClick = { /* TODO: Show context menu */ },
-                    onLoadMore = viewModel::loadNextPage,
-                    onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
-                    onPendingLoadMore = viewModel::pendingDocumentsLoadMore
-                )
-            } else {
-                MobileCashflowContent(
-                    documentsState = documentsState,
-                    sortOption = sortOption,
-                    contentPadding = contentPadding,
-                    onSortOptionSelected = viewModel::updateSortOption,
-                    onDocumentClick = { /* TODO: Navigate to document detail */ },
-                    onLoadMore = viewModel::loadNextPage
-                )
-            }
+                    DesktopCashflowContent(
+                        documentsState = documentsState,
+                        vatSummaryState = vatSummaryState,
+                        businessHealthState = businessHealthState,
+                        pendingDocumentsState = pendingDocumentsState,
+                        sortOption = sortOption,
+                        contentPadding = contentPadding,
+                        onSortOptionSelected = viewModel::updateSortOption,
+                        onDocumentClick = { /* TODO: Navigate to document detail */ },
+                        onMoreClick = { /* TODO: Show context menu */ },
+                        onLoadMore = viewModel::loadNextPage,
+                        onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                        onPendingLoadMore = viewModel::pendingDocumentsLoadMore,
+                        isOnline = isOnline
+                    )
+                } else {
+                    MobileCashflowContent(
+                        documentsState = documentsState,
+                        sortOption = sortOption,
+                        contentPadding = contentPadding,
+                        onSortOptionSelected = viewModel::updateSortOption,
+                        onDocumentClick = { /* TODO: Navigate to document detail */ },
+                        onLoadMore = viewModel::loadNextPage
+                    )
+                }
         }
 
         // Upload sidebar (desktop only)

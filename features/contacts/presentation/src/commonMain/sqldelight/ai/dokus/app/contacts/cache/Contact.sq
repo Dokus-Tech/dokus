@@ -1,0 +1,37 @@
+-- Cache table for contacts
+-- Stores full ContactDto as JSON for offline viewing
+
+CREATE TABLE IF NOT EXISTS CachedContact (
+    id TEXT PRIMARY KEY NOT NULL,
+    tenant_id TEXT NOT NULL,
+    data TEXT NOT NULL,
+    cached_at INTEGER NOT NULL,
+    server_updated_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_cached_contact_tenant ON CachedContact(tenant_id);
+
+-- Select all contacts for a tenant
+selectAllByTenant:
+SELECT * FROM CachedContact WHERE tenant_id = ?;
+
+-- Select a single contact by ID
+selectById:
+SELECT * FROM CachedContact WHERE id = ?;
+
+-- Insert or replace a contact
+upsert:
+INSERT OR REPLACE INTO CachedContact (id, tenant_id, data, cached_at, server_updated_at)
+VALUES (?, ?, ?, ?, ?);
+
+-- Delete all contacts for a tenant (used when refreshing)
+deleteAllByTenant:
+DELETE FROM CachedContact WHERE tenant_id = ?;
+
+-- Delete a single contact
+deleteById:
+DELETE FROM CachedContact WHERE id = ?;
+
+-- Count contacts for a tenant
+countByTenant:
+SELECT COUNT(*) FROM CachedContact WHERE tenant_id = ?;

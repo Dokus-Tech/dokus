@@ -20,6 +20,8 @@ import ai.dokus.app.auth.repository.LookupRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
+import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
+import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCaseImpl
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCaseImpl
 import ai.dokus.app.auth.usecases.LoginUseCase
@@ -129,6 +131,9 @@ val authDomainModule = module {
             get<TokenManager>(),
             get<TenantRemoteDataSource>()
         )
+    }
+    single<GetCurrentTenantIdUseCase> {
+        GetCurrentTenantIdUseCaseImpl(get<TokenManager>())
     }
     single<SelectTenantUseCase> { SelectTenantUseCaseImpl(get<AuthRepository>()) }
 

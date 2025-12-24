@@ -23,6 +23,7 @@ import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
 import androidx.lifecycle.viewModelScope
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +35,7 @@ import org.koin.core.component.inject
 /**
  * ViewModel for the Cashflow screen managing documents, search, sort, and summary cards.
  */
+@OptIn(ExperimentalTime::class)
 internal class CashflowViewModel :
     BaseViewModel<DokusState<PaginationState<FinancialDocumentDto>>>(DokusState.idle()),
     KoinComponent {

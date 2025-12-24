@@ -33,6 +33,9 @@ internal val diModuleApp = module {
     // Dynamic endpoint provider (bridges server config to HTTP clients)
     single<DynamicDokusEndpointProvider> { DynamicDokusEndpointProvider(get<ServerConfigManager>()) }
 
+    // Note: ServerConnectionMonitor is now registered in AppDataMainModuleDi
+    // and wired into HTTP clients for event-driven connection tracking
+
     // Theme management (singleton)
     single { ThemeManager() }
 
