@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow
 
+import ai.dokus.app.cashflow.cache.CashflowDb
 import ai.dokus.app.cashflow.di.cashflowNetworkModule
 import ai.dokus.app.cashflow.di.cashflowPresentationModule
 import ai.dokus.app.cashflow.di.cashflowViewModelModule
@@ -25,13 +26,15 @@ import ai.dokus.foundation.navigation.destinations.HomeDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Cashflow module registration for dependency injection.
  *
  * This module provides authenticated access to the Cashflow backend service (invoices & expenses).
  */
-object CashflowAppModule : AppModule {
+object CashflowAppModule : AppModule, KoinComponent {
     // Presentation layer
     override val navigationProvider: NavigationProvider = CashflowNavigationProvider
     override val homeNavigationProvider: NavigationProvider = CashflowHomeNavigationProvider
@@ -74,5 +77,10 @@ object CashflowAppModule : AppModule {
     // Domain layer - not yet needed
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
         override val useCases = null
+    }
+
+    override suspend fun initializeData() {
+        val cashflowDb: CashflowDb by inject()
+        cashflowDb.initialize()
     }
 }
