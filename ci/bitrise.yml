@@ -60,6 +60,14 @@ workflows:
       - git-clone@8:
           inputs:
             - reset_repository: "Yes"
+      - script@1:
+          title: Clean untracked files
+          inputs:
+            - content: |
+                #!/bin/bash
+                set -ex
+                git clean -fdx
+                git lfs install --skip-smudge
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -156,6 +164,14 @@ workflows:
       - git-clone@8:
           inputs:
             - reset_repository: "Yes"
+      - script@1:
+          title: Clean untracked files
+          inputs:
+            - content: |
+                #!/bin/bash
+                set -ex
+                git clean -fdx
+                git lfs install --skip-smudge
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -272,6 +288,14 @@ workflows:
       - git-clone@8:
           inputs:
             - reset_repository: "Yes"
+      - script@1:
+          title: Clean untracked files
+          inputs:
+            - content: |
+                #!/bin/bash
+                set -ex
+                git clean -fdx
+                git lfs install --skip-smudge
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
@@ -377,6 +401,14 @@ workflows:
       - git-clone@8:
           inputs:
             - reset_repository: "Yes"
+      - script@1:
+          title: Clean untracked files
+          inputs:
+            - content: |
+                #!/bin/bash
+                set -ex
+                git clean -fdx
+                git lfs install --skip-smudge
       - set-java-version@1:
           inputs:
             - set_java_version: '21'
