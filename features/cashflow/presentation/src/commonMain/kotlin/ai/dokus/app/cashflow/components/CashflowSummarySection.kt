@@ -57,17 +57,23 @@ fun CashflowSummarySection(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // VAT Summary Card at top (requires network connection)
+            // When offline with error, show loading skeleton behind overlay instead of error
             OfflineOverlay(
                 isOffline = !isOnline,
                 message = "Unavailable offline"
             ) {
                 VatSummaryCard(
-                    state = vatSummaryState,
+                    state = if (!isOnline && vatSummaryState is DokusState.Error) {
+                        DokusState.loading()
+                    } else {
+                        vatSummaryState
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
 
             // Business Health Card below - fills remaining space (requires network connection)
+            // When offline with error, show loading skeleton behind overlay instead of error
             OfflineOverlay(
                 isOffline = !isOnline,
                 message = "Unavailable offline",
@@ -76,13 +82,18 @@ fun CashflowSummarySection(
                     .weight(1f)
             ) {
                 BusinessHealthCard(
-                    state = businessHealthState,
+                    state = if (!isOnline && businessHealthState is DokusState.Error) {
+                        DokusState.loading()
+                    } else {
+                        businessHealthState
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         }
 
         // Right side: Pending Documents Card (requires network connection)
+        // When offline with error, show loading skeleton behind overlay instead of error
         OfflineOverlay(
             isOffline = !isOnline,
             message = "Unavailable offline",
@@ -91,7 +102,11 @@ fun CashflowSummarySection(
                 .fillMaxHeight()
         ) {
             PendingDocumentsCard(
-                state = pendingDocumentsState,
+                state = if (!isOnline && pendingDocumentsState is DokusState.Error) {
+                    DokusState.loading()
+                } else {
+                    pendingDocumentsState
+                },
                 onDocumentClick = onPendingDocumentClick,
                 onLoadMore = onPendingLoadMore,
                 modifier = Modifier.fillMaxSize()
