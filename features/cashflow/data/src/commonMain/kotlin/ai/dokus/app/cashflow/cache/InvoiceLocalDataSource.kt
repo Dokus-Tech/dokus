@@ -4,11 +4,12 @@ import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.FinancialDocumentDto.InvoiceDto
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 
 /**
  * Local data source for cached invoices.
  * Provides offline access to previously fetched invoices stored in SQLDelight.
+ *
+ * Note: Timestamps are epoch milliseconds (Long) for simplicity.
  */
 interface InvoiceLocalDataSource {
 
@@ -46,14 +47,14 @@ interface InvoiceLocalDataSource {
     suspend fun deleteById(id: InvoiceId)
 
     /**
-     * Get the last sync time for invoices.
+     * Get the last sync time for invoices (epoch milliseconds).
      */
-    suspend fun getLastSyncTime(tenantId: TenantId): Instant?
+    suspend fun getLastSyncTime(tenantId: TenantId): Long?
 
     /**
-     * Update the last sync time for invoices.
+     * Update the last sync time for invoices (epoch milliseconds).
      */
-    suspend fun setLastSyncTime(tenantId: TenantId, time: Instant)
+    suspend fun setLastSyncTime(tenantId: TenantId, timeMillis: Long)
 
     /**
      * Get the number of cached invoices for a tenant.
