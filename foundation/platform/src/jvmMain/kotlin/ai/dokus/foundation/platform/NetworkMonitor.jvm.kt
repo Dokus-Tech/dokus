@@ -22,6 +22,8 @@ actual class NetworkMonitor {
     private val scope = CoroutineScope(Dispatchers.IO)
     private var monitorJob: Job? = null
 
+    private val logger = Logger.forClass<NetworkMonitor>()
+
     actual fun startMonitoring() {
         if (monitorJob?.isActive == true) return
 
@@ -50,6 +52,7 @@ actual class NetworkMonitor {
                 }
             }
         } catch (e: Exception) {
+            logger.e(e) { "Exception while checking connectivity" }
             false
         }
     }
