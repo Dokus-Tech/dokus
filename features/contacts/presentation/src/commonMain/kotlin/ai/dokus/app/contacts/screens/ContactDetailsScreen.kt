@@ -393,10 +393,7 @@ private fun ContactDetailsContent(
 
                 // Activity Summary Section - requires network connection
                 // When offline with error, show loading skeleton behind overlay instead of error
-                OfflineOverlay(
-                    isOffline = !isOnline,
-                    message = "Activity unavailable offline"
-                ) {
+                OfflineOverlay(isOffline = !isOnline) {
                     ActivitySummarySection(
                         state = if (!isOnline && activityState is DokusState.Error) {
                             DokusState.loading()
@@ -408,10 +405,7 @@ private fun ContactDetailsContent(
 
                 // Notes Section - requires network connection
                 // When offline with error, show loading skeleton behind overlay instead of error
-                OfflineOverlay(
-                    isOffline = !isOnline,
-                    message = "Notes require connection"
-                ) {
+                OfflineOverlay(isOffline = !isOnline) {
                     NotesSection(
                         state = if (!isOnline && notesState is DokusState.Error) {
                             DokusState.loading()

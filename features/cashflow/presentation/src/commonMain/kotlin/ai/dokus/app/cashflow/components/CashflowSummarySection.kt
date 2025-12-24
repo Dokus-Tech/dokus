@@ -58,10 +58,7 @@ fun CashflowSummarySection(
         ) {
             // VAT Summary Card at top (requires network connection)
             // When offline with error, show loading skeleton behind overlay instead of error
-            OfflineOverlay(
-                isOffline = !isOnline,
-                message = "Unavailable offline"
-            ) {
+            OfflineOverlay(isOffline = !isOnline) {
                 VatSummaryCard(
                     state = if (!isOnline && vatSummaryState is DokusState.Error) {
                         DokusState.loading()
@@ -76,7 +73,6 @@ fun CashflowSummarySection(
             // When offline with error, show loading skeleton behind overlay instead of error
             OfflineOverlay(
                 isOffline = !isOnline,
-                message = "Unavailable offline",
                 modifier = Modifier
                     .defaultMinSize(minHeight = 120.dp)
                     .weight(1f)
@@ -96,7 +92,6 @@ fun CashflowSummarySection(
         // When offline with error, show loading skeleton behind overlay instead of error
         OfflineOverlay(
             isOffline = !isOnline,
-            message = "Unavailable offline",
             modifier = Modifier
                 .weight(2f)
                 .fillMaxHeight()
