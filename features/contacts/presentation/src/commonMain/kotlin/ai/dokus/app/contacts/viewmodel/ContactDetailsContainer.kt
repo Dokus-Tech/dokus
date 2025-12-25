@@ -2,7 +2,7 @@ package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
 import ai.dokus.app.contacts.cache.ContactLocalDataSource
-import ai.dokus.app.contacts.repository.ContactRepository
+import ai.dokus.app.contacts.repository.ContactRepositoryApi
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactDto
@@ -39,7 +39,7 @@ internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, Cont
  */
 internal class ContactDetailsContainer(
     contactId: ContactId,
-    private val contactRepository: ContactRepository,
+    private val contactRepository: ContactRepositoryApi,
     private val localDataSource: ContactLocalDataSource,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
 ) : Container<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> {

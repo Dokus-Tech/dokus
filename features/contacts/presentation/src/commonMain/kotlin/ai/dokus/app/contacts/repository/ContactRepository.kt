@@ -36,7 +36,7 @@ import io.ktor.http.contentType
  */
 class ContactRepository(
     private val httpClient: HttpClient
-) {
+) : ContactRepositoryApi {
     private val logger = Logger.forClass<ContactRepository>()
 
     // ============================================================================
@@ -53,12 +53,12 @@ class ContactRepository(
      * @param offset Pagination offset
      * @return Result containing list of contacts
      */
-    suspend fun listContacts(
-        search: String? = null,
-        isActive: Boolean? = null,
-        peppolEnabled: Boolean? = null,
-        limit: Int = 50,
-        offset: Int = 0
+    override suspend fun listContacts(
+        search: String?,
+        isActive: Boolean?,
+        peppolEnabled: Boolean?,
+        limit: Int,
+        offset: Int
     ): Result<List<ContactDto>> {
         logger.d { "Listing contacts: search=$search, active=$isActive, limit=$limit, offset=$offset" }
         return runCatching {
@@ -87,10 +87,10 @@ class ContactRepository(
      * @param offset Pagination offset
      * @return Result containing list of customer contacts
      */
-    suspend fun listCustomers(
-        isActive: Boolean = true,
-        limit: Int = 50,
-        offset: Int = 0
+    override suspend fun listCustomers(
+        isActive: Boolean,
+        limit: Int,
+        offset: Int
     ): Result<List<ContactDto>> {
         logger.d { "Listing customers: active=$isActive, limit=$limit, offset=$offset" }
         return runCatching {
@@ -117,10 +117,10 @@ class ContactRepository(
      * @param offset Pagination offset
      * @return Result containing list of vendor contacts
      */
-    suspend fun listVendors(
-        isActive: Boolean = true,
-        limit: Int = 50,
-        offset: Int = 0
+    override suspend fun listVendors(
+        isActive: Boolean,
+        limit: Int,
+        offset: Int
     ): Result<List<ContactDto>> {
         logger.d { "Listing vendors: active=$isActive, limit=$limit, offset=$offset" }
         return runCatching {
@@ -145,7 +145,7 @@ class ContactRepository(
      * @param contactId The contact ID
      * @return Result containing the contact or null if not found
      */
-    suspend fun getContact(contactId: ContactId): Result<ContactDto> {
+    override suspend fun getContact(contactId: ContactId): Result<ContactDto> {
         logger.d { "Getting contact: $contactId" }
         return runCatching {
             httpClient.get(
@@ -164,7 +164,7 @@ class ContactRepository(
      * @param request Contact creation data
      * @return Result containing the created contact
      */
-    suspend fun createContact(request: CreateContactRequest): Result<ContactDto> {
+    override suspend fun createContact(request: CreateContactRequest): Result<ContactDto> {
         logger.d { "Creating contact: ${request.name}" }
         return runCatching {
             httpClient.post(Contacts()) {
@@ -185,7 +185,7 @@ class ContactRepository(
      * @param request Contact update data (only provided fields will be updated)
      * @return Result containing the updated contact
      */
-    suspend fun updateContact(
+    override suspend fun updateContact(
         contactId: ContactId,
         request: UpdateContactRequest
     ): Result<ContactDto> {
@@ -208,7 +208,7 @@ class ContactRepository(
      * @param contactId The contact ID
      * @return Result indicating success or failure
      */
-    suspend fun deleteContact(contactId: ContactId): Result<Unit> {
+    override suspend fun deleteContact(contactId: ContactId): Result<Unit> {
         logger.d { "Deleting contact: $contactId" }
         return runCatching {
             httpClient.delete(Contacts.Id(id = contactId.toString())).body<Unit>()
@@ -230,7 +230,7 @@ class ContactRepository(
      * @param request Peppol update data
      * @return Result containing the updated contact
      */
-    suspend fun updateContactPeppol(
+    override suspend fun updateContactPeppol(
         contactId: ContactId,
         request: UpdateContactPeppolRequest
     ): Result<ContactDto> {
@@ -259,7 +259,7 @@ class ContactRepository(
      * @param contactId The contact ID
      * @return Result containing the activity summary
      */
-    suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary> {
+    override suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary> {
         logger.d { "Getting contact activity: $contactId" }
         return runCatching {
             val contactIdRoute = Contacts.Id(id = contactId.toString())
@@ -280,7 +280,7 @@ class ContactRepository(
      *
      * @return Result containing contact statistics
      */
-    suspend fun getContactStats(): Result<ContactStats> {
+    override suspend fun getContactStats(): Result<ContactStats> {
         logger.d { "Getting contact stats" }
         return runCatching {
             httpClient.get(Contacts.Summary()).body<ContactStats>()
@@ -304,7 +304,7 @@ class ContactRepository(
      * @param targetContactId The contact to merge into
      * @return Result containing merge result with reassignment counts
      */
-    suspend fun mergeContacts(
+    override suspend fun mergeContacts(
         sourceContactId: ContactId,
         targetContactId: ContactId
     ): Result<ContactMergeResult> {
@@ -339,10 +339,10 @@ class ContactRepository(
      * @param offset Pagination offset
      * @return Result containing list of notes
      */
-    suspend fun listNotes(
+    override suspend fun listNotes(
         contactId: ContactId,
-        limit: Int = 50,
-        offset: Int = 0
+        limit: Int,
+        offset: Int
     ): Result<List<ContactNoteDto>> {
         logger.d { "Listing notes for contact: $contactId, limit=$limit, offset=$offset" }
         return runCatching {
@@ -369,7 +369,7 @@ class ContactRepository(
      * @param request Note creation data
      * @return Result containing the created note
      */
-    suspend fun createNote(
+    override suspend fun createNote(
         contactId: ContactId,
         request: CreateContactNoteRequest
     ): Result<ContactNoteDto> {
@@ -395,7 +395,7 @@ class ContactRepository(
      * @param request Note update data
      * @return Result containing the updated note
      */
-    suspend fun updateNote(
+    override suspend fun updateNote(
         contactId: ContactId,
         noteId: ContactNoteId,
         request: UpdateContactNoteRequest
@@ -422,7 +422,7 @@ class ContactRepository(
      * @param noteId The note ID
      * @return Result indicating success or failure
      */
-    suspend fun deleteNote(
+    override suspend fun deleteNote(
         contactId: ContactId,
         noteId: ContactNoteId
     ): Result<Unit> {

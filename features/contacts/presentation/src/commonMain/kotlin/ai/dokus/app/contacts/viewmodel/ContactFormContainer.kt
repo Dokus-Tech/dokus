@@ -1,6 +1,6 @@
 package ai.dokus.app.contacts.viewmodel
 
-import ai.dokus.app.contacts.repository.ContactRepository
+import ai.dokus.app.contacts.repository.ContactRepositoryApi
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
@@ -36,7 +36,7 @@ internal typealias ContactFormCtx = PipelineContext<ContactFormState, ContactFor
  */
 internal class ContactFormContainer(
     contactId: ContactId?,
-    private val contactRepository: ContactRepository,
+    private val contactRepository: ContactRepositoryApi,
 ) : Container<ContactFormState, ContactFormIntent, ContactFormAction> {
 
     companion object {

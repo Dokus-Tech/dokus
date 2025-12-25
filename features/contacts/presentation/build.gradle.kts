@@ -63,6 +63,11 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.resources)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.flowmvi.test)
+        }
         desktopMain.dependencies {
         }
     }
