@@ -2,29 +2,45 @@ package tech.dokus.app
 
 import ai.dokus.app.auth.AuthInitializer
 import ai.dokus.app.auth.database.AuthDatabase
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
-import tech.dokus.foundation.app.database.LocalDatabaseCleaner
-import tech.dokus.app.local.DefaultLocalDatabaseCleaner
 import ai.dokus.app.auth.datasource.TeamRemoteDataSource
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
-import tech.dokus.app.infrastructure.ServerConfigManagerImpl
-import tech.dokus.app.viewmodel.AppVersionCheckViewModel
-import tech.dokus.app.viewmodel.BootstrapViewModel
-import tech.dokus.app.viewmodel.DashboardViewModel
-import tech.dokus.app.viewmodel.HomeViewModel
-import tech.dokus.app.viewmodel.SettingsViewModel
-import tech.dokus.app.viewmodel.TeamSettingsViewModel
-import tech.dokus.app.viewmodel.WorkspaceSettingsViewModel
+import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
+import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.flags.FeatureFlagService
-import androidx.lifecycle.SavedStateHandle
 import com.russhwolf.settings.Settings
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import tech.dokus.app.infrastructure.ServerConfigManagerImpl
+import tech.dokus.app.local.DefaultLocalDatabaseCleaner
+import tech.dokus.app.viewmodel.BootstrapAction
+import tech.dokus.app.viewmodel.BootstrapContainer
+import tech.dokus.app.viewmodel.BootstrapIntent
+import tech.dokus.app.viewmodel.BootstrapState
+import tech.dokus.app.viewmodel.DashboardAction
+import tech.dokus.app.viewmodel.DashboardContainer
+import tech.dokus.app.viewmodel.DashboardIntent
+import tech.dokus.app.viewmodel.DashboardState
+import tech.dokus.app.viewmodel.HomeAction
+import tech.dokus.app.viewmodel.HomeContainer
+import tech.dokus.app.viewmodel.HomeIntent
+import tech.dokus.app.viewmodel.HomeState
+import tech.dokus.app.viewmodel.SettingsAction
+import tech.dokus.app.viewmodel.SettingsContainer
+import tech.dokus.app.viewmodel.SettingsIntent
+import tech.dokus.app.viewmodel.SettingsState
+import tech.dokus.app.viewmodel.TeamSettingsAction
+import tech.dokus.app.viewmodel.TeamSettingsContainer
+import tech.dokus.app.viewmodel.TeamSettingsIntent
+import tech.dokus.app.viewmodel.TeamSettingsState
+import tech.dokus.app.viewmodel.WorkspaceSettingsAction
+import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
+import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
+import tech.dokus.app.viewmodel.WorkspaceSettingsState
+import tech.dokus.foundation.app.database.LocalDatabaseCleaner
+import tech.dokus.foundation.app.mvi.container
 
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
@@ -39,29 +55,35 @@ internal val diModuleApp = module {
     // Theme management (singleton)
     single { ThemeManager() }
 
-    viewModel<BootstrapViewModel> {
-        BootstrapViewModel(
-            get<AuthInitializer>(),
-            get<TokenManager>(),
-            get<ServerConfigManager>(),
+    // FlowMVI Containers
+    container<BootstrapContainer, BootstrapState, BootstrapIntent, BootstrapAction> {
+        BootstrapContainer(
+            authInitializer = get(),
+            tokenManager = get(),
+            serverConfigManager = get(),
         )
     }
-    viewModel { AppVersionCheckViewModel() }
-    viewModel {
-        DashboardViewModel(
-            get<GetCurrentTenantUseCase>(),
-            get<WatchPendingDocumentsUseCase>(),
+    container<DashboardContainer, DashboardState, DashboardIntent, DashboardAction> {
+        DashboardContainer(
+            getCurrentTenantUseCase = get(),
+            watchPendingDocuments = get(),
         )
     }
-    viewModel { HomeViewModel(SavedStateHandle.createHandle(null, null)) }
-    viewModel { SettingsViewModel(get<GetCurrentTenantUseCase>()) }
-    viewModel {
-        WorkspaceSettingsViewModel(
-            get<GetCurrentTenantUseCase>(),
-            get<TenantRemoteDataSource>()
+    container<HomeContainer, HomeState, HomeIntent, HomeAction> {
+        HomeContainer()
+    }
+    container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {
+        SettingsContainer(getCurrentTenantUseCase = get())
+    }
+    container<WorkspaceSettingsContainer, WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
+        WorkspaceSettingsContainer(
+            getCurrentTenantUseCase = get(),
+            tenantDataSource = get(),
         )
     }
-    viewModel { TeamSettingsViewModel(get<TeamRemoteDataSource>()) }
+    container<TeamSettingsContainer, TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {
+        TeamSettingsContainer(teamDataSource = get())
+    }
 
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
     single<LocalDatabaseCleaner> {

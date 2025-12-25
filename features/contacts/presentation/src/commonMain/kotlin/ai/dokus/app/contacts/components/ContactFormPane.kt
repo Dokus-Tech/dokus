@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.components
 
-import ai.dokus.app.contacts.viewmodel.ContactFormState
-import ai.dokus.app.contacts.viewmodel.DuplicateContact
+import ai.dokus.app.contacts.viewmodel.ContactFormData
+import ai.dokus.app.contacts.viewmodel.PotentialDuplicate
 import ai.dokus.foundation.domain.enums.ClientType
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -53,7 +53,9 @@ import androidx.compose.ui.unit.dp
  *
  * @param isVisible Whether the pane is currently visible
  * @param isEditMode Whether the form is in edit mode (vs create mode)
- * @param formState Current form state containing field values and validation
+ * @param formData Current form data containing field values and validation
+ * @param isSaving Whether save operation is in progress
+ * @param isDeleting Whether delete operation is in progress
  * @param duplicates List of potential duplicate contacts detected
  * @param onDismiss Callback when the pane should be dismissed (backdrop click or close button)
  * @param onNameChange Callback for name field changes
@@ -86,8 +88,10 @@ import androidx.compose.ui.unit.dp
 fun ContactFormPane(
     isVisible: Boolean,
     isEditMode: Boolean,
-    formState: ContactFormState,
-    duplicates: List<DuplicateContact>,
+    formData: ContactFormData,
+    isSaving: Boolean,
+    isDeleting: Boolean,
+    duplicates: List<PotentialDuplicate>,
     onDismiss: () -> Unit,
     onNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
@@ -112,7 +116,7 @@ fun ContactFormPane(
     onCancel: () -> Unit,
     onDelete: () -> Unit,
     onDismissDuplicates: () -> Unit,
-    onMergeWithExisting: (DuplicateContact) -> Unit,
+    onMergeWithExisting: (PotentialDuplicate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -209,7 +213,7 @@ fun ContactFormPane(
 
                             // Form fields
                             ContactFormFields(
-                                formState = formState,
+                                formData = formData,
                                 onNameChange = onNameChange,
                                 onEmailChange = onEmailChange,
                                 onPhoneChange = onPhoneChange,
@@ -238,9 +242,9 @@ fun ContactFormPane(
                         // Action buttons at bottom
                         ContactFormActionButtonsCompact(
                             isEditMode = isEditMode,
-                            isSaving = formState.isSaving,
-                            isDeleting = formState.isDeleting,
-                            isValid = formState.isValid,
+                            isSaving = isSaving,
+                            isDeleting = isDeleting,
+                            isValid = formData.isValid,
                             onSave = onSave,
                             onCancel = onCancel,
                             onDelete = onDelete,

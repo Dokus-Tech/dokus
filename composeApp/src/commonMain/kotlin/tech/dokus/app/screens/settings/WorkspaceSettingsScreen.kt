@@ -61,88 +61,136 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.app.viewmodel.AvatarState
-import tech.dokus.app.viewmodel.SaveState
-import tech.dokus.app.viewmodel.WorkspaceSettingsViewModel
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.viewmodel.WorkspaceSettingsAction
+import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
+import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
+import tech.dokus.app.viewmodel.WorkspaceSettingsState
+import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
 
 /**
- * Workspace/Company settings screen with top bar.
+ * Workspace/Company settings screen with top bar using FlowMVI Container pattern.
  * For mobile navigation flow.
  */
 @Composable
-fun WorkspaceSettingsScreen(
-    viewModel: WorkspaceSettingsViewModel = koinViewModel()
+internal fun WorkspaceSettingsScreen(
+    container: WorkspaceSettingsContainer = container()
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            is WorkspaceSettingsAction.ShowSuccess -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+            is WorkspaceSettingsAction.ShowError -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+        }
+    }
+
+    // Load settings on first composition
+    LaunchedEffect(Unit) {
+        container.store.intent(WorkspaceSettingsIntent.Load)
+    }
+
     Scaffold(
         topBar = {
             PTopAppBar(
                 title = stringResource(Res.string.workspace_settings_title)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        WorkspaceSettingsContent(
-            viewModel = viewModel,
+        WorkspaceSettingsContentInternal(
+            state = state,
+            onIntent = { container.store.intent(it) },
             modifier = Modifier.padding(contentPadding)
         )
     }
 }
 
 /**
- * Workspace settings content without scaffold.
+ * Workspace settings content without scaffold using FlowMVI Container pattern.
  * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
  */
 @Composable
-fun WorkspaceSettingsContent(
-    viewModel: WorkspaceSettingsViewModel = koinViewModel(),
+internal fun WorkspaceSettingsContent(
+    container: WorkspaceSettingsContainer = container(),
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    val state by viewModel.state.collectAsState()
-    val formState by viewModel.formState.collectAsState()
-    val saveState by viewModel.saveState.collectAsState()
-    val avatarState by viewModel.avatarState.collectAsState()
-    val currentAvatar by viewModel.currentAvatar.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            is WorkspaceSettingsAction.ShowSuccess -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+            is WorkspaceSettingsAction.ShowError -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+        }
+    }
+
+    // Load settings on first composition
+    LaunchedEffect(Unit) {
+        container.store.intent(WorkspaceSettingsIntent.Load)
+    }
+
+    WorkspaceSettingsContentInternal(
+        state = state,
+        onIntent = { container.store.intent(it) },
+        modifier = modifier.padding(contentPadding)
+    )
+}
+
+@Composable
+private fun WorkspaceSettingsContentInternal(
+    state: WorkspaceSettingsState,
+    onIntent: (WorkspaceSettingsIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     // Image picker - uploads directly without cropping
     val avatarPicker = rememberImagePicker { pickedImage ->
-        viewModel.onImageSelected(pickedImage.bytes, pickedImage.name)
+        onIntent(WorkspaceSettingsIntent.UploadAvatar(pickedImage.bytes, pickedImage.name))
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.loadWorkspaceSettings()
-    }
-
-    when {
-        state.isLoading() -> {
+    when (state) {
+        is WorkspaceSettingsState.Loading -> {
             Box(
-                modifier = modifier.fillMaxSize().padding(contentPadding),
+                modifier = modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
         }
-        state.isSuccess() -> {
+        is WorkspaceSettingsState.Content -> {
+            val formState = state.form
+            val saveState = state.saveState
+            val avatarState = state.avatarState
+            val currentAvatar = state.currentAvatar
+
             Column(
                 modifier = modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(contentPadding)
                     .withContentPaddingForScrollable(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -162,8 +210,8 @@ fun WorkspaceSettingsContent(
                             currentAvatar = currentAvatar,
                             companyInitial = formState.companyName.take(1).ifBlank { "C" },
                             avatarPicker = avatarPicker,
-                            onDeleteAvatar = { viewModel.deleteAvatar() },
-                            onResetAvatarState = { viewModel.resetAvatarState() }
+                            onDeleteAvatar = { onIntent(WorkspaceSettingsIntent.DeleteAvatar) },
+                            onResetAvatarState = { onIntent(WorkspaceSettingsIntent.ResetAvatarState) }
                         )
 
                         Spacer(Modifier.height(12.dp))
@@ -184,7 +232,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_company_name),
                             value = formState.companyName,
-                            onValueChange = { viewModel.updateCompanyName(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateCompanyName(it)) },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -193,7 +241,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_vat_number),
                             value = formState.vatNumber,
-                            onValueChange = { viewModel.updateVatNumber(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateVatNumber(it)) },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -202,7 +250,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_address),
                             value = formState.address,
-                            onValueChange = { viewModel.updateAddress(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateAddress(it)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -221,7 +269,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_iban),
                             value = formState.iban,
-                            onValueChange = { viewModel.updateIban(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateIban(it)) },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -230,7 +278,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_bic),
                             value = formState.bic,
-                            onValueChange = { viewModel.updateBic(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateBic(it)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -261,7 +309,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_invoice_prefix),
                             value = formState.invoicePrefix,
-                            onValueChange = { viewModel.updateInvoicePrefix(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateInvoicePrefix(it)) },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -277,7 +325,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_payment_terms),
                             value = formState.defaultPaymentTerms.toString(),
-                            onValueChange = { viewModel.updateDefaultPaymentTerms(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateDefaultPaymentTerms(it)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -305,7 +353,7 @@ fun WorkspaceSettingsContent(
                         ) {
                             Checkbox(
                                 checked = formState.invoiceIncludeYear,
-                                onCheckedChange = { viewModel.updateInvoiceIncludeYear(it) }
+                                onCheckedChange = { onIntent(WorkspaceSettingsIntent.UpdateInvoiceIncludeYear(it)) }
                             )
                             Text(
                                 text = stringResource(Res.string.workspace_invoice_include_year),
@@ -321,7 +369,7 @@ fun WorkspaceSettingsContent(
                         ) {
                             Checkbox(
                                 checked = formState.invoiceYearlyReset,
-                                onCheckedChange = { viewModel.updateInvoiceYearlyReset(it) }
+                                onCheckedChange = { onIntent(WorkspaceSettingsIntent.UpdateInvoiceYearlyReset(it)) }
                             )
                             Text(
                                 text = stringResource(Res.string.workspace_invoice_yearly_reset),
@@ -344,7 +392,7 @@ fun WorkspaceSettingsContent(
                         ) {
                             listOf(3, 4, 5, 6).forEach { padding ->
                                 TextButton(
-                                    onClick = { viewModel.updateInvoicePadding(padding) }
+                                    onClick = { onIntent(WorkspaceSettingsIntent.UpdateInvoicePadding(padding)) }
                                 ) {
                                     Text(
                                         text = padding.toString(),
@@ -407,7 +455,7 @@ fun WorkspaceSettingsContent(
                         PTextFieldFree(
                             fieldName = stringResource(Res.string.workspace_payment_terms_text),
                             value = formState.paymentTermsText,
-                            onValueChange = { viewModel.updatePaymentTermsText(it) },
+                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdatePaymentTermsText(it)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -416,8 +464,8 @@ fun WorkspaceSettingsContent(
                 // Save Button
                 PPrimaryButton(
                     text = stringResource(Res.string.save_changes),
-                    enabled = saveState !is SaveState.Saving,
-                    onClick = { viewModel.saveWorkspaceSettings() },
+                    enabled = saveState !is WorkspaceSettingsState.Content.SaveState.Saving,
+                    onClick = { onIntent(WorkspaceSettingsIntent.SaveSettings) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -430,6 +478,26 @@ fun WorkspaceSettingsContent(
                 Spacer(Modifier.height(16.dp))
             }
         }
+        is WorkspaceSettingsState.Error -> {
+            // Error state - show retry option
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Failed to load workspace settings",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    PPrimaryButton(
+                        text = "Retry",
+                        onClick = { onIntent(WorkspaceSettingsIntent.Load) }
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -439,7 +507,7 @@ fun WorkspaceSettingsContent(
  */
 @Composable
 private fun CompanyAvatarSection(
-    avatarState: AvatarState,
+    avatarState: WorkspaceSettingsState.Content.AvatarState,
     currentAvatar: CompanyAvatar?,
     companyInitial: String,
     avatarPicker: FilePickerLauncher,
@@ -469,7 +537,8 @@ private fun CompanyAvatarSection(
             Spacer(Modifier.height(4.dp))
 
             // Avatar action buttons
-            val isActionInProgress = avatarState is AvatarState.Uploading || avatarState is AvatarState.Deleting
+            val isActionInProgress = avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
+                    avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
                     onClick = { avatarPicker.launch() },
@@ -515,17 +584,17 @@ private fun CompanyAvatarSection(
  */
 @Composable
 private fun AvatarStateIndicator(
-    avatarState: AvatarState,
+    avatarState: WorkspaceSettingsState.Content.AvatarState,
     onResetState: () -> Unit
 ) {
     when (avatarState) {
-        is AvatarState.Uploading -> {
+        is WorkspaceSettingsState.Content.AvatarState.Uploading -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 CircularProgressIndicator(
-                    progress = { avatarState.progress }, // Smart cast works here
+                    progress = { avatarState.progress },
                     modifier = Modifier.size(16.dp),
                     strokeWidth = 2.dp
                 )
@@ -536,7 +605,7 @@ private fun AvatarStateIndicator(
                 )
             }
         }
-        is AvatarState.Deleting -> {
+        is WorkspaceSettingsState.Content.AvatarState.Deleting -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -552,14 +621,14 @@ private fun AvatarStateIndicator(
                 )
             }
         }
-        is AvatarState.Error -> {
+        is WorkspaceSettingsState.Content.AvatarState.Error -> {
             Text(
-                text = avatarState.message, // Smart cast works here
+                text = avatarState.message,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )
         }
-        is AvatarState.Success -> {
+        is WorkspaceSettingsState.Content.AvatarState.Success -> {
             LaunchedEffect(Unit) {
                 onResetState()
             }
@@ -574,20 +643,20 @@ private fun AvatarStateIndicator(
  */
 @Composable
 private fun SaveStateFeedback(
-    saveState: SaveState,
+    saveState: WorkspaceSettingsState.Content.SaveState,
     modifier: Modifier = Modifier
 ) {
     when (saveState) {
-        is SaveState.Success -> {
+        is WorkspaceSettingsState.Content.SaveState.Success -> {
             Text(
                 text = "Settings saved successfully",
                 color = MaterialTheme.colorScheme.primary,
                 modifier = modifier
             )
         }
-        is SaveState.Error -> {
+        is WorkspaceSettingsState.Content.SaveState.Error -> {
             Text(
-                text = saveState.message, // Smart cast works here
+                text = saveState.message,
                 color = MaterialTheme.colorScheme.error,
                 modifier = modifier
             )
