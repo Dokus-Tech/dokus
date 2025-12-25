@@ -1,5 +1,6 @@
 package ai.dokus.app.auth
 
+import ai.dokus.app.auth.database.AuthDatabase
 import ai.dokus.app.auth.database.AuthDb
 import ai.dokus.app.auth.datasource.AccountRemoteDataSource
 import ai.dokus.app.auth.datasource.AccountRemoteDataSourceImpl
@@ -33,19 +34,17 @@ import ai.dokus.app.auth.usecases.ValidateServerUseCase
 import ai.dokus.app.auth.utils.JwtDecoder
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.model.common.Feature
-import ai.dokus.foundation.platform.Persistence
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.HttpClient
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.qualifier
+import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 import tech.dokus.foundation.app.SharedQualifiers
-import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 
 internal object Qualifiers {
     val secureStorageAuth: Qualifier = qualifier(Feature.Auth)
@@ -54,46 +53,22 @@ internal object Qualifiers {
 expect val authPlatformModule: Module
 
 val authNetworkModule = module {
-    // IdentityRemoteDataSource (unauthenticated - uses httpClientNoAuth)
-    single<IdentityRemoteDataSource> {
-        IdentityRemoteDataSourceImpl(
-            httpClient = get<HttpClient>(SharedQualifiers.httpClientNoAuth)
-        )
-    }
+    // Non Authenticated
+    single {
+        IdentityRemoteDataSourceImpl(get<HttpClient>(SharedQualifiers.httpClientNoAuth))
+    } bind IdentityRemoteDataSource::class
 
-    // AccountRemoteDataSource (authenticated)
-    single<AccountRemoteDataSource> {
-        AccountRemoteDataSourceImpl(
-            httpClient = get<HttpClient>()
-        )
-    }
-
-    // TenantRemoteDataSource (authenticated)
-    single<TenantRemoteDataSource> {
-        TenantRemoteDataSourceImpl(
-            httpClient = get<HttpClient>()
-        )
-    }
-
-    // TeamRemoteDataSource (authenticated)
-    single<TeamRemoteDataSource> {
-        TeamRemoteDataSourceImpl(
-            httpClient = get<HttpClient>()
-        )
-    }
-
-    // LookupRemoteDataSource (authenticated)
-    single<LookupRemoteDataSource> {
-        LookupRemoteDataSourceImpl(
-            httpClient = get<HttpClient>()
-        )
-    }
+    // Authenticated
+    singleOf(::AccountRemoteDataSourceImpl) bind AccountRemoteDataSource::class
+    singleOf(::TenantRemoteDataSourceImpl) bind TenantRemoteDataSource::class
+    singleOf(::TeamRemoteDataSourceImpl) bind TeamRemoteDataSource::class
+    singleOf(::LookupRemoteDataSourceImpl) bind LookupRemoteDataSource::class
 }
 
 val authDataModule = module {
     // Database
-    single { AuthDb.create() }
-    single { get<AuthDb>().get() }
+    singleOf(AuthDb::create) bind AuthDb::class
+    single<AuthDatabase> { get<AuthDb>().get() }
 
     singleOf(::AuthManagerImpl) binds arrayOf(AuthManager::class, AuthManagerMutable::class)
 
@@ -107,44 +82,22 @@ val authDataModule = module {
     singleOf(::TokenManagerImpl) binds arrayOf(TokenManager::class, TokenManagerMutable::class)
 
     // Repositories
-    single<AuthRepository> {
-        AuthRepository(
-            tokenManager = get<TokenManagerMutable>(),
-            authManager = get<AuthManagerMutable>(),
-            accountDataSource = get<AccountRemoteDataSource>(),
-            identityDataSource = get<IdentityRemoteDataSource>(),
-            tenantDataSource = get<TenantRemoteDataSource>()
-        )
-    }
+    singleOf(::AuthRepository)
 
     // Lookup repository for CBE company search
-    single { LookupRepository(get<LookupRemoteDataSource>()) }
+    singleOf(::LookupRepository)
 }
 
 val authDomainModule = module {
-    single { LoginUseCase(get()) }
-    single { RegisterAndLoginUseCase(get()) }
-    single { LogoutUseCase(get(), get<LocalDatabaseCleaner>()) }
-    single { CheckAccountUseCase() }
-    single<GetCurrentTenantUseCase> {
-        GetCurrentTenantUseCaseImpl(
-            get<TokenManager>(),
-            get<TenantRemoteDataSource>()
-        )
-    }
-    single<GetCurrentTenantIdUseCase> {
-        GetCurrentTenantIdUseCaseImpl(get<TokenManager>())
-    }
-    single<SelectTenantUseCase> { SelectTenantUseCaseImpl(get<AuthRepository>()) }
+    singleOf(::LoginUseCase)
+    singleOf(::RegisterAndLoginUseCase)
+    singleOf(::LogoutUseCase)
+    singleOf(::CheckAccountUseCase)
+    singleOf(::GetCurrentTenantUseCaseImpl) bind GetCurrentTenantUseCase::class
+    singleOf(::GetCurrentTenantIdUseCaseImpl) bind GetCurrentTenantIdUseCase::class
+    singleOf(::SelectTenantUseCaseImpl) bind SelectTenantUseCase::class
 
     // Server connection use cases
-    single { ValidateServerUseCase() }
-    single {
-        ConnectToServerUseCase(
-            validateServer = get<ValidateServerUseCase>(),
-            serverConfigManager = get<ServerConfigManager>(),
-            tokenStorage = get<TokenStorage>(),
-            persistence = get<Persistence>()
-        )
-    }
+    singleOf(::ValidateServerUseCase) bind ValidateServerUseCase::class
+    singleOf(::ConnectToServerUseCase)
 }
