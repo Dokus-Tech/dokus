@@ -1,8 +1,8 @@
 package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
-import ai.dokus.app.contacts.repository.CachedContactRepository
-import ai.dokus.app.contacts.repository.ContactRepository
+import ai.dokus.app.contacts.repository.ContactCacheApi
+import ai.dokus.app.contacts.repository.ContactRepositoryApi
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -37,8 +37,8 @@ internal typealias ContactsCtx = PipelineContext<ContactsState, ContactsIntent, 
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class ContactsContainer(
-    private val contactRepository: ContactRepository,
-    private val cachedContactRepository: CachedContactRepository,
+    private val contactRepository: ContactRepositoryApi,
+    private val cachedContactRepository: ContactCacheApi,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
 ) : Container<ContactsState, ContactsIntent, ContactsAction> {
 

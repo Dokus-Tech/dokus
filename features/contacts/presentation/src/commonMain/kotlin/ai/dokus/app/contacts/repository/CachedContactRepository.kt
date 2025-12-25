@@ -21,9 +21,9 @@ import kotlin.time.ExperimentalTime
  */
 @OptIn(ExperimentalTime::class)
 class CachedContactRepository(
-    private val remoteRepository: ContactRepository,
+    private val remoteRepository: ContactRepositoryApi,
     private val localDataSource: ContactLocalDataSource
-) {
+) : ContactCacheApi {
 
     /**
      * Observe contacts with cache-first strategy.
@@ -33,11 +33,11 @@ class CachedContactRepository(
      * @param isActive Optional active filter (only applied to network request)
      * @param forceRefresh If true, skip cached data and fetch from network immediately
      */
-    fun observeContacts(
+    override fun observeContacts(
         tenantId: TenantId,
-        search: String? = null,
-        isActive: Boolean? = null,
-        forceRefresh: Boolean = false
+        search: String?,
+        isActive: Boolean?,
+        forceRefresh: Boolean
     ): Flow<CacheState<List<ContactDto>>> = flow {
         // 1. Try to emit cached data first (unless force refresh)
         if (!forceRefresh) {
@@ -94,10 +94,10 @@ class CachedContactRepository(
     /**
      * Get a single contact by ID with cache-first strategy.
      */
-    fun observeContact(
+    override fun observeContact(
         contactId: ContactId,
         tenantId: TenantId,
-        forceRefresh: Boolean = false
+        forceRefresh: Boolean
     ): Flow<CacheState<ContactDto>> = flow {
         // 1. Try to emit cached data first
         if (!forceRefresh) {
@@ -142,28 +142,28 @@ class CachedContactRepository(
      * Get all cached contacts without network call.
      * Useful for quick offline access.
      */
-    suspend fun getCachedContacts(tenantId: TenantId): List<ContactDto> {
+    override suspend fun getCachedContacts(tenantId: TenantId): List<ContactDto> {
         return localDataSource.getAll(tenantId)
     }
 
     /**
      * Get last sync time for contacts.
      */
-    suspend fun getLastSyncTime(tenantId: TenantId): Long? {
+    override suspend fun getLastSyncTime(tenantId: TenantId): Long? {
         return localDataSource.getLastSyncTime(tenantId)
     }
 
     /**
      * Clear all cached contacts for a tenant.
      */
-    suspend fun clearCache(tenantId: TenantId) {
+    override suspend fun clearCache(tenantId: TenantId) {
         localDataSource.deleteAll(tenantId)
     }
 
     /**
      * Manually cache contacts (useful when contacts are fetched through other means).
      */
-    suspend fun cacheContacts(tenantId: TenantId, contacts: List<ContactDto>) {
+    override suspend fun cacheContacts(tenantId: TenantId, contacts: List<ContactDto>) {
         val now = Clock.System.now().toEpochMilliseconds()
         localDataSource.upsertAll(tenantId, contacts)
         localDataSource.setLastSyncTime(tenantId, now)
