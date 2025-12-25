@@ -26,6 +26,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,17 +36,24 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.homeItems
 import tech.dokus.app.homeNavigationProviders
-import tech.dokus.app.viewmodel.HomeViewModel
+import tech.dokus.app.viewmodel.HomeContainer
+import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.local.LocalAppModules
+import tech.dokus.foundation.app.mvi.container
 
+/**
+ * Home screen using FlowMVI Container pattern.
+ * Main navigation shell containing bottom navigation (mobile) or navigation rail (desktop).
+ */
 @Composable
-fun HomeScreen(
+internal fun HomeScreen(
     appModules: List<AppModule> = LocalAppModules.current,
-    viewModel: HomeViewModel = koinViewModel(),
+    container: HomeContainer = container(),
 ) {
     val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
     val homeItems = remember(appModules) { appModules.homeItems }
@@ -57,6 +66,16 @@ fun HomeScreen(
     val selectedItem = remember(currentDestination) {
         homeItems.find { it.destination == currentDestination }
     } ?: homeItems.first()
+
+    // Subscribe to store (no actions to handle for this navigation shell)
+    val state by container.store.subscribe(DefaultLifecycle) { _ ->
+        // No actions to handle
+    }
+
+    // Notify container when screen appears
+    LaunchedEffect(Unit) {
+        container.store.intent(HomeIntent.ScreenAppeared)
+    }
 
     Surface {
         if (LocalScreenSize.isLarge) {

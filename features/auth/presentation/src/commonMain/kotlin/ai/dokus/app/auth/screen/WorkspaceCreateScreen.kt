@@ -5,7 +5,10 @@ import ai.dokus.app.auth.components.steps.CompanyNameStep
 import ai.dokus.app.auth.components.steps.TypeSelectionStep
 import ai.dokus.app.auth.components.steps.VatAndAddressStep
 import ai.dokus.app.auth.model.WorkspaceWizardStep
-import ai.dokus.app.auth.viewmodel.WorkspaceCreateViewModel
+import ai.dokus.app.auth.viewmodel.WorkspaceCreateAction
+import ai.dokus.app.auth.viewmodel.WorkspaceCreateContainer
+import ai.dokus.app.auth.viewmodel.WorkspaceCreateIntent
+import ai.dokus.app.auth.viewmodel.WorkspaceCreateState
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
@@ -40,7 +43,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,36 +52,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.foundation.app.state.DokusState
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 
 private val stepContentMinHeight = 320.dp
 
 @Composable
 internal fun WorkspaceCreateScreen(
-    viewModel: WorkspaceCreateViewModel = koinViewModel()
+    container: WorkspaceCreateContainer = container()
 ) {
     val navController = LocalNavController.current
-
-    val state by viewModel.state.collectAsState()
-    val hasFreelancerWorkspace by viewModel.hasFreelancerWorkspace.collectAsState()
-    val wizardState by viewModel.wizardState.collectAsState()
-    val confirmationState by viewModel.confirmationState.collectAsState()
 
     // Warp animation state
     var isWarpActive by remember { mutableStateOf(false) }
     var shouldNavigate by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(true) }
 
-    // Pager state - number of pages depends on tenant type
-    val steps = WorkspaceWizardStep.stepsForType(wizardState.tenantType)
-    val pagerState = rememberPagerState(pageCount = { steps.size })
-
-    // Sync pager with wizard state
-    LaunchedEffect(wizardState.step) {
-        val targetPage = steps.indexOf(wizardState.step)
-        if (targetPage >= 0 && targetPage != pagerState.currentPage) {
-            pagerState.animateScrollToPage(targetPage)
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            WorkspaceCreateAction.NavigateHome -> {
+                isWarpActive = true
+                contentVisible = false
+            }
+            WorkspaceCreateAction.NavigateBack -> {
+                navController.navigateUp()
+            }
+            is WorkspaceCreateAction.ShowCreationError -> {
+                // Handle creation error - could show snackbar
+            }
         }
     }
 
@@ -91,19 +93,14 @@ internal fun WorkspaceCreateScreen(
         }
     }
 
+    // Load user info on init
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is WorkspaceCreateViewModel.Effect.NavigateHome -> {
-                    isWarpActive = true
-                    contentVisible = false
-                }
-                is WorkspaceCreateViewModel.Effect.CreationFailed -> Unit
-            }
-        }
+        container.store.intent(WorkspaceCreateIntent.LoadUserInfo)
     }
 
-    val isSubmitting = state is DokusState.Loading || wizardState.isCreating
+    // Extract wizard state for easier access
+    val wizardState = state as? WorkspaceCreateState.Wizard
+    val isSubmitting = state is WorkspaceCreateState.Loading || state is WorkspaceCreateState.Creating
 
     Scaffold { contentPadding ->
         Box(
@@ -134,97 +131,14 @@ internal fun WorkspaceCreateScreen(
                 exit = fadeOut(animationSpec = tween(600))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    Column(
-                        modifier = Modifier
-                            .withVerticalPadding()
-                            .limitWidth()
-                            .padding(horizontal = 16.dp)
-                            .fillMaxHeight()
-                            .align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        AppNameText()
-
-                        Column(
-                            modifier = Modifier.limitWidthCenteredContent(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // Step indicator
-                            Text(
-                                text = "Step ${wizardState.currentStepNumber} of ${wizardState.totalSteps}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    if (wizardState != null) {
+                        with(container.store) {
+                            WorkspaceCreateContent(
+                                wizardState = wizardState,
+                                isSubmitting = isSubmitting,
+                                onBackPress = { navController.navigateUp() }
                             )
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            // Step content with pager
-                            Box(
-                                modifier = Modifier
-                                    .heightIn(min = stepContentMinHeight)
-                                    .fillMaxWidth(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                HorizontalPager(
-                                    state = pagerState,
-                                    userScrollEnabled = false,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) { page ->
-                                    val step = steps[page]
-                                    when (step) {
-                                        WorkspaceWizardStep.TypeSelection -> {
-                                            TypeSelectionStep(
-                                                selectedType = wizardState.tenantType,
-                                                hasFreelancerWorkspace = hasFreelancerWorkspace,
-                                                onTypeSelected = { type ->
-                                                    viewModel.onTypeSelected(type)
-                                                    viewModel.goNext()
-                                                },
-                                                onBackPress = { navController.navigateUp() },
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
-                                        WorkspaceWizardStep.CompanyName -> {
-                                            CompanyNameStep(
-                                                companyName = wizardState.companyName,
-                                                lookupState = wizardState.lookupState,
-                                                onCompanyNameChanged = viewModel::onCompanyNameChanged,
-                                                onBackPress = { viewModel.goBack() },
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
-                                        WorkspaceWizardStep.VatAndAddress -> {
-                                            VatAndAddressStep(
-                                                vatNumber = wizardState.vatNumber,
-                                                address = wizardState.address,
-                                                onVatNumberChanged = viewModel::onVatNumberChanged,
-                                                onAddressChanged = viewModel::onAddressChanged,
-                                                onBackPress = { viewModel.goBack() },
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Navigation buttons (not needed for TypeSelection step)
-                            if (wizardState.step != WorkspaceWizardStep.TypeSelection) {
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                PPrimaryButton(
-                                    text = when (wizardState.step) {
-                                        WorkspaceWizardStep.VatAndAddress -> if (isSubmitting) "Creating..." else "Create workspace"
-                                        else -> "Continue"
-                                    },
-                                    enabled = wizardState.canProceed && !isSubmitting,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { viewModel.goNext() }
-                                )
-                            }
                         }
-
-                        CopyRightText()
                     }
                 }
             }
@@ -239,12 +153,137 @@ internal fun WorkspaceCreateScreen(
             )
 
             // Entity confirmation dialog
-            EntityConfirmationDialog(
-                state = confirmationState,
-                onEntitySelected = viewModel::onEntitySelected,
-                onEnterManually = viewModel::onEnterManually,
-                onDismiss = viewModel::dismissConfirmation
-            )
+            if (wizardState != null) {
+                EntityConfirmationDialog(
+                    state = wizardState.confirmationState,
+                    onEntitySelected = { entity ->
+                        container.store.intent(WorkspaceCreateIntent.SelectEntity(entity))
+                    },
+                    onEnterManually = {
+                        container.store.intent(WorkspaceCreateIntent.EnterManually)
+                    },
+                    onDismiss = {
+                        container.store.intent(WorkspaceCreateIntent.DismissConfirmation)
+                    }
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun IntentReceiver<WorkspaceCreateIntent>.WorkspaceCreateContent(
+    wizardState: WorkspaceCreateState.Wizard,
+    isSubmitting: Boolean,
+    onBackPress: () -> Unit
+) {
+    // Pager state - number of pages depends on tenant type
+    val steps = WorkspaceWizardStep.stepsForType(wizardState.tenantType)
+    val pagerState = rememberPagerState(pageCount = { steps.size })
+
+    // Sync pager with wizard state
+    LaunchedEffect(wizardState.step) {
+        val targetPage = steps.indexOf(wizardState.step)
+        if (targetPage >= 0 && targetPage != pagerState.currentPage) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .withVerticalPadding()
+            .limitWidth()
+            .padding(horizontal = 16.dp)
+            .fillMaxHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        AppNameText()
+
+        Column(
+            modifier = Modifier.limitWidthCenteredContent(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Step indicator
+            Text(
+                text = "Step ${wizardState.currentStepNumber} of ${wizardState.totalSteps}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Step content with pager
+            Box(
+                modifier = Modifier
+                    .heightIn(min = stepContentMinHeight)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    userScrollEnabled = false,
+                    modifier = Modifier.fillMaxWidth()
+                ) { page ->
+                    val step = steps[page]
+                    when (step) {
+                        WorkspaceWizardStep.TypeSelection -> {
+                            TypeSelectionStep(
+                                selectedType = wizardState.tenantType,
+                                hasFreelancerWorkspace = wizardState.hasFreelancerWorkspace,
+                                onTypeSelected = { type ->
+                                    intent(WorkspaceCreateIntent.SelectType(type))
+                                    intent(WorkspaceCreateIntent.NextClicked)
+                                },
+                                onBackPress = onBackPress,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        WorkspaceWizardStep.CompanyName -> {
+                            CompanyNameStep(
+                                companyName = wizardState.companyName,
+                                lookupState = wizardState.lookupState,
+                                onCompanyNameChanged = { name ->
+                                    intent(WorkspaceCreateIntent.UpdateCompanyName(name))
+                                },
+                                onBackPress = { intent(WorkspaceCreateIntent.BackClicked) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        WorkspaceWizardStep.VatAndAddress -> {
+                            VatAndAddressStep(
+                                vatNumber = wizardState.vatNumber,
+                                address = wizardState.address,
+                                onVatNumberChanged = { vatNumber ->
+                                    intent(WorkspaceCreateIntent.UpdateVatNumber(vatNumber))
+                                },
+                                onAddressChanged = { address ->
+                                    intent(WorkspaceCreateIntent.UpdateAddress(address))
+                                },
+                                onBackPress = { intent(WorkspaceCreateIntent.BackClicked) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Navigation buttons (not needed for TypeSelection step)
+            if (wizardState.step != WorkspaceWizardStep.TypeSelection) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                PPrimaryButton(
+                    text = when (wizardState.step) {
+                        WorkspaceWizardStep.VatAndAddress -> if (isSubmitting) "Creating..." else "Create workspace"
+                        else -> "Continue"
+                    },
+                    enabled = wizardState.canProceed && !isSubmitting,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { intent(WorkspaceCreateIntent.NextClicked) }
+                )
+            }
+        }
+
+        CopyRightText()
     }
 }

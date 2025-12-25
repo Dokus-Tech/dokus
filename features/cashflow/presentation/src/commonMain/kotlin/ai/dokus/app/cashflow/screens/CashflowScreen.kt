@@ -4,6 +4,7 @@ import ai.dokus.app.cashflow.components.AppDownloadQrDialog
 import ai.dokus.app.cashflow.components.CashflowHeaderActions
 import ai.dokus.app.cashflow.components.CashflowHeaderSearch
 import ai.dokus.app.cashflow.components.DesktopCashflowContent
+import ai.dokus.app.cashflow.components.DocumentSortOption
 import ai.dokus.app.cashflow.components.DocumentUploadSidebar
 import ai.dokus.app.cashflow.components.DroppedFile
 import ai.dokus.app.cashflow.components.FlyingDocument
@@ -11,9 +12,14 @@ import ai.dokus.app.cashflow.components.MobileCashflowContent
 import ai.dokus.app.cashflow.components.SpaceUploadOverlay
 import ai.dokus.app.cashflow.components.fileDropTarget
 import ai.dokus.app.cashflow.components.isDragDropSupported
-import ai.dokus.app.cashflow.viewmodel.CashflowViewModel
+import ai.dokus.app.cashflow.viewmodel.CashflowAction
+import ai.dokus.app.cashflow.viewmodel.CashflowContainer
+import ai.dokus.app.cashflow.viewmodel.CashflowIntent
+import ai.dokus.app.cashflow.viewmodel.CashflowState
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
+import ai.dokus.foundation.design.local.isLarge
+import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -33,9 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.network.rememberIsOnline
+import tech.dokus.foundation.app.state.DokusState
 import kotlin.random.Random
 
 /**
@@ -52,26 +61,44 @@ import kotlin.random.Random
  */
 @Composable
 internal fun CashflowScreen(
-    viewModel: CashflowViewModel = koinViewModel(),
+    container: CashflowContainer = container(),
 ) {
-    val documentsState by viewModel.state.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val sortOption by viewModel.sortOption.collectAsState()
     val navController = LocalNavController.current
+    val isLargeScreen = LocalScreenSize.isLarge
 
-    // Sidebar and dialog state
-    val isSidebarOpen by viewModel.isSidebarOpen.collectAsState()
-    val isQrDialogOpen by viewModel.isQrDialogOpen.collectAsState()
-    val uploadTasks by viewModel.uploadTasks.collectAsState()
-    val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
-    val deletionHandles by viewModel.deletionHandles.collectAsState()
+    // Subscribe to state and handle actions
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            is CashflowAction.NavigateToDocument -> {
+                // TODO: Navigate to document detail
+            }
+            is CashflowAction.NavigateToCreateInvoice -> {
+                navController.navigateTo(CashFlowDestination.CreateInvoice)
+            }
+            is CashflowAction.NavigateToAddDocument -> {
+                navController.navigateTo(CashFlowDestination.AddDocument)
+            }
+            is CashflowAction.NavigateToSettings -> {
+                // TODO: Navigate to settings
+            }
+            is CashflowAction.ShowError -> {
+                // TODO: Show snackbar error
+            }
+            is CashflowAction.ShowSuccess -> {
+                // TODO: Show snackbar success
+            }
+        }
+    }
 
-    // Individual section states (each loads independently)
-    val vatSummaryState by viewModel.vatSummaryState.collectAsState()
-    val businessHealthState by viewModel.businessHealthState.collectAsState()
-    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
+    // Upload manager flows (still exposed via container)
+    val uploadTasks by container.uploadTasks.collectAsState()
+    val uploadedDocuments by container.uploadedDocuments.collectAsState()
+    val deletionHandles by container.deletionHandles.collectAsState()
 
-    val isLargeScreen = LocalScreenSize.current.isLarge
+    // Trigger initial data load
+    LaunchedEffect(Unit) {
+        container.store.intent(CashflowIntent.Refresh)
+    }
 
     // Snackbar for connection status changes
     val snackbarHostState = remember { SnackbarHostState() }
@@ -82,7 +109,11 @@ internal fun CashflowScreen(
 
     // Search expansion state for mobile
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
-    val searchExpanded = isLargeScreen || isSearchExpanded
+
+    // Reset mobile search expansion when rotating to large screen (desktop)
+    LaunchedEffect(isLargeScreen) {
+        if (isLargeScreen) isSearchExpanded = false
+    }
 
     // Space upload overlay state
     var isSpaceOverlayVisible by remember { mutableStateOf(false) }
@@ -90,14 +121,13 @@ internal fun CashflowScreen(
     val flyingDocuments = remember { mutableStateListOf<FlyingDocument>() }
     var pendingDroppedFiles by remember { mutableStateOf<List<DroppedFile>>(emptyList()) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.refresh()
-    }
-
-    // Reset mobile search expansion when rotating to large screen (desktop)
-    LaunchedEffect(isLargeScreen) {
-        if (isLargeScreen) isSearchExpanded = false
-    }
+    // Extract state values
+    val contentState = state as? CashflowState.Content
+    val searchQuery = contentState?.searchQuery ?: ""
+    val sortOption = contentState?.sortOption ?: DocumentSortOption.Default
+    val isSidebarOpen = contentState?.isSidebarOpen ?: false
+    val isQrDialogOpen = contentState?.isQrDialogOpen ?: false
+    val searchExpanded = isLargeScreen || isSearchExpanded
 
     // Screen-level drop target - shows space overlay when user drags files
     Box(
@@ -148,7 +178,7 @@ internal fun CashflowScreen(
                     searchContent = {
                         CashflowHeaderSearch(
                             searchQuery = searchQuery,
-                            onSearchQueryChange = viewModel::updateSearchQuery,
+                            onSearchQueryChange = { container.store.intent(CashflowIntent.UpdateSearchQuery(it)) },
                             isSearchExpanded = searchExpanded,
                             isLargeScreen = isLargeScreen,
                             onExpandSearch = { isSearchExpanded = true }
@@ -158,7 +188,7 @@ internal fun CashflowScreen(
                         CashflowHeaderActions(
                             onUploadClick = {
                                 if (isLargeScreen) {
-                                    viewModel.openSidebar()
+                                    container.store.intent(CashflowIntent.OpenSidebar)
                                 } else {
                                     navController.navigateTo(CashFlowDestination.AddDocument)
                                 }
@@ -173,49 +203,115 @@ internal fun CashflowScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
-            if (isLargeScreen) {
-                    DesktopCashflowContent(
-                        documentsState = documentsState,
-                        vatSummaryState = vatSummaryState,
-                        businessHealthState = businessHealthState,
-                        pendingDocumentsState = pendingDocumentsState,
-                        sortOption = sortOption,
-                        contentPadding = contentPadding,
-                        onSortOptionSelected = viewModel::updateSortOption,
-                        onDocumentClick = { /* TODO: Navigate to document detail */ },
-                        onMoreClick = { /* TODO: Show context menu */ },
-                        onLoadMore = viewModel::loadNextPage,
-                        onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
-                        onPendingLoadMore = viewModel::pendingDocumentsLoadMore,
-                        isOnline = isOnline
-                    )
-                } else {
-                    MobileCashflowContent(
-                        documentsState = documentsState,
-                        sortOption = sortOption,
-                        contentPadding = contentPadding,
-                        onSortOptionSelected = viewModel::updateSortOption,
-                        onDocumentClick = { /* TODO: Navigate to document detail */ },
-                        onLoadMore = viewModel::loadNextPage
-                    )
+            when (state) {
+                is CashflowState.Loading -> {
+                    // Show loading state - use empty pagination states
+                    if (isLargeScreen) {
+                        DesktopCashflowContent(
+                            documentsState = DokusState.loading(),
+                            vatSummaryState = DokusState.loading(),
+                            businessHealthState = DokusState.loading(),
+                            pendingDocumentsState = DokusState.loading(),
+                            sortOption = sortOption,
+                            contentPadding = contentPadding,
+                            onSortOptionSelected = { container.store.intent(CashflowIntent.UpdateSortOption(it)) },
+                            onDocumentClick = { /* TODO: Navigate to document detail */ },
+                            onMoreClick = { /* TODO: Show context menu */ },
+                            onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
+                            onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                            onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
+                            isOnline = isOnline
+                        )
+                    } else {
+                        MobileCashflowContent(
+                            documentsState = DokusState.loading(),
+                            sortOption = sortOption,
+                            contentPadding = contentPadding,
+                            onSortOptionSelected = { container.store.intent(CashflowIntent.UpdateSortOption(it)) },
+                            onDocumentClick = { /* TODO: Navigate to document detail */ },
+                            onLoadMore = { container.store.intent(CashflowIntent.LoadMore) }
+                        )
+                    }
                 }
+
+                is CashflowState.Content -> {
+                    val content = state as CashflowState.Content
+                    if (isLargeScreen) {
+                        DesktopCashflowContent(
+                            documentsState = DokusState.success(content.documents),
+                            vatSummaryState = content.vatSummaryState,
+                            businessHealthState = content.businessHealthState,
+                            pendingDocumentsState = content.pendingDocumentsState,
+                            sortOption = content.sortOption,
+                            contentPadding = contentPadding,
+                            onSortOptionSelected = { container.store.intent(CashflowIntent.UpdateSortOption(it)) },
+                            onDocumentClick = { /* TODO: Navigate to document detail */ },
+                            onMoreClick = { /* TODO: Show context menu */ },
+                            onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
+                            onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                            onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
+                            isOnline = isOnline
+                        )
+                    } else {
+                        MobileCashflowContent(
+                            documentsState = DokusState.success(content.documents),
+                            sortOption = content.sortOption,
+                            contentPadding = contentPadding,
+                            onSortOptionSelected = { container.store.intent(CashflowIntent.UpdateSortOption(it)) },
+                            onDocumentClick = { /* TODO: Navigate to document detail */ },
+                            onLoadMore = { container.store.intent(CashflowIntent.LoadMore) }
+                        )
+                    }
+                }
+
+                is CashflowState.Error -> {
+                    val error = state as CashflowState.Error
+                    // TODO: Show error state with retry
+                    if (isLargeScreen) {
+                        DesktopCashflowContent(
+                            documentsState = DokusState.error(error.exception, error.retryHandler),
+                            vatSummaryState = DokusState.error(error.exception, error.retryHandler),
+                            businessHealthState = DokusState.error(error.exception, error.retryHandler),
+                            pendingDocumentsState = DokusState.error(error.exception, error.retryHandler),
+                            sortOption = sortOption,
+                            contentPadding = contentPadding,
+                            onSortOptionSelected = { container.store.intent(CashflowIntent.UpdateSortOption(it)) },
+                            onDocumentClick = { /* TODO: Navigate to document detail */ },
+                            onMoreClick = { /* TODO: Show context menu */ },
+                            onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
+                            onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                            onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
+                            isOnline = isOnline
+                        )
+                    } else {
+                        MobileCashflowContent(
+                            documentsState = DokusState.error(error.exception, error.retryHandler),
+                            sortOption = sortOption,
+                            contentPadding = contentPadding,
+                            onSortOptionSelected = { container.store.intent(CashflowIntent.UpdateSortOption(it)) },
+                            onDocumentClick = { /* TODO: Navigate to document detail */ },
+                            onLoadMore = { container.store.intent(CashflowIntent.LoadMore) }
+                        )
+                    }
+                }
+            }
         }
 
         // Upload sidebar (desktop only)
         DocumentUploadSidebar(
             isVisible = isSidebarOpen,
-            onDismiss = viewModel::closeSidebar,
+            onDismiss = { container.store.intent(CashflowIntent.CloseSidebar) },
             tasks = uploadTasks,
             documents = uploadedDocuments,
             deletionHandles = deletionHandles,
-            uploadManager = viewModel.provideUploadManager(),
-            onShowQrCode = viewModel::showQrDialog
+            uploadManager = container.provideUploadManager(),
+            onShowQrCode = { container.store.intent(CashflowIntent.ShowQrDialog) }
         )
 
         // QR code dialog
         AppDownloadQrDialog(
             isVisible = isQrDialogOpen,
-            onDismiss = viewModel::hideQrDialog
+            onDismiss = { container.store.intent(CashflowIntent.HideQrDialog) }
         )
 
         // Space upload overlay (futuristic drag-and-drop effect)
@@ -227,7 +323,7 @@ internal fun CashflowScreen(
                 onAnimationComplete = {
                     // Upload the files after animation
                     if (pendingDroppedFiles.isNotEmpty()) {
-                        viewModel.provideUploadManager().enqueueFiles(pendingDroppedFiles)
+                        container.provideUploadManager().enqueueFiles(pendingDroppedFiles)
                         pendingDroppedFiles = emptyList()
                     }
 
@@ -236,7 +332,7 @@ internal fun CashflowScreen(
                     isSpaceOverlayVisible = false
 
                     // Open sidebar to show uploaded files
-                    viewModel.openSidebar()
+                    container.store.intent(CashflowIntent.OpenSidebar)
                 }
             )
         }

@@ -9,7 +9,7 @@ import androidx.compose.runtime.Stable
 /**
  * Steps in the workspace creation wizard.
  */
-internal enum class WorkspaceWizardStep {
+enum class WorkspaceWizardStep {
     /** Step 1: Select workspace type (Freelancer or Company) */
     TypeSelection,
     /** Step 2: Enter company name (Companies only, Freelancers skip) */
@@ -33,7 +33,7 @@ internal enum class WorkspaceWizardStep {
  * Address form state for workspace creation.
  */
 @Stable
-internal data class AddressFormState(
+data class AddressFormState(
     val streetLine1: String = "",
     val streetLine2: String = "",
     val city: String = "",
@@ -47,7 +47,7 @@ internal data class AddressFormState(
 /**
  * State for CBE company lookup.
  */
-internal sealed class LookupState {
+sealed class LookupState {
     data object Idle : LookupState()
     data object Loading : LookupState()
     data class Success(val results: List<EntityLookup>) : LookupState()
@@ -57,7 +57,7 @@ internal sealed class LookupState {
 /**
  * State for the entity confirmation dialog.
  */
-internal sealed class EntityConfirmationState {
+sealed class EntityConfirmationState {
     /** Dialog is hidden */
     data object Hidden : EntityConfirmationState()
     /** Single result found - show confirmation */
@@ -70,7 +70,7 @@ internal sealed class EntityConfirmationState {
  * Complete state for the workspace creation wizard.
  */
 @Stable
-internal data class WorkspaceWizardState(
+data class WorkspaceWizardState(
     val step: WorkspaceWizardStep = WorkspaceWizardStep.TypeSelection,
     val tenantType: TenantType = TenantType.Company,
     val companyName: String = "",

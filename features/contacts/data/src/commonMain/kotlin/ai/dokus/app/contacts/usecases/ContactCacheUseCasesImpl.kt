@@ -1,0 +1,21 @@
+package ai.dokus.app.contacts.usecases
+
+import ai.dokus.app.contacts.repository.ContactRepository
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.model.ContactDto
+
+internal class GetCachedContactsUseCaseImpl(
+    private val repository: ContactRepository
+) : GetCachedContactsUseCase {
+    override suspend fun invoke(tenantId: TenantId): List<ContactDto> {
+        return repository.getCachedContacts(tenantId)
+    }
+}
+
+internal class CacheContactsUseCaseImpl(
+    private val repository: ContactRepository
+) : CacheContactsUseCase {
+    override suspend fun invoke(tenantId: TenantId, contacts: List<ContactDto>) {
+        repository.cacheContacts(tenantId, contacts)
+    }
+}

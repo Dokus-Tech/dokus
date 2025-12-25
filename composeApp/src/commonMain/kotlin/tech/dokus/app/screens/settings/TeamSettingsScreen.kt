@@ -1,13 +1,11 @@
 package tech.dokus.app.screens.settings
 
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cancel
-import ai.dokus.app.resources.generated.role_admin
-import ai.dokus.app.resources.generated.role_admin_desc
 import ai.dokus.app.resources.generated.role_accountant
 import ai.dokus.app.resources.generated.role_accountant_desc
+import ai.dokus.app.resources.generated.role_admin
+import ai.dokus.app.resources.generated.role_admin_desc
 import ai.dokus.app.resources.generated.role_editor
 import ai.dokus.app.resources.generated.role_editor_desc
 import ai.dokus.app.resources.generated.role_owner
@@ -32,8 +30,6 @@ import ai.dokus.app.resources.generated.team_send_invitation
 import ai.dokus.app.resources.generated.team_settings_title
 import ai.dokus.app.resources.generated.team_transfer_confirm
 import ai.dokus.app.resources.generated.team_transfer_ownership
-import tech.dokus.app.viewmodel.TeamActionState
-import tech.dokus.app.viewmodel.TeamSettingsViewModel
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
@@ -76,7 +72,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,18 +86,43 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.foundation.app.state.DokusState
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.viewmodel.TeamSettingsAction
+import tech.dokus.app.viewmodel.TeamSettingsContainer
+import tech.dokus.app.viewmodel.TeamSettingsIntent
+import tech.dokus.app.viewmodel.TeamSettingsState
+import tech.dokus.foundation.app.mvi.container
 
 /**
- * Team settings screen with top bar.
+ * Team settings screen with top bar using FlowMVI Container pattern.
  * For mobile navigation flow.
  */
 @Composable
-fun TeamSettingsScreen(
-    viewModel: TeamSettingsViewModel = koinViewModel()
+internal fun TeamSettingsScreen(
+    container: TeamSettingsContainer = container()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var showInviteDialog by remember { mutableStateOf(false) }
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            is TeamSettingsAction.ShowSuccess -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+            is TeamSettingsAction.ShowError -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+            TeamSettingsAction.DismissInviteDialog -> {
+                showInviteDialog = false
+            }
+        }
+    }
+
+    // Load data on first composition
+    LaunchedEffect(Unit) {
+        container.store.intent(TeamSettingsIntent.Load)
+    }
 
     Scaffold(
         topBar = {
@@ -112,69 +132,91 @@ fun TeamSettingsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        TeamSettingsContent(
-            viewModel = viewModel,
-            snackbarHostState = snackbarHostState,
+        TeamSettingsContentInternal(
+            state = state,
+            showInviteDialog = showInviteDialog,
+            onShowInviteDialog = { showInviteDialog = it },
+            onIntent = { container.store.intent(it) },
             modifier = Modifier.padding(contentPadding)
         )
     }
 }
 
 /**
- * Team settings content without scaffold.
+ * Team settings content without scaffold using FlowMVI Container pattern.
  * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
  */
 @Composable
-fun TeamSettingsContent(
-    viewModel: TeamSettingsViewModel = koinViewModel(),
+internal fun TeamSettingsContent(
+    container: TeamSettingsContainer = container(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    val membersState by viewModel.membersState.collectAsState()
-    val invitationsState by viewModel.invitationsState.collectAsState()
-    val inviteFormState by viewModel.inviteFormState.collectAsState()
-    val actionState by viewModel.actionState.collectAsState()
-
-    // Dialog states
     var showInviteDialog by remember { mutableStateOf(false) }
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            is TeamSettingsAction.ShowSuccess -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+            is TeamSettingsAction.ShowError -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+            TeamSettingsAction.DismissInviteDialog -> {
+                showInviteDialog = false
+            }
+        }
+    }
+
+    // Load data on first composition
+    LaunchedEffect(Unit) {
+        container.store.intent(TeamSettingsIntent.Load)
+    }
+
+    TeamSettingsContentInternal(
+        state = state,
+        showInviteDialog = showInviteDialog,
+        onShowInviteDialog = { showInviteDialog = it },
+        onIntent = { container.store.intent(it) },
+        modifier = modifier.padding(contentPadding)
+    )
+}
+
+@Composable
+private fun TeamSettingsContentInternal(
+    state: TeamSettingsState,
+    showInviteDialog: Boolean,
+    onShowInviteDialog: (Boolean) -> Unit,
+    onIntent: (TeamSettingsIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Dialog states
     var showRemoveConfirmDialog by remember { mutableStateOf<TeamMember?>(null) }
     var showChangeRoleDialog by remember { mutableStateOf<TeamMember?>(null) }
     var showTransferOwnershipDialog by remember { mutableStateOf<TeamMember?>(null) }
 
-    // Load data on first composition
-    LaunchedEffect(viewModel) {
-        viewModel.loadAll()
-    }
-
-    // Handle action state feedback
-    LaunchedEffect(actionState) {
-        when (actionState) {
-            is TeamActionState.Success -> {
-                snackbarHostState.showSnackbar((actionState as TeamActionState.Success).message)
-                viewModel.resetActionState()
-                showInviteDialog = false
-            }
-            is TeamActionState.Error -> {
-                snackbarHostState.showSnackbar((actionState as TeamActionState.Error).message)
-                viewModel.resetActionState()
-            }
-            else -> {}
-        }
-    }
+    // Extract data from state
+    val contentState = state as? TeamSettingsState.Content
+    val members = contentState?.members ?: emptyList()
+    val invitations = contentState?.invitations ?: emptyList()
+    val membersLoading = contentState?.membersLoading == true || state is TeamSettingsState.Loading
+    val invitationsLoading = contentState?.invitationsLoading == true || state is TeamSettingsState.Loading
+    val inviteEmail = contentState?.inviteEmail ?: ""
+    val inviteRole = contentState?.inviteRole ?: UserRole.Editor
+    val isInviting = contentState?.actionState is TeamSettingsState.Content.ActionState.Inviting
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(contentPadding)
             .withContentPaddingForScrollable(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Invite Member Button
         PPrimaryButton(
             text = stringResource(Res.string.team_invite_member),
-            onClick = { showInviteDialog = true },
+            onClick = { onShowInviteDialog(true) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -189,7 +231,7 @@ fun TeamSettingsContent(
                 Spacer(Modifier.height(16.dp))
 
                 when {
-                    membersState.isLoading() -> {
+                    membersLoading -> {
                         Box(
                             modifier = Modifier.fillMaxWidth().height(100.dp),
                             contentAlignment = Alignment.Center
@@ -197,34 +239,25 @@ fun TeamSettingsContent(
                             CircularProgressIndicator()
                         }
                     }
-                    membersState.isSuccess() -> {
-                        val members = (membersState as DokusState.Success).data
-                        if (members.isEmpty()) {
-                            Text(
-                                text = stringResource(Res.string.team_no_members),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            members.forEachIndexed { index, member ->
-                                TeamMemberItem(
-                                    member = member,
-                                    onChangeRole = { showChangeRoleDialog = member },
-                                    onRemove = { showRemoveConfirmDialog = member },
-                                    onTransferOwnership = { showTransferOwnershipDialog = member }
-                                )
-                                if (index < members.lastIndex) {
-                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                                }
-                            }
-                        }
+                    members.isEmpty() -> {
+                        Text(
+                            text = stringResource(Res.string.team_no_members),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     else -> {
-                        Text(
-                            text = "Failed to load team members",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                        members.forEachIndexed { index, member ->
+                            TeamMemberItem(
+                                member = member,
+                                onChangeRole = { showChangeRoleDialog = member },
+                                onRemove = { showRemoveConfirmDialog = member },
+                                onTransferOwnership = { showTransferOwnershipDialog = member }
+                            )
+                            if (index < members.lastIndex) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -241,7 +274,7 @@ fun TeamSettingsContent(
                 Spacer(Modifier.height(16.dp))
 
                 when {
-                    invitationsState.isLoading() -> {
+                    invitationsLoading -> {
                         Box(
                             modifier = Modifier.fillMaxWidth().height(100.dp),
                             contentAlignment = Alignment.Center
@@ -249,32 +282,23 @@ fun TeamSettingsContent(
                             CircularProgressIndicator()
                         }
                     }
-                    invitationsState.isSuccess() -> {
-                        val invitations = (invitationsState as DokusState.Success).data
-                        if (invitations.isEmpty()) {
-                            Text(
-                                text = stringResource(Res.string.team_no_invitations),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            invitations.forEachIndexed { index, invitation ->
-                                InvitationItem(
-                                    invitation = invitation,
-                                    onCancel = { viewModel.cancelInvitation(invitation.id) }
-                                )
-                                if (index < invitations.lastIndex) {
-                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                                }
-                            }
-                        }
+                    invitations.isEmpty() -> {
+                        Text(
+                            text = stringResource(Res.string.team_no_invitations),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     else -> {
-                        Text(
-                            text = "Failed to load invitations",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                        invitations.forEachIndexed { index, invitation ->
+                            InvitationItem(
+                                invitation = invitation,
+                                onCancel = { onIntent(TeamSettingsIntent.CancelInvitation(invitation.id)) }
+                            )
+                            if (index < invitations.lastIndex) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -286,18 +310,16 @@ fun TeamSettingsContent(
     // Invite Dialog
     if (showInviteDialog) {
         InviteDialog(
-            email = inviteFormState.email,
-            role = inviteFormState.role,
-            isInviting = actionState is TeamActionState.Inviting,
-            onEmailChange = viewModel::updateInviteEmail,
-            onRoleChange = viewModel::updateInviteRole,
+            email = inviteEmail,
+            role = inviteRole,
+            isInviting = isInviting,
+            onEmailChange = { onIntent(TeamSettingsIntent.UpdateInviteEmail(it)) },
+            onRoleChange = { onIntent(TeamSettingsIntent.UpdateInviteRole(it)) },
             onDismiss = {
-                showInviteDialog = false
-                viewModel.resetInviteForm()
+                onShowInviteDialog(false)
+                onIntent(TeamSettingsIntent.ResetInviteForm)
             },
-            onInvite = {
-                viewModel.sendInvitation()
-            }
+            onInvite = { onIntent(TeamSettingsIntent.SendInvitation) }
         )
     }
 
@@ -308,7 +330,7 @@ fun TeamSettingsContent(
             message = stringResource(Res.string.team_remove_confirm),
             onDismiss = { showRemoveConfirmDialog = null },
             onConfirm = {
-                viewModel.removeMember(member.userId)
+                onIntent(TeamSettingsIntent.RemoveMember(member.userId))
                 showRemoveConfirmDialog = null
             }
         )
@@ -320,7 +342,7 @@ fun TeamSettingsContent(
             currentRole = member.role,
             onDismiss = { showChangeRoleDialog = null },
             onRoleSelected = { newRole ->
-                viewModel.updateMemberRole(member.userId, newRole)
+                onIntent(TeamSettingsIntent.UpdateMemberRole(member.userId, newRole))
                 showChangeRoleDialog = null
             }
         )
@@ -333,7 +355,7 @@ fun TeamSettingsContent(
             message = stringResource(Res.string.team_transfer_confirm),
             onDismiss = { showTransferOwnershipDialog = null },
             onConfirm = {
-                viewModel.transferOwnership(member.userId)
+                onIntent(TeamSettingsIntent.TransferOwnership(member.userId))
                 showTransferOwnershipDialog = null
             }
         )
