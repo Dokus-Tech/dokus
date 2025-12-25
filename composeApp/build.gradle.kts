@@ -95,6 +95,8 @@ kotlin {
             implementation(projects.features.cashflow.data)
             implementation(projects.features.cashflow.presentation)
 
+            implementation(projects.features.contacts.data)
+            implementation(projects.features.contacts.domain)
             implementation(projects.features.contacts.presentation)
 
             implementation(projects.foundation.domain)

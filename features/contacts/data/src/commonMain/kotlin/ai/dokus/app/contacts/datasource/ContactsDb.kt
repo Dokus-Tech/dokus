@@ -1,5 +1,6 @@
-package ai.dokus.app.contacts.cache
+package ai.dokus.app.contacts.datasource
 
+import ai.dokus.app.contacts.cache.ContactsCacheDatabase
 import ai.dokus.foundation.domain.model.common.Feature
 import tech.dokus.foundation.app.database.DatabaseWrapper
 

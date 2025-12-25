@@ -1,6 +1,6 @@
 package ai.dokus.app.contacts.repository
 
-import ai.dokus.app.contacts.cache.ContactLocalDataSource
+import ai.dokus.app.contacts.datasource.ContactLocalDataSource
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactDto
@@ -20,10 +20,10 @@ import kotlin.time.ExperimentalTime
  * 4. Emit stale state with error on failure
  */
 @OptIn(ExperimentalTime::class)
-class CachedContactRepository(
-    private val remoteRepository: ContactRepositoryApi,
+internal class ContactRepository(
+    private val remoteDataSource: ContactRemoteDataSource,
     private val localDataSource: ContactLocalDataSource
-) : ContactCacheApi {
+) {
 
     /**
      * Observe contacts with cache-first strategy.
@@ -33,11 +33,11 @@ class CachedContactRepository(
      * @param isActive Optional active filter (only applied to network request)
      * @param forceRefresh If true, skip cached data and fetch from network immediately
      */
-    override fun observeContacts(
+    fun observeContacts(
         tenantId: TenantId,
-        search: String?,
-        isActive: Boolean?,
-        forceRefresh: Boolean
+        search: String? = null,
+        isActive: Boolean? = null,
+        forceRefresh: Boolean = false
     ): Flow<CacheState<List<ContactDto>>> = flow {
         // 1. Try to emit cached data first (unless force refresh)
         if (!forceRefresh) {
@@ -59,7 +59,7 @@ class CachedContactRepository(
         }
 
         // 2. Fetch from network
-        val result = remoteRepository.listContacts(
+        val result = remoteDataSource.listContacts(
             search = search,
             isActive = isActive,
             limit = 1000, // Fetch all for caching
@@ -94,10 +94,10 @@ class CachedContactRepository(
     /**
      * Get a single contact by ID with cache-first strategy.
      */
-    override fun observeContact(
+    fun observeContact(
         contactId: ContactId,
         tenantId: TenantId,
-        forceRefresh: Boolean
+        forceRefresh: Boolean = false
     ): Flow<CacheState<ContactDto>> = flow {
         // 1. Try to emit cached data first
         if (!forceRefresh) {
@@ -115,7 +115,7 @@ class CachedContactRepository(
         }
 
         // 2. Fetch from network
-        val result = remoteRepository.getContact(contactId)
+        val result = remoteDataSource.getContact(contactId)
 
         result
             .onSuccess { contact ->
@@ -142,28 +142,28 @@ class CachedContactRepository(
      * Get all cached contacts without network call.
      * Useful for quick offline access.
      */
-    override suspend fun getCachedContacts(tenantId: TenantId): List<ContactDto> {
+    suspend fun getCachedContacts(tenantId: TenantId): List<ContactDto> {
         return localDataSource.getAll(tenantId)
     }
 
     /**
      * Get last sync time for contacts.
      */
-    override suspend fun getLastSyncTime(tenantId: TenantId): Long? {
+    suspend fun getLastSyncTime(tenantId: TenantId): Long? {
         return localDataSource.getLastSyncTime(tenantId)
     }
 
     /**
      * Clear all cached contacts for a tenant.
      */
-    override suspend fun clearCache(tenantId: TenantId) {
+    suspend fun clearCache(tenantId: TenantId) {
         localDataSource.deleteAll(tenantId)
     }
 
     /**
      * Manually cache contacts (useful when contacts are fetched through other means).
      */
-    override suspend fun cacheContacts(tenantId: TenantId, contacts: List<ContactDto>) {
+    suspend fun cacheContacts(tenantId: TenantId, contacts: List<ContactDto>) {
         val now = Clock.System.now().toEpochMilliseconds()
         localDataSource.upsertAll(tenantId, contacts)
         localDataSource.setLastSyncTime(tenantId, now)

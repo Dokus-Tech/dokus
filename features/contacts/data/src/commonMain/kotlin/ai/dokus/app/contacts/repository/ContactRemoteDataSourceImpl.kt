@@ -27,32 +27,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 /**
- * Repository for Contact API operations.
- * Uses Ktor HttpClient with type-safe routing to communicate with the contacts API.
- *
- * Error Handling:
- * - All methods return Result<T> for safe error propagation
- * - Uses runCatching to wrap API calls
+ * Ktor implementation of ContactRemoteDataSource.
+ * Uses type-safe routing to communicate with the contacts API.
  */
-class ContactRepository(
+internal class ContactRemoteDataSourceImpl(
     private val httpClient: HttpClient
-) : ContactRepositoryApi {
-    private val logger = Logger.forClass<ContactRepository>()
+) : ContactRemoteDataSource {
+    private val logger = Logger.forClass<ContactRemoteDataSourceImpl>()
 
-    // ============================================================================
-    // CRUD OPERATIONS
-    // ============================================================================
-
-    /**
-     * List contacts with optional filters.
-     *
-     * @param search Search query for name, email, VAT number
-     * @param isActive Filter by active/inactive status
-     * @param peppolEnabled Filter by Peppol enabled status
-     * @param limit Maximum number of results (1-200)
-     * @param offset Pagination offset
-     * @return Result containing list of contacts
-     */
     override suspend fun listContacts(
         search: String?,
         isActive: Boolean?,
@@ -79,14 +61,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * List customer contacts only (contacts with outgoing invoices).
-     *
-     * @param isActive Filter by active/inactive status
-     * @param limit Maximum number of results
-     * @param offset Pagination offset
-     * @return Result containing list of customer contacts
-     */
     override suspend fun listCustomers(
         isActive: Boolean,
         limit: Int,
@@ -109,14 +83,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * List vendor contacts only (contacts with incoming bills).
-     *
-     * @param isActive Filter by active/inactive status
-     * @param limit Maximum number of results
-     * @param offset Pagination offset
-     * @return Result containing list of vendor contacts
-     */
     override suspend fun listVendors(
         isActive: Boolean,
         limit: Int,
@@ -139,12 +105,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * Get a single contact by ID.
-     *
-     * @param contactId The contact ID
-     * @return Result containing the contact or null if not found
-     */
     override suspend fun getContact(contactId: ContactId): Result<ContactDto> {
         logger.d { "Getting contact: $contactId" }
         return runCatching {
@@ -158,12 +118,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * Create a new contact.
-     *
-     * @param request Contact creation data
-     * @return Result containing the created contact
-     */
     override suspend fun createContact(request: CreateContactRequest): Result<ContactDto> {
         logger.d { "Creating contact: ${request.name}" }
         return runCatching {
@@ -178,13 +132,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * Update an existing contact.
-     *
-     * @param contactId The contact ID
-     * @param request Contact update data (only provided fields will be updated)
-     * @return Result containing the updated contact
-     */
     override suspend fun updateContact(
         contactId: ContactId,
         request: UpdateContactRequest
@@ -202,12 +149,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * Delete a contact.
-     *
-     * @param contactId The contact ID
-     * @return Result indicating success or failure
-     */
     override suspend fun deleteContact(contactId: ContactId): Result<Unit> {
         logger.d { "Deleting contact: $contactId" }
         return runCatching {
@@ -219,17 +160,6 @@ class ContactRepository(
         }
     }
 
-    // ============================================================================
-    // PEPPOL OPERATIONS
-    // ============================================================================
-
-    /**
-     * Update a contact's Peppol settings.
-     *
-     * @param contactId The contact ID
-     * @param request Peppol update data
-     * @return Result containing the updated contact
-     */
     override suspend fun updateContactPeppol(
         contactId: ContactId,
         request: UpdateContactPeppolRequest
@@ -248,17 +178,6 @@ class ContactRepository(
         }
     }
 
-    // ============================================================================
-    // ACTIVITY OPERATIONS
-    // ============================================================================
-
-    /**
-     * Get activity summary for a contact.
-     * Returns counts and totals for invoices, bills, and expenses.
-     *
-     * @param contactId The contact ID
-     * @return Result containing the activity summary
-     */
     override suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary> {
         logger.d { "Getting contact activity: $contactId" }
         return runCatching {
@@ -271,15 +190,6 @@ class ContactRepository(
         }
     }
 
-    // ============================================================================
-    // STATISTICS
-    // ============================================================================
-
-    /**
-     * Get contact statistics for dashboard.
-     *
-     * @return Result containing contact statistics
-     */
     override suspend fun getContactStats(): Result<ContactStats> {
         logger.d { "Getting contact stats" }
         return runCatching {
@@ -291,19 +201,6 @@ class ContactRepository(
         }
     }
 
-    // ============================================================================
-    // MERGE OPERATIONS
-    // ============================================================================
-
-    /**
-     * Merge source contact into target contact.
-     * All cashflow items (invoices, bills, expenses) and notes from the source
-     * contact are reassigned to the target contact. The source contact is archived.
-     *
-     * @param sourceContactId The contact to merge from (will be archived)
-     * @param targetContactId The contact to merge into
-     * @return Result containing merge result with reassignment counts
-     */
     override suspend fun mergeContacts(
         sourceContactId: ContactId,
         targetContactId: ContactId
@@ -327,18 +224,6 @@ class ContactRepository(
         }
     }
 
-    // ============================================================================
-    // NOTES OPERATIONS
-    // ============================================================================
-
-    /**
-     * List notes for a contact.
-     *
-     * @param contactId The contact ID
-     * @param limit Maximum number of results
-     * @param offset Pagination offset
-     * @return Result containing list of notes
-     */
     override suspend fun listNotes(
         contactId: ContactId,
         limit: Int,
@@ -362,13 +247,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * Create a note for a contact.
-     *
-     * @param contactId The contact ID
-     * @param request Note creation data
-     * @return Result containing the created note
-     */
     override suspend fun createNote(
         contactId: ContactId,
         request: CreateContactNoteRequest
@@ -387,14 +265,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * Update a note.
-     *
-     * @param contactId The contact ID
-     * @param noteId The note ID
-     * @param request Note update data
-     * @return Result containing the updated note
-     */
     override suspend fun updateNote(
         contactId: ContactId,
         noteId: ContactNoteId,
@@ -415,13 +285,6 @@ class ContactRepository(
         }
     }
 
-    /**
-     * Delete a note.
-     *
-     * @param contactId The contact ID
-     * @param noteId The note ID
-     * @return Result indicating success or failure
-     */
     override suspend fun deleteNote(
         contactId: ContactId,
         noteId: ContactNoteId

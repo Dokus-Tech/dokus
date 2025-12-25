@@ -1,6 +1,10 @@
 package ai.dokus.app.contacts.viewmodel
 
-import ai.dokus.app.contacts.repository.ContactRepositoryApi
+import ai.dokus.app.contacts.usecases.CreateContactUseCase
+import ai.dokus.app.contacts.usecases.DeleteContactUseCase
+import ai.dokus.app.contacts.usecases.GetContactUseCase
+import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import ai.dokus.app.contacts.usecases.UpdateContactUseCase
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
@@ -36,7 +40,11 @@ internal typealias ContactFormCtx = PipelineContext<ContactFormState, ContactFor
  */
 internal class ContactFormContainer(
     contactId: ContactId?,
-    private val contactRepository: ContactRepositoryApi,
+    private val getContact: GetContactUseCase,
+    private val listContacts: ListContactsUseCase,
+    private val createContact: CreateContactUseCase,
+    private val updateContact: UpdateContactUseCase,
+    private val deleteContact: DeleteContactUseCase,
 ) : Container<ContactFormState, ContactFormIntent, ContactFormAction> {
 
     companion object {
@@ -135,7 +143,7 @@ internal class ContactFormContainer(
 
         updateState { ContactFormState.LoadingContact(contactId) }
 
-        contactRepository.getContact(contactId).fold(
+        getContact(contactId).fold(
             onSuccess = { contact ->
                 logger.i { "Loaded contact for editing: ${contact.name}" }
                 updateState {
@@ -387,7 +395,7 @@ internal class ContactFormContainer(
 
             // Check by VAT number (highest confidence)
             if (form.vatNumber.isNotBlank()) {
-                contactRepository.listContacts(search = form.vatNumber, limit = 5).fold(
+                listContacts(search = form.vatNumber, limit = 5).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId && it.vatNumber?.value == form.vatNumber }
@@ -399,7 +407,7 @@ internal class ContactFormContainer(
 
             // Check by email (high confidence)
             if (form.email.isNotBlank() && form.email.contains("@")) {
-                contactRepository.listContacts(search = form.email, limit = 5).fold(
+                listContacts(search = form.email, limit = 5).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId && it.email?.value.equals(form.email, ignoreCase = true) }
@@ -412,7 +420,7 @@ internal class ContactFormContainer(
 
             // Check by name + country (medium confidence)
             if (form.name.length >= 3 && form.country.isNotBlank()) {
-                contactRepository.listContacts(search = form.name, limit = 10).fold(
+                listContacts(search = form.name, limit = 10).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId }
@@ -497,7 +505,7 @@ internal class ContactFormContainer(
 
             val request = formData.toCreateRequest()
 
-            contactRepository.createContact(request).fold(
+            createContact(request).fold(
                 onSuccess = { contact ->
                     logger.i { "Contact created: ${contact.id}" }
                     updateState { copy(isSaving = false) }
@@ -527,7 +535,7 @@ internal class ContactFormContainer(
 
             val request = formData.toUpdateRequest()
 
-            contactRepository.updateContact(contactId, request).fold(
+            updateContact(contactId, request).fold(
                 onSuccess = { contact ->
                     logger.i { "Contact updated: ${contact.id}" }
                     updateState { copy(isSaving = false) }
@@ -566,7 +574,7 @@ internal class ContactFormContainer(
 
             logger.d { "Deleting contact: $id" }
 
-            contactRepository.deleteContact(id).fold(
+            deleteContact(id).fold(
                 onSuccess = {
                     logger.i { "Contact deleted: $id" }
                     updateState { copy(isDeleting = false) }

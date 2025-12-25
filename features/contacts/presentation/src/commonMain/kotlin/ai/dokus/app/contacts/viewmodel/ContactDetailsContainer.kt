@@ -1,8 +1,15 @@
 package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
-import ai.dokus.app.contacts.cache.ContactLocalDataSource
-import ai.dokus.app.contacts.repository.ContactRepositoryApi
+import ai.dokus.app.contacts.usecases.CacheContactsUseCase
+import ai.dokus.app.contacts.usecases.CreateContactNoteUseCase
+import ai.dokus.app.contacts.usecases.DeleteContactNoteUseCase
+import ai.dokus.app.contacts.usecases.GetCachedContactsUseCase
+import ai.dokus.app.contacts.usecases.GetContactActivityUseCase
+import ai.dokus.app.contacts.usecases.GetContactUseCase
+import ai.dokus.app.contacts.usecases.ListContactNotesUseCase
+import ai.dokus.app.contacts.usecases.UpdateContactNoteUseCase
+import ai.dokus.app.contacts.usecases.UpdateContactPeppolUseCase
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactDto
@@ -39,8 +46,15 @@ internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, Cont
  */
 internal class ContactDetailsContainer(
     contactId: ContactId,
-    private val contactRepository: ContactRepositoryApi,
-    private val localDataSource: ContactLocalDataSource,
+    private val getContact: GetContactUseCase,
+    private val getContactActivity: GetContactActivityUseCase,
+    private val listContactNotes: ListContactNotesUseCase,
+    private val createContactNote: CreateContactNoteUseCase,
+    private val updateContactNote: UpdateContactNoteUseCase,
+    private val deleteContactNote: DeleteContactNoteUseCase,
+    private val updateContactPeppol: UpdateContactPeppolUseCase,
+    private val getCachedContacts: GetCachedContactsUseCase,
+    private val cacheContacts: CacheContactsUseCase,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
 ) : Container<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> {
 
@@ -156,7 +170,7 @@ internal class ContactDetailsContainer(
         }
 
         // Then try network refresh
-        contactRepository.getContact(contactId).fold(
+        getContact(contactId).fold(
             onSuccess = { contact ->
                 logger.i { "Loaded contact from network: ${contact.name}" }
                 transitionToContent(contactId, contact)
@@ -199,8 +213,9 @@ internal class ContactDetailsContainer(
      * Load contact from local cache.
      */
     private suspend fun loadContactFromCache(contactId: ContactId): ContactDto? {
+        val tenantId = getCurrentTenantId() ?: return null
         return try {
-            localDataSource.getById(contactId)
+            getCachedContacts(tenantId).find { it.id == contactId }
         } catch (e: Exception) {
             logger.e(e) { "Failed to load contact from cache" }
             null
@@ -213,7 +228,7 @@ internal class ContactDetailsContainer(
     private suspend fun cacheContact(contact: ContactDto) {
         val tenantId = getCurrentTenantId() ?: return
         try {
-            localDataSource.upsertAll(tenantId, listOf(contact))
+            cacheContacts(tenantId, listOf(contact))
             logger.d { "Cached contact: ${contact.name}" }
         } catch (e: Exception) {
             logger.w(e) { "Failed to cache contact" }
@@ -224,7 +239,7 @@ internal class ContactDetailsContainer(
      * Load activity summary from API.
      */
     private suspend fun ContactDetailsCtx.loadActivityData(contactId: ContactId) {
-        contactRepository.getContactActivity(contactId).fold(
+        getContactActivity(contactId).fold(
             onSuccess = { activity ->
                 logger.i { "Loaded activity: invoices=${activity.invoiceCount}, bills=${activity.billCount}" }
                 withState<ContactDetailsState.Content, _> {
@@ -252,7 +267,7 @@ internal class ContactDetailsContainer(
      * Load notes from API.
      */
     private suspend fun ContactDetailsCtx.loadNotesData(contactId: ContactId) {
-        contactRepository.listNotes(contactId).fold(
+        listContactNotes(contactId).fold(
             onSuccess = { notes ->
                 logger.i { "Loaded ${notes.size} notes" }
                 withState<ContactDetailsState.Content, _> {
@@ -298,7 +313,7 @@ internal class ContactDetailsContainer(
                 peppolEnabled = enabled
             )
 
-            contactRepository.updateContactPeppol(contactId, request).fold(
+            updateContactPeppol(contactId, request).fold(
                 onSuccess = { updatedContact ->
                     logger.i { "Peppol updated: ${updatedContact.peppolEnabled}" }
                     updateState {
@@ -483,7 +498,7 @@ internal class ContactDetailsContainer(
             logger.d { "Adding note for contact $contactId" }
 
             val request = CreateContactNoteRequest(content = content)
-            contactRepository.createNote(contactId, request).fold(
+            createContactNote(contactId, request).fold(
                 onSuccess = { note ->
                     logger.i { "Note added: ${note.id}" }
                     updateState {
@@ -524,7 +539,7 @@ internal class ContactDetailsContainer(
             logger.d { "Updating note ${note.id}" }
 
             val request = UpdateContactNoteRequest(content = content)
-            contactRepository.updateNote(contactId, note.id, request).fold(
+            updateContactNote(contactId, note.id, request).fold(
                 onSuccess = { updatedNote ->
                     logger.i { "Note updated: ${updatedNote.id}" }
                     updateState {
@@ -558,7 +573,7 @@ internal class ContactDetailsContainer(
 
             logger.d { "Deleting note ${note.id}" }
 
-            contactRepository.deleteNote(contactId, note.id).fold(
+            deleteContactNote(contactId, note.id).fold(
                 onSuccess = {
                     logger.i { "Note deleted: ${note.id}" }
                     updateState {
