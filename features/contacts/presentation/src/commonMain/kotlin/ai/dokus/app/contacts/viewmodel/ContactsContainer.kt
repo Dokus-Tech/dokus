@@ -1,8 +1,11 @@
 package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
-import ai.dokus.app.contacts.repository.ContactCacheApi
-import ai.dokus.app.contacts.repository.ContactRepositoryApi
+import ai.dokus.app.contacts.usecases.CacheContactsUseCase
+import ai.dokus.app.contacts.usecases.GetCachedContactsUseCase
+import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import ai.dokus.app.contacts.usecases.ListCustomersUseCase
+import ai.dokus.app.contacts.usecases.ListVendorsUseCase
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -37,8 +40,11 @@ internal typealias ContactsCtx = PipelineContext<ContactsState, ContactsIntent, 
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
 internal class ContactsContainer(
-    private val contactRepository: ContactRepositoryApi,
-    private val cachedContactRepository: ContactCacheApi,
+    private val listContacts: ListContactsUseCase,
+    private val listCustomers: ListCustomersUseCase,
+    private val listVendors: ListVendorsUseCase,
+    private val getCachedContacts: GetCachedContactsUseCase,
+    private val cacheContacts: CacheContactsUseCase,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
 ) : Container<ContactsState, ContactsIntent, ContactsAction> {
 
@@ -312,19 +318,19 @@ internal class ContactsContainer(
 
         // Determine which endpoint to use based on role filter
         val result = when (roleFilter) {
-            ContactRoleFilter.All -> contactRepository.listContacts(
+            ContactRoleFilter.All -> listContacts(
                 search = searchQueryValue,
                 isActive = activeFilterValue,
                 peppolEnabled = peppolFilter,
                 limit = ContactsState.PAGE_SIZE,
                 offset = page * ContactsState.PAGE_SIZE
             )
-            ContactRoleFilter.Customers -> contactRepository.listCustomers(
+            ContactRoleFilter.Customers -> listCustomers(
                 isActive = activeFilterValue ?: true,
                 limit = ContactsState.PAGE_SIZE,
                 offset = page * ContactsState.PAGE_SIZE
             )
-            ContactRoleFilter.Vendors -> contactRepository.listVendors(
+            ContactRoleFilter.Vendors -> listVendors(
                 isActive = activeFilterValue ?: true,
                 limit = ContactsState.PAGE_SIZE,
                 offset = page * ContactsState.PAGE_SIZE
@@ -344,7 +350,7 @@ internal class ContactsContainer(
                 )
 
                 // Cache the contacts for offline access
-                cacheContacts(contacts)
+                cacheContactsToLocal(contacts)
 
                 // Apply client-side filtering and sorting
                 val filtered = applyClientSideSearch(loadedContacts, searchQuery, roleFilter)
@@ -420,7 +426,7 @@ internal class ContactsContainer(
     private suspend fun loadFromCache(): List<ContactDto> {
         val tenantId = getTenantId() ?: return emptyList()
         return try {
-            cachedContactRepository.getCachedContacts(tenantId)
+            getCachedContacts(tenantId)
         } catch (e: Exception) {
             logger.e(e) { "Failed to load contacts from cache" }
             emptyList()
@@ -430,10 +436,10 @@ internal class ContactsContainer(
     /**
      * Cache contacts for offline access.
      */
-    private suspend fun cacheContacts(contacts: List<ContactDto>) {
+    private suspend fun cacheContactsToLocal(contacts: List<ContactDto>) {
         val tenantId = getTenantId() ?: return
         try {
-            cachedContactRepository.cacheContacts(tenantId, contacts)
+            cacheContacts(tenantId, contacts)
             logger.d { "Cached ${contacts.size} contacts for offline access" }
         } catch (e: Exception) {
             logger.w(e) { "Failed to cache contacts" }

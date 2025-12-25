@@ -1,8 +1,10 @@
 package ai.dokus.app.contacts
 
-import ai.dokus.app.contacts.cache.ContactsDb
+import ai.dokus.app.contacts.contactsDataModule
+import ai.dokus.app.contacts.contactsDomainModule
+import ai.dokus.app.contacts.contactsNetworkModule
+import ai.dokus.app.contacts.datasource.ContactsDb
 import ai.dokus.app.contacts.di.contactsPresentationModule
-import ai.dokus.app.contacts.di.contactsViewModelModule
 import ai.dokus.app.contacts.navigation.ContactsHomeNavigationProvider
 import ai.dokus.app.contacts.navigation.ContactsNavigationProvider
 import ai.dokus.app.resources.generated.Res
@@ -43,20 +45,20 @@ object ContactsAppModule : AppModule, KoinComponent {
     override val dashboardWidgets: List<DashboardWidget> = emptyList()
 
     override val presentationDi: AppPresentationModuleDi = object : AppPresentationModuleDi {
-        override val viewModels = contactsViewModelModule
+        override val viewModels = contactsPresentationModule
         override val presentation = contactsPresentationModule
     }
 
-    // Data layer - not yet needed
+    // Data layer
     override val dataDi: AppDataModuleDi = object : AppDataModuleDi {
         override val platform = null
-        override val network = null
-        override val data = null
+        override val network = contactsNetworkModule
+        override val data = contactsDataModule
     }
 
-    // Domain layer - not yet needed
+    // Domain layer
     override val domainDi: AppDomainModuleDi = object : AppDomainModuleDi {
-        override val useCases = null
+        override val useCases = contactsDomainModule
     }
 
     override suspend fun initializeData() {

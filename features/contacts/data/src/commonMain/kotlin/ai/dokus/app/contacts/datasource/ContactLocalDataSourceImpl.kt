@@ -1,4 +1,6 @@
-package ai.dokus.app.contacts.cache
+package ai.dokus.app.contacts.datasource
+
+import ai.dokus.app.contacts.cache.ContactsCacheDatabase
 
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId

@@ -14,10 +14,10 @@ import ai.dokus.foundation.domain.model.UpdateContactPeppolRequest
 import ai.dokus.foundation.domain.model.UpdateContactRequest
 
 /**
- * Interface for Contact API operations.
+ * Remote data source for Contact API operations.
  * Enables testability through dependency injection of test doubles.
  */
-interface ContactRepositoryApi {
+interface ContactRemoteDataSource {
     // CRUD Operations
     suspend fun listContacts(
         search: String? = null,

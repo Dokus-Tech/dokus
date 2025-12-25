@@ -1,6 +1,7 @@
 package ai.dokus.app.contacts.components
 
-import ai.dokus.app.contacts.repository.ContactRepository
+import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import ai.dokus.app.contacts.usecases.MergeContactsUseCase
 import ai.dokus.foundation.domain.model.ContactActivitySummary
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.ContactMergeResult
@@ -111,7 +112,8 @@ internal fun ContactMergeDialog(
     preselectedTarget: ContactDto? = null,
     onMergeComplete: (ContactMergeResult) -> Unit,
     onDismiss: () -> Unit,
-    contactRepository: ContactRepository = koinInject()
+    listContacts: ListContactsUseCase = koinInject(),
+    mergeContacts: MergeContactsUseCase = koinInject()
 ) {
     val scope = rememberCoroutineScope()
     val logger = remember { Logger.withTag("ContactMergeDialog") }
@@ -146,12 +148,12 @@ internal fun ContactMergeDialog(
         scope.launch {
             logger.d { "Merging contact ${sourceContact.id} into ${target.id}" }
 
-            contactRepository.mergeContacts(
+            mergeContacts(
                 sourceContactId = sourceContact.id,
                 targetContactId = target.id
             ).fold(
                 onSuccess = { result ->
-                    logger.i { "Merge successful: ${result.invoicesReassigned} invoices, ${result.billsReassigned} bills" }
+                    logger.i { "Merge successful: ${result.invoicesReassigned} invoices, ${result.billsReassigned} bills reassigned" }
                     mergeResult = result
                     currentStep = MergeDialogStep.Result
                     isMerging = false
@@ -198,7 +200,7 @@ internal fun ContactMergeDialog(
                             selectedTarget = target
                             currentStep = MergeDialogStep.CompareFields
                         },
-                        contactRepository = contactRepository
+                        listContacts = listContacts
                     )
                 }
 
@@ -337,7 +339,7 @@ internal fun ContactMergeDialog(
 private fun SelectTargetStep(
     sourceContact: ContactDto,
     onTargetSelected: (ContactDto) -> Unit,
-    contactRepository: ContactRepository
+    listContacts: ListContactsUseCase
 ) {
     val scope = rememberCoroutineScope()
     val logger = remember { Logger.withTag("ContactMergeDialog") }
@@ -354,7 +356,7 @@ private fun SelectTargetStep(
             if (searchQuery.length >= 2) {
                 delay(300)
                 isSearching = true
-                contactRepository.listContacts(
+                listContacts(
                     search = searchQuery,
                     isActive = true,
                     limit = 20
