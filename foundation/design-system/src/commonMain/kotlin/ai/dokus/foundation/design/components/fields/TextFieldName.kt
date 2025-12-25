@@ -39,6 +39,7 @@ fun PTextFieldName(
     visualTransformation: VisualTransformation = PTextFieldNameDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onClear: (() -> Unit)? = null,
+    showClearButton: Boolean = false,
     onValueChange: (Name) -> Unit,
 ) {
     val locale = Locale.current
@@ -54,6 +55,7 @@ fun PTextFieldName(
         visualTransformation = visualTransformation,
         modifier = modifier,
         onClear = onClear,
+        showClearButton = showClearButton,
         onValueChange = { value -> onValueChange(Name(value.capitalize(locale))) }
     )
 }

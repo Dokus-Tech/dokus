@@ -36,6 +36,7 @@ fun PTextFieldTaxNumber(
     visualTransformation: VisualTransformation = PTextFieldTaxNumberDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onClear: (() -> Unit)? = null,
+    showClearButton: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     PTextField(
@@ -50,6 +51,7 @@ fun PTextFieldTaxNumber(
         visualTransformation = visualTransformation,
         modifier = modifier,
         onClear = onClear,
+        showClearButton = showClearButton,
         onValueChange = onValueChange
     )
 }
