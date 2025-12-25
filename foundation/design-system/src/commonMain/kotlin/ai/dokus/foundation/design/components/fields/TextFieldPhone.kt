@@ -35,6 +35,7 @@ fun PTextFieldPhone(
     visualTransformation: VisualTransformation = PTextFieldPhoneDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onClear: (() -> Unit)? = null,
+    showClearButton: Boolean = false,
     onValueChange: (PhoneNumber) -> Unit,
 ) {
     PTextField(
@@ -49,6 +50,7 @@ fun PTextFieldPhone(
         visualTransformation = visualTransformation,
         modifier = modifier,
         onClear = onClear,
+        showClearButton = showClearButton,
         onValueChange = { onValueChange(PhoneNumber(it)) }
     )
 }

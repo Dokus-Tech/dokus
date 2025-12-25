@@ -37,6 +37,7 @@ fun PTextFieldWorkspaceName(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
     onClear: (() -> Unit)? = null,
+    showClearButton: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     PTextField(
@@ -52,6 +53,7 @@ fun PTextFieldWorkspaceName(
         enabled = enabled,
         modifier = modifier,
         onClear = onClear,
+        showClearButton = showClearButton,
         onValueChange = onValueChange
     )
 }
