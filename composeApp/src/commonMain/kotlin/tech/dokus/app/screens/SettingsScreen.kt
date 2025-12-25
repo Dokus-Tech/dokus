@@ -1,20 +1,10 @@
 package tech.dokus.app.screens
 
-import ai.dokus.app.auth.screen.ProfileSettingsContent
-import ai.dokus.app.cashflow.screens.settings.PeppolSettingsContent
-import tech.dokus.foundation.app.ModuleSettingsGroup
-import tech.dokus.foundation.app.ModuleSettingsSection
-import tech.dokus.foundation.app.local.LocalAppModules
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
+import ai.dokus.app.auth.screen.ProfileSettingsScreen
+import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.settings_current_workspace
 import ai.dokus.app.resources.generated.settings_select_workspace
-import tech.dokus.app.screens.settings.AppearanceSettingsContent
-import tech.dokus.app.screens.settings.TeamSettingsContent
-import tech.dokus.app.screens.settings.WorkspaceSettingsContent
-import tech.dokus.app.settingsGroupsCombined
-import tech.dokus.app.viewmodel.SettingsViewModel
 import ai.dokus.foundation.design.components.ListSettingsItem
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
 import ai.dokus.foundation.design.local.LocalScreenSize
@@ -51,7 +41,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,20 +53,54 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.screens.settings.AppearanceSettingsContent
+import tech.dokus.app.screens.settings.TeamSettingsContent
+import tech.dokus.app.screens.settings.WorkspaceSettingsContent
+import tech.dokus.app.settingsGroupsCombined
+import tech.dokus.app.viewmodel.SettingsAction
+import tech.dokus.app.viewmodel.SettingsContainer
+import tech.dokus.app.viewmodel.SettingsIntent
+import tech.dokus.app.viewmodel.SettingsState
+import tech.dokus.foundation.app.ModuleSettingsGroup
+import tech.dokus.foundation.app.ModuleSettingsSection
+import tech.dokus.foundation.app.local.LocalAppModules
+import tech.dokus.foundation.app.mvi.container
 
+/**
+ * Settings screen using FlowMVI Container pattern.
+ * Displays settings navigation with split-pane (desktop) or list (mobile) layout.
+ */
 @Composable
-fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel()
+internal fun SettingsScreen(
+    container: SettingsContainer = container()
 ) {
     val screenSize = LocalScreenSize.current
+    val navController = LocalNavController.current
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            SettingsAction.NavigateToWorkspaceSelect -> {
+                navController.navigateTo(AuthDestination.WorkspaceSelect)
+            }
+            is SettingsAction.ShowError -> {
+                // TODO: Show snackbar
+            }
+        }
+    }
+
+    // Load tenant when screen appears
+    LaunchedEffect(Unit) {
+        container.store.intent(SettingsIntent.Load)
+    }
 
     if (screenSize.isLarge) {
         // Desktop: Split-pane layout
-        SettingsSplitPaneLayout(viewModel = viewModel)
+        SettingsSplitPaneLayout(state = state)
     } else {
         // Mobile: Traditional navigation layout
-        SettingsMobileLayout(viewModel = viewModel)
+        SettingsMobileLayout(state = state)
     }
 }
 
@@ -86,7 +109,7 @@ fun SettingsScreen(
  */
 @Composable
 private fun SettingsSplitPaneLayout(
-    viewModel: SettingsViewModel
+    state: SettingsState
 ) {
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
@@ -112,7 +135,7 @@ private fun SettingsSplitPaneLayout(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
             ) {
                 SettingsNavigationPanel(
-                    viewModel = viewModel,
+                    state = state,
                     settingsGroups = settingsGroups,
                     selectedSection = selectedSection,
                     onSectionSelected = { selectedSection = it }
@@ -142,17 +165,15 @@ private fun SettingsSplitPaneLayout(
  */
 @Composable
 private fun SettingsMobileLayout(
-    viewModel: SettingsViewModel
+    state: SettingsState
 ) {
     val navController = LocalNavController.current
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
-    val currentTenantState by viewModel.currentTenantState.collectAsState()
-
-    LaunchedEffect(viewModel) {
-        viewModel.loadCurrentTenant()
-    }
+    // Extract tenant from state
+    val currentTenant = (state as? SettingsState.Content)?.tenant
+    val isLoading = state is SettingsState.Loading
 
     Scaffold { contentPadding ->
         Column(
@@ -164,10 +185,8 @@ private fun SettingsMobileLayout(
         ) {
             // Workspace Picker Card
             WorkspacePickerCard(
-                workspaceName = currentTenantState.let {
-                    if (it.isSuccess()) it.data?.displayName?.value else null
-                },
-                isLoading = currentTenantState.isLoading(),
+                workspaceName = currentTenant?.displayName?.value,
+                isLoading = isLoading,
                 onClick = {
                     navController.navigateTo(AuthDestination.WorkspaceSelect)
                 }
@@ -196,17 +215,16 @@ private fun SettingsMobileLayout(
  */
 @Composable
 private fun SettingsNavigationPanel(
-    viewModel: SettingsViewModel,
+    state: SettingsState,
     settingsGroups: Map<StringResource, List<ModuleSettingsGroup>>,
     selectedSection: ModuleSettingsSection?,
     onSectionSelected: (ModuleSettingsSection) -> Unit
 ) {
     val navController = LocalNavController.current
-    val currentTenantState by viewModel.currentTenantState.collectAsState()
 
-    LaunchedEffect(viewModel) {
-        viewModel.loadCurrentTenant()
-    }
+    // Extract tenant from state
+    val currentTenant = (state as? SettingsState.Content)?.tenant
+    val isLoading = state is SettingsState.Loading
 
     Column(
         modifier = Modifier
@@ -216,10 +234,8 @@ private fun SettingsNavigationPanel(
     ) {
         // Workspace Picker
         WorkspacePickerCard(
-            workspaceName = currentTenantState.let {
-                if (it.isSuccess()) it.data?.displayName?.value else null
-            },
-            isLoading = currentTenantState.isLoading(),
+            workspaceName = currentTenant?.displayName?.value,
+            isLoading = isLoading,
             onClick = {
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
@@ -294,7 +310,8 @@ private fun SettingsContentPane(
         ) {
             when (section.destination) {
                 is AuthDestination.ProfileSettings -> {
-                    ProfileSettingsContent()
+                    // Use the full screen as embedded content for now
+                    ProfileSettingsScreen()
                 }
                 is SettingsDestination.WorkspaceSettings -> {
                     WorkspaceSettingsContent()
@@ -306,7 +323,8 @@ private fun SettingsContentPane(
                     AppearanceSettingsContent()
                 }
                 is SettingsDestination.PeppolSettings -> {
-                    PeppolSettingsContent()
+                    // Use the full screen as embedded content for now
+                    PeppolSettingsScreen()
                 }
                 else -> {
                     // Fallback for unknown destinations
@@ -453,7 +471,7 @@ private val SettingsSectionSaver = Saver<ModuleSettingsSection?, String>(
             }
         }
     },
-    restore = { key ->
+    restore = { _ ->
         // We can't restore the full section without access to the modules,
         // so we return null and let the default selection logic handle it
         null

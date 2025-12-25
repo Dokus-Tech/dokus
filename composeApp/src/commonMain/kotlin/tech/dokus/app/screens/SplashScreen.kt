@@ -5,7 +5,6 @@ import ai.dokus.app.resources.generated.bootstrap_state_app_version_check
 import ai.dokus.app.resources.generated.bootstrap_state_authenticating
 import ai.dokus.app.resources.generated.bootstrap_state_checking_account_status
 import ai.dokus.app.resources.generated.bootstrap_state_initializing
-import tech.dokus.app.viewmodel.BootstrapViewModel
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.navigation.destinations.AuthDestination
@@ -33,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,48 +40,48 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.viewmodel.BootstrapAction
+import tech.dokus.app.viewmodel.BootstrapContainer
+import tech.dokus.app.viewmodel.BootstrapIntent
+import tech.dokus.app.viewmodel.BootstrapState
+import tech.dokus.app.viewmodel.BootstrapStep
+import tech.dokus.app.viewmodel.BootstrapStepType
+import tech.dokus.foundation.app.mvi.container
+
+private val BootstrapStepType.localized: String
+    @Composable get() = when (this) {
+        BootstrapStepType.InitializeApp -> stringResource(Res.string.bootstrap_state_initializing)
+        BootstrapStepType.CheckingLogin -> stringResource(Res.string.bootstrap_state_authenticating)
+        BootstrapStepType.CheckUpdate -> stringResource(Res.string.bootstrap_state_app_version_check)
+        BootstrapStepType.CheckingAccountStatus -> stringResource(Res.string.bootstrap_state_checking_account_status)
+    }
 
 /**
- * Handles bootstrap navigation effects.
+ * Splash screen using FlowMVI Container pattern.
+ * Handles app initialization and navigation to appropriate destination.
  */
-private fun BootstrapViewModel.Effect.handle(navController: NavController) {
-    when (this) {
-        is BootstrapViewModel.Effect.Idle -> Unit
-        is BootstrapViewModel.Effect.NeedsUpdate -> navController.replace(CoreDestination.UpdateRequired)
-        is BootstrapViewModel.Effect.NeedsLogin -> navController.replace(AuthDestination.Login)
-        is BootstrapViewModel.Effect.NeedsAccountConfirmation -> navController.replace(
-            AuthDestination.PendingConfirmAccount
-        )
-        is BootstrapViewModel.Effect.NeedsTenantSelection -> navController.replace(
-            AuthDestination.WorkspaceSelect
-        )
-        is BootstrapViewModel.Effect.Ok -> navController.replace(CoreDestination.Home)
-    }
-}
-
-private val BootstrapViewModel.BootstrapState.localized: String
-    @Composable get() = when (this) {
-        is BootstrapViewModel.BootstrapState.InitializeApp -> stringResource(Res.string.bootstrap_state_initializing)
-        is BootstrapViewModel.BootstrapState.CheckingLogin -> stringResource(Res.string.bootstrap_state_authenticating)
-        is BootstrapViewModel.BootstrapState.CheckUpdate -> stringResource(Res.string.bootstrap_state_app_version_check)
-        is BootstrapViewModel.BootstrapState.CheckingAccountStatus -> stringResource(Res.string.bootstrap_state_checking_account_status)
-    }
-
 @Composable
-fun SplashScreen(
-    viewModel: BootstrapViewModel = koinViewModel(),
+internal fun SplashScreen(
+    container: BootstrapContainer = container()
 ) {
-    val loadingStates by viewModel.state.collectAsState()
     val navController = LocalNavController.current
 
-    // Collect navigation effects and start bootstrap
-    LaunchedEffect("SplashScreen") {
-        launch { viewModel.effect.collect { it.handle(navController) } }
-        viewModel.load()
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            BootstrapAction.NavigateToLogin -> navController.replace(AuthDestination.Login)
+            BootstrapAction.NavigateToUpdate -> navController.replace(CoreDestination.UpdateRequired)
+            BootstrapAction.NavigateToAccountConfirmation -> navController.replace(AuthDestination.PendingConfirmAccount)
+            BootstrapAction.NavigateToTenantSelection -> navController.replace(AuthDestination.WorkspaceSelect)
+            BootstrapAction.NavigateToMain -> navController.replace(CoreDestination.Home)
+        }
+    }
+
+    // Start bootstrap process when screen appears
+    LaunchedEffect(Unit) {
+        container.store.intent(BootstrapIntent.Load)
     }
 
     Scaffold { contentPadding ->
@@ -115,7 +113,7 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(80.dp))
 
                 // Bootstrap states as vertical list
-                BootstrapStatesList(loadingStates)
+                BootstrapStatesList(state.steps)
             }
         }
     }
@@ -123,17 +121,17 @@ fun SplashScreen(
 
 @Composable
 private fun BootstrapStatesList(
-    states: List<BootstrapViewModel.BootstrapState>,
+    steps: List<BootstrapStep>,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        states.forEach { state ->
+        steps.forEach { step ->
             BootstrapStateItem(
-                state = state,
-                isActive = state.isActive,
-                isCurrentStep = state.isCurrent
+                step = step,
+                isActive = step.isActive,
+                isCurrentStep = step.isCurrent
             )
         }
     }
@@ -141,7 +139,7 @@ private fun BootstrapStatesList(
 
 @Composable
 private fun BootstrapStateItem(
-    state: BootstrapViewModel.BootstrapState,
+    step: BootstrapStep,
     isActive: Boolean,
     isCurrentStep: Boolean
 ) {
@@ -195,7 +193,7 @@ private fun BootstrapStateItem(
 
         // State text
         Text(
-            text = state.localized,
+            text = step.type.localized,
             color = when {
                 isCurrentStep -> Color(0xFFD4AF37).copy(alpha = glowAlpha)
                 isActive -> Color.White.copy(alpha = 0.7f)

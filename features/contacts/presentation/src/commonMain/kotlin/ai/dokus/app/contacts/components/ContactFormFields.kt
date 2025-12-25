@@ -1,6 +1,6 @@
 package ai.dokus.app.contacts.components
 
-import ai.dokus.app.contacts.viewmodel.ContactFormState
+import ai.dokus.app.contacts.viewmodel.ContactFormData
 import ai.dokus.foundation.design.components.fields.PTextFieldPhone
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.domain.PhoneNumber
@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 internal fun ContactFormFields(
-    formState: ContactFormState,
+    formData: ContactFormData,
     onNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
@@ -81,9 +81,9 @@ internal fun ContactFormFields(
             // Name (Required)
             PTextFieldStandard(
                 fieldName = "Name *",
-                value = formState.name,
+                value = formData.name,
                 onValueChange = onNameChange,
-                error = formState.errors["name"]?.toValidationError(),
+                error = formData.errors["name"]?.toValidationError(),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -92,9 +92,9 @@ internal fun ContactFormFields(
             // Email
             PTextFieldStandard(
                 fieldName = "Email",
-                value = formState.email,
+                value = formData.email,
                 onValueChange = onEmailChange,
-                error = formState.errors["email"]?.toValidationError(),
+                error = formData.errors["email"]?.toValidationError(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     capitalization = KeyboardCapitalization.None,
@@ -108,7 +108,7 @@ internal fun ContactFormFields(
             // Phone
             PTextFieldPhone(
                 fieldName = "Phone",
-                value = PhoneNumber(formState.phone),
+                value = PhoneNumber(formData.phone),
                 onValueChange = { onPhoneChange(it.value) },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -118,7 +118,7 @@ internal fun ContactFormFields(
             // Contact Person
             PTextFieldStandard(
                 fieldName = "Contact Person",
-                value = formState.contactPerson,
+                value = formData.contactPerson,
                 onValueChange = onContactPersonChange,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -128,7 +128,7 @@ internal fun ContactFormFields(
         ContactFormSection(title = "Business Information") {
             // Business Type
             BusinessTypeSelector(
-                selectedType = formState.businessType,
+                selectedType = formData.businessType,
                 onTypeSelected = onBusinessTypeChange
             )
 
@@ -137,9 +137,9 @@ internal fun ContactFormFields(
             // VAT Number
             PTextFieldStandard(
                 fieldName = "VAT Number",
-                value = formState.vatNumber,
+                value = formData.vatNumber,
                 onValueChange = onVatNumberChange,
-                error = formState.errors["vatNumber"]?.toValidationError(),
+                error = formData.errors["vatNumber"]?.toValidationError(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     capitalization = KeyboardCapitalization.Characters,
@@ -153,7 +153,7 @@ internal fun ContactFormFields(
             // Company Number
             PTextFieldStandard(
                 fieldName = "Company Number",
-                value = formState.companyNumber,
+                value = formData.companyNumber,
                 onValueChange = onCompanyNumberChange,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -164,7 +164,7 @@ internal fun ContactFormFields(
             // Address Line 1
             PTextFieldStandard(
                 fieldName = "Street Address",
-                value = formState.addressLine1,
+                value = formData.addressLine1,
                 onValueChange = onAddressLine1Change,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -174,7 +174,7 @@ internal fun ContactFormFields(
             // Address Line 2
             PTextFieldStandard(
                 fieldName = "Address Line 2 (optional)",
-                value = formState.addressLine2,
+                value = formData.addressLine2,
                 onValueChange = onAddressLine2Change,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -188,14 +188,14 @@ internal fun ContactFormFields(
             ) {
                 PTextFieldStandard(
                     fieldName = "Postal Code",
-                    value = formState.postalCode,
+                    value = formData.postalCode,
                     onValueChange = onPostalCodeChange,
                     modifier = Modifier.weight(1f)
                 )
 
                 PTextFieldStandard(
                     fieldName = "City",
-                    value = formState.city,
+                    value = formData.city,
                     onValueChange = onCityChange,
                     modifier = Modifier.weight(2f)
                 )
@@ -206,7 +206,7 @@ internal fun ContactFormFields(
             // Country
             PTextFieldStandard(
                 fieldName = "Country",
-                value = formState.country,
+                value = formData.country,
                 onValueChange = onCountryChange,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -217,7 +217,7 @@ internal fun ContactFormFields(
             // Peppol Enabled Toggle
             FormField(label = "Peppol Enabled") {
                 Switch(
-                    checked = formState.peppolEnabled,
+                    checked = formData.peppolEnabled,
                     onCheckedChange = onPeppolEnabledChange
                 )
             }
@@ -226,10 +226,10 @@ internal fun ContactFormFields(
 
             // Peppol ID (only shown/required when Peppol is enabled)
             PTextFieldStandard(
-                fieldName = if (formState.peppolEnabled) "Peppol ID *" else "Peppol ID",
-                value = formState.peppolId,
+                fieldName = if (formData.peppolEnabled) "Peppol ID *" else "Peppol ID",
+                value = formData.peppolId,
                 onValueChange = onPeppolIdChange,
-                error = formState.errors["peppolId"]?.toValidationError(),
+                error = formData.errors["peppolId"]?.toValidationError(),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -250,7 +250,7 @@ internal fun ContactFormFields(
             ) {
                 PTextFieldStandard(
                     fieldName = "Payment Terms (days)",
-                    value = formState.defaultPaymentTerms.toString(),
+                    value = formData.defaultPaymentTerms.toString(),
                     onValueChange = { value ->
                         value.toIntOrNull()?.let { onDefaultPaymentTermsChange(it) }
                     },
@@ -264,7 +264,7 @@ internal fun ContactFormFields(
                 // Default VAT Rate
                 PTextFieldStandard(
                     fieldName = "Default VAT Rate (%)",
-                    value = formState.defaultVatRate,
+                    value = formData.defaultVatRate,
                     onValueChange = onDefaultVatRateChange,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
@@ -279,7 +279,7 @@ internal fun ContactFormFields(
         ContactFormSection(title = "Tags") {
             PTextFieldStandard(
                 fieldName = "Tags (comma-separated)",
-                value = formState.tags,
+                value = formData.tags,
                 onValueChange = onTagsChange,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -296,7 +296,7 @@ internal fun ContactFormFields(
             ContactFormSection(title = "Initial Note") {
                 PTextFieldStandard(
                     fieldName = "Note (optional)",
-                    value = formState.initialNote,
+                    value = formData.initialNote,
                     onValueChange = onInitialNoteChange,
                     singleLine = false,
                     modifier = Modifier.fillMaxWidth()
@@ -315,7 +315,7 @@ internal fun ContactFormFields(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = formState.isActive,
+                            selected = formData.isActive,
                             onClick = { onIsActiveChange(true) }
                         )
                         Text(
@@ -327,7 +327,7 @@ internal fun ContactFormFields(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = !formState.isActive,
+                            selected = !formData.isActive,
                             onClick = { onIsActiveChange(false) }
                         )
                         Text(
@@ -340,7 +340,7 @@ internal fun ContactFormFields(
         }
 
         // General error message
-        formState.errors["general"]?.let { error ->
+        formData.errors["general"]?.let { error ->
             Text(
                 text = error,
                 style = MaterialTheme.typography.bodySmall,

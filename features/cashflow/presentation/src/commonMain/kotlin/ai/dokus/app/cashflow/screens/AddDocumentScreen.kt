@@ -8,11 +8,15 @@ import ai.dokus.app.cashflow.components.rememberDocumentFilePicker
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
-import ai.dokus.app.cashflow.viewmodel.AddDocumentViewModel
+import ai.dokus.app.cashflow.viewmodel.AddDocumentAction
+import ai.dokus.app.cashflow.viewmodel.AddDocumentContainer
+import ai.dokus.app.cashflow.viewmodel.AddDocumentIntent
+import ai.dokus.app.cashflow.viewmodel.AddDocumentState
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.padding
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.model.DocumentDto
+import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +42,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 
 /**
  * Add a document screen for uploading and processing documents/invoices.
@@ -54,45 +61,59 @@ import org.koin.compose.viewmodel.koinViewModel
  */
 @Composable
 internal fun AddDocumentScreen(
-    viewModel: AddDocumentViewModel = koinViewModel()
+    container: AddDocumentContainer = container()
 ) {
-    val state by viewModel.state.collectAsState()
-    val uploadTasks by viewModel.uploadTasks.collectAsState()
-    val uploadedDocuments by viewModel.uploadedDocuments.collectAsState()
-    val deletionHandles by viewModel.deletionHandles.collectAsState()
-
+    val navController = LocalNavController.current
     val layoutDirection = LocalLayoutDirection.current
     val isLarge = LocalScreenSize.current.isLarge
 
     var isQrDialogOpen by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberDocumentFilePicker { files ->
-        if (files.isNotEmpty()) viewModel.uploadFiles(files)
+        if (files.isNotEmpty()) container.store.intent(AddDocumentIntent.Upload(files))
     }
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            AddDocumentAction.LaunchFilePicker -> filePickerLauncher.launch()
+            AddDocumentAction.NavigateBack -> navController.navigateUp()
+        }
+    }
+
+    // Collect additional state flows from the container
+    val uploadTasks by container.uploadTasks.collectAsState()
+    val uploadedDocuments by container.uploadedDocuments.collectAsState()
+    val deletionHandles by container.deletionHandles.collectAsState()
+
+    val isUploading = state is AddDocumentState.Uploading
 
     Scaffold { contentPadding ->
         Box(Modifier.padding(contentPadding, layoutDirection)) {
             if (isLarge) {
-                DesktopLayout(
-                    onUploadFile = { filePickerLauncher.launch() },
-                    isUploading = state.isUploading,
-                    uploadTasks = uploadTasks,
-                    uploadedDocuments = uploadedDocuments,
-                    deletionHandles = deletionHandles,
-                    viewModel = viewModel,
-                    onShowQrCode = { isQrDialogOpen = true }
-                )
+                with(container.store) {
+                    DesktopLayout(
+                        onUploadFile = { intent(AddDocumentIntent.SelectFile) },
+                        isUploading = isUploading,
+                        uploadTasks = uploadTasks,
+                        uploadedDocuments = uploadedDocuments,
+                        deletionHandles = deletionHandles,
+                        uploadManager = container.provideUploadManager(),
+                        onShowQrCode = { isQrDialogOpen = true }
+                    )
+                }
             } else {
                 // Mobile layout with upload zones and upload list
-                MobileLayout(
-                    onUploadFile = { filePickerLauncher.launch() },
-                    onUploadCamera = { /* TODO: Implement camera upload */ },
-                    isUploading = state.isUploading,
-                    uploadTasks = uploadTasks,
-                    uploadedDocuments = uploadedDocuments,
-                    deletionHandles = deletionHandles,
-                    viewModel = viewModel
-                )
+                with(container.store) {
+                    MobileLayout(
+                        onUploadFile = { intent(AddDocumentIntent.SelectFile) },
+                        onUploadCamera = { /* TODO: Implement camera upload */ },
+                        isUploading = isUploading,
+                        uploadTasks = uploadTasks,
+                        uploadedDocuments = uploadedDocuments,
+                        deletionHandles = deletionHandles,
+                        uploadManager = container.provideUploadManager()
+                    )
+                }
             }
 
             // QR code dialog
@@ -110,13 +131,13 @@ internal fun AddDocumentScreen(
  * This screen is a fallback if navigated to directly.
  */
 @Composable
-private fun DesktopLayout(
+private fun IntentReceiver<AddDocumentIntent>.DesktopLayout(
     onUploadFile: () -> Unit,
     isUploading: Boolean,
     uploadTasks: List<DocumentUploadTask>,
     uploadedDocuments: Map<String, DocumentDto>,
     deletionHandles: Map<String, DocumentDeletionHandle>,
-    viewModel: AddDocumentViewModel,
+    uploadManager: DocumentUploadManager,
     onShowQrCode: () -> Unit
 ) {
     var isDragging by remember { mutableStateOf(false) }
@@ -154,7 +175,7 @@ private fun DesktopLayout(
                 isDragging = isDragging,
                 onClick = onUploadFile,
                 onDragStateChange = { isDragging = it },
-                onFilesDropped = { viewModel.uploadFiles(it) },
+                onFilesDropped = { intent(AddDocumentIntent.Upload(it)) },
                 isUploading = isUploading,
                 modifier = Modifier.fillMaxWidth(0.5f)
             )
@@ -173,7 +194,7 @@ private fun DesktopLayout(
                 tasks = uploadTasks,
                 documents = uploadedDocuments,
                 deletionHandles = deletionHandles,
-                uploadManager = viewModel.provideUploadManager(),
+                uploadManager = uploadManager,
                 modifierText = Modifier.fillMaxWidth(0.5f),
                 modifierList = Modifier.fillMaxWidth(0.5f)
             )
@@ -187,14 +208,14 @@ private fun DesktopLayout(
  * Mobile layout with stacked upload zones and upload list.
  */
 @Composable
-private fun MobileLayout(
+private fun IntentReceiver<AddDocumentIntent>.MobileLayout(
     onUploadFile: () -> Unit,
     onUploadCamera: () -> Unit,
     isUploading: Boolean,
     uploadTasks: List<DocumentUploadTask>,
     uploadedDocuments: Map<String, DocumentDto>,
     deletionHandles: Map<String, DocumentDeletionHandle>,
-    viewModel: AddDocumentViewModel
+    uploadManager: DocumentUploadManager
 ) {
     var isCameraDragging by remember { mutableStateOf(false) }
     var isFileDragging by remember { mutableStateOf(false) }
@@ -216,7 +237,7 @@ private fun MobileLayout(
                 isDragging = isCameraDragging,
                 onClick = onUploadCamera,
                 onDragStateChange = { isCameraDragging = it },
-                onFilesDropped = { viewModel.uploadFiles(it) },
+                onFilesDropped = { intent(AddDocumentIntent.Upload(it)) },
                 isUploading = isUploading,
                 title = "Upload with camera",
                 icon = UploadIcon.Camera,
@@ -228,7 +249,7 @@ private fun MobileLayout(
                 isDragging = isFileDragging,
                 onClick = onUploadFile,
                 onDragStateChange = { isFileDragging = it },
-                onFilesDropped = { viewModel.uploadFiles(it) },
+                onFilesDropped = { intent(AddDocumentIntent.Upload(it)) },
                 isUploading = isUploading,
                 title = "Select file",
                 icon = UploadIcon.Document,
@@ -239,7 +260,7 @@ private fun MobileLayout(
                 tasks = uploadTasks,
                 documents = uploadedDocuments,
                 deletionHandles = deletionHandles,
-                uploadManager = viewModel.provideUploadManager(),
+                uploadManager = uploadManager,
                 modifierList = Modifier.fillMaxWidth()
             )
 

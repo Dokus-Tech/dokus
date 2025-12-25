@@ -3,7 +3,10 @@ package ai.dokus.app.cashflow.screens
 import ai.dokus.app.cashflow.components.invoice.InteractiveInvoiceDocument
 import ai.dokus.app.cashflow.components.invoice.InvoiceSendOptionsPanel
 import ai.dokus.app.cashflow.components.invoice.InvoiceSendOptionsStep
-import ai.dokus.app.cashflow.viewmodel.CreateInvoiceViewModel
+import ai.dokus.app.cashflow.viewmodel.CreateInvoiceAction
+import ai.dokus.app.cashflow.viewmodel.CreateInvoiceContainer
+import ai.dokus.app.cashflow.viewmodel.CreateInvoiceIntent
+import ai.dokus.app.cashflow.viewmodel.CreateInvoiceState
 import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.app.contacts.components.ContactAutoFillData
@@ -51,8 +54,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -60,7 +61,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.plus
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 
 /**
  * Screen for creating a new invoice using an interactive WYSIWYG editor.
@@ -70,166 +74,184 @@ import org.koin.compose.viewmodel.koinViewModel
  */
 @Composable
 internal fun CreateInvoiceScreen(
-    viewModel: CreateInvoiceViewModel = koinViewModel(),
+    container: CreateInvoiceContainer = container(),
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    val formState by viewModel.formState.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
-    val createdInvoiceId by viewModel.createdInvoiceId.collectAsState()
-    val invoiceNumberPreview by viewModel.invoiceNumberPreview.collectAsState()
-
-    // Navigate back when invoice is created
-    LaunchedEffect(createdInvoiceId) {
-        if (createdInvoiceId != null) {
-            navController.popBackStack()
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            is CreateInvoiceAction.NavigateBack -> navController.popBackStack()
+            is CreateInvoiceAction.NavigateToCreateContact -> {
+                navController.navigate(ContactsDestination.CreateContact)
+            }
+            is CreateInvoiceAction.NavigateToInvoice -> {
+                // Invoice created, navigate back
+                navController.popBackStack()
+            }
+            is CreateInvoiceAction.ShowValidationError -> {
+                // Could show a snackbar, for now handled via form state errors
+            }
+            is CreateInvoiceAction.ShowSuccess -> {
+                // Could show a success snackbar
+            }
+            is CreateInvoiceAction.ShowError -> {
+                // Could show an error snackbar
+            }
         }
     }
+
+    val formState = state.formState
+    val uiState = state.uiState
+    val invoiceNumberPreview = (state as? CreateInvoiceState.Editing)?.invoiceNumberPreview
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLargeScreen) {
-                DesktopLayout(
-                    contentPadding = contentPadding,
-                    invoiceNumberPreview = invoiceNumberPreview,
-                    onBackPress = { navController.popBackStack() },
-                    invoiceContent = {
-                        InteractiveInvoiceDocument(
-                            formState = formState,
-                            uiState = uiState,
-                            onClientClick = viewModel::openClientPanel,
-                            onIssueDateClick = viewModel::openIssueDatePicker,
-                            onDueDateClick = viewModel::openDueDatePicker,
-                            onItemClick = viewModel::expandItem,
-                            onItemCollapse = viewModel::collapseItem,
-                            onAddItem = { viewModel.addLineItem() },
-                            onRemoveItem = viewModel::removeLineItem,
-                            onUpdateItemDescription = viewModel::updateItemDescription,
-                            onUpdateItemQuantity = viewModel::updateItemQuantity,
-                            onUpdateItemUnitPrice = viewModel::updateItemUnitPrice,
-                            onUpdateItemVatRate = viewModel::updateItemVatRate
-                        )
-                    },
-                    sendOptionsContent = {
-                        InvoiceSendOptionsPanel(
-                            formState = formState,
-                            selectedMethod = uiState.selectedDeliveryMethod,
-                            onMethodSelected = viewModel::selectDeliveryMethod,
-                            onSaveAsDraft = viewModel::saveAsDraft,
-                            isSaving = formState.isSaving
-                        )
-                    }
-                )
-
-                // Client selection side panel with ContactAutocomplete
-                ContactSelectionPanel(
-                    isVisible = uiState.isClientPanelOpen,
-                    onDismiss = viewModel::closeClientPanel,
-                    selectedContact = formState.selectedClient,
-                    searchQuery = uiState.clientSearchQuery,
-                    onSearchQueryChange = viewModel::updateClientSearchQuery,
-                    onContactSelected = { autoFillData ->
-                        // Select the contact
-                        viewModel.selectClientAndClose(autoFillData.contact)
-
-                        // Auto-fill due date from payment terms if available
-                        val paymentTerms = autoFillData.defaultPaymentTerms
-                        if (paymentTerms > 0) {
-                            formState.issueDate?.let { issueDate ->
-                                val newDueDate = issueDate.plus(paymentTerms, DateTimeUnit.DAY)
-                                viewModel.updateDueDate(newDueDate)
-                            }
+                with(container.store) {
+                    DesktopLayout(
+                        contentPadding = contentPadding,
+                        invoiceNumberPreview = invoiceNumberPreview,
+                        onBackPress = { intent(CreateInvoiceIntent.BackClicked) },
+                        invoiceContent = {
+                            InteractiveInvoiceDocument(
+                                formState = formState,
+                                uiState = uiState,
+                                onClientClick = { intent(CreateInvoiceIntent.OpenClientPanel) },
+                                onIssueDateClick = { intent(CreateInvoiceIntent.OpenIssueDatePicker) },
+                                onDueDateClick = { intent(CreateInvoiceIntent.OpenDueDatePicker) },
+                                onItemClick = { intent(CreateInvoiceIntent.ExpandItem(it)) },
+                                onItemCollapse = { intent(CreateInvoiceIntent.CollapseItem) },
+                                onAddItem = { intent(CreateInvoiceIntent.AddLineItem) },
+                                onRemoveItem = { intent(CreateInvoiceIntent.RemoveLineItem(it)) },
+                                onUpdateItemDescription = { id, desc -> intent(CreateInvoiceIntent.UpdateItemDescription(id, desc)) },
+                                onUpdateItemQuantity = { id, qty -> intent(CreateInvoiceIntent.UpdateItemQuantity(id, qty)) },
+                                onUpdateItemUnitPrice = { id, price -> intent(CreateInvoiceIntent.UpdateItemUnitPrice(id, price)) },
+                                onUpdateItemVatRate = { id, rate -> intent(CreateInvoiceIntent.UpdateItemVatRate(id, rate)) }
+                            )
+                        },
+                        sendOptionsContent = {
+                            InvoiceSendOptionsPanel(
+                                formState = formState,
+                                selectedMethod = uiState.selectedDeliveryMethod,
+                                onMethodSelected = { intent(CreateInvoiceIntent.SelectDeliveryMethod(it)) },
+                                onSaveAsDraft = { intent(CreateInvoiceIntent.SaveAsDraft) },
+                                isSaving = formState.isSaving
+                            )
                         }
+                    )
 
-                        // Auto-fill VAT rate for first item if contact has default VAT rate
-                        autoFillData.defaultVatRate?.toIntOrNull()?.let { vatRate ->
-                            formState.items.firstOrNull()?.let { firstItem ->
-                                viewModel.updateItemVatRate(firstItem.id, vatRate)
+                    // Client selection side panel with ContactAutocomplete
+                    ContactSelectionPanel(
+                        isVisible = uiState.isClientPanelOpen,
+                        onDismiss = { intent(CreateInvoiceIntent.CloseClientPanel) },
+                        selectedContact = formState.selectedClient,
+                        searchQuery = uiState.clientSearchQuery,
+                        onSearchQueryChange = { intent(CreateInvoiceIntent.UpdateClientSearchQuery(it)) },
+                        onContactSelected = { autoFillData ->
+                            // Select the contact
+                            intent(CreateInvoiceIntent.SelectClient(autoFillData.contact))
+
+                            // Auto-fill due date from payment terms if available
+                            val paymentTerms = autoFillData.defaultPaymentTerms
+                            if (paymentTerms > 0) {
+                                formState.issueDate?.let { issueDate ->
+                                    val newDueDate = issueDate.plus(paymentTerms, DateTimeUnit.DAY)
+                                    intent(CreateInvoiceIntent.UpdateDueDate(newDueDate))
+                                }
                             }
+
+                            // Auto-fill VAT rate for first item if contact has default VAT rate
+                            autoFillData.defaultVatRate?.toIntOrNull()?.let { vatRate ->
+                                formState.items.firstOrNull()?.let { firstItem ->
+                                    intent(CreateInvoiceIntent.UpdateItemVatRate(firstItem.id, vatRate))
+                                }
+                            }
+                        },
+                        onAddNewContact = {
+                            intent(CreateInvoiceIntent.CloseClientPanel)
+                            navController.navigate(ContactsDestination.CreateContact)
                         }
-                    },
-                    onAddNewContact = {
-                        viewModel.closeClientPanel()
-                        navController.navigate(ContactsDestination.CreateContact)
-                    }
-                )
+                    )
+                }
             } else {
-                // Mobile: Two-step flow
-                when (uiState.currentStep) {
-                    InvoiceCreationStep.EDIT_INVOICE -> {
-                        MobileEditLayout(
-                            contentPadding = contentPadding,
-                            invoiceNumberPreview = invoiceNumberPreview,
-                            onBackPress = { navController.popBackStack() },
-                            invoiceContent = {
-                                InteractiveInvoiceDocument(
-                                    formState = formState,
-                                    uiState = uiState,
-                                    onClientClick = viewModel::openClientPanel,
-                                    onIssueDateClick = viewModel::openIssueDatePicker,
-                                    onDueDateClick = viewModel::openDueDatePicker,
-                                    onItemClick = viewModel::expandItem,
-                                    onItemCollapse = viewModel::collapseItem,
-                                    onAddItem = { viewModel.addLineItem() },
-                                    onRemoveItem = viewModel::removeLineItem,
-                                    onUpdateItemDescription = viewModel::updateItemDescription,
-                                    onUpdateItemQuantity = viewModel::updateItemQuantity,
-                                    onUpdateItemUnitPrice = viewModel::updateItemUnitPrice,
-                                    onUpdateItemVatRate = viewModel::updateItemVatRate
-                                )
-                            },
-                            onNextClick = viewModel::goToSendOptions,
-                            isNextEnabled = formState.isValid
-                        )
+                with(container.store) {
+                    // Mobile: Two-step flow
+                    when (uiState.currentStep) {
+                        InvoiceCreationStep.EDIT_INVOICE -> {
+                            MobileEditLayout(
+                                contentPadding = contentPadding,
+                                invoiceNumberPreview = invoiceNumberPreview,
+                                onBackPress = { intent(CreateInvoiceIntent.BackClicked) },
+                                invoiceContent = {
+                                    InteractiveInvoiceDocument(
+                                        formState = formState,
+                                        uiState = uiState,
+                                        onClientClick = { intent(CreateInvoiceIntent.OpenClientPanel) },
+                                        onIssueDateClick = { intent(CreateInvoiceIntent.OpenIssueDatePicker) },
+                                        onDueDateClick = { intent(CreateInvoiceIntent.OpenDueDatePicker) },
+                                        onItemClick = { intent(CreateInvoiceIntent.ExpandItem(it)) },
+                                        onItemCollapse = { intent(CreateInvoiceIntent.CollapseItem) },
+                                        onAddItem = { intent(CreateInvoiceIntent.AddLineItem) },
+                                        onRemoveItem = { intent(CreateInvoiceIntent.RemoveLineItem(it)) },
+                                        onUpdateItemDescription = { id, desc -> intent(CreateInvoiceIntent.UpdateItemDescription(id, desc)) },
+                                        onUpdateItemQuantity = { id, qty -> intent(CreateInvoiceIntent.UpdateItemQuantity(id, qty)) },
+                                        onUpdateItemUnitPrice = { id, price -> intent(CreateInvoiceIntent.UpdateItemUnitPrice(id, price)) },
+                                        onUpdateItemVatRate = { id, rate -> intent(CreateInvoiceIntent.UpdateItemVatRate(id, rate)) }
+                                    )
+                                },
+                                onNextClick = { intent(CreateInvoiceIntent.GoToSendOptions) },
+                                isNextEnabled = formState.isValid
+                            )
 
-                        // Client selection side panel with ContactAutocomplete
-                        ContactSelectionPanel(
-                            isVisible = uiState.isClientPanelOpen,
-                            onDismiss = viewModel::closeClientPanel,
-                            selectedContact = formState.selectedClient,
-                            searchQuery = uiState.clientSearchQuery,
-                            onSearchQueryChange = viewModel::updateClientSearchQuery,
-                            onContactSelected = { autoFillData ->
-                                // Select the contact
-                                viewModel.selectClientAndClose(autoFillData.contact)
+                            // Client selection side panel with ContactAutocomplete
+                            ContactSelectionPanel(
+                                isVisible = uiState.isClientPanelOpen,
+                                onDismiss = { intent(CreateInvoiceIntent.CloseClientPanel) },
+                                selectedContact = formState.selectedClient,
+                                searchQuery = uiState.clientSearchQuery,
+                                onSearchQueryChange = { intent(CreateInvoiceIntent.UpdateClientSearchQuery(it)) },
+                                onContactSelected = { autoFillData ->
+                                    // Select the contact
+                                    intent(CreateInvoiceIntent.SelectClient(autoFillData.contact))
 
-                                // Auto-fill due date from payment terms if available
-                                val paymentTerms = autoFillData.defaultPaymentTerms
-                                if (paymentTerms > 0) {
-                                    formState.issueDate?.let { issueDate ->
-                                        val newDueDate =
-                                            issueDate.plus(paymentTerms, DateTimeUnit.DAY)
-                                        viewModel.updateDueDate(newDueDate)
+                                    // Auto-fill due date from payment terms if available
+                                    val paymentTerms = autoFillData.defaultPaymentTerms
+                                    if (paymentTerms > 0) {
+                                        formState.issueDate?.let { issueDate ->
+                                            val newDueDate =
+                                                issueDate.plus(paymentTerms, DateTimeUnit.DAY)
+                                            intent(CreateInvoiceIntent.UpdateDueDate(newDueDate))
+                                        }
                                     }
-                                }
 
-                                // Auto-fill VAT rate for first item if contact has default VAT rate
-                                autoFillData.defaultVatRate?.toIntOrNull()?.let { vatRate ->
-                                    formState.items.firstOrNull()?.let { firstItem ->
-                                        viewModel.updateItemVatRate(firstItem.id, vatRate)
+                                    // Auto-fill VAT rate for first item if contact has default VAT rate
+                                    autoFillData.defaultVatRate?.toIntOrNull()?.let { vatRate ->
+                                        formState.items.firstOrNull()?.let { firstItem ->
+                                            intent(CreateInvoiceIntent.UpdateItemVatRate(firstItem.id, vatRate))
+                                        }
                                     }
+                                },
+                                onAddNewContact = {
+                                    intent(CreateInvoiceIntent.CloseClientPanel)
+                                    navController.navigate(ContactsDestination.CreateContact)
                                 }
-                            },
-                            onAddNewContact = {
-                                viewModel.closeClientPanel()
-                                navController.navigate(ContactsDestination.CreateContact)
-                            }
-                        )
-                    }
+                            )
+                        }
 
-                    InvoiceCreationStep.SEND_OPTIONS -> {
-                        InvoiceSendOptionsStep(
-                            formState = formState,
-                            selectedMethod = uiState.selectedDeliveryMethod,
-                            onMethodSelected = viewModel::selectDeliveryMethod,
-                            onBackToEdit = viewModel::goBackToEditInvoice,
-                            onSaveAsDraft = viewModel::saveAsDraft,
-                            isSaving = formState.isSaving,
-                            modifier = Modifier.padding(contentPadding)
-                        )
+                        InvoiceCreationStep.SEND_OPTIONS -> {
+                            InvoiceSendOptionsStep(
+                                formState = formState,
+                                selectedMethod = uiState.selectedDeliveryMethod,
+                                onMethodSelected = { intent(CreateInvoiceIntent.SelectDeliveryMethod(it)) },
+                                onBackToEdit = { intent(CreateInvoiceIntent.GoBackToEdit) },
+                                onSaveAsDraft = { intent(CreateInvoiceIntent.SaveAsDraft) },
+                                isSaving = formState.isSaving,
+                                modifier = Modifier.padding(contentPadding)
+                            )
+                        }
                     }
                 }
             }
@@ -239,19 +261,18 @@ internal fun CreateInvoiceScreen(
                 val initialDate = when (uiState.isDatePickerOpen) {
                     DatePickerTarget.ISSUE_DATE -> formState.issueDate
                     DatePickerTarget.DUE_DATE -> formState.dueDate
-                    else -> null
                 }
 
                 PDatePickerDialog(
                     initialDate = initialDate,
                     onDateSelected = { date ->
                         if (date != null) {
-                            viewModel.selectDate(date)
+                            container.store.intent(CreateInvoiceIntent.SelectDate(date))
                         } else {
-                            viewModel.closeDatePicker()
+                            container.store.intent(CreateInvoiceIntent.CloseDatePicker)
                         }
                     },
-                    onDismiss = viewModel::closeDatePicker
+                    onDismiss = { container.store.intent(CreateInvoiceIntent.CloseDatePicker) }
                 )
             }
         }
@@ -379,7 +400,7 @@ private fun MobileEditLayout(
  * When a contact is selected, returns ContactAutoFillData for auto-filling invoice fields.
  */
 @Composable
-private fun ContactSelectionPanel(
+private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
     isVisible: Boolean,
     onDismiss: () -> Unit,
     selectedContact: ai.dokus.foundation.domain.model.ContactDto?,

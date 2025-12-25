@@ -4,8 +4,10 @@ import ai.dokus.app.contacts.components.ContactFormActionButtonsCompact
 import ai.dokus.app.contacts.components.ContactFormContent
 import ai.dokus.app.contacts.components.ContactFormFields
 import ai.dokus.app.contacts.components.DuplicateWarningBanner
-import ai.dokus.app.contacts.viewmodel.ContactFormViewModel
-import ai.dokus.app.contacts.viewmodel.DuplicateContact
+import ai.dokus.app.contacts.viewmodel.ContactFormAction
+import ai.dokus.app.contacts.viewmodel.ContactFormContainer
+import ai.dokus.app.contacts.viewmodel.ContactFormIntent
+import ai.dokus.app.contacts.viewmodel.ContactFormState
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.domain.ids.ContactId
@@ -35,16 +37,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
+import org.koin.core.parameter.parametersOf
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 
 /**
  * Screen for creating a new contact or editing an existing contact.
@@ -63,41 +65,34 @@ import tech.dokus.foundation.app.state.isSuccess
 @Composable
 internal fun ContactFormScreen(
     contactId: ContactId? = null,
-    viewModel: ContactFormViewModel = koinViewModel()
+    container: ContactFormContainer = container {
+        parametersOf(
+            ContactFormContainer.Companion.Params(contactId)
+        )
+    }
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    val state by viewModel.state.collectAsState()
-    val formState by viewModel.formState.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
-    val duplicates by viewModel.duplicates.collectAsState()
-    val savedContactId by viewModel.savedContactId.collectAsState()
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            ContactFormAction.NavigateBack -> navController.popBackStack()
+            is ContactFormAction.NavigateToContact -> {
+                // Navigate back to the contact list - the contact will be visible there
+                navController.popBackStack()
+            }
 
-    val isEditMode = uiState.isEditMode
+            is ContactFormAction.ShowError -> {
+                // TODO: Show snackbar with error message
+            }
 
-    // Initialize form based on mode
-    LaunchedEffect(contactId) {
-        if (contactId != null) {
-            viewModel.initForEdit(contactId)
-        } else {
-            viewModel.initForCreate()
-        }
-    }
+            is ContactFormAction.ShowSuccess -> {
+                // TODO: Show snackbar with success message
+            }
 
-    // Navigate when contact is saved successfully
-    LaunchedEffect(savedContactId, state) {
-        if (savedContactId != null && state.isSuccess()) {
-            // Navigate back - the contact list will refresh and show the new/updated contact
-            navController.popBackStack()
-        }
-    }
-
-    // Handle deletion completion - when deleting finishes and state becomes idle, navigate back
-    LaunchedEffect(state, uiState.isContactDeleted) {
-        if (uiState.isContactDeleted) {
-            // Contact was deleted successfully, navigate back to contacts list
-            navController.popBackStack()
+            is ContactFormAction.ShowFieldError -> {
+                // Field errors are shown inline in the form
+            }
         }
     }
 
@@ -105,105 +100,70 @@ internal fun ContactFormScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
-            // Loading state for edit mode (loading existing contact)
-            if (isEditMode && state.isLoading() && formState.name.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+            when (val state = state) {
+                is ContactFormState.LoadingContact -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-            } else {
-                if (isLargeScreen) {
-                    DesktopFormLayout(
-                        contentPadding = contentPadding,
-                        isEditMode = isEditMode,
-                        formState = formState,
-                        duplicates = duplicates,
-                        onBackPress = { navController.popBackStack() },
-                        onNameChange = viewModel::updateName,
-                        onEmailChange = viewModel::updateEmail,
-                        onPhoneChange = viewModel::updatePhone,
-                        onContactPersonChange = viewModel::updateContactPerson,
-                        onVatNumberChange = viewModel::updateVatNumber,
-                        onCompanyNumberChange = viewModel::updateCompanyNumber,
-                        onBusinessTypeChange = viewModel::updateBusinessType,
-                        onAddressLine1Change = viewModel::updateAddressLine1,
-                        onAddressLine2Change = viewModel::updateAddressLine2,
-                        onCityChange = viewModel::updateCity,
-                        onPostalCodeChange = viewModel::updatePostalCode,
-                        onCountryChange = viewModel::updateCountry,
-                        onPeppolIdChange = viewModel::updatePeppolId,
-                        onPeppolEnabledChange = viewModel::updatePeppolEnabled,
-                        onDefaultPaymentTermsChange = viewModel::updateDefaultPaymentTerms,
-                        onDefaultVatRateChange = viewModel::updateDefaultVatRate,
-                        onTagsChange = viewModel::updateTags,
-                        onInitialNoteChange = viewModel::updateInitialNote,
-                        onIsActiveChange = viewModel::updateIsActive,
-                        onSave = viewModel::save,
-                        onCancel = { navController.popBackStack() },
-                        onDelete = viewModel::showDeleteConfirmation,
-                        onDismissDuplicates = viewModel::dismissDuplicateWarnings,
-                        onMergeWithExisting = { duplicate ->
-                            // Navigate to the duplicate contact's details page for merging
-                            navController.navigateTo(
-                                ContactsDestination.ContactDetails(duplicate.contact.id.toString())
+
+                is ContactFormState.Editing -> {
+                    with(container.store) {
+                        if (isLargeScreen) {
+                            DesktopFormLayout(
+                                contentPadding = contentPadding,
+                                state = state,
+                                onBackPress = { intent(ContactFormIntent.Cancel) }
+                            )
+                        } else {
+                            MobileFormLayout(
+                                contentPadding = contentPadding,
+                                state = state,
+                                onBackPress = { intent(ContactFormIntent.Cancel) }
                             )
                         }
+                    }
+                }
+
+                is ContactFormState.Error -> {
+                    val editingState = ContactFormState.Editing(
+                        contactId = state.contactId,
+                        formData = state.formData
                     )
-                } else {
-                    MobileFormLayout(
-                        contentPadding = contentPadding,
-                        isEditMode = isEditMode,
-                        formState = formState,
-                        duplicates = duplicates,
-                        onBackPress = { navController.popBackStack() },
-                        onNameChange = viewModel::updateName,
-                        onEmailChange = viewModel::updateEmail,
-                        onPhoneChange = viewModel::updatePhone,
-                        onContactPersonChange = viewModel::updateContactPerson,
-                        onVatNumberChange = viewModel::updateVatNumber,
-                        onCompanyNumberChange = viewModel::updateCompanyNumber,
-                        onBusinessTypeChange = viewModel::updateBusinessType,
-                        onAddressLine1Change = viewModel::updateAddressLine1,
-                        onAddressLine2Change = viewModel::updateAddressLine2,
-                        onCityChange = viewModel::updateCity,
-                        onPostalCodeChange = viewModel::updatePostalCode,
-                        onCountryChange = viewModel::updateCountry,
-                        onPeppolIdChange = viewModel::updatePeppolId,
-                        onPeppolEnabledChange = viewModel::updatePeppolEnabled,
-                        onDefaultPaymentTermsChange = viewModel::updateDefaultPaymentTerms,
-                        onDefaultVatRateChange = viewModel::updateDefaultVatRate,
-                        onTagsChange = viewModel::updateTags,
-                        onInitialNoteChange = viewModel::updateInitialNote,
-                        onIsActiveChange = viewModel::updateIsActive,
-                        onSave = viewModel::save,
-                        onCancel = { navController.popBackStack() },
-                        onDelete = viewModel::showDeleteConfirmation,
-                        onDismissDuplicates = viewModel::dismissDuplicateWarnings,
-                        onMergeWithExisting = { duplicate ->
-                            // Navigate to the duplicate contact's details page for merging
-                            navController.navigateTo(
-                                ContactsDestination.ContactDetails(duplicate.contact.id.toString())
+                    with(container.store) {
+                        if (isLargeScreen) {
+                            DesktopFormLayout(
+                                contentPadding = contentPadding,
+                                state = editingState,
+                                onBackPress = { intent(ContactFormIntent.Cancel) }
+                            )
+                        } else {
+                            MobileFormLayout(
+                                contentPadding = contentPadding,
+                                state = editingState,
+                                onBackPress = { intent(ContactFormIntent.Cancel) }
                             )
                         }
-                    )
+                    }
                 }
             }
 
             // Delete confirmation dialog
-            if (uiState.showDeleteConfirmation) {
-                DeleteContactConfirmationDialog(
-                    contactName = formState.name,
-                    isDeleting = formState.isDeleting,
-                    onConfirm = {
-                        viewModel.deleteContact()
-                        // Navigate back will happen via LaunchedEffect when deletion completes
-                    },
-                    onDismiss = viewModel::hideDeleteConfirmation
-                )
+            (state as? ContactFormState.Editing)?.let { editingState ->
+                if (editingState.ui.showDeleteConfirmation) {
+                    with(container.store) {
+                        DeleteContactConfirmationDialog(
+                            contactName = editingState.formData.name,
+                            isDeleting = editingState.isDeleting,
+                            onConfirm = { intent(ContactFormIntent.Delete) }
+                        ) { intent(ContactFormIntent.HideDeleteConfirmation) }
+                    }
+                }
             }
         }
     }
@@ -214,67 +174,48 @@ internal fun ContactFormScreen(
  * Uses ContactFormContent with additional horizontal padding for desktop.
  */
 @Composable
-private fun DesktopFormLayout(
+private fun IntentReceiver<ContactFormIntent>.DesktopFormLayout(
     contentPadding: PaddingValues,
-    isEditMode: Boolean,
-    formState: ai.dokus.app.contacts.viewmodel.ContactFormState,
-    duplicates: List<DuplicateContact>,
-    onBackPress: () -> Unit,
-    onNameChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
-    onPhoneChange: (String) -> Unit,
-    onContactPersonChange: (String) -> Unit,
-    onVatNumberChange: (String) -> Unit,
-    onCompanyNumberChange: (String) -> Unit,
-    onBusinessTypeChange: (ai.dokus.foundation.domain.enums.ClientType) -> Unit,
-    onAddressLine1Change: (String) -> Unit,
-    onAddressLine2Change: (String) -> Unit,
-    onCityChange: (String) -> Unit,
-    onPostalCodeChange: (String) -> Unit,
-    onCountryChange: (String) -> Unit,
-    onPeppolIdChange: (String) -> Unit,
-    onPeppolEnabledChange: (Boolean) -> Unit,
-    onDefaultPaymentTermsChange: (Int) -> Unit,
-    onDefaultVatRateChange: (String) -> Unit,
-    onTagsChange: (String) -> Unit,
-    onInitialNoteChange: (String) -> Unit,
-    onIsActiveChange: (Boolean) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
-    onDelete: () -> Unit,
-    onDismissDuplicates: () -> Unit,
-    onMergeWithExisting: (DuplicateContact) -> Unit
+    state: ContactFormState.Editing,
+    onBackPress: () -> Unit
 ) {
+    val navController = LocalNavController.current
+
     ContactFormContent(
-        isEditMode = isEditMode,
-        formState = formState,
-        duplicates = duplicates,
+        isEditMode = state.isEditMode,
+        formData = state.formData,
+        isSaving = state.isSaving,
+        isDeleting = state.isDeleting,
+        duplicates = state.duplicates,
         showBackButton = true,
         onBackPress = onBackPress,
-        onNameChange = onNameChange,
-        onEmailChange = onEmailChange,
-        onPhoneChange = onPhoneChange,
-        onContactPersonChange = onContactPersonChange,
-        onVatNumberChange = onVatNumberChange,
-        onCompanyNumberChange = onCompanyNumberChange,
-        onBusinessTypeChange = onBusinessTypeChange,
-        onAddressLine1Change = onAddressLine1Change,
-        onAddressLine2Change = onAddressLine2Change,
-        onCityChange = onCityChange,
-        onPostalCodeChange = onPostalCodeChange,
-        onCountryChange = onCountryChange,
-        onPeppolIdChange = onPeppolIdChange,
-        onPeppolEnabledChange = onPeppolEnabledChange,
-        onDefaultPaymentTermsChange = onDefaultPaymentTermsChange,
-        onDefaultVatRateChange = onDefaultVatRateChange,
-        onTagsChange = onTagsChange,
-        onInitialNoteChange = onInitialNoteChange,
-        onIsActiveChange = onIsActiveChange,
-        onSave = onSave,
-        onCancel = onCancel,
-        onDelete = onDelete,
-        onDismissDuplicates = onDismissDuplicates,
-        onMergeWithExisting = onMergeWithExisting,
+        onNameChange = { intent(ContactFormIntent.UpdateName(it)) },
+        onEmailChange = { intent(ContactFormIntent.UpdateEmail(it)) },
+        onPhoneChange = { intent(ContactFormIntent.UpdatePhone(it)) },
+        onContactPersonChange = { intent(ContactFormIntent.UpdateContactPerson(it)) },
+        onVatNumberChange = { intent(ContactFormIntent.UpdateVatNumber(it)) },
+        onCompanyNumberChange = { intent(ContactFormIntent.UpdateCompanyNumber(it)) },
+        onBusinessTypeChange = { intent(ContactFormIntent.UpdateBusinessType(it)) },
+        onAddressLine1Change = { intent(ContactFormIntent.UpdateAddressLine1(it)) },
+        onAddressLine2Change = { intent(ContactFormIntent.UpdateAddressLine2(it)) },
+        onCityChange = { intent(ContactFormIntent.UpdateCity(it)) },
+        onPostalCodeChange = { intent(ContactFormIntent.UpdatePostalCode(it)) },
+        onCountryChange = { intent(ContactFormIntent.UpdateCountry(it)) },
+        onPeppolIdChange = { intent(ContactFormIntent.UpdatePeppolId(it)) },
+        onPeppolEnabledChange = { intent(ContactFormIntent.UpdatePeppolEnabled(it)) },
+        onDefaultPaymentTermsChange = { intent(ContactFormIntent.UpdateDefaultPaymentTerms(it)) },
+        onDefaultVatRateChange = { intent(ContactFormIntent.UpdateDefaultVatRate(it)) },
+        onTagsChange = { intent(ContactFormIntent.UpdateTags(it)) },
+        onInitialNoteChange = { intent(ContactFormIntent.UpdateInitialNote(it)) },
+        onIsActiveChange = { intent(ContactFormIntent.UpdateIsActive(it)) },
+        onSave = { intent(ContactFormIntent.Save) },
+        onCancel = onBackPress,
+        onDelete = { intent(ContactFormIntent.ShowDeleteConfirmation) },
+        onDismissDuplicates = { intent(ContactFormIntent.DismissDuplicateWarnings) },
+        onMergeWithExisting = { duplicate ->
+            // Navigate to the duplicate contact's details page for merging
+            navController.navigateTo(ContactsDestination.ContactDetails(duplicate.contact.id.toString()))
+        },
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
@@ -287,37 +228,13 @@ private fun DesktopFormLayout(
  * Full-width content with fixed bottom action bar.
  */
 @Composable
-private fun MobileFormLayout(
+private fun IntentReceiver<ContactFormIntent>.MobileFormLayout(
     contentPadding: PaddingValues,
-    isEditMode: Boolean,
-    formState: ai.dokus.app.contacts.viewmodel.ContactFormState,
-    duplicates: List<DuplicateContact>,
-    onBackPress: () -> Unit,
-    onNameChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
-    onPhoneChange: (String) -> Unit,
-    onContactPersonChange: (String) -> Unit,
-    onVatNumberChange: (String) -> Unit,
-    onCompanyNumberChange: (String) -> Unit,
-    onBusinessTypeChange: (ai.dokus.foundation.domain.enums.ClientType) -> Unit,
-    onAddressLine1Change: (String) -> Unit,
-    onAddressLine2Change: (String) -> Unit,
-    onCityChange: (String) -> Unit,
-    onPostalCodeChange: (String) -> Unit,
-    onCountryChange: (String) -> Unit,
-    onPeppolIdChange: (String) -> Unit,
-    onPeppolEnabledChange: (Boolean) -> Unit,
-    onDefaultPaymentTermsChange: (Int) -> Unit,
-    onDefaultVatRateChange: (String) -> Unit,
-    onTagsChange: (String) -> Unit,
-    onInitialNoteChange: (String) -> Unit,
-    onIsActiveChange: (Boolean) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
-    onDelete: () -> Unit,
-    onDismissDuplicates: () -> Unit,
-    onMergeWithExisting: (DuplicateContact) -> Unit
+    state: ContactFormState.Editing,
+    onBackPress: () -> Unit
 ) {
+    val navController = LocalNavController.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -335,13 +252,13 @@ private fun MobileFormLayout(
 
             // Header with back button
             SectionTitle(
-                text = if (isEditMode) "Edit Contact" else "Create Contact",
+                text = if (state.isEditMode) "Edit Contact" else "Create Contact",
                 onBackPress = onBackPress
             )
 
             // Description (shorter for mobile)
             Text(
-                text = if (isEditMode) {
+                text = if (state.isEditMode) {
                     "Update contact information."
                 } else {
                     "Required fields are marked with *."
@@ -351,38 +268,49 @@ private fun MobileFormLayout(
             )
 
             // Duplicate warning banner
-            if (duplicates.isNotEmpty()) {
+            if (state.duplicates.isNotEmpty()) {
                 DuplicateWarningBanner(
-                    duplicates = duplicates,
-                    onContinueAnyway = onDismissDuplicates,
-                    onMergeWithExisting = onMergeWithExisting,
-                    onCancel = onCancel
+                    duplicates = state.duplicates,
+                    onContinueAnyway = { intent(ContactFormIntent.DismissDuplicateWarnings) },
+                    onMergeWithExisting = { duplicate ->
+                        // Navigate to the duplicate contact's details page for merging
+                        navController.navigateTo(
+                            ContactsDestination.ContactDetails(duplicate.contact.id.toString())
+                        )
+                    },
+                    onCancel = onBackPress
                 )
             }
 
             // Form fields
             ContactFormFields(
-                formState = formState,
-                onNameChange = onNameChange,
-                onEmailChange = onEmailChange,
-                onPhoneChange = onPhoneChange,
-                onContactPersonChange = onContactPersonChange,
-                onVatNumberChange = onVatNumberChange,
-                onCompanyNumberChange = onCompanyNumberChange,
-                onBusinessTypeChange = onBusinessTypeChange,
-                onAddressLine1Change = onAddressLine1Change,
-                onAddressLine2Change = onAddressLine2Change,
-                onCityChange = onCityChange,
-                onPostalCodeChange = onPostalCodeChange,
-                onCountryChange = onCountryChange,
-                onPeppolIdChange = onPeppolIdChange,
-                onPeppolEnabledChange = onPeppolEnabledChange,
-                onDefaultPaymentTermsChange = onDefaultPaymentTermsChange,
-                onDefaultVatRateChange = onDefaultVatRateChange,
-                onTagsChange = onTagsChange,
-                onInitialNoteChange = onInitialNoteChange,
-                onIsActiveChange = onIsActiveChange,
-                showInitialNote = !isEditMode
+                formData = state.formData,
+                onNameChange = { intent(ContactFormIntent.UpdateName(it)) },
+                onEmailChange = { intent(ContactFormIntent.UpdateEmail(it)) },
+                onPhoneChange = { intent(ContactFormIntent.UpdatePhone(it)) },
+                onContactPersonChange = { intent(ContactFormIntent.UpdateContactPerson(it)) },
+                onVatNumberChange = { intent(ContactFormIntent.UpdateVatNumber(it)) },
+                onCompanyNumberChange = { intent(ContactFormIntent.UpdateCompanyNumber(it)) },
+                onBusinessTypeChange = { intent(ContactFormIntent.UpdateBusinessType(it)) },
+                onAddressLine1Change = { intent(ContactFormIntent.UpdateAddressLine1(it)) },
+                onAddressLine2Change = { intent(ContactFormIntent.UpdateAddressLine2(it)) },
+                onCityChange = { intent(ContactFormIntent.UpdateCity(it)) },
+                onPostalCodeChange = { intent(ContactFormIntent.UpdatePostalCode(it)) },
+                onCountryChange = { intent(ContactFormIntent.UpdateCountry(it)) },
+                onPeppolIdChange = { intent(ContactFormIntent.UpdatePeppolId(it)) },
+                onPeppolEnabledChange = { intent(ContactFormIntent.UpdatePeppolEnabled(it)) },
+                onDefaultPaymentTermsChange = {
+                    intent(
+                        ContactFormIntent.UpdateDefaultPaymentTerms(
+                            it
+                        )
+                    )
+                },
+                onDefaultVatRateChange = { intent(ContactFormIntent.UpdateDefaultVatRate(it)) },
+                onTagsChange = { intent(ContactFormIntent.UpdateTags(it)) },
+                onInitialNoteChange = { intent(ContactFormIntent.UpdateInitialNote(it)) },
+                onIsActiveChange = { intent(ContactFormIntent.UpdateIsActive(it)) },
+                showInitialNote = !state.isEditMode
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -390,13 +318,13 @@ private fun MobileFormLayout(
 
         // Bottom action bar (fixed at bottom for mobile)
         ContactFormActionButtonsCompact(
-            isEditMode = isEditMode,
-            isSaving = formState.isSaving,
-            isDeleting = formState.isDeleting,
-            isValid = formState.isValid,
-            onSave = onSave,
-            onCancel = onCancel,
-            onDelete = onDelete,
+            isEditMode = state.isEditMode,
+            isSaving = state.isSaving,
+            isDeleting = state.isDeleting,
+            isValid = state.formData.isValid,
+            onSave = { intent(ContactFormIntent.Save) },
+            onCancel = onBackPress,
+            onDelete = { intent(ContactFormIntent.ShowDeleteConfirmation) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
