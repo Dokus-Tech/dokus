@@ -1,9 +1,9 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.auth.viewmodel.LoginViewModel
-import tech.dokus.foundation.app.extensions.rememberIsValid
-import tech.dokus.foundation.app.state.exceptionIfError
-import tech.dokus.foundation.app.state.isLoading
+import ai.dokus.app.auth.viewmodel.LoginAction
+import ai.dokus.app.auth.viewmodel.LoginContainer
+import ai.dokus.app.auth.viewmodel.LoginIntent
+import ai.dokus.app.auth.viewmodel.LoginState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.app_name
 import ai.dokus.app.resources.generated.auth_email_label
@@ -23,8 +23,6 @@ import ai.dokus.foundation.design.components.fields.PTextFieldPasswordDefaults
 import ai.dokus.foundation.design.components.layout.TwoPaneContainer
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
@@ -47,12 +45,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -65,57 +59,54 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.exceptionIfError
 
 @Composable
 internal fun LoginScreen(
-    viewModel: LoginViewModel = koinViewModel(),
+    container: LoginContainer = container()
 ) {
+    val navController = LocalNavController.current
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            LoginAction.NavigateToHome -> navController.replace(CoreDestination.Home)
+            LoginAction.NavigateToWorkspaceSelect -> navController.replace(AuthDestination.WorkspaceSelect)
+        }
+    }
+
     Scaffold { contentPadding ->
         TwoPaneContainer(
             middleEffect = {
-                // Shared background effects once
                 EnhancedFloatingBubbles()
                 SpotlightEffect()
             },
-            left = { LoginContent(viewModel, contentPadding) },
+            left = {
+                with(container.store) {
+                    LoginContent(state, contentPadding)
+                }
+            },
             right = { SloganScreen() },
         )
     }
 }
 
 @Composable
-private fun LoginContent(
-    viewModel: LoginViewModel,
+private fun IntentReceiver<LoginIntent>.LoginContent(
+    state: LoginState,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     val focusManager = LocalFocusManager.current
     val navController = LocalNavController.current
 
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is LoginViewModel.Effect.NavigateToHome -> {
-                    navController.replace(CoreDestination.Home)
-                }
-
-                is LoginViewModel.Effect.NavigateToWorkspaceSelect -> {
-                    navController.replace(AuthDestination.WorkspaceSelect)
-                }
-            }
-        }
-    }
-
-    val state by viewModel.state.collectAsState()
     val fieldsError = state.exceptionIfError()
-
-    var email by remember { mutableStateOf(Email("")) }
-    var password by remember { mutableStateOf(Password("")) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
 
-    val emailIsValid = email.rememberIsValid()
-    val passwordIsValid = password.rememberIsValid()
-    val canLogin = emailIsValid && passwordIsValid
+    val isLoading = state is LoginState.Authenticating
+    val canLogin = state.email.isValid && state.password.isValid
 
     Box(
         Modifier
@@ -150,21 +141,21 @@ private fun LoginContent(
                 // Email Field
                 PTextFieldEmail(
                     fieldName = stringResource(Res.string.auth_email_label),
-                    value = email,
+                    value = state.email,
                     keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(
                         imeAction = ImeAction.Next
                     ),
                     error = fieldsError.takeIf { it is DokusException.Validation.InvalidEmail },
                     onAction = { focusManager.moveFocus(FocusDirection.Next) },
                     modifier = Modifier.fillMaxWidth()
-                ) { email = it }
+                ) { intent(LoginIntent.UpdateEmail(it)) }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Password Field
                 PTextFieldPassword(
                     fieldName = stringResource(Res.string.auth_password_label),
-                    value = password,
+                    value = state.password,
                     keyboardOptions = PTextFieldPasswordDefaults.keyboardOptions.copy(
                         imeAction = ImeAction.Done
                     ),
@@ -173,10 +164,10 @@ private fun LoginContent(
                     },
                     onAction = {
                         focusManager.clearFocus()
-                        viewModel.login(email, password)
+                        intent(LoginIntent.LoginClicked)
                     },
                     modifier = Modifier.fillMaxWidth()
-                ) { password = it }
+                ) { intent(LoginIntent.UpdatePassword(it)) }
 
                 // Forgot Password Link
                 Box(
@@ -199,11 +190,11 @@ private fun LoginContent(
                 // Login Button
                 PPrimaryButton(
                     text = stringResource(Res.string.auth_sign_in_button),
-                    enabled = canLogin && !state.isLoading(),
-                    isLoading = state.isLoading(),
+                    enabled = canLogin && !isLoading,
+                    isLoading = isLoading,
                     onClick = {
                         focusManager.clearFocus()
-                        viewModel.login(email, password)
+                        intent(LoginIntent.LoginClicked)
                     },
                     modifier = Modifier.fillMaxWidth()
                 )

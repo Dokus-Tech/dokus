@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinPluginSerialization)
-    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -50,18 +49,20 @@ kotlin {
             implementation(projects.foundation.designSystem)
             implementation(projects.foundation.platform)
             implementation(projects.features.auth.domain)
+            implementation(projects.features.contacts.data)
+            implementation(projects.features.contacts.domain)
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.bundles.koin.compose)
 
             implementation(libs.kotlinx.serialization)
             implementation(libs.kotlinx.coroutinesCore)
-            implementation(libs.bundles.sqldelight)
             implementation(libs.kotlinx.datetime)
-
-            // Ktor client for repository API calls
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.resources)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.flowmvi.test)
         }
         desktopMain.dependencies {
         }
@@ -96,13 +97,4 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-}
-
-sqldelight {
-    databases {
-        create("ContactsCacheDatabase") {
-            packageName.set("ai.dokus.app.contacts.cache")
-            generateAsync.set(true)
-        }
-    }
 }

@@ -169,6 +169,7 @@ coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.r
 # FlowMVI (multiplatform MVI framework)
 flowmvi-core = { module = "pro.respawn.flowmvi:core", version.ref = "flowmvi" }
 flowmvi-compose = { module = "pro.respawn.flowmvi:compose", version.ref = "flowmvi" }
+flowmvi-test = { module = "pro.respawn.flowmvi:test", version.ref = "flowmvi" }
 
 # JetBrains Koog AI Framework
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }

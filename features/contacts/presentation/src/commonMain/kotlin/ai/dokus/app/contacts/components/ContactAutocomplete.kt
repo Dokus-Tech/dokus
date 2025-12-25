@@ -1,6 +1,6 @@
 package ai.dokus.app.contacts.components
 
-import ai.dokus.app.contacts.repository.ContactRepository
+import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.domain.model.ContactDto
@@ -123,7 +123,7 @@ fun ContactAutocomplete(
     enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String? = null,
-    contactRepository: ContactRepository = koinInject()
+    listContacts: ListContactsUseCase = koinInject()
 ) {
     val scope = rememberCoroutineScope()
     val logger = remember { Logger.withTag("ContactAutocomplete") }
@@ -159,7 +159,7 @@ fun ContactAutocomplete(
                 delay(300) // Debounce delay
                 isSearching = true
 
-                contactRepository.listContacts(
+                listContacts(
                     search = searchQuery,
                     isActive = true,
                     limit = 10
@@ -650,7 +650,7 @@ fun ContactAutocompleteSimple(
     enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String? = null,
-    contactRepository: ContactRepository = koinInject()
+    listContacts: ListContactsUseCase = koinInject()
 ) {
     ContactAutocomplete(
         value = value,
@@ -666,6 +666,6 @@ fun ContactAutocompleteSimple(
         enabled = enabled,
         isError = isError,
         errorMessage = errorMessage,
-        contactRepository = contactRepository
+        listContacts = listContacts
     )
 }

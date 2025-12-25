@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.components
 
-import ai.dokus.app.contacts.viewmodel.DuplicateContact
-import ai.dokus.app.contacts.viewmodel.DuplicateMatchReason
+import ai.dokus.app.contacts.viewmodel.DuplicateReason
+import ai.dokus.app.contacts.viewmodel.PotentialDuplicate
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,9 +45,9 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 internal fun DuplicateWarningBanner(
-    duplicates: List<DuplicateContact>,
+    duplicates: List<PotentialDuplicate>,
     onContinueAnyway: () -> Unit,
-    onMergeWithExisting: (DuplicateContact) -> Unit,
+    onMergeWithExisting: (PotentialDuplicate) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -119,7 +119,7 @@ private fun DuplicateWarningHeader(
  */
 @Composable
 private fun DuplicateContactItem(
-    duplicate: DuplicateContact,
+    duplicate: PotentialDuplicate,
     onMerge: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -164,7 +164,7 @@ private fun DuplicateContactItem(
                 }
 
                 // Match reason badge
-                DuplicateMatchReasonBadge(reason = duplicate.matchReason)
+                DuplicateReasonBadge(reason = duplicate.matchReason)
             }
 
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
@@ -181,18 +181,18 @@ private fun DuplicateContactItem(
  * Badge showing the reason for the duplicate match.
  */
 @Composable
-private fun DuplicateMatchReasonBadge(
-    reason: DuplicateMatchReason,
+private fun DuplicateReasonBadge(
+    reason: DuplicateReason,
     modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (reason) {
-        DuplicateMatchReason.VatNumber -> {
+        DuplicateReason.VatNumber -> {
             MaterialTheme.colorScheme.error.copy(alpha = 0.1f) to MaterialTheme.colorScheme.error
         }
-        DuplicateMatchReason.Email -> {
+        DuplicateReason.Email -> {
             MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) to MaterialTheme.colorScheme.primary
         }
-        DuplicateMatchReason.NameAndCountry -> {
+        DuplicateReason.NameAndCountry -> {
             MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f) to MaterialTheme.colorScheme.tertiary
         }
     }

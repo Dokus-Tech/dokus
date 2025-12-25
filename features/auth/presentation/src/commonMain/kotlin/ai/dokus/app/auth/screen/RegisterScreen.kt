@@ -5,9 +5,10 @@ import ai.dokus.app.auth.components.RegisterCredentialsFields
 import ai.dokus.app.auth.components.RegisterProfileFields
 import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.auth.model.RegisterPage
-import ai.dokus.app.auth.viewmodel.RegisterViewModel
-import tech.dokus.foundation.app.state.exceptionIfError
-import tech.dokus.foundation.app.state.isLoading
+import ai.dokus.app.auth.viewmodel.RegisterAction
+import ai.dokus.app.auth.viewmodel.RegisterContainer
+import ai.dokus.app.auth.viewmodel.RegisterIntent
+import ai.dokus.app.auth.viewmodel.RegisterState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_has_account_prefix
 import ai.dokus.app.resources.generated.auth_login_link
@@ -41,13 +42,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -55,29 +52,46 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.exceptionIfError
 
 private val fieldsContentMinHeight = 280.dp
 
 @Composable
 internal fun RegisterScreen(
-    viewModel: RegisterViewModel = koinViewModel()
+    container: RegisterContainer = container()
 ) {
+    val navController = LocalNavController.current
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            RegisterAction.NavigateToHome -> navController.replace(CoreDestination.Home)
+            RegisterAction.NavigateToWorkspaceSelect -> navController.replace(AuthDestination.WorkspaceSelect)
+        }
+    }
+
     Scaffold { contentPadding ->
         TwoPaneContainer(
             middleEffect = {
                 EnhancedFloatingBubbles()
                 SpotlightEffect()
             },
-            left = { RegisterContent(viewModel, contentPadding) },
+            left = {
+                with(container.store) {
+                    RegisterContent(state, contentPadding)
+                }
+            },
             right = { SloganScreen() }
         )
     }
 }
 
 @Composable
-private fun RegisterContent(
-    viewModel: RegisterViewModel,
+private fun IntentReceiver<RegisterIntent>.RegisterContent(
+    state: RegisterState,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     val navController = LocalNavController.current
@@ -85,25 +99,16 @@ private fun RegisterContent(
     val mutableInteractionSource = remember { MutableInteractionSource() }
     val scope = rememberCoroutineScope()
 
-    // Handle navigation effects
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is RegisterViewModel.Effect.NavigateToHome -> {
-                    navController.replace(CoreDestination.Home)
-                }
-
-                is RegisterViewModel.Effect.NavigateToWorkspaceSelect -> {
-                    navController.replace(AuthDestination.WorkspaceSelect)
-                }
-            }
-        }
-    }
-
-    val state by viewModel.state.collectAsState()
     val fieldsError = state.exceptionIfError()
+    val isLoading = state is RegisterState.Registering
 
-    var fields by remember(viewModel) { mutableStateOf(RegisterFormFields()) }
+    // Create form fields from state
+    val fields = RegisterFormFields(
+        email = state.email,
+        password = state.password,
+        firstName = state.firstName,
+        lastName = state.lastName
+    )
     val pagerState = rememberPagerState(pageCount = { 2 })
 
     val onContinueClick = { page: RegisterPage ->
@@ -116,12 +121,7 @@ private fun RegisterContent(
             }
 
             RegisterPage.Credentials -> {
-                viewModel.register(
-                    fields.email,
-                    fields.password,
-                    fields.firstName,
-                    fields.lastName
-                )
+                intent(RegisterIntent.RegisterClicked)
             }
         }
     }
@@ -183,7 +183,10 @@ private fun RegisterContent(
                             focusManager = focusManager,
                             error = fieldsError,
                             fields = fields,
-                            onFieldsUpdate = { fields = it },
+                            onFieldsUpdate = { updatedFields ->
+                                intent(RegisterIntent.UpdateFirstName(updatedFields.firstName))
+                                intent(RegisterIntent.UpdateLastName(updatedFields.lastName))
+                            },
                             onSubmit = { onContinueClick(RegisterPage.Profile) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -192,7 +195,10 @@ private fun RegisterContent(
                             focusManager = focusManager,
                             error = fieldsError,
                             fields = fields,
-                            onFieldsUpdate = { fields = it },
+                            onFieldsUpdate = { updatedFields ->
+                                intent(RegisterIntent.UpdateEmail(updatedFields.email))
+                                intent(RegisterIntent.UpdatePassword(updatedFields.password))
+                            },
                             onRegisterClick = { onContinueClick(RegisterPage.Credentials) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -206,7 +212,7 @@ private fun RegisterContent(
                 fields = fields,
                 onContinueClick = { onContinueClick(RegisterPage.fromIndex(pagerState.currentPage)) },
                 modifier = Modifier.limitWidthCenteredContent().fillMaxWidth(),
-                isLoading = state.isLoading(),
+                isLoading = isLoading,
             )
             Spacer(modifier = Modifier.height(16.dp))
 

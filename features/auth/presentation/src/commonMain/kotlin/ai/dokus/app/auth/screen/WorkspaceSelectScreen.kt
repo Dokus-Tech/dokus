@@ -1,7 +1,10 @@
 package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.components.WorkspaceSelectionBody
-import ai.dokus.app.auth.viewmodel.WorkspaceSelectViewModel
+import ai.dokus.app.auth.viewmodel.WorkspaceSelectAction
+import ai.dokus.app.auth.viewmodel.WorkspaceSelectContainer
+import ai.dokus.app.auth.viewmodel.WorkspaceSelectIntent
+import ai.dokus.app.auth.viewmodel.WorkspaceSelectState
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
 import ai.dokus.foundation.design.components.text.AppNameText
@@ -28,7 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,21 +40,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalLayoutDirection
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 
 @Composable
 internal fun WorkspaceSelectScreen(
-    viewModel: WorkspaceSelectViewModel = koinViewModel()
+    container: WorkspaceSelectContainer = container()
 ) {
     val navController = LocalNavController.current
-    val state by viewModel.state.collectAsState()
 
     // Warp animation state
     var isWarpActive by remember { mutableStateOf(false) }
     var selectedItemPosition by remember { mutableStateOf<Offset?>(null) }
     var shouldNavigate by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(true) }
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            WorkspaceSelectAction.NavigateToHome -> {
+                // Trigger warp animation instead of immediate navigation
+                isWarpActive = true
+                contentVisible = false
+            }
+            is WorkspaceSelectAction.ShowSelectionError -> {
+                // Handle selection error - could show snackbar
+            }
+        }
+    }
 
     // Handle navigation after warp animation
     LaunchedEffect(shouldNavigate) {
@@ -62,21 +78,9 @@ internal fun WorkspaceSelectScreen(
         }
     }
 
-    LaunchedEffect(viewModel) {
-        launch {
-            viewModel.effect.collect { effect ->
-                when (effect) {
-                    is WorkspaceSelectViewModel.Effect.WorkspaceSelected -> {
-                        // Trigger warp animation instead of immediate navigation
-                        isWarpActive = true
-                        contentVisible = false
-                    }
-
-                    is WorkspaceSelectViewModel.Effect.SelectionFailed -> {}
-                }
-            }
-        }
-        viewModel.loadTenants()
+    // Load tenants on init
+    LaunchedEffect(Unit) {
+        container.store.intent(WorkspaceSelectIntent.LoadTenants)
     }
 
     Scaffold { contentPadding ->
@@ -108,30 +112,11 @@ internal fun WorkspaceSelectScreen(
                 exit = fadeOut(animationSpec = tween(600))
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    Column(
-                        modifier = Modifier
-                            .withVerticalPadding()
-                            .limitWidth()
-                            .fillMaxHeight()
-                            .align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        AppNameText()
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            WorkspaceSelectionBody(
-                                state = state,
-                                onTenantClick = { tenant ->
-                                    viewModel.selectTenant(tenant.id)
-                                },
-                                onAddTenantClick = { navController.navigateTo(AuthDestination.WorkspaceCreate) }
-                            )
-                        }
-
-                        CopyRightText()
+                    with(container.store) {
+                        WorkspaceSelectContent(
+                            state = state,
+                            onAddTenantClick = { navController.navigateTo(AuthDestination.WorkspaceCreate) }
+                        )
                     }
                 }
             }
@@ -145,5 +130,36 @@ internal fun WorkspaceSelectScreen(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun IntentReceiver<WorkspaceSelectIntent>.WorkspaceSelectContent(
+    state: WorkspaceSelectState,
+    onAddTenantClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .withVerticalPadding()
+            .limitWidth()
+            .fillMaxHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        AppNameText()
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            WorkspaceSelectionBody(
+                state = state,
+                onTenantClick = { tenant ->
+                    intent(WorkspaceSelectIntent.SelectTenant(tenant.id))
+                },
+                onAddTenantClick = onAddTenantClick
+            )
+        }
+
+        CopyRightText()
     }
 }

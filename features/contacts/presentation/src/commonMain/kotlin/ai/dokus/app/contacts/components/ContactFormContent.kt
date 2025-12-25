@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.components
 
-import ai.dokus.app.contacts.viewmodel.ContactFormState
-import ai.dokus.app.contacts.viewmodel.DuplicateContact
+import ai.dokus.app.contacts.viewmodel.ContactFormData
+import ai.dokus.app.contacts.viewmodel.PotentialDuplicate
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.POutlinedButton
@@ -43,7 +43,9 @@ import androidx.compose.ui.unit.dp
  * - Side pane layouts (ContactFormPane for desktop)
  *
  * @param isEditMode Whether the form is in edit mode (vs create mode)
- * @param formState Current form state containing field values and validation
+ * @param formData Current form data containing field values and validation
+ * @param isSaving Whether save operation is in progress
+ * @param isDeleting Whether delete operation is in progress
  * @param duplicates List of potential duplicate contacts detected
  * @param showBackButton Whether to show the back button in the header
  * @param onBackPress Callback when back button is pressed
@@ -57,8 +59,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 internal fun ContactFormContent(
     isEditMode: Boolean,
-    formState: ContactFormState,
-    duplicates: List<DuplicateContact>,
+    formData: ContactFormData,
+    isSaving: Boolean,
+    isDeleting: Boolean,
+    duplicates: List<PotentialDuplicate>,
     showBackButton: Boolean = true,
     onBackPress: () -> Unit,
     onNameChange: (String) -> Unit,
@@ -84,7 +88,7 @@ internal fun ContactFormContent(
     onCancel: () -> Unit,
     onDelete: () -> Unit,
     onDismissDuplicates: () -> Unit,
-    onMergeWithExisting: (DuplicateContact) -> Unit,
+    onMergeWithExisting: (PotentialDuplicate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -131,7 +135,7 @@ internal fun ContactFormContent(
 
             // Form fields
             ContactFormFields(
-                formState = formState,
+                formData = formData,
                 onNameChange = onNameChange,
                 onEmailChange = onEmailChange,
                 onPhoneChange = onPhoneChange,
@@ -159,9 +163,9 @@ internal fun ContactFormContent(
             // Action buttons
             ContactFormActionButtons(
                 isEditMode = isEditMode,
-                isSaving = formState.isSaving,
-                isDeleting = formState.isDeleting,
-                isValid = formState.isValid,
+                isSaving = isSaving,
+                isDeleting = isDeleting,
+                isValid = formData.isValid,
                 onSave = onSave,
                 onCancel = onCancel,
                 onDelete = onDelete
@@ -179,8 +183,10 @@ internal fun ContactFormContent(
 @Composable
 internal fun ContactFormContentCompact(
     isEditMode: Boolean,
-    formState: ContactFormState,
-    duplicates: List<DuplicateContact>,
+    formData: ContactFormData,
+    isSaving: Boolean,
+    isDeleting: Boolean,
+    duplicates: List<PotentialDuplicate>,
     showBackButton: Boolean = false,
     onBackPress: () -> Unit,
     onNameChange: (String) -> Unit,
@@ -206,7 +212,7 @@ internal fun ContactFormContentCompact(
     onCancel: () -> Unit,
     onDelete: () -> Unit,
     onDismissDuplicates: () -> Unit,
-    onMergeWithExisting: (DuplicateContact) -> Unit,
+    onMergeWithExisting: (PotentialDuplicate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -244,7 +250,7 @@ internal fun ContactFormContentCompact(
 
         // Form fields
         ContactFormFields(
-            formState = formState,
+            formData = formData,
             onNameChange = onNameChange,
             onEmailChange = onEmailChange,
             onPhoneChange = onPhoneChange,
@@ -272,9 +278,9 @@ internal fun ContactFormContentCompact(
         // Action buttons (compact layout)
         ContactFormActionButtonsCompact(
             isEditMode = isEditMode,
-            isSaving = formState.isSaving,
-            isDeleting = formState.isDeleting,
-            isValid = formState.isValid,
+            isSaving = isSaving,
+            isDeleting = isDeleting,
+            isValid = formData.isValid,
             onSave = onSave,
             onCancel = onCancel,
             onDelete = onDelete

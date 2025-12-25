@@ -39,7 +39,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,14 +49,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
-import org.koin.compose.viewmodel.koinViewModel
-import tech.dokus.app.viewmodel.DashboardViewModel
-import tech.dokus.foundation.app.state.isLoading
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.viewmodel.DashboardAction
+import tech.dokus.app.viewmodel.DashboardContainer
+import tech.dokus.app.viewmodel.DashboardIntent
+import tech.dokus.app.viewmodel.DashboardState
+import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.isSuccess
 
+/**
+ * Dashboard screen using FlowMVI Container pattern.
+ * Displays workspace info and pending documents on mobile.
+ */
 @Composable
 internal fun DashboardScreen(
-    viewModel: DashboardViewModel = koinViewModel()
+    container: DashboardContainer = container()
 ) {
     val navController = LocalNavController.current
     var searchQuery by remember { mutableStateOf("") }
@@ -65,20 +72,34 @@ internal fun DashboardScreen(
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val searchExpanded = isLargeScreen || isSearchExpanded
 
-    val currentTenantState by viewModel.currentTenantState.collectAsState()
-    val currentTenant = currentTenantState.let { if (it.isSuccess()) it.data else null }
-    val currentAvatar by viewModel.currentAvatar.collectAsState()
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            is DashboardAction.NavigateToDocument -> {
+                // TODO: Navigate to document edit/confirmation screen
+            }
+            DashboardAction.NavigateToWorkspaceSelect -> {
+                navController.navigateTo(AuthDestination.WorkspaceSelect)
+            }
+            is DashboardAction.ShowError -> {
+                // TODO: Show snackbar or error state
+            }
+        }
+    }
 
-    // Pending documents state (for mobile only) - includes loading, success, and error states
-    val pendingDocumentsState by viewModel.pendingDocumentsState.collectAsState()
-
-    LaunchedEffect(viewModel) {
-        viewModel.refreshTenant()
+    // Refresh tenant when screen appears
+    LaunchedEffect(Unit) {
+        container.store.intent(DashboardIntent.RefreshTenant)
     }
 
     LaunchedEffect(isLargeScreen) {
         isSearchExpanded = isLargeScreen
     }
+
+    // Extract state data
+    val contentState = state as? DashboardState.Content
+    val currentTenant = contentState?.tenantState?.let { if (it.isSuccess()) it.data else null }
+    val currentAvatar = contentState?.currentAvatar
+    val pendingDocumentsState = contentState?.pendingDocumentsState
 
     Scaffold(
         topBar = {
@@ -156,12 +177,14 @@ internal fun DashboardScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Pending documents card - always show (displays empty/error state when needed)
-                PendingDocumentsCard(
-                    state = pendingDocumentsState,
-                    onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
-                    onLoadMore = viewModel::pendingDocumentsLoadMore,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                pendingDocumentsState?.let { docsState ->
+                    PendingDocumentsCard(
+                        state = docsState,
+                        onDocumentClick = { /* TODO: Navigate to document edit/confirmation screen */ },
+                        onLoadMore = { container.store.intent(DashboardIntent.LoadMorePendingDocuments) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 // Other dashboard widgets can be added here
             }

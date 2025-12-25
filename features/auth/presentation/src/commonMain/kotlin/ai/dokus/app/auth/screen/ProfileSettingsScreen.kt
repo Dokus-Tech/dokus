@@ -2,10 +2,11 @@ package ai.dokus.app.auth.screen
 
 import ai.dokus.app.auth.components.CurrentServerSection
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
-import ai.dokus.app.auth.viewmodel.ProfileSettingsViewModel
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
+import ai.dokus.app.auth.usecases.LogoutUseCase
+import ai.dokus.app.auth.viewmodel.ProfileSettingsAction
+import ai.dokus.app.auth.viewmodel.ProfileSettingsContainer
+import ai.dokus.app.auth.viewmodel.ProfileSettingsIntent
+import ai.dokus.app.auth.viewmodel.ProfileSettingsState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.profile_cancel
 import ai.dokus.app.resources.generated.profile_danger_zone
@@ -19,15 +20,13 @@ import ai.dokus.app.resources.generated.profile_logout
 import ai.dokus.app.resources.generated.profile_logout_description
 import ai.dokus.app.resources.generated.profile_personal_info
 import ai.dokus.app.resources.generated.profile_save
-import ai.dokus.app.resources.generated.profile_save_error
-import ai.dokus.app.resources.generated.profile_save_success
 import ai.dokus.app.resources.generated.profile_settings_title
-import ai.dokus.app.auth.usecases.LogoutUseCase
-import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.POutlinedButton
+import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldName
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -45,6 +44,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +55,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,22 +64,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 
 /**
  * Profile settings screen with top bar and navigation.
  * For mobile navigation flow.
  */
 @Composable
-fun ProfileSettingsScreen() {
+fun ProfileSettingsScreen(
+    container: ProfileSettingsContainer = container()
+) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val navController = LocalNavController.current
+
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            ProfileSettingsAction.ShowSaveSuccess -> {
+                snackbarHostState.showSnackbar("Profile saved successfully")
+            }
+            is ProfileSettingsAction.ShowSaveError -> {
+                snackbarHostState.showSnackbar(action.message)
+            }
+            ProfileSettingsAction.NavigateBack -> {
+                navController.navigateUp()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -90,10 +108,13 @@ fun ProfileSettingsScreen() {
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        ProfileSettingsContent(
-            modifier = Modifier.padding(contentPadding),
-            snackbarHostState = snackbarHostState
-        )
+        with(container.store) {
+            ProfileSettingsContent(
+                state = state,
+                modifier = Modifier.padding(contentPadding),
+                snackbarHostState = snackbarHostState
+            )
+        }
     }
 }
 
@@ -102,13 +123,13 @@ fun ProfileSettingsScreen() {
  * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
  */
 @Composable
-fun ProfileSettingsContent(
+fun IntentReceiver<ProfileSettingsIntent>.ProfileSettingsContent(
+    state: ProfileSettingsState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val logger = remember { Logger.withTag("ProfileSettingsContent") }
-    val viewModel: ProfileSettingsViewModel = koinViewModel()
     val logoutUseCase: LogoutUseCase = koinInject()
     val serverConfigManager: ServerConfigManager = koinInject()
     val connectToServerUseCase: ConnectToServerUseCase = koinInject()
@@ -117,32 +138,7 @@ fun ProfileSettingsContent(
 
     val currentServer by serverConfigManager.currentServer.collectAsState()
     var isResettingToCloud by remember { mutableStateOf(false) }
-
-    val userState by viewModel.state.collectAsState()
-    val isEditing by viewModel.isEditing.collectAsState()
-    val editFirstName by viewModel.editFirstName.collectAsState()
-    val editLastName by viewModel.editLastName.collectAsState()
-    val isSaving by viewModel.isSaving.collectAsState()
-
     var isLoggingOut by remember { mutableStateOf(false) }
-
-    // String resources for effects
-    val saveSuccessMessage = stringResource(Res.string.profile_save_success)
-    val saveErrorMessage = stringResource(Res.string.profile_save_error)
-
-    // Handle effects
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is ProfileSettingsViewModel.Effect.ShowSaveSuccess -> {
-                    snackbarHostState.showSnackbar(saveSuccessMessage)
-                }
-                is ProfileSettingsViewModel.Effect.ShowSaveError -> {
-                    snackbarHostState.showSnackbar(effect.message)
-                }
-            }
-        }
-    }
 
     Column(
         modifier = modifier
@@ -153,8 +149,8 @@ fun ProfileSettingsContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Profile content based on state
-        when {
-            userState.isLoading() -> {
+        when (state) {
+            ProfileSettingsState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -164,156 +160,29 @@ fun ProfileSettingsContent(
                     CircularProgressIndicator()
                 }
             }
-            userState.isSuccess() -> {
-                val user = (userState as DokusState.Success).data
-                // Personal Information Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.profile_personal_info),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            if (!isEditing) {
-                                TextButton(onClick = { viewModel.startEditing() }) {
-                                    Text(stringResource(Res.string.profile_edit))
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-
-                        // Email (always read-only)
-                        ProfileField(
-                            label = stringResource(Res.string.profile_email),
-                            value = user.email.value
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        if (isEditing) {
-                            // Edit mode - show text fields
-                            PTextFieldName(
-                                fieldName = stringResource(Res.string.profile_first_name),
-                                value = editFirstName,
-                                icon = null,
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Text,
-                                    capitalization = KeyboardCapitalization.Words,
-                                    imeAction = ImeAction.Next
-                                ),
-                                modifier = Modifier.fillMaxWidth(),
-                                onValueChange = { viewModel.updateFirstName(it) }
-                            )
-
-                            Spacer(Modifier.height(12.dp))
-
-                            PTextFieldName(
-                                fieldName = stringResource(Res.string.profile_last_name),
-                                value = editLastName,
-                                icon = null,
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Text,
-                                    capitalization = KeyboardCapitalization.Words,
-                                    imeAction = ImeAction.Done
-                                ),
-                                onAction = { if (viewModel.canSave()) viewModel.saveProfile() },
-                                modifier = Modifier.fillMaxWidth(),
-                                onValueChange = { viewModel.updateLastName(it) }
-                            )
-
-                            Spacer(Modifier.height(16.dp))
-
-                            // Save/Cancel buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                POutlinedButton(
-                                    text = stringResource(Res.string.profile_cancel),
-                                    enabled = !isSaving,
-                                    onClick = { viewModel.cancelEditing() }
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                if (isSaving) {
-                                    Box(
-                                        modifier = Modifier.height(42.dp).width(80.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.height(24.dp).width(24.dp)
-                                        )
-                                    }
-                                } else {
-                                    PPrimaryButton(
-                                        text = stringResource(Res.string.profile_save),
-                                        enabled = viewModel.canSave(),
-                                        onClick = { viewModel.saveProfile() }
-                                    )
-                                }
-                            }
-                        } else {
-                            // View mode - show read-only fields
-                            ProfileField(
-                                label = stringResource(Res.string.profile_first_name),
-                                value = user.firstName?.value ?: "-"
-                            )
-
-                            Spacer(Modifier.height(12.dp))
-
-                            ProfileField(
-                                label = stringResource(Res.string.profile_last_name),
-                                value = user.lastName?.value ?: "-"
-                            )
-                        }
-                    }
-                }
-
-                // Danger Zone (only show when profile loaded)
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(Res.string.profile_danger_zone),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        Text(
-                            text = stringResource(Res.string.profile_deactivate_warning),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        POutlinedButton(
-                            text = stringResource(Res.string.profile_deactivate_account),
-                            onClick = { /* TODO: Implement deactivation dialog */ },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+            is ProfileSettingsState.Viewing -> {
+                ProfileViewingSection(
+                    state = state,
+                    onEditClick = { intent(ProfileSettingsIntent.StartEditing) }
+                )
+                DangerZoneSection()
             }
-            else -> {
-                // Error state - show error message
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Failed to load profile",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
+            is ProfileSettingsState.Editing -> {
+                ProfileEditingSection(
+                    state = state,
+                    onFirstNameChange = { intent(ProfileSettingsIntent.UpdateFirstName(it)) },
+                    onLastNameChange = { intent(ProfileSettingsIntent.UpdateLastName(it)) },
+                    onSave = { intent(ProfileSettingsIntent.SaveClicked) },
+                    onCancel = { intent(ProfileSettingsIntent.CancelEditing) }
+                )
+                DangerZoneSection()
+            }
+            is ProfileSettingsState.Saving -> {
+                ProfileSavingSection(state = state)
+                DangerZoneSection()
+            }
+            is ProfileSettingsState.Error -> {
+                ProfileErrorSection()
             }
         }
 
@@ -343,50 +212,276 @@ fun ProfileSettingsContent(
         )
 
         // Logout Section - ALWAYS visible regardless of profile state
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        LogoutSection(
+            isLoggingOut = isLoggingOut,
+            onLogout = {
+                scope.launch {
+                    isLoggingOut = true
+                    logger.d { "Logging out user" }
+                    logoutUseCase().fold(
+                        onSuccess = {
+                            logger.i { "Logout successful" }
+                            navController.navigateTo(AuthDestination.Login) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        onFailure = { error ->
+                            logger.e(error) { "Logout failed" }
+                            isLoggingOut = false
+                        }
+                    )
+                }
+            }
+        )
+
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun ProfileViewingSection(
+    state: ProfileSettingsState.Viewing,
+    onEditClick: () -> Unit
+) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = stringResource(Res.string.profile_logout),
+                    text = stringResource(Res.string.profile_personal_info),
                     style = MaterialTheme.typography.titleMedium
                 )
+                TextButton(onClick = onEditClick) {
+                    Text(stringResource(Res.string.profile_edit))
+                }
+            }
 
-                Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
-                Text(
-                    text = stringResource(Res.string.profile_logout_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            ProfileField(
+                label = stringResource(Res.string.profile_email),
+                value = state.user.email.value
+            )
 
-                Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
 
+            ProfileField(
+                label = stringResource(Res.string.profile_first_name),
+                value = state.user.firstName?.value ?: "-"
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            ProfileField(
+                label = stringResource(Res.string.profile_last_name),
+                value = state.user.lastName?.value ?: "-"
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileEditingSection(
+    state: ProfileSettingsState.Editing,
+    onFirstNameChange: (Name) -> Unit,
+    onLastNameChange: (Name) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit
+) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(Res.string.profile_personal_info),
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            ProfileField(
+                label = stringResource(Res.string.profile_email),
+                value = state.user.email.value
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            PTextFieldName(
+                fieldName = stringResource(Res.string.profile_first_name),
+                value = state.editFirstName,
+                icon = null,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Next
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onFirstNameChange
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            PTextFieldName(
+                fieldName = stringResource(Res.string.profile_last_name),
+                value = state.editLastName,
+                icon = null,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Done
+                ),
+                onAction = { if (state.canSave) onSave() },
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = onLastNameChange
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
                 POutlinedButton(
-                    text = if (isLoggingOut) "Logging out..." else stringResource(Res.string.profile_logout),
-                    enabled = !isLoggingOut,
-                    onClick = {
-                        scope.launch {
-                            isLoggingOut = true
-                            logger.d { "Logging out user" }
-                            logoutUseCase().fold(
-                                onSuccess = {
-                                    logger.i { "Logout successful" }
-                                    navController.navigateTo(AuthDestination.Login) {
-                                        popUpTo(0) { inclusive = true }
-                                    }
-                                },
-                                onFailure = { error ->
-                                    logger.e(error) { "Logout failed" }
-                                    isLoggingOut = false
-                                }
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                    text = stringResource(Res.string.profile_cancel),
+                    onClick = onCancel
+                )
+                Spacer(Modifier.width(8.dp))
+                PPrimaryButton(
+                    text = stringResource(Res.string.profile_save),
+                    enabled = state.canSave,
+                    onClick = onSave
                 )
             }
         }
+    }
+}
 
-        Spacer(Modifier.height(16.dp))
+@Composable
+private fun ProfileSavingSection(
+    state: ProfileSettingsState.Saving
+) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(Res.string.profile_personal_info),
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            ProfileField(
+                label = stringResource(Res.string.profile_email),
+                value = state.user.email.value
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            ProfileField(
+                label = stringResource(Res.string.profile_first_name),
+                value = state.editFirstName.value
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            ProfileField(
+                label = stringResource(Res.string.profile_last_name),
+                value = state.editLastName.value
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Box(
+                    modifier = Modifier.height(42.dp).width(80.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.height(24.dp).width(24.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileErrorSection() {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Failed to load profile",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+private fun DangerZoneSection() {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(Res.string.profile_danger_zone),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.error
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                text = stringResource(Res.string.profile_deactivate_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            POutlinedButton(
+                text = stringResource(Res.string.profile_deactivate_account),
+                onClick = { /* TODO: Implement deactivation dialog */ },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun LogoutSection(
+    isLoggingOut: Boolean,
+    onLogout: () -> Unit
+) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(Res.string.profile_logout),
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(Res.string.profile_logout_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            POutlinedButton(
+                text = if (isLoggingOut) "Logging out..." else stringResource(Res.string.profile_logout),
+                enabled = !isLoggingOut,
+                onClick = onLogout,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

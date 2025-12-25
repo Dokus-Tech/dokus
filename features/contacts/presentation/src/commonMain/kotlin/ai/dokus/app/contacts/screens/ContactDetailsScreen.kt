@@ -1,15 +1,18 @@
 package ai.dokus.app.contacts.screens
 
 import ai.dokus.app.contacts.components.ActivitySummarySection
-import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.app.contacts.components.ContactInfoSection
 import ai.dokus.app.contacts.components.ContactMergeDialog
 import ai.dokus.app.contacts.components.NotesBottomSheet
 import ai.dokus.app.contacts.components.NotesSection
 import ai.dokus.app.contacts.components.NotesSidePanel
-import ai.dokus.app.contacts.viewmodel.ContactDetailsViewModel
+import ai.dokus.app.contacts.viewmodel.ContactDetailsAction
+import ai.dokus.app.contacts.viewmodel.ContactDetailsContainer
+import ai.dokus.app.contacts.viewmodel.ContactDetailsIntent
+import ai.dokus.app.contacts.viewmodel.ContactDetailsState
 import ai.dokus.app.contacts.viewmodel.EnrichmentSuggestion
 import ai.dokus.foundation.design.components.common.DokusErrorContent
+import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.model.ContactActivitySummary
@@ -56,7 +59,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -66,7 +68,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import pro.respawn.flowmvi.api.IntentReceiver
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.app.state.DokusState
 
@@ -84,32 +90,47 @@ import tech.dokus.foundation.app.state.DokusState
  * - Embedded in master-detail layout (desktop) - showBackButton = false
  * - Standalone navigation (mobile) - showBackButton = true
  *
+ * Uses FlowMVI container/subscribe pattern for state management.
+ *
  * @param contactId The ID of the contact to display
  * @param showBackButton Whether to show the back button in the top bar (true for standalone, false for embedded)
- * @param viewModel The ViewModel for managing contact details state
+ * @param container The FlowMVI container for managing contact details state
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ContactDetailsScreen(
     contactId: ContactId,
     showBackButton: Boolean = false,
-    viewModel: ContactDetailsViewModel = koinViewModel()
+    container: ContactDetailsContainer = container {
+        parametersOf(
+            ContactDetailsContainer.Companion.Params(contactId)
+        )
+    }
 ) {
     val navController = LocalNavController.current
 
-    // State collection
-    val contactState by viewModel.state.collectAsState()
-    val activityState by viewModel.activityState.collectAsState()
-    val notesState by viewModel.notesState.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
-    val enrichmentSuggestions by viewModel.enrichmentSuggestions.collectAsState()
-    val isTogglingPeppol by viewModel.isTogglingPeppol.collectAsState()
-    val isSavingNote by viewModel.isSavingNote.collectAsState()
-    val isDeletingNote by viewModel.isDeletingNote.collectAsState()
+    // Subscribe to state and handle actions
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
+        when (action) {
+            ContactDetailsAction.NavigateBack -> navController.popBackStack()
+            is ContactDetailsAction.NavigateToEditContact -> {
+                navController.navigateTo(ContactsDestination.EditContact(action.contactId.toString()))
+            }
+            is ContactDetailsAction.NavigateToMergedContact -> {
+                navController.navigateTo(ContactsDestination.ContactDetails(action.contactId.toString()))
+            }
+            is ContactDetailsAction.ShowError -> {
+                // TODO: Show snackbar with error message
+            }
+            is ContactDetailsAction.ShowSuccess -> {
+                // TODO: Show snackbar with success message
+            }
+        }
+    }
 
     // Load contact on first composition or when contactId changes
     LaunchedEffect(contactId) {
-        viewModel.loadContact(contactId)
+        container.store.intent(ContactDetailsIntent.LoadContact(contactId))
     }
 
     // Check connection status for disabling offline actions
@@ -119,104 +140,172 @@ internal fun ContactDetailsScreen(
     BoxWithConstraints {
         val isDesktop = maxWidth >= 600.dp
 
-        Scaffold(
-            topBar = {
-                ContactDetailsTopBar(
-                    contactState = contactState,
-                    showBackButton = showBackButton,
-                    hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
-                    onBackClick = { navController.popBackStack() },
-                    onEditClick = {
-                        navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
-                    },
-                    onEnrichmentClick = viewModel::showEnrichmentPanel,
-                    onMergeClick = viewModel::showMergeDialog,
-                    isOnline = isOnline
-                )
-            },
-            containerColor = MaterialTheme.colorScheme.background
-        ) { contentPadding ->
-            ContactDetailsContent(
-                contactState = contactState,
-                activityState = activityState,
-                notesState = notesState,
-                isTogglingPeppol = isTogglingPeppol,
+        with(container.store) {
+            ContactDetailsScreenContent(
+                state = state,
+                showBackButton = showBackButton,
+                isDesktop = isDesktop,
                 isOnline = isOnline,
-                contentPadding = contentPadding,
-                onPeppolToggle = viewModel::togglePeppol,
-                onAddNote = {
-                    // Show notes panel (desktop) or bottom sheet (mobile)
-                    if (isDesktop) {
-                        viewModel.showNotesSidePanel()
-                    } else {
-                        viewModel.showNotesBottomSheet()
-                    }
-                },
-                onEditNote = viewModel::showEditNoteDialog,
-                onDeleteNote = viewModel::showDeleteNoteConfirmation,
-                onRetry = viewModel::refresh
-            )
-        }
-
-        // Responsive Notes UI - Side panel for desktop, bottom sheet for mobile
-        if (isDesktop) {
-            // Desktop: Notes Side Panel
-            NotesSidePanel(
-                isVisible = uiState.showNotesSidePanel,
-                onDismiss = viewModel::hideNotesSidePanel,
-                notesState = notesState,
-                noteContent = uiState.noteContent,
-                onNoteContentChange = viewModel::updateNoteContent,
-                isSavingNote = isSavingNote,
-                isDeletingNote = isDeletingNote,
-                editingNote = uiState.editingNote,
-                onAddNote = viewModel::addNote,
-                onUpdateNote = viewModel::updateNote,
-                onDeleteNote = { note ->
-                    viewModel.showDeleteNoteConfirmation(note)
-                    viewModel.deleteNote()
-                },
-                onEditNoteClick = viewModel::showEditNoteDialog,
-                onCancelEdit = viewModel::hideEditNoteDialog
-            )
-        } else {
-            // Mobile: Notes Bottom Sheet
-            NotesBottomSheet(
-                isVisible = uiState.showNotesBottomSheet,
-                onDismiss = viewModel::hideNotesBottomSheet,
-                notesState = notesState,
-                noteContent = uiState.noteContent,
-                onNoteContentChange = viewModel::updateNoteContent,
-                isSavingNote = isSavingNote,
-                isDeletingNote = isDeletingNote,
-                editingNote = uiState.editingNote,
-                onAddNote = viewModel::addNote,
-                onUpdateNote = viewModel::updateNote,
-                onDeleteNote = { note ->
-                    viewModel.showDeleteNoteConfirmation(note)
-                    viewModel.deleteNote()
-                },
-                onEditNoteClick = viewModel::showEditNoteDialog,
-                onCancelEdit = viewModel::hideEditNoteDialog
+                contactId = contactId,
+                onBackClick = { navController.popBackStack() },
+                onEditClick = {
+                    navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
+                }
             )
         }
     }
+}
+
+/**
+ * Main content of the contact details screen.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun IntentReceiver<ContactDetailsIntent>.ContactDetailsScreenContent(
+    state: ContactDetailsState,
+    showBackButton: Boolean,
+    isDesktop: Boolean,
+    isOnline: Boolean,
+    contactId: ContactId,
+    onBackClick: () -> Unit,
+    onEditClick: () -> Unit
+) {
+    // Extract state values based on current state type
+    val contactState: DokusState<ContactDto> = when (state) {
+        is ContactDetailsState.Loading -> DokusState.loading()
+        is ContactDetailsState.Content -> DokusState.success(state.contact)
+        is ContactDetailsState.Error -> DokusState.error(state.exception, state.retryHandler)
+    }
+
+    val activityState: DokusState<ContactActivitySummary> = when (state) {
+        is ContactDetailsState.Content -> state.activityState
+        else -> DokusState.loading()
+    }
+
+    val notesState: DokusState<List<ContactNoteDto>> = when (state) {
+        is ContactDetailsState.Content -> state.notesState
+        else -> DokusState.loading()
+    }
+
+    val enrichmentSuggestions: List<EnrichmentSuggestion> = when (state) {
+        is ContactDetailsState.Content -> state.enrichmentSuggestions
+        else -> emptyList()
+    }
+
+    val isTogglingPeppol: Boolean = when (state) {
+        is ContactDetailsState.Content -> state.isTogglingPeppol
+        else -> false
+    }
+
+    val isSavingNote: Boolean = when (state) {
+        is ContactDetailsState.Content -> state.isSavingNote
+        else -> false
+    }
+
+    val isDeletingNote: Boolean = when (state) {
+        is ContactDetailsState.Content -> state.isDeletingNote
+        else -> false
+    }
+
+    Scaffold(
+        topBar = {
+            ContactDetailsTopBar(
+                contactState = contactState,
+                showBackButton = showBackButton,
+                hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
+                onBackClick = onBackClick,
+                onEditClick = onEditClick,
+                onEnrichmentClick = { intent(ContactDetailsIntent.ShowEnrichmentPanel) },
+                onMergeClick = { intent(ContactDetailsIntent.ShowMergeDialog) },
+                isOnline = isOnline
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { contentPadding ->
+        ContactDetailsContent(
+            contactState = contactState,
+            activityState = activityState,
+            notesState = notesState,
+            isTogglingPeppol = isTogglingPeppol,
+            isOnline = isOnline,
+            contentPadding = contentPadding,
+            onPeppolToggle = { enabled -> intent(ContactDetailsIntent.TogglePeppol(enabled)) },
+            onAddNote = {
+                // Show notes panel (desktop) or bottom sheet (mobile)
+                if (isDesktop) {
+                    intent(ContactDetailsIntent.ShowNotesSidePanel)
+                } else {
+                    intent(ContactDetailsIntent.ShowNotesBottomSheet)
+                }
+            },
+            onEditNote = { note -> intent(ContactDetailsIntent.ShowEditNoteDialog(note)) },
+            onDeleteNote = { note -> intent(ContactDetailsIntent.ShowDeleteNoteConfirmation(note)) },
+            onRetry = { intent(ContactDetailsIntent.Refresh) }
+        )
+    }
+
+    // Responsive Notes UI - Side panel for desktop, bottom sheet for mobile
+    val uiState = (state as? ContactDetailsState.Content)?.uiState
+
+    if (isDesktop) {
+        // Desktop: Notes Side Panel
+        NotesSidePanel(
+            isVisible = uiState?.showNotesSidePanel == true,
+            onDismiss = { intent(ContactDetailsIntent.HideNotesSidePanel) },
+            notesState = notesState,
+            noteContent = uiState?.noteContent ?: "",
+            onNoteContentChange = { content -> intent(ContactDetailsIntent.UpdateNoteContent(content)) },
+            isSavingNote = isSavingNote,
+            isDeletingNote = isDeletingNote,
+            editingNote = uiState?.editingNote,
+            onAddNote = { intent(ContactDetailsIntent.AddNote) },
+            onUpdateNote = { intent(ContactDetailsIntent.UpdateNote) },
+            onDeleteNote = { note ->
+                intent(ContactDetailsIntent.ShowDeleteNoteConfirmation(note))
+                intent(ContactDetailsIntent.DeleteNote)
+            },
+            onEditNoteClick = { note -> intent(ContactDetailsIntent.ShowEditNoteDialog(note)) },
+            onCancelEdit = { intent(ContactDetailsIntent.HideEditNoteDialog) }
+        )
+    } else {
+        // Mobile: Notes Bottom Sheet
+        NotesBottomSheet(
+            isVisible = uiState?.showNotesBottomSheet == true,
+            onDismiss = { intent(ContactDetailsIntent.HideNotesBottomSheet) },
+            notesState = notesState,
+            noteContent = uiState?.noteContent ?: "",
+            onNoteContentChange = { content -> intent(ContactDetailsIntent.UpdateNoteContent(content)) },
+            isSavingNote = isSavingNote,
+            isDeletingNote = isDeletingNote,
+            editingNote = uiState?.editingNote,
+            onAddNote = { intent(ContactDetailsIntent.AddNote) },
+            onUpdateNote = { intent(ContactDetailsIntent.UpdateNote) },
+            onDeleteNote = { note ->
+                intent(ContactDetailsIntent.ShowDeleteNoteConfirmation(note))
+                intent(ContactDetailsIntent.DeleteNote)
+            },
+            onEditNoteClick = { note -> intent(ContactDetailsIntent.ShowEditNoteDialog(note)) },
+            onCancelEdit = { intent(ContactDetailsIntent.HideEditNoteDialog) }
+        )
+    }
 
     // Enrichment Panel Dialog (simplified for now)
-    if (uiState.showEnrichmentPanel && enrichmentSuggestions.isNotEmpty()) {
+    if (uiState?.showEnrichmentPanel == true && enrichmentSuggestions.isNotEmpty()) {
         EnrichmentSuggestionsDialog(
             suggestions = enrichmentSuggestions,
             onApply = { selected ->
-                viewModel.applyEnrichmentSuggestions(selected)
+                intent(ContactDetailsIntent.ApplyEnrichmentSuggestions(selected))
             },
-            onDismiss = viewModel::hideEnrichmentPanel
+            onDismiss = { intent(ContactDetailsIntent.HideEnrichmentPanel) }
         )
     }
 
     // Merge Dialog
-    if (uiState.showMergeDialog) {
-        val contact = (contactState as? DokusState.Success)?.data
-        val activity = (activityState as? DokusState.Success)?.data
+    if (uiState?.showMergeDialog == true) {
+        val contact = (state as? ContactDetailsState.Content)?.contact
+        val activity = (state as? ContactDetailsState.Content)?.activityState?.let {
+            (it as? DokusState.Success)?.data
+        }
 
         if (contact != null) {
             ContactMergeDialog(
@@ -225,11 +314,10 @@ internal fun ContactDetailsScreen(
                 preselectedTarget = null,
                 onMergeComplete = { result ->
                     // Navigate to the merged (target) contact
-                    navController.navigateTo(
-                        ContactsDestination.ContactDetails(result.targetContactId.toString())
-                    )
+                    intent(ContactDetailsIntent.HideMergeDialog)
+                    // Navigation will be handled by the action
                 },
-                onDismiss = viewModel::hideMergeDialog
+                onDismiss = { intent(ContactDetailsIntent.HideMergeDialog) }
             )
         }
     }
@@ -711,4 +799,3 @@ private fun SourceBadge(source: String) {
         }
     }
 }
-
