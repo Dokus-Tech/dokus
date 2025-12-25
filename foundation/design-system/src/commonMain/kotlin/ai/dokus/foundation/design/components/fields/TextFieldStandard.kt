@@ -34,6 +34,7 @@ fun PTextFieldStandard(
     visualTransformation: VisualTransformation = PTextFieldStandardDefaults.visualTransformation,
     modifier: Modifier = Modifier,
     onClear: (() -> Unit)? = null,
+    showClearButton: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     PTextField(
@@ -48,6 +49,7 @@ fun PTextFieldStandard(
         visualTransformation = visualTransformation,
         modifier = modifier,
         onClear = onClear,
+        showClearButton = showClearButton,
         onValueChange = onValueChange
     )
 }
