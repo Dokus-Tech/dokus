@@ -44,6 +44,9 @@ kotlin {
 
             implementation(projects.foundation.platform)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
     }
 }
 
