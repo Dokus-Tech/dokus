@@ -67,6 +67,7 @@ internal class CashflowContainer(
 
     // Internal state for search debouncing
     private var searchJob: Job? = null
+    private var pendingDocumentsJob: Job? = null
 
     // Internal state for loaded documents and pagination
     private var loadedDocuments: List<FinancialDocumentDto> = emptyList()
@@ -131,6 +132,7 @@ internal class CashflowContainer(
 
     private suspend fun CashflowCtx.handleRefresh() {
         searchJob?.cancel()
+        pendingDocumentsJob?.cancel()
         logger.d { "Refreshing cashflow data in parallel" }
 
         // Reset pagination state
@@ -139,18 +141,19 @@ internal class CashflowContainer(
 
         updateState { CashflowState.Loading }
 
+        // Start pending documents watcher in background (runs indefinitely)
+        pendingDocumentsJob = launch { watchPendingDocumentsAndUpdateState() }
+
         coroutineScope {
             // Start parallel loading of summary data and documents
             val vatJob = async { loadVatSummaryData() }
             val healthJob = async { loadBusinessHealthData() }
             val documentsJob = async { loadInitialDocuments() }
-            val pendingJob = launch { startWatchingPendingDocuments() }
 
             // Wait for all to complete
             val vatSummary = vatJob.await()
             val businessHealth = healthJob.await()
             val documentsResult = documentsJob.await()
-            pendingJob.join()
 
             // Transition to content state with loaded data
             documentsResult.fold(
@@ -398,15 +401,26 @@ internal class CashflowContainer(
         }
     }
 
-    private suspend fun startWatchingPendingDocuments() {
+    /**
+     * Watches pending documents and updates the UI state when emissions arrive.
+     * This runs indefinitely in the background until cancelled.
+     */
+    private suspend fun CashflowCtx.watchPendingDocumentsAndUpdateState() {
         watchPendingDocuments().collect { state ->
             when (state) {
                 is DokusState.Success -> {
                     allPendingDocuments = state.data
                     pendingVisibleCount = PENDING_PAGE_SIZE
+                    // Update UI state if we're in Content
+                    withState<CashflowState.Content, _> {
+                        updateState { copy(pendingDocumentsState = buildPendingDocumentsState()) }
+                    }
                 }
                 is DokusState.Error -> {
                     allPendingDocuments = emptyList()
+                    withState<CashflowState.Content, _> {
+                        updateState { copy(pendingDocumentsState = buildPendingDocumentsState()) }
+                    }
                 }
                 else -> { /* No-op for loading/idle */ }
             }
