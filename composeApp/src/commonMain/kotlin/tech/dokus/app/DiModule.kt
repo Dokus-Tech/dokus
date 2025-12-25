@@ -1,17 +1,11 @@
 package tech.dokus.app
 
-import ai.dokus.app.auth.AuthInitializer
-import ai.dokus.app.auth.database.AuthDatabase
-import ai.dokus.app.auth.datasource.TeamRemoteDataSource
-import ai.dokus.app.auth.datasource.TenantRemoteDataSource
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import ai.dokus.foundation.design.style.ThemeManager
-import ai.dokus.foundation.domain.asbtractions.TokenManager
 import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.domain.flags.FeatureFlagService
-import com.russhwolf.settings.Settings
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import tech.dokus.app.infrastructure.ServerConfigManagerImpl
 import tech.dokus.app.local.DefaultLocalDatabaseCleaner
@@ -44,16 +38,17 @@ import tech.dokus.foundation.app.mvi.container
 
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
-    single<ServerConfigManager> { ServerConfigManagerImpl(get<Settings>()) }
+    singleOf(::ServerConfigManagerImpl) bind ServerConfigManager::class
+
 
     // Dynamic endpoint provider (bridges server config to HTTP clients)
-    single<DynamicDokusEndpointProvider> { DynamicDokusEndpointProvider(get<ServerConfigManager>()) }
+    singleOf(::DynamicDokusEndpointProvider)
 
     // Note: ServerConnectionMonitor is now registered in AppDataMainModuleDi
     // and wired into HTTP clients for event-driven connection tracking
 
     // Theme management (singleton)
-    single { ThemeManager() }
+    singleOf(::ThemeManager)
 
     // FlowMVI Containers
     container<BootstrapContainer, BootstrapState, BootstrapIntent, BootstrapAction> {
@@ -86,11 +81,7 @@ internal val diModuleApp = module {
     }
 
     single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
-    single<LocalDatabaseCleaner> {
-        DefaultLocalDatabaseCleaner(
-            authDatabase = get<AuthDatabase>(),
-        )
-    }
+    singleOf(::DefaultLocalDatabaseCleaner) bind LocalDatabaseCleaner::class
 }
 
 internal val diModuleUseCases = module {
