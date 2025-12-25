@@ -44,7 +44,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
 
@@ -74,46 +73,55 @@ internal fun ContactFormScreen(
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            ContactFormAction.NavigateBack -> navController.popBackStack()
-            is ContactFormAction.NavigateToContact -> {
-                // Navigate back to the contact list - the contact will be visible there
-                navController.popBackStack()
-            }
+    with(container.store) {
+        val state by subscribe { action ->
+            when (action) {
+                ContactFormAction.NavigateBack -> navController.popBackStack()
+                is ContactFormAction.NavigateToContact -> {
+                    // Navigate back to the contact list - the contact will be visible there
+                    navController.popBackStack()
+                }
 
-            is ContactFormAction.ShowError -> {
-                // TODO: Show snackbar with error message
-            }
+                is ContactFormAction.ShowError -> {
+                    // TODO: Show snackbar with error message
+                }
 
-            is ContactFormAction.ShowSuccess -> {
-                // TODO: Show snackbar with success message
-            }
+                is ContactFormAction.ShowSuccess -> {
+                    // TODO: Show snackbar with success message
+                }
 
-            is ContactFormAction.ShowFieldError -> {
-                // Field errors are shown inline in the form
+                is ContactFormAction.ShowFieldError -> {
+                    // Field errors are shown inline in the form
+                }
             }
         }
-    }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
-    ) { contentPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (val state = state) {
-                is ContactFormState.LoadingContact -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(contentPadding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background
+        ) { contentPadding ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (val state = state) {
+                    is ContactFormState.LoadingContact -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(contentPadding),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
 
-                is ContactFormState.Editing -> {
-                    with(container.store) {
+                    is ContactFormState.Editing -> {
+                        if (state.ui.showDeleteConfirmation) {
+                            with(container.store) {
+                                DeleteContactConfirmationDialog(
+                                    contactName = state.formData.name,
+                                    isDeleting = state.isDeleting,
+                                    onConfirm = { intent(ContactFormIntent.Delete) }
+                                ) { intent(ContactFormIntent.HideDeleteConfirmation) }
+                            }
+                        }
                         if (isLargeScreen) {
                             DesktopFormLayout(
                                 contentPadding = contentPadding,
@@ -128,40 +136,27 @@ internal fun ContactFormScreen(
                             )
                         }
                     }
-                }
 
-                is ContactFormState.Error -> {
-                    val editingState = ContactFormState.Editing(
-                        contactId = state.contactId,
-                        formData = state.formData
-                    )
-                    with(container.store) {
-                        if (isLargeScreen) {
-                            DesktopFormLayout(
-                                contentPadding = contentPadding,
-                                state = editingState,
-                                onBackPress = { intent(ContactFormIntent.Cancel) }
-                            )
-                        } else {
-                            MobileFormLayout(
-                                contentPadding = contentPadding,
-                                state = editingState,
-                                onBackPress = { intent(ContactFormIntent.Cancel) }
-                            )
+                    is ContactFormState.Error -> {
+                        val editingState = ContactFormState.Editing(
+                            contactId = state.contactId,
+                            formData = state.formData
+                        )
+                        with(container.store) {
+                            if (isLargeScreen) {
+                                DesktopFormLayout(
+                                    contentPadding = contentPadding,
+                                    state = editingState,
+                                    onBackPress = { intent(ContactFormIntent.Cancel) }
+                                )
+                            } else {
+                                MobileFormLayout(
+                                    contentPadding = contentPadding,
+                                    state = editingState,
+                                    onBackPress = { intent(ContactFormIntent.Cancel) }
+                                )
+                            }
                         }
-                    }
-                }
-            }
-
-            // Delete confirmation dialog
-            (state as? ContactFormState.Editing)?.let { editingState ->
-                if (editingState.ui.showDeleteConfirmation) {
-                    with(container.store) {
-                        DeleteContactConfirmationDialog(
-                            contactName = editingState.formData.name,
-                            isDeleting = editingState.isDeleting,
-                            onConfirm = { intent(ContactFormIntent.Delete) }
-                        ) { intent(ContactFormIntent.HideDeleteConfirmation) }
                     }
                 }
             }
