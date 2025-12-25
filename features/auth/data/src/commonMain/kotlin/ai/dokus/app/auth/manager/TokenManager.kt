@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import tech.dokus.foundation.app.network.isNetworkException
 
 interface TokenManagerMutable : TokenManager {
     var onTokenRefreshNeeded: (suspend (refreshToken: String, tenantId: TenantId?) -> LoginResponse?)?
@@ -91,6 +92,11 @@ class TokenManagerImpl(
 
     /**
      * Refreshes the access token using the refresh token.
+     *
+     * Error handling:
+     * - Auth failures (callback returns null) → logout user
+     * - Network failures (callback throws network exception) → keep user logged in, return null
+     * - Other failures → logout user (safer default)
      */
     override suspend fun refreshToken(force: Boolean): String? = refreshMutex.withLock {
         // Double-check token status after acquiring lock
@@ -113,10 +119,15 @@ class TokenManagerImpl(
                 saveTokens(response)
                 return response.accessToken
             }
-            // Treat null response as an auth failure
+            // Null response means auth failure (401, invalid/expired tokens) → logout
             onAuthenticationFailed()
         } catch (e: Exception) {
-            // Refresh failed, clear tokens
+            // Network errors should NOT trigger logout - user stays logged in
+            if (isNetworkException(e)) {
+                // Silently fail - tokens are still valid, just can't reach server
+                return null
+            }
+            // Unknown errors - safer to logout
             onAuthenticationFailed()
         }
 
