@@ -242,6 +242,15 @@ class AuthRepository(
 
     /**
      * Internal token refresh implementation.
+     *
+     * Error handling:
+     * - Returns LoginResponse on success
+     * - Returns null for authentication failures (401, expired/invalid tokens)
+     * - Throws for network errors (ConnectException, SocketTimeoutException, etc.)
+     *
+     * This allows TokenManager to distinguish between:
+     * - Auth failures (should logout) → null return
+     * - Network failures (should NOT logout) → exception thrown
      */
     private suspend fun refreshTokenInternal(
         refreshToken: String,
@@ -257,9 +266,15 @@ class AuthRepository(
             .onSuccess {
                 logger.i { "Token refreshed successfully" }
             }
-            .onFailure { e ->
-                logger.e(e) { "Token refresh error" }
+            .getOrElse { e ->
+                // Check if it's a network error - throw it so TokenManager doesn't logout
+                if (tech.dokus.foundation.app.network.isNetworkException(e)) {
+                    logger.w(e) { "Token refresh failed due to network error" }
+                    throw e
+                }
+                // For auth errors (401, etc.), return null to signal auth failure
+                logger.e(e) { "Token refresh failed due to auth error" }
+                null
             }
-            .getOrNull()
     }
 }
