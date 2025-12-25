@@ -1,6 +1,7 @@
 package ai.dokus.foundation.domain
 
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.usecases.validators.ValidateCityUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidateLegalNameUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidateNameUseCase
@@ -90,4 +91,15 @@ value class PhoneNumber(override val value: String) : ValueClass<String>, Valida
 
     override val validOrThrows: PhoneNumber
         get() = if (isValid) this else throw DokusException.Validation.InvalidPhoneNumber
+}
+
+@Serializable
+@JvmInline
+value class City(override val value: String) : ValueClass<String>, Validatable<City> {
+    override fun toString(): String = value
+
+    override val isValid get() = ValidateCityUseCase(this)
+
+    override val validOrThrows: City
+        get() = if (isValid) this else throw DokusException.Validation.InvalidCity
 }
