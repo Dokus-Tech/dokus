@@ -135,10 +135,10 @@ fun PTextField(
                 }
             )
 
-            // Clear button - shown when showClearButton is true, value is not empty, and onClear is provided
-            if (showClearButton && value.isNotEmpty() && onClear != null) {
+            // Clear button - shown when showClearButton is true and value is not empty
+            if (showClearButton && value.isNotEmpty()) {
                 IconButton(
-                    onClick = onClear,
+                    onClick = { onClear?.invoke() ?: onValueChange("") },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
