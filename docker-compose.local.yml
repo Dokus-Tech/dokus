@@ -30,9 +30,9 @@ services:
   # INFRASTRUCTURE SERVICES
   # ==========================================================================
 
-  # Single PostgreSQL Database for all services
+  # Single PostgreSQL Database for all services (with pgvector for embeddings)
   postgres-local:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     container_name: dokus-postgres-local
     environment:
       POSTGRES_DB: dokus

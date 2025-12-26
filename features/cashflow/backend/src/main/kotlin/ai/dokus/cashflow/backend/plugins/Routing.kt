@@ -1,5 +1,6 @@
 package ai.dokus.cashflow.backend.plugins
 
+import ai.dokus.cashflow.backend.routes.chatRoutes
 import ai.dokus.cashflow.backend.routes.configureCashflowRoutes
 import ai.dokus.foundation.ktor.routes.healthRoutes
 import io.ktor.server.application.Application
@@ -16,8 +17,9 @@ fun Application.configureRouting() {
 
     routing {
         healthRoutes()
+        chatRoutes()
     }
     configureCashflowRoutes()
 
-    logger.info("Routes configured: health checks and REST routes")
+    logger.info("Routes configured: health checks, chat, and REST routes")
 }

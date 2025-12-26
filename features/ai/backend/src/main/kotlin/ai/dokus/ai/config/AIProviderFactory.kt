@@ -11,9 +11,36 @@ import org.slf4j.LoggerFactory
 
 /**
  * Factory for creating AI prompt executors and models based on configuration.
+ *
+ * Supports both LLM models (for text generation) and embedding models (for vector search/RAG).
+ *
+ * ## Embedding Models
+ *
+ * The factory provides configuration for embedding models used in RAG (Retrieval Augmented Generation):
+ * - **Ollama**: Uses `nomic-embed-text` (768 dimensions) by default
+ * - **OpenAI**: Uses `text-embedding-3-small` (1536 dimensions) by default
+ *
+ * Note: Embedding generation is handled by [ai.dokus.ai.services.EmbeddingService] using direct
+ * HTTP calls to provider APIs, as Koog doesn't have built-in embedding support for Ollama.
  */
 object AIProviderFactory {
     private val logger = LoggerFactory.getLogger(AIProviderFactory::class.java)
+
+    // =========================================================================
+    // Embedding Model Constants
+    // =========================================================================
+
+    /** Default embedding model for Ollama (768 dimensions) */
+    const val OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
+
+    /** Default embedding model for OpenAI (1536 dimensions) */
+    const val OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+
+    /** Embedding dimensions for Ollama nomic-embed-text model */
+    const val OLLAMA_EMBEDDING_DIMENSIONS = 768
+
+    /** Embedding dimensions for OpenAI text-embedding-3-small model */
+    const val OPENAI_EMBEDDING_DIMENSIONS = 1536
 
     /**
      * Create a prompt executor based on the configured provider.
@@ -107,4 +134,97 @@ object AIProviderFactory {
             }
         }
     }
+
+    // =========================================================================
+    // Embedding Configuration Methods
+    // =========================================================================
+
+    /**
+     * Get embedding configuration for the specified provider.
+     *
+     * @param config The AI configuration
+     * @return EmbeddingConfig with model name, dimensions, and provider info
+     */
+    fun getEmbeddingConfig(config: AIConfig): EmbeddingConfig {
+        return when (config.defaultProvider) {
+            AIConfig.AIProvider.OLLAMA -> EmbeddingConfig(
+                modelName = config.getEmbeddingModel(),
+                dimensions = getEmbeddingDimensions(config.getEmbeddingModel()),
+                provider = config.defaultProvider,
+                baseUrl = config.ollama.baseUrl
+            )
+            AIConfig.AIProvider.OPENAI -> EmbeddingConfig(
+                modelName = config.getEmbeddingModel(),
+                dimensions = getEmbeddingDimensions(config.getEmbeddingModel()),
+                provider = config.defaultProvider,
+                baseUrl = "https://api.openai.com/v1"
+            )
+        }
+    }
+
+    /**
+     * Get the embedding dimensions for a specific model.
+     *
+     * @param modelName The embedding model name
+     * @return Number of dimensions in the embedding vector
+     */
+    fun getEmbeddingDimensions(modelName: String): Int {
+        return when (modelName) {
+            // Ollama models
+            "nomic-embed-text" -> OLLAMA_EMBEDDING_DIMENSIONS
+            "mxbai-embed-large" -> 1024
+            "all-minilm" -> 384
+            "bge-base-en" -> 768
+            "bge-large-en" -> 1024
+
+            // OpenAI models
+            "text-embedding-3-small" -> OPENAI_EMBEDDING_DIMENSIONS
+            "text-embedding-3-large" -> 3072
+            "text-embedding-ada-002" -> 1536
+
+            // Default to Ollama dimensions for unknown models
+            else -> {
+                logger.warn("Unknown embedding model: $modelName, assuming $OLLAMA_EMBEDDING_DIMENSIONS dimensions")
+                OLLAMA_EMBEDDING_DIMENSIONS
+            }
+        }
+    }
+
+    /**
+     * Get the chat model for RAG-powered Q&A.
+     *
+     * @param config The AI configuration
+     * @return LLModel for chat/Q&A operations
+     */
+    fun getChatModel(config: AIConfig): LLModel {
+        return getModel(config, ModelPurpose.CHAT)
+    }
+
+    /**
+     * Check if the configured provider supports embeddings.
+     *
+     * @param config The AI configuration
+     * @return true if embeddings are supported
+     */
+    fun supportsEmbeddings(config: AIConfig): Boolean {
+        return when (config.defaultProvider) {
+            AIConfig.AIProvider.OLLAMA -> config.ollama.enabled
+            AIConfig.AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
+        }
+    }
 }
+
+/**
+ * Configuration for embedding model.
+ *
+ * @property modelName The name of the embedding model
+ * @property dimensions The number of dimensions in the embedding vector
+ * @property provider The AI provider (OLLAMA or OPENAI)
+ * @property baseUrl The base URL for the embedding API
+ */
+data class EmbeddingConfig(
+    val modelName: String,
+    val dimensions: Int,
+    val provider: AIConfig.AIProvider,
+    val baseUrl: String
+)
