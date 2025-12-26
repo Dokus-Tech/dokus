@@ -224,6 +224,29 @@ services:
       - traefik.http.routers.contacts.tls.certresolver=letsencrypt
       - traefik.http.services.contacts.loadbalancer.server.port=8080
 
+  # Processor Service - Background document processing worker
+  processor-service:
+    image: 94.111.226.82:5000/dokus-processor:latest
+    container_name: dokus-processor
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *jvm-cloud-defaults
+      ENVIRONMENT: cloud
+      # AI Configuration
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
+      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
+      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-mistral:7b}
+      # Processing settings
+      PROCESSOR_POLLING_INTERVAL: ${PROCESSOR_POLLING_INTERVAL:-5000}
+      PROCESSOR_BATCH_SIZE: ${PROCESSOR_BATCH_SIZE:-10}
+      PROCESSOR_MAX_ATTEMPTS: ${PROCESSOR_MAX_ATTEMPTS:-3}
+    networks:
+      - dokus-network
+    labels:
+      - traefik.enable=false
+
   # =========================================================
   # Web UI
   # =========================================================
