@@ -120,33 +120,41 @@ internal fun ChatScreen(
             is ChatAction.NavigateBack -> {
                 navController.popBackStack()
             }
+
             is ChatAction.NavigateToDocumentReview -> {
                 // TODO: Navigate to document review screen
             }
+
             is ChatAction.NavigateToDocumentPreview -> {
                 // TODO: Navigate to document preview with page number
             }
+
             is ChatAction.ShowError -> {
                 scope.launch {
                     snackbarHostState.showSnackbar(action.message)
                 }
             }
+
             is ChatAction.ShowSuccess -> {
                 scope.launch {
                     snackbarHostState.showSnackbar(action.message)
                 }
             }
+
             is ChatAction.ShowInfo -> {
                 scope.launch {
                     snackbarHostState.showSnackbar(action.message)
                 }
             }
+
             is ChatAction.ScrollToBottom -> {
                 // Scroll is handled in a LaunchedEffect based on message count changes
             }
+
             is ChatAction.FocusInput -> {
                 // Focus is handled by the input field
             }
+
             is ChatAction.DismissKeyboard -> {
                 // Keyboard dismissal is platform-specific
             }
@@ -184,6 +192,7 @@ internal fun ChatScreen(
                             // For single-doc, we need a document ID
                             // This should navigate to document picker or use current doc
                         }
+
                         ChatScope.AllDocs -> {
                             container.store.intent(ChatIntent.SwitchToCrossDoc)
                         }
@@ -198,6 +207,7 @@ internal fun ChatScreen(
             is ChatState.Loading -> {
                 LoadingContent(contentPadding)
             }
+
             is ChatState.Content -> {
                 val content = state as ChatState.Content
                 ChatContent(
@@ -208,6 +218,7 @@ internal fun ChatScreen(
                     onIntent = { container.store.intent(it) }
                 )
             }
+
             is ChatState.Error -> {
                 val error = state as ChatState.Error
                 ErrorContent(
@@ -241,7 +252,9 @@ private fun ChatTopBar(
                 Column {
                     Text(
                         text = when {
-                            content?.isSingleDocMode == true -> content.documentName ?: "Document Chat"
+                            content?.isSingleDocMode == true -> content.documentName
+                                ?: "Document Chat"
+
                             else -> "Chat with Documents"
                         },
                         style = MaterialTheme.typography.titleMedium,

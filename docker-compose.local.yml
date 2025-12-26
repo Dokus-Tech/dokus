@@ -355,6 +355,9 @@ services:
       AI_DEFAULT_PROVIDER: ollama
       LOCAL_AI_BASE_URL: http://host.docker.internal:11434
       LOCAL_AI_MODEL: mistral:7b
+      # RabbitMQ Configuration
+      RABBITMQ_HOST: rabbitmq-local
+      RABBITMQ_PASSWORD: localrabbitpass
       # Processor settings
       PROCESSOR_POLLING_INTERVAL: "5000"
       PROCESSOR_BATCH_SIZE: "10"
@@ -366,6 +369,8 @@ services:
       postgres-local:
         condition: service_healthy
       minio-local:
+        condition: service_healthy
+      rabbitmq-local:
         condition: service_healthy
     networks:
       - dokus-local-network
