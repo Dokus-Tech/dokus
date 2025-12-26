@@ -49,7 +49,7 @@ class JwtGenerator(
             exp = accessExpiry.epochSeconds,
             jti = Uuid.random().toString(),
             iss = config.issuer,
-            aud = JwtClaims.AUD_DEFAULT
+            aud = config.audience
         )
     }
 

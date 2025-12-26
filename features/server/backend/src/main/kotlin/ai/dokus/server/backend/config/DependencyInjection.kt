@@ -19,7 +19,6 @@ import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.cashflow.backend.service.ExpenseService
 import ai.dokus.cashflow.backend.service.InvoiceService
-import ai.dokus.cashflow.backend.service.DocumentStorageService as LocalDocumentStorageService
 import ai.dokus.contacts.backend.service.ContactMatchingService
 import ai.dokus.contacts.backend.service.ContactNoteService
 import ai.dokus.contacts.backend.service.ContactService
@@ -45,6 +44,7 @@ import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.security.RedisTokenBlacklistService
 import ai.dokus.foundation.ktor.security.TokenBlacklistService
 import ai.dokus.foundation.ktor.storage.AvatarStorageService
+import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
 import ai.dokus.foundation.ktor.storage.DocumentStorageService
 import ai.dokus.foundation.ktor.storage.MinioStorage
 import ai.dokus.foundation.ktor.storage.ObjectStorage
@@ -145,6 +145,7 @@ private val storageModule = module {
         MinioStorage.create(minioConfig, publicUrl)
     }
 
+    single { DocumentUploadValidator() }
     single { DocumentStorageService(get<ObjectStorage>()) }
     single { AvatarStorageService(get<ObjectStorage>()) }
 }
@@ -233,9 +234,6 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { ExpenseService(get()) }
     single { BillService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
-
-    // Legacy local-file validation helper still used by routes
-    single { LocalDocumentStorageService(storageBasePath = "./storage/documents", maxFileSizeMb = 10) }
 
     // Peppol
     single { PeppolModuleConfig.fromConfig(appConfig.config) }

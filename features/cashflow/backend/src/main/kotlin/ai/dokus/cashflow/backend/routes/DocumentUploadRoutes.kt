@@ -2,13 +2,13 @@ package ai.dokus.cashflow.backend.routes
 
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.model.DocumentUploadResponse
 import ai.dokus.foundation.domain.routes.Documents
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
+import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
 import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -18,15 +18,8 @@ import io.ktor.server.resources.get
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.utils.io.jvm.javaio.copyTo
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayOutputStream
-
-/** Maximum file size in bytes (10 MB) */
-private const val MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024
 
 /** Allowed prefixes for document storage */
 private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")
@@ -46,7 +39,7 @@ fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
     val processingRepository by inject<DocumentProcessingRepository>()
-    val localStorageService by inject<DocumentStorageService>()
+    val uploadValidator by inject<DocumentUploadValidator>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
 
     authenticateJwt {
@@ -79,19 +72,7 @@ fun Route.documentUploadRoutes() {
                         contentType = part.contentType?.toString() ?: "application/octet-stream"
 
                         // Read file content
-                        fileBytes = withContext(Dispatchers.IO) {
-                            val outputStream = ByteArrayOutputStream()
-                            part.provider().copyTo(outputStream)
-                            val bytes = outputStream.toByteArray()
-
-                            // Check file size limit to prevent DoS
-                            if (bytes.size > MAX_FILE_SIZE_BYTES) {
-                                throw DokusException.BadRequest(
-                                    "File size exceeds maximum limit of ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB"
-                                )
-                            }
-                            bytes
-                        }
+                        fileBytes = part.readBytesWithLimit(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)
                     }
                     is PartData.FormItem -> {
                         if (part.name == "prefix") {
@@ -114,15 +95,14 @@ fun Route.documentUploadRoutes() {
                 throw DokusException.BadRequest("No file provided in request")
             }
 
-            // Validate file using existing validation logic
-            val validationError = localStorageService.validateFile(
-                fileBytes!!,
-                filename!!,
-                contentType!!
+            val validationError = uploadValidator.validate(
+                fileContent = fileBytes!!,
+                filename = filename!!,
+                mimeType = contentType!!,
             )
             if (validationError != null) {
                 logger.warn("File validation failed: $validationError")
-                throw DokusException.BadRequest(validationError)
+                throw DokusException.Validation.Generic(validationError)
             }
 
             // Upload to MinIO
