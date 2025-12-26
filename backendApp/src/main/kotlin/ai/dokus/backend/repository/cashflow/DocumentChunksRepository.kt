@@ -156,7 +156,7 @@ class DocumentChunksRepository : ChunkRepository {
         chunks: List<ChunkWithEmbedding>
     ): Unit = newSuspendedTransaction {
         if (chunks.isEmpty()) {
-            logger.debug("No chunks to store for document $documentId")
+            logger.debug("No chunks to store for document {}", documentId)
             return@newSuspendedTransaction
         }
 
