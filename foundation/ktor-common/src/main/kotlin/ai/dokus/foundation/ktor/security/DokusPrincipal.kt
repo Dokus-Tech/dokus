@@ -1,5 +1,6 @@
 package ai.dokus.foundation.ktor.security
 
+import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.AuthenticationInfo
@@ -41,7 +42,7 @@ data class DokusPrincipal(
      * Require tenant to be selected, throwing if not
      */
     fun requireTenantId(): TenantId =
-        tenantId ?: throw IllegalStateException("Tenant context required but not selected")
+        tenantId ?: throw DokusException.BadRequest("Tenant context required but not selected")
 
     companion object {
         /**

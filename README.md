@@ -78,7 +78,7 @@ chmod +x dokus.sh
 ./dokus.sh      # macOS / Linux
 ```
 
-**Windows:** Download `dokus-quick-deploy.zip` from [releases](https://github.com/Dokus-Tech/dokus/releases/latest), extract, and run `dokus.bat`
+**Windows:** Download `dokus-quick-deploy.zip` from [releases](https://github.com/Dokus-Tech/dokus/releases/latest), extract, and run `dokus.sh` via WSL2 (recommended), or start via `docker compose` manually
 
 #### Or Clone from Repository
 
@@ -93,7 +93,7 @@ The script will:
 - ✅ Install Docker if needed
 - ✅ Configure all services
 - ✅ Pull latest images from our registry
-- ✅ Start all backend services
+- ✅ Start the Dokus stack (single backend + infrastructure)
 - ✅ Optionally configure auto-start on boot
 
 **That's it!** Your Dokus server is running. See [deployment/README.md](deployment/README.md) for details.
@@ -133,8 +133,8 @@ cd dokus
 2. 💰 **Expense & Invoice Management** - Complete financial overview
 3. 🏦 **Bank Transaction Matching** - Auto-match transactions to documents
 4. 🤖 **AI Assistant** - Context-aware help using your company's full financial data
-5. 📦 **Inventory Management** - Track products and services
-6. 📊 **Forecasting** - VAT projections and company balance predictions
+5. 🧾 **Item Catalog** - Reusable invoice line templates (non-inventory)
+6. 📊 **Compliance & Audit** - Boring checks, logs, and exports (no “magic” forecasts)
 7. 📤 **Export Options** - PDF, CSV, Excel for all data
 
 ---
