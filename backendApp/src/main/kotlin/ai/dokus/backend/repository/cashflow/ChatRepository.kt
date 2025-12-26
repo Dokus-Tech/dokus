@@ -65,7 +65,11 @@ class ChatRepository {
         val sessionUuid = UUID.fromString(message.sessionId.toString())
 
         logger.debug(
-            "Saving chat message: id=$messageId, session=$sessionUuid, role=${message.role}, tenant=$tenantUuid"
+            "Saving chat message: id={}, session={}, role={}, tenant={}",
+            messageId,
+            sessionUuid,
+            message.role,
+            tenantUuid
         )
 
         // Serialize citations as JSON array
@@ -95,7 +99,7 @@ class ChatRepository {
             it[createdAt] = message.createdAt
         }
 
-        logger.debug("Successfully saved chat message: $messageId")
+        logger.debug("Successfully saved chat message: {}", messageId)
         message
     }
 
@@ -411,8 +415,10 @@ class ChatRepository {
             .entries
             .take(limit)
             .map { (sessionUuid, sessionMessages) ->
-                val firstMessage = sessionMessages.minByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
-                val lastMessage = sessionMessages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
+                val firstMessage =
+                    sessionMessages.minByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
+                val lastMessage =
+                    sessionMessages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
 
                 ChatSessionSummary(
                     sessionId = ChatSessionId.parse(sessionUuid.toString()),
