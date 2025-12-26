@@ -7,6 +7,7 @@ import ai.dokus.foundation.ktor.configure.configureMonitoring
 import ai.dokus.foundation.ktor.configure.configureSecurity
 import ai.dokus.foundation.ktor.configure.configureSerialization
 import ai.dokus.server.backend.config.configureDependencyInjection
+import ai.dokus.server.backend.plugins.configureBackgroundWorkers
 import ai.dokus.server.backend.plugins.configureDatabase
 import ai.dokus.server.backend.plugins.configureGracefulDatabaseShutdown
 import ai.dokus.server.backend.plugins.configureRouting
@@ -63,8 +64,8 @@ fun Application.module(appConfig: AppBaseConfig) {
     configureRouting(appConfig)
 
     // Lifecycle management
+    configureBackgroundWorkers(appConfig)
     configureGracefulDatabaseShutdown()
 
     logger.info("Dokus Server started successfully")
 }
-
