@@ -124,9 +124,7 @@ private fun ragModule(config: ProcessorConfig) = module {
 
     // ChunkRepository - NOTE: Implementation must be provided externally
     // The DocumentChunksRepository is in cashflow-backend.
-    // For now, we register a nullable binding that can be overridden.
-    // When integrated with cashflow-backend, replace this with the actual implementation.
-    single<ChunkRepository?> { null }
+    // For now, RAG is disabled until we integrate with cashflow-backend.
 }
 
 private fun workerModule(config: ProcessorConfig) = module {
@@ -144,9 +142,10 @@ private fun workerModule(config: ProcessorConfig) = module {
             providerFactory = get(),
             config = get(),
             // RAG dependencies - chunking and embedding for chat feature
+            // ChunkRepository is null until we integrate with cashflow-backend
             chunkingService = get<ChunkingService>(),
             embeddingService = get<EmbeddingService>(),
-            chunkRepository = getOrNull<ChunkRepository>()
+            chunkRepository = null
         )
     }
 }
