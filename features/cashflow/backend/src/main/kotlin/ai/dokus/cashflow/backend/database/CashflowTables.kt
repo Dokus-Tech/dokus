@@ -1,5 +1,7 @@
 package ai.dokus.cashflow.backend.database
 
+import ai.dokus.foundation.database.tables.ai.ChatMessagesTable
+import ai.dokus.foundation.database.tables.ai.DocumentChunksTable
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
@@ -26,10 +28,13 @@ import org.slf4j.LoggerFactory
  * - BillsTable
  * - PeppolSettingsTable
  * - PeppolTransmissionsTable
+ * - DocumentChunksTable (AI/RAG)
+ * - ChatMessagesTable (AI/RAG)
  *
  * DEPENDS ON (must exist first):
  * - TenantTable (auth service)
  * - ContactsTable (contacts service)
+ * - UsersTable (auth service) - for ChatMessagesTable
  */
 object CashflowTables {
     private val logger = LoggerFactory.getLogger(CashflowTables::class.java)
@@ -57,7 +62,11 @@ object CashflowTables {
 
                 // Peppol e-invoicing tables
                 PeppolSettingsTable,
-                PeppolTransmissionsTable
+                PeppolTransmissionsTable,
+
+                // AI/RAG tables
+                DocumentChunksTable,
+                ChatMessagesTable
             )
         }
 

@@ -96,7 +96,10 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          * Whether the document shows AI confidence indicators.
          */
         val showConfidence: Boolean
-            get() = document.confidence != null && document.confidence > 0.0
+            get() {
+                val conf = document.confidence
+                return conf != null && conf > 0.0
+            }
 
         /**
          * Overall confidence percentage for display.

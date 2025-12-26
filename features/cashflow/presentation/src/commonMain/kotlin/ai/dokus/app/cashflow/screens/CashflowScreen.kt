@@ -218,7 +218,9 @@ internal fun CashflowScreen(
                             onDocumentClick = { /* TODO: Navigate to document detail */ },
                             onMoreClick = { /* TODO: Show context menu */ },
                             onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
-                            onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                            onPendingDocumentClick = { doc ->
+                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.id.toString()))
+                            },
                             onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
                             isOnline = isOnline
                         )
@@ -248,7 +250,9 @@ internal fun CashflowScreen(
                             onDocumentClick = { /* TODO: Navigate to document detail */ },
                             onMoreClick = { /* TODO: Show context menu */ },
                             onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
-                            onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                            onPendingDocumentClick = { doc ->
+                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.id.toString()))
+                            },
                             onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
                             isOnline = isOnline
                         )
@@ -279,7 +283,9 @@ internal fun CashflowScreen(
                             onDocumentClick = { /* TODO: Navigate to document detail */ },
                             onMoreClick = { /* TODO: Show context menu */ },
                             onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
-                            onPendingDocumentClick = { /* TODO: Navigate to document edit */ },
+                            onPendingDocumentClick = { doc ->
+                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.id.toString()))
+                            },
                             onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
                             isOnline = isOnline
                         )

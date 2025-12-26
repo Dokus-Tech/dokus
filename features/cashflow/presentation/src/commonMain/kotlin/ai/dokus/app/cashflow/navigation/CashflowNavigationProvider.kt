@@ -33,9 +33,6 @@ internal object CashflowNavigationProvider : NavigationProvider {
             val processingId = DocumentProcessingId.parse(route.processingId)
             ChatScreen(processingId = processingId)
         }
-        composable<CashFlowDestination.GlobalChat> {
-            ChatScreen(processingId = null)
-        }
         composable<SettingsDestination.PeppolSettings> {
             PeppolSettingsScreen()
         }

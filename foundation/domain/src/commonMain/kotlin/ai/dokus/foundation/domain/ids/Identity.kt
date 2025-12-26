@@ -43,6 +43,11 @@ value class UserId(val value: Uuid) {
 
     @OptIn(ExperimentalUuidApi::class)
     val uuid: Uuid get() = value
+
+    companion object {
+        fun generate(): UserId = UserId(Uuid.random())
+        fun parse(value: String): UserId = UserId(Uuid.parse(value))
+    }
 }
 
 @OptIn(ExperimentalUuidApi::class)

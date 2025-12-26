@@ -54,6 +54,9 @@ kotlin {
             // FlowMVI for state management
             implementation(libs.flowmvi.core)
             implementation(libs.flowmvi.compose)
+
+            // DateTime
+            implementation(libs.kotlinx.datetime)
         }
         desktopMain.dependencies {
         }
