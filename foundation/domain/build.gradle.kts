@@ -83,18 +83,18 @@ buildkonfig {
         buildConfigField(INT, "rabbitmqPort", "5672")
         buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
 
-        // Internal endpoints (for inter-service communication in Docker) - Cloud
-        buildConfigField(STRING, "authInternalHost", "auth-service")
+        // Internal endpoints (for in-cluster calls; modular monolith uses a single host)
+        buildConfigField(STRING, "authInternalHost", "dokus-server")
         buildConfigField(INT, "authInternalPort", "8080")
-        buildConfigField(STRING, "cashflowInternalHost", "cashflow-service")
+        buildConfigField(STRING, "cashflowInternalHost", "dokus-server")
         buildConfigField(INT, "cashflowInternalPort", "8080")
-        buildConfigField(STRING, "paymentInternalHost", "payment-service")
+        buildConfigField(STRING, "paymentInternalHost", "dokus-server")
         buildConfigField(INT, "paymentInternalPort", "8080")
-        buildConfigField(STRING, "bankingInternalHost", "banking-service")
+        buildConfigField(STRING, "bankingInternalHost", "dokus-server")
         buildConfigField(INT, "bankingInternalPort", "8080")
-        buildConfigField(STRING, "contactsInternalHost", "contacts-service")
+        buildConfigField(STRING, "contactsInternalHost", "dokus-server")
         buildConfigField(INT, "contactsInternalPort", "8080")
-        buildConfigField(STRING, "mediaInternalHost", "media-service")
+        buildConfigField(STRING, "mediaInternalHost", "dokus-server")
         buildConfigField(INT, "mediaInternalPort", "8080")
     }
     defaultConfigs("local") {

@@ -147,12 +147,11 @@ scan_images() {
     fi
 
     local images=(
-        "ghcr.io/invoid-vision/dokus-database:latest"
-        "ghcr.io/invoid-vision/dokus-auth:latest"
-        "postgres:17-alpine"
+        "${DOKUS_SERVER_IMAGE:-94.111.226.82:5000/dokus-server:latest}"
+        "pgvector/pgvector:pg17"
         "redis:8-alpine"
-        "grafana/grafana:10.2.3"
-        "prom/prometheus:v2.48.0"
+        "minio/minio:latest"
+        "traefik:v3.2"
     )
 
     local failed=0

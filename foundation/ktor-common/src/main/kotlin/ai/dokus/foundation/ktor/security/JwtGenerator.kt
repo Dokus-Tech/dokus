@@ -86,6 +86,9 @@ class JwtGenerator(
         return JWT.create()
             .withIssuer(config.issuer)
             .withSubject(userId.value.toString())
+            // Refresh tokens must be unique even when issued in the same second.
+            // (Auth0 JWT date claims are second-precision, so iat/exp alone is not enough.)
+            .withJWTId(UUID.randomUUID().toString())
             .withClaim(JwtClaims.CLAIM_TYPE, JwtClaims.TOKEN_TYPE_REFRESH)
             .withIssuedAt(Date.from(Instant.ofEpochMilli(nowTime.toEpochMilliseconds())))
             .withExpiresAt(Date.from(Instant.ofEpochMilli(refreshExpiry.toEpochMilliseconds())))

@@ -5,7 +5,6 @@ networks:
 volumes:
   postgres-data:
   redis-data:
-  rabbitmq-data:
   minio-data:
   traefik-acme:
 
@@ -31,6 +30,8 @@ services:
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
 
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
@@ -56,6 +57,8 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./logs/traefik:/logs
       - traefik-acme:/acme
 
     networks:
@@ -83,6 +86,11 @@ services:
       - ./postgres/init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql:ro
     networks:
       - dokus-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U dokus -d dokus" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:8-alpine
@@ -96,32 +104,29 @@ services:
       - redis-data:/data
     networks:
       - dokus-network
-
-  rabbitmq:
-    image: rabbitmq:3.13-alpine
-    container_name: dokus-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: dokus
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-      RABBITMQ_DEFAULT_VHOST: /dokus
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - dokus-network
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep PONG" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   minio:
     image: minio/minio:latest
     container_name: dokus-minio
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: dokus
+      MINIO_ROOT_USER: dokusadmin
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
-    command: server /data
+    command: server /data --console-address ":9001"
     volumes:
       - minio-data:/data
     networks:
       - dokus-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.minio.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/storage`)"
@@ -132,133 +137,63 @@ services:
       - "traefik.http.routers.minio.middlewares=minio-strip"
 
   # =========================================================
-  # Backend services
+  # Backend (single server)
   # =========================================================
-  auth-service:
-    image: 94.111.226.82:5000/dokus-auth:latest
-    container_name: dokus-auth
+  dokus-server:
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:${TAG:-latest}
+    container_name: dokus-server
     restart: unless-stopped
     env_file:
       - .env
     environment:
       <<: *jvm-cloud-defaults
       ENVIRONMENT: cloud
+      CACHE_TYPE: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: dokusadmin
+      MINIO_SECRET_KEY: ${MINIO_PASSWORD}
+      MINIO_BUCKET: dokus-storage
+      LOG_PATH: /app/logs
     networks:
       - dokus-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    volumes:
+      - ./logs/server:/app/logs
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.auth.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/server`) || PathPrefix(`/api/v1/lookup`))
-      - traefik.http.routers.auth.entrypoints=websecure
-      - traefik.http.routers.auth.tls.certresolver=letsencrypt
-      - traefik.http.services.auth.loadbalancer.server.port=8080
-
-  cashflow-service:
-    image: 94.111.226.82:5000/dokus-cashflow:latest
-    container_name: dokus-cashflow
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-cloud-defaults
-      ENVIRONMENT: cloud
-    networks:
-      - dokus-network
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.cashflow.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`) || PathPrefix(`/api/v1/chat`))
-      - traefik.http.routers.cashflow.entrypoints=websecure
-      - traefik.http.routers.cashflow.tls.certresolver=letsencrypt
-      - traefik.http.services.cashflow.loadbalancer.server.port=8080
-
-  payment-service:
-    image: 94.111.226.82:5000/dokus-payment:latest
-    container_name: dokus-payment
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-cloud-defaults
-      ENVIRONMENT: cloud
-    networks:
-      - dokus-network
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.payment.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/payments`)
-      - traefik.http.routers.payment.entrypoints=websecure
-      - traefik.http.routers.payment.tls.certresolver=letsencrypt
-      - traefik.http.services.payment.loadbalancer.server.port=8080
-
-  banking-service:
-    image: 94.111.226.82:5000/dokus-banking:latest
-    container_name: dokus-banking
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-cloud-defaults
-      ENVIRONMENT: cloud
-    networks:
-      - dokus-network
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.banking.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/banking`)
-      - traefik.http.routers.banking.entrypoints=websecure
-      - traefik.http.routers.banking.tls.certresolver=letsencrypt
-      - traefik.http.services.banking.loadbalancer.server.port=8080
-
-  contacts-service:
-    image: 94.111.226.82:5000/dokus-contacts:latest
-    container_name: dokus-contacts
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-cloud-defaults
-      ENVIRONMENT: cloud
-    networks:
-      - dokus-network
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.contacts.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/api/v1/contacts`)
-      - traefik.http.routers.contacts.entrypoints=websecure
-      - traefik.http.routers.contacts.tls.certresolver=letsencrypt
-      - traefik.http.services.contacts.loadbalancer.server.port=8080
-
-  # Processor Service - Background document processing worker
-  processor-service:
-    image: 94.111.226.82:5000/dokus-processor:latest
-    container_name: dokus-processor
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-cloud-defaults
-      ENVIRONMENT: cloud
-      # AI Configuration
-      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
-      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
-      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-mistral:7b}
-      # Processing settings
-      PROCESSOR_POLLING_INTERVAL: ${PROCESSOR_POLLING_INTERVAL:-5000}
-      PROCESSOR_BATCH_SIZE: ${PROCESSOR_BATCH_SIZE:-10}
-      PROCESSOR_MAX_ATTEMPTS: ${PROCESSOR_MAX_ATTEMPTS:-3}
-    networks:
-      - dokus-network
-    labels:
-      - traefik.enable=false
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`${DOMAIN:-app.dokus.tech}`) && (PathPrefix(`/api`) || Path(`/health`) || Path(`/metrics`))"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.api.middlewares=rate-limit@file,cors-api@file,compress@file"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
 
   # =========================================================
-  # Web UI
+  # Web UI (optional)
   # =========================================================
   web:
-    image: 94.111.226.82:5000/dokus-web:latest
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-web:${TAG:-latest}
     container_name: dokus-web
     restart: unless-stopped
     networks:
       - dokus-network
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.web.rule=Host(`${DOMAIN:-app.dokus.tech}`)
-      - traefik.http.routers.web.entrypoints=websecure
-      - traefik.http.routers.web.tls.certresolver=letsencrypt
-      - traefik.http.services.web.loadbalancer.server.port=8080
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN:-app.dokus.tech}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.web.middlewares=compress@file"
+      - "traefik.http.services.web.loadbalancer.server.port=8080"

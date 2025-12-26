@@ -1,28 +1,20 @@
 # Dokus Docker Compose - Lite Profile (Low Resource)
-# Optimized for: Low memory, ARM64, constrained resources
-# Target: Raspberry Pi 4/5 (4GB+ RAM recommended, 8GB ideal)
+# Optimized for: Raspberry Pi / edge (personal use)
+#
+# Stack:
+# - Traefik (gateway + routing on :8000)
+# - PostgreSQL (single DB; tuned for lower memory)
+# - Redis (optional but enabled; tuned for low memory)
+# - MinIO (object storage; must be kept)
+# - dokus-server (modular monolith backend)
+# - dokus-web (optional UI)
 #
 # Usage:
-#   docker-compose -f docker-compose.lite.yml up -d
+#   docker compose -f docker-compose.lite.yml up -d
 #   ./dokus.sh --profile=lite start
 #
-# JVM Optimizations for ARM/Pi:
-#   - SerialGC for lower overhead on limited cores
-#   - Smaller heap sizes (256MB max per service)
-#   - Aggressive memory limits
-#   - Reduced parallelism
-#
-# Total estimated memory usage:
-#   - PostgreSQL: 256MB
-#   - Redis: 128MB
-#   - RabbitMQ: 256MB
-#   - MinIO: 256MB
-#   - Services: 6 x 256MB = 1.54GB (auth, cashflow, payment, banking, contacts, processor)
-#   - Traefik: 128MB
-#   - Web: 64MB
-#   Total: ~2.8-3.8GB (fits Pi 4/5 comfortably)
-#
-# Note: Ollama runs externally on the host machine
+# Note: When using `deploy.resources` with plain `docker compose`,
+# run via `./dokus.sh` (it uses `--compatibility`) to apply limits.
 
 x-jvm-pi-defaults: &jvm-pi-defaults
   JAVA_OPTS: >-
@@ -46,10 +38,8 @@ x-healthcheck-pi: &healthcheck-pi
 
 services:
   # ==========================================================================
-  # INFRASTRUCTURE - Memory Constrained
+  # GATEWAY
   # ==========================================================================
-
-  # Traefik API Gateway - HTTP only for self-hosting
   traefik:
     image: traefik:v3.2
     container_name: dokus-traefik
@@ -81,7 +71,9 @@ services:
       - "traefik.http.routers.dashboard.entrypoints=traefik"
       - "traefik.http.routers.dashboard.service=api@internal"
 
-  # PostgreSQL - Pi optimized with pgvector for AI/RAG features
+  # ==========================================================================
+  # INFRA
+  # ==========================================================================
   postgres:
     image: pgvector/pgvector:pg17
     container_name: dokus-postgres
@@ -129,7 +121,6 @@ services:
       <<: *healthcheck-pi
     restart: unless-stopped
 
-  # Redis - Minimal memory
   redis:
     image: redis:8-alpine
     container_name: dokus-redis
@@ -161,38 +152,6 @@ services:
       <<: *healthcheck-pi
     restart: unless-stopped
 
-  # RabbitMQ - Memory constrained
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    container_name: dokus-rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: dokus
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-      RABBITMQ_DEFAULT_VHOST: /dokus
-      # Aggressive memory limits for Pi
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.4
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK_PAGING_RATIO: 0.5
-    ports:
-      - "25672:5672"
-      - "25673:15672"
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - dokus-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      <<: *healthcheck-pi
-    restart: unless-stopped
-
-  # MinIO - Reduced memory
   minio:
     image: minio/minio:latest
     container_name: dokus-minio
@@ -228,231 +187,64 @@ services:
       - "traefik.http.routers.minio.middlewares=minio-strip"
 
   # ==========================================================================
-  # BACKEND SERVICES - Pi Optimized JVM (SerialGC, small heap)
+  # BACKEND (single server)
   # ==========================================================================
-
-  auth-service:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-auth:${TAG:-latest}
-    container_name: dokus-auth
+  dokus-server:
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-server:${TAG:-latest}
+    container_name: dokus-server
     env_file:
       - .env
     environment:
       <<: *jvm-pi-defaults
       ENVIRONMENT: lite
+      CACHE_TYPE: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: dokusadmin
+      MINIO_SECRET_KEY: ${MINIO_PASSWORD}
+      MINIO_BUCKET: dokus-storage
+      # Default for Pi: keep background AI processing off unless explicitly enabled
+      PROCESSOR_ENABLED: ${PROCESSOR_ENABLED:-false}
+      AI_OLLAMA_BASE_URL: ${AI_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
+      LOG_PATH: /app/logs
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - dokus-network
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 320M
-        reservations:
-          cpus: '0.25'
-          memory: 192M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/metrics"]
-      <<: *healthcheck-pi
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/lookup`)"
-      - "traefik.http.routers.auth.entrypoints=web"
-      - "traefik.http.routers.auth.service=auth"
-      - "traefik.http.routers.auth.middlewares=rate-limit@file,cors-api@file"
-      - "traefik.http.services.auth.loadbalancer.server.port=8080"
-      - "traefik.http.routers.health.rule=Path(`/health`)"
-      - "traefik.http.routers.health.entrypoints=web"
-      - "traefik.http.routers.health.service=auth"
-      - "traefik.http.routers.health.priority=1000"
-      - "traefik.http.routers.server-info.rule=Path(`/api/v1/server/info`)"
-      - "traefik.http.routers.server-info.entrypoints=web"
-      - "traefik.http.routers.server-info.service=auth"
-      - "traefik.http.routers.server-info.priority=1000"
-
-  cashflow-service:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-cashflow:${TAG:-latest}
-    container_name: dokus-cashflow
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-pi-defaults
-      ENVIRONMENT: lite
-    depends_on:
-      postgres:
-        condition: service_healthy
       minio:
         condition: service_healthy
     networks:
       - dokus-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     deploy:
       resources:
         limits:
           cpus: '1.0'
-          memory: 320M
+          memory: 512M
         reservations:
           cpus: '0.25'
-          memory: 192M
+          memory: 256M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       <<: *healthcheck-pi
     restart: unless-stopped
+    volumes:
+      - ./logs/server:/app/logs
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`) || PathPrefix(`/api/v1/chat`)"
-      - "traefik.http.routers.cashflow.entrypoints=web"
-      - "traefik.http.routers.cashflow.service=cashflow"
-      - "traefik.http.routers.cashflow.middlewares=rate-limit@file,cors-api@file"
-      - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
-
-  payment-service:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-payment:${TAG:-latest}
-    container_name: dokus-payment
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-pi-defaults
-      ENVIRONMENT: lite
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - dokus-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      <<: *healthcheck-pi
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.payment.rule=PathPrefix(`/api/v1/payments`)"
-      - "traefik.http.routers.payment.entrypoints=web"
-      - "traefik.http.routers.payment.service=payment"
-      - "traefik.http.routers.payment.middlewares=rate-limit@file,cors-api@file"
-      - "traefik.http.services.payment.loadbalancer.server.port=8080"
-
-  banking-service:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-banking:${TAG:-latest}
-    container_name: dokus-banking
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-pi-defaults
-      ENVIRONMENT: lite
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - dokus-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      <<: *healthcheck-pi
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.banking.rule=PathPrefix(`/api/v1/banking`)"
-      - "traefik.http.routers.banking.entrypoints=web"
-      - "traefik.http.routers.banking.service=banking"
-      - "traefik.http.routers.banking.middlewares=rate-limit@file,cors-api@file"
-      - "traefik.http.services.banking.loadbalancer.server.port=8080"
-
-  contacts-service:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-contacts:${TAG:-latest}
-    container_name: dokus-contacts
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-pi-defaults
-      ENVIRONMENT: lite
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - dokus-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      <<: *healthcheck-pi
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.contacts.rule=PathPrefix(`/api/v1/contacts`)"
-      - "traefik.http.routers.contacts.entrypoints=web"
-      - "traefik.http.routers.contacts.service=contacts"
-      - "traefik.http.routers.contacts.middlewares=rate-limit@file,cors-api@file"
-      - "traefik.http.services.contacts.loadbalancer.server.port=8080"
-
-  # Processor Service - Background document processing worker
-  processor-service:
-    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-processor:${TAG:-latest}
-    container_name: dokus-processor
-    env_file:
-      - .env
-    environment:
-      <<: *jvm-pi-defaults
-      ENVIRONMENT: lite
-      # AI Configuration - uses Ollama on host by default
-      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
-      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
-      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-mistral:7b}
-      # Processing settings
-      PROCESSOR_POLLING_INTERVAL: ${PROCESSOR_POLLING_INTERVAL:-5000}
-      PROCESSOR_BATCH_SIZE: ${PROCESSOR_BATCH_SIZE:-5}
-      PROCESSOR_MAX_ATTEMPTS: ${PROCESSOR_MAX_ATTEMPTS:-3}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - dokus-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      <<: *healthcheck-pi
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=false"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`) || Path(`/health`) || Path(`/metrics`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.service=api"
+      - "traefik.http.routers.api.priority=1000"
+      - "traefik.http.routers.api.middlewares=rate-limit@file,cors-api@file,compress@file"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
 
   # ==========================================================================
-  # WEB FRONTEND
+  # WEB (optional)
   # ==========================================================================
   web:
     image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-web:${TAG:-latest}
@@ -463,10 +255,10 @@ services:
       resources:
         limits:
           cpus: '0.25'
-          memory: 64M
+          memory: 96M
         reservations:
           cpus: '0.05'
-          memory: 32M
+          memory: 48M
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
       <<: *healthcheck-pi
@@ -487,5 +279,4 @@ networks:
 volumes:
   postgres-data:
   redis-data:
-  rabbitmq-data:
   minio-data:

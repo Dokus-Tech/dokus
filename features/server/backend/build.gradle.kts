@@ -98,7 +98,8 @@ tasks.shadowJar {
         attributes["Main-Class"] = "ai.dokus.server.backend.ApplicationKt"
     }
     mergeServiceFiles()
-    archiveClassifier.set("")
+    // Avoid clashing with the plain `jar` task output.
+    archiveClassifier.set("all")
     exclude("META-INF/*.SF")
     exclude("META-INF/*.DSA")
     exclude("META-INF/*.RSA")
@@ -133,4 +134,3 @@ tasks.named("shadowDistZip") {
 tasks.named("build") {
     dependsOn("shadowJar")
 }
-

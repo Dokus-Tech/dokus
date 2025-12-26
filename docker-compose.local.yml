@@ -1,5 +1,5 @@
 # Development Docker Compose configuration
-# Consolidated to single PostgreSQL database
+# Modular monolith backend + shared infrastructure
 # All API traffic routed through Traefik gateway on port 8000
 
 services:
@@ -30,7 +30,7 @@ services:
   # INFRASTRUCTURE SERVICES
   # ==========================================================================
 
-  # Single PostgreSQL Database for all services (with pgvector for embeddings)
+  # Single PostgreSQL Database for all features (with pgvector for embeddings)
   postgres-local:
     image: pgvector/pgvector:pg17
     container_name: dokus-postgres-local
@@ -51,7 +51,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Shared Redis
+  # Optional Redis (rate limiting + token blacklist)
   redis-local:
     image: redis:8-alpine
     container_name: dokus-redis-local
@@ -96,40 +96,16 @@ services:
       - "traefik.http.middlewares.minio-strip.stripprefix.prefixes=/storage"
       - "traefik.http.routers.minio.middlewares=minio-strip"
 
-  # Ollama is expected to run on the host (http://localhost:11434),
-  # aligned with deployed profiles. Use `./dev.sh ai` to check status.
-
-  # RabbitMQ Message Broker
-  rabbitmq-local:
-    image: rabbitmq:3.13-management-alpine
-    container_name: dokus-rabbitmq-local
-    environment:
-      RABBITMQ_DEFAULT_USER: dokus
-      RABBITMQ_DEFAULT_PASS: localrabbitpass
-      RABBITMQ_DEFAULT_VHOST: /dokus
-    ports:
-      - "25672:5672"    # AMQP
-      - "25673:15672"  # Management UI
-    volumes:
-      - rabbitmq-data-local:/var/lib/rabbitmq
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   # ==========================================================================
-  # BACKEND SERVICES (routed through Traefik)
+  # BACKEND (single server)
   # ==========================================================================
 
-  # Auth Service
-  auth-service-local:
-    image: invoid-vision/dokus-auth:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-auth-local
+  server-local:
+    build:
+      context: .
+      dockerfile: features/server/backend/Dockerfile
+    image: dokus-server:local
+    container_name: dokus-server-local
     environment:
       PORT: 8080
       ENVIRONMENT: local
@@ -139,238 +115,35 @@ services:
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
+      # Optional Redis-backed rate-limit + token blacklist
+      CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: redis-local
       REDIS_PORT: 6379
       REDIS_PASSWORD: devredispass
-      RABBITMQ_HOST: rabbitmq-local
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: dokus
-      RABBITMQ_PASSWORD: localrabbitpass
-      RABBITMQ_VHOST: /dokus
       # MinIO Storage
       MINIO_ENDPOINT: http://minio-local:9000
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: dokusadminpassword
-      MINIO_BUCKET: dokus-auth
+      MINIO_BUCKET: dokus-storage
       STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:8000/storage}
-      GEOIP_DATABASE_PATH: resources/GeoLite2-City.mmdb
-      LOG_LEVEL: DEBUG
-      LOG_PATH: /app/logs
-    ports:
-      - "15007:5005"  # Debug port only
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-      redis-local:
-        condition: service_healthy
-      rabbitmq-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/metrics" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-    labels:
-      - "traefik.enable=true"
-      # Auth routes: identity, account, tenants, team
-      - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/identity`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/tenants`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/lookup`)"
-      - "traefik.http.routers.auth.entrypoints=web"
-      - "traefik.http.routers.auth.service=auth"
-      - "traefik.http.services.auth.loadbalancer.server.port=8080"
-      - "traefik.http.services.auth.loadbalancer.healthcheck.path=/metrics"
-      - "traefik.http.services.auth.loadbalancer.healthcheck.interval=30s"
-      # Gateway health endpoint routed to auth service
-      - "traefik.http.routers.health.rule=Path(`/health`)"
-      - "traefik.http.routers.health.entrypoints=web"
-      - "traefik.http.routers.health.service=auth"
-      - "traefik.http.routers.health.priority=1000"
-      # Server info endpoint for mobile app discovery
-      - "traefik.http.routers.server-info.rule=Path(`/api/v1/server/info`)"
-      - "traefik.http.routers.server-info.entrypoints=web"
-      - "traefik.http.routers.server-info.service=auth"
-      - "traefik.http.routers.server-info.priority=1000"
-
-  # Cashflow Service (Invoice + Expense + Documents + Peppol)
-  cashflow-service-local:
-    image: invoid-vision/dokus-cashflow:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-cashflow-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      REDIS_HOST: redis-local
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: devredispass
-      RABBITMQ_HOST: rabbitmq-local
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: dokus
-      RABBITMQ_PASSWORD: localrabbitpass
-      RABBITMQ_VHOST: /dokus
-      # MinIO Storage
-      MINIO_ENDPOINT: http://minio-local:9000
-      MINIO_ACCESS_KEY: dokusadmin
-      MINIO_SECRET_KEY: dokusadminpassword
-      MINIO_BUCKET: dokus-documents
-      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:8000/storage}
-      # Peppol Configuration
+      # Peppol (optional)
       ENCRYPTION_KEY: local-peppol-encryption-key-32chars!
       PEPPOL_DEFAULT_PROVIDER: recommand
       PEPPOL_INBOX_POLLING_ENABLED: "true"
-      PEPPOL_INBOX_POLLING_INTERVAL: "600"
+      PEPPOL_INBOX_POLLING_INTERVAL_SECONDS: "600"
+      # Processor (optional; runs in-process)
+      PROCESSOR_ENABLED: "true"
+      PROCESSOR_AI_DEFAULT_PROVIDER: local
+      LOCAL_AI_BASE_URL: http://host.docker.internal:11434
+      LOCAL_AI_MODEL: mistral:7b
       LOG_LEVEL: DEBUG
-    ports:
-      - "15008:5005"  # Debug port only
+      LOG_PATH: /app/logs
     depends_on:
       postgres-local:
         condition: service_healthy
       redis-local:
         condition: service_healthy
-      rabbitmq-local:
-        condition: service_healthy
       minio-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-      - cashflow-storage-local:/app/storage/documents
-    labels:
-      - "traefik.enable=true"
-      # Cashflow routes: invoices, expenses, bills, cashflow, documents, attachments, peppol, chat
-      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`) || PathPrefix(`/api/v1/chat`)"
-      - "traefik.http.routers.cashflow.entrypoints=web"
-      - "traefik.http.routers.cashflow.service=cashflow"
-      - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
-      - "traefik.http.services.cashflow.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.cashflow.loadbalancer.healthcheck.interval=30s"
-
-  # Payment Service
-  payment-service-local:
-    image: invoid-vision/dokus-payment:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-payment-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      LOG_LEVEL: DEBUG
-    ports:
-      - "15009:5005"  # Debug port only
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.payment.rule=PathPrefix(`/api/v1/payments`)"
-      - "traefik.http.routers.payment.entrypoints=web"
-      - "traefik.http.routers.payment.service=payment"
-      - "traefik.http.services.payment.loadbalancer.server.port=8080"
-      - "traefik.http.services.payment.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.payment.loadbalancer.healthcheck.interval=30s"
-
-  # Banking Service
-  banking-service-local:
-    image: invoid-vision/dokus-banking:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-banking-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      LOG_LEVEL: DEBUG
-    ports:
-      - "15012:5005"  # Debug port only
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.banking.rule=PathPrefix(`/api/v1/banking`)"
-      - "traefik.http.routers.banking.entrypoints=web"
-      - "traefik.http.routers.banking.service=banking"
-      - "traefik.http.services.banking.loadbalancer.server.port=8080"
-      - "traefik.http.services.banking.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.banking.loadbalancer.healthcheck.interval=30s"
-
-  # Document Processor Service (AI extraction worker)
-  processor-service-local:
-    image: invoid-vision/dokus-processor:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-processor-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      # MinIO Storage (for downloading documents to process)
-      MINIO_ENDPOINT: http://minio-local:9000
-      MINIO_ACCESS_KEY: dokusadmin
-      MINIO_SECRET_KEY: dokusadminpassword
-      MINIO_BUCKET: dokus-documents
-      # AI Configuration (Ollama on host machine)
-      AI_DEFAULT_PROVIDER: ollama
-      LOCAL_AI_BASE_URL: http://host.docker.internal:11434
-      LOCAL_AI_MODEL: mistral:7b
-      # RabbitMQ Configuration
-      RABBITMQ_HOST: rabbitmq-local
-      RABBITMQ_PASSWORD: localrabbitpass
-      # Processor settings
-      PROCESSOR_POLLING_INTERVAL: "5000"
-      PROCESSOR_BATCH_SIZE: "10"
-      PROCESSOR_MAX_ATTEMPTS: "3"
-      LOG_LEVEL: DEBUG
-    ports:
-      - "15014:5005"  # Debug port only
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-      minio-local:
-        condition: service_healthy
-      rabbitmq-local:
         condition: service_healthy
     networks:
       - dokus-local-network
@@ -385,56 +158,19 @@ services:
     volumes:
       - ./logs-local:/app/logs
     labels:
-      - "traefik.enable=false"  # Internal service, not exposed via gateway
-
-  # Contacts Service
-  contacts-service-local:
-    image: invoid-vision/dokus-contacts:dev-${BUILD_NUMBER:-latest}
-    container_name: dokus-contacts-local
-    environment:
-      PORT: 8080
-      ENVIRONMENT: local
-      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
-      DB_USERNAME: dev
-      DB_PASSWORD: devpassword
-      JWT_SECRET: local-secret-key
-      JWT_ISSUER: local.dokus.tech
-      JWT_AUDIENCE: dokus-api-local
-      REDIS_HOST: redis-local
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: devredispass
-      LOG_LEVEL: DEBUG
-    ports:
-      - "15013:5005"  # Debug port only
-    depends_on:
-      postgres-local:
-        condition: service_healthy
-      redis-local:
-        condition: service_healthy
-    networks:
-      - dokus-local-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./logs-local:/app/logs
-    labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.contacts.rule=PathPrefix(`/api/v1/contacts`)"
-      - "traefik.http.routers.contacts.entrypoints=web"
-      - "traefik.http.routers.contacts.service=contacts"
-      - "traefik.http.services.contacts.loadbalancer.server.port=8080"
-      - "traefik.http.services.contacts.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.contacts.loadbalancer.healthcheck.interval=30s"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`) || Path(`/health`) || Path(`/metrics`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.service=api"
+      - "traefik.http.routers.api.priority=1000"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+      - "traefik.http.services.api.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.api.loadbalancer.healthcheck.interval=30s"
 
   # ==========================================================================
   # TOOLS (optional profiles)
   # ==========================================================================
 
-  # pgAdmin for database management (profile: tools)
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: dokus-pgadmin
@@ -457,7 +193,5 @@ networks:
 volumes:
   postgres-local:
   redis-data-local:
-  rabbitmq-data-local:
   minio-data-local:
   pgadmin-data:
-  cashflow-storage-local:

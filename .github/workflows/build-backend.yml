@@ -1,8 +1,10 @@
-name: Build and Deploy Backend Services
+name: Build and Deploy Dokus Server
 
 on:
   push:
     branches: [ main, develop ]
+    tags:
+      - 'v*'
     paths:
       - 'features/*/backend/**'
       - 'foundation/**'
@@ -12,14 +14,15 @@ on:
     paths:
       - 'features/*/backend/**'
       - 'foundation/**'
+      - '.github/workflows/build-backend.yml'
   workflow_dispatch:
     inputs:
-      services:
-        description: 'Services to build (comma-separated: auth,banking,cashflow,contacts,payment,processor or "all")'
+      force-build:
+        description: 'Force build even without changes'
         required: false
-        default: 'all'
+        default: 'false'
+        type: boolean
 
-# Cancel in-progress runs for the same workflow and ref
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -32,96 +35,31 @@ env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   JAVA_VERSION: '21'
   REGISTRY: '94.111.226.82:5000'
-  IMAGE_PREFIX: 'dokus'
+  IMAGE_NAME: 'dokus-server'
 
 jobs:
-  # Detect which services changed
-  detect-changes:
-    name: 🔍 Detect Changed Services
-    runs-on: ubuntu-latest
-    outputs:
-      services: ${{ steps.changes.outputs.services }}
-      has-changes: ${{ steps.changes.outputs.has-changes }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 🔍 Detect changed services
-        id: changes
-        run: |
-          # Manual trigger with specific services
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            SERVICES="${{ github.event.inputs.services }}"
-            if [ "$SERVICES" == "all" ]; then
-              SERVICES="auth,banking,cashflow,contacts,payment,processor"
-            fi
-            # Convert to JSON array (compact, single line)
-            JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
-            echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
-            echo "has-changes=true" >> $GITHUB_OUTPUT
-            echo "Changed services: $SERVICES"
-            exit 0
-          fi
-
-          # On main branch, always build all services for releases
-          if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
-            echo "Main branch push detected - building all services for release"
-            SERVICES="auth,banking,cashflow,contacts,payment,processor"
-            JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
-            echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
-            echo "has-changes=true" >> $GITHUB_OUTPUT
-            echo "Building all services: $SERVICES"
-            exit 0
-          fi
-
-          # Detect changes for push/PR
-          CHANGED_SERVICES=""
-
-          # Get list of changed files
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
-          else
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
-          fi
-
-          # Check each service for changes
-          for service in auth banking cashflow contacts payment processor; do
-            if echo "$CHANGED_FILES" | grep -q "features/${service}/backend/" || \
-               echo "$CHANGED_FILES" | grep -q "foundation/"; then
-              if [ -z "$CHANGED_SERVICES" ]; then
-                CHANGED_SERVICES="$service"
-              else
-                CHANGED_SERVICES="$CHANGED_SERVICES,$service"
-              fi
-            fi
-          done
-
-          if [ -z "$CHANGED_SERVICES" ]; then
-            echo "has-changes=false" >> $GITHUB_OUTPUT
-            echo "services=[]" >> $GITHUB_OUTPUT
-            echo "No backend services changed"
-          else
-            # Convert to JSON array (compact, single line)
-            JSON_SERVICES=$(echo "$CHANGED_SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
-            echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
-            echo "has-changes=true" >> $GITHUB_OUTPUT
-            echo "Changed services: $CHANGED_SERVICES"
-          fi
-
-  # Build JARs for all backend services
-  build-jars:
-    name: 🏗️ Build Backend JARs
-    needs: detect-changes
-    if: needs.detect-changes.outputs.has-changes == 'true'
+  build-and-push:
+    name: 🐳 Build & Deploy dokus-server
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
+
+      - name: 🏷️ Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION_TAG="${GITHUB_REF#refs/tags/}"
+            VERSION_NAME="${VERSION_TAG#v}"
+            echo "Building release version: $VERSION_NAME (from tag $VERSION_TAG)"
+            echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
+            echo "is-release=true" >> $GITHUB_OUTPUT
+          else
+            echo "Building development version"
+            echo "is-release=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: 🔧 Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
@@ -133,50 +71,15 @@ jobs:
       - name: 🔑 Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: 🏗️ Build all backend services
+      - name: 🏗️ Build dokus-server shadow JAR
         run: |
-          echo "Building backend services..."
-          ./gradlew :features:auth:backend:shadowJar \
-                    :features:banking:backend:shadowJar \
-                    :features:cashflow:backend:shadowJar \
-                    :features:contacts:backend:shadowJar \
-                    :features:payment:backend:shadowJar \
-                    :features:processor:backend:shadowJar \
-                    -x test
+          ./gradlew :features:server:backend:shadowJar -x test
 
-      - name: 📦 Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-jars
-          path: features/*/backend/build/libs/backend-*.jar
-          retention-days: 1
-
-  # Build and push Docker images
-  build-docker:
-    name: 🐳 Build Docker Images
-    needs: [detect-changes, build-jars]
-    if: needs.detect-changes.outputs.has-changes == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📥 Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-jars
-          path: features/
-
-      - name: 🔍 Verify JAR exists
+      - name: 🔍 Verify fat JAR exists
         run: |
-          ls -lh features/${{ matrix.service }}/backend/build/libs/
-          if [ ! -f features/${{ matrix.service }}/backend/build/libs/backend-*.jar ]; then
-            echo "❌ JAR file not found for ${{ matrix.service }}"
+          ls -lh features/server/backend/build/libs/
+          if ! ls features/server/backend/build/libs/backend-*-all.jar 1> /dev/null 2>&1; then
+            echo "❌ Fat JAR not found for dokus-server (expected backend-*-all.jar)"
             exit 1
           fi
 
@@ -190,21 +93,35 @@ jobs:
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
 
           # Image name
-          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}"
+          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
 
-          # Build tags
-          TAGS="${IMAGE_NAME}:${BRANCH_NAME}-${SHORT_SHA}"
-          TAGS="${TAGS},${IMAGE_NAME}:${BRANCH_NAME}-latest"
+          # Check if this is a release build (from version tag)
+          IS_RELEASE="${{ steps.version.outputs.is-release }}"
+          VERSION_NAME="${{ steps.version.outputs.version-name }}"
 
-          # Add 'latest' tag for main branch
-          if [ "${{ github.ref_name }}" == "main" ]; then
+          if [ "$IS_RELEASE" == "true" ] && [ -n "$VERSION_NAME" ]; then
+            # Release build: use version tag
+            TAGS="${IMAGE_NAME}:${VERSION_NAME}"
+            TAGS="${TAGS},${IMAGE_NAME}:${VERSION_NAME}-${SHORT_SHA}"
             TAGS="${TAGS},${IMAGE_NAME}:latest"
+            echo "Release build - using version tags"
+          else
+            # Development build: use branch-based tags
+            TAGS="${IMAGE_NAME}:${BRANCH_NAME}-${SHORT_SHA}"
+            TAGS="${TAGS},${IMAGE_NAME}:${BRANCH_NAME}-latest"
+
+            # Add 'latest' tag for main branch
+            if [ "${{ github.ref_name }}" == "main" ]; then
+              TAGS="${TAGS},${IMAGE_NAME}:latest"
+            fi
           fi
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "image-name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
           echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "is-release=${IS_RELEASE}" >> $GITHUB_OUTPUT
 
           echo "📦 Image: ${IMAGE_NAME}"
           echo "🏷️  Tags: ${TAGS}"
@@ -228,108 +145,34 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: features/${{ matrix.service }}/backend/Dockerfile
+          file: features/server/backend/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
-            org.opencontainers.image.title=dokus-${{ matrix.service }}
-            org.opencontainers.image.description=Dokus ${{ matrix.service }} service
+            org.opencontainers.image.title=dokus-server
+            org.opencontainers.image.description=Dokus modular monolith server
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ steps.meta.outputs.branch }}-${{ steps.meta.outputs.short-sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.is-release == 'true' && steps.meta.outputs.version || format('{0}-{1}', steps.meta.outputs.branch, steps.meta.outputs.short-sha) }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
 
       - name: 📊 Image details
+        if: always()
         run: |
-          echo "# 🐳 Docker Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "# 🐳 dokus-server image" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Service:** ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.meta.outputs.is-release }}" == "true" ]; then
+            echo "**🏷️ Release Version:** ${{ steps.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "**Branch/Tag:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** ${{ steps.meta.outputs.image-name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:** " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-  # Summary
-  deployment-summary:
-    name: 📊 Deployment Summary
-    needs: [detect-changes, build-jars, build-docker]
-    if: always() && needs.detect-changes.outputs.has-changes == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📊 Generate summary
-        run: |
-          echo "# 🚀 Backend Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Services Deployed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Parse JSON array and iterate
-          SERVICES_JSON='${{ needs.detect-changes.outputs.services }}'
-          echo "$SERVICES_JSON" | jq -r '.[]' | while read service; do
-            echo "- ✅ **${service}**: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${service}:${{ github.ref_name }}-latest\`" >> $GITHUB_STEP_SUMMARY
-          done
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Build JARs | ${{ needs.build-jars.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Docker Images | ${{ needs.build-docker.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-
-      - name: ✅ Check status
-        run: |
-          if [ "${{ needs.build-jars.result }}" == "failure" ] || \
-             [ "${{ needs.build-docker.result }}" == "failure" ]; then
-            echo "❌ Deployment Failed"
-            exit 1
-          fi
-          echo "✅ Deployment Successful"
-
-  # Create deployment package artifact for main release
-  create-deployment-package:
-    name: 📦 Create Deployment Package
-    needs: [ detect-changes, build-jars, build-docker ]
-    if: |
-      github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      (needs.build-jars.result == 'success' || needs.build-jars.result == 'skipped') &&
-      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') &&
-      needs.detect-changes.result == 'success'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Create deployment package
-        run: |
-          # Create deployment archive
-          cd deployment
-          zip -r ../dokus-quick-deploy.zip . -x "*.git*" -x ".env" -x ".env.backup"
-          cd ..
-
-          # Show contents
-          echo "📦 Package contents:"
-          unzip -l dokus-quick-deploy.zip
-
-          # Get file size
-          SIZE=$(du -h dokus-quick-deploy.zip | cut -f1)
-          echo "📊 Package size: $SIZE"
-
-      - name: 📤 Upload deployment package
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-package
-          path: dokus-quick-deploy.zip
-          retention-days: 90
