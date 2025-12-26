@@ -30,9 +30,9 @@ services:
   # INFRASTRUCTURE SERVICES
   # ==========================================================================
 
-  # Single PostgreSQL Database for all services
+  # Single PostgreSQL Database for all services (with pgvector for embeddings)
   postgres-local:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     container_name: dokus-postgres-local
     environment:
       POSTGRES_DB: dokus
@@ -42,6 +42,7 @@ services:
       - "15432:5432"
     volumes:
       - postgres-local:/var/lib/postgresql/data
+      - ./deployment/postgres/init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql:ro
     networks:
       - dokus-local-network
     healthcheck:
@@ -251,8 +252,8 @@ services:
       - cashflow-storage-local:/app/storage/documents
     labels:
       - "traefik.enable=true"
-      # Cashflow routes: invoices, expenses, bills, cashflow, documents, attachments, peppol
-      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
+      # Cashflow routes: invoices, expenses, bills, cashflow, documents, attachments, peppol, chat
+      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`) || PathPrefix(`/api/v1/chat`)"
       - "traefik.http.routers.cashflow.entrypoints=web"
       - "traefik.http.routers.cashflow.service=cashflow"
       - "traefik.http.services.cashflow.loadbalancer.server.port=8080"
@@ -334,6 +335,57 @@ services:
       - "traefik.http.services.banking.loadbalancer.server.port=8080"
       - "traefik.http.services.banking.loadbalancer.healthcheck.path=/health"
       - "traefik.http.services.banking.loadbalancer.healthcheck.interval=30s"
+
+  # Document Processor Service (AI extraction worker)
+  processor-service-local:
+    image: invoid-vision/dokus-processor:dev-${BUILD_NUMBER:-latest}
+    container_name: dokus-processor-local
+    environment:
+      PORT: 8080
+      ENVIRONMENT: local
+      DB_URL: jdbc:postgresql://postgres-local:5432/dokus
+      DB_USERNAME: dev
+      DB_PASSWORD: devpassword
+      # MinIO Storage (for downloading documents to process)
+      MINIO_ENDPOINT: http://minio-local:9000
+      MINIO_ACCESS_KEY: dokusadmin
+      MINIO_SECRET_KEY: dokusadminpassword
+      MINIO_BUCKET: dokus-documents
+      # AI Configuration (Ollama on host machine)
+      AI_DEFAULT_PROVIDER: ollama
+      LOCAL_AI_BASE_URL: http://host.docker.internal:11434
+      LOCAL_AI_MODEL: mistral:7b
+      # RabbitMQ Configuration
+      RABBITMQ_HOST: rabbitmq-local
+      RABBITMQ_PASSWORD: localrabbitpass
+      # Processor settings
+      PROCESSOR_POLLING_INTERVAL: "5000"
+      PROCESSOR_BATCH_SIZE: "10"
+      PROCESSOR_MAX_ATTEMPTS: "3"
+      LOG_LEVEL: DEBUG
+    ports:
+      - "15014:5005"  # Debug port only
+    depends_on:
+      postgres-local:
+        condition: service_healthy
+      minio-local:
+        condition: service_healthy
+      rabbitmq-local:
+        condition: service_healthy
+    networks:
+      - dokus-local-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs-local:/app/logs
+    labels:
+      - "traefik.enable=false"  # Internal service, not exposed via gateway
 
   # Contacts Service
   contacts-service-local:

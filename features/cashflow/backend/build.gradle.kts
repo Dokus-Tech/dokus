@@ -24,6 +24,7 @@ dependencies {
     implementation(projects.foundation.messaging)
     implementation(projects.foundation.database)
     implementation(projects.foundation.peppolCore)
+    implementation(projects.features.ai.backend)
 
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.datetime)

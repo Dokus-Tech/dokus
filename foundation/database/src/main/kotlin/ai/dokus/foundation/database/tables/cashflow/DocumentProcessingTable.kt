@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
+import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
@@ -25,6 +26,14 @@ import org.jetbrains.exposed.v1.datetime.datetime
  * - Confidence scores
  * - AI provider used
  * - Confirmation status when user reviews
+ *
+ * Draft Versioning (Audit Trail):
+ * - aiDraftData: Original AI extraction output (immutable once set)
+ * - extractedData: Current version (may include user edits)
+ * - userCorrections: JSON tracking what the user changed from AI draft
+ * - provenanceData: JSON linking extracted fields to source locations in document
+ * - draftVersion: Incremented on each user edit
+ * - draftEditedAt/draftEditedBy: Tracks who last edited and when
  */
 object DocumentProcessingTable : UUIDTable("document_processing") {
 
@@ -48,7 +57,39 @@ object DocumentProcessingTable : UUIDTable("document_processing") {
         .nullable()
 
     // Extraction results as JSON (ExtractedDocumentData serialized)
+    // This is the "current" version that may include user edits
     val extractedData = text("extracted_data").nullable()
+
+    // ============================================
+    // Draft Versioning Fields (Audit Trail)
+    // ============================================
+
+    // Original AI extraction output - IMMUTABLE once set
+    // Preserves the AI's initial extraction for audit purposes
+    val aiDraftData = text("ai_draft_data").nullable()
+
+    // JSON tracking user corrections/edits from the AI draft
+    // Format: [{ "field": "vendorName", "aiValue": "Acme Inc", "userValue": "ACME Corporation", "editedAt": "..." }, ...]
+    val userCorrections = text("user_corrections").nullable()
+
+    // JSON linking extracted fields to their source locations in the document
+    // Format: { "vendorName": { "page": 1, "bbox": [x1,y1,x2,y2], "text": "..." }, ... }
+    val provenanceData = text("provenance_data").nullable()
+
+    // Version number - incremented each time user edits the draft
+    val draftVersion = integer("draft_version").default(0)
+
+    // When the draft was last edited by a user
+    val draftEditedAt = datetime("draft_edited_at").nullable()
+
+    // Who last edited the draft
+    val draftEditedBy = uuid("draft_edited_by")
+        .references(UsersTable.id, onDelete = ReferenceOption.SET_NULL)
+        .nullable()
+
+    // ============================================
+    // End Draft Versioning Fields
+    // ============================================
 
     // Full OCR/extracted text - stored separately for size
     val rawText = text("raw_text").nullable()

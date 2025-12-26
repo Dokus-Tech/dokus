@@ -1,5 +1,9 @@
 package ai.dokus.processor.backend.config
 
+import ai.dokus.ai.config.AIConfig as RAGAIConfig
+import ai.dokus.ai.services.ChunkRepository
+import ai.dokus.ai.services.ChunkingService
+import ai.dokus.ai.services.EmbeddingService
 import ai.dokus.foundation.database.di.repositoryModuleProcessor
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.config.MinioConfig
@@ -35,6 +39,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             httpClientModule(),
             storageModule(appConfig),
             extractionModule(processorConfig),
+            ragModule(processorConfig),
             repositoryModuleProcessor,
             workerModule(processorConfig)
         )
@@ -95,6 +100,33 @@ private fun extractionModule(config: ProcessorConfig) = module {
     single { ExtractionProviderFactory(get(), get()) }
 }
 
+/**
+ * RAG (Retrieval Augmented Generation) module for document chunking and embedding.
+ * Provides ChunkingService and EmbeddingService for preparing documents for chat.
+ */
+private fun ragModule(config: ProcessorConfig) = module {
+    // ChunkingService - no external dependencies
+    single { ChunkingService() }
+
+    // RAG AI Config - uses the local AI configuration for embeddings
+    single {
+        RAGAIConfig.localDefault().copy(
+            ollama = RAGAIConfig.OllamaConfig(
+                enabled = true,
+                baseUrl = config.ai.local.baseUrl,
+                defaultModel = config.ai.local.model
+            )
+        )
+    }
+
+    // EmbeddingService - for generating vector embeddings
+    single { EmbeddingService(get<HttpClient>(), get<RAGAIConfig>()) }
+
+    // ChunkRepository - NOTE: Implementation must be provided externally
+    // The DocumentChunksRepository is in cashflow-backend.
+    // For now, RAG is disabled until we integrate with cashflow-backend.
+}
+
 private fun workerModule(config: ProcessorConfig) = module {
     single {
         WorkerConfig(
@@ -108,7 +140,12 @@ private fun workerModule(config: ProcessorConfig) = module {
             processingRepository = get(),
             documentStorage = get(),
             providerFactory = get(),
-            config = get()
+            config = get(),
+            // RAG dependencies - chunking and embedding for chat feature
+            // ChunkRepository is null until we integrate with cashflow-backend
+            chunkingService = get<ChunkingService>(),
+            embeddingService = get<EmbeddingService>(),
+            chunkRepository = null
         )
     }
 }

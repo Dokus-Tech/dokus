@@ -9,10 +9,12 @@ import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.DocumentProcessingSummary
 import ai.dokus.foundation.domain.model.ExtractedDocumentData
+import ai.dokus.foundation.domain.model.TrackedCorrection
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -301,6 +303,72 @@ class DocumentProcessingRepository {
             it[status] = ProcessingStatus.Rejected
             it[updatedAt] = now
         } > 0
+    }
+
+    /**
+     * Update the extracted data draft with user corrections.
+     * Preserves the original AI draft for audit trail.
+     *
+     * @param processingId The processing record ID
+     * @param tenantId The tenant ID (for security)
+     * @param userId The user making the edit
+     * @param updatedData The new extracted data with user corrections
+     * @param corrections List of tracked corrections for audit trail
+     * @return The new draft version number, or null if update failed
+     */
+    suspend fun updateDraft(
+        processingId: DocumentProcessingId,
+        tenantId: TenantId,
+        userId: UserId,
+        updatedData: ExtractedDocumentData,
+        corrections: List<TrackedCorrection>
+    ): Int? = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        // First, get the current record to check if AI draft needs to be preserved
+        val current = DocumentProcessingTable.selectAll().where {
+            (DocumentProcessingTable.id eq UUID.fromString(processingId.toString())) and
+                    (DocumentProcessingTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }.singleOrNull() ?: return@newSuspendedTransaction null
+
+        val currentVersion = current[DocumentProcessingTable.draftVersion]
+        val newVersion = currentVersion + 1
+
+        // If this is the first edit, preserve the original AI draft
+        val currentAiDraft = current[DocumentProcessingTable.aiDraftData]
+        val aiDraftToStore = if (currentAiDraft == null) {
+            // First edit - save current extractedData as aiDraftData
+            current[DocumentProcessingTable.extractedData]
+        } else {
+            // Already have AI draft preserved - keep it
+            currentAiDraft
+        }
+
+        // Merge new corrections with existing ones
+        val existingCorrections = current[DocumentProcessingTable.userCorrections]?.let {
+            try {
+                json.decodeFromString<List<TrackedCorrection>>(it)
+            } catch (e: Exception) {
+                emptyList()
+            }
+        } ?: emptyList()
+
+        val allCorrections = existingCorrections + corrections
+
+        val updated = DocumentProcessingTable.update({
+            (DocumentProcessingTable.id eq UUID.fromString(processingId.toString())) and
+                    (DocumentProcessingTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[extractedData] = json.encodeToString(updatedData)
+            it[aiDraftData] = aiDraftToStore
+            it[userCorrections] = json.encodeToString(allCorrections)
+            it[draftVersion] = newVersion
+            it[draftEditedAt] = now
+            it[draftEditedBy] = UUID.fromString(userId.toString())
+            it[updatedAt] = now
+        }
+
+        if (updated > 0) newVersion else null
     }
 
     /**

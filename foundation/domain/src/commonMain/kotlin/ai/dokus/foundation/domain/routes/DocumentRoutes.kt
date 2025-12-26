@@ -69,5 +69,21 @@ class Documents(
         @Serializable
         @Resource("processing-jobs")
         class ProcessingJobs(val parent: Id)
+
+        /**
+         * PATCH /api/v1/documents/{id}/draft
+         * Update extracted draft data with user corrections
+         */
+        @Serializable
+        @Resource("draft")
+        class Draft(val parent: Id)
+
+        /**
+         * POST /api/v1/documents/{id}/chat
+         * Send a chat message for single-document Q&A
+         */
+        @Serializable
+        @Resource("chat")
+        class Chat(val parent: Id)
     }
 }
