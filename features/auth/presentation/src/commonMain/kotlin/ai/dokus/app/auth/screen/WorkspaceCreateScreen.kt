@@ -53,7 +53,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import pro.respawn.flowmvi.api.IntentReceiver
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
 
@@ -70,102 +69,101 @@ internal fun WorkspaceCreateScreen(
     var shouldNavigate by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(true) }
 
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            WorkspaceCreateAction.NavigateHome -> {
-                isWarpActive = true
-                contentVisible = false
-            }
-            WorkspaceCreateAction.NavigateBack -> {
-                navController.navigateUp()
-            }
-            is WorkspaceCreateAction.ShowCreationError -> {
-                // Handle creation error - could show snackbar
-            }
-        }
-    }
+    with(container.store) {
+        val state by subscribe { action ->
+            when (action) {
+                WorkspaceCreateAction.NavigateHome -> {
+                    isWarpActive = true
+                    contentVisible = false
+                }
 
-    // Handle navigation after warp animation
-    LaunchedEffect(shouldNavigate) {
-        if (shouldNavigate) {
-            delay(100)
-            navController.replace(CoreDestination.Home)
-        }
-    }
+                WorkspaceCreateAction.NavigateBack -> {
+                    navController.navigateUp()
+                }
 
-    // Load user info on init
-    LaunchedEffect(Unit) {
-        container.store.intent(WorkspaceCreateIntent.LoadUserInfo)
-    }
-
-    // Extract wizard state for easier access
-    val wizardState = state as? WorkspaceCreateState.Wizard
-    val isSubmitting = state is WorkspaceCreateState.Loading || state is WorkspaceCreateState.Creating
-
-    Scaffold { contentPadding ->
-        Box(
-            modifier = Modifier
-                .padding(
-                    bottom = contentPadding.calculateBottomPadding(),
-                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-                    top = contentPadding.calculateTopPadding(),
-                )
-                .fillMaxSize()
-        ) {
-            // Background effects with fade animation
-            AnimatedVisibility(
-                visible = contentVisible,
-                enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(800))
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    EnhancedFloatingBubbles()
+                is WorkspaceCreateAction.ShowCreationError -> {
+                    // Handle creation error - could show snackbar
                 }
             }
+        }
 
-            // Main content with fade animation
-            AnimatedVisibility(
-                visible = contentVisible,
-                enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(600))
+        // Handle navigation after warp animation
+        LaunchedEffect(shouldNavigate) {
+            if (shouldNavigate) {
+                delay(100)
+                navController.replace(CoreDestination.Home)
+            }
+        }
+
+        // Extract wizard state for easier access
+        val wizardState = state as? WorkspaceCreateState.Wizard
+        val isSubmitting =
+            state is WorkspaceCreateState.Loading || state is WorkspaceCreateState.Creating
+
+        Scaffold { contentPadding ->
+            Box(
+                modifier = Modifier
+                    .padding(
+                        bottom = contentPadding.calculateBottomPadding(),
+                        start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                        end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                        top = contentPadding.calculateTopPadding(),
+                    )
+                    .fillMaxSize()
             ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (wizardState != null) {
-                        with(container.store) {
+                // Background effects with fade animation
+                AnimatedVisibility(
+                    visible = contentVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut(animationSpec = tween(800))
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        EnhancedFloatingBubbles()
+                    }
+                }
+
+                // Main content with fade animation
+                AnimatedVisibility(
+                    visible = contentVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut(animationSpec = tween(600))
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (wizardState != null) {
                             WorkspaceCreateContent(
                                 wizardState = wizardState,
                                 isSubmitting = isSubmitting,
-                                onBackPress = { navController.navigateUp() }
+                                onBackPress = { navController.navigateUp() },
+                                modifier = Modifier.align(Alignment.Center)
                             )
                         }
                     }
                 }
-            }
 
-            // Warp jump effect overlay
-            WarpJumpEffect(
-                isActive = isWarpActive,
-                selectedItemPosition = null,
-                onAnimationComplete = {
-                    shouldNavigate = true
-                }
-            )
-
-            // Entity confirmation dialog
-            if (wizardState != null) {
-                EntityConfirmationDialog(
-                    state = wizardState.confirmationState,
-                    onEntitySelected = { entity ->
-                        container.store.intent(WorkspaceCreateIntent.SelectEntity(entity))
-                    },
-                    onEnterManually = {
-                        container.store.intent(WorkspaceCreateIntent.EnterManually)
-                    },
-                    onDismiss = {
-                        container.store.intent(WorkspaceCreateIntent.DismissConfirmation)
+                // Warp jump effect overlay
+                WarpJumpEffect(
+                    isActive = isWarpActive,
+                    selectedItemPosition = null,
+                    onAnimationComplete = {
+                        shouldNavigate = true
                     }
                 )
+
+                // Entity confirmation dialog
+                if (wizardState != null) {
+                    EntityConfirmationDialog(
+                        state = wizardState.confirmationState,
+                        onEntitySelected = { entity ->
+                            intent(WorkspaceCreateIntent.SelectEntity(entity))
+                        },
+                        onEnterManually = {
+                            intent(WorkspaceCreateIntent.EnterManually)
+                        },
+                        onDismiss = {
+                            intent(WorkspaceCreateIntent.DismissConfirmation)
+                        }
+                    )
+                }
             }
         }
     }
@@ -175,7 +173,8 @@ internal fun WorkspaceCreateScreen(
 private fun IntentReceiver<WorkspaceCreateIntent>.WorkspaceCreateContent(
     wizardState: WorkspaceCreateState.Wizard,
     isSubmitting: Boolean,
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    modifier: Modifier,
 ) {
     // Pager state - number of pages depends on tenant type
     val steps = WorkspaceWizardStep.stepsForType(wizardState.tenantType)
@@ -190,7 +189,7 @@ private fun IntentReceiver<WorkspaceCreateIntent>.WorkspaceCreateContent(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .withVerticalPadding()
             .limitWidth()
             .padding(horizontal = 16.dp)
@@ -239,6 +238,7 @@ private fun IntentReceiver<WorkspaceCreateIntent>.WorkspaceCreateContent(
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
+
                         WorkspaceWizardStep.CompanyName -> {
                             CompanyNameStep(
                                 companyName = wizardState.companyName,
@@ -250,6 +250,7 @@ private fun IntentReceiver<WorkspaceCreateIntent>.WorkspaceCreateContent(
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
+
                         WorkspaceWizardStep.VatAndAddress -> {
                             VatAndAddressStep(
                                 vatNumber = wizardState.vatNumber,

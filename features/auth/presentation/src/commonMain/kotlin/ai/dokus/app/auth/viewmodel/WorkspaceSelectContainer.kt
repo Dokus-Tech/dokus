@@ -10,6 +10,7 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 
 internal typealias WorkspaceSelectCtx = PipelineContext<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction>
@@ -29,6 +30,9 @@ internal class WorkspaceSelectContainer(
 
     override val store: Store<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> =
         store(WorkspaceSelectState.Loading) {
+            init {
+                handleLoadTenants()
+            }
             reduce { intent ->
                 when (intent) {
                     is WorkspaceSelectIntent.LoadTenants -> handleLoadTenants()
@@ -45,7 +49,7 @@ internal class WorkspaceSelectContainer(
             onSuccess = { tenants ->
                 logger.i { "Loaded ${tenants.size} tenants" }
                 updateState {
-                    WorkspaceSelectState.Content(tenants = tenants)
+                    WorkspaceSelectState.Content(data = tenants)
                 }
             },
             onFailure = { error ->
@@ -81,7 +85,7 @@ internal class WorkspaceSelectContainer(
                     logger.e(error) { "Failed to select tenant: $tenantId" }
                     action(WorkspaceSelectAction.ShowSelectionError(error.message ?: "Failed to select workspace"))
                     updateState {
-                        WorkspaceSelectState.Content(tenants = currentTenants)
+                        WorkspaceSelectState.Content(data = currentTenants)
                     }
                 }
             )

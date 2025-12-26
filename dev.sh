@@ -347,7 +347,7 @@ check_requirements() {
 build_app() {
     print_gradient_header "🔨 Building Application Services"
 
-    local services=("auth" "banking" "payment" "cashflow" "contacts")
+    local services=("auth" "banking" "payment" "cashflow" "contacts" "processor")
     local total=${#services[@]}
     local current=0
 
@@ -610,6 +610,7 @@ show_status() {
         "Payment Service:payment-service-local:/api/v1/payments"
         "Banking Service:banking-service-local:/api/v1/banking"
         "Contacts Service:contacts-service-local:/api/v1/contacts"
+        "Processor:processor-service-local:/health"
     )
 
     check_service() {
@@ -990,7 +991,7 @@ print_services_info() {
 
     echo ""
     echo_e "  ${SOFT_GRAY}${BOLD}Debug Ports (direct access)${NC}"
-    echo_e "    ${DIM_WHITE}Auth: 15007 • Cashflow: 15008 • Payment: 15009 • Banking: 15012 • Contacts: 15013${NC}"
+    echo_e "    ${DIM_WHITE}Auth: 15007 • Cashflow: 15008 • Payment: 15009 • Banking: 15012 • Contacts: 15013 • Processor: 15014${NC}"
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}💾 Database & Services${NC}\n"

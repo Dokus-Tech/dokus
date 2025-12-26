@@ -18,6 +18,10 @@ sealed interface HomeDestination : NavigationDestination {
     data object Contacts : HomeDestination
 
     @Serializable
+    @SerialName("ai-chat")
+    data object AiChat : HomeDestination
+
+    @Serializable
     @SerialName("settings")
     data object Settings : HomeDestination
 

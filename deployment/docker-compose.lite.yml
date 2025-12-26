@@ -17,10 +17,10 @@
 #   - Redis: 128MB
 #   - RabbitMQ: 256MB
 #   - MinIO: 256MB
-#   - Services: 5 x 256MB = 1.28GB
+#   - Services: 6 x 256MB = 1.54GB (auth, cashflow, payment, banking, contacts, processor)
 #   - Traefik: 128MB
 #   - Web: 64MB
-#   Total: ~2.5-3.5GB (fits Pi 4/5 comfortably)
+#   Total: ~2.8-3.8GB (fits Pi 4/5 comfortably)
 #
 # Note: Ollama runs externally on the host machine
 
@@ -81,9 +81,9 @@ services:
       - "traefik.http.routers.dashboard.entrypoints=traefik"
       - "traefik.http.routers.dashboard.service=api@internal"
 
-  # PostgreSQL - Pi optimized (lower memory, fewer connections)
+  # PostgreSQL - Pi optimized with pgvector for AI/RAG features
   postgres:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     container_name: dokus-postgres
     environment:
       POSTGRES_DB: dokus
@@ -113,6 +113,7 @@ services:
       - "15432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql:ro
     networks:
       - dokus-network
     deploy:
@@ -304,7 +305,7 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`)"
+      - "traefik.http.routers.cashflow.rule=PathPrefix(`/api/v1/invoices`) || PathPrefix(`/api/v1/expenses`) || PathPrefix(`/api/v1/bills`) || PathPrefix(`/api/v1/cashflow`) || PathPrefix(`/api/v1/documents`) || PathPrefix(`/api/v1/attachments`) || PathPrefix(`/api/v1/peppol`) || PathPrefix(`/api/v1/chat`)"
       - "traefik.http.routers.cashflow.entrypoints=web"
       - "traefik.http.routers.cashflow.service=cashflow"
       - "traefik.http.routers.cashflow.middlewares=rate-limit@file,cors-api@file"
@@ -408,6 +409,47 @@ services:
       - "traefik.http.routers.contacts.service=contacts"
       - "traefik.http.routers.contacts.middlewares=rate-limit@file,cors-api@file"
       - "traefik.http.services.contacts.loadbalancer.server.port=8080"
+
+  # Processor Service - Background document processing worker
+  processor-service:
+    image: ${DOCKER_REGISTRY:-94.111.226.82:5000}/dokus-processor:${TAG:-latest}
+    container_name: dokus-processor
+    env_file:
+      - .env
+    environment:
+      <<: *jvm-pi-defaults
+      ENVIRONMENT: lite
+      # AI Configuration - uses Ollama on host by default
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-ollama}
+      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
+      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-mistral:7b}
+      # Processing settings
+      PROCESSOR_POLLING_INTERVAL: ${PROCESSOR_POLLING_INTERVAL:-5000}
+      PROCESSOR_BATCH_SIZE: ${PROCESSOR_BATCH_SIZE:-5}
+      PROCESSOR_MAX_ATTEMPTS: ${PROCESSOR_MAX_ATTEMPTS:-3}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dokus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      <<: *healthcheck-pi
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=false"
 
   # ==========================================================================
   # WEB FRONTEND

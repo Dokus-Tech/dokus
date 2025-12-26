@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinPluginSerialization)
+    `java-library`
 }
 
 group = "ai.dokus.ai"
@@ -14,12 +15,19 @@ kotlin {
 }
 
 dependencies {
-    // JetBrains Koog AI Framework
-    implementation(libs.koog.agents)
+    // JetBrains Koog AI Framework (api to expose PromptExecutor, LLModel to dependents)
+    api(libs.koog.agents)
 
     // Foundation dependencies
     implementation(projects.foundation.domain)
     implementation(projects.foundation.ktorCommon)
+
+    // Ktor HTTP Client (for Ollama/OpenAI embeddings API)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     // Kotlin
     implementation(libs.kotlinx.coroutinesCore)

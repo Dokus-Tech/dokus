@@ -41,7 +41,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalLayoutDirection
 import kotlinx.coroutines.delay
 import pro.respawn.flowmvi.api.IntentReceiver
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
 
@@ -57,78 +56,75 @@ internal fun WorkspaceSelectScreen(
     var shouldNavigate by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(true) }
 
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            WorkspaceSelectAction.NavigateToHome -> {
-                // Trigger warp animation instead of immediate navigation
-                isWarpActive = true
-                contentVisible = false
-            }
-            is WorkspaceSelectAction.ShowSelectionError -> {
-                // Handle selection error - could show snackbar
-            }
-        }
-    }
+    with(container.store) {
+        val state by subscribe { action ->
+            when (action) {
+                WorkspaceSelectAction.NavigateToHome -> {
+                    // Trigger warp animation instead of immediate navigation
+                    isWarpActive = true
+                    contentVisible = false
+                }
 
-    // Handle navigation after warp animation
-    LaunchedEffect(shouldNavigate) {
-        if (shouldNavigate) {
-            delay(100) // Small delay for smooth transition
-            navController.replace(CoreDestination.Home)
-        }
-    }
-
-    // Load tenants on init
-    LaunchedEffect(Unit) {
-        container.store.intent(WorkspaceSelectIntent.LoadTenants)
-    }
-
-    Scaffold { contentPadding ->
-        Box(
-            modifier = Modifier
-                .padding(
-                    bottom = contentPadding.calculateBottomPadding(),
-                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-                    top = contentPadding.calculateTopPadding(),
-                )
-                .fillMaxSize()
-        ) {
-            // Background effects with fade animation
-            AnimatedVisibility(
-                visible = contentVisible,
-                enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(800))
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    EnhancedFloatingBubbles()
+                is WorkspaceSelectAction.ShowSelectionError -> {
+                    // Handle selection error - could show snackbar
                 }
             }
+        }
 
-            // Main content with fade animation
-            AnimatedVisibility(
-                visible = contentVisible,
-                enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(600))
+        // Handle navigation after warp animation
+        LaunchedEffect(shouldNavigate) {
+            if (shouldNavigate) {
+                delay(100) // Small delay for smooth transition
+                navController.replace(CoreDestination.Home)
+            }
+        }
+
+        Scaffold { contentPadding ->
+            Box(
+                modifier = Modifier
+                    .padding(
+                        bottom = contentPadding.calculateBottomPadding(),
+                        start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                        end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                        top = contentPadding.calculateTopPadding(),
+                    )
+                    .fillMaxSize()
             ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    with(container.store) {
+                // Background effects with fade animation
+                AnimatedVisibility(
+                    visible = contentVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut(animationSpec = tween(800))
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        EnhancedFloatingBubbles()
+                    }
+                }
+
+                // Main content with fade animation
+                AnimatedVisibility(
+                    visible = contentVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut(animationSpec = tween(600))
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         WorkspaceSelectContent(
                             state = state,
-                            onAddTenantClick = { navController.navigateTo(AuthDestination.WorkspaceCreate) }
+                            onAddTenantClick = { navController.navigateTo(AuthDestination.WorkspaceCreate) },
+                            modifier = Modifier.align(Alignment.Center)
                         )
                     }
                 }
-            }
 
-            // Warp jump effect overlay
-            WarpJumpEffect(
-                isActive = isWarpActive,
-                selectedItemPosition = selectedItemPosition,
-                onAnimationComplete = {
-                    shouldNavigate = true
-                }
-            )
+                // Warp jump effect overlay
+                WarpJumpEffect(
+                    isActive = isWarpActive,
+                    selectedItemPosition = selectedItemPosition,
+                    onAnimationComplete = {
+                        shouldNavigate = true
+                    }
+                )
+            }
         }
     }
 }
@@ -136,10 +132,11 @@ internal fun WorkspaceSelectScreen(
 @Composable
 private fun IntentReceiver<WorkspaceSelectIntent>.WorkspaceSelectContent(
     state: WorkspaceSelectState,
-    onAddTenantClick: () -> Unit
+    onAddTenantClick: () -> Unit,
+    modifier: Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .withVerticalPadding()
             .limitWidth()
             .fillMaxHeight(),

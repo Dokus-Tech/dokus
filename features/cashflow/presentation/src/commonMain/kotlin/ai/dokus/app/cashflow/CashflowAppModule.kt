@@ -6,17 +6,10 @@ import ai.dokus.app.cashflow.di.cashflowPresentationModule
 import ai.dokus.app.cashflow.di.cashflowViewModelModule
 import ai.dokus.app.cashflow.navigation.CashflowHomeNavigationProvider
 import ai.dokus.app.cashflow.navigation.CashflowNavigationProvider
-import tech.dokus.foundation.app.AppDataModuleDi
-import tech.dokus.foundation.app.AppDomainModuleDi
-import tech.dokus.foundation.app.AppModule
-import tech.dokus.foundation.app.AppPresentationModuleDi
-import tech.dokus.foundation.app.DashboardWidget
-import tech.dokus.foundation.app.ModuleSettingsGroup
-import tech.dokus.foundation.app.ModuleSettingsSection
-import tech.dokus.foundation.app.SettingsPriority
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cashflow
 import ai.dokus.app.resources.generated.cashflow_title
+import ai.dokus.app.resources.generated.ml
 import ai.dokus.app.resources.generated.settings_group_workspace
 import ai.dokus.app.resources.generated.settings_peppol
 import ai.dokus.foundation.design.model.HomeItem
@@ -28,6 +21,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import tech.dokus.foundation.app.AppDataModuleDi
+import tech.dokus.foundation.app.AppDomainModuleDi
+import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.AppPresentationModuleDi
+import tech.dokus.foundation.app.DashboardWidget
+import tech.dokus.foundation.app.ModuleSettingsGroup
+import tech.dokus.foundation.app.ModuleSettingsSection
+import tech.dokus.foundation.app.SettingsPriority
 
 /**
  * Cashflow module registration for dependency injection.
@@ -44,6 +45,13 @@ object CashflowAppModule : AppModule, KoinComponent {
             titleRes = Res.string.cashflow_title,
             iconRes = Res.drawable.cashflow,
             priority = HomeItemPriority.High,
+            showTopBar = false
+        ),
+        HomeItem(
+            destination = HomeDestination.AiChat,
+            titleRes = Res.string.cashflow_title,
+            iconRes = Res.drawable.ml,
+            priority = HomeItemPriority.Medium,
             showTopBar = false
         )
     )
