@@ -63,3 +63,6 @@ include(":features:processor:backend")
 
 include(":foundation:domain")
 include(":foundation:sstorage")
+
+// Modular monolith backend (single-server deployment)
+include(":features:server:backend")
