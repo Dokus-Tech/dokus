@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       services:
-        description: 'Services to build (comma-separated: auth,banking,cashflow,contacts,payment or "all")'
+        description: 'Services to build (comma-separated: auth,banking,cashflow,contacts,payment,processor or "all")'
         required: false
         default: 'all'
 
@@ -56,7 +56,7 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             SERVICES="${{ github.event.inputs.services }}"
             if [ "$SERVICES" == "all" ]; then
-              SERVICES="auth,banking,cashflow,contacts,payment"
+              SERVICES="auth,banking,cashflow,contacts,payment,processor"
             fi
             # Convert to JSON array (compact, single line)
             JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
@@ -69,7 +69,7 @@ jobs:
           # On main branch, always build all services for releases
           if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
             echo "Main branch push detected - building all services for release"
-            SERVICES="auth,banking,cashflow,contacts,payment"
+            SERVICES="auth,banking,cashflow,contacts,payment,processor"
             JSON_SERVICES=$(echo "$SERVICES" | jq -R -c 'split(",") | map(select(length > 0))')
             echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
             echo "has-changes=true" >> $GITHUB_OUTPUT
@@ -88,7 +88,7 @@ jobs:
           fi
 
           # Check each service for changes
-          for service in auth banking cashflow contacts payment; do
+          for service in auth banking cashflow contacts payment processor; do
             if echo "$CHANGED_FILES" | grep -q "features/${service}/backend/" || \
                echo "$CHANGED_FILES" | grep -q "foundation/"; then
               if [ -z "$CHANGED_SERVICES" ]; then
@@ -141,6 +141,7 @@ jobs:
                     :features:cashflow:backend:shadowJar \
                     :features:contacts:backend:shadowJar \
                     :features:payment:backend:shadowJar \
+                    :features:processor:backend:shadowJar \
                     -x test
 
       - name: 📦 Upload build artifacts

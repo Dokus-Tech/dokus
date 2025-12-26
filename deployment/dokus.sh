@@ -442,16 +442,29 @@ show_status() {
         "Payment Service:/api/v1/payments"
         "Banking Service:/api/v1/banking"
         "Contacts Service:/api/v1/contacts"
+        "Processor Service:container:processor-service"
         "Web Frontend:/"
     )
 
     for service_info in "${services[@]}"; do
-        IFS=':' read -r service_name endpoint <<< "$service_info"
+        IFS=':' read -r service_name check_type check_target <<< "$service_info"
         printf "  ${SOFT_GRAY}│${NC} %-23s ${SOFT_GRAY}│${NC} " "$service_name"
-        if gateway_is_reachable "$endpoint"; then
-            echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+
+        if [ "$check_type" == "container" ]; then
+            # Container-based health check for background workers
+            if docker compose -f "$COMPOSE_FILE" ps --status running -q "$check_target" 2>/dev/null | grep -q .; then
+                echo_e "${SOFT_GREEN}◎ RUNNING${NC}       ${SOFT_GRAY}│${NC}"
+            else
+                echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+            fi
         else
-            echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+            # Gateway-based health check (check_type is actually the endpoint)
+            local endpoint="$check_type"
+            if gateway_is_reachable "$endpoint"; then
+                echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+            else
+                echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+            fi
         fi
     done
 
