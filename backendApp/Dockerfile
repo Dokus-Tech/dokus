@@ -11,7 +11,7 @@ RUN apk add --no-cache curl tzdata
 RUN addgroup -g 1001 -S dokus && adduser -u 1001 -S dokus -G dokus
 
 # Copy the pre-built fat JAR (shadowJar) (wildcard avoids version hardcoding)
-COPY backendApp/build/libs/backend-*-all.jar app.jar
+COPY backendApp/build/libs/backendApp-*-all.jar app.jar
 
 # Create directory for logs
 RUN mkdir -p /app/logs && chown -R dokus:dokus /app

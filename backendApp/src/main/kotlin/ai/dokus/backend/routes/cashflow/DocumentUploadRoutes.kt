@@ -35,7 +35,7 @@ private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses
  *
  * Base path: /api/v1/documents
  */
-fun Route.documentUploadRoutes() {
+internal fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
     val processingRepository by inject<DocumentProcessingRepository>()

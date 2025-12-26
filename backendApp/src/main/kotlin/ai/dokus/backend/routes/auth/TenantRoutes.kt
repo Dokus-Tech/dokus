@@ -1,15 +1,15 @@
 package ai.dokus.backend.routes.auth
 
-import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.AddressRepository
+import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.CreateTenantRequest
 import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
+import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.domain.routes.Tenants
 import ai.dokus.foundation.ktor.security.authenticateJwt
@@ -35,7 +35,7 @@ import kotlin.uuid.Uuid
 private val logger = LoggerFactory.getLogger("TenantRoutes")
 
 @OptIn(ExperimentalUuidApi::class)
-fun Route.tenantRoutes() {
+internal fun Route.tenantRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()
     val userRepository by inject<UserRepository>()
@@ -135,7 +135,10 @@ fun Route.tenantRoutes() {
             val tenantId = dokusPrincipal.requireTenantId()
             val address = addressRepository.getCompanyAddress(tenantId)
             if (address == null) {
-                call.respond(HttpStatusCode.NotFound, mapOf("message" to "Company address not configured"))
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    mapOf("message" to "Company address not configured")
+                )
             } else {
                 call.respond(HttpStatusCode.OK, address)
             }

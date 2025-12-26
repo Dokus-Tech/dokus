@@ -34,7 +34,7 @@ import kotlin.uuid.Uuid
  * All routes require Owner role except listing members.
  */
 @OptIn(ExperimentalUuidApi::class)
-fun Route.teamRoutes() {
+internal fun Route.teamRoutes() {
     val teamService by inject<TeamService>()
 
     authenticateJwt {

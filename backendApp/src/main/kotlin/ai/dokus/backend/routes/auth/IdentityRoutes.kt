@@ -7,12 +7,12 @@ import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
 import ai.dokus.foundation.domain.routes.Identity
-import io.ktor.http.*
-import io.ktor.server.request.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
 import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 
 /**
@@ -23,7 +23,7 @@ import org.koin.ktor.ext.inject
  * - Password reset
  * - Email verification
  */
-fun Route.identityRoutes() {
+internal fun Route.identityRoutes() {
     val authService by inject<AuthService>()
 
     /**

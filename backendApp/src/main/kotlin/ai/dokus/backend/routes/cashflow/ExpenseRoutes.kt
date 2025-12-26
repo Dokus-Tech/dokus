@@ -27,7 +27,7 @@ import kotlin.uuid.Uuid
  * All routes require JWT authentication and tenant context.
  */
 @OptIn(ExperimentalUuidApi::class)
-fun Route.expenseRoutes() {
+internal fun Route.expenseRoutes() {
     val expenseService by inject<ExpenseService>()
 
     authenticateJwt {

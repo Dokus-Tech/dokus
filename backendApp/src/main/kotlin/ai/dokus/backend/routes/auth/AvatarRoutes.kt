@@ -30,7 +30,7 @@ private val logger = LoggerFactory.getLogger("AvatarRoutes")
  * - GET /api/v1/tenants/avatar - Get current avatar URLs
  * - DELETE /api/v1/tenants/avatar - Remove avatar
  */
-fun Route.avatarRoutes() {
+internal fun Route.avatarRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val avatarStorageService by inject<AvatarStorageService>()
 
@@ -61,6 +61,7 @@ fun Route.avatarRoutes() {
                             fileBytes = part.streamProvider().readBytes()
                         }
                     }
+
                     else -> {}
                 }
                 part.dispose()

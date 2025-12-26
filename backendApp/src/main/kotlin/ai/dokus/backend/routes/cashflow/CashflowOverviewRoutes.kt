@@ -17,7 +17,7 @@ import org.koin.ktor.ext.inject
  *
  * All routes require JWT authentication and tenant context.
  */
-fun Route.cashflowOverviewRoutes() {
+internal fun Route.cashflowOverviewRoutes() {
     val cashflowOverviewService by inject<CashflowOverviewService>()
 
     authenticateJwt {

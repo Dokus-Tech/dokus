@@ -1,12 +1,12 @@
 package ai.dokus.backend.plugins
 
-import ai.dokus.backend.routes.auth.configureRoutes as configureAuthRoutes
+import ai.dokus.backend.routes.auth.configureAuthRoutes
 import ai.dokus.backend.routes.cashflow.configureCashflowRoutes
 import ai.dokus.backend.routes.contacts.contactRoutes
+import ai.dokus.backend.routes.payment.paymentRoutes
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.routes.healthRoutes
 import ai.dokus.foundation.ktor.routes.serverInfoRoutes
-import ai.dokus.backend.routes.payment.paymentRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
 import org.slf4j.LoggerFactory

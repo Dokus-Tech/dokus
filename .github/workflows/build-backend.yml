@@ -78,8 +78,8 @@ jobs:
       - name: 🔍 Verify fat JAR exists
         run: |
           ls -lh backendApp/build/libs/
-          if ! ls backendApp/build/libs/backend-*-all.jar 1> /dev/null 2>&1; then
-            echo "❌ Fat JAR not found for dokus-server (expected backend-*-all.jar)"
+          if ! ls backendApp/build/libs/backendApp-*-all.jar 1> /dev/null 2>&1; then
+            echo "❌ Fat JAR not found for dokus-server (expected backendApp-*-all.jar)"
             exit 1
           fi
 
