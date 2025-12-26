@@ -20,6 +20,9 @@ import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.DocumentProcessingListResponse
 import ai.dokus.foundation.domain.model.ReprocessDocumentRequest
 import ai.dokus.foundation.domain.model.ReprocessDocumentResponse
+import ai.dokus.foundation.domain.model.TrackedCorrection
+import ai.dokus.foundation.domain.model.UpdateDraftRequest
+import ai.dokus.foundation.domain.model.UpdateDraftResponse
 import ai.dokus.foundation.domain.routes.Documents
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import ai.dokus.foundation.ktor.security.dokusPrincipal
@@ -41,9 +44,9 @@ import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentS
  * Endpoints:
  * - GET /api/v1/documents/processing - List documents by processing status
  * - GET /api/v1/documents/{id}/processing - Get processing details for a document
- * - POST /api/v1/documents/{id}/confirm - Confirm extraction and create entity
- * - POST /api/v1/documents/{id}/reject - Reject extraction for manual entry
- * - POST /api/v1/documents/{id}/reprocess - Trigger re-extraction
+ * - PATCH /api/v1/documents/{id}/status - Confirm extraction and create entity
+ * - PATCH /api/v1/documents/{id}/draft - Update extracted draft with user corrections
+ * - POST /api/v1/documents/{id}/processing-jobs - Trigger re-extraction
  */
 fun Route.documentProcessingRoutes() {
     val processingRepository by inject<DocumentProcessingRepository>()
@@ -327,6 +330,128 @@ fun Route.documentProcessingRoutes() {
                     entityId = entityId.toString(),
                     entityType = request.entityType,
                     processingId = processing.id.toString()
+                )
+            )
+        }
+
+        /**
+         * PATCH /api/v1/documents/{id}/draft
+         * Update extracted draft data with user corrections.
+         * Preserves the original AI draft for audit trail.
+         *
+         * Path parameters:
+         * - id: Document ID (UUID)
+         *
+         * Request body: UpdateDraftRequest
+         * - extractedData: The updated extracted data with user corrections
+         * - changeDescription: Optional description of what was changed
+         *
+         * Response: UpdateDraftResponse
+         */
+        patch<Documents.Id.Draft> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val userId = dokusPrincipal.userId
+            val documentId = DocumentId.parse(route.parent.id)
+
+            val request = call.receive<UpdateDraftRequest>()
+
+            logger.info("Updating draft for document: $documentId, tenant=$tenantId, user=$userId")
+
+            // Get processing record
+            val processing = processingRepository.getByDocumentId(
+                documentId = documentId,
+                tenantId = tenantId,
+                includeDocument = false
+            ) ?: throw DokusException.NotFound("Processing record not found for document")
+
+            // Verify status allows editing (only PROCESSED documents can have drafts edited)
+            if (processing.status != ProcessingStatus.Processed) {
+                throw DokusException.BadRequest(
+                    "Draft cannot be edited in status: ${processing.status}. Must be PROCESSED."
+                )
+            }
+
+            // Build tracked corrections for audit trail
+            val now = kotlinx.datetime.Clock.System.now().toString()
+            val corrections = mutableListOf<TrackedCorrection>()
+
+            // Compare old and new data to track what changed
+            val oldData = processing.extractedData
+            val newData = request.extractedData
+
+            // Track changes at a high level (document type specific tracking can be enhanced later)
+            if (oldData?.documentType != newData.documentType) {
+                corrections.add(TrackedCorrection(
+                    field = "documentType",
+                    aiValue = oldData?.documentType?.name,
+                    userValue = newData.documentType.name,
+                    editedAt = now
+                ))
+            }
+
+            // For invoices, track key field changes
+            oldData?.invoice?.let { oldInvoice ->
+                newData.invoice?.let { newInvoice ->
+                    if (oldInvoice.clientName != newInvoice.clientName) {
+                        corrections.add(TrackedCorrection("invoice.clientName", oldInvoice.clientName, newInvoice.clientName, now))
+                    }
+                    if (oldInvoice.invoiceNumber != newInvoice.invoiceNumber) {
+                        corrections.add(TrackedCorrection("invoice.invoiceNumber", oldInvoice.invoiceNumber, newInvoice.invoiceNumber, now))
+                    }
+                    if (oldInvoice.totalAmount != newInvoice.totalAmount) {
+                        corrections.add(TrackedCorrection("invoice.totalAmount", oldInvoice.totalAmount?.toString(), newInvoice.totalAmount?.toString(), now))
+                    }
+                }
+            }
+
+            // For bills, track key field changes
+            oldData?.bill?.let { oldBill ->
+                newData.bill?.let { newBill ->
+                    if (oldBill.supplierName != newBill.supplierName) {
+                        corrections.add(TrackedCorrection("bill.supplierName", oldBill.supplierName, newBill.supplierName, now))
+                    }
+                    if (oldBill.invoiceNumber != newBill.invoiceNumber) {
+                        corrections.add(TrackedCorrection("bill.invoiceNumber", oldBill.invoiceNumber, newBill.invoiceNumber, now))
+                    }
+                    if (oldBill.amount != newBill.amount) {
+                        corrections.add(TrackedCorrection("bill.amount", oldBill.amount?.toString(), newBill.amount?.toString(), now))
+                    }
+                }
+            }
+
+            // For expenses, track key field changes
+            oldData?.expense?.let { oldExpense ->
+                newData.expense?.let { newExpense ->
+                    if (oldExpense.merchant != newExpense.merchant) {
+                        corrections.add(TrackedCorrection("expense.merchant", oldExpense.merchant, newExpense.merchant, now))
+                    }
+                    if (oldExpense.amount != newExpense.amount) {
+                        corrections.add(TrackedCorrection("expense.amount", oldExpense.amount?.toString(), newExpense.amount?.toString(), now))
+                    }
+                    if (oldExpense.category != newExpense.category) {
+                        corrections.add(TrackedCorrection("expense.category", oldExpense.category?.name, newExpense.category?.name, now))
+                    }
+                }
+            }
+
+            // Update the draft
+            val newVersion = processingRepository.updateDraft(
+                processingId = processing.id,
+                tenantId = tenantId,
+                userId = userId,
+                updatedData = request.extractedData,
+                corrections = corrections
+            ) ?: throw DokusException.InternalError("Failed to update draft")
+
+            logger.info("Draft updated: document=$documentId, version=$newVersion, corrections=${corrections.size}")
+
+            call.respond(
+                HttpStatusCode.OK,
+                UpdateDraftResponse(
+                    processingId = processing.id.toString(),
+                    draftVersion = newVersion,
+                    extractedData = request.extractedData,
+                    updatedAt = now
                 )
             )
         }

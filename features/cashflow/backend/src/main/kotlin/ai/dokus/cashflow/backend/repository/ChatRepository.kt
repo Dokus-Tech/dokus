@@ -1,0 +1,469 @@
+package ai.dokus.cashflow.backend.repository
+
+import ai.dokus.foundation.database.tables.ai.ChatMessagesTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
+import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.model.ChatCitation
+import ai.dokus.foundation.domain.model.ChatMessageDto
+import ai.dokus.foundation.domain.model.ChatMessageId
+import ai.dokus.foundation.domain.model.ChatScope
+import ai.dokus.foundation.domain.model.ChatSessionId
+import ai.dokus.foundation.domain.model.ChatSessionSummary
+import ai.dokus.foundation.domain.model.MessageRole
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import org.slf4j.LoggerFactory
+import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+
+/**
+ * Repository for chat message persistence and conversation management.
+ *
+ * Provides CRUD operations for chat messages and session management for
+ * document Q&A conversations. Supports both single-document and cross-document
+ * chat scopes.
+ *
+ * CRITICAL SECURITY: All queries MUST filter by tenantId for multi-tenant isolation.
+ */
+@OptIn(ExperimentalUuidApi::class)
+class ChatRepository {
+
+    private val logger = LoggerFactory.getLogger(ChatRepository::class.java)
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
+    // =========================================================================
+    // Message Operations
+    // =========================================================================
+
+    /**
+     * Save a new chat message.
+     *
+     * @param message The message DTO to save
+     * @return The saved message with ID populated
+     */
+    suspend fun saveMessage(message: ChatMessageDto): ChatMessageDto = newSuspendedTransaction {
+        val messageId = UUID.fromString(message.id.toString())
+        val tenantUuid = UUID.fromString(message.tenantId.toString())
+        val userUuid = UUID.fromString(message.userId.toString())
+        val sessionUuid = UUID.fromString(message.sessionId.toString())
+
+        logger.debug(
+            "Saving chat message: id=$messageId, session=$sessionUuid, role=${message.role}, tenant=$tenantUuid"
+        )
+
+        // Serialize citations as JSON array
+        val citationsJson = message.citations?.takeIf { it.isNotEmpty() }?.let { cites ->
+            json.encodeToString(ListSerializer(ChatCitation.serializer()), cites)
+        }
+
+        ChatMessagesTable.insert {
+            it[id] = messageId
+            it[tenantId] = tenantUuid
+            it[userId] = userUuid
+            it[sessionId] = sessionUuid
+            it[role] = message.role.dbValue
+            it[content] = message.content
+            it[scope] = message.scope.dbValue
+            it[documentProcessingId] = message.documentProcessingId?.let { docId ->
+                UUID.fromString(docId.toString())
+            }
+            it[citations] = citationsJson
+            it[chunksRetrieved] = message.chunksRetrieved
+            it[aiModel] = message.aiModel
+            it[aiProvider] = message.aiProvider
+            it[generationTimeMs] = message.generationTimeMs
+            it[promptTokens] = message.promptTokens
+            it[completionTokens] = message.completionTokens
+            it[sequenceNumber] = message.sequenceNumber
+            it[createdAt] = message.createdAt
+        }
+
+        logger.debug("Successfully saved chat message: $messageId")
+        message
+    }
+
+    /**
+     * Get a message by ID.
+     * CRITICAL: MUST filter by tenantId.
+     */
+    suspend fun getMessageById(
+        tenantId: TenantId,
+        messageId: ChatMessageId
+    ): ChatMessageDto? = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val msgUuid = UUID.fromString(messageId.toString())
+
+        ChatMessagesTable
+            .selectAll()
+            .where {
+                (ChatMessagesTable.id eq msgUuid) and
+                        (ChatMessagesTable.tenantId eq tenantUuid)
+            }
+            .singleOrNull()
+            ?.toMessageDto()
+    }
+
+    /**
+     * Get all messages for a session, ordered by sequence number.
+     * CRITICAL: MUST filter by tenantId.
+     */
+    suspend fun getSessionMessages(
+        tenantId: TenantId,
+        sessionId: ChatSessionId,
+        limit: Int = 100,
+        offset: Int = 0,
+        descending: Boolean = false
+    ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val sessionUuid = UUID.fromString(sessionId.toString())
+
+        val baseQuery = ChatMessagesTable
+            .selectAll()
+            .where {
+                (ChatMessagesTable.tenantId eq tenantUuid) and
+                        (ChatMessagesTable.sessionId eq sessionUuid)
+            }
+
+        val total = baseQuery.count()
+
+        val sortOrder = if (descending) SortOrder.DESC else SortOrder.ASC
+        val messages = baseQuery
+            .orderBy(ChatMessagesTable.sequenceNumber to sortOrder)
+            .limit(limit)
+            .offset(offset.toLong())
+            .map { it.toMessageDto() }
+
+        messages to total
+    }
+
+    /**
+     * Get messages for a specific document (across all sessions).
+     * Useful for document-specific chat history.
+     * CRITICAL: MUST filter by tenantId.
+     */
+    suspend fun getMessagesForDocument(
+        tenantId: TenantId,
+        documentProcessingId: DocumentProcessingId,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val documentUuid = UUID.fromString(documentProcessingId.toString())
+
+        val baseQuery = ChatMessagesTable
+            .selectAll()
+            .where {
+                (ChatMessagesTable.tenantId eq tenantUuid) and
+                        (ChatMessagesTable.documentProcessingId eq documentUuid)
+            }
+
+        val total = baseQuery.count()
+
+        val messages = baseQuery
+            .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
+            .limit(limit)
+            .offset(offset.toLong())
+            .map { it.toMessageDto() }
+
+        messages to total
+    }
+
+    /**
+     * Get the next sequence number for a session.
+     * Used when adding new messages to ensure proper ordering.
+     */
+    suspend fun getNextSequenceNumber(
+        tenantId: TenantId,
+        sessionId: ChatSessionId
+    ): Int = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val sessionUuid = UUID.fromString(sessionId.toString())
+
+        val maxSeq: Int? = ChatMessagesTable
+            .select(ChatMessagesTable.sequenceNumber.max())
+            .where {
+                (ChatMessagesTable.tenantId eq tenantUuid) and
+                        (ChatMessagesTable.sessionId eq sessionUuid)
+            }
+            .singleOrNull()
+            ?.get(ChatMessagesTable.sequenceNumber.max())
+
+        (maxSeq ?: 0).plus(1)
+    }
+
+    // =========================================================================
+    // Session Operations
+    // =========================================================================
+
+    /**
+     * List chat sessions for a tenant with pagination.
+     * CRITICAL: MUST filter by tenantId.
+     */
+    suspend fun listSessions(
+        tenantId: TenantId,
+        scope: ChatScope? = null,
+        documentProcessingId: DocumentProcessingId? = null,
+        limit: Int = 20,
+        offset: Int = 0
+    ): Pair<List<ChatSessionSummary>, Long> = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+
+        // Build query with optional filters
+        var query = ChatMessagesTable
+            .selectAll()
+            .where { ChatMessagesTable.tenantId eq tenantUuid }
+
+        if (scope != null) {
+            query = query.andWhere { ChatMessagesTable.scope eq scope.dbValue }
+        }
+
+        if (documentProcessingId != null) {
+            val documentUuid = UUID.fromString(documentProcessingId.toString())
+            query = query.andWhere { ChatMessagesTable.documentProcessingId eq documentUuid }
+        }
+
+        // Get distinct sessions
+        val allMessages = query
+            .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
+            .toList()
+
+        // Group by session and build summaries
+        val sessionGroups = allMessages.groupBy { it[ChatMessagesTable.sessionId] }
+        val total = sessionGroups.size.toLong()
+
+        val sessions = sessionGroups.entries
+            .sortedByDescending { entry ->
+                entry.value.maxOfOrNull { it[ChatMessagesTable.createdAt] }
+            }
+            .drop(offset)
+            .take(limit)
+            .map { (sessionUuid, messages) ->
+                val firstMessage = messages.minByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
+                val lastMessage = messages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
+
+                ChatSessionSummary(
+                    sessionId = ChatSessionId.parse(sessionUuid.toString()),
+                    scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
+                    documentProcessingId = firstMessage[ChatMessagesTable.documentProcessingId]?.let {
+                        DocumentProcessingId.parse(it.toString())
+                    },
+                    documentName = null, // Would need join for this
+                    messageCount = messages.size,
+                    lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
+                    createdAt = firstMessage[ChatMessagesTable.createdAt],
+                    lastMessageAt = lastMessage[ChatMessagesTable.createdAt]
+                )
+            }
+
+        sessions to total
+    }
+
+    /**
+     * Get session summary by ID.
+     * CRITICAL: MUST filter by tenantId.
+     */
+    suspend fun getSessionSummary(
+        tenantId: TenantId,
+        sessionId: ChatSessionId
+    ): ChatSessionSummary? = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val sessionUuid = UUID.fromString(sessionId.toString())
+
+        val messages = ChatMessagesTable
+            .selectAll()
+            .where {
+                (ChatMessagesTable.tenantId eq tenantUuid) and
+                        (ChatMessagesTable.sessionId eq sessionUuid)
+            }
+            .orderBy(ChatMessagesTable.sequenceNumber to SortOrder.ASC)
+            .toList()
+
+        if (messages.isEmpty()) return@newSuspendedTransaction null
+
+        val firstMessage = messages.first()
+        val lastMessage = messages.last()
+
+        // Try to get document name if single-doc scope
+        val documentName = firstMessage[ChatMessagesTable.documentProcessingId]?.let { docId ->
+            try {
+                (DocumentProcessingTable innerJoin DocumentsTable)
+                    .selectAll()
+                    .where {
+                        (DocumentProcessingTable.id eq docId) and
+                                (DocumentProcessingTable.tenantId eq tenantUuid)
+                    }
+                    .singleOrNull()
+                    ?.get(DocumentsTable.filename)
+            } catch (e: Exception) {
+                logger.warn("Failed to get document name for session: ${e.message}")
+                null
+            }
+        }
+
+        ChatSessionSummary(
+            sessionId = ChatSessionId.parse(sessionUuid.toString()),
+            scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
+            documentProcessingId = firstMessage[ChatMessagesTable.documentProcessingId]?.let {
+                DocumentProcessingId.parse(it.toString())
+            },
+            documentName = documentName,
+            messageCount = messages.size,
+            lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
+            createdAt = firstMessage[ChatMessagesTable.createdAt],
+            lastMessageAt = lastMessage[ChatMessagesTable.createdAt]
+        )
+    }
+
+    /**
+     * Check if a session exists and belongs to the tenant.
+     */
+    suspend fun sessionExists(
+        tenantId: TenantId,
+        sessionId: ChatSessionId
+    ): Boolean = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val sessionUuid = UUID.fromString(sessionId.toString())
+
+        ChatMessagesTable
+            .selectAll()
+            .where {
+                (ChatMessagesTable.tenantId eq tenantUuid) and
+                        (ChatMessagesTable.sessionId eq sessionUuid)
+            }
+            .limit(1)
+            .count() > 0
+    }
+
+    /**
+     * Count total messages for a tenant.
+     * Useful for usage monitoring.
+     */
+    suspend fun countMessagesForTenant(
+        tenantId: TenantId
+    ): Long = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+
+        ChatMessagesTable
+            .selectAll()
+            .where { ChatMessagesTable.tenantId eq tenantUuid }
+            .count()
+    }
+
+    /**
+     * Count sessions for a tenant.
+     */
+    suspend fun countSessionsForTenant(
+        tenantId: TenantId
+    ): Long = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+
+        ChatMessagesTable
+            .select(ChatMessagesTable.sessionId)
+            .where { ChatMessagesTable.tenantId eq tenantUuid }
+            .withDistinct()
+            .count()
+    }
+
+    // =========================================================================
+    // Recent Activity
+    // =========================================================================
+
+    /**
+     * Get recent sessions for a user.
+     * CRITICAL: MUST filter by tenantId.
+     */
+    suspend fun getRecentSessionsForUser(
+        tenantId: TenantId,
+        userId: UserId,
+        limit: Int = 10
+    ): List<ChatSessionSummary> = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val userUuid = UUID.fromString(userId.toString())
+
+        val messages = ChatMessagesTable
+            .selectAll()
+            .where {
+                (ChatMessagesTable.tenantId eq tenantUuid) and
+                        (ChatMessagesTable.userId eq userUuid)
+            }
+            .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
+            .toList()
+
+        messages
+            .groupBy { it[ChatMessagesTable.sessionId] }
+            .entries
+            .take(limit)
+            .map { (sessionUuid, sessionMessages) ->
+                val firstMessage = sessionMessages.minByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
+                val lastMessage = sessionMessages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
+
+                ChatSessionSummary(
+                    sessionId = ChatSessionId.parse(sessionUuid.toString()),
+                    scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
+                    documentProcessingId = firstMessage[ChatMessagesTable.documentProcessingId]?.let {
+                        DocumentProcessingId.parse(it.toString())
+                    },
+                    documentName = null,
+                    messageCount = sessionMessages.size,
+                    lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
+                    createdAt = firstMessage[ChatMessagesTable.createdAt],
+                    lastMessageAt = lastMessage[ChatMessagesTable.createdAt]
+                )
+            }
+    }
+
+    // =========================================================================
+    // Private Helpers
+    // =========================================================================
+
+    private fun ResultRow.toMessageDto(): ChatMessageDto {
+        val citationsJson = this[ChatMessagesTable.citations]
+        val citations = citationsJson?.let {
+            try {
+                json.decodeFromString<List<ChatCitation>>(it)
+            } catch (e: Exception) {
+                logger.warn("Failed to parse citations JSON: ${e.message}")
+                null
+            }
+        }
+
+        return ChatMessageDto(
+            id = ChatMessageId.parse(this[ChatMessagesTable.id].value.toString()),
+            tenantId = TenantId.parse(this[ChatMessagesTable.tenantId].toString()),
+            userId = UserId(this[ChatMessagesTable.userId].toString()),
+            sessionId = ChatSessionId.parse(this[ChatMessagesTable.sessionId].toString()),
+            role = MessageRole.fromDbValue(this[ChatMessagesTable.role]),
+            content = this[ChatMessagesTable.content],
+            scope = ChatScope.fromDbValue(this[ChatMessagesTable.scope]),
+            documentProcessingId = this[ChatMessagesTable.documentProcessingId]?.let {
+                DocumentProcessingId.parse(it.toString())
+            },
+            citations = citations,
+            chunksRetrieved = this[ChatMessagesTable.chunksRetrieved],
+            aiModel = this[ChatMessagesTable.aiModel],
+            aiProvider = this[ChatMessagesTable.aiProvider],
+            generationTimeMs = this[ChatMessagesTable.generationTimeMs],
+            promptTokens = this[ChatMessagesTable.promptTokens],
+            completionTokens = this[ChatMessagesTable.completionTokens],
+            sequenceNumber = this[ChatMessagesTable.sequenceNumber],
+            createdAt = this[ChatMessagesTable.createdAt]
+        )
+    }
+}

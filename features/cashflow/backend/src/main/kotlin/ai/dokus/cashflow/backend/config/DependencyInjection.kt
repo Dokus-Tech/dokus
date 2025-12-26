@@ -1,6 +1,9 @@
 package ai.dokus.cashflow.backend.config
 
+import ai.dokus.ai.config.AIConfig
 import ai.dokus.cashflow.backend.database.CashflowTables
+import ai.dokus.cashflow.backend.repository.ChatRepository
+import ai.dokus.cashflow.backend.repository.DocumentChunksRepository
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
 import ai.dokus.cashflow.backend.service.DocumentStorageService
@@ -23,7 +26,10 @@ import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import ai.dokus.peppol.validator.PeppolValidator
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -42,7 +48,8 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             repositoryModules,
             storageModule(appConfig),
             serviceModule,
-            peppolModule(appConfig)
+            peppolModule(appConfig),
+            chatModule(appConfig)
         )
     }
 }
@@ -58,14 +65,21 @@ fun coreModule(appConfig: AppBaseConfig) = module {
         JwtValidator(appConfig.jwt)
     }
 
-    // HTTP Client for inter-service communication
+    // HTTP Client for inter-service communication and AI calls
     single {
-        HttpClient {
+        HttpClient(CIO) {
             install(ContentNegotiation) {
                 json(Json {
                     ignoreUnknownKeys = true
                     isLenient = true
+                    encodeDefaults = true
                 })
+            }
+            install(Logging) {
+                level = LogLevel.INFO
+            }
+            engine {
+                requestTimeout = 120_000 // 2 minutes for AI calls
             }
         }
     }
@@ -181,4 +195,30 @@ fun peppolModule(appConfig: AppBaseConfig) = module {
             validator = get()
         )
     }
+}
+
+/**
+ * Chat module - AI chat and RAG services for document Q&A.
+ * Provides repositories and configuration for the chat API endpoints.
+ */
+fun chatModule(appConfig: AppBaseConfig) = module {
+    val logger = LoggerFactory.getLogger("ChatModule")
+
+    // AI Configuration - uses local Ollama by default, can be overridden via HOCON
+    single<AIConfig> {
+        val aiConfig = AIConfig.fromConfigOrNull(appConfig.config)
+        if (aiConfig != null) {
+            logger.info("Loaded AI config from HOCON: provider=${aiConfig.defaultProvider}")
+            aiConfig
+        } else {
+            logger.info("No AI config in HOCON, using local Ollama default")
+            AIConfig.localDefault()
+        }
+    }
+
+    // Chat message repository for conversation persistence
+    single { ChatRepository() }
+
+    // Document chunks repository for vector embeddings and similarity search
+    single { DocumentChunksRepository() }
 }

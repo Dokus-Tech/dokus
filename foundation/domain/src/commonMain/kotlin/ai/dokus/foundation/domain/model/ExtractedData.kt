@@ -225,3 +225,58 @@ data class ConfirmDocumentResponse(
     /** The processing record ID */
     val processingId: String
 )
+
+// ============================================================================
+// DRAFT UPDATE MODELS
+// Used when user edits extracted data before confirmation
+// ============================================================================
+
+/**
+ * Request to update the extracted draft with user corrections.
+ * This preserves the original AI draft for audit purposes.
+ */
+@Serializable
+data class UpdateDraftRequest(
+    /** Updated extracted data (merged with user corrections) */
+    val extractedData: ExtractedDocumentData,
+
+    /** Optional description of what was changed */
+    val changeDescription: String? = null
+)
+
+/**
+ * Response after updating draft.
+ */
+@Serializable
+data class UpdateDraftResponse(
+    /** The processing record ID */
+    val processingId: String,
+
+    /** Current draft version after update */
+    val draftVersion: Int,
+
+    /** The updated extracted data */
+    val extractedData: ExtractedDocumentData,
+
+    /** Timestamp of the update */
+    val updatedAt: String
+)
+
+/**
+ * Tracked user correction for audit trail.
+ * Records what field was changed, from what AI value to what user value.
+ */
+@Serializable
+data class TrackedCorrection(
+    /** Field path that was changed (e.g., "invoice.clientName") */
+    val field: String,
+
+    /** Original AI-extracted value */
+    val aiValue: String?,
+
+    /** User-provided value */
+    val userValue: String?,
+
+    /** When this correction was made */
+    val editedAt: String
+)

@@ -26,6 +26,7 @@ import java.util.UUID
 data class ProcessingItem(
     val processingId: String,
     val documentId: String,
+    val tenantId: String,
     val storageKey: String,
     val filename: String,
     val contentType: String,
@@ -65,6 +66,7 @@ class ProcessorDocumentProcessingRepository {
                 ProcessingItem(
                     processingId = row[DocumentProcessingTable.id].value.toString(),
                     documentId = row[DocumentProcessingTable.documentId].toString(),
+                    tenantId = row[DocumentProcessingTable.tenantId].toString(),
                     storageKey = row[DocumentsTable.storageKey],
                     filename = row[DocumentsTable.filename],
                     contentType = row[DocumentsTable.contentType],

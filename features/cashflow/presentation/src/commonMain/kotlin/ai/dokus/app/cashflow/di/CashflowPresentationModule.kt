@@ -1,6 +1,14 @@
 package ai.dokus.app.cashflow.di
 
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
+import ai.dokus.app.cashflow.presentation.chat.ChatAction
+import ai.dokus.app.cashflow.presentation.chat.ChatContainer
+import ai.dokus.app.cashflow.presentation.chat.ChatIntent
+import ai.dokus.app.cashflow.presentation.chat.ChatState
+import ai.dokus.app.cashflow.presentation.review.DocumentReviewAction
+import ai.dokus.app.cashflow.presentation.review.DocumentReviewContainer
+import ai.dokus.app.cashflow.presentation.review.DocumentReviewIntent
+import ai.dokus.app.cashflow.presentation.review.DocumentReviewState
 import ai.dokus.app.cashflow.usecase.FilterDocumentsUseCase
 import ai.dokus.app.cashflow.usecase.LoadBusinessHealthUseCase
 import ai.dokus.app.cashflow.usecase.LoadCashflowDocumentsUseCase
@@ -77,6 +85,15 @@ val cashflowViewModelModule = module {
             tenantDataSource = get(),
             validateInvoice = get(),
             submitInvoice = get()
+        )
+    }
+    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
+        DocumentReviewContainer(dataSource = get())
+    }
+    container<ChatContainer, ChatState, ChatIntent, ChatAction> {
+        ChatContainer(
+            sendChatMessageUseCase = get(),
+            chatRepository = get()
         )
     }
 }
