@@ -6,7 +6,6 @@ import ai.dokus.cashflow.backend.repository.ChatRepository
 import ai.dokus.cashflow.backend.repository.DocumentChunksRepository
 import ai.dokus.cashflow.backend.service.BillService
 import ai.dokus.cashflow.backend.service.CashflowOverviewService
-import ai.dokus.cashflow.backend.service.DocumentStorageService
 import ai.dokus.cashflow.backend.service.ExpenseService
 import ai.dokus.cashflow.backend.service.InvoiceService
 import ai.dokus.foundation.database.di.repositoryModules
@@ -16,6 +15,7 @@ import ai.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
 import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.security.JwtValidator
+import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
 import ai.dokus.foundation.ktor.storage.MinioStorage
 import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.peppol.config.PeppolModuleConfig
@@ -127,20 +127,14 @@ fun storageModule(appConfig: AppBaseConfig) = module {
         val objectStorage = get<ObjectStorage>()
         MinioDocumentStorageService(objectStorage)
     }
+
+    single { DocumentUploadValidator() }
 }
 
 /**
  * Service module - business logic services
  */
 val serviceModule = module {
-    // Legacy document storage service (local filesystem fallback)
-    single {
-        DocumentStorageService(
-            storageBasePath = "./storage/documents",
-            maxFileSizeMb = 10
-        )
-    }
-
     // Business logic services
     single { InvoiceService(get()) }
     single { ExpenseService(get()) }

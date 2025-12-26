@@ -32,6 +32,7 @@ class JwtValidator(
 
     val verifier: JWTVerifier = JWT.require(algorithm)
         .withIssuer(config.issuer)
+        .withAudience(config.audience)
         .build()
 
     /**
