@@ -20,6 +20,17 @@ class ExtractionProviderFactory(
                 apiKey = config.openaiApiKey,
                 model = config.openaiModel,
                 baseUrl = config.openaiBaseUrl
+            ),
+            "ollama" to OllamaExtractionProvider(
+                httpClient = httpClient,
+                baseUrl = config.localBaseUrl,
+                model = config.localModel
+            ),
+            // Alias for convenience
+            "local" to OllamaExtractionProvider(
+                httpClient = httpClient,
+                baseUrl = config.localBaseUrl,
+                model = config.localModel
             )
         )
     }
