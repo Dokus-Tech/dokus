@@ -48,7 +48,7 @@ import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentS
  * - PATCH /api/v1/documents/{id}/draft - Update extracted draft with user corrections
  * - POST /api/v1/documents/{id}/processing-jobs - Trigger re-extraction
  */
-fun Route.documentProcessingRoutes() {
+internal fun Route.documentProcessingRoutes() {
     val processingRepository by inject<DocumentProcessingRepository>()
     val documentRepository by inject<DocumentRepository>()
     val invoiceRepository by inject<InvoiceRepository>()

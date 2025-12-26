@@ -39,7 +39,7 @@ import kotlin.uuid.Uuid
  * - Transmission history
  */
 @OptIn(ExperimentalUuidApi::class)
-fun Route.peppolRoutes() {
+internal fun Route.peppolRoutes() {
     val peppolService by inject<PeppolService>()
     val peppolConnectionService by inject<PeppolConnectionService>()
     val invoiceService by inject<InvoiceService>()

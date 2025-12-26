@@ -1,9 +1,9 @@
 package ai.dokus.backend.routes.auth
 
-import ai.dokus.foundation.ktor.lookup.CbeApiClient
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.EntityLookupResponse
 import ai.dokus.foundation.domain.routes.Lookup
+import ai.dokus.foundation.ktor.lookup.CbeApiClient
 import ai.dokus.foundation.ktor.security.authenticateJwt
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
  */
 private val logger = LoggerFactory.getLogger("LookupRoutes")
 
-fun Route.lookupRoutes() {
+internal fun Route.lookupRoutes() {
     val cbeApiClient by inject<CbeApiClient>()
 
     authenticateJwt {

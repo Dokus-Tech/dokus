@@ -42,7 +42,7 @@ import kotlin.uuid.Uuid
  * All routes require JWT authentication and tenant context.
  */
 @OptIn(ExperimentalUuidApi::class)
-fun Route.attachmentRoutes() {
+internal fun Route.attachmentRoutes() {
     val documentRepository by inject<DocumentRepository>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val minioStorage by inject<MinioDocumentStorageService>()

@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
  *
  * All routes require JWT authentication and tenant context.
  */
-fun Route.cashflowDocumentRoutes() {
+internal fun Route.cashflowDocumentRoutes() {
     val repository by inject<CashflowRepository>()
     val logger = LoggerFactory.getLogger("CashflowDocumentRoutes")
 

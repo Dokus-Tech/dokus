@@ -33,7 +33,7 @@ import kotlin.uuid.Uuid
  * All routes require JWT authentication and tenant context.
  */
 @OptIn(ExperimentalUuidApi::class)
-fun Route.invoiceRoutes() {
+internal fun Route.invoiceRoutes() {
     val invoiceService by inject<InvoiceService>()
 
     authenticateJwt {
@@ -55,7 +55,9 @@ fun Route.invoiceRoutes() {
                 toDate = route.toDate,
                 limit = route.limit,
                 offset = route.offset
-            ).getOrElse { throw DokusException.InternalError("Failed to list invoices: ${it.message}") }
+            ).getOrElse {
+                throw DokusException.InternalError("Failed to list invoices: ${it.message}")
+            }
 
             call.respond(HttpStatusCode.OK, invoices)
         }

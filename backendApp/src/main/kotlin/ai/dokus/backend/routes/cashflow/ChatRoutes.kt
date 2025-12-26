@@ -2,7 +2,6 @@ package ai.dokus.backend.routes.cashflow
 
 import ai.dokus.ai.agents.ChatAgent
 import ai.dokus.ai.agents.ConversationMessage
-import ai.dokus.ai.agents.MessageRole as AgentMessageRole
 import ai.dokus.ai.config.AIConfig
 import ai.dokus.ai.config.AIProviderFactory
 import ai.dokus.ai.config.ModelPurpose
@@ -41,6 +40,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import ai.dokus.ai.agents.MessageRole as AgentMessageRole
 
 /**
  * Chat routes for RAG-powered document Q&A.
@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory
  *
  * SECURITY: All endpoints filter by tenantId from the authenticated user's JWT.
  */
-fun Route.chatRoutes() {
+internal fun Route.chatRoutes() {
     val chatRepository by inject<ChatRepository>()
     val chunksRepository by inject<DocumentChunksRepository>()
     val processingRepository by inject<DocumentProcessingRepository>()

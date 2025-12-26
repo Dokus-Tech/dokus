@@ -28,7 +28,7 @@ import org.koin.ktor.ext.inject
  * - Update account (including deactivation)
  * - Request email verification
  */
-fun Route.accountRoutes() {
+internal fun Route.accountRoutes() {
     val authService by inject<AuthService>()
     val userRepository by inject<UserRepository>()
 
