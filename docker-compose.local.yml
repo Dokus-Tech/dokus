@@ -103,7 +103,7 @@ services:
   server-local:
     build:
       context: .
-      dockerfile: features/server/backend/Dockerfile
+      dockerfile: backendApp/Dockerfile
     image: dokus-server:local
     container_name: dokus-server-local
     environment:
