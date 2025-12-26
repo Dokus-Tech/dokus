@@ -10,24 +10,23 @@ import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
+import ai.dokus.foundation.domain.model.TenantMembership
+import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
-import ai.dokus.foundation.domain.model.TenantMembership
-import ai.dokus.foundation.domain.model.auth.TenantScope
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import ai.dokus.foundation.domain.model.auth.TenantScope
 import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
-import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.security.TokenBlacklistService
 import com.auth0.jwt.JWT
-import java.time.Instant
+import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
-import org.slf4j.LoggerFactory
 
 class AuthService(
     private val userRepository: UserRepository,
