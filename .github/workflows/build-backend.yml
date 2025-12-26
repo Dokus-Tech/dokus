@@ -73,12 +73,12 @@ jobs:
 
       - name: 🏗️ Build dokus-server shadow JAR
         run: |
-          ./gradlew :features:server:backend:shadowJar -x test
+          ./gradlew :backendApp:shadowJar -x test
 
       - name: 🔍 Verify fat JAR exists
         run: |
-          ls -lh features/server/backend/build/libs/
-          if ! ls features/server/backend/build/libs/backend-*-all.jar 1> /dev/null 2>&1; then
+          ls -lh backendApp/build/libs/
+          if ! ls backendApp/build/libs/backend-*-all.jar 1> /dev/null 2>&1; then
             echo "❌ Fat JAR not found for dokus-server (expected backend-*-all.jar)"
             exit 1
           fi
@@ -145,7 +145,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: features/server/backend/Dockerfile
+          file: backendApp/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

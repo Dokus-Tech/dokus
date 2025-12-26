@@ -103,7 +103,7 @@ SYMBOL_SMALL="⋄"
 # Configuration
 PROJECT_NAME="dokus"
 COMPOSE_FILE="docker-compose.local.yml"
-SERVER_SERVICE_DIR="features/server/backend"
+SERVER_SERVICE_DIR="backendApp"
 
 # Database configuration - consolidated single database
 DB_CONTAINER="postgres-local"
@@ -350,9 +350,9 @@ build_app() {
 
     print_simple_status building "Building dokus-server JAR..."
     if [ -f "./gradlew" ]; then
-        ./gradlew :features:server:backend:shadowJar -x test -q > /dev/null 2>&1
+        ./gradlew :backendApp:shadowJar -x test -q > /dev/null 2>&1
     else
-        gradle :features:server:backend:shadowJar -x test -q > /dev/null 2>&1
+        gradle :backendApp:shadowJar -x test -q > /dev/null 2>&1
     fi
 
     if [ $? -ne 0 ]; then

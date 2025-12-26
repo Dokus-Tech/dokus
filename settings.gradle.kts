@@ -33,6 +33,7 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
+include(":backendApp")
 
 include(":foundation:design-system")
 
@@ -44,25 +45,20 @@ include(":foundation:messaging")
 include(":foundation:database")
 include(":foundation:peppol-core")
 
+// AI backend library (shared by backendApp)
 include(":features:ai:backend")
-include(":features:auth:backend")
+
+// Auth domain for shared types
 include(":features:auth:presentation")
 include(":features:auth:data")
 include(":features:auth:domain")
 
-include(":features:cashflow:backend")
+// Frontend modules
 include(":features:cashflow:data")
 include(":features:cashflow:presentation")
-include(":features:contacts:backend")
 include(":features:contacts:data")
 include(":features:contacts:domain")
 include(":features:contacts:presentation")
-include(":features:payment:backend")
-include(":features:banking:backend")
-include(":features:processor:backend")
 
 include(":foundation:domain")
 include(":foundation:sstorage")
-
-// Modular monolith backend (single-server deployment)
-include(":features:server:backend")
