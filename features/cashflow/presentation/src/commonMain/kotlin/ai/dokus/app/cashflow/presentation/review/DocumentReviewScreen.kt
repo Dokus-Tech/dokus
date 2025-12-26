@@ -99,7 +99,7 @@ import tech.dokus.foundation.app.mvi.container
  * - Navigate to chat for document Q&A
  */
 @Composable
-fun DocumentReviewScreen(
+internal fun DocumentReviewScreen(
     processingId: DocumentProcessingId,
     container: DocumentReviewContainer = container(),
 ) {
@@ -207,7 +207,7 @@ private fun ReviewTopBar(
             title = {
                 Column {
                     Text(
-                        text = content?.document?.document?.fileName ?: "Document Review",
+                        text = content?.document?.document?.filename ?: "Document Review",
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

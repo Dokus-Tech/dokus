@@ -76,5 +76,8 @@ fun Application.configureCashflowRoutes() {
 
         // Peppol e-invoicing routes
         peppolRoutes()
+
+        // Chat routes (RAG-powered document Q&A)
+        chatRoutes()
     }
 }

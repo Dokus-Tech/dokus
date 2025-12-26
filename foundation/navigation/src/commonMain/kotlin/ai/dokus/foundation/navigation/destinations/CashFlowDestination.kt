@@ -27,11 +27,4 @@ sealed interface CashFlowDestination : NavigationDestination {
     @Serializable
     @SerialName("cashflow/document_chat")
     data class DocumentChat(val processingId: String) : CashFlowDestination
-
-    /**
-     * Cross-document chat screen for RAG-powered Q&A across all confirmed documents.
-     */
-    @Serializable
-    @SerialName("cashflow/chat")
-    data object GlobalChat : CashFlowDestination
 }

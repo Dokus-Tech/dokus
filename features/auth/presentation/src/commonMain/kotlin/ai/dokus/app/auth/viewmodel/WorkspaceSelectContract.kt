@@ -36,8 +36,10 @@ sealed interface WorkspaceSelectState : MVIState, DokusState<List<Tenant>> {
      * Content state - user can select from available tenants.
      */
     data class Content(
-        val tenants: List<Tenant>,
-    ) : WorkspaceSelectState
+        override val data: List<Tenant>,
+    ) : WorkspaceSelectState, DokusState.Success<List<Tenant>> {
+        val tenants: List<Tenant> get() = data
+    }
 
     /**
      * Selecting state - user has selected a tenant, processing selection.
@@ -62,7 +64,6 @@ sealed interface WorkspaceSelectState : MVIState, DokusState<List<Tenant>> {
 
 @Immutable
 sealed interface WorkspaceSelectIntent : MVIIntent {
-    /** Load available tenants on screen init */
     data object LoadTenants : WorkspaceSelectIntent
 
     /** User selected a tenant from the list */

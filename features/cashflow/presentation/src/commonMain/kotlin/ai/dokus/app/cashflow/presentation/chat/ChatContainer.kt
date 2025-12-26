@@ -3,8 +3,11 @@ package ai.dokus.app.cashflow.presentation.chat
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
 import ai.dokus.app.cashflow.usecase.SendChatMessageUseCase
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import ai.dokus.foundation.domain.ids.TenantId
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.ChatConfiguration
 import ai.dokus.foundation.domain.model.ChatMessageDto
+import ai.dokus.foundation.domain.model.ChatMessageId
 import ai.dokus.foundation.domain.model.ChatResponse
 import ai.dokus.foundation.domain.model.ChatScope
 import ai.dokus.foundation.domain.model.ChatSessionId
@@ -12,7 +15,7 @@ import ai.dokus.foundation.domain.model.MessageRole
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import pro.respawn.flowmvi.api.Container
@@ -21,6 +24,8 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 internal typealias ChatCtx = PipelineContext<ChatState, ChatIntent, ChatAction>
 
@@ -462,14 +467,15 @@ internal class ChatContainer(
             ?: ChatConfiguration() // Use defaults if fetch fails
     }
 
-    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+    @OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
     private fun ChatState.Content.createOptimisticUserMessage(content: String): ChatMessageDto {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val nowInstant = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+        val now = nowInstant.toLocalDateTime(TimeZone.currentSystemDefault())
 
         return ChatMessageDto(
-            id = ai.dokus.foundation.domain.model.ChatMessageId.generate(),
-            tenantId = ai.dokus.foundation.domain.ids.TenantId.generate(), // Placeholder
-            userId = ai.dokus.foundation.domain.ids.UserId.generate(), // Placeholder
+            id = ChatMessageId.generate(),
+            tenantId = TenantId.generate(), // Placeholder
+            userId = UserId.generate(), // Placeholder
             sessionId = sessionId ?: ChatSessionId.generate(),
             role = MessageRole.User,
             content = content,

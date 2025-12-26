@@ -3,7 +3,6 @@ package ai.dokus.app.cashflow.presentation.chat
 import ai.dokus.foundation.design.components.PBackButton
 import ai.dokus.foundation.design.components.chat.ChatMessageBubble
 import ai.dokus.foundation.design.components.chat.ChatMessageRole
-import ai.dokus.foundation.design.components.chat.ChatSourceCitation
 import ai.dokus.foundation.design.components.chat.ChatSourceCitationList
 import ai.dokus.foundation.design.components.chat.CitationDisplayData
 import ai.dokus.foundation.design.components.chat.PChatInputField
@@ -12,7 +11,6 @@ import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.model.ChatCitation
 import ai.dokus.foundation.domain.model.ChatMessageDto
 import ai.dokus.foundation.domain.model.ChatScope
 import ai.dokus.foundation.domain.model.ChatSessionSummary
@@ -86,8 +84,6 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.MessageCircle
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
@@ -108,7 +104,7 @@ import tech.dokus.foundation.app.mvi.container
  * - Desktop: Same layout with wider message area
  */
 @Composable
-fun ChatScreen(
+internal fun ChatScreen(
     processingId: DocumentProcessingId? = null,
     container: ChatContainer = container(),
 ) {
@@ -146,14 +142,7 @@ fun ChatScreen(
                 }
             }
             is ChatAction.ScrollToBottom -> {
-                scope.launch {
-                    val contentState = container.store.state.value as? ChatState.Content
-                    contentState?.messages?.let { messages ->
-                        if (messages.isNotEmpty()) {
-                            listState.animateScrollToItem(messages.lastIndex)
-                        }
-                    }
-                }
+                // Scroll is handled in a LaunchedEffect based on message count changes
             }
             is ChatAction.FocusInput -> {
                 // Focus is handled by the input field
@@ -170,6 +159,15 @@ fun ChatScreen(
             container.store.intent(ChatIntent.InitSingleDocChat(processingId))
         } else {
             container.store.intent(ChatIntent.InitCrossDocChat)
+        }
+    }
+
+    // Auto-scroll to bottom when new messages arrive
+    val contentState = state as? ChatState.Content
+    val messageCount = contentState?.messages?.size ?: 0
+    LaunchedEffect(messageCount) {
+        if (messageCount > 0) {
+            listState.animateScrollToItem(messageCount - 1)
         }
     }
 
@@ -689,8 +687,9 @@ private fun MessageItem(
         )
 
         // Citations (only for assistant messages)
-        if (message.role == MessageRole.Assistant && !message.citations.isNullOrEmpty()) {
-            val citationDisplayData = message.citations.map { citation ->
+        val citations = message.citations
+        if (message.role == MessageRole.Assistant && !citations.isNullOrEmpty()) {
+            val citationDisplayData = citations.map { citation ->
                 CitationDisplayData(
                     chunkId = citation.chunkId,
                     documentId = citation.documentId,
@@ -866,9 +865,10 @@ private fun SessionListItem(
                 )
             }
 
-            if (session.lastMessagePreview != null) {
+            val preview = session.lastMessagePreview
+            if (preview != null) {
                 Text(
-                    text = session.lastMessagePreview,
+                    text = preview,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

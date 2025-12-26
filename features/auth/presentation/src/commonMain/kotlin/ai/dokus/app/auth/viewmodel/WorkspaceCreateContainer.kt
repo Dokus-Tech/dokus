@@ -21,6 +21,7 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 
 internal typealias WorkspaceCreateCtx = PipelineContext<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction>
@@ -40,6 +41,9 @@ internal class WorkspaceCreateContainer(
 
     override val store: Store<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> =
         store(WorkspaceCreateState.Loading) {
+            init {
+                handleLoadUserInfo()
+            }
             reduce { intent ->
                 when (intent) {
                     is WorkspaceCreateIntent.LoadUserInfo -> handleLoadUserInfo()
