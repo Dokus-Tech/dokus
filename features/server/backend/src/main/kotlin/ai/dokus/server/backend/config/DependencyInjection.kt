@@ -29,6 +29,7 @@ import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.schema.DokusSchema
 import ai.dokus.foundation.ktor.cache.RedisNamespace
+import ai.dokus.foundation.ktor.cache.RedisClient
 import ai.dokus.foundation.ktor.cache.redis
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.config.MinioConfig
@@ -94,7 +95,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             repositoryModules,
 
             // Feature services
-            authModule,
+            authModule(appConfig),
             cashflowModule(appConfig),
             contactsModule,
             processorModule(appConfig),
@@ -161,9 +162,8 @@ private val cryptoModule = module {
     single { JwtValidator(get<AppBaseConfig>().jwt) }
 }
 
-private val authModule = module {
+private fun authModule(appConfig: AppBaseConfig) = module {
     single<EmailService> {
-        val appConfig = get<AppBaseConfig>()
         val emailConfig = EmailConfig.load(appConfig)
         if (emailConfig.enabled && emailConfig.provider == "smtp") {
             SmtpEmailService(emailConfig)
@@ -184,26 +184,22 @@ private val authModule = module {
         )
     }
 
-    // Redis is optional in monolith: use it only when CACHE_TYPE=redis
-    single {
-        val appConfig = get<AppBaseConfig>()
-        if (appConfig.caching.type.lowercase() == "redis") {
+    if (appConfig.caching.type.lowercase() == "redis") {
+        single<RedisClient> {
             redis {
                 config = appConfig.caching.redis
                 namespace = RedisNamespace.Auth
             }
-        } else {
-            null
         }
     }
 
     single<RateLimitServiceInterface> {
-        val redisClient = get<Any?>() as? ai.dokus.foundation.ktor.cache.RedisClient
+        val redisClient = getOrNull<RedisClient>()
         if (redisClient != null) RedisRateLimitService(redisClient) else RateLimitService()
     }
 
     single<TokenBlacklistService> {
-        val redisClient = get<Any?>() as? ai.dokus.foundation.ktor.cache.RedisClient
+        val redisClient = getOrNull<RedisClient>()
         if (redisClient != null) RedisTokenBlacklistService(redisClient) else InMemoryTokenBlacklistService()
     }
 
