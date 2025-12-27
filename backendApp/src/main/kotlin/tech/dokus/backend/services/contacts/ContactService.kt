@@ -8,7 +8,7 @@ import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactRequest
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Service for contact business operations.

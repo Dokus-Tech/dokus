@@ -26,8 +26,8 @@ import ai.dokus.foundation.domain.model.ChatScope
 import ai.dokus.foundation.domain.model.ChatSessionId
 import ai.dokus.foundation.domain.model.ChatSessionListResponse
 import ai.dokus.foundation.domain.model.MessageRole
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive

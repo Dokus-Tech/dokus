@@ -4,10 +4,10 @@ import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.AvatarUploadResponse
 import ai.dokus.foundation.domain.routes.Tenants
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.security.dokusPrincipal
-import ai.dokus.foundation.ktor.storage.AvatarStorageService
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.storage.AvatarStorageService
+import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart

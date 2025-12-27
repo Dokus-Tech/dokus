@@ -20,7 +20,7 @@ import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactRequest
-import ai.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

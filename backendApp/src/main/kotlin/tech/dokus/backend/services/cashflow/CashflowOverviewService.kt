@@ -11,7 +11,7 @@ import ai.dokus.foundation.domain.model.CashInSummary
 import ai.dokus.foundation.domain.model.CashOutSummary
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CashflowPeriod
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate

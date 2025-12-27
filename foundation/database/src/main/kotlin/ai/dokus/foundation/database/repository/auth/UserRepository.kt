@@ -13,9 +13,9 @@ import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.TenantMembership
 import ai.dokus.foundation.domain.model.User
 import ai.dokus.foundation.domain.model.UserInTenant
-import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.crypto.PasswordCryptoService
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

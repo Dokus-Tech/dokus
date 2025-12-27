@@ -23,8 +23,8 @@ import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.utils.loggerFor
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 
 /**

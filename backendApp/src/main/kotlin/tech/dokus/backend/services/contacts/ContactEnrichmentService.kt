@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.UpdateContactRequest
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Service for progressively enriching contacts with data extracted from documents.

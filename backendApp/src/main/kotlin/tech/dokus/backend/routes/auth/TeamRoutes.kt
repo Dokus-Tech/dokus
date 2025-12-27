@@ -1,6 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.backend.services.auth.TeamService
 import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.UserId
@@ -8,8 +7,6 @@ import ai.dokus.foundation.domain.model.CreateInvitationRequest
 import ai.dokus.foundation.domain.model.TransferOwnershipRequest
 import ai.dokus.foundation.domain.model.UpdateMemberRoleRequest
 import ai.dokus.foundation.domain.routes.Team
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -19,6 +16,9 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.services.auth.TeamService
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -66,7 +66,10 @@ internal fun Route.teamRoutes() {
 
             // Verify owner role
             if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(HttpStatusCode.Forbidden, "Only the workspace Owner can manage team members")
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    "Only the workspace Owner can manage team members"
+                )
                 return@put
             }
 
@@ -78,7 +81,10 @@ internal fun Route.teamRoutes() {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Role updated successfully"))
                 }
                 .onFailure { error ->
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (error.message ?: "Failed to update role")))
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to (error.message ?: "Failed to update role"))
+                    )
                 }
         }
 
@@ -93,7 +99,10 @@ internal fun Route.teamRoutes() {
 
             // Verify owner role
             if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(HttpStatusCode.Forbidden, "Only the workspace Owner can manage team members")
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    "Only the workspace Owner can manage team members"
+                )
                 return@delete
             }
 
@@ -104,7 +113,10 @@ internal fun Route.teamRoutes() {
                     call.respond(HttpStatusCode.NoContent)
                 }
                 .onFailure { error ->
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (error.message ?: "Failed to remove member")))
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to (error.message ?: "Failed to remove member"))
+                    )
                 }
         }
 
@@ -123,7 +135,10 @@ internal fun Route.teamRoutes() {
 
             // Verify owner role
             if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(HttpStatusCode.Forbidden, "Only the workspace Owner can transfer ownership")
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    "Only the workspace Owner can transfer ownership"
+                )
                 return@put
             }
 
@@ -131,10 +146,16 @@ internal fun Route.teamRoutes() {
 
             teamService.transferOwnership(tenantId, request.newOwnerId, principal.userId)
                 .onSuccess {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Ownership transferred successfully"))
+                    call.respond(
+                        HttpStatusCode.OK,
+                        mapOf("message" to "Ownership transferred successfully")
+                    )
                 }
                 .onFailure { error ->
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (error.message ?: "Failed to transfer ownership")))
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to (error.message ?: "Failed to transfer ownership"))
+                    )
                 }
         }
 
@@ -172,7 +193,10 @@ internal fun Route.teamRoutes() {
 
             // Verify owner role
             if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(HttpStatusCode.Forbidden, "Only the workspace Owner can invite team members")
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    "Only the workspace Owner can invite team members"
+                )
                 return@post
             }
 
@@ -183,7 +207,10 @@ internal fun Route.teamRoutes() {
                     call.respond(HttpStatusCode.Created, invitation)
                 }
                 .onFailure { error ->
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (error.message ?: "Failed to create invitation")))
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to (error.message ?: "Failed to create invitation"))
+                    )
                 }
         }
 
@@ -198,7 +225,10 @@ internal fun Route.teamRoutes() {
 
             // Verify owner role
             if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(HttpStatusCode.Forbidden, "Only the workspace Owner can manage invitations")
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    "Only the workspace Owner can manage invitations"
+                )
                 return@delete
             }
 
@@ -209,7 +239,10 @@ internal fun Route.teamRoutes() {
                     call.respond(HttpStatusCode.NoContent)
                 }
                 .onFailure { error ->
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (error.message ?: "Failed to cancel invitation")))
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to (error.message ?: "Failed to cancel invitation"))
+                    )
                 }
         }
     }

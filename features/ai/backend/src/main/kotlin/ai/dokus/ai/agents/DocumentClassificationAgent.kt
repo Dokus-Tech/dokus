@@ -2,7 +2,7 @@ package ai.dokus.ai.agents
 
 import ai.dokus.ai.models.ClassifiedDocumentType
 import ai.dokus.ai.models.DocumentClassification
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry

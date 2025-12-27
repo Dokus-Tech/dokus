@@ -4,7 +4,7 @@ import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactMatchReason
 import ai.dokus.foundation.domain.model.ContactSuggestion
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Service for matching extracted counterparty data to existing contacts.

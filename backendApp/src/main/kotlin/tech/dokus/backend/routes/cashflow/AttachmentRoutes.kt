@@ -14,9 +14,9 @@ import ai.dokus.foundation.domain.model.DocumentDto
 import ai.dokus.foundation.domain.routes.Attachments
 import ai.dokus.foundation.domain.routes.Expenses
 import ai.dokus.foundation.domain.routes.Invoices
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.security.dokusPrincipal
-import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -32,7 +32,7 @@ import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
  * Attachment API Routes using Ktor Type-Safe Routing

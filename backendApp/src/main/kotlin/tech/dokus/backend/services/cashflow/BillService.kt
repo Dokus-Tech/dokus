@@ -12,7 +12,7 @@ import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolReceivedDocument
 import kotlinx.datetime.LocalDate
 

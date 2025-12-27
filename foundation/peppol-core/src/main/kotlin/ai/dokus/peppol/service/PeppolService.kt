@@ -22,7 +22,7 @@ import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.mapper.PeppolMapper
 import ai.dokus.peppol.model.PeppolVerifyResponse
 import ai.dokus.peppol.provider.PeppolProvider

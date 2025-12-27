@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.PaginatedResponse
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.LocalDate
 
 /**

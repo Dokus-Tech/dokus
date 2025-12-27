@@ -7,26 +7,6 @@ import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.schema.DokusSchema
 import ai.dokus.foundation.domain.repository.ChunkRepository
-import ai.dokus.foundation.ktor.cache.RedisClient
-import ai.dokus.foundation.ktor.cache.RedisNamespace
-import ai.dokus.foundation.ktor.cache.redis
-import ai.dokus.foundation.ktor.config.AppBaseConfig
-import ai.dokus.foundation.ktor.config.MinioConfig
-import ai.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
-import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
-import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
-import ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j
-import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.lookup.CbeApiClient
-import ai.dokus.foundation.ktor.security.JwtGenerator
-import ai.dokus.foundation.ktor.security.JwtValidator
-import ai.dokus.foundation.ktor.security.RedisTokenBlacklistService
-import ai.dokus.foundation.ktor.security.TokenBlacklistService
-import ai.dokus.foundation.ktor.storage.AvatarStorageService
-import ai.dokus.foundation.ktor.storage.DocumentStorageService
-import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
-import ai.dokus.foundation.ktor.storage.MinioStorage
-import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.peppol.config.PeppolModuleConfig
 import ai.dokus.peppol.mapper.PeppolMapper
 import ai.dokus.peppol.provider.PeppolProviderFactory
@@ -34,6 +14,7 @@ import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
 import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import ai.dokus.peppol.validator.PeppolValidator
+import aws.smithy.kotlin.runtime.retries.delay.InfiniteTokenBucket.config
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -45,6 +26,7 @@ import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.scope.get
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -70,6 +52,26 @@ import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.backend.worker.WorkerConfig
+import tech.dokus.foundation.ktor.cache.RedisClient
+import tech.dokus.foundation.ktor.cache.RedisNamespace
+import tech.dokus.foundation.ktor.cache.redis
+import tech.dokus.foundation.ktor.config.AppBaseConfig
+import tech.dokus.foundation.ktor.config.MinioConfig
+import tech.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
+import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
+import tech.dokus.foundation.ktor.crypto.PasswordCryptoService
+import tech.dokus.foundation.ktor.crypto.PasswordCryptoService4j
+import tech.dokus.foundation.ktor.database.DatabaseFactory
+import tech.dokus.foundation.ktor.lookup.CbeApiClient
+import tech.dokus.foundation.ktor.security.JwtGenerator
+import tech.dokus.foundation.ktor.security.JwtValidator
+import tech.dokus.foundation.ktor.security.RedisTokenBlacklistService
+import tech.dokus.foundation.ktor.security.TokenBlacklistService
+import tech.dokus.foundation.ktor.storage.AvatarStorageService
+import tech.dokus.foundation.ktor.storage.DocumentStorageService
+import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
+import tech.dokus.foundation.ktor.storage.MinioStorage
+import tech.dokus.foundation.ktor.storage.ObjectStorage
 
 /**
  * Koin setup for the modular monolith server.

@@ -9,8 +9,8 @@ import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.TenantInvitation
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
