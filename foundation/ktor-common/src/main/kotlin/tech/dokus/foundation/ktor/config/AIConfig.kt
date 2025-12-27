@@ -95,31 +95,6 @@ data class AIConfig(
             openai = OpenAIConfig.fromConfig(config.getConfig("openai")),
             models = ModelConfig.fromConfig(config.getConfig("models"))
         )
-
-        /**
-         * Create a default configuration for local development with Ollama.
-         */
-        fun localDefault(): AIConfig = AIConfig(
-            defaultProvider = AIProvider.OLLAMA,
-            ollama = OllamaConfig(
-                enabled = true,
-                baseUrl = "http://localhost:11434",
-                defaultModel = "mistral:7b"
-            ),
-            openai = OpenAIConfig(
-                enabled = false,
-                apiKey = "",
-                defaultModel = "gpt-4o-mini"
-            ),
-            models = ModelConfig(
-                classification = "mistral:7b",
-                documentExtraction = "mistral:7b",
-                categorization = "llama3.1:8b",
-                suggestions = "mistral:7b",
-                chat = "mistral:7b",
-                embedding = "nomic-embed-text"
-            )
-        )
     }
 
     /**
