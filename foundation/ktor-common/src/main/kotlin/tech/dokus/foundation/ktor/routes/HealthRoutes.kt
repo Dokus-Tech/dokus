@@ -1,5 +1,9 @@
 package tech.dokus.foundation.ktor.routes
 
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.get
 import tech.dokus.domain.ApplicationInfo
 import tech.dokus.domain.DetailedHealthInfo
 import tech.dokus.domain.HealthCheck
@@ -8,13 +12,9 @@ import tech.dokus.domain.HeapMemoryInfo
 import tech.dokus.domain.JvmInfo
 import tech.dokus.domain.MemoryInfo
 import tech.dokus.domain.NonHeapMemoryInfo
-import tech.dokus.domain.ServerStatus
 import tech.dokus.domain.SystemInfo
 import tech.dokus.domain.ThreadInfo
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Routing
-import io.ktor.server.routing.get
+import tech.dokus.domain.config.ServerStatus
 import java.io.File
 import java.lang.management.ManagementFactory
 
