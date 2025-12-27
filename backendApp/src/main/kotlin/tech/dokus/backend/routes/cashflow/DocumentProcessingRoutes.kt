@@ -12,18 +12,18 @@ import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.model.ConfirmDocumentRequest
-import ai.dokus.foundation.domain.model.ConfirmDocumentResponse
-import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.DocumentProcessingListResponse
-import ai.dokus.foundation.domain.model.ReprocessDocumentRequest
-import ai.dokus.foundation.domain.model.ReprocessDocumentResponse
-import ai.dokus.foundation.domain.model.TrackedCorrection
-import ai.dokus.foundation.domain.model.UpdateDraftRequest
-import ai.dokus.foundation.domain.model.UpdateDraftResponse
-import ai.dokus.foundation.domain.routes.Documents
+import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.ConfirmDocumentResponse
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.DocumentProcessingListResponse
+import tech.dokus.domain.model.ReprocessDocumentRequest
+import tech.dokus.domain.model.ReprocessDocumentResponse
+import tech.dokus.domain.model.TrackedCorrection
+import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.UpdateDraftResponse
+import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.*
@@ -36,6 +36,7 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.model.InvoiceItemDto
 import java.util.*
 import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 
@@ -216,7 +217,7 @@ internal fun Route.documentProcessingRoutes() {
                     val createRequest = CreateInvoiceRequest(
                         contactId = contactId,
                         items = request.corrections?.items?.map { item ->
-                            ai.dokus.foundation.domain.model.InvoiceItemDto(
+                            InvoiceItemDto(
                                 description = item.description ?: "",
                                 quantity = item.quantity ?: 1.0,
                                 unitPrice = item.unitPrice ?: Money("0"),

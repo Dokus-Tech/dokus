@@ -11,8 +11,8 @@ import ai.dokus.foundation.domain.ids.BankTransactionId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.BankConnectionDto
-import ai.dokus.foundation.domain.model.BankTransactionDto
+import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime

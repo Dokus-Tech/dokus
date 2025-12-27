@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.usecases
 
-import ai.dokus.foundation.domain.model.Tenant
+import tech.dokus.domain.model.Tenant
 
 /**
  * Retrieves the tenant currently scoped in the user's JWT claims.

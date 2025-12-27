@@ -7,10 +7,10 @@ import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CashInSummary
-import ai.dokus.foundation.domain.model.CashOutSummary
-import ai.dokus.foundation.domain.model.CashflowOverview
-import ai.dokus.foundation.domain.model.CashflowPeriod
+import tech.dokus.domain.model.CashInSummary
+import tech.dokus.domain.model.CashOutSummary
+import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPeriod
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod

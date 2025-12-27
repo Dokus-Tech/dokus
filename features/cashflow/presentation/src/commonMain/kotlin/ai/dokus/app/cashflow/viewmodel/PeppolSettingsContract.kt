@@ -2,9 +2,9 @@ package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.PeppolProvider
-import ai.dokus.foundation.domain.model.PeppolSettingsDto
-import ai.dokus.foundation.domain.model.RecommandCompanySummary
+import tech.dokus.domain.model.PeppolProvider
+import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.RecommandCompanySummary
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

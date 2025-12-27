@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.components
 
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues

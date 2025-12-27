@@ -16,8 +16,8 @@ import ai.dokus.foundation.design.constrains.withContentPadding
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.PeppolProvider
-import ai.dokus.foundation.domain.model.RecommandCompanySummary
+import tech.dokus.domain.model.PeppolProvider
+import tech.dokus.domain.model.RecommandCompanySummary
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement

@@ -3,10 +3,10 @@ package ai.dokus.app.cashflow.viewmodel
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.model.PeppolConnectRequest
-import ai.dokus.foundation.domain.model.PeppolConnectStatus
-import ai.dokus.foundation.domain.model.PeppolProvider
-import ai.dokus.foundation.domain.model.RecommandCompanySummary
+import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.model.PeppolConnectStatus
+import tech.dokus.domain.model.PeppolProvider
+import tech.dokus.domain.model.RecommandCompanySummary
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext

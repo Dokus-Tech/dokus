@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LogoutRequest
 import ai.dokus.foundation.domain.model.auth.SelectTenantRequest
 import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
-import ai.dokus.foundation.domain.routes.Account
+import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode

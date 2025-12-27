@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.components.DocumentSortOption
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.FinancialDocumentDto
 
 /**
  * Sorts and filters financial documents based on the selected sort option.

@@ -2,7 +2,7 @@ package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow

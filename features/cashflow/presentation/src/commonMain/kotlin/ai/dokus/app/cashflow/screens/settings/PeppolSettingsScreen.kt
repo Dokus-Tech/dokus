@@ -14,7 +14,7 @@ import ai.dokus.app.resources.generated.profile_danger_zone
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.model.PeppolProvider
+import tech.dokus.domain.model.PeppolProvider
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.BorderStroke
@@ -58,6 +58,7 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -170,7 +171,7 @@ fun IntentReceiver<PeppolSettingsIntent>.PeppolSettingsContent(
 @Composable
 private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
     isConnected: Boolean,
-    connectedCompany: ai.dokus.foundation.domain.model.RecommandCompanySummary?,
+    connectedCompany: RecommandCompanySummary?,
     isDeleting: Boolean,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)

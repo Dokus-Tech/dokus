@@ -1,15 +1,15 @@
 package ai.dokus.app.auth.datasource
 
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.AvatarUploadResponse
-import ai.dokus.foundation.domain.model.CreateTenantRequest
-import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.AvatarUploadResponse
+import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.domain.model.common.Thumbnail
-import ai.dokus.foundation.domain.routes.Tenants
+import tech.dokus.domain.routes.Tenants
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload

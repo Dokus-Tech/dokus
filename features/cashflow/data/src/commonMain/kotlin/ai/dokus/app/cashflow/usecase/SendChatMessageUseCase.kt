@@ -2,9 +2,9 @@ package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.model.ChatResponse
-import ai.dokus.foundation.domain.model.ChatScope
-import ai.dokus.foundation.domain.model.ChatSessionId
+import tech.dokus.domain.model.ChatResponse
+import tech.dokus.domain.model.ChatScope
+import tech.dokus.domain.model.ChatSessionId
 
 /**
  * Use case for sending chat messages to the document Q&A system.

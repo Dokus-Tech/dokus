@@ -1,6 +1,6 @@
 package ai.dokus.app.contacts.usecases
 
-import ai.dokus.foundation.domain.model.ContactDto
+import tech.dokus.domain.model.ContactDto
 
 /**
  * Use case for listing contacts with optional filters.

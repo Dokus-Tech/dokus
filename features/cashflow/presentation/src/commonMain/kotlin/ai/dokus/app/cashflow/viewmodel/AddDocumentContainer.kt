@@ -5,7 +5,7 @@ import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.model.UploadStatus
-import ai.dokus.foundation.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentDto
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 import pro.respawn.flowmvi.api.Container

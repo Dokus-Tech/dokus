@@ -7,11 +7,11 @@ import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateTenantRequest
-import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
-import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
-import ai.dokus.foundation.domain.routes.Tenants
+import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.routes.Tenants
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get

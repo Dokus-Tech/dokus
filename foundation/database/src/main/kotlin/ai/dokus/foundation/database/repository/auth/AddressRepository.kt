@@ -5,8 +5,8 @@ package ai.dokus.foundation.database.repository.auth
 import ai.dokus.foundation.database.mappers.auth.TenantMappers.toAddress
 import ai.dokus.foundation.database.tables.auth.AddressTable
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.database.now
 import kotlinx.datetime.TimeZone

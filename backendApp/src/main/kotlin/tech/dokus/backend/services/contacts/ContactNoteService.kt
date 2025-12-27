@@ -5,7 +5,7 @@ import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ContactNoteId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.ContactNoteDto
+import tech.dokus.domain.model.ContactNoteDto
 import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.utils.loggerFor
 

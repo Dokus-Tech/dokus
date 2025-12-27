@@ -9,11 +9,11 @@ import ai.dokus.foundation.domain.ids.AttachmentId
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.model.AttachmentDto
-import ai.dokus.foundation.domain.model.DocumentDto
-import ai.dokus.foundation.domain.routes.Attachments
-import ai.dokus.foundation.domain.routes.Expenses
-import ai.dokus.foundation.domain.routes.Invoices
+import tech.dokus.domain.model.AttachmentDto
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.routes.Attachments
+import tech.dokus.domain.routes.Expenses
+import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import tech.dokus.foundation.ktor.storage.DocumentUploadValidator

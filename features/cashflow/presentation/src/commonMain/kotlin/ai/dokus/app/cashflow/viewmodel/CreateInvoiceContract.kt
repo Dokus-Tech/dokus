@@ -2,13 +2,11 @@ package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
-import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
-import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceDeliveryMethod
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.model.ContactDto
+import tech.dokus.domain.model.ContactDto
 import androidx.compose.runtime.Immutable
 import kotlinx.datetime.LocalDate
 import pro.respawn.flowmvi.api.MVIAction

@@ -4,8 +4,8 @@ import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.LocalDate

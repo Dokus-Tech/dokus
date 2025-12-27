@@ -12,11 +12,11 @@ import ai.dokus.app.contacts.usecases.UpdateContactNoteUseCase
 import ai.dokus.app.contacts.usecases.UpdateContactPeppolUseCase
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.ContactNoteDto
-import ai.dokus.foundation.domain.model.CreateContactNoteRequest
-import ai.dokus.foundation.domain.model.UpdateContactNoteRequest
-import ai.dokus.foundation.domain.model.UpdateContactPeppolRequest
+import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.ContactNoteDto
+import tech.dokus.domain.model.CreateContactNoteRequest
+import tech.dokus.domain.model.UpdateContactNoteRequest
+import tech.dokus.domain.model.UpdateContactPeppolRequest
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.async
 import pro.respawn.flowmvi.api.Container

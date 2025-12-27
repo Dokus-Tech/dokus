@@ -64,6 +64,7 @@ import kotlinx.datetime.plus
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.model.ContactDto
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -403,7 +404,7 @@ private fun MobileEditLayout(
 private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    selectedContact: ai.dokus.foundation.domain.model.ContactDto?,
+    selectedContact: ContactDto?,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onContactSelected: (ContactAutoFillData) -> Unit,

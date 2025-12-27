@@ -13,10 +13,10 @@ import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.CreateTenantRequest
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
-import ai.dokus.foundation.domain.model.User
+import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse

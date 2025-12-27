@@ -7,9 +7,9 @@ import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.DocumentDto
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction

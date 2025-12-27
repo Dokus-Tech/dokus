@@ -9,7 +9,7 @@ import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.PeppolTransmissionId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.PeppolTransmissionDto
+import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock

@@ -8,7 +8,7 @@ import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock

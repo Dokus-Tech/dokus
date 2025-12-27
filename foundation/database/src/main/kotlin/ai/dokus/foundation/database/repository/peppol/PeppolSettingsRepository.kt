@@ -4,8 +4,8 @@ import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.PeppolSettingsId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.PeppolSettingsDto
-import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
+import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.utils.loggerFor

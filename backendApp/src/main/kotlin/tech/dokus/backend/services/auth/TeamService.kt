@@ -8,11 +8,12 @@ import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.CreateInvitationRequest
-import ai.dokus.foundation.domain.model.TeamMember
-import ai.dokus.foundation.domain.model.TenantInvitation
+import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.domain.model.TeamMember
+import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -103,8 +104,8 @@ class TeamService(
                 role = request.role,
                 invitedByName = "System",
                 status = InvitationStatus.Accepted,
-                expiresAt = Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC),
-                createdAt = Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
+                expiresAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
+                createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             )
         }
 

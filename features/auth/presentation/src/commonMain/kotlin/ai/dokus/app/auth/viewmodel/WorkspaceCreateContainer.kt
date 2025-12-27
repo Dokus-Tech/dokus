@@ -13,8 +13,8 @@ import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.EntityLookup
-import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.EntityLookup
+import tech.dokus.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext

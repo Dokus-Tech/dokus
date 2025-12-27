@@ -8,7 +8,7 @@ import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.ContactDto
+import tech.dokus.domain.model.ContactDto
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 

@@ -4,7 +4,7 @@ import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.domain.enums.ProcessingStatus
 import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentProcessingDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest

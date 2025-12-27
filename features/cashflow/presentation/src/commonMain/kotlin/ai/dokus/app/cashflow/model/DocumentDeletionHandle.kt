@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.model
 
 import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.utils.currentTimeMillis
+import tech.dokus.domain.utils.currentTimeMillis
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlin.time.Duration

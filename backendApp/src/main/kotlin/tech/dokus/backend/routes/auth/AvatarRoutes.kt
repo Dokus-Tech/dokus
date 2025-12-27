@@ -2,8 +2,8 @@ package tech.dokus.backend.routes.auth
 
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.AvatarUploadResponse
-import ai.dokus.foundation.domain.routes.Tenants
+import tech.dokus.domain.model.AvatarUploadResponse
+import tech.dokus.domain.routes.Tenants
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart

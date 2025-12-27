@@ -11,10 +11,10 @@ import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.model.ChatMessageDto
-import ai.dokus.foundation.domain.model.ChatScope
-import ai.dokus.foundation.domain.model.ChatSessionSummary
-import ai.dokus.foundation.domain.model.MessageRole
+import tech.dokus.domain.model.ChatMessageDto
+import tech.dokus.domain.model.ChatScope
+import tech.dokus.domain.model.ChatSessionSummary
+import tech.dokus.domain.model.MessageRole
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -86,6 +86,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.model.ChatSessionId
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -777,7 +778,7 @@ private fun ChatInputSection(
 @Composable
 private fun SessionPickerDialog(
     sessions: List<ChatSessionSummary>,
-    onSessionSelect: (ai.dokus.foundation.domain.model.ChatSessionId) -> Unit,
+    onSessionSelect: (ChatSessionId) -> Unit,
     onNewSession: () -> Unit,
     onDismiss: () -> Unit,
 ) {

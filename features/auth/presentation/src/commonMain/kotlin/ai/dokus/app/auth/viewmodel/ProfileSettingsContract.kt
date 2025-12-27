@@ -3,7 +3,7 @@ package ai.dokus.app.auth.viewmodel
 import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.User
+import tech.dokus.domain.model.User
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
