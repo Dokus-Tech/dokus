@@ -115,8 +115,6 @@ services:
       JWT_SECRET: local-secret-key
       JWT_ISSUER: local.dokus.tech
       JWT_AUDIENCE: dokus-api-local
-      # Optional Redis-backed rate-limit + token blacklist
-      CACHE_TYPE: ${CACHE_TYPE:-redis}
       REDIS_HOST: redis-local
       REDIS_PORT: 6379
       REDIS_PASSWORD: devredispass

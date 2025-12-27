@@ -1,6 +1,7 @@
 package ai.dokus.backend.config
 
 import ai.dokus.ai.config.AIConfig
+import ai.dokus.backend.extraction.processor.ExtractionProviderFactory
 import ai.dokus.backend.jobs.auth.RateLimitCleanupJob
 import ai.dokus.backend.services.auth.AuthService
 import ai.dokus.backend.services.auth.DisabledEmailService
@@ -8,7 +9,6 @@ import ai.dokus.backend.services.auth.EmailConfig
 import ai.dokus.backend.services.auth.EmailService
 import ai.dokus.backend.services.auth.EmailVerificationService
 import ai.dokus.backend.services.auth.PasswordResetService
-import ai.dokus.backend.services.auth.RateLimitService
 import ai.dokus.backend.services.auth.RateLimitServiceInterface
 import ai.dokus.backend.services.auth.RedisRateLimitService
 import ai.dokus.backend.services.auth.SmtpEmailService
@@ -20,13 +20,16 @@ import ai.dokus.backend.services.cashflow.InvoiceService
 import ai.dokus.backend.services.contacts.ContactMatchingService
 import ai.dokus.backend.services.contacts.ContactNoteService
 import ai.dokus.backend.services.contacts.ContactService
+import ai.dokus.backend.worker.processor.DocumentProcessingWorker
+import ai.dokus.backend.worker.processor.WorkerConfig
 import ai.dokus.foundation.database.di.repositoryModules
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.schema.DokusSchema
-import ai.dokus.foundation.ktor.cache.RedisNamespace
+import ai.dokus.foundation.domain.repository.ChunkRepository
 import ai.dokus.foundation.ktor.cache.RedisClient
+import ai.dokus.foundation.ktor.cache.RedisNamespace
 import ai.dokus.foundation.ktor.cache.redis
 import ai.dokus.foundation.ktor.config.AppBaseConfig
 import ai.dokus.foundation.ktor.config.MinioConfig
@@ -36,14 +39,13 @@ import ai.dokus.foundation.ktor.crypto.PasswordCryptoService
 import ai.dokus.foundation.ktor.crypto.PasswordCryptoService4j
 import ai.dokus.foundation.ktor.database.DatabaseFactory
 import ai.dokus.foundation.ktor.lookup.CbeApiClient
-import ai.dokus.foundation.ktor.security.InMemoryTokenBlacklistService
 import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.security.JwtValidator
 import ai.dokus.foundation.ktor.security.RedisTokenBlacklistService
 import ai.dokus.foundation.ktor.security.TokenBlacklistService
 import ai.dokus.foundation.ktor.storage.AvatarStorageService
-import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
 import ai.dokus.foundation.ktor.storage.DocumentStorageService
+import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
 import ai.dokus.foundation.ktor.storage.MinioStorage
 import ai.dokus.foundation.ktor.storage.ObjectStorage
 import ai.dokus.peppol.config.PeppolModuleConfig
@@ -53,22 +55,20 @@ import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
 import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import ai.dokus.peppol.validator.PeppolValidator
-import ai.dokus.backend.extraction.processor.ExtractionProviderFactory
-import ai.dokus.backend.worker.processor.DocumentProcessingWorker
-import ai.dokus.backend.worker.processor.WorkerConfig
-import ai.dokus.foundation.domain.repository.ChunkRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
-import org.koin.dsl.module
-import org.koin.ktor.plugin.Koin
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
+import org.koin.dsl.module
+import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
 
 /**
@@ -184,26 +184,16 @@ private fun authModule(appConfig: AppBaseConfig) = module {
         )
     }
 
-    if (appConfig.caching.type.lowercase() == "redis") {
-        single<RedisClient> {
-            redis {
-                config = appConfig.caching.redis
-                namespace = RedisNamespace.Auth
-            }
+    single<RedisClient> {
+        redis {
+            config = appConfig.caching.redis
+            namespace = RedisNamespace.Auth
         }
     }
 
-    single<RateLimitServiceInterface> {
-        val redisClient = getOrNull<RedisClient>()
-        if (redisClient != null) RedisRateLimitService(redisClient) else RateLimitService()
-    }
-
-    single<TokenBlacklistService> {
-        val redisClient = getOrNull<RedisClient>()
-        if (redisClient != null) RedisTokenBlacklistService(redisClient) else InMemoryTokenBlacklistService()
-    }
-
-    single { RateLimitCleanupJob(get<RateLimitServiceInterface>()) }
+    singleOf(::RedisRateLimitService) bind RateLimitServiceInterface::class
+    singleOf(::RedisTokenBlacklistService) bind TokenBlacklistService::class
+    singleOf(::RateLimitCleanupJob)
 
     single {
         val appConfig = get<AppBaseConfig>()
@@ -223,7 +213,8 @@ private fun authModule(appConfig: AppBaseConfig) = module {
 
     single {
         val appConfig = get<AppBaseConfig>()
-        val cbeApiSecret = if (appConfig.config.hasPath("cbe.apiSecret")) appConfig.config.getString("cbe.apiSecret") else ""
+        val cbeApiSecret =
+            if (appConfig.config.hasPath("cbe.apiSecret")) appConfig.config.getString("cbe.apiSecret") else ""
         CbeApiClient(get(), cbeApiSecret)
     }
 }
