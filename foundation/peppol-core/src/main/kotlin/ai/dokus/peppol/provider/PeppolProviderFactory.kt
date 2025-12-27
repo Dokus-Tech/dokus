@@ -1,9 +1,9 @@
 package ai.dokus.peppol.provider
 
+import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.config.PeppolModuleConfig
 import ai.dokus.peppol.providers.recommand.RecommandProvider
 import io.ktor.client.HttpClient
-import org.slf4j.LoggerFactory
 
 /**
  * Factory for creating Peppol provider instances.
@@ -14,7 +14,7 @@ class PeppolProviderFactory(
     private val httpClient: HttpClient,
     private val config: PeppolModuleConfig
 ) {
-    private val logger = LoggerFactory.getLogger(PeppolProviderFactory::class.java)
+    private val logger = loggerFor()
     private val providerFactories = mutableMapOf<String, () -> PeppolProvider>()
 
     init {
@@ -49,8 +49,10 @@ class PeppolProviderFactory(
      */
     fun createProvider(credentials: PeppolCredentials): PeppolProvider {
         val factory = providerFactories[credentials.providerId]
-            ?: throw IllegalArgumentException("Unknown Peppol provider: ${credentials.providerId}. " +
-                "Available providers: ${getAvailableProviders()}")
+            ?: throw IllegalArgumentException(
+                "Unknown Peppol provider: ${credentials.providerId}. " +
+                        "Available providers: ${getAvailableProviders()}"
+            )
 
         return factory().apply {
             configure(credentials)

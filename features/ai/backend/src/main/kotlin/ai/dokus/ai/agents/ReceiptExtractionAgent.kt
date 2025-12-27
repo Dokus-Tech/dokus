@@ -1,13 +1,13 @@
 package ai.dokus.ai.agents
 
 import ai.dokus.ai.models.ExtractedReceiptData
+import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 
 /**
  * Agent responsible for extracting data from receipt documents.
@@ -17,7 +17,7 @@ class ReceiptExtractionAgent(
     private val executor: PromptExecutor,
     private val model: LLModel
 ) {
-    private val logger = LoggerFactory.getLogger(ReceiptExtractionAgent::class.java)
+    private val logger = loggerFor()
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true

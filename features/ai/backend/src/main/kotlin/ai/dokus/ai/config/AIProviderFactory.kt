@@ -1,13 +1,16 @@
 package ai.dokus.ai.config
 
+import ai.dokus.foundation.domain.model.ai.AIProvider
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import ai.koog.prompt.executor.model.PromptExecutor
-import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.OllamaModels
-import org.slf4j.LoggerFactory
+import tech.dokus.foundation.ktor.config.AIConfig
+import tech.dokus.foundation.ktor.config.ModelPurpose
+import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Factory for creating AI prompt executors and models based on configuration.
@@ -24,8 +27,7 @@ import org.slf4j.LoggerFactory
  * HTTP calls to provider APIs, as Koog doesn't have built-in embedding support for Ollama.
  */
 object AIProviderFactory {
-    private val logger = LoggerFactory.getLogger(AIProviderFactory::class.java)
-
+    private val logger = loggerFor()
     // =========================================================================
     // Embedding Model Constants
     // =========================================================================
@@ -47,11 +49,12 @@ object AIProviderFactory {
      */
     fun createExecutor(config: AIConfig): PromptExecutor {
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> {
+            AIProvider.OLLAMA -> {
                 logger.info("Creating Ollama executor: ${config.ollama.baseUrl}")
                 simpleOllamaAIExecutor(config.ollama.baseUrl)
             }
-            AIConfig.AIProvider.OPENAI -> {
+
+            AIProvider.OPENAI -> {
                 logger.info("Creating OpenAI executor")
                 simpleOpenAIExecutor(config.openai.apiKey)
             }
@@ -64,8 +67,8 @@ object AIProviderFactory {
     fun getModel(config: AIConfig, purpose: ModelPurpose): LLModel {
         val modelName = config.getModel(purpose)
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> createOllamaModel(modelName)
-            AIConfig.AIProvider.OPENAI -> createOpenAIModel(modelName)
+            AIProvider.OLLAMA -> createOllamaModel(modelName)
+            AIProvider.OPENAI -> createOpenAIModel(modelName)
         }
     }
 
@@ -147,13 +150,14 @@ object AIProviderFactory {
      */
     fun getEmbeddingConfig(config: AIConfig): EmbeddingConfig {
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> EmbeddingConfig(
+            AIProvider.OLLAMA -> EmbeddingConfig(
                 modelName = config.getEmbeddingModel(),
                 dimensions = getEmbeddingDimensions(config.getEmbeddingModel()),
                 provider = config.defaultProvider,
                 baseUrl = config.ollama.baseUrl
             )
-            AIConfig.AIProvider.OPENAI -> EmbeddingConfig(
+
+            AIProvider.OPENAI -> EmbeddingConfig(
                 modelName = config.getEmbeddingModel(),
                 dimensions = getEmbeddingDimensions(config.getEmbeddingModel()),
                 provider = config.defaultProvider,
@@ -208,8 +212,8 @@ object AIProviderFactory {
      */
     fun supportsEmbeddings(config: AIConfig): Boolean {
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> config.ollama.enabled
-            AIConfig.AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
+            AIProvider.OLLAMA -> config.ollama.enabled
+            AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
         }
     }
 }
@@ -225,6 +229,6 @@ object AIProviderFactory {
 data class EmbeddingConfig(
     val modelName: String,
     val dimensions: Int,
-    val provider: AIConfig.AIProvider,
+    val provider: AIProvider,
     val baseUrl: String
 )

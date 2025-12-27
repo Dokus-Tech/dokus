@@ -103,8 +103,7 @@ SYMBOL_SMALL="⋄"
 # Configuration
 PROJECT_NAME="dokus"
 COMPOSE_FILE="docker-compose.local.yml"
-AUTH_SERVICE_DIR="features/auth/backend"
-BANKING_SERVICE_DIR="features/banking/backend"
+SERVER_SERVICE_DIR="backendApp"
 
 # Database configuration - consolidated single database
 DB_CONTAINER="postgres-local"
@@ -345,54 +344,38 @@ check_requirements() {
 
 # Function to build the application
 build_app() {
-    print_gradient_header "🔨 Building Application Services"
+    print_gradient_header "🔨 Building Dokus Server"
 
-    local services=("auth" "banking" "payment" "cashflow" "contacts" "processor")
-    local total=${#services[@]}
-    local current=0
+    echo_e "  ${SOFT_CYAN}${BOLD}Phase 1: Building backend fat JAR${NC}\n"
 
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 1: Building Backend JAR files${NC}\n"
+    print_simple_status building "Building dokus-server JAR..."
+    if [ -f "./gradlew" ]; then
+        ./gradlew :backendApp:shadowJar -x test -q > /dev/null 2>&1
+    else
+        gradle :backendApp:shadowJar -x test -q > /dev/null 2>&1
+    fi
 
-    for service in "${services[@]}"; do
-        current=$((current + 1))
-        local service_name="$(capitalize "$service") Service"
-
-        print_simple_status building "Building ${service_name} JAR..."
-
-        if [ -f "./gradlew" ]; then
-            ./gradlew :features:${service}:backend:shadowJar -x test -q > /dev/null 2>&1
-        else
-            gradle :features:${service}:backend:shadowJar -x test -q > /dev/null 2>&1
-        fi
-
-        if [ $? -ne 0 ]; then
-            print_status error "${service_name} JAR build failed"
-            exit 1
-        fi
-        print_simple_status success "${service_name} JAR compiled"
-    done
+    if [ $? -ne 0 ]; then
+        print_status error "dokus-server JAR build failed"
+        exit 1
+    fi
+    print_simple_status success "dokus-server JAR compiled"
 
     echo ""
     print_separator
     echo ""
-    echo_e "  ${SOFT_CYAN}${BOLD}Phase 2: Building Docker images${NC}\n"
+    echo_e "  ${SOFT_CYAN}${BOLD}Phase 2: Building Docker image${NC}\n"
 
-    current=0
-    for service in "${services[@]}"; do
-        current=$((current + 1))
-        local service_name="$(capitalize "$service") Service"
-
-        print_simple_status building "Building ${service_name} image..."
-        docker build -f features/${service}/backend/Dockerfile.dev -t invoid-vision/dokus-${service}:dev-latest . -q > /dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            print_status error "${service_name} Docker image build failed"
-            exit 1
-        fi
-        print_simple_status success "${service_name} image ready"
-    done
+    print_simple_status building "Building server-local image..."
+    docker-compose -f $COMPOSE_FILE build server-local > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        print_status error "server-local Docker image build failed"
+        exit 1
+    fi
+    print_simple_status success "server-local image ready"
 
     echo ""
-    echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}All services built successfully${NC}"
+    echo_e "  ${SOFT_GREEN}${BOLD}✓${NC}  ${SOFT_GREEN}Server build complete${NC}"
     echo ""
 }
 
@@ -441,12 +424,15 @@ start_services() {
             sleep 1
         done
 
-        # Wait for RabbitMQ
-        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "RabbitMQ Broker"
+        # Wait for MinIO
+        printf "  ${SOFT_CYAN}${TREE_BRANCH}${TREE_RIGHT}${NC} %-22s" "MinIO Storage"
         for i in {1..30}; do
-            if curl -f -s -u dokus:localrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
+            if docker-compose -f $COMPOSE_FILE exec -T minio-local curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
                 echo_e "${SOFT_GREEN}◎ Ready${NC}"
                 break
+            fi
+            if [ $i -eq 30 ]; then
+                echo_e "${SOFT_YELLOW}◒ Slow Start${NC}"
             fi
             echo -n "."
             sleep 1
@@ -477,13 +463,9 @@ start_services() {
         # Wait for services with proper spacing
         sleep 3
 
-        # Check services via gateway
+        # Check server via gateway
         local services=(
-            "Auth:/api/v1/identity"
-            "Cashflow:/api/v1/invoices"
-            "Payment:/api/v1/payments"
-            "Banking:/api/v1/banking"
-            "Contacts:/api/v1/contacts"
+            "Dokus Server:/api/v1/server/info"
         )
 
         for service_info in "${services[@]}"; do
@@ -577,9 +559,9 @@ show_status() {
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    # RabbitMQ
-    printf "  ${SOFT_GRAY}│${NC} RabbitMQ Broker         ${SOFT_GRAY}│${NC} "
-    if curl -f -s -u dokus:localrabbitpass http://localhost:25673/api/health/checks/alarms &>/dev/null; then
+    # MinIO
+    printf "  ${SOFT_GRAY}│${NC} MinIO Storage           ${SOFT_GRAY}│${NC} "
+    if docker-compose -f $COMPOSE_FILE exec -T minio-local curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -601,16 +583,19 @@ show_status() {
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
+    # Dokus Server (via gateway)
+    printf "  ${SOFT_GRAY}│${NC} Dokus Server            ${SOFT_GRAY}│${NC} "
+    if curl -f -s http://localhost:${GATEWAY_PORT}/api/v1/server/info &>/dev/null 2>&1; then
+        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
+    else
+        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
+    fi
+
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
     # Services - Check via gateway using path-based routing
     local services=(
-        "Auth Service:auth-service-local:/api/v1/identity"
-        "Cashflow Service:cashflow-service-local:/api/v1/invoices"
-        "Payment Service:payment-service-local:/api/v1/payments"
-        "Banking Service:banking-service-local:/api/v1/banking"
-        "Contacts Service:contacts-service-local:/api/v1/contacts"
-        "Processor:processor-service-local:/health"
+        "Dokus Server:server-local:/api/v1/server/info"
     )
 
     check_service() {
@@ -972,26 +957,22 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}┌─────────────────────────────┬────────────────────────────────────┐${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Route Prefix${NC}                ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                            ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└─────────────────────────────┴────────────────────────────────────┘${NC}"
-
-    echo ""
-    echo_e "  ${SOFT_GRAY}${BOLD}Debug Ports (direct access)${NC}"
-    echo_e "    ${DIM_WHITE}Auth: 15007 • Cashflow: 15008 • Payment: 15009 • Banking: 15012 • Contacts: 15013 • Processor: 15014${NC}"
 
     echo ""
     echo_e "  ${SOFT_CYAN}${BOLD}💾 Database & Services${NC}\n"
@@ -1002,8 +983,6 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:$DB_PORT${NC} • ${SOFT_GRAY}$DB_NAME${NC}         ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC} • ${SOFT_GRAY}pass: devredispass${NC} ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:25672${NC} • ${SOFT_GRAY}user: dokus${NC}        ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC}                      ${SOFT_GRAY}│${NC} ${DIM_WHITE}UI: localhost:25673${NC} • ${SOFT_GRAY}pass: localrabbitpass${NC} ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO${NC}                ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:19000${NC} • ${SOFT_GRAY}Console: 19001${NC}    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC} • ${SOFT_GRAY}API endpoint${NC}     ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
@@ -1041,8 +1020,6 @@ start_pgadmin() {
 
 # Function to watch for changes and rebuild
 watch_mode() {
-    service=${1:-all}
-
     print_color "$SOFT_BLUE" "👁️  Watch mode - rebuilding on changes..."
     print_color "$SOFT_YELLOW" "Press Ctrl+C to stop"
 
@@ -1050,44 +1027,22 @@ watch_mode() {
     build_app
     restart_services
 
-    # Watch for changes (requires fswatch or inotify-tools)
+    # Watch for changes (requires fswatch)
     if command -v fswatch &> /dev/null; then
-        if [ "$service" = "all" ]; then
-            fswatch -o $AUTH_SERVICE_DIR/src $BANKING_SERVICE_DIR/src | while read num ; do
-                print_color "$SOFT_YELLOW" "🔄 Changes detected, rebuilding..."
+        fswatch -o \
+            ${SERVER_SERVICE_DIR}/src \
+            foundation/*/src \
+            features/*/backend/src \
+            | while read num ; do
+                print_color "$SOFT_YELLOW" "🔄 Changes detected, rebuilding server..."
                 build_app
-                docker-compose -f $COMPOSE_FILE restart dokus-auth-local dokus-banking-local
-                print_color "$SOFT_GREEN" "✓ Services restarted"
+                docker-compose -f $COMPOSE_FILE restart server-local
+                print_color "$SOFT_GREEN" "✓ Server restarted"
             done
-        elif [ "$service" = "auth" ]; then
-            fswatch -o $AUTH_SERVICE_DIR/src | while read num ; do
-                print_color "$SOFT_YELLOW" "🔄 Auth Service changes detected, rebuilding..."
-                if [ -f "./gradlew" ]; then
-                    ./gradlew :features:auth:backend:shadowJar -x test
-                else
-                    gradle :features:auth:backend:shadowJar -x test
-                fi
-                docker build -f features/auth/backend/Dockerfile.dev -t invoid-vision/dokus-auth:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart dokus-auth-local
-                print_color "$SOFT_GREEN" "✓ Auth Service restarted"
-            done
-        elif [ "$service" = "banking" ]; then
-            fswatch -o $BANKING_SERVICE_DIR/src | while read num ; do
-                print_color "$SOFT_YELLOW" "🔄 Banking Service changes detected, rebuilding..."
-                if [ -f "./gradlew" ]; then
-                    ./gradlew :features:banking:backend:shadowJar -x test
-                else
-                    gradle :features:banking:backend:shadowJar -x test
-                fi
-                docker build -f features/banking/backend/Dockerfile.dev -t invoid-vision/dokus-banking:dev-latest .
-                docker-compose -f $COMPOSE_FILE restart dokus-banking-local
-                print_color "$SOFT_GREEN" "✓ Banking Service restarted"
-            done
-        fi
     else
         print_color "$SOFT_YELLOW" "⚠️  fswatch not installed. Install it for file watching:"
         echo "  macOS: brew install fswatch"
-        echo "  Linux: apt-get install inotify-tools"
+        echo "  Linux: apt-get install fswatch"
     fi
 }
 
@@ -1178,8 +1133,8 @@ show_help() {
     echo ""
 
     echo_e "  ${SOFT_MAGENTA}${BOLD}Build & Development${NC}"
-    echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Create service JARs + images${NC}"
-    echo_e "    ${SOFT_CYAN}watch${NC} [svc]  ${DIM_WHITE}Auto rebuild on changes${NC}"
+    echo_e "    ${SOFT_CYAN}build${NC}        ${DIM_WHITE}Build dokus-server JAR + image${NC}"
+    echo_e "    ${SOFT_CYAN}watch${NC}        ${DIM_WHITE}Auto rebuild + restart server${NC}"
     echo_e "    ${SOFT_CYAN}test${NC} [svc]   ${DIM_WHITE}Run tests (auth|banking|cashflow|contacts|all)${NC}"
     echo ""
 

@@ -3,9 +3,11 @@
 package ai.dokus.foundation.database.repository.auth
 
 import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
+import ai.dokus.foundation.database.utils.toKotlinxInstant
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.ktor.database.now
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.database.now
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -19,11 +21,9 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
-import ai.dokus.foundation.database.utils.toKotlinxInstant
 
 /**
  * Information about a refresh token
@@ -57,7 +57,7 @@ data class RefreshTokenInfo(
  * - Provides comprehensive error handling and logging
  */
 class RefreshTokenRepository {
-    private val logger = LoggerFactory.getLogger(RefreshTokenRepository::class.java)
+    private val logger = loggerFor()
 
     /**
      * Save a refresh token to the database
@@ -134,7 +134,11 @@ class RefreshTokenRepository {
 
             if (now > expiresAtInstant) {
                 logger.warn(
-                    "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${oldTokenHash.take(8)})"
+                    "Attempt to use expired token (ID: $tokenId, expired: $expiresAt, hash: ${
+                        oldTokenHash.take(
+                            8
+                        )
+                    })"
                 )
                 throw IllegalArgumentException("Refresh token has expired")
             }
@@ -162,6 +166,7 @@ class RefreshTokenRepository {
                 // Expected validation errors, already logged with details
                 logger.debug("Token validation failed: ${error.message}")
             }
+
             else -> {
                 // Unexpected errors
                 logger.error("Unexpected error during token validation and rotation", error)
@@ -214,7 +219,7 @@ class RefreshTokenRepository {
             val updated = RefreshTokensTable.update(
                 {
                     (RefreshTokensTable.userId eq userUuid) and
-                    (RefreshTokensTable.isRevoked eq false)
+                            (RefreshTokensTable.isRevoked eq false)
                 }
             ) {
                 it[RefreshTokensTable.isRevoked] = true
@@ -266,8 +271,8 @@ class RefreshTokenRepository {
                 .selectAll()
                 .where {
                     (RefreshTokensTable.userId eq userUuid) and
-                    (RefreshTokensTable.isRevoked eq false) and
-                    (RefreshTokensTable.expiresAt greater now)
+                            (RefreshTokensTable.isRevoked eq false) and
+                            (RefreshTokensTable.expiresAt greater now)
                 }
                 .count()
                 .toInt()
@@ -296,8 +301,8 @@ class RefreshTokenRepository {
                 .selectAll()
                 .where {
                     (RefreshTokensTable.userId eq userUuid) and
-                    (RefreshTokensTable.isRevoked eq false) and
-                    (RefreshTokensTable.expiresAt greater now)
+                            (RefreshTokensTable.isRevoked eq false) and
+                            (RefreshTokensTable.expiresAt greater now)
                 }
                 .orderBy(RefreshTokensTable.createdAt, SortOrder.ASC)
                 .limit(1)
@@ -334,8 +339,8 @@ class RefreshTokenRepository {
                 .selectAll()
                 .where {
                     (RefreshTokensTable.userId eq userUuid) and
-                    (RefreshTokensTable.isRevoked eq false) and
-                    (RefreshTokensTable.expiresAt greater now)
+                            (RefreshTokensTable.isRevoked eq false) and
+                            (RefreshTokensTable.expiresAt greater now)
                 }
                 .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
                 .map { row ->
