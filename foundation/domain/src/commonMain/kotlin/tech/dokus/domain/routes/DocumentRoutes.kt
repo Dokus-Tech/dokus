@@ -11,10 +11,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @Resource("/api/v1/documents")
-class Documents(
-    val limit: Int = 50,
-    val offset: Int = 0
-) {
+class Documents {
     /**
      * POST /api/v1/documents/upload
      * Upload a new document
@@ -33,7 +30,7 @@ class Documents(
     class Processing(
         val parent: Documents = Documents(),
         val status: String? = null,
-        val page: Int = 1,
+        val page: Int = 0,
         val limit: Int = 20
     )
 
