@@ -1,4 +1,4 @@
-package ai.dokus.backend.cashflow
+package tech.dokus.backend.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.InvoiceNumberRepository
 import ai.dokus.foundation.database.services.InvoiceNumberGenerator
@@ -19,6 +19,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.Year
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -254,7 +255,7 @@ class InvoiceNumberYearRolloverTest {
     fun `getCurrentYear returns correct year for timezone`() {
         // Test with Europe/Brussels timezone
         val brusselsYear = invoiceNumberGenerator.getCurrentYear("Europe/Brussels")
-        val currentYear = java.time.Year.now().value
+        val currentYear = Year.now().value
 
         // Should return current year (may differ by 1 at year boundary depending on timezone)
         assertTrue(
