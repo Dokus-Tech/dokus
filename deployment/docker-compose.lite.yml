@@ -197,7 +197,6 @@ services:
     environment:
       <<: *jvm-pi-defaults
       ENVIRONMENT: lite
-      CACHE_TYPE: redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
       MINIO_ENDPOINT: http://minio:9000

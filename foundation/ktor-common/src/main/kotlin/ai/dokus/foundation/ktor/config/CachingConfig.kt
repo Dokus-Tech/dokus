@@ -3,7 +3,6 @@ package ai.dokus.foundation.ktor.config
 import com.typesafe.config.Config
 
 data class CachingConfig(
-    val type: String,
     val ttl: Long,
     val maxSize: Long,
     val redis: RedisConfig,
@@ -38,7 +37,6 @@ data class CachingConfig(
             val timeoutConfig = redisConfig.getConfig("timeout")
 
             return CachingConfig(
-                type = config.getString("type"),
                 ttl = config.getLong("ttl"),
                 maxSize = config.getLong("maxSize"),
                 redis = RedisConfig(

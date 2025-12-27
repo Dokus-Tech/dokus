@@ -5,11 +5,8 @@ package ai.dokus.foundation.ktor.security
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.ktor.cache.RedisClient
 import ai.dokus.foundation.ktor.utils.loggerFor
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.uuid.ExperimentalUuidApi
 
 /**
@@ -91,7 +88,7 @@ class RedisTokenBlacklistService(
                 .map { it.substringAfterLast(":") }
 
             if (jtis.isEmpty()) {
-                logger.debug("No active tokens found for user ${userId.value}")
+                logger.debug("No active tokens found for user {}", userId.value)
                 return
             }
 
@@ -126,7 +123,7 @@ class RedisTokenBlacklistService(
         try {
             val key = "${userTokensKey(userId)}:$jti"
             redisClient.set(key, "1", ttl)
-            logger.debug("Tracking token $jti for user ${userId.value}")
+            logger.debug("Tracking token {} for user {}", jti, userId.value)
         } catch (e: Exception) {
             logger.error("Failed to track token for user ${userId.value}: ${e.message}", e)
             // Non-critical - token tracking is best-effort
@@ -140,78 +137,4 @@ class RedisTokenBlacklistService(
         val now = Instant.now()
         return Duration.between(now, expiresAt)
     }
-}
-
-/**
- * In-memory token blacklist for development/testing or single-instance deployments.
- * NOT suitable for production with multiple server instances.
- */
-class InMemoryTokenBlacklistService : TokenBlacklistService {
-
-    private val logger = loggerFor()
-    private val blacklist = ConcurrentHashMap<String, Instant>()
-    private val userTokens = ConcurrentHashMap<String, MutableSet<TokenEntry>>()
-    private val cleanupMutex = Mutex()
-
-    private data class TokenEntry(val jti: String, val expiresAt: Instant)
-
-    init {
-        logger.warn("Using in-memory token blacklist - NOT suitable for multi-instance production deployments")
-    }
-
-    override suspend fun blacklistToken(jti: String, expiresAt: Instant) {
-        if (expiresAt.isBefore(Instant.now())) {
-            return
-        }
-        blacklist[jti] = expiresAt
-        logger.debug("Blacklisted token $jti (in-memory)")
-        cleanupExpired()
-    }
-
-    override suspend fun isBlacklisted(jti: String): Boolean {
-        val expiresAt = blacklist[jti] ?: return false
-        if (expiresAt.isBefore(Instant.now())) {
-            blacklist.remove(jti)
-            return false
-        }
-        return true
-    }
-
-    override suspend fun blacklistAllUserTokens(userId: UserId) {
-        val tokens = userTokens.remove(userId.value.toString()) ?: return
-        val now = Instant.now()
-        for (entry in tokens) {
-            if (entry.expiresAt.isAfter(now)) {
-                blacklist[entry.jti] = entry.expiresAt
-            }
-        }
-        logger.info("Blacklisted ${tokens.size} tokens for user ${userId.value} (in-memory)")
-    }
-
-    override suspend fun trackUserToken(userId: UserId, jti: String, expiresAt: Instant) {
-        val key = userId.value.toString()
-        userTokens.getOrPut(key) { ConcurrentHashMap.newKeySet() }
-            .add(TokenEntry(jti, expiresAt))
-    }
-
-    private suspend fun cleanupExpired() {
-        cleanupMutex.withLock {
-            val now = Instant.now()
-            blacklist.entries.removeIf { it.value.isBefore(now) }
-            userTokens.values.forEach { tokens ->
-                tokens.removeIf { it.expiresAt.isBefore(now) }
-            }
-        }
-    }
-}
-
-/**
- * No-op implementation that never blacklists tokens.
- * Use for development when token revocation is not needed.
- */
-class NoOpTokenBlacklistService : TokenBlacklistService {
-    override suspend fun blacklistToken(jti: String, expiresAt: Instant) {}
-    override suspend fun isBlacklisted(jti: String): Boolean = false
-    override suspend fun blacklistAllUserTokens(userId: UserId) {}
-    override suspend fun trackUserToken(userId: UserId, jti: String, expiresAt: Instant) {}
 }
