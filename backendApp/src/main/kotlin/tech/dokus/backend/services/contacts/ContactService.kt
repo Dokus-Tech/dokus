@@ -3,11 +3,11 @@ package tech.dokus.backend.services.contacts
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.ContactStats
-import ai.dokus.foundation.domain.model.CreateContactRequest
+import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.ContactStats
+import tech.dokus.domain.model.CreateContactRequest
 import ai.dokus.foundation.domain.model.common.PaginatedResponse
-import ai.dokus.foundation.domain.model.UpdateContactRequest
+import tech.dokus.domain.model.UpdateContactRequest
 import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**

@@ -3,7 +3,7 @@ package tech.dokus.app.navigation
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.domain.asbtractions.AuthManager
-import ai.dokus.foundation.domain.model.AuthEvent
+import tech.dokus.domain.model.AuthEvent
 import ai.dokus.foundation.domain.model.common.DeepLinks
 import ai.dokus.foundation.domain.model.common.KnownDeepLinks
 import ai.dokus.foundation.navigation.NavigationProvider

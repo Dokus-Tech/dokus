@@ -3,7 +3,7 @@ package ai.dokus.app.contacts.components
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerBox
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.domain.model.ContactDto
+import tech.dokus.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

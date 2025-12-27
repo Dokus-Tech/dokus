@@ -2,7 +2,7 @@ package ai.dokus.app.auth.usecases
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.model.Tenant
+import tech.dokus.domain.model.Tenant
 import ai.dokus.foundation.platform.Logger
 
 /**

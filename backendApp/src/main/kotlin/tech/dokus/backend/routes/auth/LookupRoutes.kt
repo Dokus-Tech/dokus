@@ -1,8 +1,8 @@
 package tech.dokus.backend.routes.auth
 
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.EntityLookupResponse
-import ai.dokus.foundation.domain.routes.Lookup
+import tech.dokus.domain.model.EntityLookupResponse
+import tech.dokus.domain.routes.Lookup
 import tech.dokus.foundation.ktor.lookup.CbeApiClient
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.utils.loggerFor
@@ -11,7 +11,6 @@ import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
 
 /**
  * Lookup routes for external data searches (CBE company lookup, etc.)

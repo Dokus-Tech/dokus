@@ -4,7 +4,7 @@ package tech.dokus.foundation.ktor.security
 
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.AuthenticationInfo
+import tech.dokus.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.TenantClaimDto
 import tech.dokus.foundation.ktor.config.JwtConfig

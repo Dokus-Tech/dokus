@@ -5,7 +5,7 @@ import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadDisplayState
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.model.UploadStatus
-import ai.dokus.foundation.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentDto
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember

@@ -12,9 +12,9 @@ import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate

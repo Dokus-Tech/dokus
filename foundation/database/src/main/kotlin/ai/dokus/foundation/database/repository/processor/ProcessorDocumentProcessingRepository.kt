@@ -4,7 +4,7 @@ import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
-import ai.dokus.foundation.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.ExtractedDocumentData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

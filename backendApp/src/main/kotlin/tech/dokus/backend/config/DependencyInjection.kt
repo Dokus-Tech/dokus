@@ -6,7 +6,7 @@ import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.schema.DokusSchema
-import ai.dokus.foundation.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ChunkRepository
 import ai.dokus.peppol.config.PeppolModuleConfig
 import ai.dokus.peppol.mapper.PeppolMapper
 import ai.dokus.peppol.provider.PeppolProviderFactory
@@ -14,7 +14,6 @@ import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
 import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import ai.dokus.peppol.validator.PeppolValidator
-import aws.smithy.kotlin.runtime.retries.delay.InfiniteTokenBucket.config
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -26,7 +25,6 @@ import io.ktor.server.application.install
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.scope.get
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin

@@ -1,7 +1,7 @@
 package tech.dokus.backend.processor
 
 import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

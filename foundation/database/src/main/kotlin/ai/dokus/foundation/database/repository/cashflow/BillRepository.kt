@@ -6,10 +6,11 @@ import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.ids.BillId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Clock
@@ -76,7 +77,7 @@ class BillRepository {
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
-                    documentId = row[BillsTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                    documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
                     paymentMethod = row[BillsTable.paymentMethod],
@@ -117,7 +118,7 @@ class BillRepository {
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
-                    documentId = row[BillsTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                    documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
                     paymentMethod = row[BillsTable.paymentMethod],
@@ -183,7 +184,7 @@ class BillRepository {
                         category = row[BillsTable.category],
                         currency = row[BillsTable.currency],
                         description = row[BillsTable.description],
-                        documentId = row[BillsTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                        documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                         paidAt = row[BillsTable.paidAt],
                         paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
                         paymentMethod = row[BillsTable.paymentMethod],
@@ -233,7 +234,7 @@ class BillRepository {
                         category = row[BillsTable.category],
                         currency = row[BillsTable.currency],
                         description = row[BillsTable.description],
-                        documentId = row[BillsTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                        documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                         paidAt = row[BillsTable.paidAt],
                         paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
                         paymentMethod = row[BillsTable.paymentMethod],
@@ -325,7 +326,7 @@ class BillRepository {
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
-                    documentId = row[BillsTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                    documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
                     paymentMethod = row[BillsTable.paymentMethod],
@@ -390,7 +391,7 @@ class BillRepository {
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
-                    documentId = row[BillsTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                    documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
                     paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
                     paymentMethod = row[BillsTable.paymentMethod],

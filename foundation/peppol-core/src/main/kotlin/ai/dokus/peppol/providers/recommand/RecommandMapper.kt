@@ -1,17 +1,17 @@
 package ai.dokus.peppol.providers.recommand
 
 import ai.dokus.foundation.domain.enums.PeppolDocumentType.Companion.toApiValue
-import ai.dokus.foundation.domain.model.RecommandDocumentsResponse
-import ai.dokus.foundation.domain.model.RecommandInboxDocument
-import ai.dokus.foundation.domain.model.RecommandInvoiceDocument
-import ai.dokus.foundation.domain.model.RecommandLineItem
-import ai.dokus.foundation.domain.model.RecommandParty
-import ai.dokus.foundation.domain.model.RecommandPaymentMeans
-import ai.dokus.foundation.domain.model.RecommandReceivedDocument
-import ai.dokus.foundation.domain.model.RecommandSendDocumentType
-import ai.dokus.foundation.domain.model.RecommandSendRequest
-import ai.dokus.foundation.domain.model.RecommandSendResponse
-import ai.dokus.foundation.domain.model.RecommandVerifyResponse
+import tech.dokus.domain.model.RecommandDocumentsResponse
+import tech.dokus.domain.model.RecommandInboxDocument
+import tech.dokus.domain.model.RecommandInvoiceDocument
+import tech.dokus.domain.model.RecommandLineItem
+import tech.dokus.domain.model.RecommandParty
+import tech.dokus.domain.model.RecommandPaymentMeans
+import tech.dokus.domain.model.RecommandReceivedDocument
+import tech.dokus.domain.model.RecommandSendDocumentType
+import tech.dokus.domain.model.RecommandSendRequest
+import tech.dokus.domain.model.RecommandSendResponse
+import tech.dokus.domain.model.RecommandVerifyResponse
 import ai.dokus.peppol.model.PeppolDirection
 import ai.dokus.peppol.model.PeppolDocumentList
 import ai.dokus.peppol.model.PeppolDocumentSummary
@@ -27,6 +27,7 @@ import ai.dokus.peppol.model.PeppolSendResponse
 import ai.dokus.peppol.model.PeppolTaxSubtotal
 import ai.dokus.peppol.model.PeppolTaxTotal
 import ai.dokus.peppol.model.PeppolVerifyResponse
+import tech.dokus.domain.model.RecommandReceivedLineItem
 
 /**
  * Maps between provider-agnostic Peppol models and Recommand-specific models.
@@ -201,7 +202,7 @@ object RecommandMapper {
     }
 
     private fun fromRecommandReceivedLineItem(
-        item: ai.dokus.foundation.domain.model.RecommandReceivedLineItem
+        item: RecommandReceivedLineItem
     ): PeppolReceivedLineItem {
         return PeppolReceivedLineItem(
             id = item.id,

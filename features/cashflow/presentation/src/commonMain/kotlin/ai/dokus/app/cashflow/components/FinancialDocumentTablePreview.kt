@@ -10,7 +10,7 @@ import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.InvoiceNumber
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable

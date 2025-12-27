@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.datasource
 
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.User
+import tech.dokus.domain.model.User
 import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.LogoutRequest

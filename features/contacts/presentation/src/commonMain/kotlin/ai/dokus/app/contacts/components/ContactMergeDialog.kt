@@ -2,9 +2,9 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.app.contacts.usecases.MergeContactsUseCase
-import ai.dokus.foundation.domain.model.ContactActivitySummary
-import ai.dokus.foundation.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.ContactMergeResult
+import tech.dokus.domain.model.ContactActivitySummary
+import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.ContactMergeResult
 import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

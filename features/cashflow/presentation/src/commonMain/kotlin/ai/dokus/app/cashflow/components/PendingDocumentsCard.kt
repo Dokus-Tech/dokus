@@ -9,7 +9,7 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerBox
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import ai.dokus.foundation.design.extensions.localizedUppercase
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentProcessingDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

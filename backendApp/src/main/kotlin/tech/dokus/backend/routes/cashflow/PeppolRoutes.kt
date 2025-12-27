@@ -5,9 +5,9 @@ import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.model.PeppolConnectRequest
-import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
-import ai.dokus.foundation.domain.routes.Peppol
+import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.model.SavePeppolSettingsRequest
+import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import ai.dokus.peppol.service.PeppolConnectionService

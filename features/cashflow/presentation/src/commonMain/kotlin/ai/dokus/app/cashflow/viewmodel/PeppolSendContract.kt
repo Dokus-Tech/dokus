@@ -5,11 +5,11 @@ import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.model.PeppolInboxPollResponse
-import ai.dokus.foundation.domain.model.PeppolTransmissionDto
-import ai.dokus.foundation.domain.model.PeppolValidationResult
-import ai.dokus.foundation.domain.model.PeppolVerifyResponse
-import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
+import tech.dokus.domain.model.PeppolInboxPollResponse
+import tech.dokus.domain.model.PeppolTransmissionDto
+import tech.dokus.domain.model.PeppolValidationResult
+import tech.dokus.domain.model.PeppolVerifyResponse
+import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import ai.dokus.foundation.domain.model.common.PaginationState
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction

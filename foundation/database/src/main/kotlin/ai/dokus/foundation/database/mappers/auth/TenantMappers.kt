@@ -11,9 +11,9 @@ import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid

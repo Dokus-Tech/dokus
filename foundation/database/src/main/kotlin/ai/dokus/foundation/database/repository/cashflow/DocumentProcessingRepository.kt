@@ -10,11 +10,11 @@ import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.DocumentDto
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
-import ai.dokus.foundation.domain.model.DocumentProcessingSummary
-import ai.dokus.foundation.domain.model.ExtractedDocumentData
-import ai.dokus.foundation.domain.model.TrackedCorrection
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentProcessingSummary
+import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.TrackedCorrection
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

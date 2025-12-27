@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.asbtractions
 
-import ai.dokus.foundation.domain.model.AuthEvent
+import tech.dokus.domain.model.AuthEvent
 import kotlinx.coroutines.flow.SharedFlow
 
 interface AuthManager {

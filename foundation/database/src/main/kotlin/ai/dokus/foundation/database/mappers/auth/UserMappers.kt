@@ -6,9 +6,9 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.TenantMembership
-import ai.dokus.foundation.domain.model.User
-import ai.dokus.foundation.domain.model.UserInTenant
+import tech.dokus.domain.model.TenantMembership
+import tech.dokus.domain.model.User
+import tech.dokus.domain.model.UserInTenant
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid

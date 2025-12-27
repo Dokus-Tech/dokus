@@ -4,7 +4,7 @@ import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentDto
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and

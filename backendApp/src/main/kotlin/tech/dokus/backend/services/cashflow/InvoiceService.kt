@@ -4,8 +4,8 @@ import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.LocalDate

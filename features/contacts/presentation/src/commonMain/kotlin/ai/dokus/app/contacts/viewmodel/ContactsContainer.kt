@@ -9,7 +9,7 @@ import ai.dokus.app.contacts.usecases.ListVendorsUseCase
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.ContactDto
+import tech.dokus.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job

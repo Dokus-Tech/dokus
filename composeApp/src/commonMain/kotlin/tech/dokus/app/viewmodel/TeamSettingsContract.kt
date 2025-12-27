@@ -5,8 +5,8 @@ import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.TeamMember
-import ai.dokus.foundation.domain.model.TenantInvitation
+import tech.dokus.domain.model.TeamMember
+import tech.dokus.domain.model.TenantInvitation
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

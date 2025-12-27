@@ -8,7 +8,7 @@ import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.EntityLookup
+import tech.dokus.domain.model.EntityLookup
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

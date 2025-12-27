@@ -10,9 +10,9 @@ import tech.dokus.domain.Password
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.TenantMembership
-import ai.dokus.foundation.domain.model.User
-import ai.dokus.foundation.domain.model.UserInTenant
+import tech.dokus.domain.model.TenantMembership
+import tech.dokus.domain.model.User
+import tech.dokus.domain.model.UserInTenant
 import tech.dokus.foundation.ktor.crypto.PasswordCryptoService
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.utils.loggerFor
