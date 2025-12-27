@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.auth
 
-import ai.dokus.backend.services.auth.TeamService
+import tech.dokus.backend.services.auth.TeamService
 import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.UserId
