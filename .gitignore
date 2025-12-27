@@ -25,3 +25,5 @@ captures
 .auto-claude/
 .worktrees
 .auto-claude-status
+
+backendApp/logs/
