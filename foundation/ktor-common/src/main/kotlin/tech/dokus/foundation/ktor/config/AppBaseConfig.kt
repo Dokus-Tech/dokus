@@ -13,7 +13,6 @@ data class AppBaseConfig(
     val metrics: MetricsConfig,
     val security: SecurityConfig,
     val caching: CachingConfig,
-    val rabbitmq: RabbitMQConfig,
     val serverInfo: ServerInfoConfig,
     val storage: StorageConfig,
     val ai: AIConfig,
@@ -32,7 +31,6 @@ data class AppBaseConfig(
                 metrics = MetricsConfig.fromConfig(config.getConfig("metrics")),
                 security = SecurityConfig.fromConfig(config.getConfig("security")),
                 caching = CachingConfig.fromConfig(config.getConfig("caching")),
-                rabbitmq = RabbitMQConfig.fromConfig(config.getConfig("rabbitmq")),
                 serverInfo = ServerInfoConfig.fromConfig(config.getConfig("server")),
                 storage = if (config.hasPath("storage")) StorageConfig.fromConfig(config.getConfig("storage")) else StorageConfig.empty(),
                 ai = if (config.hasPath("ai")) {
