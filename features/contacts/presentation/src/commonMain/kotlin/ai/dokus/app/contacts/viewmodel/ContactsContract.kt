@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.foundation.design.components.dropdown.FilterOption
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.ContactDto

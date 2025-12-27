@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.manager
 
-import ai.dokus.foundation.domain.asbtractions.AuthManager
+import tech.dokus.domain.asbtractions.AuthManager
 import tech.dokus.domain.model.AuthEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

@@ -2,6 +2,10 @@ package tech.dokus.domain
 
 import tech.dokus.domain.exceptions.DokusException
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.validators.ValidateMoneyUseCase
+import tech.dokus.domain.validators.ValidatePercentageUseCase
+import tech.dokus.domain.validators.ValidateQuantityUseCase
+import tech.dokus.domain.validators.ValidateVatRateUseCase
 import kotlin.jvm.JvmInline
 
 @Serializable
@@ -10,7 +14,7 @@ value class Money(override val value: String) : ValueClass<String>, Validatable<
     override fun toString(): String = value
 
     override val isValid: Boolean
-        get() = ai.dokus.foundation.domain.usecases.validators.ValidateMoneyUseCase(this)
+        get() = ValidateMoneyUseCase(this)
 
     override val validOrThrows: Money
         get() = if (isValid) this else throw DokusException.Validation.InvalidMoney
@@ -41,7 +45,7 @@ value class VatRate(override val value: String) : ValueClass<String>, Validatabl
     override fun toString(): String = value
 
     override val isValid: Boolean
-        get() = ai.dokus.foundation.domain.usecases.validators.ValidateVatRateUseCase(this)
+        get() = ValidateVatRateUseCase(this)
 
     override val validOrThrows: VatRate
         get() = if (isValid) this else throw DokusException.Validation.InvalidVatRate
@@ -61,7 +65,7 @@ value class Percentage(override val value: String) : ValueClass<String>, Validat
     override fun toString(): String = value
 
     override val isValid: Boolean
-        get() = ai.dokus.foundation.domain.usecases.validators.ValidatePercentageUseCase(this)
+        get() = ValidatePercentageUseCase(this)
 
     override val validOrThrows: Percentage
         get() = if (isValid) this else throw DokusException.Validation.InvalidPercentage
@@ -80,7 +84,7 @@ value class Quantity(override val value: String) : ValueClass<String>, Validatab
     override fun toString(): String = value
 
     override val isValid: Boolean
-        get() = ai.dokus.foundation.domain.usecases.validators.ValidateQuantityUseCase(this)
+        get() = ValidateQuantityUseCase(this)
 
     override val validOrThrows: Quantity
         get() = if (isValid) this else throw DokusException.Validation.InvalidQuantity

@@ -4,7 +4,7 @@ import ai.dokus.app.auth.model.AddressFormState
 import ai.dokus.app.auth.model.EntityConfirmationState
 import ai.dokus.app.auth.model.LookupState
 import ai.dokus.app.auth.model.WorkspaceWizardStep
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.VatNumber

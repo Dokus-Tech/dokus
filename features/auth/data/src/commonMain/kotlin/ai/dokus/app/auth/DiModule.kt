@@ -32,8 +32,8 @@ import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.auth.usecases.SelectTenantUseCaseImpl
 import ai.dokus.app.auth.usecases.ValidateServerUseCase
 import ai.dokus.app.auth.utils.JwtDecoder
-import ai.dokus.foundation.domain.asbtractions.AuthManager
-import ai.dokus.foundation.domain.asbtractions.TokenManager
+import tech.dokus.domain.asbtractions.AuthManager
+import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.model.common.Feature
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.HttpClient

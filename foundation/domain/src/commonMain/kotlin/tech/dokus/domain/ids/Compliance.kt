@@ -3,8 +3,8 @@ package tech.dokus.domain.ids
 import tech.dokus.domain.Validatable
 import tech.dokus.domain.ValueClass
 import tech.dokus.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.usecases.validators.ValidatePeppolIdUseCase
-import ai.dokus.foundation.domain.usecases.validators.ValidateVatNumberUseCase
+import tech.dokus.domain.validators.ValidatePeppolIdUseCase
+import tech.dokus.domain.validators.ValidateVatNumberUseCase
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi

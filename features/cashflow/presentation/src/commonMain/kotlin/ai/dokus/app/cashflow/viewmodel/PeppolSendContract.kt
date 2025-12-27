@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.viewmodel
 
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.exceptions.DokusException

@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Tenant

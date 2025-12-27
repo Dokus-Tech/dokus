@@ -1,6 +1,6 @@
 package tech.dokus.domain.model.auth
 
-import ai.dokus.foundation.domain.database.DbEnum
+import tech.dokus.domain.database.DbEnum
 import tech.dokus.domain.ids.SessionId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable

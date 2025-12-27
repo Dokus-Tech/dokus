@@ -1,6 +1,6 @@
 package tech.dokus.domain.enums
 
-import ai.dokus.foundation.domain.database.DbEnum
+import tech.dokus.domain.database.DbEnum
 import kotlinx.serialization.Serializable
 
 @Serializable

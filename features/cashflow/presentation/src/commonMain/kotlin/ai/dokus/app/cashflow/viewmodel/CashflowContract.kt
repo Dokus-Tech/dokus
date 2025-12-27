@@ -5,7 +5,7 @@ import ai.dokus.app.cashflow.components.DocumentSortOption
 import ai.dokus.app.cashflow.components.VatSummaryData
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentProcessingDto

@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.LoginUseCase
-import ai.dokus.foundation.domain.asbtractions.TokenManager
+import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.exceptions.asDokusException
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container

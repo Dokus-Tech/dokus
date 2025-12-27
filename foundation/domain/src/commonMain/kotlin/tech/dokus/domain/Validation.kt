@@ -2,6 +2,12 @@ package tech.dokus.domain
 
 import tech.dokus.domain.exceptions.DokusException
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.validators.ValidateCityUseCase
+import tech.dokus.domain.validators.ValidateEmailUseCase
+import tech.dokus.domain.validators.ValidateLegalNameUseCase
+import tech.dokus.domain.validators.ValidateNameUseCase
+import tech.dokus.domain.validators.ValidatePasswordUseCase
+import tech.dokus.domain.validators.ValidatePhoneNumberUseCase
 import kotlin.jvm.JvmInline
 
 interface ValueClass<T> {
@@ -17,7 +23,7 @@ interface Validatable<ValueClassType> where ValueClassType : ValueClass<*> {
 @JvmInline
 value class Password(override val value: String) : ValueClass<String>, Validatable<Password> {
     override fun toString(): String = value
-    override val isValid get() = ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase(
+    override val isValid get() = ValidatePasswordUseCase(
         this
     )
 
@@ -30,7 +36,7 @@ value class Password(override val value: String) : ValueClass<String>, Validatab
 value class Email(override val value: String) : ValueClass<String>, Validatable<Email> {
     override fun toString(): String = value
 
-    override val isValid get() = ai.dokus.foundation.domain.usecases.validators.ValidateEmailUseCase(
+    override val isValid get() = ValidateEmailUseCase(
         this
     )
 
@@ -46,7 +52,7 @@ value class Name(override val value: String) : ValueClass<String>, Validatable<N
     val initialOrEmpty: String
         get() = value.firstOrNull()?.toString() ?: ""
 
-    override val isValid get() = ai.dokus.foundation.domain.usecases.validators.ValidateNameUseCase(
+    override val isValid get() = ValidateNameUseCase(
         this
     )
 
@@ -62,7 +68,7 @@ value class LegalName(override val value: String) : ValueClass<String>, Validata
     val initialOrEmpty: String
         get() = value.firstOrNull()?.toString() ?: ""
 
-    override val isValid get() = ai.dokus.foundation.domain.usecases.validators.ValidateLegalNameUseCase(
+    override val isValid get() = ValidateLegalNameUseCase(
         this
     )
 
@@ -89,7 +95,7 @@ value class DisplayName(override val value: String) : ValueClass<String>, Valida
 value class PhoneNumber(override val value: String) : ValueClass<String>, Validatable<PhoneNumber> {
     override fun toString(): String = value
 
-    override val isValid get() = ai.dokus.foundation.domain.usecases.validators.ValidatePhoneNumberUseCase(
+    override val isValid get() = ValidatePhoneNumberUseCase(
         this
     )
 
@@ -102,7 +108,7 @@ value class PhoneNumber(override val value: String) : ValueClass<String>, Valida
 value class City(override val value: String) : ValueClass<String>, Validatable<City> {
     override fun toString(): String = value
 
-    override val isValid get() = ai.dokus.foundation.domain.usecases.validators.ValidateCityUseCase(
+    override val isValid get() = ValidateCityUseCase(
         this
     )
 

@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.usecases
 
-import ai.dokus.foundation.domain.asbtractions.TokenManager
+import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.ids.TenantId
 
 /**
