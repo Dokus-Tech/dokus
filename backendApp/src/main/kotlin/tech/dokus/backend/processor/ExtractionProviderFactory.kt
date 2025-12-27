@@ -1,5 +1,6 @@
 package tech.dokus.backend.processor
 
+import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 
@@ -17,20 +18,26 @@ class ExtractionProviderFactory(
         mapOf(
             "openai" to OpenAIExtractionProvider(
                 httpClient = httpClient,
-                apiKey = config.openaiApiKey,
-                model = config.openaiModel,
-                baseUrl = config.openaiBaseUrl
+                apiKey = config.openai.apiKey,
+                model = config.models.documentExtraction.takeIf {
+                    config.defaultProvider == AIConfig.AIProvider.OPENAI
+                } ?: config.openai.defaultModel,
+                baseUrl = "https://api.openai.com/v1"
             ),
             "ollama" to OllamaExtractionProvider(
                 httpClient = httpClient,
-                baseUrl = config.localBaseUrl,
-                model = config.localModel
+                baseUrl = config.ollama.baseUrl,
+                model = config.models.documentExtraction.takeIf {
+                    config.defaultProvider == AIConfig.AIProvider.OLLAMA
+                } ?: config.ollama.defaultModel
             ),
             // Alias for convenience
             "local" to OllamaExtractionProvider(
                 httpClient = httpClient,
-                baseUrl = config.localBaseUrl,
-                model = config.localModel
+                baseUrl = config.ollama.baseUrl,
+                model = config.models.documentExtraction.takeIf {
+                    config.defaultProvider == AIConfig.AIProvider.OLLAMA
+                } ?: config.ollama.defaultModel
             )
         )
     }
@@ -39,7 +46,11 @@ class ExtractionProviderFactory(
      * Get the default provider based on configuration.
      */
     fun getDefaultProvider(): AIExtractionProvider {
-        return providers[config.defaultProvider]
+        val providerName = when (config.defaultProvider) {
+            AIConfig.AIProvider.OLLAMA -> "ollama"
+            AIConfig.AIProvider.OPENAI -> "openai"
+        }
+        return providers[providerName]
             ?: providers["openai"]
             ?: throw IllegalStateException("No AI providers available")
     }
@@ -81,18 +92,3 @@ class ExtractionProviderFactory(
         return providers.values.filter { it.isAvailable() }
     }
 }
-
-/**
- * Configuration for AI extraction providers.
- */
-data class AIConfig(
-    val defaultProvider: String = "openai",
-    val openaiApiKey: String = "",
-    val openaiModel: String = "gpt-4o",
-    val openaiBaseUrl: String = "https://api.openai.com/v1",
-    val anthropicApiKey: String = "",
-    val anthropicModel: String = "claude-sonnet-4-20250514",
-    val anthropicBaseUrl: String = "https://api.anthropic.com",
-    val localBaseUrl: String = "http://localhost:11434",
-    val localModel: String = "llama3.2"
-)
