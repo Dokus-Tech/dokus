@@ -84,11 +84,11 @@ internal fun Route.documentProcessingRoutes() {
 
             if (statuses.isEmpty()) throw DokusException.BadRequest("No valid status values provided")
 
-            val page = route.page
+            val page = route.page.coerceAtLeast(0)
             val limit = route.limit.coerceIn(1, 100)
-            val offset = (page - 1) * limit
+            val offset = page * limit
 
-            logger.info("Listing processing records: tenant=$tenantId, statuses=$statuses, page=$page, limit=$limit")
+            logger.info("Listing processing records: tenant=$tenantId, statuses=$statuses, page=$page, limit=$limit, offset=$offset")
 
             val (items, total) = processingRepository.listByStatus(
                 tenantId = tenantId,
@@ -118,7 +118,7 @@ internal fun Route.documentProcessingRoutes() {
                     total = total,
                     page = page,
                     limit = limit,
-                    hasMore = page * limit < total
+                    hasMore = (page + 1) * limit < total
                 )
             )
         }
