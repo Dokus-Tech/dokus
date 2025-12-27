@@ -2,8 +2,8 @@ package tech.dokus.backend.routes.cashflow
 
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.routes.Cashflow
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.response.respond

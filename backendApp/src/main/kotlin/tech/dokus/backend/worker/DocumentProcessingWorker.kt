@@ -9,7 +9,7 @@ import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.repository.ChunkRepository
 import ai.dokus.foundation.domain.repository.ChunkWithEmbedding
-import ai.dokus.foundation.ktor.storage.DocumentStorageService
+import tech.dokus.foundation.ktor.storage.DocumentStorageService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

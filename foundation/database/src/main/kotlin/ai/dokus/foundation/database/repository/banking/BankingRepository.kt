@@ -13,7 +13,7 @@ import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.BankConnectionDto
 import ai.dokus.foundation.domain.model.BankTransactionDto
-import ai.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow

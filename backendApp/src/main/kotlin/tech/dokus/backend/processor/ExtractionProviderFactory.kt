@@ -1,6 +1,6 @@
 package tech.dokus.backend.processor
 
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 
 /**

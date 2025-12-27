@@ -17,8 +17,8 @@ import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.utils.loggerFor
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert

@@ -1,7 +1,7 @@
 package tech.dokus.backend.plugins
 
-import ai.dokus.foundation.ktor.database.DatabaseFactory
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.database.DatabaseFactory
+import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.server.application.Application
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.inject

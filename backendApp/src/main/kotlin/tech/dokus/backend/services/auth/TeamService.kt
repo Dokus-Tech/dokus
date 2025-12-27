@@ -11,7 +11,7 @@ import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.CreateInvitationRequest
 import ai.dokus.foundation.domain.model.TeamMember
 import ai.dokus.foundation.domain.model.TenantInvitation
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.days
 

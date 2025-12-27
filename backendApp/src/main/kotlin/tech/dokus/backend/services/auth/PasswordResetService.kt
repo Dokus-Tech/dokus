@@ -7,9 +7,9 @@ import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.ktor.database.now
-import ai.dokus.foundation.ktor.security.TokenBlacklistService
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.database.now
+import tech.dokus.foundation.ktor.security.TokenBlacklistService
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

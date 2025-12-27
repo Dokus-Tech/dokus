@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-group = "ai.dokus.foundation.ktor"
+group = "tech.dokus.foundation.ktor"
 version = "1.0.0"
 
 kotlin {

@@ -24,8 +24,8 @@ import ai.dokus.foundation.domain.model.TrackedCorrection
 import ai.dokus.foundation.domain.model.UpdateDraftRequest
 import ai.dokus.foundation.domain.model.UpdateDraftResponse
 import ai.dokus.foundation.domain.routes.Documents
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.get
@@ -36,7 +36,7 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import java.util.*
-import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
  * Document processing routes using Ktor Type-Safe Routing for querying and managing AI extraction.

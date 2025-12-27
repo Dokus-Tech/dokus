@@ -6,10 +6,10 @@ import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.model.DocumentUploadResponse
 import ai.dokus.foundation.domain.routes.Documents
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.security.dokusPrincipal
-import ai.dokus.foundation.ktor.storage.DocumentUploadValidator
-import ai.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
+import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.request.*

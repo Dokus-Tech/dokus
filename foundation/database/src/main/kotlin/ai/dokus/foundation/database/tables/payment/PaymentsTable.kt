@@ -3,7 +3,7 @@ package ai.dokus.foundation.database.tables.payment
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.ktor.database.dbEnumeration
+import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime

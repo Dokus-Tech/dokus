@@ -3,9 +3,9 @@ package tech.dokus.backend.routes.auth
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.EntityLookupResponse
 import ai.dokus.foundation.domain.routes.Lookup
-import ai.dokus.foundation.ktor.lookup.CbeApiClient
-import ai.dokus.foundation.ktor.security.authenticateJwt
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.lookup.CbeApiClient
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.response.respond

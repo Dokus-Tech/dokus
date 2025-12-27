@@ -1,11 +1,11 @@
 package tech.dokus.backend
 
-import ai.dokus.foundation.ktor.config.AppBaseConfig
-import ai.dokus.foundation.ktor.configure.configureErrorHandling
-import ai.dokus.foundation.ktor.configure.configureJwtAuthentication
-import ai.dokus.foundation.ktor.configure.configureMonitoring
-import ai.dokus.foundation.ktor.configure.configureSecurity
-import ai.dokus.foundation.ktor.configure.configureSerialization
+import tech.dokus.foundation.ktor.config.AppBaseConfig
+import tech.dokus.foundation.ktor.configure.configureErrorHandling
+import tech.dokus.foundation.ktor.configure.configureJwtAuthentication
+import tech.dokus.foundation.ktor.configure.configureMonitoring
+import tech.dokus.foundation.ktor.configure.configureSecurity
+import tech.dokus.foundation.ktor.configure.configureSerialization
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -21,7 +21,7 @@ import tech.dokus.backend.plugins.configureRouting
 private val logger = LoggerFactory.getLogger("DokusServer")
 
 fun main() {
-    val appConfig = AppBaseConfig.load()
+    val appConfig = _root_ide_package_.tech.dokus.foundation.ktor.config.AppBaseConfig.load()
     logger.info("Loaded configuration: ${appConfig.ktor.deployment.environment}")
 
     val server = embeddedServer(
@@ -41,7 +41,7 @@ fun main() {
     server.start(wait = true)
 }
 
-fun Application.module(appConfig: AppBaseConfig) {
+fun Application.module(appConfig: tech.dokus.foundation.ktor.config.AppBaseConfig) {
     logger.info("Starting Dokus Server (modular monolith)...")
     logger.info("Environment: ${appConfig.ktor.deployment.environment}")
     logger.info("Port: ${appConfig.ktor.deployment.port}")

@@ -11,7 +11,7 @@ import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolDocumentType
 import ai.dokus.peppol.model.PeppolInvoiceData
 import ai.dokus.peppol.model.PeppolLineItem

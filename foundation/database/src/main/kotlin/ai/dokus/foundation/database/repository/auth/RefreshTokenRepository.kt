@@ -5,9 +5,9 @@ package ai.dokus.foundation.database.repository.auth
 import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
 import ai.dokus.foundation.database.utils.toKotlinxInstant
 import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.ktor.database.now
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.database.now
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

@@ -14,7 +14,7 @@ import ai.dokus.ai.models.DocumentProcessingResult
 import ai.dokus.ai.models.ExtractedDocumentData
 import ai.dokus.ai.models.ExtractedInvoiceData
 import ai.dokus.ai.models.ExtractedReceiptData
-import ai.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * High-level AI service that orchestrates document processing agents.
