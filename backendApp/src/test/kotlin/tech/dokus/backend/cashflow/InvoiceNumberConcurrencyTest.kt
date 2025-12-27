@@ -1,4 +1,4 @@
-package ai.dokus.backend.cashflow
+package tech.dokus.backend.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.InvoiceNumberRepository
 import ai.dokus.foundation.database.services.InvoiceNumberGenerator
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.Year
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
@@ -126,7 +127,7 @@ class InvoiceNumberConcurrencyTest {
     fun `100 concurrent requests produce 100 unique sequential numbers`() = runBlocking {
         val numberOfRequests = 100
         val errors = ConcurrentHashMap.newKeySet<Throwable>()
-        val currentYear = java.time.Year.now().value
+        val currentYear = Year.now().value
 
         // Launch 100 concurrent coroutines
         val deferreds = (1..numberOfRequests).map {
@@ -184,7 +185,7 @@ class InvoiceNumberConcurrencyTest {
     fun `concurrent number generation is consistent across multiple runs`() = runBlocking {
         val numberOfRequests = 50
         val runs = 3
-        val currentYear = java.time.Year.now().value
+        val currentYear = Year.now().value
 
         repeat(runs) { run ->
             // Reset the sequence for each run by using a different year
@@ -248,7 +249,7 @@ class InvoiceNumberConcurrencyTest {
         }
 
         val numberOfRequests = 50
-        val currentYear = java.time.Year.now().value
+        val currentYear = Year.now().value
 
         // Launch concurrent requests for both tenants
         val tenant1Deferreds = (1..numberOfRequests).map {
@@ -316,7 +317,7 @@ class InvoiceNumberConcurrencyTest {
         )
 
         // Verify format is correct (INV-YYYY-NNNN)
-        val currentYear = java.time.Year.now().value
+        val currentYear = Year.now().value
         val expectedPrefix = "INV-$currentYear-"
         results.forEach { invoiceNumber ->
             assertTrue(
@@ -344,7 +345,7 @@ class InvoiceNumberConcurrencyTest {
     fun `high concurrency stress test with 100 concurrent requests`() = runBlocking {
         val numberOfRequests = 100
         val errors = ConcurrentHashMap.newKeySet<Throwable>()
-        val currentYear = java.time.Year.now().value
+        val currentYear = Year.now().value
 
         // Launch all requests simultaneously
         val deferreds = (1..numberOfRequests).map {
