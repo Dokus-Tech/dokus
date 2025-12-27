@@ -64,7 +64,7 @@ import kotlinx.datetime.plus
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.mvi.container
 
 /**

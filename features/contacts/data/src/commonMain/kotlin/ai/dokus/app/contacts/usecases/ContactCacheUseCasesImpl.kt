@@ -2,7 +2,7 @@ package ai.dokus.app.contacts.usecases
 
 import ai.dokus.app.contacts.repository.ContactRepository
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 
 internal class GetCachedContactsUseCaseImpl(
     private val repository: ContactRepository

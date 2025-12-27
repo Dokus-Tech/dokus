@@ -2,10 +2,10 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import tech.dokus.domain.model.ContactActivitySummary
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.ContactNoteDto
-import tech.dokus.domain.model.DerivedContactRoles
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.domain.model.contact.DerivedContactRoles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

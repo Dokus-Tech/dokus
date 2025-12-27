@@ -8,9 +8,9 @@ import ai.dokus.app.contacts.usecases.UpdateContactUseCase
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.CreateContactRequest
-import tech.dokus.domain.model.UpdateContactRequest
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

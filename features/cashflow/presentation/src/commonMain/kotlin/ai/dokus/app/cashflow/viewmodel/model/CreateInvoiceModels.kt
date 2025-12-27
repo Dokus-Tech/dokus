@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.viewmodel.model
 
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

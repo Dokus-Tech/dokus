@@ -1,8 +1,8 @@
-package tech.dokus.domain.model
+package tech.dokus.domain.model.auth
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import kotlinx.serialization.Serializable
 
 /**
  * Authentication information extracted from a validated JWT token.

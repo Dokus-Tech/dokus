@@ -4,7 +4,7 @@ import ai.dokus.foundation.design.components.dropdown.FilterOption
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction

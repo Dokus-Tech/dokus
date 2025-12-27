@@ -2,7 +2,7 @@ package ai.dokus.app.contacts.datasource
 
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import kotlinx.coroutines.flow.Flow
 
 /**

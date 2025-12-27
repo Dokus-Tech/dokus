@@ -4,8 +4,8 @@ import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.UpdateContactRequest
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**

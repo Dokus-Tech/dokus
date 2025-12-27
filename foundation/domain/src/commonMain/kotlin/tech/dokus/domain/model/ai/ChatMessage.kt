@@ -1,11 +1,11 @@
-package tech.dokus.domain.model
+package tech.dokus.domain.model.ai
 
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.database.DbEnum
 import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

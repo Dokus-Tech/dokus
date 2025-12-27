@@ -13,7 +13,7 @@ import tech.dokus.domain.enums.TenantPlan
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.EntityLookup
+import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container

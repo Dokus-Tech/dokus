@@ -1,9 +1,9 @@
 package ai.dokus.app.contacts.usecases
 
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.CreateContactRequest
-import tech.dokus.domain.model.UpdateContactRequest
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 
 /**
  * Use case for getting a single contact by ID.

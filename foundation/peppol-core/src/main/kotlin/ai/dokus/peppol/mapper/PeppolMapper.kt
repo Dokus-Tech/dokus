@@ -4,7 +4,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
