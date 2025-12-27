@@ -35,7 +35,13 @@ data class AppBaseConfig(
                 rabbitmq = RabbitMQConfig.fromConfig(config.getConfig("rabbitmq")),
                 serverInfo = ServerInfoConfig.fromConfig(config.getConfig("server")),
                 storage = if (config.hasPath("storage")) StorageConfig.fromConfig(config.getConfig("storage")) else StorageConfig.empty(),
-                ai = AIConfig.fromConfig(config.getConfig("ai")),
+                ai = if (config.hasPath("ai")) {
+                    AIConfig.fromConfig(config.getConfig("ai"))
+                } else {
+                    throw IllegalStateException(
+                        "AI configuration is required. Add 'ai { ... }' section to application.conf"
+                    )
+                },
                 processor = ProcessorConfig.fromConfig(config.getConfig("processor")),
                 config = config,
             )

@@ -1,5 +1,6 @@
 package tech.dokus.foundation.ktor.config
 
+import ai.dokus.foundation.domain.model.ai.AIProvider
 import com.typesafe.config.Config
 
 /**
@@ -69,28 +70,12 @@ data class AIConfig(
         }
     }
 
-    /**
-     * Supported AI providers.
-     */
-    enum class AIProvider {
-        OLLAMA,
-        OPENAI;
-
-        companion object {
-            fun fromString(value: String): AIProvider = when (value.lowercase()) {
-                "ollama" -> OLLAMA
-                "openai" -> OPENAI
-                else -> throw IllegalArgumentException("Unknown AI provider: $value")
-            }
-        }
-    }
-
     companion object {
         /**
          * Load AI config from HOCON configuration.
          */
         fun fromConfig(config: Config): AIConfig = AIConfig(
-            defaultProvider = AIProvider.fromString(config.getString("default-provider")),
+            defaultProvider = AIProvider.fromDbValue(config.getString("default-provider")),
             ollama = OllamaConfig.fromConfig(config.getConfig("ollama")),
             openai = OpenAIConfig.fromConfig(config.getConfig("openai")),
             models = ModelConfig.fromConfig(config.getConfig("models"))

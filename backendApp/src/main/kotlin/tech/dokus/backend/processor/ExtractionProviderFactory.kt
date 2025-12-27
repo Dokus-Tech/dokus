@@ -1,8 +1,9 @@
 package tech.dokus.backend.processor
 
+import ai.dokus.foundation.domain.model.ai.AIProvider
+import io.ktor.client.HttpClient
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor
-import io.ktor.client.HttpClient
 
 /**
  * Factory for creating AI extraction providers.
@@ -20,7 +21,7 @@ class ExtractionProviderFactory(
                 httpClient = httpClient,
                 apiKey = config.openai.apiKey,
                 model = config.models.documentExtraction.takeIf {
-                    config.defaultProvider == AIConfig.AIProvider.OPENAI
+                    config.defaultProvider == AIProvider.OPENAI
                 } ?: config.openai.defaultModel,
                 baseUrl = "https://api.openai.com/v1"
             ),
@@ -28,7 +29,7 @@ class ExtractionProviderFactory(
                 httpClient = httpClient,
                 baseUrl = config.ollama.baseUrl,
                 model = config.models.documentExtraction.takeIf {
-                    config.defaultProvider == AIConfig.AIProvider.OLLAMA
+                    config.defaultProvider == AIProvider.OLLAMA
                 } ?: config.ollama.defaultModel
             ),
             // Alias for convenience
@@ -36,7 +37,7 @@ class ExtractionProviderFactory(
                 httpClient = httpClient,
                 baseUrl = config.ollama.baseUrl,
                 model = config.models.documentExtraction.takeIf {
-                    config.defaultProvider == AIConfig.AIProvider.OLLAMA
+                    config.defaultProvider == AIProvider.OLLAMA
                 } ?: config.ollama.defaultModel
             )
         )
@@ -47,8 +48,8 @@ class ExtractionProviderFactory(
      */
     fun getDefaultProvider(): AIExtractionProvider {
         val providerName = when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> "ollama"
-            AIConfig.AIProvider.OPENAI -> "openai"
+            AIProvider.OLLAMA -> "ollama"
+            AIProvider.OPENAI -> "openai"
         }
         return providers[providerName]
             ?: providers["openai"]
