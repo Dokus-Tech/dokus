@@ -50,9 +50,15 @@ enum class ServerStatus {
     @SerialName("UP")
     UP,
 
+    @SerialName("WARN")
+    WARN,
+
     @SerialName("DOWN")
     DOWN,
 
     @SerialName("MAINTENANCE")
-    MAINTENANCE
+    MAINTENANCE,
+
+    @SerialName("UNKNOWN")
+    UNKNOWN
 }
