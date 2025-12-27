@@ -16,6 +16,8 @@ data class AppBaseConfig(
     val rabbitmq: RabbitMQConfig,
     val serverInfo: ServerInfoConfig,
     val storage: StorageConfig,
+    val ai: AIConfig,
+    val processor: ProcessorConfig,
     val config: Config,
 ) {
     companion object Companion {
@@ -33,6 +35,8 @@ data class AppBaseConfig(
                 rabbitmq = RabbitMQConfig.fromConfig(config.getConfig("rabbitmq")),
                 serverInfo = ServerInfoConfig.fromConfig(config.getConfig("server")),
                 storage = if (config.hasPath("storage")) StorageConfig.fromConfig(config.getConfig("storage")) else StorageConfig.empty(),
+                ai = AIConfig.fromConfig(config.getConfig("ai")),
+                processor = ProcessorConfig.fromConfig(config.getConfig("processor")),
                 config = config,
             )
         }

@@ -1,6 +1,6 @@
 package tech.dokus.backend.config
 
-import ai.dokus.ai.config.AIConfig
+import tech.dokus.foundation.ktor.config.AIConfig
 import ai.dokus.foundation.database.di.repositoryModules
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
