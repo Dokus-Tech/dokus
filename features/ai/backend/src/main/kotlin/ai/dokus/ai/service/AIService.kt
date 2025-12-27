@@ -4,9 +4,9 @@ import ai.dokus.ai.agents.CategorySuggestionAgent
 import ai.dokus.ai.agents.DocumentClassificationAgent
 import ai.dokus.ai.agents.InvoiceExtractionAgent
 import ai.dokus.ai.agents.ReceiptExtractionAgent
-import ai.dokus.ai.config.AIConfig
 import ai.dokus.ai.config.AIProviderFactory
-import ai.dokus.ai.config.ModelPurpose
+import tech.dokus.foundation.ktor.config.AIConfig
+import tech.dokus.foundation.ktor.config.ModelPurpose
 import ai.dokus.ai.models.CategorySuggestion
 import ai.dokus.ai.models.ClassifiedDocumentType
 import ai.dokus.ai.models.DocumentClassification

@@ -51,7 +51,6 @@ import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
-import tech.dokus.backend.worker.WorkerConfig
 import tech.dokus.foundation.ktor.cache.RedisClient
 import tech.dokus.foundation.ktor.cache.RedisNamespace
 import tech.dokus.foundation.ktor.cache.redis
@@ -237,9 +236,7 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolService(get(), get(), get(), get(), get()) }
 
     // AI / RAG config (repositories are in repositoryModules)
-    single<AIConfig> {
-        AIConfig.fromConfigOrNull(appConfig.config) ?: AIConfig.localDefault()
-    }
+    single<AIConfig> { appConfig.ai }
 }
 
 private val contactsModule = module {
@@ -249,29 +246,14 @@ private val contactsModule = module {
 }
 
 private fun processorModule(appConfig: AppBaseConfig) = module {
-    // Worker config from environment with sensible defaults
-    single {
-        WorkerConfig(
-            pollingInterval = appConfig.config.getConfig("processor").getLong("pollingInterval"),
-            batchSize = appConfig.config.getConfig("processor").getInt("batchSize"),
-            maxAttempts = appConfig.config.getConfig("processor").getInt("maxAttempts"),
-        )
-    }
-
-    single {
-        val processorConfig = appConfig.config.getConfig("processor")
-
-        AIConfig.fromConfigOrNull(processorConfig)
-    }
-
-    single { ExtractionProviderFactory(get<HttpClient>(), get()) }
+    single { ExtractionProviderFactory(get<HttpClient>(), appConfig.ai) }
 
     single {
         DocumentProcessingWorker(
             processingRepository = get(),
             documentStorage = get<DocumentStorageService>(),
             providerFactory = get(),
-            config = get(),
+            config = appConfig.processor,
             // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = null,
             embeddingService = null,

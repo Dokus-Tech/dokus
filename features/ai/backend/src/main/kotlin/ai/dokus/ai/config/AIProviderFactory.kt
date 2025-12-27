@@ -1,5 +1,7 @@
 package ai.dokus.ai.config
 
+import tech.dokus.foundation.ktor.config.AIConfig
+import tech.dokus.foundation.ktor.config.ModelPurpose
 import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
