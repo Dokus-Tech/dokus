@@ -192,7 +192,14 @@ private fun authModule(appConfig: AppBaseConfig) = module {
         }
     }
 
-    singleOf(::RedisRateLimitService) bind RateLimitServiceInterface::class
+    single<RateLimitServiceInterface> {
+        RedisRateLimitService(
+            redisClient = get(),
+            maxAttempts = appConfig.auth.maxLoginAttempts,
+            attemptWindowMinutes = (appConfig.auth.rateLimit.windowSeconds / 60).toLong(),
+            lockoutDurationMinutes = appConfig.auth.lockDurationMinutes.toLong()
+        )
+    }
     singleOf(::RedisTokenBlacklistService) bind TokenBlacklistService::class
     singleOf(::RateLimitCleanupWorker)
 
