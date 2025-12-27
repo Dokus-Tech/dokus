@@ -1,6 +1,6 @@
 package ai.dokus.ai.services
 
-import ai.dokus.ai.config.AIConfig
+import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

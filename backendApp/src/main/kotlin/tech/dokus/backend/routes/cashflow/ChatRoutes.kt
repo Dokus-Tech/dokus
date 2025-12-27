@@ -2,9 +2,9 @@ package tech.dokus.backend.routes.cashflow
 
 import ai.dokus.ai.agents.ChatAgent
 import ai.dokus.ai.agents.ConversationMessage
-import ai.dokus.ai.config.AIConfig
 import ai.dokus.ai.config.AIProviderFactory
-import ai.dokus.ai.config.ModelPurpose
+import tech.dokus.foundation.ktor.config.AIConfig
+import tech.dokus.foundation.ktor.config.ModelPurpose
 import ai.dokus.ai.services.EmbeddingService
 import ai.dokus.ai.services.RAGService
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
