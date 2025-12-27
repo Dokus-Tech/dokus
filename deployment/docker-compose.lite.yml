@@ -203,8 +203,7 @@ services:
       MINIO_ACCESS_KEY: dokusadmin
       MINIO_SECRET_KEY: ${MINIO_PASSWORD}
       MINIO_BUCKET: dokus-storage
-      # Default for Pi: keep background AI processing off unless explicitly enabled
-      PROCESSOR_ENABLED: ${PROCESSOR_ENABLED:-false}
+      # Processor always runs; configure AI provider URL as needed
       AI_OLLAMA_BASE_URL: ${AI_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
       LOG_PATH: /app/logs
