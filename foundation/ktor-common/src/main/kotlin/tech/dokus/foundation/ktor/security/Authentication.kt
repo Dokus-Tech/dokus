@@ -1,19 +1,16 @@
 package tech.dokus.foundation.ktor.security
 
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
+import tech.dokus.domain.exceptions.DokusException
 
 /**
  * Authentication method constants
  */
 object AuthMethod {
     const val JWT = "auth-jwt"
-    const val API_KEY = "auth-key"
 }
 
 /**
@@ -41,30 +38,6 @@ fun Route.authenticateJwt(
 }
 
 /**
- * Wrap routes with optional JWT authentication.
- * The principal may be null if no token is provided.
- */
-fun Route.authenticateJwtOptional(
-    build: Route.() -> Unit
-): Route {
-    return authenticate(AuthMethod.JWT, optional = true) {
-        build()
-    }
-}
-
-/**
- * Wrap routes with API key authentication.
- * For service-to-service communication.
- */
-fun Route.authenticateApiKey(
-    build: Route.() -> Unit
-): Route {
-    return authenticate(AuthMethod.API_KEY, optional = false) {
-        build()
-    }
-}
-
-/**
  * Extension property to get the DokusPrincipal from authenticated routes.
  * Throws if no principal is available (route not authenticated or token invalid).
  *
@@ -80,63 +53,3 @@ fun Route.authenticateApiKey(
 val RoutingContext.dokusPrincipal: DokusPrincipal
     get() = call.principal<DokusPrincipal>()
         ?: throw DokusException.NotAuthenticated("Authentication required")
-
-/**
- * Extension property to get the DokusPrincipal if available, or null.
- * Useful for optional authentication scenarios.
- */
-val RoutingContext.dokusPrincipalOrNull: DokusPrincipal?
-    get() = call.principal<DokusPrincipal>()
-
-/**
- * Convenience extension to get the authenticated user's ID.
- */
-val RoutingContext.authenticatedUserId: UserId
-    get() = dokusPrincipal.userId
-
-/**
- * Convenience extension to get the authenticated user's tenant ID.
- * Throws if no tenant is selected.
- */
-val RoutingContext.authenticatedTenantId: TenantId
-    get() = dokusPrincipal.requireTenantId()
-
-/**
- * Execute a block with the authenticated principal.
- * This is a convenience method similar to Pulse's withJwt pattern.
- *
- * Usage:
- * ```
- * get("/users") {
- *     withPrincipal { principal ->
- *         val users = userService.findByTenant(principal.requireTenantId())
- *         call.respond(users)
- *     }
- * }
- * ```
- */
-suspend inline fun <T> RoutingContext.withPrincipal(
-    block: suspend (DokusPrincipal) -> T
-): T {
-    return block(dokusPrincipal)
-}
-
-/**
- * Execute a block with the authenticated principal's tenant ID.
- * Throws if no tenant is selected.
- *
- * Usage:
- * ```
- * get("/invoices") {
- *     withTenant { tenantId ->
- *         val invoices = invoiceService.findByTenant(tenantId)
- *         call.respond(invoices)
- *     }
- * }
- * ```
- */
-suspend inline fun <T> RoutingContext.withTenant(
-    block: suspend (TenantId) -> T
-): T {
-    return block(dokusPrincipal.requireTenantId())
-}
