@@ -2,11 +2,11 @@ package ai.dokus.app.auth.manager
 
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.utils.JwtDecoder
-import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.auth.JwtClaims
-import ai.dokus.foundation.domain.model.auth.LoginResponse
-import ai.dokus.foundation.domain.model.auth.TokenStatus
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.LoginResponse
+import tech.dokus.domain.model.auth.TokenStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

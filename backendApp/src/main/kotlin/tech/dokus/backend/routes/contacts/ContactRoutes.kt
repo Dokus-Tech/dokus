@@ -1,15 +1,15 @@
 package tech.dokus.backend.routes.contacts
 
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.ContactNoteId
-import ai.dokus.foundation.domain.model.CreateContactNoteRequest
-import ai.dokus.foundation.domain.model.CreateContactRequest
-import ai.dokus.foundation.domain.model.UpdateContactNoteRequest
-import ai.dokus.foundation.domain.model.UpdateContactPeppolRequest
-import ai.dokus.foundation.domain.model.UpdateContactRequest
-import ai.dokus.foundation.domain.routes.Contacts
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.CreateContactNoteRequest
+import tech.dokus.domain.model.CreateContactRequest
+import tech.dokus.domain.model.UpdateContactNoteRequest
+import tech.dokus.domain.model.UpdateContactPeppolRequest
+import tech.dokus.domain.model.UpdateContactRequest
+import tech.dokus.domain.routes.Contacts
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode

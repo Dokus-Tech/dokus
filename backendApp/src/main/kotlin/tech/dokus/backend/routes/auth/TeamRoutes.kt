@@ -1,12 +1,12 @@
 package tech.dokus.backend.routes.auth
 
-import ai.dokus.foundation.domain.enums.InvitationStatus
-import ai.dokus.foundation.domain.ids.InvitationId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.CreateInvitationRequest
-import ai.dokus.foundation.domain.model.TransferOwnershipRequest
-import ai.dokus.foundation.domain.model.UpdateMemberRoleRequest
-import ai.dokus.foundation.domain.routes.Team
+import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.domain.model.TransferOwnershipRequest
+import tech.dokus.domain.model.UpdateMemberRoleRequest
+import tech.dokus.domain.routes.Team
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete

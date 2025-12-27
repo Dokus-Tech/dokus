@@ -14,10 +14,10 @@ import ai.dokus.app.contacts.viewmodel.EnrichmentSuggestion
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.model.ContactActivitySummary
-import ai.dokus.foundation.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.ContactNoteDto
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.ContactActivitySummary
+import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.ContactNoteDto
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -45,7 +45,6 @@ import androidx.compose.material.icons.filled.MergeType
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon

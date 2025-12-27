@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.components
 
 import ai.dokus.foundation.design.components.fields.PTextFieldFree
-import ai.dokus.foundation.domain.model.ContactNoteDto
+import tech.dokus.domain.model.ContactNoteDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

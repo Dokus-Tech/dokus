@@ -1,6 +1,6 @@
 package ai.dokus.foundation.design.components
 
-import ai.dokus.foundation.domain.enums.ProcessingStatus
+import tech.dokus.domain.enums.ProcessingStatus
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

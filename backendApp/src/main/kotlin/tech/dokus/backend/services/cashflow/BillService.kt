@@ -2,16 +2,16 @@ package tech.dokus.backend.services.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.BillStatistics
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.enums.BillStatus
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.MarkBillPaidRequest
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolReceivedDocument
 import kotlinx.datetime.LocalDate

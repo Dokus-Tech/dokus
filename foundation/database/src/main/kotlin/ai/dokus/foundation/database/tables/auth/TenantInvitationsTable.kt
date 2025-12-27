@@ -1,7 +1,7 @@
 package ai.dokus.foundation.database.tables.auth
 
-import ai.dokus.foundation.domain.enums.InvitationStatus
-import ai.dokus.foundation.domain.enums.UserRole
+import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.enums.UserRole
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

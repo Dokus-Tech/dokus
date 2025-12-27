@@ -1,14 +1,14 @@
 package ai.dokus.peppol.service
 
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
-import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.PeppolConnectRequest
-import ai.dokus.foundation.domain.model.PeppolConnectResponse
-import ai.dokus.foundation.domain.model.PeppolConnectStatus
-import ai.dokus.foundation.domain.model.RecommandCompanySummary
-import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
-import ai.dokus.foundation.domain.model.Tenant
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.model.PeppolConnectResponse
+import tech.dokus.domain.model.PeppolConnectStatus
+import tech.dokus.domain.model.RecommandCompanySummary
+import tech.dokus.domain.model.SavePeppolSettingsRequest
+import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
 import ai.dokus.peppol.providers.recommand.RecommandCompany

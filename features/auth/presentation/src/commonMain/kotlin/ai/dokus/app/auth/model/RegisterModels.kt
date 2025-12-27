@@ -1,9 +1,9 @@
 package ai.dokus.app.auth.model
 
 import tech.dokus.foundation.app.extensions.rememberIsValid
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.Password
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.Password
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf

@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.model.FinancialDocumentDto
 
 /**
  * Extension functions for working with FinancialDocumentDto types in the cashflow presentation layer.

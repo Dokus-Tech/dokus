@@ -1,10 +1,10 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.routes.Expenses
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.routes.Expenses
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode

@@ -20,7 +20,7 @@ import ai.dokus.app.cashflow.model.DocumentUploadDisplayState
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.state.DocumentUploadItemState
 import ai.dokus.app.cashflow.state.rememberDocumentUploadItemState
-import ai.dokus.foundation.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

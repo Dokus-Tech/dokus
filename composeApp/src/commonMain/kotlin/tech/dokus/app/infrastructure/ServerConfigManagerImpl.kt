@@ -1,7 +1,7 @@
 package tech.dokus.app.infrastructure
 
-import ai.dokus.foundation.domain.config.ServerConfig
-import ai.dokus.foundation.domain.config.ServerConfigManager
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerConfigManager
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.get
 import com.russhwolf.settings.set

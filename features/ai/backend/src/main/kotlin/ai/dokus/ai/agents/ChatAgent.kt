@@ -1,9 +1,9 @@
 package ai.dokus.ai.agents
 
 import ai.dokus.ai.services.RAGService
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.repository.RetrievedChunk
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.repository.RetrievedChunk
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry

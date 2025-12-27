@@ -5,7 +5,7 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.components.tiles.AddCompanyTile
 import ai.dokus.foundation.design.components.tiles.CompanyTile
-import ai.dokus.foundation.domain.model.Tenant
+import tech.dokus.domain.model.Tenant
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow

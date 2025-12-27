@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.foundation.domain.model.ContactDto
+import tech.dokus.domain.model.ContactDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

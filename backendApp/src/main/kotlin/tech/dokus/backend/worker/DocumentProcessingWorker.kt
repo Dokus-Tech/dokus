@@ -6,10 +6,10 @@ import ai.dokus.ai.services.EmbeddingException
 import ai.dokus.ai.services.EmbeddingService
 import ai.dokus.foundation.database.repository.processor.ProcessingItem
 import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.repository.ChunkRepository
-import ai.dokus.foundation.domain.repository.ChunkWithEmbedding
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ChunkWithEmbedding
 import tech.dokus.foundation.ktor.storage.DocumentStorageService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

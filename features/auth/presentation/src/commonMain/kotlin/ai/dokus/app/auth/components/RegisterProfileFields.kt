@@ -5,7 +5,7 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_first_name_label
 import ai.dokus.app.resources.generated.auth_last_name_label
 import ai.dokus.foundation.design.components.fields.PTextFieldName
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

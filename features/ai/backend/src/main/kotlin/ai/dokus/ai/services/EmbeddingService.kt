@@ -1,6 +1,6 @@
 package ai.dokus.ai.services
 
-import ai.dokus.foundation.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AIProvider
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
@@ -13,7 +13,6 @@ import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 
 /**
  * Service for generating text embeddings using AI providers.

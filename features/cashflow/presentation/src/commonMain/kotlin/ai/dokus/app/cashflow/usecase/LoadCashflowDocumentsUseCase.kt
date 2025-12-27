@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginatedResponse
 import kotlinx.datetime.LocalDate
 
 /**

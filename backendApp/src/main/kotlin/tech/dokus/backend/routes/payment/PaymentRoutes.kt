@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.payment
 
-import ai.dokus.foundation.domain.routes.Payments
+import tech.dokus.domain.routes.Payments
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode

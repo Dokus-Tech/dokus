@@ -1,7 +1,7 @@
 package tech.dokus.foundation.ktor.crypto
 
 import com.password4j.Password
-import ai.dokus.foundation.domain.Password as DokusPassword
+import tech.dokus.domain.Password as DokusPassword
 
 class PasswordCryptoService4j : PasswordCryptoService {
     override fun hashPassword(password: DokusPassword): String {

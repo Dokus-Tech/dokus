@@ -1,17 +1,15 @@
 package ai.dokus.foundation.database.repository.ai
 
 import ai.dokus.foundation.database.tables.ai.DocumentChunksTable
-import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
-import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.ChunkMetadata
-import ai.dokus.foundation.domain.model.DocumentChunkDto
-import ai.dokus.foundation.domain.model.DocumentChunkId
-import ai.dokus.foundation.domain.repository.ChunkRepository
-import ai.dokus.foundation.domain.repository.ChunkSearchResult
-import ai.dokus.foundation.domain.repository.ChunkWithEmbedding
-import ai.dokus.foundation.domain.repository.RetrievedChunk
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.ChunkMetadata
+import tech.dokus.domain.model.DocumentChunkDto
+import tech.dokus.domain.model.DocumentChunkId
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ChunkSearchResult
+import tech.dokus.domain.repository.ChunkWithEmbedding
+import tech.dokus.domain.repository.RetrievedChunk
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

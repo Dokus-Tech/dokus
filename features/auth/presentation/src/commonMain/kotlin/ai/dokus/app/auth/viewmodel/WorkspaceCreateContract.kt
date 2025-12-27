@@ -4,11 +4,11 @@ import ai.dokus.app.auth.model.AddressFormState
 import ai.dokus.app.auth.model.EntityConfirmationState
 import ai.dokus.app.auth.model.LookupState
 import ai.dokus.app.auth.model.WorkspaceWizardStep
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.enums.TenantType
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.VatNumber
-import ai.dokus.foundation.domain.model.EntityLookup
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.EntityLookup
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

@@ -2,12 +2,12 @@ package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.foundation.domain.ids.Bic
-import ai.dokus.foundation.domain.ids.Iban
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
+import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext

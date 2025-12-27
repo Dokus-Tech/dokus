@@ -1,15 +1,16 @@
 package ai.dokus.foundation.database.repository.cashflow
 
 import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import tech.dokus.domain.Money
+import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -72,7 +73,7 @@ class ExpenseRepository {
                     vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                     category = row[ExpensesTable.category],
                     description = row[ExpensesTable.description],
-                    documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                    documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     isDeductible = row[ExpensesTable.isDeductible],
                     deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                     paymentMethod = row[ExpensesTable.paymentMethod],
@@ -108,7 +109,7 @@ class ExpenseRepository {
                     vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                     category = row[ExpensesTable.category],
                     description = row[ExpensesTable.description],
-                    documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                    documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     isDeductible = row[ExpensesTable.isDeductible],
                     deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                     paymentMethod = row[ExpensesTable.paymentMethod],
@@ -165,7 +166,7 @@ class ExpenseRepository {
                         vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                         category = row[ExpensesTable.category],
                         description = row[ExpensesTable.description],
-                        documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                        documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                         isDeductible = row[ExpensesTable.isDeductible],
                         deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                         paymentMethod = row[ExpensesTable.paymentMethod],
@@ -241,7 +242,7 @@ class ExpenseRepository {
                     vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
                     category = row[ExpensesTable.category],
                     description = row[ExpensesTable.description],
-                    documentId = row[ExpensesTable.documentId]?.let { ai.dokus.foundation.domain.ids.DocumentId.parse(it.toString()) },
+                    documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     isDeductible = row[ExpensesTable.isDeductible],
                     deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
                     paymentMethod = row[ExpensesTable.paymentMethod],

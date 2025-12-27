@@ -2,9 +2,9 @@ package ai.dokus.app.cashflow.components
 
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

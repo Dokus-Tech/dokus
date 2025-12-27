@@ -2,10 +2,10 @@ package ai.dokus.app.cashflow.repository
 
 import ai.dokus.app.cashflow.cache.InvoiceLocalDataSource
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.FinancialDocumentDto.InvoiceDto
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.LocalDate

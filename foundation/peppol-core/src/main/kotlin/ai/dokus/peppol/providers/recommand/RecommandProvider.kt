@@ -1,9 +1,9 @@
 package ai.dokus.peppol.providers.recommand
 
-import ai.dokus.foundation.domain.model.RecommandDocumentsResponse
-import ai.dokus.foundation.domain.model.RecommandInboxDocument
-import ai.dokus.foundation.domain.model.RecommandMarkAsReadRequest
-import ai.dokus.foundation.domain.model.RecommandSendResponse
+import tech.dokus.domain.model.RecommandDocumentsResponse
+import tech.dokus.domain.model.RecommandInboxDocument
+import tech.dokus.domain.model.RecommandMarkAsReadRequest
+import tech.dokus.domain.model.RecommandSendResponse
 import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolDirection
 import ai.dokus.peppol.model.PeppolDocumentList

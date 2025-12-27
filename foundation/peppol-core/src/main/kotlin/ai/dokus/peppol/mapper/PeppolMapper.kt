@@ -1,16 +1,16 @@
 package ai.dokus.peppol.mapper
 
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.InvoiceItemDto
-import ai.dokus.foundation.domain.model.PeppolSettingsDto
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
 import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolDocumentType
 import ai.dokus.peppol.model.PeppolInvoiceData

@@ -1,12 +1,12 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.InvoiceItemDto
-import ai.dokus.foundation.domain.model.RecordPaymentRequest
-import ai.dokus.foundation.domain.routes.Invoices
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.RecordPaymentRequest
+import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode

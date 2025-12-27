@@ -2,13 +2,13 @@ package ai.dokus.foundation.database.mappers.auth
 
 import ai.dokus.foundation.database.tables.auth.TenantMembersTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.TenantMembership
-import ai.dokus.foundation.domain.model.User
-import ai.dokus.foundation.domain.model.UserInTenant
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.TenantMembership
+import tech.dokus.domain.model.User
+import tech.dokus.domain.model.UserInTenant
 import org.jetbrains.exposed.v1.core.ResultRow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid

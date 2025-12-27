@@ -23,8 +23,8 @@ import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
-import ai.dokus.foundation.domain.repository.ChatRepository
-import ai.dokus.foundation.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ChatRepository
+import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
 import org.koin.dsl.bind
 import org.koin.dsl.module

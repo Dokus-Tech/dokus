@@ -1,6 +1,6 @@
 package tech.dokus.foundation.ktor.storage
 
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.ktor.utils.loggerFor
 import java.text.Normalizer
 import java.util.UUID

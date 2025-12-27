@@ -10,7 +10,7 @@ import ai.dokus.app.contacts.viewmodel.ContactFormIntent
 import ai.dokus.app.contacts.viewmodel.ContactFormState
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactId
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo

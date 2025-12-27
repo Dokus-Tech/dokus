@@ -1,11 +1,11 @@
 package ai.dokus.app.auth.datasource
 
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.InvitationId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.CreateInvitationRequest
-import ai.dokus.foundation.domain.model.TeamMember
-import ai.dokus.foundation.domain.model.TenantInvitation
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.domain.model.TeamMember
+import tech.dokus.domain.model.TenantInvitation
 
 /**
  * Remote data source for team management operations.

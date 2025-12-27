@@ -2,7 +2,7 @@ package ai.dokus.app.auth.components.steps
 
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.constrains.Constrains
-import ai.dokus.foundation.domain.enums.TenantType
+import tech.dokus.domain.enums.TenantType
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints

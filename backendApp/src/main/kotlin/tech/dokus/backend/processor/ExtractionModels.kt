@@ -1,15 +1,15 @@
 package tech.dokus.backend.processor
 
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.model.ExtractedBillFields
-import ai.dokus.foundation.domain.model.ExtractedExpenseFields
-import ai.dokus.foundation.domain.model.ExtractedInvoiceFields
-import ai.dokus.foundation.domain.model.ExtractedLineItem
+import tech.dokus.domain.Money
+import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.model.ExtractedBillFields
+import tech.dokus.domain.model.ExtractedExpenseFields
+import tech.dokus.domain.model.ExtractedInvoiceFields
+import tech.dokus.domain.model.ExtractedLineItem
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 

@@ -1,9 +1,9 @@
 package ai.dokus.foundation.database.tables.auth
 
-import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.TenantPlan
-import ai.dokus.foundation.domain.enums.TenantStatus
-import ai.dokus.foundation.domain.enums.TenantType
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.TenantStatus
+import tech.dokus.domain.enums.TenantType
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime

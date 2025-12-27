@@ -2,10 +2,10 @@
 
 package tech.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.auth.JwtClaims
-import ai.dokus.foundation.domain.model.auth.LoginResponse
-import ai.dokus.foundation.domain.model.auth.TenantScope
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.LoginResponse
+import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.foundation.ktor.config.JwtConfig
 import tech.dokus.foundation.ktor.database.now
 import com.auth0.jwt.JWT

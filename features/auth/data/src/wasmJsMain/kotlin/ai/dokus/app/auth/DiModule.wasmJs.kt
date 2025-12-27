@@ -1,6 +1,6 @@
 package ai.dokus.app.auth
 
-import ai.dokus.foundation.domain.model.common.Feature
+import tech.dokus.domain.model.common.Feature
 import ai.dokus.foundation.sstorage.SecureStorage
 import ai.dokus.foundation.sstorage.createSecureStorage
 import org.koin.core.module.Module

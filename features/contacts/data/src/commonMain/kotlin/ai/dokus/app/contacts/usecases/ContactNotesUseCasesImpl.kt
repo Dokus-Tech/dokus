@@ -1,11 +1,11 @@
 package ai.dokus.app.contacts.usecases
 
 import ai.dokus.app.contacts.repository.ContactRemoteDataSource
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.ContactNoteId
-import ai.dokus.foundation.domain.model.ContactNoteDto
-import ai.dokus.foundation.domain.model.CreateContactNoteRequest
-import ai.dokus.foundation.domain.model.UpdateContactNoteRequest
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.ContactNoteDto
+import tech.dokus.domain.model.CreateContactNoteRequest
+import tech.dokus.domain.model.UpdateContactNoteRequest
 
 internal class ListContactNotesUseCaseImpl(
     private val remoteDataSource: ContactRemoteDataSource

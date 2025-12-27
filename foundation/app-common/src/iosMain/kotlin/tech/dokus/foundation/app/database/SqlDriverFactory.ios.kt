@@ -1,6 +1,6 @@
 package tech.dokus.foundation.app.database
 
-import ai.dokus.foundation.domain.model.common.Feature
+import tech.dokus.domain.model.common.Feature
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.db.SqlDriver

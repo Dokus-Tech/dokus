@@ -6,7 +6,7 @@ import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.domain.enums.ClientType
+import tech.dokus.domain.enums.ClientType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
