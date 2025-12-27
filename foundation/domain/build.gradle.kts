@@ -51,7 +51,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.foundation.domain"
+    namespace = "tech.dokus.domain"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     compileOptions {
@@ -65,7 +65,7 @@ android {
 }
 
 buildkonfig {
-    packageName = "ai.dokus.foundation.domain.config"
+    packageName = "tech.dokus.domain.config"
     defaultConfigs {
         // Version info - name comes from git tag during releases (e.g., "1.2.3")
         buildConfigField(STRING, "appVersionName", appVersion.name)

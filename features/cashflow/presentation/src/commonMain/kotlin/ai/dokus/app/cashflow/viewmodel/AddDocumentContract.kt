@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.components.DroppedFile
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction

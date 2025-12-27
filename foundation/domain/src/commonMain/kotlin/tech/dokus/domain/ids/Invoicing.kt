@@ -3,7 +3,7 @@ package tech.dokus.domain.ids
 import tech.dokus.domain.Validatable
 import tech.dokus.domain.ValueClass
 import tech.dokus.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.usecases.validators.ValidateInvoiceNumberUseCase
+import tech.dokus.domain.validators.ValidateInvoiceNumberUseCase
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi

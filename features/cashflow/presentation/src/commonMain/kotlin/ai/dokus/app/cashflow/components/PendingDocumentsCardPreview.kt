@@ -4,7 +4,7 @@ import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ProcessingStatus
 import tech.dokus.domain.exceptions.DokusException

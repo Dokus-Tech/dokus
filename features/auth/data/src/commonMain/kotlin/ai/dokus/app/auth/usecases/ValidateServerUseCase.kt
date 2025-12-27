@@ -1,16 +1,15 @@
 package ai.dokus.app.auth.usecases
 
-import ai.dokus.foundation.domain.config.ServerConfig
-import ai.dokus.foundation.domain.config.ServerInfo
-import ai.dokus.foundation.domain.config.ServerStatus
-import ai.dokus.foundation.domain.config.ServerValidationResult
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerInfo
+import tech.dokus.domain.config.ServerStatus
+import tech.dokus.domain.config.ServerValidationResult
 import ai.dokus.foundation.platform.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
-import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json

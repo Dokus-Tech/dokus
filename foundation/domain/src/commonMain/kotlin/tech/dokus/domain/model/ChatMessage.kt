@@ -1,6 +1,6 @@
 package tech.dokus.domain.model
 
-import ai.dokus.foundation.domain.database.DbEnum
+import tech.dokus.domain.database.DbEnum
 import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId

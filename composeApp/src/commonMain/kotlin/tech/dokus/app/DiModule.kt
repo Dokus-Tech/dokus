@@ -1,8 +1,8 @@
 package tech.dokus.app
 
 import ai.dokus.foundation.design.style.ThemeManager
-import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
-import ai.dokus.foundation.domain.config.ServerConfigManager
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
+import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.flags.FeatureFlagService
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind

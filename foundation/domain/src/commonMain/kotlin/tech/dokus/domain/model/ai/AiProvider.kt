@@ -1,6 +1,6 @@
 package tech.dokus.domain.model.ai
 
-import ai.dokus.foundation.domain.database.DbEnum
+import tech.dokus.domain.database.DbEnum
 
 
 /**

@@ -1,6 +1,7 @@
 package tech.dokus.domain
 
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.config.ServerStatus
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -27,14 +28,6 @@ data class DetailedHealthInfo(
     val threads: ThreadInfo,
     val system: SystemInfo
 )
-
-@Serializable
-enum class ServerStatus {
-    UP,
-    WARN,
-    DOWN,
-    UNKNOWN
-}
 
 @Serializable
 data class ApplicationInfo(

@@ -1,8 +1,8 @@
 package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.AuthInitializer
-import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.config.ServerConfigManager
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.config.ServerConfigManager
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext

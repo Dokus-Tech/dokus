@@ -2,7 +2,7 @@ package tech.dokus.app.module
 
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
-import ai.dokus.foundation.domain.config.DynamicDokusEndpointProvider
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import ai.dokus.foundation.platform.platformModule
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope

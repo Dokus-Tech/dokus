@@ -12,9 +12,9 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.config.ServerConfig
-import ai.dokus.foundation.domain.config.ServerConfigManager
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController

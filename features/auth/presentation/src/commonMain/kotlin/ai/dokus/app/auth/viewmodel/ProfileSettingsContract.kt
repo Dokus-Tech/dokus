@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
 import tech.dokus.domain.Name
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.User
 import androidx.compose.runtime.Immutable

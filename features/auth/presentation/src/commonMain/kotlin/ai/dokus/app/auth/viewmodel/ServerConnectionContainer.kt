@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
-import ai.dokus.foundation.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.exceptions.asDokusException
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
