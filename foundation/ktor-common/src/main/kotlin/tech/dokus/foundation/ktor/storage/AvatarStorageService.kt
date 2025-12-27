@@ -1,12 +1,12 @@
 package tech.dokus.foundation.ktor.storage
 
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CompanyAvatar
-import tech.dokus.foundation.ktor.utils.loggerFor
+import ai.dokus.foundation.domain.model.common.Thumbnail
 import com.sksamuel.scrimage.ImmutableImage
 import com.sksamuel.scrimage.webp.WebpWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tech.dokus.foundation.ktor.utils.loggerFor
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -51,7 +51,7 @@ class AvatarStorageService(
      */
     data class AvatarUploadResult(
         val storageKeyPrefix: String,
-        val avatar: CompanyAvatar,
+        val avatar: Thumbnail,
         val sizeBytes: Long
     )
 
@@ -100,7 +100,7 @@ class AvatarStorageService(
             logger.debug("Uploaded avatar size: $sizeName, key=$key, bytes=${webpData.size}")
         }
 
-        val avatar = CompanyAvatar(
+        val avatar = Thumbnail(
             small = urls["small"]!!,
             medium = urls["medium"]!!,
             large = urls["large"]!!
@@ -121,7 +121,7 @@ class AvatarStorageService(
      * @param storageKeyPrefix The key prefix stored in the database
      * @return Fresh presigned URLs for all sizes, or null if avatar doesn't exist
      */
-    suspend fun getAvatarUrls(storageKeyPrefix: String): CompanyAvatar? =
+    suspend fun getAvatarUrls(storageKeyPrefix: String): Thumbnail? =
         withContext(Dispatchers.IO) {
             // Check if avatar exists by checking one of the sizes
             val smallKey = "${storageKeyPrefix}_small.webp"
@@ -136,7 +136,7 @@ class AvatarStorageService(
                 storage.getSignedUrl(key, defaultUrlExpiry)
             }
 
-            CompanyAvatar(
+            Thumbnail(
                 small = urls["small"]!!,
                 medium = urls["medium"]!!,
                 large = urls["large"]!!

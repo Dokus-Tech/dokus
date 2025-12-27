@@ -12,9 +12,6 @@ import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.domain.routes.Tenants
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.AvatarStorageService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -23,7 +20,10 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.storage.AvatarStorageService
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -32,7 +32,7 @@ import kotlin.uuid.Uuid
  * - Get tenant by ID
  * - Get/update tenant settings
  */
-private val logger = LoggerFactory.getLogger("TenantRoutes")
+private val logger = loggerFor("TenantRoutes")
 
 @OptIn(ExperimentalUuidApi::class)
 internal fun Route.tenantRoutes() {

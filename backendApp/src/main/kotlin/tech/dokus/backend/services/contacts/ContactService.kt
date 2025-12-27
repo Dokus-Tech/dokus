@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactRequest
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactRequest
 import tech.dokus.foundation.ktor.utils.loggerFor
 

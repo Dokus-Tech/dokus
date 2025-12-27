@@ -9,7 +9,7 @@ import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.SortOrder

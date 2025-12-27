@@ -9,7 +9,7 @@ import ai.dokus.foundation.domain.model.ContactNoteDto
 import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactNoteRequest
 import ai.dokus.foundation.domain.model.CreateContactRequest
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactNoteRequest
 import ai.dokus.foundation.domain.model.UpdateContactPeppolRequest
 import ai.dokus.foundation.domain.model.UpdateContactRequest
