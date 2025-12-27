@@ -339,7 +339,7 @@ splash_screen() {
         if [[ "$IS_TTY" == true ]]; then sleep 0.04; fi
     done
     print_separator 52
-    echo_e "  ${DIM_WHITE}Synth-styled orchestrator for PostgreSQL, Redis, RabbitMQ, MinIO, Ollama, and services.${NC}\n"
+    echo_e "  ${DIM_WHITE}Synth-styled orchestrator for PostgreSQL, Redis, MinIO, Ollama, and services.${NC}\n"
 }
 
 # Detect OS

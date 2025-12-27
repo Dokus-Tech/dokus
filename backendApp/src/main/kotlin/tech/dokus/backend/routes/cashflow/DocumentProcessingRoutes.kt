@@ -5,7 +5,17 @@ import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingReposi
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.resources.get
+import io.ktor.server.resources.patch
+import io.ktor.server.resources.post
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.EntityType
 import tech.dokus.domain.enums.ProcessingStatus
@@ -18,6 +28,7 @@ import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentProcessingListResponse
+import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.ReprocessDocumentRequest
 import tech.dokus.domain.model.ReprocessDocumentResponse
 import tech.dokus.domain.model.TrackedCorrection
@@ -26,18 +37,7 @@ import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
-import io.ktor.http.*
-import io.ktor.server.request.*
-import io.ktor.server.resources.get
-import io.ktor.server.resources.patch
-import io.ktor.server.resources.post
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
-import tech.dokus.domain.VatRate
-import tech.dokus.domain.model.InvoiceItemDto
-import java.util.*
+import java.util.UUID
 import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
@@ -511,8 +511,6 @@ internal fun Route.documentProcessingRoutes() {
 
             // Reset for reprocessing
             processingRepository.resetForReprocessing(processing.id, tenantId)
-
-            // TODO: Publish to RabbitMQ for immediate reprocessing
 
             call.respond(
                 HttpStatusCode.OK,
