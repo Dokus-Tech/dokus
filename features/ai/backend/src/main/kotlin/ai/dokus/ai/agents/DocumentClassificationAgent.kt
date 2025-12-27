@@ -2,13 +2,13 @@ package ai.dokus.ai.agents
 
 import ai.dokus.ai.models.ClassifiedDocumentType
 import ai.dokus.ai.models.DocumentClassification
+import ai.dokus.foundation.ktor.utils.loggerFor
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 
 /**
  * Agent responsible for classifying document types.
@@ -18,7 +18,7 @@ class DocumentClassificationAgent(
     private val executor: PromptExecutor,
     private val model: LLModel
 ) {
-    private val logger = LoggerFactory.getLogger(DocumentClassificationAgent::class.java)
+    private val logger = loggerFor()
     private val json = Json { ignoreUnknownKeys = true }
 
     private val systemPrompt = """

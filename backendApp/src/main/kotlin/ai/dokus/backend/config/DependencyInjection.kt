@@ -13,8 +13,6 @@ import ai.dokus.backend.services.auth.RateLimitServiceInterface
 import ai.dokus.backend.services.auth.RedisRateLimitService
 import ai.dokus.backend.services.auth.SmtpEmailService
 import ai.dokus.backend.services.auth.TeamService
-import ai.dokus.backend.repository.cashflow.ChatRepository
-import ai.dokus.backend.repository.cashflow.DocumentChunksRepository
 import ai.dokus.backend.services.cashflow.BillService
 import ai.dokus.backend.services.cashflow.CashflowOverviewService
 import ai.dokus.backend.services.cashflow.ExpenseService
@@ -58,6 +56,7 @@ import ai.dokus.peppol.validator.PeppolValidator
 import ai.dokus.backend.extraction.processor.ExtractionProviderFactory
 import ai.dokus.backend.worker.processor.DocumentProcessingWorker
 import ai.dokus.backend.worker.processor.WorkerConfig
+import ai.dokus.foundation.domain.repository.ChunkRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -244,12 +243,10 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { PeppolConnectionService(get(), get()) }
     single { PeppolService(get(), get(), get(), get(), get()) }
 
-    // Chat / RAG
+    // AI / RAG config (repositories are in repositoryModules)
     single<AIConfig> {
         AIConfig.fromConfigOrNull(appConfig.config) ?: AIConfig.localDefault()
     }
-    single { ChatRepository() }
-    single { DocumentChunksRepository() }
 }
 
 private val contactsModule = module {
@@ -293,10 +290,10 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
             documentStorage = get<DocumentStorageService>(),
             providerFactory = get(),
             config = get(),
-            // RAG chunking/embedding is intentionally disabled for MVP
+            // RAG chunking/embedding - use repositories from foundation:database
             chunkingService = null,
             embeddingService = null,
-            chunkRepository = null,
+            chunkRepository = getOrNull<ChunkRepository>(),
         )
     }
 }

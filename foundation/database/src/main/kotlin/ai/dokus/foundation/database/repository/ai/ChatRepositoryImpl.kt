@@ -1,4 +1,4 @@
-package ai.dokus.backend.repository.cashflow
+package ai.dokus.foundation.database.repository.ai
 
 import ai.dokus.foundation.database.tables.ai.ChatMessagesTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
@@ -13,6 +13,7 @@ import ai.dokus.foundation.domain.model.ChatScope
 import ai.dokus.foundation.domain.model.ChatSessionId
 import ai.dokus.foundation.domain.model.ChatSessionSummary
 import ai.dokus.foundation.domain.model.MessageRole
+import ai.dokus.foundation.domain.repository.ChatRepository
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -30,7 +31,7 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 
 /**
- * Repository for chat message persistence and conversation management.
+ * Repository implementation for chat message persistence and conversation management.
  *
  * Provides CRUD operations for chat messages and session management for
  * document Q&A conversations. Supports both single-document and cross-document
@@ -39,9 +40,9 @@ import kotlin.uuid.ExperimentalUuidApi
  * CRITICAL SECURITY: All queries MUST filter by tenantId for multi-tenant isolation.
  */
 @OptIn(ExperimentalUuidApi::class)
-class ChatRepository {
+class ChatRepositoryImpl : ChatRepository {
 
-    private val logger = LoggerFactory.getLogger(ChatRepository::class.java)
+    private val logger = LoggerFactory.getLogger(ChatRepositoryImpl::class.java)
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -52,13 +53,7 @@ class ChatRepository {
     // Message Operations
     // =========================================================================
 
-    /**
-     * Save a new chat message.
-     *
-     * @param message The message DTO to save
-     * @return The saved message with ID populated
-     */
-    suspend fun saveMessage(message: ChatMessageDto): ChatMessageDto = newSuspendedTransaction {
+    override suspend fun saveMessage(message: ChatMessageDto): ChatMessageDto = newSuspendedTransaction {
         val messageId = UUID.fromString(message.id.toString())
         val tenantUuid = UUID.fromString(message.tenantId.toString())
         val userUuid = UUID.fromString(message.userId.toString())
@@ -103,11 +98,7 @@ class ChatRepository {
         message
     }
 
-    /**
-     * Get a message by ID.
-     * CRITICAL: MUST filter by tenantId.
-     */
-    suspend fun getMessageById(
+    override suspend fun getMessageById(
         tenantId: TenantId,
         messageId: ChatMessageId
     ): ChatMessageDto? = newSuspendedTransaction {
@@ -124,16 +115,12 @@ class ChatRepository {
             ?.toMessageDto()
     }
 
-    /**
-     * Get all messages for a session, ordered by sequence number.
-     * CRITICAL: MUST filter by tenantId.
-     */
-    suspend fun getSessionMessages(
+    override suspend fun getSessionMessages(
         tenantId: TenantId,
         sessionId: ChatSessionId,
-        limit: Int = 100,
-        offset: Int = 0,
-        descending: Boolean = false
+        limit: Int,
+        offset: Int,
+        descending: Boolean
     ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val sessionUuid = UUID.fromString(sessionId.toString())
@@ -157,16 +144,11 @@ class ChatRepository {
         messages to total
     }
 
-    /**
-     * Get messages for a specific document (across all sessions).
-     * Useful for document-specific chat history.
-     * CRITICAL: MUST filter by tenantId.
-     */
-    suspend fun getMessagesForDocument(
+    override suspend fun getMessagesForDocument(
         tenantId: TenantId,
         documentProcessingId: DocumentProcessingId,
-        limit: Int = 50,
-        offset: Int = 0
+        limit: Int,
+        offset: Int
     ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val documentUuid = UUID.fromString(documentProcessingId.toString())
@@ -189,11 +171,7 @@ class ChatRepository {
         messages to total
     }
 
-    /**
-     * Get the next sequence number for a session.
-     * Used when adding new messages to ensure proper ordering.
-     */
-    suspend fun getNextSequenceNumber(
+    override suspend fun getNextSequenceNumber(
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): Int = newSuspendedTransaction {
@@ -216,16 +194,12 @@ class ChatRepository {
     // Session Operations
     // =========================================================================
 
-    /**
-     * List chat sessions for a tenant with pagination.
-     * CRITICAL: MUST filter by tenantId.
-     */
-    suspend fun listSessions(
+    override suspend fun listSessions(
         tenantId: TenantId,
-        scope: ChatScope? = null,
-        documentProcessingId: DocumentProcessingId? = null,
-        limit: Int = 20,
-        offset: Int = 0
+        scope: ChatScope?,
+        documentProcessingId: DocumentProcessingId?,
+        limit: Int,
+        offset: Int
     ): Pair<List<ChatSessionSummary>, Long> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
 
@@ -279,11 +253,7 @@ class ChatRepository {
         sessions to total
     }
 
-    /**
-     * Get session summary by ID.
-     * CRITICAL: MUST filter by tenantId.
-     */
-    suspend fun getSessionSummary(
+    override suspend fun getSessionSummary(
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): ChatSessionSummary? = newSuspendedTransaction {
@@ -335,10 +305,7 @@ class ChatRepository {
         )
     }
 
-    /**
-     * Check if a session exists and belongs to the tenant.
-     */
-    suspend fun sessionExists(
+    override suspend fun sessionExists(
         tenantId: TenantId,
         sessionId: ChatSessionId
     ): Boolean = newSuspendedTransaction {
@@ -355,11 +322,7 @@ class ChatRepository {
             .count() > 0
     }
 
-    /**
-     * Count total messages for a tenant.
-     * Useful for usage monitoring.
-     */
-    suspend fun countMessagesForTenant(
+    override suspend fun countMessagesForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
@@ -370,10 +333,7 @@ class ChatRepository {
             .count()
     }
 
-    /**
-     * Count sessions for a tenant.
-     */
-    suspend fun countSessionsForTenant(
+    override suspend fun countSessionsForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
@@ -385,18 +345,10 @@ class ChatRepository {
             .count()
     }
 
-    // =========================================================================
-    // Recent Activity
-    // =========================================================================
-
-    /**
-     * Get recent sessions for a user.
-     * CRITICAL: MUST filter by tenantId.
-     */
-    suspend fun getRecentSessionsForUser(
+    override suspend fun getRecentSessionsForUser(
         tenantId: TenantId,
         userId: UserId,
-        limit: Int = 10
+        limit: Int
     ): List<ChatSessionSummary> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val userUuid = UUID.fromString(userId.toString())

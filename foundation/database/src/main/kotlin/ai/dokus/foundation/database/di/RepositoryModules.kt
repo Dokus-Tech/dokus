@@ -1,5 +1,7 @@
 package ai.dokus.foundation.database.di
 
+import ai.dokus.foundation.database.repository.ai.ChatRepositoryImpl
+import ai.dokus.foundation.database.repository.ai.DocumentChunksRepository
 import ai.dokus.foundation.database.repository.auth.AddressRepository
 import ai.dokus.foundation.database.repository.auth.InvitationRepository
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
@@ -21,7 +23,10 @@ import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
 import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
+import ai.dokus.foundation.domain.repository.ChatRepository
+import ai.dokus.foundation.domain.repository.ChunkRepository
 import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /**
@@ -106,6 +111,15 @@ val repositoryModuleContacts = module {
 }
 
 /**
+ * AI repositories module.
+ * Provides repositories for document chunks (RAG) and chat messages.
+ */
+val repositoryModuleAI = module {
+    single { DocumentChunksRepository() } bind ChunkRepository::class
+    single { ChatRepositoryImpl() } bind ChatRepository::class
+}
+
+/**
  * Combined repository module including all domain repositories.
  *
  * Usage:
@@ -129,6 +143,7 @@ val repositoryModules = module {
         repositoryModuleProcessor,
         repositoryModuleBanking,
         repositoryModulePayment,
-        repositoryModuleContacts
+        repositoryModuleContacts,
+        repositoryModuleAI
     )
 }

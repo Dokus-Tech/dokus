@@ -7,8 +7,8 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CreateExpenseRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.LocalDate
-import org.slf4j.LoggerFactory
 
 /**
  * Service for expense business operations.
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class ExpenseService(
     private val expenseRepository: ExpenseRepository
 ) {
-    private val logger = LoggerFactory.getLogger(ExpenseService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new expense for a tenant.
@@ -112,52 +112,52 @@ class ExpenseService(
         return when {
             // Office supplies
             merchantLower.contains("office") ||
-            merchantLower.contains("staples") ||
-            merchantLower.contains("amazon") && descLower.contains("office") -> ExpenseCategory.OfficeSupplies
+                    merchantLower.contains("staples") ||
+                    merchantLower.contains("amazon") && descLower.contains("office") -> ExpenseCategory.OfficeSupplies
 
             // Software
             merchantLower.contains("github") ||
-            merchantLower.contains("jetbrains") ||
-            merchantLower.contains("aws") ||
-            merchantLower.contains("google cloud") ||
-            merchantLower.contains("azure") ||
-            merchantLower.contains("digitalocean") ||
-            merchantLower.contains("heroku") -> ExpenseCategory.Software
+                    merchantLower.contains("jetbrains") ||
+                    merchantLower.contains("aws") ||
+                    merchantLower.contains("google cloud") ||
+                    merchantLower.contains("azure") ||
+                    merchantLower.contains("digitalocean") ||
+                    merchantLower.contains("heroku") -> ExpenseCategory.Software
 
             // Travel
             merchantLower.contains("airline") ||
-            merchantLower.contains("sncb") ||
-            merchantLower.contains("hotel") ||
-            merchantLower.contains("uber") ||
-            merchantLower.contains("taxi") ||
-            merchantLower.contains("airbnb") -> ExpenseCategory.Travel
+                    merchantLower.contains("sncb") ||
+                    merchantLower.contains("hotel") ||
+                    merchantLower.contains("uber") ||
+                    merchantLower.contains("taxi") ||
+                    merchantLower.contains("airbnb") -> ExpenseCategory.Travel
 
             // Meals
             merchantLower.contains("restaurant") ||
-            merchantLower.contains("cafe") ||
-            merchantLower.contains("deliveroo") ||
-            merchantLower.contains("uber eats") -> ExpenseCategory.Meals
+                    merchantLower.contains("cafe") ||
+                    merchantLower.contains("deliveroo") ||
+                    merchantLower.contains("uber eats") -> ExpenseCategory.Meals
 
             // Hardware/Equipment
             merchantLower.contains("apple") ||
-            merchantLower.contains("dell") ||
-            merchantLower.contains("lenovo") -> ExpenseCategory.Hardware
+                    merchantLower.contains("dell") ||
+                    merchantLower.contains("lenovo") -> ExpenseCategory.Hardware
 
             // Utilities
             merchantLower.contains("telenet") ||
-            merchantLower.contains("proximus") ||
-            merchantLower.contains("engie") ||
-            merchantLower.contains("luminus") -> ExpenseCategory.Utilities
+                    merchantLower.contains("proximus") ||
+                    merchantLower.contains("engie") ||
+                    merchantLower.contains("luminus") -> ExpenseCategory.Utilities
 
             // Professional services
             merchantLower.contains("accountant") ||
-            merchantLower.contains("lawyer") ||
-            merchantLower.contains("consultant") -> ExpenseCategory.ProfessionalServices
+                    merchantLower.contains("lawyer") ||
+                    merchantLower.contains("consultant") -> ExpenseCategory.ProfessionalServices
 
             // Marketing
             merchantLower.contains("google ads") ||
-            merchantLower.contains("facebook ads") ||
-            merchantLower.contains("linkedin") -> ExpenseCategory.Marketing
+                    merchantLower.contains("facebook ads") ||
+                    merchantLower.contains("linkedin") -> ExpenseCategory.Marketing
 
             else -> ExpenseCategory.Other
         }

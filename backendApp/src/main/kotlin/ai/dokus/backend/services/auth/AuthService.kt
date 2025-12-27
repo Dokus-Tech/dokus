@@ -23,8 +23,8 @@ import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
 import ai.dokus.foundation.ktor.database.now
 import ai.dokus.foundation.ktor.security.JwtGenerator
 import ai.dokus.foundation.ktor.security.TokenBlacklistService
+import ai.dokus.foundation.ktor.utils.loggerFor
 import com.auth0.jwt.JWT
-import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -38,7 +38,7 @@ class AuthService(
     private val tokenBlacklistService: TokenBlacklistService? = null,
     private val maxConcurrentSessions: Int = DEFAULT_MAX_CONCURRENT_SESSIONS
 ) {
-    private val logger = LoggerFactory.getLogger(AuthService::class.java)
+    private val logger = loggerFor()
 
     companion object {
         /** Default maximum concurrent sessions per user */
@@ -270,7 +270,10 @@ class AuthService(
             token = response.refreshToken,
             expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days)
         ).onFailure { error ->
-            logger.error("Failed to save refresh token after tenant selection for user: ${userId.value}", error)
+            logger.error(
+                "Failed to save refresh token after tenant selection for user: ${userId.value}",
+                error
+            )
             throw DokusException.InternalError("Failed to save refresh token")
         }
 
@@ -381,7 +384,10 @@ class AuthService(
                 logger.info("All refresh tokens revoked for user: ${userId.value}")
             }
             .onFailure { error ->
-                logger.warn("Failed to revoke tokens during deactivation for user: ${userId.value}", error)
+                logger.warn(
+                    "Failed to revoke tokens during deactivation for user: ${userId.value}",
+                    error
+                )
             }
 
         logger.info("Account deactivation completed successfully for user: ${userId.value}, reason: $reason")
@@ -471,10 +477,12 @@ class AuthService(
             Permission.InvoicesSend, Permission.ClientsRead, Permission.ClientsManage,
             Permission.ReportsView, Permission.ExportsCreate
         )
+
         UserRole.Editor -> setOf(
             Permission.InvoicesRead, Permission.InvoicesCreate, Permission.InvoicesEdit,
             Permission.ClientsRead, Permission.ReportsView
         )
+
         UserRole.Viewer -> setOf(
             Permission.InvoicesRead, Permission.ClientsRead, Permission.ReportsView
         )

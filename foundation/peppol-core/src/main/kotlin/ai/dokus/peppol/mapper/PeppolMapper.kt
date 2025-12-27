@@ -11,6 +11,7 @@ import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
+import ai.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolDocumentType
 import ai.dokus.peppol.model.PeppolInvoiceData
 import ai.dokus.peppol.model.PeppolLineItem
@@ -19,7 +20,6 @@ import ai.dokus.peppol.model.PeppolPaymentInfo
 import ai.dokus.peppol.model.PeppolReceivedDocument
 import ai.dokus.peppol.model.PeppolSendRequest
 import kotlinx.datetime.LocalDate
-import org.slf4j.LoggerFactory
 
 /**
  * Maps between domain models and provider-agnostic Peppol models.
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory
  * to the generic Peppol format that providers can then convert to their specific format.
  */
 class PeppolMapper {
-    private val logger = LoggerFactory.getLogger(PeppolMapper::class.java)
+    private val logger = loggerFor()
 
     /**
      * Convert a domain invoice to a Peppol send request.

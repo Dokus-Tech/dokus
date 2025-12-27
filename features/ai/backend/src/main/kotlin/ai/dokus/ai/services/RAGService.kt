@@ -6,6 +6,8 @@ import ai.dokus.foundation.domain.model.ChunkRetrievalRequest
 import ai.dokus.foundation.domain.model.ChunkRetrievalResponse
 import ai.dokus.foundation.domain.model.DocumentChunkId
 import ai.dokus.foundation.domain.model.DocumentChunkSummary
+import ai.dokus.foundation.domain.repository.ChunkRepository
+import ai.dokus.foundation.domain.repository.RetrievedChunk
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -22,7 +24,7 @@ import kotlin.uuid.ExperimentalUuidApi
  *
  * Architecture:
  * - RAGService handles AI/embedding logic (lives in ai-backend)
- * - ChunkRepository handles database access (implemented in cashflow-service)
+ * - ChunkRepository handles database access (implemented in foundation:database)
  *
  * Usage:
  * ```kotlin
@@ -68,25 +70,6 @@ class RAGService(
         const val DEFAULT_MAX_CONTEXT_TOKENS = 2000
     }
 
-    /**
-     * Result of a similarity search for a single chunk.
-     */
-    data class RetrievedChunk(
-        /** Chunk ID */
-        val id: String,
-        /** Document processing ID */
-        val documentProcessingId: String,
-        /** Text content of the chunk */
-        val content: String,
-        /** Position within the document (0-indexed) */
-        val chunkIndex: Int,
-        /** Page number in source document (1-indexed, if available) */
-        val pageNumber: Int?,
-        /** Cosine similarity score (0.0 - 1.0, higher is more similar) */
-        val similarityScore: Float,
-        /** Source document filename (if available) */
-        val documentName: String?
-    )
 
     /**
      * Result of a RAG retrieval operation.
@@ -298,95 +281,6 @@ class RAGService(
         return embeddingService.getEmbeddingDimensions()
     }
 }
-
-/**
- * Repository interface for chunk storage and retrieval.
- *
- * This interface abstracts the database layer and should be implemented
- * by the service that has access to the database (e.g., cashflow-service).
- *
- * CRITICAL: All implementations MUST filter by tenantId for multi-tenant security.
- */
-interface ChunkRepository {
-    /**
-     * Search for similar chunks using vector similarity.
-     *
-     * @param tenantId The tenant to filter by (REQUIRED for security)
-     * @param queryEmbedding The query embedding vector
-     * @param documentId Optional document ID to filter to a single document
-     * @param topK Maximum number of chunks to return
-     * @param minSimilarity Minimum cosine similarity threshold
-     * @return ChunkSearchResult containing matched chunks
-     */
-    suspend fun searchSimilarChunks(
-        tenantId: TenantId,
-        queryEmbedding: List<Float>,
-        documentId: DocumentProcessingId?,
-        topK: Int,
-        minSimilarity: Float
-    ): ChunkSearchResult
-
-    /**
-     * Store chunks with embeddings for a document.
-     *
-     * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
-     * @param chunks The chunks to store with their embeddings
-     */
-    suspend fun storeChunks(
-        tenantId: TenantId,
-        documentId: DocumentProcessingId,
-        chunks: List<ChunkWithEmbedding>
-    )
-
-    /**
-     * Delete all chunks for a document.
-     *
-     * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
-     * @return Number of chunks deleted
-     */
-    suspend fun deleteChunksForDocument(
-        tenantId: TenantId,
-        documentId: DocumentProcessingId
-    ): Int
-}
-
-/**
- * Result of a chunk similarity search.
- */
-data class ChunkSearchResult(
-    /** Retrieved chunks ordered by similarity (highest first) */
-    val chunks: List<RAGService.RetrievedChunk>,
-    /** Total number of chunks that were searched */
-    val totalSearched: Long
-)
-
-/**
- * A chunk with its embedding, ready to be stored.
- */
-data class ChunkWithEmbedding(
-    /** Text content of the chunk */
-    val content: String,
-    /** Position within the document (0-indexed) */
-    val chunkIndex: Int,
-    /** Total number of chunks in the document */
-    val totalChunks: Int,
-    /** The embedding vector */
-    val embedding: List<Float>,
-    /** Embedding model used */
-    val embeddingModel: String,
-    /** Character offset where this chunk starts in the source text */
-    val startOffset: Int?,
-    /** Character offset where this chunk ends in the source text */
-    val endOffset: Int?,
-    /** Page number in source document (1-indexed, if available) */
-    val pageNumber: Int?,
-    /** Metadata as JSON string */
-    val metadata: String?,
-    /** Estimated token count */
-    val tokenCount: Int?
-)
 
 /**
  * Exception thrown when RAG operations fail.

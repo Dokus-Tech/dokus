@@ -11,6 +11,7 @@ import ai.dokus.foundation.domain.ids.PeppolTransmissionId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.PeppolTransmissionDto
 import ai.dokus.foundation.ktor.database.dbQuery
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -23,7 +24,6 @@ import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import org.slf4j.LoggerFactory
 import java.util.UUID
 
 /**
@@ -31,7 +31,7 @@ import java.util.UUID
  * CRITICAL: All queries MUST filter by tenantId.
  */
 class PeppolTransmissionRepository {
-    private val logger = LoggerFactory.getLogger(PeppolTransmissionRepository::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new transmission record.

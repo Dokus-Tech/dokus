@@ -1,15 +1,17 @@
-package ai.dokus.backend.repository.cashflow
+package ai.dokus.foundation.database.repository.ai
 
-import ai.dokus.ai.services.ChunkRepository
-import ai.dokus.ai.services.ChunkSearchResult
-import ai.dokus.ai.services.ChunkWithEmbedding
-import ai.dokus.ai.services.RAGService
 import ai.dokus.foundation.database.tables.ai.DocumentChunksTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ChunkMetadata
 import ai.dokus.foundation.domain.model.DocumentChunkDto
 import ai.dokus.foundation.domain.model.DocumentChunkId
+import ai.dokus.foundation.domain.repository.ChunkRepository
+import ai.dokus.foundation.domain.repository.ChunkSearchResult
+import ai.dokus.foundation.domain.repository.ChunkWithEmbedding
+import ai.dokus.foundation.domain.repository.RetrievedChunk
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -30,8 +32,8 @@ import kotlin.uuid.ExperimentalUuidApi
 /**
  * Repository for document chunks with vector embeddings.
  *
- * Implements the ChunkRepository interface from ai-backend for RAG operations.
- * Provides CRUD operations for document chunks and vector similarity search.
+ * Implements the ChunkRepository interface from foundation:domain for RAG operations.
+ * Provides CRUD operations for document chunks and vector similarity search using pgvector.
  *
  * CRITICAL SECURITY: All queries MUST filter by tenantId for multi-tenant isolation.
  */
@@ -54,13 +56,6 @@ class DocumentChunksRepository : ChunkRepository {
      *
      * Uses pgvector's `<=>` operator for cosine distance.
      * CRITICAL: Always filters by tenantId for multi-tenant security.
-     *
-     * @param tenantId The tenant to filter by (REQUIRED for security)
-     * @param queryEmbedding The query embedding vector
-     * @param documentId Optional document ID to filter to a single document
-     * @param topK Maximum number of chunks to return
-     * @param minSimilarity Minimum cosine similarity threshold (0.0 - 1.0)
-     * @return ChunkSearchResult containing matched chunks
      */
     override suspend fun searchSimilarChunks(
         tenantId: TenantId,
@@ -87,11 +82,7 @@ class DocumentChunksRepository : ChunkRepository {
         }
         val totalSearched = countQuery.count()
 
-        // Convert minSimilarity to maxDistance (cosine distance = 1 - similarity)
-        val maxDistance = 1.0 - minSimilarity
-
         // Perform vector similarity search using raw SQL for pgvector operators
-        // The <=> operator returns cosine distance (0 = identical, 2 = opposite)
         val sql = buildString {
             append("SELECT ")
             append("dc.id, dc.document_processing_id, dc.content, dc.chunk_index, ")
@@ -113,7 +104,7 @@ class DocumentChunksRepository : ChunkRepository {
 
         logger.debug("Executing vector search SQL: ${sql.take(200)}...")
 
-        val chunks = mutableListOf<RAGService.RetrievedChunk>()
+        val chunks = mutableListOf<RetrievedChunk>()
 
         // Execute raw SQL and map results
         val connection = this.connection.connection as java.sql.Connection
@@ -121,7 +112,7 @@ class DocumentChunksRepository : ChunkRepository {
             stmt.executeQuery(sql).use { rs ->
                 while (rs.next()) {
                     chunks.add(
-                        RAGService.RetrievedChunk(
+                        RetrievedChunk(
                             id = rs.getString("id"),
                             documentProcessingId = rs.getString("document_processing_id"),
                             content = rs.getString("content"),
@@ -145,10 +136,6 @@ class DocumentChunksRepository : ChunkRepository {
 
     /**
      * Store chunks with embeddings for a document.
-     *
-     * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
-     * @param chunks The chunks to store with their embeddings
      */
     override suspend fun storeChunks(
         tenantId: TenantId,
@@ -188,10 +175,6 @@ class DocumentChunksRepository : ChunkRepository {
 
     /**
      * Delete all chunks for a document.
-     *
-     * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
-     * @return Number of chunks deleted
      */
     override suspend fun deleteChunksForDocument(
         tenantId: TenantId,
@@ -217,9 +200,8 @@ class DocumentChunksRepository : ChunkRepository {
 
     /**
      * Get all chunks for a document, ordered by chunk index.
-     * CRITICAL: MUST filter by tenantId.
      */
-    suspend fun getChunksForDocument(
+    override suspend fun getChunksForDocument(
         tenantId: TenantId,
         documentId: DocumentProcessingId
     ): List<DocumentChunkDto> = newSuspendedTransaction {
@@ -238,9 +220,8 @@ class DocumentChunksRepository : ChunkRepository {
 
     /**
      * Get a single chunk by ID.
-     * CRITICAL: MUST filter by tenantId.
      */
-    suspend fun getChunkById(
+    override suspend fun getChunkById(
         tenantId: TenantId,
         chunkId: DocumentChunkId
     ): DocumentChunkDto? = newSuspendedTransaction {
@@ -259,9 +240,8 @@ class DocumentChunksRepository : ChunkRepository {
 
     /**
      * Count chunks for a document.
-     * CRITICAL: MUST filter by tenantId.
      */
-    suspend fun countChunksForDocument(
+    override suspend fun countChunksForDocument(
         tenantId: TenantId,
         documentId: DocumentProcessingId
     ): Long = newSuspendedTransaction {
@@ -280,16 +260,15 @@ class DocumentChunksRepository : ChunkRepository {
     /**
      * Check if a document has chunks.
      */
-    suspend fun hasChunks(
+    override suspend fun hasChunks(
         tenantId: TenantId,
         documentId: DocumentProcessingId
     ): Boolean = countChunksForDocument(tenantId, documentId) > 0
 
     /**
      * Get the total chunk count for a tenant.
-     * Useful for usage monitoring.
      */
-    suspend fun countTotalChunksForTenant(
+    override suspend fun countTotalChunksForTenant(
         tenantId: TenantId
     ): Long = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())

@@ -2,10 +2,10 @@ package ai.dokus.backend.services.auth
 
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ktor.database.now
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Instant
-import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -39,7 +39,7 @@ data class LoginAttemptTracker(
  * - Lockout duration increases security without permanent account lockout
  */
 class RateLimitService : RateLimitServiceInterface {
-    private val logger = LoggerFactory.getLogger(RateLimitService::class.java)
+    private val logger = loggerFor()
     private val loginAttempts = mutableMapOf<String, LoginAttemptTracker>()
     private val mutex = Mutex()
 
@@ -155,7 +155,7 @@ class RateLimitService : RateLimitServiceInterface {
 
             // Remove if window expired and not locked, or lock expired
             (currentTime > windowExpiry && lockExpiry == null) ||
-            (lockExpiry != null && currentTime > lockExpiry)
+                    (lockExpiry != null && currentTime > lockExpiry)
         }.keys
 
         toRemove.forEach { loginAttempts.remove(it) }

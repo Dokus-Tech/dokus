@@ -1,16 +1,18 @@
 package ai.dokus.foundation.ktor.configure
 
 import ai.dokus.foundation.domain.exceptions.DokusException
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.plugins.statuspages.*
-import io.ktor.server.response.*
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.response.respond
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 
 fun Application.configureErrorHandling() {
-    val logger = LoggerFactory.getLogger("ErrorHandler")
+    val logger = loggerFor("ErrorHandler")
 
     install(StatusPages) {
         // Handle rate limiting with Retry-After header
@@ -52,7 +54,9 @@ fun Application.configureErrorHandling() {
             logger.error("Downstream connection failed: ${cause.message}")
             call.respond<DokusException>(
                 HttpStatusCode.ServiceUnavailable,
-                DokusException.ConnectionError(cause.message ?: "Downstream service is unavailable"),
+                DokusException.ConnectionError(
+                    cause.message ?: "Downstream service is unavailable"
+                ),
             )
         }
 

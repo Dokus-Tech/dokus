@@ -1,6 +1,7 @@
 package ai.dokus.foundation.ktor.storage
 
 import ai.dokus.foundation.ktor.config.MinioConfig
+import ai.dokus.foundation.ktor.utils.loggerFor
 import io.minio.BucketExistsArgs
 import io.minio.GetObjectArgs
 import io.minio.GetPresignedObjectUrlArgs
@@ -12,7 +13,6 @@ import io.minio.StatObjectArgs
 import io.minio.http.Method
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -36,7 +36,7 @@ class MinioStorage(
     private val bucketName: String,
 ) : ObjectStorage {
 
-    private val logger = LoggerFactory.getLogger(MinioStorage::class.java)
+    private val logger = loggerFor()
 
     init {
         // Ensure bucket exists on startup
@@ -156,8 +156,7 @@ class MinioStorage(
         }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(MinioStorage::class.java)
-
+        private val logger = loggerFor<MinioStorage>()
         /**
          * Create a MinioStorage instance from configuration.
          *
@@ -180,7 +179,8 @@ class MinioStorage(
             val (signingClient, signingBaseUrl, pathPrefix) = if (publicUrl != null) {
                 try {
                     val url = java.net.URL(publicUrl)
-                    val baseUrl = "${url.protocol}://${url.host}${if (url.port != -1) ":${url.port}" else ""}"
+                    val baseUrl =
+                        "${url.protocol}://${url.host}${if (url.port != -1) ":${url.port}" else ""}"
                     val path = url.path.takeIf { it.isNotEmpty() && it != "/" }
 
                     logger.info("Creating signing client: baseUrl=$baseUrl, pathPrefix=$path")
@@ -196,7 +196,10 @@ class MinioStorage(
 
                     Triple(signingClient, baseUrl, path)
                 } catch (e: Exception) {
-                    logger.warn("Failed to parse public URL '$publicUrl', falling back to internal endpoint", e)
+                    logger.warn(
+                        "Failed to parse public URL '$publicUrl', falling back to internal endpoint",
+                        e
+                    )
                     Triple(null, null, null)
                 }
             } else {

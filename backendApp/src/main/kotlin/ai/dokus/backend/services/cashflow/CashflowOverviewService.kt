@@ -11,13 +11,13 @@ import ai.dokus.foundation.domain.model.CashInSummary
 import ai.dokus.foundation.domain.model.CashOutSummary
 import ai.dokus.foundation.domain.model.CashflowOverview
 import ai.dokus.foundation.domain.model.CashflowPeriod
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
-import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 
 /**
@@ -34,7 +34,7 @@ class CashflowOverviewService(
     private val expenseRepository: ExpenseRepository,
     private val billRepository: BillRepository
 ) {
-    private val logger = LoggerFactory.getLogger(CashflowOverviewService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Get cashflow overview for a period.
@@ -75,8 +75,9 @@ class CashflowOverviewService(
         ).getOrThrow()
 
         // Fetch bill statistics for period
-        val billStats = billRepository.getBillStatistics(tenantId, effectiveFromDate, effectiveToDate)
-            .getOrThrow()
+        val billStats =
+            billRepository.getBillStatistics(tenantId, effectiveFromDate, effectiveToDate)
+                .getOrThrow()
 
         // Calculate Cash-In (Invoices)
         val invoices = invoicesResult.items
@@ -85,7 +86,14 @@ class CashflowOverviewService(
             .filter { it.status == InvoiceStatus.Paid }
             .sumOf { BigDecimal(it.totalAmount.value) }
         val cashInPending = invoices
-            .filter { it.status in listOf(InvoiceStatus.Draft, InvoiceStatus.Sent, InvoiceStatus.Viewed, InvoiceStatus.PartiallyPaid) }
+            .filter {
+                it.status in listOf(
+                    InvoiceStatus.Draft,
+                    InvoiceStatus.Sent,
+                    InvoiceStatus.Viewed,
+                    InvoiceStatus.PartiallyPaid
+                )
+            }
             .sumOf { BigDecimal(it.totalAmount.value) }
         val cashInOverdue = invoices
             .filter { it.status == InvoiceStatus.Overdue }

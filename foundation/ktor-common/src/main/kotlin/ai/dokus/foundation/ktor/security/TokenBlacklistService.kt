@@ -3,14 +3,14 @@
 package ai.dokus.foundation.ktor.security
 
 import ai.dokus.foundation.domain.ids.UserId
-import kotlin.uuid.ExperimentalUuidApi
 import ai.dokus.foundation.ktor.cache.RedisClient
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Service for managing JWT access token blacklist.
@@ -55,8 +55,7 @@ interface TokenBlacklistService {
 class RedisTokenBlacklistService(
     private val redisClient: RedisClient
 ) : TokenBlacklistService {
-
-    private val logger = LoggerFactory.getLogger(RedisTokenBlacklistService::class.java)
+    private val logger = loggerFor()
 
     override suspend fun blacklistToken(jti: String, expiresAt: Instant) {
         val ttl = calculateTtl(expiresAt)
@@ -149,7 +148,7 @@ class RedisTokenBlacklistService(
  */
 class InMemoryTokenBlacklistService : TokenBlacklistService {
 
-    private val logger = LoggerFactory.getLogger(InMemoryTokenBlacklistService::class.java)
+    private val logger = loggerFor()
     private val blacklist = ConcurrentHashMap<String, Instant>()
     private val userTokens = ConcurrentHashMap<String, MutableSet<TokenEntry>>()
     private val cleanupMutex = Mutex()

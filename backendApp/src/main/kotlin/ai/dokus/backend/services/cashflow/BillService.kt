@@ -12,9 +12,9 @@ import ai.dokus.foundation.domain.model.CreateBillRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolReceivedDocument
 import kotlinx.datetime.LocalDate
-import org.slf4j.LoggerFactory
 
 /**
  * Service for bill business operations.
@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 class BillService(
     private val billRepository: BillRepository
 ) {
-    private val logger = LoggerFactory.getLogger(BillService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new bill for a tenant.
@@ -205,7 +205,12 @@ class BillService(
 
         return billRepository.createBill(tenantId, request)
             .onSuccess { logger.info("Bill created from Peppol document: ${it.id}") }
-            .onFailure { logger.error("Failed to create bill from Peppol document: ${peppolDocument.id}", it) }
+            .onFailure {
+                logger.error(
+                    "Failed to create bill from Peppol document: ${peppolDocument.id}",
+                    it
+                )
+            }
     }
 
     /**
@@ -232,35 +237,35 @@ class BillService(
         val lowerName = supplierName.lowercase()
         return when {
             lowerName.contains("telecom") || lowerName.contains("mobile") ||
-            lowerName.contains("proximus") || lowerName.contains("orange") ||
-            lowerName.contains("telenet") -> ExpenseCategory.Telecommunications
+                    lowerName.contains("proximus") || lowerName.contains("orange") ||
+                    lowerName.contains("telenet") -> ExpenseCategory.Telecommunications
 
             lowerName.contains("electric") || lowerName.contains("gas") ||
-            lowerName.contains("water") || lowerName.contains("engie") ||
-            lowerName.contains("luminus") -> ExpenseCategory.Utilities
+                    lowerName.contains("water") || lowerName.contains("engie") ||
+                    lowerName.contains("luminus") -> ExpenseCategory.Utilities
 
             lowerName.contains("software") || lowerName.contains("cloud") ||
-            lowerName.contains("microsoft") || lowerName.contains("google") ||
-            lowerName.contains("aws") || lowerName.contains("adobe") -> ExpenseCategory.Software
+                    lowerName.contains("microsoft") || lowerName.contains("google") ||
+                    lowerName.contains("aws") || lowerName.contains("adobe") -> ExpenseCategory.Software
 
             lowerName.contains("insurance") || lowerName.contains("axa") ||
-            lowerName.contains("ethias") -> ExpenseCategory.Insurance
+                    lowerName.contains("ethias") -> ExpenseCategory.Insurance
 
             lowerName.contains("office") || lowerName.contains("staples") ||
-            lowerName.contains("bol.com") -> ExpenseCategory.OfficeSupplies
+                    lowerName.contains("bol.com") -> ExpenseCategory.OfficeSupplies
 
             lowerName.contains("accountant") || lowerName.contains("lawyer") ||
-            lowerName.contains("consultant") || lowerName.contains("fiduciary") -> ExpenseCategory.ProfessionalServices
+                    lowerName.contains("consultant") || lowerName.contains("fiduciary") -> ExpenseCategory.ProfessionalServices
 
             lowerName.contains("rent") || lowerName.contains("lease") ||
-            lowerName.contains("immobili") -> ExpenseCategory.Rent
+                    lowerName.contains("immobili") -> ExpenseCategory.Rent
 
             lowerName.contains("fuel") || lowerName.contains("garage") ||
-            lowerName.contains("toyota") || lowerName.contains("volkswagen") -> ExpenseCategory.Vehicle
+                    lowerName.contains("toyota") || lowerName.contains("volkswagen") -> ExpenseCategory.Vehicle
 
             lowerName.contains("hotel") || lowerName.contains("airline") ||
-            lowerName.contains("train") || lowerName.contains("sncb") ||
-            lowerName.contains("nmbs") -> ExpenseCategory.Travel
+                    lowerName.contains("train") || lowerName.contains("sncb") ||
+                    lowerName.contains("nmbs") -> ExpenseCategory.Travel
 
             else -> ExpenseCategory.Other
         }

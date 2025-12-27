@@ -41,7 +41,6 @@ include(":foundation:app-common")
 include(":foundation:platform")
 include(":foundation:navigation")
 include(":foundation:ktor-common")
-include(":foundation:messaging")
 include(":foundation:database")
 include(":foundation:peppol-core")
 

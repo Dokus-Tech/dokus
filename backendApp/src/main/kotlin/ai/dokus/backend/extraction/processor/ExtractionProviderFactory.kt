@@ -1,7 +1,7 @@
 package ai.dokus.backend.extraction.processor
 
+import ai.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
-import org.slf4j.LoggerFactory
 
 /**
  * Factory for creating AI extraction providers.
@@ -11,7 +11,7 @@ class ExtractionProviderFactory(
     private val httpClient: HttpClient,
     private val config: AIConfig
 ) {
-    private val logger = LoggerFactory.getLogger(ExtractionProviderFactory::class.java)
+    private val logger = loggerFor()
 
     private val providers: Map<String, AIExtractionProvider> by lazy {
         mapOf(

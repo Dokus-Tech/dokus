@@ -2,6 +2,7 @@ package ai.dokus.backend.extraction.processor
 
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.model.ExtractedDocumentData
+import ai.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
@@ -32,7 +33,7 @@ class OllamaExtractionProvider(
 
     override val name = "ollama"
 
-    private val logger = LoggerFactory.getLogger(OllamaExtractionProvider::class.java)
+    private val logger = loggerFor()
 
     private val json = Json {
         ignoreUnknownKeys = true

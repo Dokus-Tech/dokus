@@ -3,7 +3,7 @@ package ai.dokus.backend.services.auth
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.ktor.cache.RedisClient
 import ai.dokus.foundation.ktor.database.now
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 import java.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -29,7 +29,7 @@ class RedisRateLimitService(
     private val lockoutDurationMinutes: Long = 15
 ) : RateLimitServiceInterface {
 
-    private val logger = LoggerFactory.getLogger(RedisRateLimitService::class.java)
+    private val logger = loggerFor()
     private val attemptWindow = attemptWindowMinutes.minutes
     private val lockoutDuration = lockoutDurationMinutes.minutes
 

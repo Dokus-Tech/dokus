@@ -1,8 +1,8 @@
 package ai.dokus.backend.worker.processor
 
-import ai.dokus.ai.services.ChunkRepository
-import ai.dokus.ai.services.ChunkWithEmbedding
 import ai.dokus.ai.services.ChunkingService
+import ai.dokus.foundation.domain.repository.ChunkRepository
+import ai.dokus.foundation.domain.repository.ChunkWithEmbedding
 import ai.dokus.ai.services.EmbeddingException
 import ai.dokus.ai.services.EmbeddingService
 import ai.dokus.foundation.database.repository.processor.ProcessingItem

@@ -3,7 +3,6 @@ package ai.dokus.backend.services.auth
 import ai.dokus.foundation.database.repository.auth.InvitationRepository
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.domain.Email
 import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.InvitationId
@@ -12,8 +11,8 @@ import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.CreateInvitationRequest
 import ai.dokus.foundation.domain.model.TeamMember
 import ai.dokus.foundation.domain.model.TenantInvitation
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
-import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -25,7 +24,7 @@ class TeamService(
     private val tenantRepository: TenantRepository,
     private val invitationRepository: InvitationRepository
 ) {
-    private val logger = LoggerFactory.getLogger(TeamService::class.java)
+    private val logger = loggerFor()
 
     companion object {
         /** Invitations expire after 30 days */
@@ -36,7 +35,7 @@ class TeamService(
      * List all team members in a tenant.
      */
     suspend fun listTeamMembers(tenantId: TenantId): List<TeamMember> {
-        logger.debug("Listing team members for tenant $tenantId")
+        logger.debug("Listing team members for tenant {}", tenantId)
 
         val usersInTenant = userRepository.listByTenant(tenantId, activeOnly = true)
 
@@ -69,7 +68,7 @@ class TeamService(
         invitedBy: UserId,
         request: CreateInvitationRequest
     ): Result<TenantInvitation> = runCatching {
-        logger.debug("Creating invitation for ${request.email} to tenant $tenantId")
+        logger.debug("Creating invitation for {} to tenant {}", request.email, tenantId)
 
         // Validate role - cannot invite as Owner
         if (request.role == UserRole.Owner) {

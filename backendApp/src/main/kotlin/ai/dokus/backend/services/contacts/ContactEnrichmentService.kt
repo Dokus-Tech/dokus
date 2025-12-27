@@ -6,7 +6,7 @@ import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactDto
 import ai.dokus.foundation.domain.model.UpdateContactRequest
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Service for progressively enriching contacts with data extracted from documents.
@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 class ContactEnrichmentService(
     private val contactRepository: ContactRepository
 ) {
-    private val logger = LoggerFactory.getLogger(ContactEnrichmentService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Data that can be used to enrich an existing contact.
@@ -121,7 +121,7 @@ class ContactEnrichmentService(
 
         logger.info(
             "Enriching contact $contactId with fields: ${toEnrich.map { it.first }}. " +
-            "Source document: $sourceDocumentId"
+                    "Source document: $sourceDocumentId"
         )
 
         val updatedContact = contactRepository.updateContact(contactId, tenantId, updateRequest)
