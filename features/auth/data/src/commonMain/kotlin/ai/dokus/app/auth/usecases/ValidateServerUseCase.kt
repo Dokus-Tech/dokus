@@ -1,9 +1,5 @@
 package ai.dokus.app.auth.usecases
 
-import tech.dokus.domain.config.ServerConfig
-import tech.dokus.domain.config.ServerInfo
-import tech.dokus.domain.config.ServerStatus
-import tech.dokus.domain.config.ServerValidationResult
 import ai.dokus.foundation.platform.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -13,6 +9,10 @@ import io.ktor.client.request.get
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerInfo
+import tech.dokus.domain.config.ServerStatus
+import tech.dokus.domain.config.ServerValidationResult
 
 /**
  * Validates that a server is a compatible Dokus instance.
@@ -62,11 +62,13 @@ class ValidateServerUseCase {
                         logger.w { "Server is in maintenance mode" }
                         ServerValidationResult.Invalid(ServerValidationResult.InvalidReason.MAINTENANCE)
                     }
+
                     ServerStatus.DOWN -> {
                         logger.w { "Server reports status as DOWN" }
                         ServerValidationResult.Invalid(ServerValidationResult.InvalidReason.UNREACHABLE)
                     }
-                    ServerStatus.UP -> {
+
+                    ServerStatus.UP, ServerStatus.WARN, ServerStatus.UNKNOWN -> {
                         ServerValidationResult.Valid(serverInfo)
                     }
                 }
