@@ -17,14 +17,14 @@ import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
-import ai.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.utils.loggerFor
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -46,7 +46,7 @@ data class TenantInvoiceConfig(
 
 @OptIn(ExperimentalUuidApi::class)
 class TenantRepository {
-    private val logger = LoggerFactory.getLogger(TenantRepository::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new tenant with required address.

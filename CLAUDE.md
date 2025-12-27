@@ -158,7 +158,7 @@ The backend services use **HOCON** (Typesafe Config) with a two-tier configurati
 **2. Cloud Configuration (`application-cloud.conf`):**
 - Extends base configuration
 - Production-optimized settings
-- Redis caching (requires `CACHE_TYPE=redis`)
+- Redis caching
 - Requires environment variables for sensitive data
 
 **Configuration Files:**
@@ -183,7 +183,6 @@ cp .env.example .env
 ```
 
 **CRITICAL Environment Variables (Cloud):**
-- `CACHE_TYPE=redis` - Cache implementation (redis or memory)
 - `DB_PASSWORD` - Database password
 - `REDIS_PASSWORD` - Redis password
 - `JWT_SECRET` - JWT signing secret (64+ characters)

@@ -7,8 +7,8 @@ import ai.dokus.foundation.database.tables.auth.AddressTable
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
-import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.ktor.database.now
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.database.now
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.eq

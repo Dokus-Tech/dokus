@@ -233,7 +233,7 @@ get_server_ip() {
 
 # Credentials
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep -E 'DB_PASSWORD|REDIS_PASSWORD|RABBITMQ_PASSWORD|MINIO_PASSWORD|JWT_SECRET|DOMAIN|ACME_EMAIL' | xargs)
+    export $(grep -v '^#' .env | grep -E 'DB_PASSWORD|REDIS_PASSWORD|MINIO_PASSWORD|JWT_SECRET|DOMAIN|ACME_EMAIL' | xargs)
     DB_USER="dokus"
     DB_PASSWORD="${DB_PASSWORD}"
 else
@@ -401,13 +401,6 @@ show_status() {
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
-    printf "  ${SOFT_GRAY}│${NC} RabbitMQ Broker         ${SOFT_GRAY}│${NC} "
-    if docker compose -f "$COMPOSE_FILE" exec -T rabbitmq rabbitmq-diagnostics ping &>/dev/null 2>&1; then
-        echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
-    else
-        echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
-    fi
-
     printf "  ${SOFT_GRAY}│${NC} MinIO Storage           ${SOFT_GRAY}│${NC} "
     if docker compose -f "$COMPOSE_FILE" exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
@@ -437,12 +430,11 @@ show_status() {
 
     # Check services via gateway (services don't expose ports directly)
     local services=(
-        "Auth Service:/api/v1/server/info"
-        "Cashflow Service:/api/v1/invoices"
-        "Payment Service:/api/v1/payments"
-        "Banking Service:/api/v1/banking"
-        "Contacts Service:/api/v1/contacts"
-        "Processor Service:container:processor-service"
+        "Dokus Server:/api/v1/server/info"
+        "Cashflow API:/api/v1/invoices"
+        "Payments API:/api/v1/payments"
+        "Banking API:/api/v1/banking"
+        "Contacts API:/api/v1/contacts"
         "Web Frontend:/"
     )
 
@@ -510,21 +502,21 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}┌─────────────────────────────┬────────────────────────────────────┐${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${BOLD}Route Prefix${NC}                ${SOFT_GRAY}│${NC} ${BOLD}Service${NC}                            ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Auth Service${NC}                     ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/identity/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/account/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/tenants/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/team/*${NC}             ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Cashflow Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/invoices/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/expenses/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/cashflow/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/documents/*${NC}        ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Payment Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/payments/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Banking Service${NC}                  ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/banking/*${NC}          ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Contacts Service${NC}                 ${SOFT_GRAY}│${NC}"
+    echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/api/v1/contacts/*${NC}         ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Dokus Server${NC}                    ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}├─────────────────────────────┼────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${DIM_WHITE}/*${NC}                          ${SOFT_GRAY}│${NC} ${SOFT_CYAN}Web Frontend (WASM)${NC}              ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└─────────────────────────────┴────────────────────────────────────┘${NC}"
@@ -537,7 +529,6 @@ print_services_info() {
     echo_e "  ${SOFT_GRAY}├──────────────────────┼─────────────────────────────────────────┤${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_CYAN}PostgreSQL${NC}           ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:${DB_PORT}${NC} • ${SOFT_GRAY}${DB_NAME}${NC}            ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_ORANGE}Redis Cache${NC}          ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:16379${NC}                     ${SOFT_GRAY}│${NC}"
-    echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}RabbitMQ${NC}             ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:25672${NC} • ${SOFT_GRAY}UI: 25673${NC}         ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_YELLOW}MinIO Storage${NC}        ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:9000${NC} • ${SOFT_GRAY}Console: 9001${NC}     ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}│${NC} ${SOFT_MAGENTA}Ollama AI${NC}            ${SOFT_GRAY}│${NC} ${DIM_WHITE}localhost:11434${NC}                     ${SOFT_GRAY}│${NC}"
     echo_e "  ${SOFT_GRAY}└──────────────────────┴─────────────────────────────────────────┘${NC}"
@@ -557,7 +548,7 @@ start_services() {
     docker compose -f "$COMPOSE_FILE" pull -q
 
     print_status info "Starting services..."
-    docker compose -f "$COMPOSE_FILE" up -d
+    docker compose --compatibility -f "$COMPOSE_FILE" up -d
 
     if [ $? -eq 0 ]; then
         print_status success "Containers ignited"
@@ -600,7 +591,7 @@ update_services() {
 
     echo ""
     print_status info "Applying updates (restart/recreate as needed)..."
-    docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+    docker compose --compatibility -f "$COMPOSE_FILE" up -d --remove-orphans
 
     echo ""
     print_status success "Update complete"
@@ -809,7 +800,6 @@ initial_setup() {
     # Generate secure passwords
     DB_PASS=$(generate_password)
     REDIS_PASS=$(generate_password)
-    RABBITMQ_PASS=$(generate_password)
     MINIO_PASS=$(generate_password)
     JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64 2>/dev/null || LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 64)
 
@@ -817,13 +807,12 @@ initial_setup() {
     print_status task "Core Credentials"
     DB_PASSWORD=$(prompt_with_default "Database password:" "$DB_PASS" "DB_PASSWORD" "true")
     REDIS_PASSWORD=$(prompt_with_default "Redis password:" "$REDIS_PASS" "REDIS_PASSWORD" "true")
-    RABBITMQ_PASSWORD=$(prompt_with_default "RabbitMQ password:" "$RABBITMQ_PASS" "RABBITMQ_PASSWORD" "true")
     MINIO_PASSWORD=$(prompt_with_default "MinIO password:" "$MINIO_PASS" "MINIO_PASSWORD" "true")
     JWT_SECRET_VAL=$(prompt_with_default "JWT secret (64+ chars):" "$JWT_SECRET" "JWT_SECRET" "true")
 
     # Create logs directory
-    mkdir -p logs/traefik
-    print_status success "Created logs/traefik/ directory"
+    mkdir -p logs/traefik logs/server
+    print_status success "Created logs/traefik/ and logs/server/ directories"
 
     # Cloud profile needs additional gateway config
     if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
@@ -843,7 +832,6 @@ initial_setup() {
 # ============================================================================
 DB_PASSWORD=$DB_PASSWORD
 REDIS_PASSWORD=$REDIS_PASSWORD
-RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
 MINIO_PASSWORD=$MINIO_PASSWORD
 JWT_SECRET=$JWT_SECRET_VAL
 
@@ -876,7 +864,6 @@ EOF
 # ============================================================================
 DB_PASSWORD=$DB_PASSWORD
 REDIS_PASSWORD=$REDIS_PASSWORD
-RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD
 MINIO_PASSWORD=$MINIO_PASSWORD
 JWT_SECRET=$JWT_SECRET_VAL
 
@@ -902,21 +889,42 @@ EOF
 
     echo ""
     print_status task "Starting Dokus services"
-    docker compose -f "$COMPOSE_FILE" up -d
+    docker compose --compatibility -f "$COMPOSE_FILE" up -d
     print_status success "Services started"
 
     echo ""
-    print_status task "Waiting for services to report healthy"
-    sleep 10
+    print_status task "Waiting for services to become ready"
+    sleep 5
 
-    local MAX_RETRIES=30
+    local MAX_RETRIES=40
     local RETRY_COUNT=0
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        HEALTHY_COUNT=$(docker compose -f "$COMPOSE_FILE" ps | grep -c "healthy" || true)
-        if [ $HEALTHY_COUNT -ge 7 ]; then
-            print_status success "All services are healthy"
+        local pg_ok=0
+        local redis_ok=0
+        local minio_ok=0
+        local api_ok=0
+
+        if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+            pg_ok=1
+        fi
+
+        if docker compose -f "$COMPOSE_FILE" exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
+            redis_ok=1
+        fi
+
+        if docker compose -f "$COMPOSE_FILE" exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
+            minio_ok=1
+        fi
+
+        if gateway_is_reachable "/api/v1/server/info"; then
+            api_ok=1
+        fi
+
+        if [ $pg_ok -eq 1 ] && [ $redis_ok -eq 1 ] && [ $minio_ok -eq 1 ] && [ $api_ok -eq 1 ]; then
+            print_status success "Core services are ready"
             break
         fi
+
         RETRY_COUNT=$((RETRY_COUNT + 1))
         printf "."
         sleep 5
@@ -1054,7 +1062,7 @@ configure_autostart() {
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>cd $SCRIPT_PATH && docker compose -f $COMPOSE_FILE up -d</string>
+        <string>cd $SCRIPT_PATH && docker compose --compatibility -f $COMPOSE_FILE up -d</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -1086,7 +1094,7 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$WORKING_DIR
-ExecStart=/usr/bin/docker compose -f $COMPOSE_FILE up -d
+ExecStart=/usr/bin/docker compose --compatibility -f $COMPOSE_FILE up -d
 ExecStop=/usr/bin/docker compose -f $COMPOSE_FILE down
 User=$USER
 

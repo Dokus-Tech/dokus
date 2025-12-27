@@ -149,13 +149,13 @@ jobs:
 
             **Windows:**
             1. Download `dokus-quick-deploy.zip` from assets
-            2. Extract and run `dokus.bat`
+            2. Extract and run `dokus.sh` using WSL2 (recommended), or start via `docker compose` manually
 
             **What's included:**
-            - All 6 backend services (auth, cashflow, payment, contacts, banking, gateway)
+            - Single backend service (`dokus-server`) – modular monolith (auth + cashflow + contacts + payments + processor worker)
             - Interactive setup with auto-generated passwords
             - Multi-architecture support (AMD64 + ARM64)
-            - PostgreSQL, Redis, RabbitMQ
+            - PostgreSQL, Redis, MinIO, Traefik
 
             ## Verification
 

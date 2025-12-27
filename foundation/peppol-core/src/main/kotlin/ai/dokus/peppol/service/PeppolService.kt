@@ -22,6 +22,7 @@ import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.SendInvoiceViaPeppolResponse
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
+import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.mapper.PeppolMapper
 import ai.dokus.peppol.model.PeppolVerifyResponse
 import ai.dokus.peppol.provider.PeppolProvider
@@ -32,7 +33,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 
 /**
  * Provider-agnostic Peppol service.
@@ -50,7 +50,7 @@ class PeppolService(
     private val mapper: PeppolMapper,
     private val validator: PeppolValidator
 ) {
-    private val logger = LoggerFactory.getLogger(PeppolService::class.java)
+    private val logger = loggerFor()
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     // ========================================================================
@@ -61,7 +61,7 @@ class PeppolService(
      * Get Peppol settings for a tenant.
      */
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> {
-        logger.debug("Getting Peppol settings for tenant: $tenantId")
+        logger.debug("Getting Peppol settings for tenant: {}", tenantId)
         return settingsRepository.getSettings(tenantId)
     }
 
@@ -119,13 +119,20 @@ class PeppolService(
         tenantSettings: TenantSettings,
         tenantId: TenantId
     ): Result<PeppolValidationResult> {
-        logger.debug("Validating invoice ${invoice.id} for Peppol sending")
+        logger.debug("Validating invoice {} for Peppol sending", invoice.id)
 
         return runCatching {
             val peppolSettings = settingsRepository.getSettings(tenantId).getOrThrow()
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
-            validator.validateForSending(invoice, contact, tenant, companyAddress, tenantSettings, peppolSettings)
+            validator.validateForSending(
+                invoice,
+                contact,
+                tenant,
+                companyAddress,
+                tenantSettings,
+                peppolSettings
+            )
         }
     }
 
@@ -193,7 +200,14 @@ class PeppolService(
 
             // Build and send request
             val sendRequest =
-                mapper.toSendRequest(invoice, contact, tenant, tenantSettings, peppolSettings, companyAddress)
+                mapper.toSendRequest(
+                    invoice,
+                    contact,
+                    tenant,
+                    tenantSettings,
+                    peppolSettings,
+                    companyAddress
+                )
             val rawRequest = provider.serializeRequest(sendRequest)
 
             val response = provider.sendDocument(sendRequest).getOrThrow()
@@ -343,7 +357,7 @@ class PeppolService(
         limit: Int = 50,
         offset: Int = 0
     ): Result<List<PeppolTransmissionDto>> {
-        logger.debug("Listing Peppol transmissions for tenant: $tenantId")
+        logger.debug("Listing Peppol transmissions for tenant: {}", tenantId)
         return transmissionRepository.listTransmissions(tenantId, direction, status, limit, offset)
     }
 
@@ -354,7 +368,7 @@ class PeppolService(
         invoiceId: InvoiceId,
         tenantId: TenantId
     ): Result<PeppolTransmissionDto?> {
-        logger.debug("Getting Peppol transmission for invoice: $invoiceId")
+        logger.debug("Getting Peppol transmission for invoice: {}", invoiceId)
         return transmissionRepository.getTransmissionByInvoiceId(invoiceId, tenantId)
     }
 

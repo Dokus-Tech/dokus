@@ -3051,8 +3051,8 @@ To find an error in backend logs:
 # Search for a specific error ID in logs
 grep "ERR-550e8400-e29b-41d4-a716-446655440000" /var/log/dokus/*.log
 
-# Search across all services with kubectl
-kubectl logs -l app=dokus-auth --all-containers | grep "ERR-550e8400"
+# Search logs in Kubernetes
+kubectl logs -l app=dokus-server --all-containers | grep "ERR-550e8400"
 
 # Using structured logging query (if using JSON logs)
 jq 'select(.errorId == "ERR-550e8400-e29b-41d4-a716-446655440000")' logs.json

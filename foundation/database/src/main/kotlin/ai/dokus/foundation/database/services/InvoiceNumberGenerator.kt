@@ -3,10 +3,10 @@ package ai.dokus.foundation.database.services
 import ai.dokus.foundation.database.repository.cashflow.InvoiceNumberRepository
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.ktor.utils.loggerFor
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -45,7 +45,7 @@ data class InvoiceNumberConfig(
 class InvoiceNumberGenerator(
     private val invoiceNumberRepository: InvoiceNumberRepository
 ) {
-    private val logger = LoggerFactory.getLogger(InvoiceNumberGenerator::class.java)
+    private val logger = loggerFor()
 
     /**
      * Generate the next invoice number for a tenant.
