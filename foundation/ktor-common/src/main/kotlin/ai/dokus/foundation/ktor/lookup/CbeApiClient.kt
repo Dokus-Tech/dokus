@@ -5,6 +5,7 @@ import ai.dokus.foundation.domain.ids.VatNumber
 import ai.dokus.foundation.domain.model.EntityAddress
 import ai.dokus.foundation.domain.model.EntityLookup
 import ai.dokus.foundation.domain.model.EntityStatus
+import ai.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -24,7 +25,7 @@ class CbeApiClient(
     private val httpClient: HttpClient,
     private val apiSecret: String,
 ) {
-    private val logger = LoggerFactory.getLogger(CbeApiClient::class.java)
+    private val logger = loggerFor()
     private val baseUrl = "https://cbeapi.be/api"
 
     /**

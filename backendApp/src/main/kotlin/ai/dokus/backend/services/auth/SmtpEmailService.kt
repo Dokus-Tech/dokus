@@ -2,12 +2,16 @@
 
 package ai.dokus.backend.services.auth
 
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 import java.util.Properties
-import javax.mail.*
+import javax.mail.Authenticator
+import javax.mail.Message
+import javax.mail.PasswordAuthentication
+import javax.mail.Session
+import javax.mail.Transport
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeBodyPart
 import javax.mail.internet.MimeMessage
@@ -33,7 +37,7 @@ import javax.mail.internet.MimeMultipart
 class SmtpEmailService(
     private val config: EmailConfig
 ) : EmailService {
-    private val logger = LoggerFactory.getLogger(SmtpEmailService::class.java)
+    private val logger = loggerFor()
     private val session: Session by lazy { createSession() }
 
     init {
@@ -73,7 +77,8 @@ class SmtpEmailService(
         expirationHours: Int
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val verificationUrl = "${config.templates.baseUrl}/verify-email?token=$verificationToken"
+            val verificationUrl =
+                "${config.templates.baseUrl}/verify-email?token=$verificationToken"
             val subject = "Verify Your Dokus Email Address"
 
             val htmlContent = buildEmailVerificationHtml(verificationUrl, expirationHours)
@@ -284,7 +289,8 @@ class SmtpEmailService(
         © ${java.time.Year.now().value} Dokus. All rights reserved.
     """.trimIndent()
 
-    private fun buildEmailVerificationHtml(verificationUrl: String, expirationHours: Int): String = """
+    private fun buildEmailVerificationHtml(verificationUrl: String, expirationHours: Int): String =
+        """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -324,7 +330,8 @@ class SmtpEmailService(
         </html>
     """.trimIndent()
 
-    private fun buildEmailVerificationText(verificationUrl: String, expirationHours: Int): String = """
+    private fun buildEmailVerificationText(verificationUrl: String, expirationHours: Int): String =
+        """
         Verify Your Email Address
 
         Thank you for signing up with Dokus! Please verify your email address by clicking the link below:

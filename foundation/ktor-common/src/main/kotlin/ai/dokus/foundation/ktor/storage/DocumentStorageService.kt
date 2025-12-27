@@ -1,7 +1,7 @@
 package ai.dokus.foundation.ktor.storage
 
 import ai.dokus.foundation.domain.ids.TenantId
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 import java.text.Normalizer
 import java.util.UUID
 import kotlin.time.Duration
@@ -15,7 +15,7 @@ class DocumentStorageService(
     private val storage: ObjectStorage,
     private val defaultUrlExpiry: Duration = 1.hours
 ) {
-    private val logger = LoggerFactory.getLogger(DocumentStorageService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Upload a document and return the result with a signed URL.

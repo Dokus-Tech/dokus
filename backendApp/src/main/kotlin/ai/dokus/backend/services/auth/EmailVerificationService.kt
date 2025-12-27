@@ -3,13 +3,13 @@
 package ai.dokus.backend.services.auth
 
 import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.ktor.database.now
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.time.Duration.Companion.hours
@@ -35,7 +35,7 @@ class EmailVerificationService(
     private val userRepository: UserRepository,
     private val emailService: EmailService
 ) {
-    private val logger = LoggerFactory.getLogger(EmailVerificationService::class.java)
+    private val logger = loggerFor()
     private val emailScope = CoroutineScope(Dispatchers.IO)
 
     /**
@@ -63,7 +63,10 @@ class EmailVerificationService(
                         logger.debug("Email verification sent successfully to ${email.take(3)}***")
                     }
                     .onFailure { error ->
-                        logger.error("Failed to send verification email, but token was created", error)
+                        logger.error(
+                            "Failed to send verification email, but token was created",
+                            error
+                        )
                     }
             }
 

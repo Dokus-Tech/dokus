@@ -2,11 +2,11 @@ package ai.dokus.foundation.ktor.storage
 
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CompanyAvatar
+import ai.dokus.foundation.ktor.utils.loggerFor
 import com.sksamuel.scrimage.ImmutableImage
 import com.sksamuel.scrimage.webp.WebpWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -25,7 +25,7 @@ class AvatarStorageService(
     private val storage: ObjectStorage,
     private val defaultUrlExpiry: Duration = 24.hours // Longer expiry for avatars
 ) {
-    private val logger = LoggerFactory.getLogger(AvatarStorageService::class.java)
+    private val logger = loggerFor()
 
     companion object {
         val AVATAR_SIZES = mapOf(
@@ -121,26 +121,27 @@ class AvatarStorageService(
      * @param storageKeyPrefix The key prefix stored in the database
      * @return Fresh presigned URLs for all sizes, or null if avatar doesn't exist
      */
-    suspend fun getAvatarUrls(storageKeyPrefix: String): CompanyAvatar? = withContext(Dispatchers.IO) {
-        // Check if avatar exists by checking one of the sizes
-        val smallKey = "${storageKeyPrefix}_small.webp"
+    suspend fun getAvatarUrls(storageKeyPrefix: String): CompanyAvatar? =
+        withContext(Dispatchers.IO) {
+            // Check if avatar exists by checking one of the sizes
+            val smallKey = "${storageKeyPrefix}_small.webp"
 
-        if (!storage.exists(smallKey)) {
-            logger.debug("Avatar not found: $storageKeyPrefix")
-            return@withContext null
+            if (!storage.exists(smallKey)) {
+                logger.debug("Avatar not found: $storageKeyPrefix")
+                return@withContext null
+            }
+
+            val urls = AVATAR_SIZES.keys.associateWith { sizeName ->
+                val key = "${storageKeyPrefix}_$sizeName.webp"
+                storage.getSignedUrl(key, defaultUrlExpiry)
+            }
+
+            CompanyAvatar(
+                small = urls["small"]!!,
+                medium = urls["medium"]!!,
+                large = urls["large"]!!
+            )
         }
-
-        val urls = AVATAR_SIZES.keys.associateWith { sizeName ->
-            val key = "${storageKeyPrefix}_$sizeName.webp"
-            storage.getSignedUrl(key, defaultUrlExpiry)
-        }
-
-        CompanyAvatar(
-            small = urls["small"]!!,
-            medium = urls["medium"]!!,
-            large = urls["large"]!!
-        )
-    }
 
     /**
      * Delete an avatar and all its sizes.

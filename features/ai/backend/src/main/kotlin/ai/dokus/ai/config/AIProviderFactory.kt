@@ -1,13 +1,13 @@
 package ai.dokus.ai.config
 
+import ai.dokus.foundation.ktor.utils.loggerFor
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import ai.koog.prompt.executor.model.PromptExecutor
-import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.OllamaModels
-import org.slf4j.LoggerFactory
 
 /**
  * Factory for creating AI prompt executors and models based on configuration.
@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory
  * HTTP calls to provider APIs, as Koog doesn't have built-in embedding support for Ollama.
  */
 object AIProviderFactory {
-    private val logger = LoggerFactory.getLogger(AIProviderFactory::class.java)
-
+    private val logger = loggerFor()
     // =========================================================================
     // Embedding Model Constants
     // =========================================================================
@@ -51,6 +50,7 @@ object AIProviderFactory {
                 logger.info("Creating Ollama executor: ${config.ollama.baseUrl}")
                 simpleOllamaAIExecutor(config.ollama.baseUrl)
             }
+
             AIConfig.AIProvider.OPENAI -> {
                 logger.info("Creating OpenAI executor")
                 simpleOpenAIExecutor(config.openai.apiKey)
@@ -153,6 +153,7 @@ object AIProviderFactory {
                 provider = config.defaultProvider,
                 baseUrl = config.ollama.baseUrl
             )
+
             AIConfig.AIProvider.OPENAI -> EmbeddingConfig(
                 modelName = config.getEmbeddingModel(),
                 dimensions = getEmbeddingDimensions(config.getEmbeddingModel()),

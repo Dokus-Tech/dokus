@@ -4,6 +4,7 @@ import ai.dokus.foundation.domain.model.RecommandDocumentsResponse
 import ai.dokus.foundation.domain.model.RecommandInboxDocument
 import ai.dokus.foundation.domain.model.RecommandMarkAsReadRequest
 import ai.dokus.foundation.domain.model.RecommandSendResponse
+import ai.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.model.PeppolDirection
 import ai.dokus.peppol.model.PeppolDocumentList
 import ai.dokus.peppol.model.PeppolInboxItem
@@ -25,7 +26,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 
 /**
  * Peppol provider implementation for Recommand.eu
@@ -47,8 +47,7 @@ class RecommandProvider(
     private val globalTestMode: Boolean = false,
 ) : PeppolProvider {
 
-    private val logger = LoggerFactory.getLogger(RecommandProvider::class.java)
-
+    private val logger = loggerFor()
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true

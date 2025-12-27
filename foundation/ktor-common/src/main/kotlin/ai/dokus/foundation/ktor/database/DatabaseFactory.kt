@@ -1,6 +1,7 @@
 package ai.dokus.foundation.ktor.database
 
 import ai.dokus.foundation.ktor.config.AppBaseConfig
+import ai.dokus.foundation.ktor.utils.loggerFor
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,7 @@ class DatabaseFactory(
     private val appConfig: AppBaseConfig,
     private val poolName: String
 ) {
-    private val logger = LoggerFactory.getLogger(DatabaseFactory::class.java)
+    private val logger = loggerFor()
     private var dataSource: HikariDataSource? = null
     lateinit var database: Database
 
@@ -42,7 +43,10 @@ class DatabaseFactory(
      * Connect and create the specified tables.
      * @deprecated Use connect() + service-specific table initializers instead
      */
-    @Deprecated("Use connect() + service-specific table initializers", level = DeprecationLevel.WARNING)
+    @Deprecated(
+        "Use connect() + service-specific table initializers",
+        level = DeprecationLevel.WARNING
+    )
     suspend fun init(vararg tables: Table): Database {
         connect()
         createTables(*tables)

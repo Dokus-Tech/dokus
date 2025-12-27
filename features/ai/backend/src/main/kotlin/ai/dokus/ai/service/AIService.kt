@@ -14,7 +14,7 @@ import ai.dokus.ai.models.DocumentProcessingResult
 import ai.dokus.ai.models.ExtractedDocumentData
 import ai.dokus.ai.models.ExtractedInvoiceData
 import ai.dokus.ai.models.ExtractedReceiptData
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * High-level AI service that orchestrates document processing agents.
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory
 class AIService(
     private val config: AIConfig
 ) {
-    private val logger = LoggerFactory.getLogger(AIService::class.java)
+    private val logger = loggerFor()
 
     // Create executor once for all agents
     private val executor by lazy {
@@ -89,17 +89,20 @@ class AIService(
                 val data = invoiceAgent.extract(ocrText)
                 ExtractedDocumentData.Invoice(data)
             }
+
             ClassifiedDocumentType.RECEIPT -> {
                 logger.debug("Extracting as receipt")
                 val data = receiptAgent.extract(ocrText)
                 ExtractedDocumentData.Receipt(data)
             }
+
             ClassifiedDocumentType.BILL -> {
                 // Bills use invoice extraction (similar structure)
                 logger.debug("Extracting as bill (using invoice structure)")
                 val data = invoiceAgent.extract(ocrText)
                 ExtractedDocumentData.Bill(data)
             }
+
             ClassifiedDocumentType.UNKNOWN -> {
                 logger.warn("Could not classify document type")
                 throw IllegalArgumentException("Could not classify document type. Classification confidence too low.")
@@ -180,6 +183,7 @@ class AIService(
                     append(", URL: ${config.ollama.baseUrl}")
                     append(", Model: ${config.ollama.defaultModel}")
                 }
+
                 AIConfig.AIProvider.OPENAI -> {
                     append(", Model: ${config.openai.defaultModel}")
                     append(", API Key: ${if (config.openai.apiKey.isNotBlank()) "configured" else "missing"}")

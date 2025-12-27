@@ -8,6 +8,7 @@ import ai.dokus.foundation.domain.model.AuthenticationInfo
 import ai.dokus.foundation.domain.model.auth.JwtClaims
 import ai.dokus.foundation.domain.model.auth.TenantClaimDto
 import ai.dokus.foundation.ktor.config.JwtConfig
+import ai.dokus.foundation.ktor.utils.loggerFor
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
@@ -15,7 +16,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.Payload
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -26,7 +26,7 @@ import kotlin.uuid.Uuid
 class JwtValidator(
     config: JwtConfig,
 ) {
-    private val logger = LoggerFactory.getLogger(JwtValidator::class.java)
+    private val logger = loggerFor()
     private val algorithm = Algorithm.HMAC256(config.secret)
     private val json = Json { ignoreUnknownKeys = true }
 

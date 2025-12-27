@@ -1,12 +1,12 @@
 package ai.dokus.backend.jobs.auth
 
 import ai.dokus.backend.services.auth.RateLimitServiceInterface
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.hours
 
 /**
@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.hours
 class RateLimitCleanupJob(
     private val rateLimitService: RateLimitServiceInterface
 ) {
-    private val logger = LoggerFactory.getLogger(RateLimitCleanupJob::class.java)
+    private val logger = loggerFor()
     private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {

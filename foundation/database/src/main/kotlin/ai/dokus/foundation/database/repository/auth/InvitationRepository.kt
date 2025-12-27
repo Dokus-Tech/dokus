@@ -10,6 +10,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.TenantInvitation
 import ai.dokus.foundation.ktor.database.dbQuery
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -21,7 +22,6 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import org.slf4j.LoggerFactory
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.uuid.ExperimentalUuidApi
@@ -34,7 +34,7 @@ import kotlin.uuid.toKotlinUuid
  */
 @OptIn(ExperimentalUuidApi::class)
 class InvitationRepository {
-    private val logger = LoggerFactory.getLogger(InvitationRepository::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new invitation for a user to join a tenant.

@@ -8,7 +8,7 @@ import ai.dokus.foundation.domain.model.ContactStats
 import ai.dokus.foundation.domain.model.CreateContactRequest
 import ai.dokus.foundation.domain.model.PaginatedResponse
 import ai.dokus.foundation.domain.model.UpdateContactRequest
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Service for contact business operations.
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class ContactService(
     private val contactRepository: ContactRepository
 ) {
-    private val logger = LoggerFactory.getLogger(ContactService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new contact for a tenant.
@@ -59,7 +59,14 @@ class ContactService(
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> {
         logger.debug("Listing contacts for tenant: $tenantId (isActive=$isActive, peppolEnabled=$peppolEnabled, limit=$limit, offset=$offset)")
-        return contactRepository.listContacts(tenantId, isActive, peppolEnabled, searchQuery, limit, offset)
+        return contactRepository.listContacts(
+            tenantId,
+            isActive,
+            peppolEnabled,
+            searchQuery,
+            limit,
+            offset
+        )
             .onSuccess { logger.debug("Retrieved ${it.items.size} contacts (total=${it.total})") }
             .onFailure { logger.error("Failed to list contacts for tenant: $tenantId", it) }
     }
@@ -188,6 +195,11 @@ class ContactService(
         logger.debug("Listing Peppol-enabled contacts for tenant: $tenantId")
         return contactRepository.listPeppolEnabledContacts(tenantId)
             .onSuccess { logger.debug("Retrieved ${it.size} Peppol-enabled contacts") }
-            .onFailure { logger.error("Failed to list Peppol-enabled contacts for tenant: $tenantId", it) }
+            .onFailure {
+                logger.error(
+                    "Failed to list Peppol-enabled contacts for tenant: $tenantId",
+                    it
+                )
+            }
     }
 }

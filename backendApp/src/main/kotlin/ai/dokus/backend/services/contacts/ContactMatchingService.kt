@@ -4,7 +4,7 @@ import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.ContactMatchReason
 import ai.dokus.foundation.domain.model.ContactSuggestion
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Service for matching extracted counterparty data to existing contacts.
@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 class ContactMatchingService(
     private val contactRepository: ContactRepository
 ) {
-    private val logger = LoggerFactory.getLogger(ContactMatchingService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Extracted counterparty data from a document.
@@ -56,7 +56,7 @@ class ContactMatchingService(
         tenantId: TenantId,
         extracted: ExtractedCounterparty
     ): Result<ContactSuggestion> = runCatching {
-        logger.debug("Finding contact match for tenant: $tenantId, extracted: $extracted")
+        logger.debug("Finding contact match for tenant: {}, extracted: {}", tenantId, extracted)
 
         // 1. Try VAT number (highest confidence)
         if (!extracted.vatNumber.isNullOrBlank()) {
@@ -90,7 +90,8 @@ class ContactMatchingService(
 
         // 3. Try company number (high confidence)
         if (!extracted.companyNumber.isNullOrBlank()) {
-            val match = contactRepository.findByCompanyNumber(tenantId, extracted.companyNumber).getOrNull()
+            val match =
+                contactRepository.findByCompanyNumber(tenantId, extracted.companyNumber).getOrNull()
             if (match != null) {
                 logger.info("Matched contact by company number: ${match.id} for: ${extracted.companyNumber}")
                 return@runCatching ContactSuggestion(
@@ -155,7 +156,7 @@ class ContactMatchingService(
         }
 
         // 6. No match found
-        logger.debug("No contact match found for: $extracted")
+        logger.debug("No contact match found for: {}", extracted)
         ContactSuggestion(
             contactId = null,
             contact = null,

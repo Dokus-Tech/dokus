@@ -7,7 +7,7 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.model.ContactNoteDto
 import ai.dokus.foundation.domain.model.PaginatedResponse
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Service for contact notes business operations.
@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
 class ContactNoteService(
     private val contactNoteRepository: ContactNoteRepository
 ) {
-    private val logger = LoggerFactory.getLogger(ContactNoteService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new note for a contact.
@@ -42,7 +42,7 @@ class ContactNoteService(
         noteId: ContactNoteId,
         tenantId: TenantId
     ): Result<ContactNoteDto?> {
-        logger.debug("Fetching note: $noteId")
+        logger.debug("Fetching note: {}", noteId)
         return contactNoteRepository.getNote(noteId, tenantId)
             .onFailure { logger.error("Failed to fetch note: $noteId", it) }
     }
@@ -56,7 +56,12 @@ class ContactNoteService(
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactNoteDto>> {
-        logger.debug("Listing notes for contact: $contactId (limit=$limit, offset=$offset)")
+        logger.debug(
+            "Listing notes for contact: {} (limit={}, offset={})",
+            contactId,
+            limit,
+            offset
+        )
         return contactNoteRepository.listNotes(contactId, tenantId, limit, offset)
             .onSuccess { logger.debug("Retrieved ${it.items.size} notes (total=${it.total})") }
             .onFailure { logger.error("Failed to list notes for contact: $contactId", it) }

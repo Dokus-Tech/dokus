@@ -5,18 +5,18 @@ package ai.dokus.backend.services.auth
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.ktor.security.TokenBlacklistService
-import kotlin.uuid.ExperimentalUuidApi
+import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.ktor.database.now
+import ai.dokus.foundation.ktor.security.TokenBlacklistService
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import java.security.SecureRandom
 import java.util.Base64
 import kotlin.time.Duration.Companion.hours
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Service for handling password reset flows with email tokens.
@@ -43,7 +43,7 @@ class PasswordResetService(
     private val emailService: EmailService,
     private val tokenBlacklistService: TokenBlacklistService? = null
 ) {
-    private val logger = LoggerFactory.getLogger(PasswordResetService::class.java)
+    private val logger = loggerFor()
     private val emailScope = CoroutineScope(Dispatchers.IO)
 
     /**
@@ -87,7 +87,10 @@ class PasswordResetService(
                             logger.debug("Password reset email sent successfully to ${email.take(3)}***")
                         }
                         .onFailure { error ->
-                            logger.error("Failed to send password reset email, but token was created", error)
+                            logger.error(
+                                "Failed to send password reset email, but token was created",
+                                error
+                            )
                         }
                 }
             } else {

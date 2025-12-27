@@ -7,8 +7,8 @@ import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.LocalDate
-import org.slf4j.LoggerFactory
 
 /**
  * Service for invoice business operations.
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class InvoiceService(
     private val invoiceRepository: InvoiceRepository
 ) {
-    private val logger = LoggerFactory.getLogger(InvoiceService::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new invoice for a tenant.

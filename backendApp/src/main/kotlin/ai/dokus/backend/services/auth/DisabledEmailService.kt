@@ -1,6 +1,6 @@
 package ai.dokus.backend.services.auth
 
-import org.slf4j.LoggerFactory
+import ai.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * No-op email service for development and testing.
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
  * All operations return success and log what would have been sent.
  */
 class DisabledEmailService : EmailService {
-    private val logger = LoggerFactory.getLogger(DisabledEmailService::class.java)
+    private val logger = loggerFor()
 
     init {
         logger.warn("Email service is DISABLED - emails will be logged but not sent")

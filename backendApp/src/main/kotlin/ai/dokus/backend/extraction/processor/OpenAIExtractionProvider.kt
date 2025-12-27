@@ -2,6 +2,7 @@ package ai.dokus.backend.extraction.processor
 
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.model.ExtractedDocumentData
+import ai.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -16,7 +17,6 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.text.PDFTextStripper
-import org.slf4j.LoggerFactory
 import java.util.Base64
 import kotlin.system.measureTimeMillis
 
@@ -33,7 +33,7 @@ class OpenAIExtractionProvider(
 
     override val name = "openai"
 
-    private val logger = LoggerFactory.getLogger(OpenAIExtractionProvider::class.java)
+    private val logger = loggerFor()
 
     private val json = Json {
         ignoreUnknownKeys = true

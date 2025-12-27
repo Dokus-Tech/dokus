@@ -9,17 +9,17 @@ import ai.dokus.foundation.domain.model.PeppolConnectStatus
 import ai.dokus.foundation.domain.model.RecommandCompanySummary
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.domain.model.Tenant
+import ai.dokus.foundation.ktor.utils.loggerFor
 import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
 import ai.dokus.peppol.providers.recommand.RecommandCompany
 import ai.dokus.peppol.providers.recommand.RecommandCreateCompanyRequest
 import ai.dokus.peppol.providers.recommand.RecommandUnauthorizedException
-import org.slf4j.LoggerFactory
 
 class PeppolConnectionService(
     private val settingsRepository: PeppolSettingsRepository,
     private val recommandCompaniesClient: RecommandCompaniesClient,
 ) {
-    private val logger = LoggerFactory.getLogger(PeppolConnectionService::class.java)
+    private val logger = loggerFor()
 
     suspend fun connectRecommand(
         tenant: Tenant,

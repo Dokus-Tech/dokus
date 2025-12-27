@@ -24,8 +24,8 @@ import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
 import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
 import ai.dokus.foundation.ktor.database.dbQuery
+import ai.dokus.foundation.ktor.utils.loggerFor
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
-import org.slf4j.LoggerFactory
 
 /**
  * Central database schema initializer for the modular monolith.
@@ -33,8 +33,7 @@ import org.slf4j.LoggerFactory
  * This replaces per-service table bootstrap to avoid cross-service FK ordering issues.
  */
 object DokusSchema {
-    private val logger = LoggerFactory.getLogger(DokusSchema::class.java)
-
+    private val logger = loggerFor()
     /**
      * Creates all tables (idempotently) in a deterministic order.
      */

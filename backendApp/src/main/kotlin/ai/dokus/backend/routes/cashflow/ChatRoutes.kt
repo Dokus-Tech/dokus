@@ -7,9 +7,9 @@ import ai.dokus.ai.config.AIProviderFactory
 import ai.dokus.ai.config.ModelPurpose
 import ai.dokus.ai.services.EmbeddingService
 import ai.dokus.ai.services.RAGService
-import ai.dokus.backend.repository.cashflow.ChatRepository
-import ai.dokus.backend.repository.cashflow.DocumentChunksRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
+import ai.dokus.foundation.domain.repository.ChatRepository
+import ai.dokus.foundation.domain.repository.ChunkRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -58,7 +58,7 @@ import ai.dokus.ai.agents.MessageRole as AgentMessageRole
  */
 internal fun Route.chatRoutes() {
     val chatRepository by inject<ChatRepository>()
-    val chunksRepository by inject<DocumentChunksRepository>()
+    val chunksRepository by inject<ChunkRepository>()
     val processingRepository by inject<DocumentProcessingRepository>()
     val httpClient by inject<HttpClient>()
     val aiConfig by inject<AIConfig>()

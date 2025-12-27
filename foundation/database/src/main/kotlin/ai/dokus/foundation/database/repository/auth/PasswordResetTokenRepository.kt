@@ -3,9 +3,11 @@
 package ai.dokus.foundation.database.repository.auth
 
 import ai.dokus.foundation.database.tables.auth.PasswordResetTokensTable
+import ai.dokus.foundation.database.utils.toKotlinxInstant
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.ktor.database.dbQuery
 import ai.dokus.foundation.ktor.database.now
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -16,12 +18,10 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
-import ai.dokus.foundation.database.utils.toKotlinxInstant
 
 /**
  * Information about a password reset token
@@ -50,7 +50,7 @@ data class PasswordResetTokenInfo(
  * All database operations are transactional via dbQuery wrapper.
  */
 class PasswordResetTokenRepository {
-    private val logger = LoggerFactory.getLogger(PasswordResetTokenRepository::class.java)
+    private val logger = loggerFor()
 
     /**
      * Create a new password reset token for a user.
@@ -117,9 +117,10 @@ class PasswordResetTokenRepository {
      */
     suspend fun markAsUsed(tokenId: UUID): Result<Unit> = runCatching {
         dbQuery {
-            val updated = PasswordResetTokensTable.update({ PasswordResetTokensTable.id eq tokenId }) {
-                it[isUsed] = true
-            }
+            val updated =
+                PasswordResetTokensTable.update({ PasswordResetTokensTable.id eq tokenId }) {
+                    it[isUsed] = true
+                }
 
             if (updated == 0) {
                 throw IllegalArgumentException("Password reset token not found: $tokenId")

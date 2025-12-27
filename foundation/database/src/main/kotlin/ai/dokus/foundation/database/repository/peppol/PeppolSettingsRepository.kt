@@ -1,5 +1,6 @@
 package ai.dokus.foundation.database.repository.peppol
 
+import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
 import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.PeppolSettingsId
 import ai.dokus.foundation.domain.ids.TenantId
@@ -7,13 +8,16 @@ import ai.dokus.foundation.domain.model.PeppolSettingsDto
 import ai.dokus.foundation.domain.model.SavePeppolSettingsRequest
 import ai.dokus.foundation.ktor.crypto.CredentialCryptoService
 import ai.dokus.foundation.ktor.database.dbQuery
-import ai.dokus.foundation.database.tables.peppol.PeppolSettingsTable
+import ai.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.jdbc.*
-import org.slf4j.LoggerFactory
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
 
 /**
@@ -23,7 +27,7 @@ import java.util.UUID
 class PeppolSettingsRepository(
     private val cryptoService: CredentialCryptoService
 ) {
-    private val logger = LoggerFactory.getLogger(PeppolSettingsRepository::class.java)
+    private val logger = loggerFor()
 
     /**
      * Get Peppol settings for a tenant.

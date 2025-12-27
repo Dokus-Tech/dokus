@@ -1,6 +1,7 @@
 package ai.dokus.ai.services
 
 import ai.dokus.ai.config.AIConfig
+import ai.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -31,7 +32,7 @@ class EmbeddingService(
     private val httpClient: HttpClient,
     private val config: AIConfig
 ) {
-    private val logger = LoggerFactory.getLogger(EmbeddingService::class.java)
+    private val logger = loggerFor()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -81,8 +82,15 @@ class EmbeddingService(
         model: String? = null
     ): EmbeddingResult {
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> generateOllamaEmbedding(text, model ?: OLLAMA_EMBEDDING_MODEL)
-            AIConfig.AIProvider.OPENAI -> generateOpenAIEmbedding(text, model ?: OPENAI_EMBEDDING_MODEL)
+            AIConfig.AIProvider.OLLAMA -> generateOllamaEmbedding(
+                text,
+                model ?: OLLAMA_EMBEDDING_MODEL
+            )
+
+            AIConfig.AIProvider.OPENAI -> generateOpenAIEmbedding(
+                text,
+                model ?: OPENAI_EMBEDDING_MODEL
+            )
         }
     }
 
@@ -108,6 +116,7 @@ class EmbeddingService(
                 // Ollama doesn't support batch embeddings, process sequentially
                 texts.map { text -> generateOllamaEmbedding(text, model ?: OLLAMA_EMBEDDING_MODEL) }
             }
+
             AIConfig.AIProvider.OPENAI -> {
                 // OpenAI supports batch embeddings
                 generateOpenAIEmbeddingsBatch(texts, model ?: OPENAI_EMBEDDING_MODEL)
@@ -212,7 +221,10 @@ class EmbeddingService(
         return results.first()
     }
 
-    private suspend fun generateOpenAIEmbeddingsBatch(texts: List<String>, model: String): List<EmbeddingResult> {
+    private suspend fun generateOpenAIEmbeddingsBatch(
+        texts: List<String>,
+        model: String
+    ): List<EmbeddingResult> {
         val baseUrl = "https://api.openai.com/v1"
         val url = "$baseUrl/embeddings"
 
