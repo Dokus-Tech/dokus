@@ -21,11 +21,7 @@ fun Application.configureBackgroundWorkers(appConfig: AppBaseConfig) {
     monitor.subscribe(ApplicationStarted) {
         rateLimitCleanupWorker.start()
 
-        val processorEnabled = runCatching {
-            appConfig.config.getConfig("processor").getBoolean("enabled")
-        }.getOrDefault(true)
-
-        if (processorEnabled) {
+        if (appConfig.processor.enabled) {
             logger.info("Starting processor worker (enabled=true)")
             processingWorker.start()
         } else {

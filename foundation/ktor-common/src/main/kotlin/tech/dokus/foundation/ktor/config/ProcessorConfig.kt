@@ -13,7 +13,7 @@ data class ProcessorConfig(
 ) {
     companion object {
         fun fromConfig(config: Config): ProcessorConfig = ProcessorConfig(
-            enabled = if (config.hasPath("enabled")) config.getBoolean("enabled") else true,
+            enabled = config.getBoolean("enabled"),
             pollingInterval = config.getLong("pollingInterval"),
             maxAttempts = config.getInt("maxAttempts"),
             batchSize = config.getInt("batchSize")

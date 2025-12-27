@@ -5,8 +5,6 @@ import ai.dokus.ai.agents.DocumentClassificationAgent
 import ai.dokus.ai.agents.InvoiceExtractionAgent
 import ai.dokus.ai.agents.ReceiptExtractionAgent
 import ai.dokus.ai.config.AIProviderFactory
-import tech.dokus.foundation.ktor.config.AIConfig
-import tech.dokus.foundation.ktor.config.ModelPurpose
 import ai.dokus.ai.models.CategorySuggestion
 import ai.dokus.ai.models.ClassifiedDocumentType
 import ai.dokus.ai.models.DocumentClassification
@@ -14,6 +12,9 @@ import ai.dokus.ai.models.DocumentProcessingResult
 import ai.dokus.ai.models.ExtractedDocumentData
 import ai.dokus.ai.models.ExtractedInvoiceData
 import ai.dokus.ai.models.ExtractedReceiptData
+import ai.dokus.foundation.domain.model.ai.AIProvider
+import tech.dokus.foundation.ktor.config.AIConfig
+import tech.dokus.foundation.ktor.config.ModelPurpose
 import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**
@@ -167,8 +168,8 @@ class AIService(
      */
     fun isConfigured(): Boolean {
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> config.ollama.enabled
-            AIConfig.AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
+            AIProvider.OLLAMA -> config.ollama.enabled
+            AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
         }
     }
 
@@ -179,12 +180,12 @@ class AIService(
         return buildString {
             append("Provider: ${config.defaultProvider}")
             when (config.defaultProvider) {
-                AIConfig.AIProvider.OLLAMA -> {
+                AIProvider.OLLAMA -> {
                     append(", URL: ${config.ollama.baseUrl}")
                     append(", Model: ${config.ollama.defaultModel}")
                 }
 
-                AIConfig.AIProvider.OPENAI -> {
+                AIProvider.OPENAI -> {
                     append(", Model: ${config.openai.defaultModel}")
                     append(", API Key: ${if (config.openai.apiKey.isNotBlank()) "configured" else "missing"}")
                 }

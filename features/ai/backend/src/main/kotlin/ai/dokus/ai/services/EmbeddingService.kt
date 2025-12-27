@@ -82,12 +82,12 @@ class EmbeddingService(
         model: String? = null
     ): EmbeddingResult {
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> generateOllamaEmbedding(
+            AIProvider.OLLAMA -> generateOllamaEmbedding(
                 text,
                 model ?: OLLAMA_EMBEDDING_MODEL
             )
 
-            AIConfig.AIProvider.OPENAI -> generateOpenAIEmbedding(
+            AIProvider.OPENAI -> generateOpenAIEmbedding(
                 text,
                 model ?: OPENAI_EMBEDDING_MODEL
             )
@@ -112,12 +112,12 @@ class EmbeddingService(
         if (texts.isEmpty()) return emptyList()
 
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> {
+            AIProvider.OLLAMA -> {
                 // Ollama doesn't support batch embeddings, process sequentially
                 texts.map { text -> generateOllamaEmbedding(text, model ?: OLLAMA_EMBEDDING_MODEL) }
             }
 
-            AIConfig.AIProvider.OPENAI -> {
+            AIProvider.OPENAI -> {
                 // OpenAI supports batch embeddings
                 generateOpenAIEmbeddingsBatch(texts, model ?: OPENAI_EMBEDDING_MODEL)
             }
@@ -129,8 +129,8 @@ class EmbeddingService(
      */
     fun getEmbeddingDimensions(): Int {
         return when (config.defaultProvider) {
-            AIConfig.AIProvider.OLLAMA -> OLLAMA_DIMENSIONS
-            AIConfig.AIProvider.OPENAI -> OPENAI_DIMENSIONS
+            AIProvider.OLLAMA -> OLLAMA_DIMENSIONS
+            AIProvider.OPENAI -> OPENAI_DIMENSIONS
         }
     }
 
@@ -140,8 +140,8 @@ class EmbeddingService(
     suspend fun isAvailable(): Boolean {
         return try {
             when (config.defaultProvider) {
-                AIConfig.AIProvider.OLLAMA -> config.ollama.enabled
-                AIConfig.AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
+                AIProvider.OLLAMA -> config.ollama.enabled
+                AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
             }
         } catch (e: Exception) {
             logger.warn("Embedding service availability check failed", e)
