@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.model.PeppolProvider

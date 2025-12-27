@@ -1,6 +1,6 @@
 package tech.dokus.foundation.ktor.configure
 
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode

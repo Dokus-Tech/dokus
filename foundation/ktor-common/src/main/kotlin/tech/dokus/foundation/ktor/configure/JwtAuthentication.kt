@@ -1,7 +1,7 @@
 package tech.dokus.foundation.ktor.configure
 
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.auth.JwtClaims
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.foundation.ktor.security.AuthMethod
 import tech.dokus.foundation.ktor.security.DokusPrincipal
 import tech.dokus.foundation.ktor.security.JwtValidator

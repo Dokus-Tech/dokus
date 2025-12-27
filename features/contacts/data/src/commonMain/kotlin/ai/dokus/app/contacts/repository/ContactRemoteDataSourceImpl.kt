@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.repository
 
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.model.ContactActivitySummary
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.ContactMergeResult
@@ -9,7 +9,7 @@ import tech.dokus.domain.model.ContactNoteDto
 import tech.dokus.domain.model.ContactStats
 import tech.dokus.domain.model.CreateContactNoteRequest
 import tech.dokus.domain.model.CreateContactRequest
-import ai.dokus.foundation.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.UpdateContactNoteRequest
 import tech.dokus.domain.model.UpdateContactPeppolRequest
 import tech.dokus.domain.model.UpdateContactRequest

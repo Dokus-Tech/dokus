@@ -1,11 +1,11 @@
 package ai.dokus.app.auth.datasource
 
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.User
-import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
-import ai.dokus.foundation.domain.model.auth.LoginResponse
-import ai.dokus.foundation.domain.model.auth.LogoutRequest
-import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
+import tech.dokus.domain.model.auth.DeactivateUserRequest
+import tech.dokus.domain.model.auth.LoginResponse
+import tech.dokus.domain.model.auth.LogoutRequest
+import tech.dokus.domain.model.auth.UpdateProfileRequest
 
 /**
  * Remote data source for account management operations.

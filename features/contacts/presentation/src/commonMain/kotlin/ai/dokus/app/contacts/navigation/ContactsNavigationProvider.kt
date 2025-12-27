@@ -2,7 +2,7 @@ package ai.dokus.app.contacts.navigation
 
 import ai.dokus.app.contacts.screens.ContactDetailsScreen
 import ai.dokus.app.contacts.screens.ContactFormScreen
-import ai.dokus.foundation.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactId
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import androidx.navigation.NavGraphBuilder

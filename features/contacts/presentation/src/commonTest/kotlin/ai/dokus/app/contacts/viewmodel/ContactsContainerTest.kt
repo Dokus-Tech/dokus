@@ -5,11 +5,11 @@ import ai.dokus.app.contacts.repository.ContactCacheApi
 import ai.dokus.app.contacts.repository.ContactRepositoryApi
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
-import ai.dokus.foundation.domain.enums.ClientType
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.ContactNoteId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ContactActivitySummary
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.ContactMergeResult
@@ -20,7 +20,7 @@ import tech.dokus.domain.model.CreateContactRequest
 import tech.dokus.domain.model.UpdateContactNoteRequest
 import tech.dokus.domain.model.UpdateContactPeppolRequest
 import tech.dokus.domain.model.UpdateContactRequest
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.PaginationState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

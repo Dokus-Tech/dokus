@@ -1,6 +1,7 @@
 package ai.dokus.foundation.domain.ids
 
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.PostalCode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

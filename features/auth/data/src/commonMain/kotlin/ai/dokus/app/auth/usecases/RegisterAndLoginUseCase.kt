@@ -4,7 +4,7 @@ import ai.dokus.app.auth.repository.AuthRepository
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
-import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import tech.dokus.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.platform.Logger
 
 /**

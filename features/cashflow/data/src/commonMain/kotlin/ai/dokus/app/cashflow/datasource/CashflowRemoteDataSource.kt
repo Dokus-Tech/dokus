@@ -1,16 +1,16 @@
 package ai.dokus.app.cashflow.datasource
 
-import ai.dokus.foundation.domain.enums.BillStatus
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
-import ai.dokus.foundation.domain.enums.ProcessingStatus
-import ai.dokus.foundation.domain.ids.AttachmentId
-import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.InvoiceId
+import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.ids.AttachmentId
+import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CreateBillRequest
@@ -20,7 +20,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentProcessingListResponse
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
-import ai.dokus.foundation.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse

@@ -1,16 +1,16 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.InvoiceId
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

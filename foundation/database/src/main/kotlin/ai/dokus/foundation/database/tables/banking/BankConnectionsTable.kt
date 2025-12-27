@@ -1,9 +1,9 @@
 package ai.dokus.foundation.database.tables.banking
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
-import ai.dokus.foundation.domain.enums.BankAccountType
-import ai.dokus.foundation.domain.enums.BankProvider
-import ai.dokus.foundation.domain.enums.Currency
+import tech.dokus.domain.enums.BankAccountType
+import tech.dokus.domain.enums.BankProvider
+import tech.dokus.domain.enums.Currency
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

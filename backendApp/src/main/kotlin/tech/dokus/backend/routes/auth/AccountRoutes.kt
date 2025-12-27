@@ -1,11 +1,11 @@
 package tech.dokus.backend.routes.auth
 
 import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.auth.DeactivateUserRequest
-import ai.dokus.foundation.domain.model.auth.LogoutRequest
-import ai.dokus.foundation.domain.model.auth.SelectTenantRequest
-import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.auth.DeactivateUserRequest
+import tech.dokus.domain.model.auth.LogoutRequest
+import tech.dokus.domain.model.auth.SelectTenantRequest
+import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal

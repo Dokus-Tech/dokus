@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.ids.PostalCode
+import tech.dokus.domain.ids.PostalCode
 
 /**
  * Validates Belgian postal codes

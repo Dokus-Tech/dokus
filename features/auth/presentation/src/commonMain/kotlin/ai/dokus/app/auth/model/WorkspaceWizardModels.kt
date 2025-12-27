@@ -1,8 +1,8 @@
 package ai.dokus.app.auth.model
 
-import ai.dokus.foundation.domain.enums.Country
-import ai.dokus.foundation.domain.enums.TenantType
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.enums.Country
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.EntityLookup
 import androidx.compose.runtime.Stable
 

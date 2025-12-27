@@ -1,8 +1,8 @@
 package tech.dokus.domain.model
 
-import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.enums.EntityType
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 

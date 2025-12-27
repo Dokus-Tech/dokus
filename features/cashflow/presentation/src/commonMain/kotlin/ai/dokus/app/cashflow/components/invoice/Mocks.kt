@@ -5,9 +5,9 @@ import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.ContactDto
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime

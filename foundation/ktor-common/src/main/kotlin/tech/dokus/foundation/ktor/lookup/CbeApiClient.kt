@@ -1,7 +1,7 @@
 package tech.dokus.foundation.ktor.lookup
 
-import ai.dokus.foundation.domain.enums.Country
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.enums.Country
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.EntityAddress
 import tech.dokus.domain.model.EntityLookup
 import tech.dokus.domain.model.EntityStatus

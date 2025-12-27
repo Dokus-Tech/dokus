@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.usecases
 
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.TenantId
 
 /**
  * Scopes the user's session to a specific tenant.

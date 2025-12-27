@@ -2,7 +2,7 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.viewmodel.ContactFormData
 import ai.dokus.app.contacts.viewmodel.PotentialDuplicate
-import ai.dokus.foundation.domain.enums.ClientType
+import tech.dokus.domain.enums.ClientType
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.cache
 
-import ai.dokus.foundation.domain.model.common.Feature
+import tech.dokus.domain.model.common.Feature
 import tech.dokus.foundation.app.database.DatabaseWrapper
 
 /**

@@ -9,7 +9,7 @@ import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.ids.UserId
 import ai.dokus.foundation.navigation.destinations.HomeDestination
 
 // Simple mock values for previews

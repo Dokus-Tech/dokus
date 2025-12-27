@@ -1,11 +1,11 @@
 package tech.dokus.app.viewmodel
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentProcessingDto
 import tech.dokus.domain.model.Tenant
-import ai.dokus.foundation.domain.model.common.PaginationState
-import ai.dokus.foundation.domain.model.common.Thumbnail
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.Thumbnail
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

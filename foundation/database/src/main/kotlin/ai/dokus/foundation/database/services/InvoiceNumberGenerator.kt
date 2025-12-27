@@ -2,7 +2,7 @@ package ai.dokus.foundation.database.services
 
 import ai.dokus.foundation.database.repository.cashflow.InvoiceNumberRepository
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.utils.loggerFor
 import org.jetbrains.exposed.v1.core.eq

@@ -1,9 +1,9 @@
 package ai.dokus.foundation.database.tables.peppol
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
-import ai.dokus.foundation.domain.enums.PeppolDocumentType
-import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.enums.PeppolDocumentType
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

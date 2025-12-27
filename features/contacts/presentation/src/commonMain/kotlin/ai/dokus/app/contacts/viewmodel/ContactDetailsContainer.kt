@@ -10,8 +10,8 @@ import ai.dokus.app.contacts.usecases.GetContactUseCase
 import ai.dokus.app.contacts.usecases.ListContactNotesUseCase
 import ai.dokus.app.contacts.usecases.UpdateContactNoteUseCase
 import ai.dokus.app.contacts.usecases.UpdateContactPeppolUseCase
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.ContactId
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.ContactNoteDto
 import tech.dokus.domain.model.CreateContactNoteRequest

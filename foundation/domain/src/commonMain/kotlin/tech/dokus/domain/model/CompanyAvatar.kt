@@ -1,7 +1,7 @@
 package tech.dokus.domain.model
 
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.common.Thumbnail
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.common.Thumbnail
 import kotlinx.serialization.Serializable
 
 /**

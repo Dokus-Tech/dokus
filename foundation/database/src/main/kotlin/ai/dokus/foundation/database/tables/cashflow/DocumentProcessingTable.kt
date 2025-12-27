@@ -3,9 +3,9 @@ package ai.dokus.foundation.database.tables.cashflow
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.enums.ProcessingStatus
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.EntityType
+import tech.dokus.domain.enums.ProcessingStatus
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

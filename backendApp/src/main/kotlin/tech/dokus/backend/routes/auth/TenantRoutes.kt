@@ -4,9 +4,9 @@ import ai.dokus.foundation.database.repository.auth.AddressRepository
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.services.InvoiceNumberGenerator
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.InvoiceNumberPreviewResponse
 import tech.dokus.domain.model.TenantSettings

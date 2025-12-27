@@ -1,8 +1,8 @@
 package ai.dokus.app.contacts.repository
 
 import ai.dokus.app.contacts.datasource.ContactLocalDataSource
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ContactDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

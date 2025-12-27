@@ -2,8 +2,8 @@ package tech.dokus.backend.routes.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.DocumentId
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentUploadResponse
 import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.ktor.security.authenticateJwt

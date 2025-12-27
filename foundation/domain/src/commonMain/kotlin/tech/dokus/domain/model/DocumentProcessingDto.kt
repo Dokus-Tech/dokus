@@ -1,12 +1,12 @@
 package tech.dokus.domain.model
 
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.enums.ProcessingStatus
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.EntityType
+import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 

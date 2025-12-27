@@ -2,9 +2,9 @@ package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.foundation.domain.ids.Bic
-import ai.dokus.foundation.domain.ids.Iban
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings

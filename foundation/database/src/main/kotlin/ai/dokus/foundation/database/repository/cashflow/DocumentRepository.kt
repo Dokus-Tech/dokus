@@ -1,9 +1,9 @@
 package ai.dokus.foundation.database.repository.cashflow
 
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import ai.dokus.foundation.domain.enums.EntityType
-import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.enums.EntityType
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder

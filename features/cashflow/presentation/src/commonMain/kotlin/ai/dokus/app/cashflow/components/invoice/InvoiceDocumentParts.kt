@@ -10,7 +10,7 @@ import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
-import ai.dokus.foundation.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

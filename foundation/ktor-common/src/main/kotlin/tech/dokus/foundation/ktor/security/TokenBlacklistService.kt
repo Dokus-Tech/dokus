@@ -2,7 +2,7 @@
 
 package tech.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.ktor.cache.RedisClient
 import tech.dokus.foundation.ktor.utils.loggerFor
 import java.time.Duration

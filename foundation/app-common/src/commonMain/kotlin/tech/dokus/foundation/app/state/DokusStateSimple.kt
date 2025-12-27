@@ -1,7 +1,7 @@
 package tech.dokus.foundation.app.state
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 
 
 /**

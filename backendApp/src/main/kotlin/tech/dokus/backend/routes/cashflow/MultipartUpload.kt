@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import io.ktor.http.content.PartData
 import io.ktor.utils.io.readAvailable
 import java.io.ByteArrayOutputStream

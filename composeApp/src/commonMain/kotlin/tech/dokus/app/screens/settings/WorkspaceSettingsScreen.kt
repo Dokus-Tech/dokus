@@ -33,7 +33,7 @@ import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldFree
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.model.common.Thumbnail
+import tech.dokus.domain.model.common.Thumbnail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

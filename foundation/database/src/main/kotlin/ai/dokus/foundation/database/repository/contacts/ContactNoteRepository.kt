@@ -2,12 +2,12 @@ package ai.dokus.foundation.database.repository.contacts
 
 import ai.dokus.foundation.database.tables.contacts.ContactNotesTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.ContactNoteId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ContactNoteDto
-import ai.dokus.foundation.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.database.dbQuery
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder

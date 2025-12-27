@@ -15,7 +15,7 @@ import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.domain.model.RecommandCompanySummary
 import ai.dokus.foundation.navigation.destinations.SettingsDestination

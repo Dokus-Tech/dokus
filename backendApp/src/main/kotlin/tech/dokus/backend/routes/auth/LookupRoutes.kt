@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.auth
 
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.EntityLookupResponse
 import tech.dokus.domain.routes.Lookup
 import tech.dokus.foundation.ktor.lookup.CbeApiClient

@@ -53,7 +53,7 @@ import ai.dokus.app.resources.generated.exception_weak_password
 import ai.dokus.app.resources.generated.exception_not_found
 import ai.dokus.app.resources.generated.exception_user_not_found
 import ai.dokus.app.resources.generated.exception_not_implemented
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 

@@ -4,7 +4,7 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerBox
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import tech.dokus.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

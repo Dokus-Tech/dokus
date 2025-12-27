@@ -6,11 +6,11 @@ import ai.dokus.app.contacts.usecases.GetCachedContactsUseCase
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.app.contacts.usecases.ListCustomersUseCase
 import ai.dokus.app.contacts.usecases.ListVendorsUseCase
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

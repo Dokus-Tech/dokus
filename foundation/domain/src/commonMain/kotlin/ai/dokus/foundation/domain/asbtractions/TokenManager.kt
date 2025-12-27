@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.asbtractions
 
-import ai.dokus.foundation.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.JwtClaims
 import kotlinx.coroutines.flow.StateFlow
 
 interface TokenManager {

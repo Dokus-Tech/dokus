@@ -8,7 +8,7 @@ import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
 import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.ContactDto
 import ai.dokus.foundation.platform.Logger
 import kotlinx.datetime.DateTimeUnit

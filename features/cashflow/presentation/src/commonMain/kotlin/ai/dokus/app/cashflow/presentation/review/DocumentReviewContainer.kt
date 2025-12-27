@@ -1,13 +1,13 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.enums.ProcessingStatus
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.DocumentCorrections
 import tech.dokus.domain.model.DocumentProcessingDto
@@ -24,6 +24,7 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.DokusException
 
 internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction>
 
@@ -122,7 +123,7 @@ internal class DocumentReviewContainer(
                     logger.e { "Document not found: $processingId" }
                     updateState {
                         DocumentReviewState.Error(
-                            exception = ai.dokus.foundation.domain.exceptions.DokusException.NotFound("Document not found"),
+                            exception = DokusException.NotFound("Document not found"),
                             retryHandler = { intent(DocumentReviewIntent.LoadDocument(processingId)) }
                         )
                     }
