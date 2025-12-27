@@ -51,7 +51,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Optional Redis (rate limiting + token blacklist)
+  # Redis (rate limiting + token blacklist)
   redis-local:
     image: redis:8-alpine
     container_name: dokus-redis-local
