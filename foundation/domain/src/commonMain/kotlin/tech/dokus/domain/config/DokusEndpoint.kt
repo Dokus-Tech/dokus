@@ -1,7 +1,5 @@
 package tech.dokus.domain.config
 
-import ai.dokus.foundation.domain.config.BuildKonfig
-
 /**
  * Represents a Dokus service endpoint.
  *
