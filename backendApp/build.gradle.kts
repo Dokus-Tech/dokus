@@ -5,11 +5,11 @@ plugins {
     application
 }
 
-group = "ai.dokus.backend"
+group = "tech.dokus.backend"
 version = "1.0.0"
 
 application {
-    mainClass.set("ai.dokus.backend.ApplicationKt")
+    mainClass.set("tech.dokus.backend.ApplicationKt")
 }
 
 kotlin {

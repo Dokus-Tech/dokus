@@ -4,7 +4,7 @@
 # Stack:
 # - Traefik (gateway + routing on :8000)
 # - PostgreSQL (single DB; tuned for lower memory)
-# - Redis (optional but enabled; tuned for low memory)
+# - Redis (required; tuned for low memory)
 # - MinIO (object storage; must be kept)
 # - dokus-server (modular monolith backend)
 # - dokus-web (optional UI)
