@@ -1,11 +1,11 @@
 package ai.dokus.app.auth.usecases
 
 import ai.dokus.app.auth.storage.TokenStorage
-import ai.dokus.foundation.domain.config.ServerConfig
-import ai.dokus.foundation.domain.config.ServerConfigManager
-import ai.dokus.foundation.domain.config.ServerConnectionException
-import ai.dokus.foundation.domain.config.ServerInfo
-import ai.dokus.foundation.domain.config.ServerValidationResult
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerConfigManager
+import tech.dokus.domain.config.ServerConnectionException
+import tech.dokus.domain.config.ServerInfo
+import tech.dokus.domain.config.ServerValidationResult
 import ai.dokus.foundation.platform.Logger
 import ai.dokus.foundation.platform.Persistence
 

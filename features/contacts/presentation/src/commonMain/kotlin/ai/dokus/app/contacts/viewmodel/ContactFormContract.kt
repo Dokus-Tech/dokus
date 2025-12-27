@@ -1,10 +1,10 @@
 package ai.dokus.app.contacts.viewmodel
 
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.enums.ClientType
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.model.ContactDto
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.ContactDto
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

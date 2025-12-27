@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.model
 
-import ai.dokus.foundation.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentDto
 
 /**
  * Display state for a document upload item in the UI.

@@ -1,11 +1,11 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.model.CreateBillRequest
-import ai.dokus.foundation.domain.model.MarkBillPaidRequest
-import ai.dokus.foundation.domain.model.UpdateBillStatusRequest
-import ai.dokus.foundation.domain.routes.Bills
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.UpdateBillStatusRequest
+import tech.dokus.domain.routes.Bills
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode

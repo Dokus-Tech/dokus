@@ -1,6 +1,6 @@
 package ai.dokus.foundation.sstorage
 
-import ai.dokus.foundation.domain.model.common.Feature
+import tech.dokus.domain.model.common.Feature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

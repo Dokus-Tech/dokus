@@ -15,9 +15,9 @@ import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.PeppolProvider
-import ai.dokus.foundation.domain.model.RecommandCompanySummary
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.PeppolProvider
+import tech.dokus.domain.model.RecommandCompanySummary
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +56,7 @@ import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.Password
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.exceptionIfError
 
@@ -207,7 +208,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
             // API Secret field - shows error if ApiSecretRequired or InvalidApiCredentials
             PTextFieldPassword(
                 fieldName = "API Secret",
-                value = ai.dokus.foundation.domain.Password(state.apiSecret),
+                value = Password(state.apiSecret),
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiSecret(it.value)) },
                 error = fieldsError.takeIf {
                     it is DokusException.Validation.ApiSecretRequired ||

@@ -4,10 +4,10 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
 import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
 import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.enums.TenantType
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.VatNumber
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi

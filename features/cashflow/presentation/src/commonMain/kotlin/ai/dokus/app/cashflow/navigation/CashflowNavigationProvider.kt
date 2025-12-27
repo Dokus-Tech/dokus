@@ -6,8 +6,8 @@ import ai.dokus.app.cashflow.screens.AddDocumentScreen
 import ai.dokus.app.cashflow.screens.CreateInvoiceScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolConnectScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.model.PeppolProvider
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.model.PeppolProvider
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination

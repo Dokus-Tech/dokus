@@ -1,12 +1,12 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.InvitationId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.TeamMember
-import ai.dokus.foundation.domain.model.TenantInvitation
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.TeamMember
+import tech.dokus.domain.model.TenantInvitation
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

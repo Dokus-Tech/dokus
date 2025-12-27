@@ -1,13 +1,13 @@
 package ai.dokus.app.auth.utils
 
-import ai.dokus.foundation.domain.enums.Permission
-import ai.dokus.foundation.domain.enums.SubscriptionTier
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.auth.JwtClaims
-import ai.dokus.foundation.domain.model.auth.TenantScope
-import ai.dokus.foundation.domain.model.auth.TokenStatus
+import tech.dokus.domain.enums.Permission
+import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.TenantScope
+import tech.dokus.domain.model.auth.TokenStatus
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray

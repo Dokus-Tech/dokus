@@ -1,10 +1,10 @@
 package ai.dokus.app.auth.usecases
 
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.model.auth.RegisterRequest
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.Password
+import tech.dokus.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.platform.Logger
 
 /**

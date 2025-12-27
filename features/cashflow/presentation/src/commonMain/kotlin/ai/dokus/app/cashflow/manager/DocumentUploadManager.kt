@@ -5,8 +5,7 @@ import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.model.UploadStatus
-import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentDto
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import ai.dokus.foundation.domain.utils.currentTimeMillis
+import tech.dokus.domain.utils.currentTimeMillis
 import kotlin.time.Duration.Companion.seconds
 
 /**

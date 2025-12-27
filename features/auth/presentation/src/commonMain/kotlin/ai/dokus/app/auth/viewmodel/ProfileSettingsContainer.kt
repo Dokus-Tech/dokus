@@ -1,8 +1,8 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.Name
+import tech.dokus.domain.exceptions.asDokusException
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext

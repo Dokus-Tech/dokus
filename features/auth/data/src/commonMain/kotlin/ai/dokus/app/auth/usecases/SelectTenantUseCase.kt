@@ -1,8 +1,7 @@
 package ai.dokus.app.auth.usecases
 
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.app.auth.usecases.SelectTenantUseCase
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.TenantId
 import ai.dokus.foundation.platform.Logger
 
 /**

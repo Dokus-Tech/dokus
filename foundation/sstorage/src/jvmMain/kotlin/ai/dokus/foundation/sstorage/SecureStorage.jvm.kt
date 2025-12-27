@@ -1,6 +1,6 @@
 package ai.dokus.foundation.sstorage
 
-import ai.dokus.foundation.domain.model.common.Feature
+import tech.dokus.domain.model.common.Feature
 
 actual fun createSecureStorage(context: Any?, feature: Feature): SecureStorage {
     return try {

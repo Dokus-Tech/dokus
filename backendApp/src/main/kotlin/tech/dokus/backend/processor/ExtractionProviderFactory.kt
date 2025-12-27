@@ -1,6 +1,6 @@
 package tech.dokus.backend.processor
 
-import ai.dokus.foundation.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AIProvider
 import io.ktor.client.HttpClient
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor

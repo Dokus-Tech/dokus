@@ -1,14 +1,16 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.LoginUseCase
-import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.exceptions.asDokusException
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.Email
+import tech.dokus.domain.Password
 
 internal typealias LoginCtx = PipelineContext<LoginState, LoginIntent, LoginAction>
 
@@ -36,7 +38,7 @@ internal class LoginContainer(
             }
         }
 
-    private suspend fun LoginCtx.handleUpdateEmail(value: ai.dokus.foundation.domain.Email) {
+    private suspend fun LoginCtx.handleUpdateEmail(value: Email) {
         updateState {
             when (this) {
                 is LoginState.Idle -> copy(email = value)
@@ -49,7 +51,7 @@ internal class LoginContainer(
         }
     }
 
-    private suspend fun LoginCtx.handleUpdatePassword(value: ai.dokus.foundation.domain.Password) {
+    private suspend fun LoginCtx.handleUpdatePassword(value: Password) {
         updateState {
             when (this) {
                 is LoginState.Idle -> copy(password = value)
@@ -64,8 +66,8 @@ internal class LoginContainer(
 
     private suspend fun LoginCtx.handleLogin() {
         // Capture values during state transition
-        var email: ai.dokus.foundation.domain.Email = ai.dokus.foundation.domain.Email("")
-        var password: ai.dokus.foundation.domain.Password = ai.dokus.foundation.domain.Password("")
+        var email: Email = Email("")
+        var password: Password = Password("")
 
         // Transition to authenticating state and capture values
         updateState {

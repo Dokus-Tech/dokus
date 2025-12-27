@@ -1,11 +1,11 @@
 package ai.dokus.app.auth.datasource
 
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.model.auth.LoginRequest
-import ai.dokus.foundation.domain.model.auth.LoginResponse
-import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
-import ai.dokus.foundation.domain.model.auth.RegisterRequest
-import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
+import tech.dokus.domain.Email
+import tech.dokus.domain.model.auth.LoginRequest
+import tech.dokus.domain.model.auth.LoginResponse
+import tech.dokus.domain.model.auth.RefreshTokenRequest
+import tech.dokus.domain.model.auth.RegisterRequest
+import tech.dokus.domain.model.auth.ResetPasswordRequest
 
 /**
  * Remote data source for identity operations (login, register, password reset).

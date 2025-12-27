@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.cache
 
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.FinancialDocumentDto.InvoiceDto
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto
 import kotlinx.coroutines.flow.Flow
 
 /**

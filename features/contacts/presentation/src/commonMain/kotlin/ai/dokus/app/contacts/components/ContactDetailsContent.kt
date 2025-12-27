@@ -2,10 +2,10 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.domain.model.ContactActivitySummary
-import ai.dokus.foundation.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.ContactNoteDto
-import ai.dokus.foundation.domain.model.DerivedContactRoles
+import tech.dokus.domain.model.ContactActivitySummary
+import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.ContactNoteDto
+import tech.dokus.domain.model.DerivedContactRoles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,8 +54,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import tech.dokus.foundation.app.state.DokusState
 
 // ============================================================================

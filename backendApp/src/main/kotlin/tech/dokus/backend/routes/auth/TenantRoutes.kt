@@ -4,17 +4,14 @@ import ai.dokus.foundation.database.repository.auth.AddressRepository
 import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.services.InvoiceNumberGenerator
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateTenantRequest
-import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
-import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
-import ai.dokus.foundation.domain.routes.Tenants
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.AvatarStorageService
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.routes.Tenants
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -23,7 +20,10 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.storage.AvatarStorageService
+import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -32,7 +32,7 @@ import kotlin.uuid.Uuid
  * - Get tenant by ID
  * - Get/update tenant settings
  */
-private val logger = LoggerFactory.getLogger("TenantRoutes")
+private val logger = loggerFor("TenantRoutes")
 
 @OptIn(ExperimentalUuidApi::class)
 internal fun Route.tenantRoutes() {

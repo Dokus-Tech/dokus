@@ -2,16 +2,16 @@ package ai.dokus.app.cashflow.presentation.chat
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
 import ai.dokus.app.cashflow.usecase.SendChatMessageUseCase
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
-import ai.dokus.foundation.domain.model.ChatConfiguration
-import ai.dokus.foundation.domain.model.ChatMessageDto
-import ai.dokus.foundation.domain.model.ChatMessageId
-import ai.dokus.foundation.domain.model.ChatResponse
-import ai.dokus.foundation.domain.model.ChatScope
-import ai.dokus.foundation.domain.model.ChatSessionId
-import ai.dokus.foundation.domain.model.MessageRole
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ChatConfiguration
+import tech.dokus.domain.model.ChatMessageDto
+import tech.dokus.domain.model.ChatMessageId
+import tech.dokus.domain.model.ChatResponse
+import tech.dokus.domain.model.ChatScope
+import tech.dokus.domain.model.ChatSessionId
+import tech.dokus.domain.model.MessageRole
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

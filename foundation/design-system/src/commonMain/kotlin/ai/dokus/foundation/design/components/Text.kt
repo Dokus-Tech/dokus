@@ -2,7 +2,7 @@ package ai.dokus.foundation.design.components
 
 import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

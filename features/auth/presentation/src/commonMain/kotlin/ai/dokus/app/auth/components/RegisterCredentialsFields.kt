@@ -8,7 +8,7 @@ import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
 import ai.dokus.foundation.design.components.fields.PTextFieldPassword
 import ai.dokus.foundation.design.components.fields.PTextFieldPasswordDefaults
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

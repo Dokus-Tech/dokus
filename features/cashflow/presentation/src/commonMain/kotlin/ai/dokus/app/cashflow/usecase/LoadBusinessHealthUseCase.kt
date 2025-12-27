@@ -2,7 +2,7 @@ package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.components.BusinessHealthData
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 

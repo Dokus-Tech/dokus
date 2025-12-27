@@ -1,7 +1,7 @@
 package tech.dokus.backend.processor
 
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.model.ExtractedDocumentData
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.model.ExtractedDocumentData
 
 /**
  * Result of document extraction.

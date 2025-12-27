@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.model
 
-import ai.dokus.foundation.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

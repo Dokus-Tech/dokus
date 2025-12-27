@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.exceptions.asDokusException
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
@@ -9,6 +9,7 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.model.PeppolProvider
 
 internal typealias PeppolSettingsCtx = PipelineContext<PeppolSettingsState, PeppolSettingsIntent, PeppolSettingsAction>
 
@@ -65,7 +66,7 @@ class PeppolSettingsContainer(
     }
 
     private suspend fun PeppolSettingsCtx.handleSelectProvider(
-        provider: ai.dokus.foundation.domain.model.PeppolProvider
+        provider: PeppolProvider
     ) {
         action(PeppolSettingsAction.NavigateToPeppolConnect(provider))
     }

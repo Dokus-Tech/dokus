@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.usecases
 
-import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.asbtractions.TokenManager
+import tech.dokus.domain.ids.TenantId
 
 /**
  * Implementation that reads tenant ID directly from JWT claims.

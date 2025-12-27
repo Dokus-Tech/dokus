@@ -1,12 +1,12 @@
 package tech.dokus.backend.services.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.ids.ExpenseId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateExpenseRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.LocalDate
 

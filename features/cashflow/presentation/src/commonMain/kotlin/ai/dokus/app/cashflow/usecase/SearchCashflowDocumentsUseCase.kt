@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.usecase
 
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.model.FinancialDocumentDto
 
 /**
  * Filters financial documents by a free-text query.

@@ -2,11 +2,11 @@ package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
-import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.InvoiceItemDto
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoiceItemDto
 
 /**
  * Use case for submitting an invoice to the backend.

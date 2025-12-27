@@ -10,10 +10,10 @@ import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.ids.DocumentProcessingId
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -82,6 +82,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -746,7 +747,7 @@ private fun InvoiceForm(
     onFieldUpdate: (InvoiceField, Any?) -> Unit,
     onFieldFocus: (String) -> Unit,
     contactSuggestions: List<ContactSuggestion>,
-    onContactSelect: (ai.dokus.foundation.domain.ids.ContactId) -> Unit,
+    onContactSelect: (ContactId) -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
@@ -883,7 +884,7 @@ private fun BillForm(
     onFieldUpdate: (BillField, Any?) -> Unit,
     onFieldFocus: (String) -> Unit,
     contactSuggestions: List<ContactSuggestion>,
-    onContactSelect: (ai.dokus.foundation.domain.ids.ContactId) -> Unit,
+    onContactSelect: (ContactId) -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
@@ -1365,8 +1366,8 @@ private fun PaymentMethodDropdown(
 @Composable
 private fun ContactSuggestionsChips(
     suggestions: List<ContactSuggestion>,
-    selectedContactId: ai.dokus.foundation.domain.ids.ContactId?,
-    onSelect: (ai.dokus.foundation.domain.ids.ContactId) -> Unit,
+    selectedContactId: ContactId?,
+    onSelect: (ContactId) -> Unit,
 ) {
     if (suggestions.isEmpty()) return
 

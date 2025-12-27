@@ -1,12 +1,12 @@
 package tech.dokus.backend.services.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.CreateInvoiceRequest
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.LocalDate
 

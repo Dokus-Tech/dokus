@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.domain.config.ServerConfig
+import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

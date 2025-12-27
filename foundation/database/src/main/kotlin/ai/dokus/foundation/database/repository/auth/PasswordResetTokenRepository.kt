@@ -4,7 +4,7 @@ package ai.dokus.foundation.database.repository.auth
 
 import ai.dokus.foundation.database.tables.auth.PasswordResetTokensTable
 import ai.dokus.foundation.database.utils.toKotlinxInstant
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.database.now
 import tech.dokus.foundation.ktor.utils.loggerFor

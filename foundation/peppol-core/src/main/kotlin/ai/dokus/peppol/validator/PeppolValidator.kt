@@ -1,14 +1,14 @@
 package ai.dokus.peppol.validator
 
-import ai.dokus.foundation.domain.model.ContactDto
-import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.PeppolSettingsDto
-import ai.dokus.foundation.domain.model.PeppolValidationError
-import ai.dokus.foundation.domain.model.PeppolValidationResult
-import ai.dokus.foundation.domain.model.PeppolValidationWarning
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
+import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.PeppolValidationError
+import tech.dokus.domain.model.PeppolValidationResult
+import tech.dokus.domain.model.PeppolValidationWarning
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
 
 /**
  * Validates invoices and settings for Peppol compliance.

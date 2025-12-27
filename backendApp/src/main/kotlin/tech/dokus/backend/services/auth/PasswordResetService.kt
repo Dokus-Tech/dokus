@@ -5,8 +5,8 @@ package tech.dokus.backend.services.auth
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
 import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.ktor.database.now
 import tech.dokus.foundation.ktor.security.TokenBlacklistService
 import tech.dokus.foundation.ktor.utils.loggerFor

@@ -1,14 +1,14 @@
 package ai.dokus.app.cashflow.repository
 
 import ai.dokus.app.cashflow.datasource.ChatRemoteDataSource
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.model.ChatConfiguration
-import ai.dokus.foundation.domain.model.ChatHistoryResponse
-import ai.dokus.foundation.domain.model.ChatRequest
-import ai.dokus.foundation.domain.model.ChatResponse
-import ai.dokus.foundation.domain.model.ChatScope
-import ai.dokus.foundation.domain.model.ChatSessionId
-import ai.dokus.foundation.domain.model.ChatSessionListResponse
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.model.ChatConfiguration
+import tech.dokus.domain.model.ChatHistoryResponse
+import tech.dokus.domain.model.ChatRequest
+import tech.dokus.domain.model.ChatResponse
+import tech.dokus.domain.model.ChatScope
+import tech.dokus.domain.model.ChatSessionId
+import tech.dokus.domain.model.ChatSessionListResponse
 import ai.dokus.foundation.platform.Logger
 
 /**

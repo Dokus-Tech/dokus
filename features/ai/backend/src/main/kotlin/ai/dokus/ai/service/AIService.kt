@@ -12,7 +12,7 @@ import ai.dokus.ai.models.DocumentProcessingResult
 import ai.dokus.ai.models.ExtractedDocumentData
 import ai.dokus.ai.models.ExtractedInvoiceData
 import ai.dokus.ai.models.ExtractedReceiptData
-import ai.dokus.foundation.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AIProvider
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.config.ModelPurpose
 import tech.dokus.foundation.ktor.utils.loggerFor

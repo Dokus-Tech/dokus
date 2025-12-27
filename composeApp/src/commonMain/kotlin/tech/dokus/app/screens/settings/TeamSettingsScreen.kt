@@ -35,9 +35,9 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.model.TeamMember
-import ai.dokus.foundation.domain.model.TenantInvitation
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.model.TeamMember
+import tech.dokus.domain.model.TenantInvitation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

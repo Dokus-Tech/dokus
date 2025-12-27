@@ -1,10 +1,10 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.Password
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent

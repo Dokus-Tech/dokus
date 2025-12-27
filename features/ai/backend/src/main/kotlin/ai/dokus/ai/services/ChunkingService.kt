@@ -1,9 +1,9 @@
 package ai.dokus.ai.services
 
-import ai.dokus.foundation.domain.model.ChunkMetadata
-import ai.dokus.foundation.domain.model.ChunkProvenance
-import ai.dokus.foundation.domain.model.ChunkingConfig
-import ai.dokus.foundation.domain.model.TextOffsets
+import tech.dokus.domain.model.ChunkMetadata
+import tech.dokus.domain.model.ChunkProvenance
+import tech.dokus.domain.model.ChunkingConfig
+import tech.dokus.domain.model.TextOffsets
 import org.slf4j.LoggerFactory
 
 /**

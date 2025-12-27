@@ -1,6 +1,6 @@
 package tech.dokus.foundation.ktor.config
 
-import ai.dokus.foundation.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AIProvider
 import com.typesafe.config.Config
 
 /**

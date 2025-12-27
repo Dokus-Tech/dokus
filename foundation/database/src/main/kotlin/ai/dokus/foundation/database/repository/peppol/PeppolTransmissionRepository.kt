@@ -1,15 +1,15 @@
 package ai.dokus.foundation.database.repository.peppol
 
 import ai.dokus.foundation.database.tables.peppol.PeppolTransmissionsTable
-import ai.dokus.foundation.domain.enums.PeppolDocumentType
-import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
-import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.PeppolId
-import ai.dokus.foundation.domain.ids.PeppolTransmissionId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.PeppolTransmissionDto
+import tech.dokus.domain.enums.PeppolDocumentType
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.PeppolId
+import tech.dokus.domain.ids.PeppolTransmissionId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.utils.loggerFor
 import kotlinx.datetime.Clock

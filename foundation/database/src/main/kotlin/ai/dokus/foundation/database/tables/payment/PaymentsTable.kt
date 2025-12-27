@@ -2,7 +2,7 @@ package ai.dokus.foundation.database.tables.payment
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
-import ai.dokus.foundation.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

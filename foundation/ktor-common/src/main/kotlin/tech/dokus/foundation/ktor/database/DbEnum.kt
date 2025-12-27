@@ -1,6 +1,6 @@
 package tech.dokus.foundation.ktor.database
 
-import ai.dokus.foundation.domain.database.DbEnum
+import tech.dokus.domain.database.DbEnum
 import org.jetbrains.exposed.v1.core.Table
 
 inline fun <reified T> Table.dbEnumeration(

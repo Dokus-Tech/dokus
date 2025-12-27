@@ -15,7 +15,7 @@ import ai.dokus.app.cashflow.viewmodel.AddDocumentState
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.padding
 import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentDto
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

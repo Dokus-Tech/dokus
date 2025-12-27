@@ -1,7 +1,7 @@
 package tech.dokus.app.navigation
 
 import tech.dokus.app.navigation.ExternalUriHandler.onNewUri
-import ai.dokus.foundation.domain.model.common.DeepLink
+import tech.dokus.domain.model.common.DeepLink
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 

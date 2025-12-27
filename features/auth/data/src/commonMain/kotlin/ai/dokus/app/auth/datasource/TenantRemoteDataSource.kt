@@ -1,13 +1,13 @@
 package ai.dokus.app.auth.datasource
 
-import ai.dokus.foundation.domain.model.AvatarUploadResponse
-import ai.dokus.foundation.domain.model.CompanyAvatar
-import ai.dokus.foundation.domain.model.CreateTenantRequest
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.Address
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.TenantSettings
-import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Address
+import tech.dokus.domain.model.AvatarUploadResponse
+import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.common.Thumbnail
 
 /**
  * Remote data source for tenant management operations.
@@ -80,7 +80,7 @@ interface TenantRemoteDataSource {
      * Get current avatar URLs for the tenant.
      * @return Result containing CompanyAvatar or null if no avatar is set
      */
-    suspend fun getAvatar(): Result<CompanyAvatar?>
+    suspend fun getAvatar(): Result<Thumbnail?>
 
     /**
      * Delete the company avatar.

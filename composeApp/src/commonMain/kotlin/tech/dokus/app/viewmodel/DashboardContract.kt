@@ -1,11 +1,11 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.CompanyAvatar
-import ai.dokus.foundation.domain.model.DocumentProcessingDto
-import ai.dokus.foundation.domain.model.Tenant
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.Thumbnail
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
@@ -47,7 +47,7 @@ sealed interface DashboardState : MVIState, DokusState<Nothing> {
      */
     data class Content(
         val tenantState: DokusState<Tenant?> = DokusState.idle(),
-        val currentAvatar: CompanyAvatar? = null,
+        val currentAvatar: Thumbnail? = null,
         val pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>> = DokusState.idle(),
     ) : DashboardState
 

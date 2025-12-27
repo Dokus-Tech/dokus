@@ -2,8 +2,8 @@ package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.SelectTenantUseCase
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.TenantId
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext

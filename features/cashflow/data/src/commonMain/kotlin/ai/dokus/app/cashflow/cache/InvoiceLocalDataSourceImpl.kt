@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.cache
 
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.model.FinancialDocumentDto.InvoiceDto
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
