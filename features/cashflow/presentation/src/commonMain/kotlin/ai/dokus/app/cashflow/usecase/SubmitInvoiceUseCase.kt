@@ -2,8 +2,8 @@ package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.model.CreateInvoiceRequest
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto

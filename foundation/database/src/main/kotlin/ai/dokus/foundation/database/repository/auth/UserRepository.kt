@@ -6,7 +6,7 @@ import ai.dokus.foundation.database.mappers.auth.UserMappers.toUserInTenant
 import ai.dokus.foundation.database.tables.auth.TenantMembersTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.database.utils.toKotlinxInstant
-import ai.dokus.foundation.domain.Password
+import tech.dokus.domain.Password
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId

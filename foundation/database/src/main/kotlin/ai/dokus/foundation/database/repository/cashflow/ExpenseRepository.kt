@@ -1,9 +1,9 @@
 package ai.dokus.foundation.database.repository.cashflow
 
 import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Money
+import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.TenantId

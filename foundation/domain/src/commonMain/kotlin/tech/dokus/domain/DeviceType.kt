@@ -1,4 +1,4 @@
-package ai.dokus.foundation.domain
+package tech.dokus.domain
 
 import ai.dokus.foundation.domain.database.DbEnum
 import kotlinx.serialization.Serializable

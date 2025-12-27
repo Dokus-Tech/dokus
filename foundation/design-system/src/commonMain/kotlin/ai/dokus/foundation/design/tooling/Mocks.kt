@@ -7,8 +7,8 @@ import ai.dokus.app.resources.generated.home_settings
 import ai.dokus.app.resources.generated.user
 import ai.dokus.foundation.design.model.HomeItem
 import ai.dokus.foundation.design.model.HomeItemPriority
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.navigation.destinations.HomeDestination
 

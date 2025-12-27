@@ -1,8 +1,8 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.ContactNoteId

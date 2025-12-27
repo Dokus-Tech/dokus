@@ -1,6 +1,6 @@
 package tech.dokus.foundation.ktor.crypto
 
-import ai.dokus.foundation.domain.Password
+import tech.dokus.domain.Password
 
 interface PasswordCryptoService {
     fun hashPassword(password: Password): String

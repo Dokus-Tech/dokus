@@ -3,8 +3,8 @@ package ai.dokus.app.contacts.viewmodel
 import ai.dokus.app.auth.usecases.GetCurrentTenantIdUseCase
 import ai.dokus.app.contacts.repository.ContactCacheApi
 import ai.dokus.app.contacts.repository.ContactRepositoryApi
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.ids.ContactId

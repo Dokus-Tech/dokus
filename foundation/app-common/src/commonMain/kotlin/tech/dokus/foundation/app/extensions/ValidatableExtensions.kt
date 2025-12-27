@@ -1,7 +1,7 @@
 package tech.dokus.foundation.app.extensions
 
-import ai.dokus.foundation.domain.Validatable
-import ai.dokus.foundation.domain.ValueClass
+import tech.dokus.domain.Validatable
+import tech.dokus.domain.ValueClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 

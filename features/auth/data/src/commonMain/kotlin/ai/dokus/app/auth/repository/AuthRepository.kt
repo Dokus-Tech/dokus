@@ -5,9 +5,9 @@ import ai.dokus.app.auth.datasource.IdentityRemoteDataSource
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerMutable
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.LegalName
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Email
+import tech.dokus.domain.LegalName
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType
@@ -25,7 +25,7 @@ import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest
 import ai.dokus.foundation.domain.model.auth.ResetPasswordRequest
 import ai.dokus.foundation.domain.model.auth.UpdateProfileRequest
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Name
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.StateFlow
 

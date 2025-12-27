@@ -56,6 +56,7 @@ import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.Password
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.exceptionIfError
 
@@ -207,7 +208,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
             // API Secret field - shows error if ApiSecretRequired or InvalidApiCredentials
             PTextFieldPassword(
                 fieldName = "API Secret",
-                value = ai.dokus.foundation.domain.Password(state.apiSecret),
+                value = Password(state.apiSecret),
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiSecret(it.value)) },
                 error = fieldsError.takeIf {
                     it is DokusException.Validation.ApiSecretRequired ||

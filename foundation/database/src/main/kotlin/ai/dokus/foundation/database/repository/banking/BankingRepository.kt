@@ -2,7 +2,7 @@ package ai.dokus.foundation.database.repository.banking
 
 import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.enums.Currency

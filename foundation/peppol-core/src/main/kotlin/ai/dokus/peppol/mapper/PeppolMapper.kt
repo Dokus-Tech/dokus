@@ -1,7 +1,7 @@
 package ai.dokus.peppol.mapper
 
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.ContactDto

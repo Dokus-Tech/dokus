@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.model.auth
 
-import ai.dokus.foundation.domain.DeviceType
-import ai.dokus.foundation.domain.current
+import tech.dokus.domain.DeviceType
+import tech.dokus.domain.current
 import kotlinx.serialization.Serializable
 
 @Serializable

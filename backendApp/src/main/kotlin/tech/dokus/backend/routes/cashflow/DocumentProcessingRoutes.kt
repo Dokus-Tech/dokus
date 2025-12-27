@@ -5,7 +5,7 @@ import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingReposi
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ProcessingStatus
@@ -35,6 +35,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.domain.VatRate
 import java.util.*
 import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
 
@@ -219,7 +220,7 @@ internal fun Route.documentProcessingRoutes() {
                                 description = item.description ?: "",
                                 quantity = item.quantity ?: 1.0,
                                 unitPrice = item.unitPrice ?: Money("0"),
-                                vatRate = item.vatRate ?: ai.dokus.foundation.domain.VatRate.STANDARD_BE,
+                                vatRate = item.vatRate ?: VatRate.STANDARD_BE,
                                 lineTotal = item.lineTotal ?: Money("0"),
                                 vatAmount = item.vatAmount ?: Money("0")
                             )

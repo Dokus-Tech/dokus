@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Name
 
 object ValidateNameUseCase : Validator<Name> {
     private const val MIN_LENGTH = 3

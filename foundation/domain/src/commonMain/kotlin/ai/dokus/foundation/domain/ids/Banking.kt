@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.ids
 
-import ai.dokus.foundation.domain.Validatable
-import ai.dokus.foundation.domain.ValueClass
+import tech.dokus.domain.Validatable
+import tech.dokus.domain.ValueClass
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.usecases.validators.ValidateBicUseCase
 import ai.dokus.foundation.domain.usecases.validators.ValidateIbanUseCase

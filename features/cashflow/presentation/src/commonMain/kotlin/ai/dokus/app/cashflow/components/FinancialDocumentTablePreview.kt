@@ -3,7 +3,7 @@ package ai.dokus.app.cashflow.components
 import ai.dokus.foundation.design.tooling.PreviewParameters
 import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.ContactId

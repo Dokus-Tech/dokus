@@ -1,10 +1,10 @@
 package ai.dokus.foundation.domain.model.auth
 
-import ai.dokus.foundation.domain.DeviceType
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.Password
-import ai.dokus.foundation.domain.current
+import tech.dokus.domain.DeviceType
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.Password
+import tech.dokus.domain.current
 import ai.dokus.foundation.domain.ids.TenantId
 import kotlinx.serialization.Serializable
 

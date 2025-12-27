@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.Email
+import tech.dokus.domain.Email
 
 object ValidateEmailUseCase : Validator<Email> {
     private val regex =

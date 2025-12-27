@@ -3,7 +3,7 @@ package ai.dokus.app.cashflow.components
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

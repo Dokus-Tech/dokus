@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Password
+import tech.dokus.domain.Email
+import tech.dokus.domain.Password
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.runtime.Immutable

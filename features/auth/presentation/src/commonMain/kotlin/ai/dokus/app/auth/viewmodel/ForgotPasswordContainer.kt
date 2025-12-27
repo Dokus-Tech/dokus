@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.foundation.domain.Email
+import tech.dokus.domain.Email
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container

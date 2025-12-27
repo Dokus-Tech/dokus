@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 
 /**
  * Validates monetary amounts

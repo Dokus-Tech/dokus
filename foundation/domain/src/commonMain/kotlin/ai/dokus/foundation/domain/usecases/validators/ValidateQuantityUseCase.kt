@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.Quantity
+import tech.dokus.domain.Quantity
 
 /**
  * Validates quantity values
