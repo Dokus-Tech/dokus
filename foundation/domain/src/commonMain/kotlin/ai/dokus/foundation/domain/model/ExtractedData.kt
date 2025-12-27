@@ -1,8 +1,8 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Money
+import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.DocumentType
 import ai.dokus.foundation.domain.enums.ExpenseCategory

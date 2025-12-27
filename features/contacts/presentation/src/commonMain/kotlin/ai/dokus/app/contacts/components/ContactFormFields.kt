@@ -3,7 +3,7 @@ package ai.dokus.app.contacts.components
 import ai.dokus.app.contacts.viewmodel.ContactFormData
 import ai.dokus.foundation.design.components.fields.PTextFieldPhone
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.domain.PhoneNumber
+import tech.dokus.domain.PhoneNumber
 import ai.dokus.foundation.domain.enums.ClientType
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.clickable

@@ -1,4 +1,4 @@
-package ai.dokus.foundation.domain
+package tech.dokus.domain
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock

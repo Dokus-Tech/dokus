@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.VatRate
 
 /**
  * Validates VAT rates

@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.PhoneNumber
+import tech.dokus.domain.PhoneNumber
 
 object ValidatePhoneNumberUseCase : Validator<PhoneNumber> {
     private const val MIN_DIGITS = 7

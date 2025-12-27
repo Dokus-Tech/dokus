@@ -1,13 +1,11 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.PaymentMeansCode
 import ai.dokus.foundation.domain.enums.PeppolCurrency
 import ai.dokus.foundation.domain.enums.PeppolDocumentType
 import ai.dokus.foundation.domain.enums.PeppolStatus
 import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
-import ai.dokus.foundation.domain.enums.PeppolVatCategory
 import ai.dokus.foundation.domain.enums.RecommandDirection
 import ai.dokus.foundation.domain.enums.RecommandDocumentStatus
 import ai.dokus.foundation.domain.enums.UnitCode
@@ -17,8 +15,6 @@ import ai.dokus.foundation.domain.ids.PeppolId
 import ai.dokus.foundation.domain.ids.PeppolSettingsId
 import ai.dokus.foundation.domain.ids.PeppolTransmissionId
 import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.VatNumber
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

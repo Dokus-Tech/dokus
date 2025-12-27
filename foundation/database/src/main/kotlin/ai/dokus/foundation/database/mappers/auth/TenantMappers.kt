@@ -3,9 +3,9 @@ package ai.dokus.foundation.database.mappers.auth
 import ai.dokus.foundation.database.tables.auth.AddressTable
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.ids.AddressId
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.Iban

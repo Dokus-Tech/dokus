@@ -1,7 +1,7 @@
 package ai.dokus.foundation.database.repository.payment
 
 import ai.dokus.foundation.database.tables.payment.PaymentsTable
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.ids.InvoiceId
 import ai.dokus.foundation.domain.ids.PaymentId

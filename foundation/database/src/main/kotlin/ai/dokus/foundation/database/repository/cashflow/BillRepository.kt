@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database.repository.cashflow
 
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.BillStatus
 import ai.dokus.foundation.domain.enums.ExpenseCategory
 import ai.dokus.foundation.domain.ids.BillId

@@ -3,8 +3,8 @@ package ai.dokus.app.cashflow.components.invoice
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.VatNumber

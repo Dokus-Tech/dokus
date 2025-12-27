@@ -3,8 +3,8 @@ package ai.dokus.foundation.database.repository.cashflow
 import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId

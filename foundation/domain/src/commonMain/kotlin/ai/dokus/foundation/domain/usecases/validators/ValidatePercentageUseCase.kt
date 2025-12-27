@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.Percentage
+import tech.dokus.domain.Percentage
 
 /**
  * Validates percentage values

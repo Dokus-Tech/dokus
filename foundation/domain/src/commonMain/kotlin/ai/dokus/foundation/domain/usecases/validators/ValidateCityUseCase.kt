@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.City
+import tech.dokus.domain.City
 
 object ValidateCityUseCase : Validator<City> {
     private const val MIN_LENGTH = 2

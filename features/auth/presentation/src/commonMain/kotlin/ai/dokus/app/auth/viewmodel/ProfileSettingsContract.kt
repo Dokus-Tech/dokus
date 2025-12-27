@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.User

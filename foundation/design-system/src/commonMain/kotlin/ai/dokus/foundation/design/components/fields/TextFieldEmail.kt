@@ -1,6 +1,6 @@
 package ai.dokus.foundation.design.components.fields
 
-import ai.dokus.foundation.domain.Email
+import tech.dokus.domain.Email
 import ai.dokus.foundation.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable

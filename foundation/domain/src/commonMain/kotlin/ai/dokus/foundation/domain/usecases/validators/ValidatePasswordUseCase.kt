@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.Password
+import tech.dokus.domain.Password
 import ai.dokus.foundation.domain.usecases.validators.ValidatePasswordUseCase.validateDetailed
 
 /**

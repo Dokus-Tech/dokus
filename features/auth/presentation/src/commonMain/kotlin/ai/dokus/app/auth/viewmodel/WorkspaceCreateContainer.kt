@@ -6,8 +6,8 @@ import ai.dokus.app.auth.model.LookupState
 import ai.dokus.app.auth.model.WorkspaceWizardStep
 import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.repository.LookupRepository
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.LegalName
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantType

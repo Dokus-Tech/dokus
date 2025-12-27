@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.Currency
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable

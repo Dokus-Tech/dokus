@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.datasource
 
-import ai.dokus.foundation.domain.Email
+import tech.dokus.domain.Email
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.LoginResponse
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest

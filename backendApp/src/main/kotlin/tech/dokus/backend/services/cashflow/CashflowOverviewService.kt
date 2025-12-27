@@ -3,7 +3,7 @@ package tech.dokus.backend.services.cashflow
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
-import ai.dokus.foundation.domain.Money
+import tech.dokus.domain.Money
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.ids.TenantId

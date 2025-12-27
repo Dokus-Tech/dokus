@@ -1,8 +1,6 @@
 package ai.dokus.peppol.model
 
-import ai.dokus.foundation.domain.Money
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 /**

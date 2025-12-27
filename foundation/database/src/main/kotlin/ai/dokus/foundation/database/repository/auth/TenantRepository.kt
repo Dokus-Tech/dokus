@@ -5,8 +5,8 @@ import ai.dokus.foundation.database.mappers.auth.TenantMappers.toTenantSettings
 import ai.dokus.foundation.database.tables.auth.AddressTable
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.LegalName
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus

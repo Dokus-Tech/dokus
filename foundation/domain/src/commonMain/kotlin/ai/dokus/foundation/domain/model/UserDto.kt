@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.UserId

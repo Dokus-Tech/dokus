@@ -5,9 +5,9 @@ import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import ai.dokus.foundation.database.tables.contacts.ContactNotesTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.VatRate
 // ContactType removed - roles are now derived from cashflow items
 import ai.dokus.foundation.domain.ids.ContactId
 import ai.dokus.foundation.domain.ids.DocumentId
@@ -30,9 +30,7 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.like
-import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert

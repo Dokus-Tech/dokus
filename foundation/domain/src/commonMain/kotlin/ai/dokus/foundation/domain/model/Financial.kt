@@ -1,12 +1,12 @@
 package ai.dokus.foundation.domain.model
 
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.Money
-import ai.dokus.foundation.domain.Name
-import ai.dokus.foundation.domain.Percentage
-import ai.dokus.foundation.domain.VatRate
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.Email
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.Money
+import tech.dokus.domain.Name
+import tech.dokus.domain.Percentage
+import tech.dokus.domain.VatRate
 import ai.dokus.foundation.domain.enums.BankAccountType
 import ai.dokus.foundation.domain.enums.BankProvider
 import ai.dokus.foundation.domain.enums.BillStatus

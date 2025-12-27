@@ -1,16 +1,16 @@
 package tech.dokus.foundation.ktor.routes
 
-import ai.dokus.foundation.domain.ApplicationInfo
-import ai.dokus.foundation.domain.DetailedHealthInfo
-import ai.dokus.foundation.domain.HealthCheck
-import ai.dokus.foundation.domain.HealthStatus
-import ai.dokus.foundation.domain.HeapMemoryInfo
-import ai.dokus.foundation.domain.JvmInfo
-import ai.dokus.foundation.domain.MemoryInfo
-import ai.dokus.foundation.domain.NonHeapMemoryInfo
-import ai.dokus.foundation.domain.ServerStatus
-import ai.dokus.foundation.domain.SystemInfo
-import ai.dokus.foundation.domain.ThreadInfo
+import tech.dokus.domain.ApplicationInfo
+import tech.dokus.domain.DetailedHealthInfo
+import tech.dokus.domain.HealthCheck
+import tech.dokus.domain.HealthStatus
+import tech.dokus.domain.HeapMemoryInfo
+import tech.dokus.domain.JvmInfo
+import tech.dokus.domain.MemoryInfo
+import tech.dokus.domain.NonHeapMemoryInfo
+import tech.dokus.domain.ServerStatus
+import tech.dokus.domain.SystemInfo
+import tech.dokus.domain.ThreadInfo
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing

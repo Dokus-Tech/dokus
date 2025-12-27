@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.auth
 
-import ai.dokus.foundation.domain.Email
+import tech.dokus.domain.Email
 import ai.dokus.foundation.domain.model.auth.LoginRequest
 import ai.dokus.foundation.domain.model.auth.RefreshTokenRequest
 import ai.dokus.foundation.domain.model.auth.RegisterRequest

@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.viewmodel
 
-import ai.dokus.foundation.domain.Password
+import tech.dokus.domain.Password
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.exceptions.asDokusException
 import ai.dokus.foundation.platform.Logger

@@ -26,7 +26,7 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldName
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.Name
+import tech.dokus.domain.Name
 import ai.dokus.foundation.domain.config.ServerConfigManager
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
