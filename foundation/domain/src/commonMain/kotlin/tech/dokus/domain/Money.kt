@@ -1,6 +1,6 @@
 package tech.dokus.domain
 
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 

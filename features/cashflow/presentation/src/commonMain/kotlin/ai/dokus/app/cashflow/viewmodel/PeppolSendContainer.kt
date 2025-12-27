@@ -1,11 +1,11 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext

@@ -1,8 +1,8 @@
 package tech.dokus.backend.routes.auth
 
-import ai.dokus.foundation.domain.enums.InvitationStatus
-import ai.dokus.foundation.domain.ids.InvitationId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TransferOwnershipRequest
 import tech.dokus.domain.model.UpdateMemberRoleRequest

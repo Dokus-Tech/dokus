@@ -5,9 +5,9 @@ import ai.dokus.app.contacts.usecases.DeleteContactUseCase
 import ai.dokus.app.contacts.usecases.GetContactUseCase
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.app.contacts.usecases.UpdateContactUseCase
-import ai.dokus.foundation.domain.enums.ClientType
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.ContactId
+import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.CreateContactRequest
 import tech.dokus.domain.model.UpdateContactRequest

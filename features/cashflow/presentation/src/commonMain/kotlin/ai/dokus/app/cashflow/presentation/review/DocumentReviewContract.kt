@@ -1,13 +1,13 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.enums.ProcessingStatus
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.model.DocumentProcessingDto
 import tech.dokus.domain.model.ExtractedBillFields
 import tech.dokus.domain.model.ExtractedDocumentData

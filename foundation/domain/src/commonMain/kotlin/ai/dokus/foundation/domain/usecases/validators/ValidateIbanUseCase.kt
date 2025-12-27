@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.ids.Iban
+import tech.dokus.domain.ids.Iban
 
 /**
  * Validates IBAN (International Bank Account Number)

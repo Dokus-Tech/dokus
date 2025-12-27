@@ -1,6 +1,6 @@
 package tech.dokus.domain.routes
 
-import ai.dokus.foundation.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.InvoiceStatus
 import io.ktor.resources.*
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable

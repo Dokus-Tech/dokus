@@ -1,6 +1,6 @@
 package tech.dokus.backend.services.auth
 
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.ktor.cache.RedisClient
 import tech.dokus.foundation.ktor.database.now
 import tech.dokus.foundation.ktor.utils.loggerFor

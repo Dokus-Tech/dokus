@@ -2,9 +2,9 @@ package ai.dokus.app.cashflow.presentation.chat
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
 import ai.dokus.app.cashflow.usecase.SendChatMessageUseCase
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ChatConfiguration
 import tech.dokus.domain.model.ChatMessageDto
 import tech.dokus.domain.model.ChatMessageId

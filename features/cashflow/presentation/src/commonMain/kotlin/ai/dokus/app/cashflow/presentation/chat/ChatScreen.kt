@@ -10,7 +10,7 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.model.ChatMessageDto
 import tech.dokus.domain.model.ChatScope
 import tech.dokus.domain.model.ChatSessionSummary

@@ -1,6 +1,6 @@
 package tech.dokus.domain.model
 
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentProcessingId
 import kotlinx.serialization.Serializable
 
 // =============================================================================

@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.presentation.chat
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.model.ChatCitation
 import tech.dokus.domain.model.ChatConfiguration
 import tech.dokus.domain.model.ChatMessageDto

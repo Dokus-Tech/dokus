@@ -5,11 +5,11 @@ import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.cashflow.InvoiceNumberSequencesTable
-import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.TenantPlan
-import ai.dokus.foundation.domain.enums.TenantStatus
-import ai.dokus.foundation.domain.enums.TenantType
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.TenantStatus
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.TenantId
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils

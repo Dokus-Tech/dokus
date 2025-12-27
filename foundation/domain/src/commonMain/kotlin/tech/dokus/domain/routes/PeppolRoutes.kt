@@ -1,7 +1,7 @@
 package tech.dokus.domain.routes
 
-import ai.dokus.foundation.domain.enums.PeppolStatus
-import ai.dokus.foundation.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
 

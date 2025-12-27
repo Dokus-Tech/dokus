@@ -1,8 +1,8 @@
 package tech.dokus.foundation.ktor.security
 
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.AuthenticationInfo
 import io.ktor.server.auth.Principal
 

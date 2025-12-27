@@ -14,7 +14,7 @@ import ai.dokus.app.contacts.viewmodel.EnrichmentSuggestion
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.ContactActivitySummary
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.ContactNoteDto

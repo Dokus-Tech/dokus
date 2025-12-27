@@ -1,7 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.BillId
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.UpdateBillStatusRequest

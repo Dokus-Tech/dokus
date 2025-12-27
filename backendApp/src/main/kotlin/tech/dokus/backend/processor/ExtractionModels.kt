@@ -3,9 +3,9 @@ package tech.dokus.backend.processor
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.model.ExtractedBillFields
 import tech.dokus.domain.model.ExtractedExpenseFields
 import tech.dokus.domain.model.ExtractedInvoiceFields

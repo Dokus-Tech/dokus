@@ -2,10 +2,10 @@ package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.datasource.TeamRemoteDataSource
 import tech.dokus.domain.Email
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.InvitationId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import ai.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container

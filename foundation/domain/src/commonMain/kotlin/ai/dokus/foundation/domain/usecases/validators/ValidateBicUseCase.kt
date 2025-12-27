@@ -1,6 +1,6 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.ids.Bic
+import tech.dokus.domain.ids.Bic
 
 /**
  * Validates BIC/SWIFT codes

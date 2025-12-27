@@ -1,6 +1,6 @@
 package tech.dokus.foundation.app.cache
 
-import ai.dokus.foundation.domain.ids.AttachmentId
+import tech.dokus.domain.ids.AttachmentId
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Clock

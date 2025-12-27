@@ -1,6 +1,6 @@
 package ai.dokus.foundation.design.extensions
 
-import ai.dokus.foundation.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.InvoiceStatus
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color

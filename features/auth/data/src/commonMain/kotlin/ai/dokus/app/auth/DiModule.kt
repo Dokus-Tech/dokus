@@ -34,7 +34,7 @@ import ai.dokus.app.auth.usecases.ValidateServerUseCase
 import ai.dokus.app.auth.utils.JwtDecoder
 import ai.dokus.foundation.domain.asbtractions.AuthManager
 import ai.dokus.foundation.domain.asbtractions.TokenManager
-import ai.dokus.foundation.domain.model.common.Feature
+import tech.dokus.domain.model.common.Feature
 import ai.dokus.foundation.sstorage.SecureStorage
 import io.ktor.client.HttpClient
 import org.koin.core.module.Module

@@ -10,10 +10,10 @@ import ai.dokus.ai.services.RAGService
 import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ChatCitation
 import tech.dokus.domain.model.ChatConfiguration
 import tech.dokus.domain.model.ChatHistoryResponse

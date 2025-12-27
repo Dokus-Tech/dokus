@@ -1,7 +1,7 @@
 package ai.dokus.foundation.design.components.fields
 
 import tech.dokus.domain.PhoneNumber
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

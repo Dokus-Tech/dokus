@@ -1,8 +1,8 @@
 package ai.dokus.foundation.database.repository.ai
 
 import ai.dokus.foundation.database.tables.ai.DocumentChunksTable
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ChunkMetadata
 import tech.dokus.domain.model.DocumentChunkDto
 import tech.dokus.domain.model.DocumentChunkId

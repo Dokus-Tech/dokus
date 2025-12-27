@@ -2,10 +2,10 @@ package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable

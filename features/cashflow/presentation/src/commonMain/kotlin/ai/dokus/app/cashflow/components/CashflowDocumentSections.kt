@@ -4,7 +4,7 @@ import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import tech.dokus.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

@@ -16,7 +16,7 @@ import ai.dokus.app.resources.generated.invoice_subtotal
 import ai.dokus.app.resources.generated.invoice_total
 import ai.dokus.app.resources.generated.invoice_vat
 import ai.dokus.foundation.design.components.PDashedDivider
-import ai.dokus.foundation.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

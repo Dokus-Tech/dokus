@@ -4,7 +4,7 @@ package ai.dokus.foundation.database.repository.auth
 
 import ai.dokus.foundation.database.mappers.auth.TenantMappers.toAddress
 import ai.dokus.foundation.database.tables.auth.AddressTable
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.foundation.ktor.database.dbQuery

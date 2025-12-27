@@ -4,8 +4,8 @@ import ai.dokus.app.auth.model.AddressFormState
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
 import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.domain.enums.Country
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.enums.Country
+import tech.dokus.domain.ids.VatNumber
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

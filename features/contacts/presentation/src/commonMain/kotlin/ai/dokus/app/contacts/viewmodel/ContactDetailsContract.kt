@@ -1,8 +1,8 @@
 package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.ids.ContactId
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.ContactActivitySummary
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.ContactNoteDto

@@ -3,11 +3,11 @@ package ai.dokus.foundation.database.repository.auth
 import ai.dokus.foundation.database.tables.auth.TenantInvitationsTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
 import tech.dokus.domain.Email
-import ai.dokus.foundation.domain.enums.InvitationStatus
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.InvitationId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.utils.loggerFor

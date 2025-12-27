@@ -4,9 +4,9 @@ import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
 import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.InvoiceStatus
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashInSummary
 import tech.dokus.domain.model.CashOutSummary
 import tech.dokus.domain.model.CashflowOverview

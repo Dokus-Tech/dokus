@@ -1,6 +1,6 @@
 package ai.dokus.peppol.providers.recommand
 
-import ai.dokus.foundation.domain.enums.PeppolDocumentType.Companion.toApiValue
+import tech.dokus.domain.enums.PeppolDocumentType.Companion.toApiValue
 import tech.dokus.domain.model.RecommandDocumentsResponse
 import tech.dokus.domain.model.RecommandInboxDocument
 import tech.dokus.domain.model.RecommandInvoiceDocument
@@ -27,6 +27,7 @@ import ai.dokus.peppol.model.PeppolSendResponse
 import ai.dokus.peppol.model.PeppolTaxSubtotal
 import ai.dokus.peppol.model.PeppolTaxTotal
 import ai.dokus.peppol.model.PeppolVerifyResponse
+import tech.dokus.domain.enums.RecommandDirection
 import tech.dokus.domain.model.RecommandReceivedLineItem
 
 /**
@@ -228,8 +229,8 @@ object RecommandMapper {
                     id = doc.id,
                     documentType = doc.documentType.toApiValue(),
                     direction = when (doc.direction) {
-                        ai.dokus.foundation.domain.enums.RecommandDirection.Outgoing -> PeppolDirection.OUTBOUND
-                        ai.dokus.foundation.domain.enums.RecommandDirection.Incoming -> PeppolDirection.INBOUND
+                        RecommandDirection.Outgoing -> PeppolDirection.OUTBOUND
+                        RecommandDirection.Incoming -> PeppolDirection.INBOUND
                     },
                     counterpartyPeppolId = doc.counterparty,
                     status = doc.status.toPeppolStatus().name,

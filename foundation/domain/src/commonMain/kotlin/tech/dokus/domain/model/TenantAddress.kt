@@ -1,6 +1,6 @@
 package tech.dokus.domain.model
 
-import ai.dokus.foundation.domain.enums.Country
+import tech.dokus.domain.enums.Country
 import kotlinx.serialization.Serializable
 
 @Serializable

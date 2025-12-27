@@ -1,7 +1,7 @@
 package tech.dokus.domain.model
 
-import ai.dokus.foundation.domain.enums.Country
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.enums.Country
+import tech.dokus.domain.ids.VatNumber
 import kotlinx.serialization.Serializable
 
 /**

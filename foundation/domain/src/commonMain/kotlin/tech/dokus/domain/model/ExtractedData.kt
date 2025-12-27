@@ -3,10 +3,10 @@ package tech.dokus.domain.model
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
-import ai.dokus.foundation.domain.enums.Currency
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.ExpenseCategory
-import ai.dokus.foundation.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 

@@ -1,7 +1,7 @@
 package ai.dokus.foundation.domain.usecases.validators
 
-import ai.dokus.foundation.domain.ids.PeppolId
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.ids.PeppolId
+import tech.dokus.domain.ids.VatNumber
 
 /**
  * Validates PEPPOL participant IDs

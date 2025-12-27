@@ -7,9 +7,9 @@ import ai.dokus.foundation.database.tables.auth.TenantMembersTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.database.utils.toKotlinxInstant
 import tech.dokus.domain.Password
-import ai.dokus.foundation.domain.enums.UserRole
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.UserInTenant

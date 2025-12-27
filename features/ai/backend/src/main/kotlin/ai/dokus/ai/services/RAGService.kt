@@ -1,7 +1,7 @@
 package ai.dokus.ai.services
 
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ChunkRetrievalRequest
 import tech.dokus.domain.model.ChunkRetrievalResponse
 import tech.dokus.domain.model.DocumentChunkId

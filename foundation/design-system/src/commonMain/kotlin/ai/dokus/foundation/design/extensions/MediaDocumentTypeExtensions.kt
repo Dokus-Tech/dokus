@@ -2,12 +2,11 @@ package ai.dokus.foundation.design.extensions
 
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.document_type_bill
-import ai.dokus.app.resources.generated.document_type_document
 import ai.dokus.app.resources.generated.document_type_expense
 import ai.dokus.app.resources.generated.document_type_invoice
 import ai.dokus.app.resources.generated.document_type_unknown
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.MediaDocumentType
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.MediaDocumentType
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 

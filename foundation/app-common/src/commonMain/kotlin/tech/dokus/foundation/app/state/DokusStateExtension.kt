@@ -1,6 +1,6 @@
 package tech.dokus.foundation.app.state
 
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 

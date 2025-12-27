@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.repository
 
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.model.ContactActivitySummary
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.ContactMergeResult

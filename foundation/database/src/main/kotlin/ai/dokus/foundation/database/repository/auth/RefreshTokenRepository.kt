@@ -4,7 +4,7 @@ package ai.dokus.foundation.database.repository.auth
 
 import ai.dokus.foundation.database.tables.auth.RefreshTokensTable
 import ai.dokus.foundation.database.utils.toKotlinxInstant
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.ktor.database.dbQuery
 import tech.dokus.foundation.ktor.database.now
 import tech.dokus.foundation.ktor.utils.loggerFor
@@ -23,6 +23,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 
 /**
@@ -158,7 +159,7 @@ class RefreshTokenRepository {
 
             // Return userId for generating new tokens
             @OptIn(ExperimentalUuidApi::class)
-            UserId(kotlin.uuid.Uuid.parse(userId.toString()).toString())
+            UserId(Uuid.parse(userId.toString()).toString())
         }
     }.onFailure { error ->
         when (error) {

@@ -1,8 +1,8 @@
 package ai.dokus.app.contacts.usecases
 
 import ai.dokus.app.contacts.repository.ContactRemoteDataSource
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.model.ContactNoteDto
 import tech.dokus.domain.model.CreateContactNoteRequest
 import tech.dokus.domain.model.UpdateContactNoteRequest

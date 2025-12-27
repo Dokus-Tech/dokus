@@ -2,8 +2,8 @@ package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.domain.enums.ProcessingStatus
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentProcessingDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow

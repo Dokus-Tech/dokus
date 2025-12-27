@@ -2,11 +2,11 @@ package ai.dokus.foundation.database.repository.payment
 
 import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
-import ai.dokus.foundation.domain.enums.PaymentMethod
-import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.PaymentId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.TransactionId
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.ids.PaymentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.TransactionId
 import tech.dokus.domain.model.PaymentDto
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.LocalDate

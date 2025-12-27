@@ -5,7 +5,7 @@ import ai.dokus.foundation.design.local.ThemeManagerProvided
 import ai.dokus.foundation.design.style.ThemeManager
 import ai.dokus.foundation.design.style.ThemeMode
 import ai.dokus.foundation.design.style.Themed
-import ai.dokus.foundation.domain.enums.Language
+import tech.dokus.domain.enums.Language
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

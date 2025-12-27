@@ -24,7 +24,7 @@ import ai.dokus.app.resources.generated.contacts_select_contact_hint
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import ai.dokus.foundation.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.ContactDto
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -64,6 +64,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.state.DokusState
@@ -246,7 +247,7 @@ internal fun ContactsScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         // Convert state to DokusState for ContactsList
-        val contactsState: DokusState<ai.dokus.foundation.domain.model.common.PaginationState<ContactDto>> =
+        val contactsState: DokusState<PaginationState<ContactDto>> =
             when (state) {
                 is ContactsState.Loading -> DokusState.loading()
                 is ContactsState.Content -> DokusState.success((state as ContactsState.Content).contacts)
@@ -421,7 +422,7 @@ internal fun ContactsScreen(
  */
 @Composable
 private fun DesktopContactsContent(
-    contactsState: DokusState<ai.dokus.foundation.domain.model.common.PaginationState<ContactDto>>,
+    contactsState: DokusState<PaginationState<ContactDto>>,
     selectedContactId: ContactId?,
     sortOption: ContactSortOption,
     roleFilter: ContactRoleFilter,
@@ -503,7 +504,7 @@ private fun DesktopContactsContent(
  */
 @Composable
 private fun MobileContactsContent(
-    contactsState: DokusState<ai.dokus.foundation.domain.model.common.PaginationState<ContactDto>>,
+    contactsState: DokusState<PaginationState<ContactDto>>,
     sortOption: ContactSortOption,
     roleFilter: ContactRoleFilter,
     activeFilter: ContactActiveFilter,

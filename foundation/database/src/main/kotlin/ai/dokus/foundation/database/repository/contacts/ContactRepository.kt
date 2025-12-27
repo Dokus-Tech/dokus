@@ -9,16 +9,16 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.VatRate
 // ContactType removed - roles are now derived from cashflow items
-import ai.dokus.foundation.domain.ids.ContactId
-import ai.dokus.foundation.domain.ids.DocumentId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.ContactActivitySummary
 import tech.dokus.domain.model.ContactDto
 import tech.dokus.domain.model.ContactMergeResult
 import tech.dokus.domain.model.ContactStats
 import tech.dokus.domain.model.CreateContactRequest
-import ai.dokus.foundation.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.UpdateContactRequest
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Clock

@@ -15,7 +15,7 @@ import ai.dokus.foundation.design.constrains.withContentPadding
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.config.ServerConfig
 import ai.dokus.foundation.domain.config.ServerConfigManager
-import ai.dokus.foundation.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.replace

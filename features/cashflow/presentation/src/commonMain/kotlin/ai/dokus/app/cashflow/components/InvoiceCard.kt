@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.foundation.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

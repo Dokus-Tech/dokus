@@ -2,8 +2,8 @@ package ai.dokus.foundation.database.repository.processor
 
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import ai.dokus.foundation.domain.enums.DocumentType
-import ai.dokus.foundation.domain.enums.ProcessingStatus
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.ProcessingStatus
 import tech.dokus.domain.model.ExtractedDocumentData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone

@@ -3,9 +3,9 @@ package ai.dokus.foundation.database.repository.ai
 import ai.dokus.foundation.database.tables.ai.ChatMessagesTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
-import ai.dokus.foundation.domain.ids.TenantId
-import ai.dokus.foundation.domain.ids.UserId
+import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ChatCitation
 import tech.dokus.domain.model.ChatMessageDto
 import tech.dokus.domain.model.ChatMessageId

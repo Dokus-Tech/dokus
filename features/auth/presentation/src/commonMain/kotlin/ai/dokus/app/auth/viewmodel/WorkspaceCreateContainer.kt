@@ -8,11 +8,11 @@ import ai.dokus.app.auth.repository.AuthRepository
 import ai.dokus.app.auth.repository.LookupRepository
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
-import ai.dokus.foundation.domain.enums.Language
-import ai.dokus.foundation.domain.enums.TenantPlan
-import ai.dokus.foundation.domain.enums.TenantType
-import ai.dokus.foundation.domain.exceptions.asDokusException
-import ai.dokus.foundation.domain.ids.VatNumber
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.EntityLookup
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import ai.dokus.foundation.platform.Logger

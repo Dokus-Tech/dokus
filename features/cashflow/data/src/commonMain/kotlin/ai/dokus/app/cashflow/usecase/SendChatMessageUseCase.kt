@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
-import ai.dokus.foundation.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.model.ChatResponse
 import tech.dokus.domain.model.ChatScope
 import tech.dokus.domain.model.ChatSessionId

@@ -35,7 +35,7 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.enums.UserRole
+import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import androidx.compose.foundation.layout.Arrangement

@@ -1,8 +1,8 @@
 package tech.dokus.foundation.app.state
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
-import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
 
 /**
  * Type-safe state machine for async operations in Dokus.

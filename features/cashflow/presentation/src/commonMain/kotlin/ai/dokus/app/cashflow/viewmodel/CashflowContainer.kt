@@ -12,11 +12,11 @@ import ai.dokus.app.cashflow.usecase.LoadCashflowDocumentsUseCase
 import ai.dokus.app.cashflow.usecase.LoadVatSummaryUseCase
 import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
-import ai.dokus.foundation.domain.exceptions.asDokusException
+import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentProcessingDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async

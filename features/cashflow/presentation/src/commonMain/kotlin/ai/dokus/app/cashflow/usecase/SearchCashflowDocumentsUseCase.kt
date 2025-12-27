@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.usecase
 
-import ai.dokus.foundation.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 
 /**

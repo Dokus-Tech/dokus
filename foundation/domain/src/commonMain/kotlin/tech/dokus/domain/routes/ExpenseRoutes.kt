@@ -1,6 +1,6 @@
 package tech.dokus.domain.routes
 
-import ai.dokus.foundation.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.ExpenseCategory
 import io.ktor.resources.*
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable

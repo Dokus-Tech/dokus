@@ -1,6 +1,6 @@
 package tech.dokus.domain.routes
 
-import ai.dokus.foundation.domain.enums.InvitationStatus
+import tech.dokus.domain.enums.InvitationStatus
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
 

@@ -2,7 +2,7 @@ package ai.dokus.app.cashflow.components
 
 import ai.dokus.foundation.design.components.common.OfflineOverlay
 import tech.dokus.domain.model.DocumentProcessingDto
-import ai.dokus.foundation.domain.model.common.PaginationState
+import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
