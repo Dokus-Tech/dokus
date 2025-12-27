@@ -1,7 +1,7 @@
 package ai.dokus.app.contacts.usecases
 
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 
 /**
  * Use case for getting cached contacts for offline support.

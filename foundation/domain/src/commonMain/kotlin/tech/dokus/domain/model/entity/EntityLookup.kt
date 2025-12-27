@@ -1,8 +1,8 @@
-package tech.dokus.domain.model
+package tech.dokus.domain.model.entity
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
-import kotlinx.serialization.Serializable
 
 /**
  * Result from CBE (Crossroads Bank for Enterprises) company lookup.

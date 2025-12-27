@@ -1,7 +1,7 @@
-package tech.dokus.domain.model
+package tech.dokus.domain.model.ai
 
-import tech.dokus.domain.ids.DocumentProcessingId
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.ids.DocumentProcessingId
 
 // =============================================================================
 // Chat API Request/Response Models

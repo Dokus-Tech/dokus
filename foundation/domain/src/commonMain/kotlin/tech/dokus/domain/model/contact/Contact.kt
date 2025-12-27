@@ -1,5 +1,8 @@
-package tech.dokus.domain.model
+package tech.dokus.domain.model.contact
 
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.VatRate
@@ -10,13 +13,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
-// ============================================================================
-// CONTACT DTOs
-// ============================================================================
 
 /**
  * Main contact DTO representing a customer, vendor, or both.
@@ -175,40 +171,6 @@ data class ContactStats(
     val bothCount: Long,
     val peppolEnabledContacts: Long
 )
-
-// ============================================================================
-// EVENTS
-// ============================================================================
-
-/**
- * Real-time contact events for reactive UI updates.
- */
-@Serializable
-sealed class ContactEvent {
-    @Serializable
-    @SerialName("ContactEvent.ContactCreated")
-    data class ContactCreated(val contact: ContactDto) : ContactEvent()
-
-    @Serializable
-    @SerialName("ContactEvent.ContactUpdated")
-    data class ContactUpdated(val contact: ContactDto) : ContactEvent()
-
-    @Serializable
-    @SerialName("ContactEvent.ContactDeleted")
-    data class ContactDeleted(val contactId: ContactId) : ContactEvent()
-
-    @Serializable
-    @SerialName("ContactEvent.NoteAdded")
-    data class NoteAdded(val contactId: ContactId, val note: ContactNoteDto) : ContactEvent()
-
-    @Serializable
-    @SerialName("ContactEvent.NoteUpdated")
-    data class NoteUpdated(val contactId: ContactId, val note: ContactNoteDto) : ContactEvent()
-
-    @Serializable
-    @SerialName("ContactEvent.NoteDeleted")
-    data class NoteDeleted(val contactId: ContactId, val noteId: ContactNoteId) : ContactEvent()
-}
 
 // ============================================================================
 // DERIVED ROLES (Computed from cashflow items)

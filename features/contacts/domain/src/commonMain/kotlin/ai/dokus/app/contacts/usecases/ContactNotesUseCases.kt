@@ -2,9 +2,9 @@ package ai.dokus.app.contacts.usecases
 
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
-import tech.dokus.domain.model.ContactNoteDto
-import tech.dokus.domain.model.CreateContactNoteRequest
-import tech.dokus.domain.model.UpdateContactNoteRequest
+import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.domain.model.contact.CreateContactNoteRequest
+import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 
 /**
  * Use case for listing notes for a contact.

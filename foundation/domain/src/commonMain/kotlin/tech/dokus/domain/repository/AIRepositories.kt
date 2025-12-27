@@ -3,11 +3,11 @@ package tech.dokus.domain.repository
 import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ChatMessageDto
-import tech.dokus.domain.model.ChatMessageId
-import tech.dokus.domain.model.ChatScope
-import tech.dokus.domain.model.ChatSessionId
-import tech.dokus.domain.model.ChatSessionSummary
+import tech.dokus.domain.model.ai.ChatMessageDto
+import tech.dokus.domain.model.ai.ChatMessageId
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
+import tech.dokus.domain.model.ai.ChatSessionSummary
 import tech.dokus.domain.model.DocumentChunkDto
 import tech.dokus.domain.model.DocumentChunkId
 

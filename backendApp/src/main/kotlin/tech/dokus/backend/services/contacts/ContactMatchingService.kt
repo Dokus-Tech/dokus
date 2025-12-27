@@ -2,8 +2,8 @@ package tech.dokus.backend.services.contacts
 
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ContactMatchReason
-import tech.dokus.domain.model.ContactSuggestion
+import tech.dokus.domain.model.contact.ContactMatchReason
+import tech.dokus.domain.model.contact.ContactSuggestion
 import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**

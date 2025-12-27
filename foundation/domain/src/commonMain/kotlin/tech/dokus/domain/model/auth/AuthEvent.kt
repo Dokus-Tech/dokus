@@ -1,5 +1,4 @@
-package tech.dokus.domain.model
-
+package tech.dokus.domain.model.auth
 
 /**
  * Authentication events that can occur in the application.
