@@ -51,7 +51,6 @@ class DynamicDokusEndpointProvider(
 /**
  * Endpoint configuration for dynamic server connections.
  *
- * Unlike [DokusEndpoint] which uses compile-time BuildKonfig values,
  * [DynamicEndpoint] uses runtime values from the user's selected server.
  *
  * @property host Server hostname or IP address

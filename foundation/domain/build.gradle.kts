@@ -72,30 +72,6 @@ buildkonfig {
         buildConfigField(INT, "appVersionCode", appVersion.code.toString())
 
         buildConfigField(STRING, "env", "cloud")
-
-        // Gateway endpoint (for external clients via Traefik) - Cloud
-        buildConfigField(STRING, "gatewayHost", "app.dokus.tech")
-        buildConfigField(INT, "gatewayPort", "443")
-        buildConfigField(STRING, "gatewayProtocol", "https")
-
-        // RabbitMQ Configuration - Cloud (credentials from env vars at runtime)
-        buildConfigField(STRING, "rabbitmqHost", "rabbitmq")
-        buildConfigField(INT, "rabbitmqPort", "5672")
-        buildConfigField(STRING, "rabbitmqVirtualHost", "/dokus")
-
-        // Internal endpoints (for in-cluster calls; modular monolith uses a single host)
-        buildConfigField(STRING, "authInternalHost", "dokus-server")
-        buildConfigField(INT, "authInternalPort", "8080")
-        buildConfigField(STRING, "cashflowInternalHost", "dokus-server")
-        buildConfigField(INT, "cashflowInternalPort", "8080")
-        buildConfigField(STRING, "paymentInternalHost", "dokus-server")
-        buildConfigField(INT, "paymentInternalPort", "8080")
-        buildConfigField(STRING, "bankingInternalHost", "dokus-server")
-        buildConfigField(INT, "bankingInternalPort", "8080")
-        buildConfigField(STRING, "contactsInternalHost", "dokus-server")
-        buildConfigField(INT, "contactsInternalPort", "8080")
-        buildConfigField(STRING, "mediaInternalHost", "dokus-server")
-        buildConfigField(INT, "mediaInternalPort", "8080")
     }
     defaultConfigs("local") {
         buildConfigField(STRING, "env", "local")
