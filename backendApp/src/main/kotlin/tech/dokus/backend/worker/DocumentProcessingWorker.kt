@@ -1,5 +1,6 @@
 package tech.dokus.backend.worker
 
+import tech.dokus.foundation.ktor.config.ProcessorConfig
 import ai.dokus.ai.services.ChunkingService
 import ai.dokus.ai.services.EmbeddingException
 import ai.dokus.ai.services.EmbeddingService
@@ -38,7 +39,7 @@ class DocumentProcessingWorker(
     private val processingRepository: ProcessorDocumentProcessingRepository,
     private val documentStorage: DocumentStorageService,
     private val providerFactory: ExtractionProviderFactory,
-    private val config: WorkerConfig = WorkerConfig(),
+    private val config: ProcessorConfig,
     // Optional RAG dependencies - if provided, chunking and embedding will be performed
     private val chunkingService: ChunkingService? = null,
     private val embeddingService: EmbeddingService? = null,
@@ -359,12 +360,3 @@ class DocumentProcessingWorker(
         }
     }
 }
-
-/**
- * Configuration for the processing worker.
- */
-data class WorkerConfig(
-    val pollingInterval: Long = 5000L,
-    val batchSize: Int = 10,
-    val maxAttempts: Int = 3
-)
