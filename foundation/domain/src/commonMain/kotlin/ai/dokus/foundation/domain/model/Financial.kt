@@ -1,6 +1,10 @@
 package ai.dokus.foundation.domain.model
 
+import ai.dokus.foundation.domain.DisplayName
+import ai.dokus.foundation.domain.Email
+import ai.dokus.foundation.domain.LegalName
 import ai.dokus.foundation.domain.Money
+import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.Percentage
 import ai.dokus.foundation.domain.VatRate
 import ai.dokus.foundation.domain.enums.BankAccountType
@@ -10,12 +14,12 @@ import ai.dokus.foundation.domain.enums.Country
 import ai.dokus.foundation.domain.enums.Currency
 import ai.dokus.foundation.domain.enums.EntityType
 import ai.dokus.foundation.domain.enums.ExpenseCategory
+import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.enums.InvoiceStatus
 import ai.dokus.foundation.domain.enums.Language
 import ai.dokus.foundation.domain.enums.PaymentMethod
 import ai.dokus.foundation.domain.enums.TenantPlan
 import ai.dokus.foundation.domain.enums.TenantStatus
-import ai.dokus.foundation.domain.enums.InvitationStatus
 import ai.dokus.foundation.domain.enums.TenantType
 import ai.dokus.foundation.domain.enums.UserRole
 import ai.dokus.foundation.domain.ids.AddressId
@@ -24,21 +28,18 @@ import ai.dokus.foundation.domain.ids.BankConnectionId
 import ai.dokus.foundation.domain.ids.BankTransactionId
 import ai.dokus.foundation.domain.ids.Bic
 import ai.dokus.foundation.domain.ids.BillId
-import ai.dokus.foundation.domain.DisplayName
-import ai.dokus.foundation.domain.Email
-import ai.dokus.foundation.domain.LegalName
-import ai.dokus.foundation.domain.Name
 import ai.dokus.foundation.domain.ids.ContactId
+import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.ExpenseId
 import ai.dokus.foundation.domain.ids.Iban
 import ai.dokus.foundation.domain.ids.InvitationId
 import ai.dokus.foundation.domain.ids.InvoiceId
-import ai.dokus.foundation.domain.ids.DocumentId
 import ai.dokus.foundation.domain.ids.PaymentId
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.ids.TransactionId
 import ai.dokus.foundation.domain.ids.UserId
 import ai.dokus.foundation.domain.ids.VatNumber
+import ai.dokus.foundation.domain.model.common.Thumbnail
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -61,7 +62,7 @@ data class Tenant(
     val subscriptionStartedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-    val avatar: CompanyAvatar? = null,
+    val avatar: Thumbnail? = null,
 )
 
 @Serializable

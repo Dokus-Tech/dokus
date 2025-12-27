@@ -2,9 +2,9 @@ package tech.dokus.app.viewmodel
 
 import ai.dokus.foundation.domain.asbtractions.RetryHandler
 import ai.dokus.foundation.domain.exceptions.DokusException
-import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
+import ai.dokus.foundation.domain.model.common.Thumbnail
 import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
@@ -57,7 +57,7 @@ sealed interface WorkspaceSettingsState : MVIState, DokusState<Nothing> {
         val form: FormState = FormState(),
         val saveState: SaveState = SaveState.Idle,
         val avatarState: AvatarState = AvatarState.Idle,
-        val currentAvatar: CompanyAvatar? = null,
+        val currentAvatar: Thumbnail? = null,
     ) : WorkspaceSettingsState {
 
         /**
@@ -172,7 +172,8 @@ sealed interface WorkspaceSettingsIntent : MVIIntent {
 
     // Avatar operations
     /** Upload a new avatar image */
-    data class UploadAvatar(val imageBytes: ByteArray, val filename: String) : WorkspaceSettingsIntent
+    data class UploadAvatar(val imageBytes: ByteArray, val filename: String) :
+        WorkspaceSettingsIntent
 
     /** Delete the current avatar */
     data object DeleteAvatar : WorkspaceSettingsIntent

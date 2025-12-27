@@ -33,7 +33,7 @@ import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldFree
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.domain.model.CompanyAvatar
+import ai.dokus.foundation.domain.model.common.Thumbnail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,6 +99,7 @@ internal fun WorkspaceSettingsScreen(
             is WorkspaceSettingsAction.ShowSuccess -> {
                 snackbarHostState.showSnackbar(action.message)
             }
+
             is WorkspaceSettingsAction.ShowError -> {
                 snackbarHostState.showSnackbar(action.message)
             }
@@ -143,6 +144,7 @@ internal fun WorkspaceSettingsContent(
             is WorkspaceSettingsAction.ShowSuccess -> {
                 snackbarHostState.showSnackbar(action.message)
             }
+
             is WorkspaceSettingsAction.ShowError -> {
                 snackbarHostState.showSnackbar(action.message)
             }
@@ -181,6 +183,7 @@ private fun WorkspaceSettingsContentInternal(
                 CircularProgressIndicator()
             }
         }
+
         is WorkspaceSettingsState.Content -> {
             val formState = state.form
             val saveState = state.saveState
@@ -309,7 +312,13 @@ private fun WorkspaceSettingsContentInternal(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_invoice_prefix),
                             value = formState.invoicePrefix,
-                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateInvoicePrefix(it)) },
+                            onValueChange = {
+                                onIntent(
+                                    WorkspaceSettingsIntent.UpdateInvoicePrefix(
+                                        it
+                                    )
+                                )
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -325,7 +334,13 @@ private fun WorkspaceSettingsContentInternal(
                         PTextFieldStandard(
                             fieldName = stringResource(Res.string.workspace_payment_terms),
                             value = formState.defaultPaymentTerms.toString(),
-                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdateDefaultPaymentTerms(it)) },
+                            onValueChange = {
+                                onIntent(
+                                    WorkspaceSettingsIntent.UpdateDefaultPaymentTerms(
+                                        it
+                                    )
+                                )
+                            },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -353,7 +368,13 @@ private fun WorkspaceSettingsContentInternal(
                         ) {
                             Checkbox(
                                 checked = formState.invoiceIncludeYear,
-                                onCheckedChange = { onIntent(WorkspaceSettingsIntent.UpdateInvoiceIncludeYear(it)) }
+                                onCheckedChange = {
+                                    onIntent(
+                                        WorkspaceSettingsIntent.UpdateInvoiceIncludeYear(
+                                            it
+                                        )
+                                    )
+                                }
                             )
                             Text(
                                 text = stringResource(Res.string.workspace_invoice_include_year),
@@ -369,7 +390,13 @@ private fun WorkspaceSettingsContentInternal(
                         ) {
                             Checkbox(
                                 checked = formState.invoiceYearlyReset,
-                                onCheckedChange = { onIntent(WorkspaceSettingsIntent.UpdateInvoiceYearlyReset(it)) }
+                                onCheckedChange = {
+                                    onIntent(
+                                        WorkspaceSettingsIntent.UpdateInvoiceYearlyReset(
+                                            it
+                                        )
+                                    )
+                                }
                             )
                             Text(
                                 text = stringResource(Res.string.workspace_invoice_yearly_reset),
@@ -392,7 +419,13 @@ private fun WorkspaceSettingsContentInternal(
                         ) {
                             listOf(3, 4, 5, 6).forEach { padding ->
                                 TextButton(
-                                    onClick = { onIntent(WorkspaceSettingsIntent.UpdateInvoicePadding(padding)) }
+                                    onClick = {
+                                        onIntent(
+                                            WorkspaceSettingsIntent.UpdateInvoicePadding(
+                                                padding
+                                            )
+                                        )
+                                    }
                                 ) {
                                     Text(
                                         text = padding.toString(),
@@ -455,7 +488,13 @@ private fun WorkspaceSettingsContentInternal(
                         PTextFieldFree(
                             fieldName = stringResource(Res.string.workspace_payment_terms_text),
                             value = formState.paymentTermsText,
-                            onValueChange = { onIntent(WorkspaceSettingsIntent.UpdatePaymentTermsText(it)) },
+                            onValueChange = {
+                                onIntent(
+                                    WorkspaceSettingsIntent.UpdatePaymentTermsText(
+                                        it
+                                    )
+                                )
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -478,6 +517,7 @@ private fun WorkspaceSettingsContentInternal(
                 Spacer(Modifier.height(16.dp))
             }
         }
+
         is WorkspaceSettingsState.Error -> {
             // Error state - show retry option
             Box(
@@ -508,7 +548,7 @@ private fun WorkspaceSettingsContentInternal(
 @Composable
 private fun CompanyAvatarSection(
     avatarState: WorkspaceSettingsState.Content.AvatarState,
-    currentAvatar: CompanyAvatar?,
+    currentAvatar: Thumbnail?,
     companyInitial: String,
     avatarPicker: FilePickerLauncher,
     onDeleteAvatar: () -> Unit,
@@ -537,8 +577,9 @@ private fun CompanyAvatarSection(
             Spacer(Modifier.height(4.dp))
 
             // Avatar action buttons
-            val isActionInProgress = avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
-                    avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
+            val isActionInProgress =
+                avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
+                        avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
                     onClick = { avatarPicker.launch() },
@@ -605,6 +646,7 @@ private fun AvatarStateIndicator(
                 )
             }
         }
+
         is WorkspaceSettingsState.Content.AvatarState.Deleting -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -621,6 +663,7 @@ private fun AvatarStateIndicator(
                 )
             }
         }
+
         is WorkspaceSettingsState.Content.AvatarState.Error -> {
             Text(
                 text = avatarState.message,
@@ -628,11 +671,13 @@ private fun AvatarStateIndicator(
                 color = MaterialTheme.colorScheme.error
             )
         }
+
         is WorkspaceSettingsState.Content.AvatarState.Success -> {
             LaunchedEffect(Unit) {
                 onResetState()
             }
         }
+
         else -> {}
     }
 }
@@ -654,6 +699,7 @@ private fun SaveStateFeedback(
                 modifier = modifier
             )
         }
+
         is WorkspaceSettingsState.Content.SaveState.Error -> {
             Text(
                 text = saveState.message,
@@ -661,6 +707,7 @@ private fun SaveStateFeedback(
                 modifier = modifier
             )
         }
+
         else -> {}
     }
 }

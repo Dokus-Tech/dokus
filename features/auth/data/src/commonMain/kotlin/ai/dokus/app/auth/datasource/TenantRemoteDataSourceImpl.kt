@@ -3,12 +3,12 @@ package ai.dokus.app.auth.datasource
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.Address
 import ai.dokus.foundation.domain.model.AvatarUploadResponse
-import ai.dokus.foundation.domain.model.CompanyAvatar
 import ai.dokus.foundation.domain.model.CreateTenantRequest
+import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
 import ai.dokus.foundation.domain.model.Tenant
 import ai.dokus.foundation.domain.model.TenantSettings
 import ai.dokus.foundation.domain.model.UpsertTenantAddressRequest
-import ai.dokus.foundation.domain.model.InvoiceNumberPreviewResponse
+import ai.dokus.foundation.domain.model.common.Thumbnail
 import ai.dokus.foundation.domain.routes.Tenants
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -130,7 +130,7 @@ internal class TenantRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getAvatar(): Result<CompanyAvatar?> {
+    override suspend fun getAvatar(): Result<Thumbnail?> {
         return runCatching {
             val response: HttpResponse = httpClient.get(Tenants.Avatar())
             if (response.status == HttpStatusCode.NotFound) {

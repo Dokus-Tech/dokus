@@ -2,7 +2,7 @@ package ai.dokus.foundation.database.repository.cashflow
 
 import ai.dokus.foundation.domain.ids.TenantId
 import ai.dokus.foundation.domain.model.FinancialDocumentDto
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import kotlinx.datetime.LocalDate
 
 class CashflowRepository(

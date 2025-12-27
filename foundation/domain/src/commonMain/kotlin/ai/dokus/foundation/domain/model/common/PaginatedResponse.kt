@@ -1,4 +1,4 @@
-package ai.dokus.foundation.domain.model
+package ai.dokus.foundation.domain.model.common
 
 import kotlinx.serialization.Serializable
 

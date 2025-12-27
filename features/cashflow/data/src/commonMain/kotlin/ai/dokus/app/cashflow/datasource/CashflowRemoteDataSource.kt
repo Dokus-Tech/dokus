@@ -22,7 +22,7 @@ import ai.dokus.foundation.domain.model.FinancialDocumentDto
 import ai.dokus.foundation.domain.model.InvoiceItemDto
 import ai.dokus.foundation.domain.model.InvoiceTotals
 import ai.dokus.foundation.domain.model.MarkBillPaidRequest
-import ai.dokus.foundation.domain.model.PaginatedResponse
+import ai.dokus.foundation.domain.model.common.PaginatedResponse
 import ai.dokus.foundation.domain.model.PeppolConnectRequest
 import ai.dokus.foundation.domain.model.PeppolConnectResponse
 import ai.dokus.foundation.domain.model.PeppolInboxPollResponse

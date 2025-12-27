@@ -4,10 +4,6 @@ import ai.dokus.foundation.database.repository.auth.TenantRepository
 import ai.dokus.foundation.domain.exceptions.DokusException
 import ai.dokus.foundation.domain.model.AvatarUploadResponse
 import ai.dokus.foundation.domain.routes.Tenants
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.AvatarStorageService
-import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -19,6 +15,10 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.foundation.ktor.security.authenticateJwt
+import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.ktor.storage.AvatarStorageService
+import tech.dokus.foundation.ktor.utils.loggerFor
 
 private val logger = loggerFor("AvatarRoutes")
 
@@ -84,7 +84,7 @@ internal fun Route.avatarRoutes() {
 
             // Upload new avatar
             val result = try {
-                avatarStorageService.uploadAvatar(tenantId, fileBytes!!, contentType!!)
+                avatarStorageService.uploadAvatar(tenantId, fileBytes, contentType!!)
             } catch (e: IllegalArgumentException) {
                 throw DokusException.BadRequest(e.message ?: "Invalid image")
             }
