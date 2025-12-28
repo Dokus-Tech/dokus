@@ -1,7 +1,7 @@
 package tech.dokus.domain.model.ai
 
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 
 // =============================================================================
 // Chat API Request/Response Models
@@ -25,7 +25,7 @@ data class ChatRequest(
      * Document ID for single-document chat.
      * Required when scope is SINGLE_DOC.
      */
-    val documentProcessingId: DocumentProcessingId? = null,
+    val documentId: DocumentId? = null,
 
     /**
      * Session ID to continue an existing conversation.
@@ -131,7 +131,7 @@ data class StreamingChatRequest(
     val scope: ChatScope,
 
     /** Document ID for single-document chat */
-    val documentProcessingId: DocumentProcessingId? = null,
+    val documentId: DocumentId? = null,
 
     /** Session ID to continue an existing conversation */
     val sessionId: ChatSessionId? = null,
@@ -201,7 +201,7 @@ data class ChatSessionListRequest(
     val scope: ChatScope? = null,
 
     /** Filter by document ID */
-    val documentProcessingId: DocumentProcessingId? = null,
+    val documentId: DocumentId? = null,
 
     /** Pagination: page number (0-indexed) */
     val page: Int = 0,

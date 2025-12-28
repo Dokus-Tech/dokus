@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.repository
 
 import ai.dokus.app.cashflow.datasource.ChatRemoteDataSource
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatHistoryResponse
 import tech.dokus.domain.model.ai.ChatRequest
@@ -86,7 +86,7 @@ class ChatRepositoryImpl(
         val request = ChatRequest(
             message = message,
             scope = ChatScope.AllDocs,
-            documentProcessingId = null,
+            documentId = null,
             sessionId = sessionId,
             maxChunks = maxChunks,
             minSimilarity = minSimilarity
@@ -108,7 +108,7 @@ class ChatRepositoryImpl(
      * @return Chat response with AI-generated answer and source citations
      */
     suspend fun sendSingleDocumentMessage(
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
         message: String,
         sessionId: ChatSessionId? = null,
         maxChunks: Int? = null,
@@ -117,7 +117,7 @@ class ChatRepositoryImpl(
         val request = ChatRequest(
             message = message,
             scope = ChatScope.SingleDoc,
-            documentProcessingId = documentId,
+            documentId = documentId,
             sessionId = sessionId,
             maxChunks = maxChunks,
             minSimilarity = minSimilarity
@@ -143,7 +143,7 @@ class ChatRepositoryImpl(
      */
     suspend fun listSessions(
         scope: ChatScope? = null,
-        documentId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         page: Int = 0,
         limit: Int = 20
     ): Result<ChatSessionListResponse> {
@@ -175,7 +175,7 @@ class ChatRepositoryImpl(
      * @return Paginated list of chat sessions for the document
      */
     suspend fun listSessionsForDocument(
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
         page: Int = 0,
         limit: Int = 20
     ): Result<ChatSessionListResponse> {
@@ -292,7 +292,7 @@ class ChatRepositoryImpl(
      * @param documentId The document to check
      * @return true if chat is available for the document
      */
-    suspend fun isChatAvailable(documentId: DocumentProcessingId): Boolean {
+    suspend fun isChatAvailable(documentId: DocumentId): Boolean {
         // Try to list sessions - if we can access the API, chat is available
         // The actual document status check should be done via DocumentProcessingRepository
         return getConfiguration().isSuccess
@@ -309,7 +309,7 @@ class ChatRepositoryImpl(
      * @return The new session's first response
      */
     suspend fun startDocumentChat(
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
         initialMessage: String
     ): Result<ChatResponse> {
         logger.i { "Starting new document chat: documentId=$documentId" }
@@ -354,12 +354,12 @@ class ChatRepositoryImpl(
         sessionId: ChatSessionId,
         message: String,
         scope: ChatScope,
-        documentId: DocumentProcessingId? = null
+        documentId: DocumentId? = null
     ): Result<ChatResponse> {
         val request = ChatRequest(
             message = message,
             scope = scope,
-            documentProcessingId = documentId,
+            documentId = documentId,
             sessionId = sessionId
         )
         return sendMessage(request)
