@@ -133,10 +133,12 @@ class DocumentChunksRepository : ChunkRepository {
 
     /**
      * Store chunks with embeddings for a document.
+     * Includes contentHash for deduplication on reprocessing.
      */
     override suspend fun storeChunks(
         tenantId: TenantId,
         documentId: DocumentId,
+        contentHash: String,
         chunks: List<ChunkWithEmbedding>
     ): Unit = newSuspendedTransaction {
         if (chunks.isEmpty()) {
@@ -148,13 +150,14 @@ class DocumentChunksRepository : ChunkRepository {
         val documentUuid = UUID.fromString(documentId.toString())
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        logger.info("Storing ${chunks.size} chunks for document $documentId, tenant $tenantId")
+        logger.info("Storing ${chunks.size} chunks for document $documentId, tenant $tenantId, hash=$contentHash")
 
         DocumentChunksTable.batchInsert(chunks) { chunk ->
             this[DocumentChunksTable.id] = UUID.randomUUID()
             this[DocumentChunksTable.tenantId] = tenantUuid
             this[DocumentChunksTable.documentId] = documentUuid
             this[DocumentChunksTable.content] = chunk.content
+            this[DocumentChunksTable.contentHash] = contentHash
             this[DocumentChunksTable.chunkIndex] = chunk.chunkIndex
             this[DocumentChunksTable.totalChunks] = chunk.totalChunks
             this[DocumentChunksTable.embedding] = chunk.embedding
@@ -169,6 +172,28 @@ class DocumentChunksRepository : ChunkRepository {
         }
 
         logger.debug("Successfully stored ${chunks.size} chunks")
+    }
+
+    /**
+     * Get the content hash for a document's chunks (for deduplication).
+     * Returns the content hash if chunks exist, null otherwise.
+     */
+    override suspend fun getContentHashForDocument(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): String? = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val documentUuid = UUID.fromString(documentId.toString())
+
+        DocumentChunksTable
+            .selectAll()
+            .where {
+                (DocumentChunksTable.tenantId eq tenantUuid) and
+                (DocumentChunksTable.documentId eq documentUuid)
+            }
+            .limit(1)
+            .singleOrNull()
+            ?.get(DocumentChunksTable.contentHash)
     }
 
     /**

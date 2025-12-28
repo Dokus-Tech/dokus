@@ -47,13 +47,27 @@ interface ChunkRepository {
      *
      * @param tenantId The tenant owning the document
      * @param documentId The document ID
+     * @param contentHash SHA-256 hash of the source text for deduplication
      * @param chunks The chunks to store with their embeddings
      */
     suspend fun storeChunks(
         tenantId: TenantId,
         documentId: DocumentId,
+        contentHash: String,
         chunks: List<ChunkWithEmbedding>
     )
+
+    /**
+     * Get the content hash for a document's chunks (for deduplication).
+     *
+     * @param tenantId The tenant owning the document
+     * @param documentId The document ID
+     * @return The content hash if chunks exist, null otherwise
+     */
+    suspend fun getContentHashForDocument(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): String?
 
     /**
      * Delete all chunks for a document.

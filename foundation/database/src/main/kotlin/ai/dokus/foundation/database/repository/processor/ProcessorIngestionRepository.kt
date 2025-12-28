@@ -10,6 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -39,6 +40,77 @@ class ProcessorIngestionRepository {
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
+    }
+
+    /**
+     * Check if extracted data meets the minimal threshold to create a draft.
+     *
+     * Thresholds:
+     * - Invoice: has totalAmount OR (subtotal + vat) OR (amount + date + clientName)
+     * - Bill: has amount OR (amount + date + supplierName)
+     * - Expense: has amount AND (merchant OR date)
+     * - Unknown: never creates draft
+     */
+    private fun meetsMinimalThreshold(type: DocumentType, data: ExtractedDocumentData): Boolean {
+        return when (type) {
+            DocumentType.Invoice -> {
+                val inv = data.invoice ?: return false
+                inv.totalAmount != null ||
+                (inv.subtotalAmount != null && inv.vatAmount != null) ||
+                (inv.totalAmount != null && inv.issueDate != null && inv.clientName != null)
+            }
+            DocumentType.Bill -> {
+                val bill = data.bill ?: return false
+                bill.amount != null ||
+                (bill.amount != null && bill.issueDate != null && bill.supplierName != null)
+            }
+            DocumentType.Expense -> {
+                val exp = data.expense ?: return false
+                exp.amount != null && (exp.merchant != null || exp.date != null)
+            }
+            DocumentType.Unknown -> false
+        }
+    }
+
+    /**
+     * Determine the draft status based on extracted data validation.
+     *
+     * Returns:
+     * - Ready: All required fields present and valid
+     * - NeedsReview: Missing required fields or validation issues
+     */
+    private fun determineDraftStatus(type: DocumentType, data: ExtractedDocumentData): DraftStatus {
+        return when (type) {
+            DocumentType.Invoice -> {
+                val inv = data.invoice ?: return DraftStatus.NeedsReview
+                if (inv.totalAmount != null && inv.clientName != null &&
+                    inv.issueDate != null && inv.dueDate != null) {
+                    DraftStatus.Ready
+                } else {
+                    DraftStatus.NeedsReview
+                }
+            }
+            DocumentType.Bill -> {
+                val bill = data.bill ?: return DraftStatus.NeedsReview
+                if (bill.amount != null && bill.supplierName != null &&
+                    bill.issueDate != null && bill.dueDate != null &&
+                    bill.category != null) {
+                    DraftStatus.Ready
+                } else {
+                    DraftStatus.NeedsReview
+                }
+            }
+            DocumentType.Expense -> {
+                val exp = data.expense ?: return DraftStatus.NeedsReview
+                if (exp.amount != null && exp.merchant != null &&
+                    exp.date != null && exp.category != null) {
+                    DraftStatus.Ready
+                } else {
+                    DraftStatus.NeedsReview
+                }
+            }
+            DocumentType.Unknown -> DraftStatus.NeedsReview
+        }
     }
 
     /**
@@ -110,7 +182,11 @@ class ProcessorIngestionRepository {
         confidence: Double,
         rawText: String?,
         force: Boolean = false
-    ): Boolean = newSuspendedTransaction {
+    ): Boolean {
+        // Defense-in-depth: Validate tenantId is provided
+        require(tenantId.isNotBlank()) { "tenantId is required for draft operations" }
+
+        return newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val runUuid = UUID.fromString(runId)
         val documentUuid = UUID.fromString(documentId)
@@ -133,9 +209,23 @@ class ProcessorIngestionRepository {
 
         if (!runUpdated) return@newSuspendedTransaction false
 
+        // Only create/update draft if extraction meets minimal threshold
+        if (!meetsMinimalThreshold(documentType, extractedData)) {
+            // Extraction didn't produce meaningful data - don't create draft
+            // Ingestion run is still marked as succeeded with artifacts
+            return@newSuspendedTransaction true
+        }
+
+        // Determine draft status based on validation
+        val calculatedStatus = determineDraftStatus(documentType, extractedData)
+
         // Check if draft exists and get current state
+        // SECURITY: Always filter by tenantId to prevent cross-tenant access
         val existingDraft = DocumentDraftsTable.selectAll()
-            .where { DocumentDraftsTable.documentId eq documentUuid }
+            .where {
+                (DocumentDraftsTable.documentId eq documentUuid) and
+                (DocumentDraftsTable.tenantId eq tenantUuid)
+            }
             .singleOrNull()
 
         if (existingDraft == null) {
@@ -143,7 +233,7 @@ class ProcessorIngestionRepository {
             DocumentDraftsTable.insert {
                 it[DocumentDraftsTable.documentId] = documentUuid
                 it[DocumentDraftsTable.tenantId] = tenantUuid
-                it[draftStatus] = DraftStatus.NeedsReview
+                it[draftStatus] = calculatedStatus
                 it[DocumentDraftsTable.documentType] = documentType
                 it[aiDraftData] = extractedDataJson
                 it[aiDraftSourceRunId] = runUuid
@@ -164,8 +254,10 @@ class ProcessorIngestionRepository {
             // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
             val shouldSetExtracted = currentVersion == 0 || force
 
+            // SECURITY: Always filter by tenantId to prevent cross-tenant modification
             DocumentDraftsTable.update({
-                DocumentDraftsTable.documentId eq documentUuid
+                (DocumentDraftsTable.documentId eq documentUuid) and
+                (DocumentDraftsTable.tenantId eq tenantUuid)
             }) {
                 it[DocumentDraftsTable.documentType] = documentType
                 it[lastSuccessfulRunId] = runUuid
@@ -178,11 +270,14 @@ class ProcessorIngestionRepository {
 
                 if (shouldSetExtracted) {
                     it[DocumentDraftsTable.extractedData] = extractedDataJson
+                    // Update status when we update extracted data
+                    it[draftStatus] = calculatedStatus
                 }
             }
         }
 
         true
+    }
     }
 
     /**

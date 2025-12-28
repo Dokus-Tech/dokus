@@ -2,10 +2,11 @@ package tech.dokus.backend.routes.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import tech.dokus.domain.enums.IngestionStatus
+import ai.dokus.foundation.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentUploadResponse
+import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
@@ -140,13 +141,18 @@ internal fun Route.documentUploadRoutes() {
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.InternalError("Failed to retrieve created document")
 
-            // Return with document and ingestion run info
+            // Fetch the ingestion run to return full DTO
+            val ingestionRun = ingestionRepository.getById(runId, tenantId)
+                ?: throw DokusException.InternalError("Failed to retrieve created ingestion run")
+
+            // Return DocumentRecordDto with draft=null (no draft yet - document is queued)
             call.respond(
                 HttpStatusCode.Created,
-                DocumentUploadResponse(
+                DocumentRecordDto(
                     document = document.copy(downloadUrl = result.url),
-                    processingId = runId,
-                    processingStatus = IngestionStatus.Queued.name
+                    draft = null,  // No draft until extraction completes
+                    latestIngestion = ingestionRun.toDto(),
+                    confirmedEntity = null
                 )
             )
         }
@@ -211,3 +217,19 @@ internal fun Route.documentUploadRoutes() {
         }
     }
 }
+
+/**
+ * Convert IngestionRunSummary to DTO for API response.
+ */
+private fun IngestionRunSummary.toDto(): DocumentIngestionDto = DocumentIngestionDto(
+    id = id,
+    documentId = documentId,
+    tenantId = tenantId,
+    status = status,
+    provider = provider,
+    queuedAt = queuedAt,
+    startedAt = startedAt,
+    finishedAt = finishedAt,
+    errorMessage = errorMessage,
+    confidence = confidence
+)
