@@ -365,73 +365,6 @@ check_docker() {
     print_status success "Docker engine is live"
 }
 
-# Function to check OCR dependencies (tesseract + pdftoppm)
-check_ocr_dependencies() {
-    local ocr_ok=true
-    local missing_deps=()
-
-    # Check tesseract
-    if ! command -v tesseract &> /dev/null; then
-        ocr_ok=false
-        missing_deps+=("tesseract")
-    fi
-
-    # Check pdftoppm (from poppler)
-    if ! command -v pdftoppm &> /dev/null; then
-        ocr_ok=false
-        missing_deps+=("pdftoppm")
-    fi
-
-    if [ "$ocr_ok" = true ]; then
-        print_status success "OCR tools available (tesseract, pdftoppm)"
-        return 0
-    fi
-
-    # Show warning and installation instructions
-    print_status warning "OCR dependencies missing: ${missing_deps[*]}"
-    echo ""
-    echo_e "  ${SOFT_YELLOW}${BOLD}Document OCR will not work without these tools.${NC}"
-    echo_e "  ${DIM_WHITE}Install them to enable PDF/image text extraction:${NC}"
-    echo ""
-
-    local OS=$(detect_os)
-    if [[ "$OS" == "macos" ]]; then
-        echo_e "  ${SOFT_CYAN}macOS (Homebrew):${NC}"
-        echo_e "    ${DIM_WHITE}brew install tesseract tesseract-lang poppler${NC}"
-    else
-        echo_e "  ${SOFT_CYAN}Linux (apt):${NC}"
-        echo_e "    ${DIM_WHITE}sudo apt-get install tesseract-ocr tesseract-ocr-eng \\${NC}"
-        echo_e "    ${DIM_WHITE}     tesseract-ocr-fra tesseract-ocr-nld poppler-utils${NC}"
-    fi
-    echo ""
-
-    printf "  ${BOLD}Install now?${NC} ${DIM_WHITE}(y/N):${NC} "
-    read -n 1 -r
-    echo ""
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo ""
-        if [[ "$OS" == "macos" ]]; then
-            print_status loading "Installing OCR tools via Homebrew..."
-            if brew install tesseract tesseract-lang poppler; then
-                print_status success "OCR tools installed successfully"
-            else
-                print_status error "Installation failed. Please install manually."
-            fi
-        else
-            print_status loading "Installing OCR tools via apt..."
-            if sudo apt-get install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-fra tesseract-ocr-nld poppler-utils; then
-                print_status success "OCR tools installed successfully"
-            else
-                print_status error "Installation failed. Please install manually."
-            fi
-        fi
-    else
-        print_status info "Skipping OCR installation (document processing will be limited)"
-    fi
-    echo ""
-}
-
 check_env() {
     if [ ! -f .env ]; then
         print_status warning ".env missing — run the guided setup (option 1)."
@@ -810,10 +743,6 @@ initial_setup() {
     else
         print_status success "Docker Compose available"
     fi
-
-    # Check OCR dependencies for document processing
-    print_status task "Checking OCR dependencies"
-    check_ocr_dependencies
 
     # Generate secure password
     generate_password() {
