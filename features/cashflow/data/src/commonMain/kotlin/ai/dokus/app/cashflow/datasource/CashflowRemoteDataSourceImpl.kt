@@ -23,7 +23,6 @@ import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.DocumentUploadResponse
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -405,7 +404,7 @@ internal class CashflowRemoteDataSourceImpl(
         prefix: String
     ): Result<DocumentDto> {
         return runCatching {
-            val response: DocumentUploadResponse = httpClient.submitFormWithBinaryData(
+            val response: DocumentRecordDto = httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
                 formData = formData {
                     append(
@@ -434,7 +433,7 @@ internal class CashflowRemoteDataSourceImpl(
         onProgress: (Float) -> Unit
     ): Result<DocumentDto> {
         return runCatching {
-            val response: DocumentUploadResponse = httpClient.submitFormWithBinaryData(
+            val response: DocumentRecordDto = httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
                 formData = formData {
                     append(
