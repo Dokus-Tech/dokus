@@ -5,7 +5,15 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache curl tzdata
+# Install runtime dependencies including OCR tools
+RUN apk add --no-cache \
+    curl \
+    tzdata \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    tesseract-ocr-data-fra \
+    tesseract-ocr-data-nld \
+    poppler-utils
 
 # Create non-root user
 RUN addgroup -g 1001 -S dokus && adduser -u 1001 -S dokus -G dokus
