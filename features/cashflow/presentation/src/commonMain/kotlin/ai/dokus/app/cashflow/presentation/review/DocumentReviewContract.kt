@@ -2,13 +2,13 @@ package ai.dokus.app.cashflow.presentation.review
 
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.enums.ProcessingStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentProcessingId
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedBillFields
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedExpenseFields
@@ -58,8 +58,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
     /**
      * Content state - document loaded and ready for review.
      *
-     * @property processingId The document processing record ID
-     * @property document Full document processing record
+     * @property documentId The document ID
+     * @property document Full document record
      * @property editableData Current editable state of extracted data
      * @property originalData Original AI-extracted data (for comparison)
      * @property hasUnsavedChanges Whether user has made unsaved edits
@@ -70,8 +70,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
      * @property contactSuggestions Suggested contacts based on extraction
      */
     data class Content(
-        val processingId: DocumentProcessingId,
-        val document: DocumentProcessingDto,
+        val documentId: DocumentId,
+        val document: DocumentRecordDto,
         val editableData: EditableExtractedData,
         val originalData: ExtractedDocumentData?,
         val hasUnsavedChanges: Boolean = false,
@@ -84,10 +84,11 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
 
         /**
          * Whether the document can be confirmed.
-         * Must be in PROCESSED status and have valid required fields.
+         * Must have draft in NeedsReview/Ready status and have valid required fields.
          */
         val canConfirm: Boolean
-            get() = document.status == ProcessingStatus.Processed &&
+            get() = (document.draft?.draftStatus == DraftStatus.NeedsReview ||
+                    document.draft?.draftStatus == DraftStatus.Ready) &&
                     !isConfirming &&
                     !isSaving &&
                     editableData.isValid
@@ -97,7 +98,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          */
         val showConfidence: Boolean
             get() {
-                val conf = document.confidence
+                val conf = document.latestIngestion?.confidence
                 return conf != null && conf > 0.0
             }
 
@@ -105,7 +106,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          * Overall confidence percentage for display.
          */
         val confidencePercent: Int
-            get() = ((document.confidence ?: 0.0) * 100).toInt()
+            get() = ((document.latestIngestion?.confidence ?: 0.0) * 100).toInt()
     }
 
     /**
@@ -338,8 +339,8 @@ sealed interface DocumentReviewIntent : MVIIntent {
 
     // === Data Loading ===
 
-    /** Load the document processing record */
-    data class LoadDocument(val processingId: DocumentProcessingId) : DocumentReviewIntent
+    /** Load the document record */
+    data class LoadDocument(val documentId: DocumentId) : DocumentReviewIntent
 
     /** Refresh the document data */
     data object Refresh : DocumentReviewIntent
@@ -479,7 +480,7 @@ sealed interface DocumentReviewAction : MVIAction {
     data object NavigateBack : DocumentReviewAction
 
     /** Navigate to document chat screen */
-    data class NavigateToChat(val processingId: DocumentProcessingId) : DocumentReviewAction
+    data class NavigateToChat(val documentId: DocumentId) : DocumentReviewAction
 
     /** Navigate to created entity after confirmation */
     data class NavigateToEntity(val entityId: String, val entityType: DocumentType) : DocumentReviewAction
