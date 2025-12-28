@@ -2,6 +2,44 @@ package ai.dokus.ai.models
 
 import kotlinx.serialization.Serializable
 
+// =============================================================================
+// Provenance Models for Receipt Extraction
+// =============================================================================
+
+/**
+ * Provenance data for all extracted receipt fields.
+ * Maps field names to their provenance information.
+ */
+@Serializable
+data class ReceiptProvenance(
+    // Merchant fields provenance
+    val merchantName: FieldProvenance? = null,
+    val merchantAddress: FieldProvenance? = null,
+    val merchantVatNumber: FieldProvenance? = null,
+
+    // Transaction details provenance
+    val receiptNumber: FieldProvenance? = null,
+    val transactionDate: FieldProvenance? = null,
+    val transactionTime: FieldProvenance? = null,
+
+    // Totals provenance
+    val currency: FieldProvenance? = null,
+    val subtotal: FieldProvenance? = null,
+    val vatAmount: FieldProvenance? = null,
+    val totalAmount: FieldProvenance? = null,
+
+    // Payment provenance
+    val paymentMethod: FieldProvenance? = null,
+    val cardLastFour: FieldProvenance? = null,
+
+    // Category provenance
+    val category: FieldProvenance? = null
+)
+
+// =============================================================================
+// Extracted Receipt Data with Provenance
+// =============================================================================
+
 /**
  * Extracted data from a receipt document.
  */
@@ -34,7 +72,10 @@ data class ExtractedReceiptData(
     val suggestedCategory: String? = null,
 
     // Metadata
-    val confidence: Double = 0.0
+    val confidence: Double = 0.0,
+
+    // Provenance - links extracted values to source locations
+    val provenance: ReceiptProvenance? = null
 )
 
 /**
