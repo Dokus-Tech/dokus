@@ -4,9 +4,9 @@ import tech.dokus.foundation.ktor.config.ProcessorConfig
 import ai.dokus.ai.services.ChunkingService
 import ai.dokus.ai.services.EmbeddingException
 import ai.dokus.ai.services.EmbeddingService
-import ai.dokus.foundation.database.repository.processor.ProcessingItem
-import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
-import tech.dokus.domain.ids.DocumentProcessingId
+import ai.dokus.foundation.database.repository.processor.IngestionItem
+import ai.dokus.foundation.database.repository.processor.ProcessorIngestionRepository
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - RAG preparation: chunking and embedding generation after extraction
  */
 class DocumentProcessingWorker(
-    private val processingRepository: ProcessorDocumentProcessingRepository,
+    private val ingestionRepository: ProcessorIngestionRepository,
     private val documentStorage: DocumentStorageService,
     private val providerFactory: ExtractionProviderFactory,
     private val config: ProcessorConfig,
@@ -103,71 +103,77 @@ class DocumentProcessingWorker(
     }
 
     /**
-     * Process a batch of pending documents.
+     * Process a batch of pending ingestion runs.
      */
     private suspend fun processBatch() {
-        // Find pending documents
-        val pending = processingRepository.findPendingForProcessing(
-            limit = config.batchSize,
-            maxAttempts = config.maxAttempts
+        // Find queued ingestion runs
+        val pending = ingestionRepository.findPendingForProcessing(
+            limit = config.batchSize
         )
 
         if (pending.isEmpty()) {
-            logger.debug("No pending documents to process")
+            logger.debug("No pending ingestion runs to process")
             return
         }
 
-        logger.info("Found ${pending.size} pending documents to process")
+        logger.info("Found ${pending.size} pending ingestion runs to process")
 
-        for (processing in pending) {
+        for (ingestion in pending) {
             if (!isRunning.get()) break
 
             try {
-                processDocument(processing)
+                processIngestionRun(ingestion)
             } catch (e: Exception) {
-                logger.error("Failed to process document ${processing.documentId}", e)
+                logger.error("Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}", e)
             }
         }
     }
 
     /**
-     * Process a single document.
+     * Process a single ingestion run.
+     *
+     * Each ingestion run is a single processing attempt. If it fails, it stays failed.
+     * Retries are handled via the /reprocess endpoint which creates new runs.
      */
-    private suspend fun processDocument(processing: ProcessingItem) {
-        val documentId = processing.documentId
-        val processingId = processing.processingId
+    private suspend fun processIngestionRun(ingestion: IngestionItem) {
+        val runId = ingestion.runId
+        val documentId = ingestion.documentId
+        val tenantId = ingestion.tenantId
 
-        logger.info("Processing document: $documentId (attempt ${processing.attempts + 1})")
+        logger.info("Processing ingestion run: $runId for document: $documentId")
 
         // Get AI provider
         val provider = providerFactory.getFirstAvailableProvider()
         if (provider == null) {
             logger.error("No AI provider available for processing")
-            processingRepository.markAsFailed(processingId, "No AI provider available")
+            ingestionRepository.markAsFailed(runId, "No AI provider available")
             return
         }
 
         // Mark as processing
-        processingRepository.markAsProcessing(processingId, provider.name)
+        ingestionRepository.markAsProcessing(runId, provider.name)
 
         try {
             // Download document from storage
-            val documentBytes = downloadDocument(processing.storageKey)
+            val documentBytes = downloadDocument(ingestion.storageKey)
 
             // Run AI extraction
             val result = provider.extract(
                 documentBytes = documentBytes,
-                contentType = processing.contentType,
-                filename = processing.filename
+                contentType = ingestion.contentType,
+                filename = ingestion.filename
             )
 
-            // Update with results
-            processingRepository.markAsProcessed(
-                processingId = processingId,
+            // Update ingestion run with results and create/update draft
+            ingestionRepository.markAsSucceeded(
+                runId = runId,
+                tenantId = tenantId,
+                documentId = documentId,
                 documentType = result.documentType,
                 extractedData = result.extractedData,
                 confidence = result.confidence,
-                rawText = result.rawText
+                rawText = result.rawText,
+                force = false // Don't overwrite user edits
             )
 
             logger.info("Successfully processed document $documentId: type=${result.documentType}, confidence=${result.confidence}")
@@ -176,8 +182,8 @@ class DocumentProcessingWorker(
             if (isRagEnabled && result.rawText != null) {
                 try {
                     chunkAndEmbedDocument(
-                        tenantId = processing.tenantId,
-                        processingId = processingId,
+                        tenantId = tenantId,
+                        documentId = documentId,
                         rawText = result.rawText
                     )
                 } catch (e: Exception) {
@@ -188,21 +194,16 @@ class DocumentProcessingWorker(
 
         } catch (e: ExtractionException) {
             logger.error("Extraction failed for document $documentId: ${e.message}")
+            ingestionRepository.markAsFailed(runId, "Extraction failed: ${e.message}")
 
-            if (e.isRetryable && processing.attempts < config.maxAttempts - 1) {
-                // Will be retried on next poll
-                processingRepository.markAsFailed(processingId, "Extraction failed: ${e.message}")
-            } else {
-                // Final failure
-                processingRepository.markAsFailed(processingId, "Extraction failed (final): ${e.message}")
+            // Try fallback provider if available and error is retryable
+            if (e.isRetryable) {
+                tryFallbackProvider(ingestion, provider.name, e)
             }
-
-            // Try fallback provider if available
-            tryFallbackProvider(processing, provider.name, e)
 
         } catch (e: Exception) {
             logger.error("Unexpected error processing document $documentId", e)
-            processingRepository.markAsFailed(processingId, "Processing error: ${e.message}")
+            ingestionRepository.markAsFailed(runId, "Processing error: ${e.message}")
         }
     }
 
@@ -213,36 +214,36 @@ class DocumentProcessingWorker(
      * Chunks are stored in the database with their embeddings for later retrieval.
      *
      * @param tenantId The tenant owning this document (for isolation)
-     * @param processingId The document processing ID
+     * @param documentId The document ID
      * @param rawText The extracted text to chunk and embed
      */
     private suspend fun chunkAndEmbedDocument(
         tenantId: String,
-        processingId: String,
+        documentId: String,
         rawText: String
     ) {
         val chunkingSvc = chunkingService ?: return
         val embeddingSvc = embeddingService ?: return
         val chunkRepo = chunkRepository ?: return
 
-        logger.info("Starting RAG preparation for document $processingId")
+        logger.info("Starting RAG preparation for document $documentId")
 
         // Step 1: Chunk the text
         val chunkingResult = chunkingSvc.chunk(rawText)
 
         if (chunkingResult.chunks.isEmpty()) {
-            logger.warn("No chunks generated for document $processingId (empty text?)")
+            logger.warn("No chunks generated for document $documentId (empty text?)")
             return
         }
 
-        logger.info("Generated ${chunkingResult.totalChunks} chunks for document $processingId")
+        logger.info("Generated ${chunkingResult.totalChunks} chunks for document $documentId")
 
         // Step 2: Generate embeddings for each chunk
         val chunkTexts = chunkingResult.chunks.map { it.content }
         val embeddings = try {
             embeddingSvc.generateEmbeddings(chunkTexts)
         } catch (e: EmbeddingException) {
-            logger.error("Failed to generate embeddings for document $processingId: ${e.message}")
+            logger.error("Failed to generate embeddings for document $documentId: ${e.message}")
             if (e.isRetryable) {
                 throw e // Let it be retried
             }
@@ -276,12 +277,12 @@ class DocumentProcessingWorker(
         try {
             chunkRepo.storeChunks(
                 tenantId = TenantId.parse(tenantId),
-                documentId = DocumentProcessingId.parse(processingId),
+                documentId = DocumentId.parse(documentId),
                 chunks = chunksWithEmbeddings
             )
-            logger.info("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $processingId")
+            logger.info("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $documentId")
         } catch (e: Exception) {
-            logger.error("Failed to store chunks for document $processingId: ${e.message}", e)
+            logger.error("Failed to store chunks for document $documentId: ${e.message}", e)
             throw e
         }
     }
@@ -290,11 +291,13 @@ class DocumentProcessingWorker(
      * Try a fallback provider after primary failure.
      */
     private suspend fun tryFallbackProvider(
-        processing: ProcessingItem,
+        ingestion: IngestionItem,
         failedProvider: String,
         originalError: ExtractionException
     ) {
-        if (!originalError.isRetryable) return
+        val runId = ingestion.runId
+        val documentId = ingestion.documentId
+        val tenantId = ingestion.tenantId
 
         val providers = providerFactory.getAvailableProviders()
             .filter { it.name != failedProvider }
@@ -303,36 +306,39 @@ class DocumentProcessingWorker(
             try {
                 logger.info("Trying fallback provider: ${provider.name}")
 
-                processingRepository.markAsProcessing(processing.processingId, provider.name)
+                ingestionRepository.markAsProcessing(runId, provider.name)
 
-                val documentBytes = downloadDocument(processing.storageKey)
+                val documentBytes = downloadDocument(ingestion.storageKey)
 
                 val result = provider.extract(
                     documentBytes = documentBytes,
-                    contentType = processing.contentType,
-                    filename = processing.filename
+                    contentType = ingestion.contentType,
+                    filename = ingestion.filename
                 )
 
-                processingRepository.markAsProcessed(
-                    processingId = processing.processingId,
+                ingestionRepository.markAsSucceeded(
+                    runId = runId,
+                    tenantId = tenantId,
+                    documentId = documentId,
                     documentType = result.documentType,
                     extractedData = result.extractedData,
                     confidence = result.confidence,
-                    rawText = result.rawText
+                    rawText = result.rawText,
+                    force = false
                 )
 
-                logger.info("Fallback provider ${provider.name} succeeded for document ${processing.documentId}")
+                logger.info("Fallback provider ${provider.name} succeeded for document $documentId")
 
                 // RAG preparation for fallback success
                 if (isRagEnabled && result.rawText != null) {
                     try {
                         chunkAndEmbedDocument(
-                            tenantId = processing.tenantId,
-                            processingId = processing.processingId,
+                            tenantId = tenantId,
+                            documentId = documentId,
                             rawText = result.rawText
                         )
                     } catch (e: Exception) {
-                        logger.error("Failed to chunk/embed document ${processing.documentId} after fallback: ${e.message}", e)
+                        logger.error("Failed to chunk/embed document $documentId after fallback: ${e.message}", e)
                     }
                 }
 

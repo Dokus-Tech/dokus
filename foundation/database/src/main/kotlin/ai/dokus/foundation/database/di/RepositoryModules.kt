@@ -71,10 +71,10 @@ val repositoryModulePeppol = module {
 
 /**
  * Processor repositories module.
- * Provides repositories for document processing operations.
+ * Provides repositories for document ingestion operations.
  */
 val repositoryModuleProcessor = module {
-    single { ProcessorDocumentProcessingRepository() }
+    single { ProcessorIngestionRepository() }
 }
 
 /**
