@@ -275,7 +275,14 @@ data class VatSummaryData(
     val quarterInfo: String? = null
 ) {
     companion object {
-        val empty by lazy { createVatSummary("", "", "") }
+        val empty by lazy {
+            VatSummaryData(
+                vatAmount = Money.ZERO,
+                netAmount = Money.ZERO,
+                predictedNetAmount = Money.ZERO,
+                quarterInfo = null
+            )
+        }
     }
 }
 
