@@ -1,9 +1,9 @@
 package ai.dokus.foundation.database.repository.ai
 
-import ai.dokus.ai.services.IngestionStatusChecker
 import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.repository.IngestionStatusChecker
 
 /**
  * Implementation of IngestionStatusChecker that uses DocumentIngestionRunRepository.

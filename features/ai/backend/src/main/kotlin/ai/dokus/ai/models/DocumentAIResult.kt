@@ -13,7 +13,6 @@ import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedExpenseFields
 import tech.dokus.domain.model.ExtractedInvoiceFields
 import tech.dokus.domain.model.ExtractedLineItem
-import java.math.BigDecimal
 
 /**
  * Sealed class representing the result of AI document processing.
@@ -346,11 +345,14 @@ private fun String.parseLocalDate(): LocalDate? {
 
 private fun String.parseMoney(currencyCode: String?): Money? {
     return try {
-        val amount = this.replace(",", ".").replace(" ", "")
+        val cleaned = this.replace(",", ".").replace(" ", "")
             .replace("€", "").replace("$", "").replace("£", "")
             .trim()
-            .toBigDecimalOrNull() ?: return null
-        Money(amount, currencyCode?.parseCurrency() ?: Currency.EUR)
+        // Validate it's a valid decimal number
+        cleaned.toBigDecimalOrNull() ?: return null
+        // Format to 2 decimal places
+        val formatted = Money.fromDouble(cleaned.toDouble())
+        formatted
     } catch (e: Exception) {
         null
     }
@@ -361,9 +363,9 @@ private fun String.parseCurrency(): Currency? {
         Currency.valueOf(this.uppercase())
     } catch (e: Exception) {
         when (this.lowercase()) {
-            "eur", "€" -> Currency.EUR
-            "usd", "$" -> Currency.USD
-            "gbp", "£" -> Currency.GBP
+            "eur", "€" -> Currency.valueOf("EUR")
+            "usd", "$" -> Currency.valueOf("USD")
+            "gbp", "£" -> Currency.valueOf("GBP")
             else -> null
         }
     }
@@ -372,7 +374,9 @@ private fun String.parseCurrency(): Currency? {
 private fun String.parseVatRate(): VatRate? {
     return try {
         val rate = this.replace("%", "").trim().toDoubleOrNull() ?: return null
-        VatRate(BigDecimal.valueOf(rate))
+        // Format as string with 2 decimal places
+        val formatted = String.format("%.2f", rate)
+        VatRate(formatted)
     } catch (e: Exception) {
         null
     }

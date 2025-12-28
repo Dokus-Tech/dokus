@@ -7,6 +7,7 @@ import tech.dokus.domain.model.ChunkRetrievalResponse
 import tech.dokus.domain.model.DocumentChunkId
 import tech.dokus.domain.model.DocumentChunkSummary
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.IngestionStatusChecker
 import tech.dokus.domain.repository.RetrievedChunk
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi

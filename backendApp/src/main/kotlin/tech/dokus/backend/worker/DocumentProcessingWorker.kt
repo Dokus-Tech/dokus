@@ -1,5 +1,10 @@
 package tech.dokus.backend.worker
 
+import ai.dokus.ai.models.DocumentAIResult
+import ai.dokus.ai.models.meetsMinimalThreshold
+import ai.dokus.ai.models.toExtractedDocumentData
+import ai.dokus.ai.models.toDomainType
+import ai.dokus.ai.service.AIService
 import ai.dokus.ai.services.ChunkingService
 import ai.dokus.ai.services.EmbeddingException
 import ai.dokus.ai.services.EmbeddingService
@@ -15,31 +20,41 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.processor.ExtractionException
-import tech.dokus.backend.processor.ExtractionProviderFactory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
 import tech.dokus.foundation.ktor.config.ProcessorConfig
 import tech.dokus.foundation.ktor.storage.DocumentStorageService
+import tech.dokus.ocr.OcrEngine
+import tech.dokus.ocr.OcrInput
+import tech.dokus.ocr.OcrResult
+import java.nio.file.Files
+import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Background worker that polls for pending documents and processes them with AI extraction.
  *
+ * TEXT-FIRST Architecture:
+ * 1. Download document bytes from storage
+ * 2. Save to temp file
+ * 3. Extract text via OCR engine (handles PDF and images)
+ * 4. Send text to AIService for classification and extraction
+ * 5. Persist results
+ *
  * Features:
  * - Polling-based processing (configurable interval)
  * - Automatic retry with backoff
  * - Graceful shutdown support
- * - Provider fallback if primary fails
  * - RAG preparation: chunking and embedding generation after extraction
  */
 class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val documentStorage: DocumentStorageService,
-    private val providerFactory: ExtractionProviderFactory,
+    private val aiService: AIService,
+    private val ocrEngine: OcrEngine,
     private val config: ProcessorConfig,
     // Optional RAG dependencies - if provided, chunking and embedding will be performed
     private val chunkingService: ChunkingService? = null,
@@ -146,49 +161,79 @@ class DocumentProcessingWorker(
 
         logger.info("Processing ingestion run: $runId for document: $documentId")
 
-        // Get AI provider
-        val provider = providerFactory.getFirstAvailableProvider()
-        if (provider == null) {
-            logger.error("No AI provider available for processing")
-            ingestionRepository.markAsFailed(runId, "No AI provider available")
-            return
-        }
+        // Mark as processing with AI provider name
+        val providerName = aiService.getConfigSummary().substringBefore(",")
+        ingestionRepository.markAsProcessing(runId, providerName)
 
-        // Mark as processing
-        ingestionRepository.markAsProcessing(runId, provider.name)
-
+        var tempFile: Path? = null
         try {
-            // Download document from storage
+            // Step 1: Download document from storage
             val documentBytes = downloadDocument(ingestion.storageKey)
 
-            // Run AI extraction
-            val result = provider.extract(
-                documentBytes = documentBytes,
-                contentType = ingestion.contentType,
-                filename = ingestion.filename
+            // Step 2: Save to temp file for OCR
+            tempFile = Files.createTempFile("dokus_ocr_", "_${ingestion.filename}")
+            Files.write(tempFile, documentBytes)
+            logger.debug("Saved document to temp file: $tempFile")
+
+            // Step 3: Extract text via OCR
+            val ocrResult = ocrEngine.extractText(
+                OcrInput(
+                    filePath = tempFile,
+                    mimeType = ingestion.contentType
+                )
             )
 
-            // Update ingestion run with results and create/update draft
+            val rawText = when (ocrResult) {
+                is OcrResult.Success -> ocrResult.text
+                is OcrResult.Failure -> {
+                    logger.error("OCR failed for document $documentId: ${ocrResult.reason}")
+                    ingestionRepository.markAsFailed(runId, "OCR failed: ${ocrResult.reason}")
+                    return
+                }
+            }
+
+            if (rawText.isBlank()) {
+                logger.warn("OCR returned empty text for document $documentId")
+                ingestionRepository.markAsFailed(runId, "OCR returned empty text")
+                return
+            }
+
+            logger.debug("OCR extracted ${rawText.length} characters from document $documentId")
+
+            // Step 4: Send text to AIService for classification and extraction
+            val aiResult = aiService.processDocument(rawText)
+
+            val result = aiResult.getOrElse { e ->
+                logger.error("AI processing failed for document $documentId: ${e.message}", e)
+                ingestionRepository.markAsFailed(runId, "AI processing failed: ${e.message}")
+                return
+            }
+
+            // Step 5: Convert to domain model and persist
+            val extractedData = result.toExtractedDocumentData()
+            val documentType = result.toDomainType()
+
+            // Only create draft if meets minimal threshold (checked in repository)
             ingestionRepository.markAsSucceeded(
                 runId = runId,
                 tenantId = tenantId,
                 documentId = documentId,
-                documentType = result.documentType,
-                extractedData = result.extractedData,
+                documentType = documentType,
+                extractedData = extractedData,
                 confidence = result.confidence,
-                rawText = result.rawText,
+                rawText = rawText,
                 force = false // Don't overwrite user edits
             )
 
-            logger.info("Successfully processed document $documentId: type=${result.documentType}, confidence=${result.confidence}")
+            logger.info("Successfully processed document $documentId: type=$documentType, confidence=${result.confidence}")
 
             // RAG preparation: chunk and embed the extracted text
-            if (isRagEnabled && result.rawText != null) {
+            if (isRagEnabled) {
                 try {
                     chunkAndEmbedDocument(
                         tenantId = tenantId,
                         documentId = documentId,
-                        rawText = result.rawText
+                        rawText = rawText
                     )
                 } catch (e: Exception) {
                     // Log but don't fail the extraction - RAG is enhancement, not critical
@@ -196,18 +241,19 @@ class DocumentProcessingWorker(
                 }
             }
 
-        } catch (e: ExtractionException) {
-            logger.error("Extraction failed for document $documentId: ${e.message}")
-            ingestionRepository.markAsFailed(runId, "Extraction failed: ${e.message}")
-
-            // Try fallback provider if available and error is retryable
-            if (e.isRetryable) {
-                tryFallbackProvider(ingestion, provider.name, e)
-            }
-
         } catch (e: Exception) {
             logger.error("Unexpected error processing document $documentId", e)
             ingestionRepository.markAsFailed(runId, "Processing error: ${e.message}")
+        } finally {
+            // Clean up temp file
+            tempFile?.let { path ->
+                try {
+                    Files.deleteIfExists(path)
+                    logger.debug("Deleted temp file: $path")
+                } catch (e: Exception) {
+                    logger.warn("Failed to delete temp file: $path", e)
+                }
+            }
         }
     }
 
@@ -325,84 +371,26 @@ class DocumentProcessingWorker(
     }
 
     /**
-     * Try a fallback provider after primary failure.
-     */
-    private suspend fun tryFallbackProvider(
-        ingestion: IngestionItemEntity,
-        failedProvider: String,
-        originalError: ExtractionException
-    ) {
-        val runId = ingestion.runId
-        val documentId = ingestion.documentId
-        val tenantId = ingestion.tenantId
-
-        val providers = providerFactory.getAvailableProviders()
-            .filter { it.name != failedProvider }
-
-        for (provider in providers) {
-            try {
-                logger.info("Trying fallback provider: ${provider.name}")
-
-                ingestionRepository.markAsProcessing(runId, provider.name)
-
-                val documentBytes = downloadDocument(ingestion.storageKey)
-
-                val result = provider.extract(
-                    documentBytes = documentBytes,
-                    contentType = ingestion.contentType,
-                    filename = ingestion.filename
-                )
-
-                ingestionRepository.markAsSucceeded(
-                    runId = runId,
-                    tenantId = tenantId,
-                    documentId = documentId,
-                    documentType = result.documentType,
-                    extractedData = result.extractedData,
-                    confidence = result.confidence,
-                    rawText = result.rawText,
-                    force = false
-                )
-
-                logger.info("Fallback provider ${provider.name} succeeded for document $documentId")
-
-                // RAG preparation for fallback success
-                if (isRagEnabled && result.rawText != null) {
-                    try {
-                        chunkAndEmbedDocument(
-                            tenantId = tenantId,
-                            documentId = documentId,
-                            rawText = result.rawText
-                        )
-                    } catch (e: Exception) {
-                        logger.error(
-                            "Failed to chunk/embed document $documentId after fallback: ${e.message}",
-                            e
-                        )
-                    }
-                }
-
-                return
-
-            } catch (e: Exception) {
-                logger.warn("Fallback provider ${provider.name} also failed: ${e.message}")
-            }
-        }
-    }
-
-    /**
      * Download document from object storage.
      */
     private suspend fun downloadDocument(storageKey: String): ByteArray {
         return try {
             documentStorage.downloadDocument(storageKey)
         } catch (e: Exception) {
-            throw ExtractionException(
+            throw DocumentProcessingException(
                 "Failed to download document from storage: ${e.message}",
-                "storage",
                 isRetryable = true,
                 cause = e
             )
         }
     }
 }
+
+/**
+ * Exception thrown when document processing fails.
+ */
+class DocumentProcessingException(
+    message: String,
+    val isRetryable: Boolean = false,
+    cause: Throwable? = null
+) : RuntimeException(message, cause)

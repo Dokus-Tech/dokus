@@ -1,4 +1,4 @@
-package ai.dokus.ai.services
+package tech.dokus.domain.repository
 
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
