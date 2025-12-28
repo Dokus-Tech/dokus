@@ -1,20 +1,21 @@
 package tech.dokus.domain.enums
 
-import tech.dokus.domain.database.DbEnum
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.database.DbEnum
 
 @Serializable
 enum class MediaStatus(override val dbValue: String) : DbEnum {
-    Pending("PENDING"),
-    Processing("PROCESSING"),
-    Processed("PROCESSED"),
-    Failed("FAILED")
+    @SerialName("PENDING") Pending("PENDING"),
+    @SerialName("PROCESSING") Processing("PROCESSING"),
+    @SerialName("PROCESSED") Processed("PROCESSED"),
+    @SerialName("FAILED") Failed("FAILED")
 }
 
 @Serializable
 enum class MediaDocumentType {
-    Invoice,
-    Expense,
-    Bill,
-    Unknown
+    @SerialName("INVOICE") Invoice,
+    @SerialName("EXPENSE") Expense,
+    @SerialName("BILL") Bill,
+    @SerialName("UNKNOWN") Unknown
 }

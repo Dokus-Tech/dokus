@@ -1,9 +1,10 @@
 package tech.dokus.domain.model.auth
 
+import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.database.DbEnum
 import tech.dokus.domain.ids.SessionId
-import kotlinx.datetime.Instant
-import kotlinx.serialization.Serializable
 import tech.dokus.domain.DeviceType
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -41,12 +42,13 @@ data class SessionDto(
     val revokedAtInstant: Instant? get() = revokedAt?.let { Instant.fromEpochSeconds(it) }
 }
 
+@Serializable
 enum class SessionRevokeReason(override val dbValue: String) : DbEnum {
-    EXPIRED("EXPIRED"),
-    LOGOUT("LOGOUT"),
-    LOGOUT_ALL("LOGOUT_ALL"),
-    REVOKE("REVOKE"),
-    TOKEN_REFRESH("TOKEN_REFRESH"),
-    MAX_SESSIONS("MAX_SESSIONS"),
-    OTHER("OTHER")
+    @SerialName("EXPIRED") Expired("EXPIRED"),
+    @SerialName("LOGOUT") Logout("LOGOUT"),
+    @SerialName("LOGOUT_ALL") LogoutAll("LOGOUT_ALL"),
+    @SerialName("REVOKE") Revoke("REVOKE"),
+    @SerialName("TOKEN_REFRESH") TokenRefresh("TOKEN_REFRESH"),
+    @SerialName("MAX_SESSIONS") MaxSessions("MAX_SESSIONS"),
+    @SerialName("OTHER") Other("OTHER")
 }

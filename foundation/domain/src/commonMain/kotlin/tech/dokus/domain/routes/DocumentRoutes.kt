@@ -1,7 +1,10 @@
 package tech.dokus.domain.routes
 
-import io.ktor.resources.*
+import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
 
 /**
  * Type-safe route definitions for Document Management API.
@@ -24,9 +27,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Resource("/api/v1/documents")
 class Documents(
-    val draftStatus: String? = null,
-    val documentType: String? = null,
-    val ingestionStatus: String? = null,
+    val draftStatus: DraftStatus? = null,
+    val documentType: DocumentType? = null,
+    val ingestionStatus: IngestionStatus? = null,
     val search: String? = null,
     val page: Int = 0,
     val limit: Int = 20

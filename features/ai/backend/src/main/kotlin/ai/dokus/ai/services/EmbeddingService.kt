@@ -1,6 +1,6 @@
 package ai.dokus.ai.services
 
-import tech.dokus.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor
 import io.ktor.client.HttpClient
@@ -82,12 +82,12 @@ class EmbeddingService(
         model: String? = null
     ): EmbeddingResult {
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> generateOllamaEmbedding(
+            AiProvider.Ollama -> generateOllamaEmbedding(
                 text,
                 model ?: OLLAMA_EMBEDDING_MODEL
             )
 
-            AIProvider.OPENAI -> generateOpenAIEmbedding(
+            AiProvider.OpenAi -> generateOpenAIEmbedding(
                 text,
                 model ?: OPENAI_EMBEDDING_MODEL
             )
@@ -112,12 +112,12 @@ class EmbeddingService(
         if (texts.isEmpty()) return emptyList()
 
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> {
+            AiProvider.Ollama -> {
                 // Ollama doesn't support batch embeddings, process sequentially
                 texts.map { text -> generateOllamaEmbedding(text, model ?: OLLAMA_EMBEDDING_MODEL) }
             }
 
-            AIProvider.OPENAI -> {
+            AiProvider.OpenAi -> {
                 // OpenAI supports batch embeddings
                 generateOpenAIEmbeddingsBatch(texts, model ?: OPENAI_EMBEDDING_MODEL)
             }
@@ -129,8 +129,8 @@ class EmbeddingService(
      */
     fun getEmbeddingDimensions(): Int {
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> OLLAMA_DIMENSIONS
-            AIProvider.OPENAI -> OPENAI_DIMENSIONS
+            AiProvider.Ollama -> OLLAMA_DIMENSIONS
+            AiProvider.OpenAi -> OPENAI_DIMENSIONS
         }
     }
 
@@ -140,8 +140,8 @@ class EmbeddingService(
     suspend fun isAvailable(): Boolean {
         return try {
             when (config.defaultProvider) {
-                AIProvider.OLLAMA -> config.ollama.enabled
-                AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
+                AiProvider.Ollama -> config.ollama.enabled
+                AiProvider.OpenAi -> config.openai.enabled && config.openai.apiKey.isNotBlank()
             }
         } catch (e: Exception) {
             logger.warn("Embedding service availability check failed", e)

@@ -12,7 +12,7 @@ import ai.dokus.ai.models.DocumentProcessingResult
 import ai.dokus.ai.models.ExtractedDocumentData
 import ai.dokus.ai.models.ExtractedInvoiceData
 import ai.dokus.ai.models.ExtractedReceiptData
-import tech.dokus.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.config.ModelPurpose
 import tech.dokus.foundation.ktor.utils.loggerFor
@@ -168,8 +168,8 @@ class AIService(
      */
     fun isConfigured(): Boolean {
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> config.ollama.enabled
-            AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
+            AiProvider.Ollama -> config.ollama.enabled
+            AiProvider.OpenAi -> config.openai.enabled && config.openai.apiKey.isNotBlank()
         }
     }
 
@@ -180,12 +180,12 @@ class AIService(
         return buildString {
             append("Provider: ${config.defaultProvider}")
             when (config.defaultProvider) {
-                AIProvider.OLLAMA -> {
+                AiProvider.Ollama -> {
                     append(", URL: ${config.ollama.baseUrl}")
                     append(", Model: ${config.ollama.defaultModel}")
                 }
 
-                AIProvider.OPENAI -> {
+                AiProvider.OpenAi -> {
                     append(", Model: ${config.openai.defaultModel}")
                     append(", API Key: ${if (config.openai.apiKey.isNotBlank()) "configured" else "missing"}")
                 }
