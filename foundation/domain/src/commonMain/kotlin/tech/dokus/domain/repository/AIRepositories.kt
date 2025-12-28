@@ -59,12 +59,12 @@ interface ChunkRepository {
      * Delete all chunks for a document.
      *
      * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
+     * @param documentId The document ID
      * @return Number of chunks deleted
      */
     suspend fun deleteChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Int
 
     /**
@@ -72,7 +72,7 @@ interface ChunkRepository {
      */
     suspend fun getChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): List<DocumentChunkDto>
 
     /**
@@ -88,7 +88,7 @@ interface ChunkRepository {
      */
     suspend fun countChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Long
 
     /**
@@ -96,7 +96,7 @@ interface ChunkRepository {
      */
     suspend fun hasChunks(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Boolean
 
     /**
@@ -121,8 +121,8 @@ data class ChunkSearchResult(
 data class RetrievedChunk(
     /** Chunk ID */
     val id: String,
-    /** Document processing ID */
-    val documentProcessingId: String,
+    /** Document ID */
+    val documentId: String,
     /** Text content of the chunk */
     val content: String,
     /** Position within the document (0-indexed) */
@@ -209,7 +209,7 @@ interface ChatRepository {
      */
     suspend fun getMessagesForDocument(
         tenantId: TenantId,
-        documentProcessingId: DocumentProcessingId,
+        documentId: DocumentId,
         limit: Int = 50,
         offset: Int = 0
     ): Pair<List<ChatMessageDto>, Long>
@@ -232,7 +232,7 @@ interface ChatRepository {
     suspend fun listSessions(
         tenantId: TenantId,
         scope: ChatScope? = null,
-        documentProcessingId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         limit: Int = 20,
         offset: Int = 0
     ): Pair<List<ChatSessionSummary>, Long>
