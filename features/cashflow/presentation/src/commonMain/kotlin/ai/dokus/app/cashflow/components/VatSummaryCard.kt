@@ -289,9 +289,9 @@ fun createVatSummary(
     quarter: String? = null
 ): VatSummaryData {
     return VatSummaryData(
-        vatAmount = Money(vat),
-        netAmount = Money(net),
-        predictedNetAmount = Money(predicted),
+        vatAmount = Money.parseOrThrow(vat),
+        netAmount = Money.parseOrThrow(net),
+        predictedNetAmount = Money.parseOrThrow(predicted),
         quarterInfo = quarter
     )
 }

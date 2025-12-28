@@ -41,7 +41,7 @@ object TenantMappers {
         invoicePrefix = this[TenantSettingsTable.invoicePrefix],
         nextInvoiceNumber = this[TenantSettingsTable.nextInvoiceNumber],
         defaultPaymentTerms = this[TenantSettingsTable.defaultPaymentTerms],
-        defaultVatRate = VatRate(this[TenantSettingsTable.defaultVatRate].toString()),
+        defaultVatRate = VatRate.fromDbDecimal(this[TenantSettingsTable.defaultVatRate]),
         invoiceYearlyReset = this[TenantSettingsTable.invoiceYearlyReset],
         invoicePadding = this[TenantSettingsTable.invoicePadding],
         invoiceIncludeYear = this[TenantSettingsTable.invoiceIncludeYear],

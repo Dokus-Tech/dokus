@@ -757,7 +757,7 @@ class ContactRepository {
             phone = row[ContactsTable.phone],
             companyNumber = row[ContactsTable.companyNumber],
             defaultPaymentTerms = row[ContactsTable.defaultPaymentTerms],
-            defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate(it.toString()) },
+            defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate.fromDbDecimal(it) },
             peppolId = row[ContactsTable.peppolId],
             peppolEnabled = row[ContactsTable.peppolEnabled],
             tags = row[ContactsTable.tags],
