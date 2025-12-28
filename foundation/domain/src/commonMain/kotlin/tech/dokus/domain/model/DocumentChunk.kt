@@ -1,6 +1,6 @@
 package tech.dokus.domain.model
 
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -116,8 +116,8 @@ data class DocumentChunkDto(
     /** Chunk ID */
     val id: DocumentChunkId,
 
-    /** Reference to the source document processing record */
-    val documentProcessingId: DocumentProcessingId,
+    /** Reference to the source document */
+    val documentId: DocumentId,
 
     /** Tenant for multi-tenant isolation */
     val tenantId: TenantId,
@@ -170,7 +170,7 @@ data class DocumentChunkDto(
 @Serializable
 data class DocumentChunkSummary(
     val id: DocumentChunkId,
-    val documentProcessingId: DocumentProcessingId,
+    val documentId: DocumentId,
     val chunkIndex: Int,
     val content: String,
     val pageNumber: Int? = null,
@@ -209,7 +209,7 @@ data class ChunkRetrievalRequest(
     val minSimilarity: Float = 0.3f,
 
     /** Filter to specific document (null for cross-document search) */
-    val documentProcessingId: DocumentProcessingId? = null,
+    val documentId: DocumentId? = null,
 
     /** Include only chunks from confirmed documents */
     val confirmedOnly: Boolean = true

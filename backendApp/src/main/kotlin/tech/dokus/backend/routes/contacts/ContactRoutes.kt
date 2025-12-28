@@ -4,11 +4,11 @@ import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
-import tech.dokus.domain.model.CreateContactNoteRequest
-import tech.dokus.domain.model.CreateContactRequest
-import tech.dokus.domain.model.UpdateContactNoteRequest
-import tech.dokus.domain.model.UpdateContactPeppolRequest
-import tech.dokus.domain.model.UpdateContactRequest
+import tech.dokus.domain.model.contact.CreateContactNoteRequest
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactNoteRequest
+import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal

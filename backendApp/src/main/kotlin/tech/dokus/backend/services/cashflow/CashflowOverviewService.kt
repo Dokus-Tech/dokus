@@ -81,10 +81,10 @@ class CashflowOverviewService(
 
         // Calculate Cash-In (Invoices)
         val invoices = invoicesResult.items
-        val cashInTotal = invoices.sumOf { BigDecimal(it.totalAmount.value) }
+        val cashInTotal = invoices.sumOf { it.totalAmount.minor }
         val cashInPaid = invoices
             .filter { it.status == InvoiceStatus.Paid }
-            .sumOf { BigDecimal(it.totalAmount.value) }
+            .sumOf { it.totalAmount.minor }
         val cashInPending = invoices
             .filter {
                 it.status in listOf(
@@ -94,31 +94,31 @@ class CashflowOverviewService(
                     InvoiceStatus.PartiallyPaid
                 )
             }
-            .sumOf { BigDecimal(it.totalAmount.value) }
+            .sumOf { it.totalAmount.minor }
         val cashInOverdue = invoices
             .filter { it.status == InvoiceStatus.Overdue }
-            .sumOf { BigDecimal(it.totalAmount.value) }
+            .sumOf { it.totalAmount.minor }
 
         val cashIn = CashInSummary(
-            total = Money(cashInTotal.toString()),
-            paid = Money(cashInPaid.toString()),
-            pending = Money(cashInPending.toString()),
-            overdue = Money(cashInOverdue.toString()),
+            total = Money(cashInTotal),
+            paid = Money(cashInPaid),
+            pending = Money(cashInPending),
+            overdue = Money(cashInOverdue),
             invoiceCount = invoices.size
         )
 
         // Calculate Cash-Out (Expenses + Bills)
         val expenses = expensesResult.items
-        val expenseTotal = expenses.sumOf { BigDecimal(it.amount.value) }
+        val expenseTotal = expenses.sumOf { it.amount.minor }
 
-        val cashOutTotal = expenseTotal + BigDecimal(billStats.total.value)
-        val cashOutPaid = expenseTotal + BigDecimal(billStats.paid.value)
-        val cashOutPending = BigDecimal(billStats.pending.value)
+        val cashOutTotal = expenseTotal + billStats.total.minor
+        val cashOutPaid = expenseTotal + billStats.paid.minor
+        val cashOutPending = billStats.pending.minor
 
         val cashOut = CashOutSummary(
-            total = Money(cashOutTotal.toString()),
-            paid = Money(cashOutPaid.toString()),
-            pending = Money(cashOutPending.toString()),
+            total = Money(cashOutTotal),
+            paid = Money(cashOutPaid),
+            pending = Money(cashOutPending),
             expenseCount = expenses.size,
             billCount = billStats.count
         )
@@ -130,7 +130,7 @@ class CashflowOverviewService(
             period = CashflowPeriod(from = effectiveFromDate, to = effectiveToDate),
             cashIn = cashIn,
             cashOut = cashOut,
-            netCashflow = Money(netCashflow.toString()),
+            netCashflow = Money(netCashflow),
             currency = Currency.Eur
         )
     }.onFailure {

@@ -50,7 +50,7 @@ internal class SearchCashflowDocumentsUseCase {
                 is FinancialDocumentDto.InvoiceDto -> matchesInvoice(document, needle)
                 is FinancialDocumentDto.ExpenseDto -> matchesExpense(document, needle)
                 is FinancialDocumentDto.BillDto -> matchesBill(document, needle)
-            } || document.amount.value.contains(needle, ignoreCase = true)
+            } || document.amount.toDisplayString().contains(needle, ignoreCase = true)
         }
     }
 

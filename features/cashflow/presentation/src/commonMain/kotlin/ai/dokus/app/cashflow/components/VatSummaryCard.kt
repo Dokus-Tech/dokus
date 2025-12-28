@@ -244,7 +244,7 @@ private fun AmountColumn(
  */
 private fun formatAmount(amount: Money): String {
     return try {
-        val value = amount.value.toDoubleOrNull() ?: 0.0
+        val value = amount.toDouble()
         val formattedValue = when {
             value >= 1000 -> {
                 val thousands = (value / 1000).toInt()
@@ -275,7 +275,14 @@ data class VatSummaryData(
     val quarterInfo: String? = null
 ) {
     companion object {
-        val empty by lazy { createVatSummary("", "", "") }
+        val empty by lazy {
+            VatSummaryData(
+                vatAmount = Money.ZERO,
+                netAmount = Money.ZERO,
+                predictedNetAmount = Money.ZERO,
+                quarterInfo = null
+            )
+        }
     }
 }
 
@@ -289,9 +296,9 @@ fun createVatSummary(
     quarter: String? = null
 ): VatSummaryData {
     return VatSummaryData(
-        vatAmount = Money(vat),
-        netAmount = Money(net),
-        predictedNetAmount = Money(predicted),
+        vatAmount = Money.parseOrThrow(vat),
+        netAmount = Money.parseOrThrow(net),
+        predictedNetAmount = Money.parseOrThrow(predicted),
         quarterInfo = quarter
     )
 }

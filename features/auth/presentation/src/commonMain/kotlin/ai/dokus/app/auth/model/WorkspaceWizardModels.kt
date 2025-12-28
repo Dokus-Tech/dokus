@@ -3,7 +3,7 @@ package ai.dokus.app.auth.model
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.EntityLookup
+import tech.dokus.domain.model.entity.EntityLookup
 import androidx.compose.runtime.Stable
 
 /**

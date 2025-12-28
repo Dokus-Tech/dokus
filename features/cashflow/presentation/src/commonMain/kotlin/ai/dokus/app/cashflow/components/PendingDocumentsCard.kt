@@ -9,7 +9,7 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerBox
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import ai.dokus.foundation.design.extensions.localizedUppercase
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -60,8 +60,8 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun PendingDocumentsCard(
-    state: DokusState<PaginationState<DocumentProcessingDto>>,
-    onDocumentClick: (DocumentProcessingDto) -> Unit,
+    state: DokusState<PaginationState<DocumentRecordDto>>,
+    onDocumentClick: (DocumentRecordDto) -> Unit,
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -231,10 +231,10 @@ private fun PendingDocumentsErrorContent(
  */
 @Composable
 private fun PendingDocumentsLazyList(
-    documents: List<DocumentProcessingDto>,
+    documents: List<DocumentRecordDto>,
     hasMorePages: Boolean,
     isLoadingMore: Boolean,
-    onDocumentClick: (DocumentProcessingDto) -> Unit,
+    onDocumentClick: (DocumentRecordDto) -> Unit,
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -263,7 +263,7 @@ private fun PendingDocumentsLazyList(
     ) {
         itemsIndexed(
             items = documents,
-            key = { _, doc -> doc.id.toString() }
+            key = { _, doc -> doc.document.id.toString() }
         ) { index, processing ->
             PendingDocumentItem(
                 processing = processing,
@@ -307,7 +307,7 @@ private fun PendingDocumentsLazyList(
  */
 @Composable
 private fun PendingDocumentItem(
-    processing: DocumentProcessingDto,
+    processing: DocumentRecordDto,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -364,18 +364,18 @@ private fun NeedConfirmationBadge(
  * Uses extracted invoice/bill number if available, otherwise falls back to filename.
  */
 @Composable
-private fun getDocumentDisplayName(processing: DocumentProcessingDto): String {
-    val filename = processing.document?.filename
-    val extractedData = processing.extractedData
+private fun getDocumentDisplayName(record: DocumentRecordDto): String {
+    val filename = record.document.filename
+    val extractedData = record.draft?.extractedData
 
     // Try to get invoice/bill number from extracted data
     val documentNumber = extractedData?.invoice?.invoiceNumber
         ?: extractedData?.bill?.invoiceNumber
 
     // Get document type prefix (localizedUppercase is @Composable, call outside remembering)
-    val typePrefix = processing.documentType?.localizedUppercase.orEmpty()
+    val typePrefix = record.draft?.documentType?.localizedUppercase.orEmpty()
 
-    return remember(processing.id, typePrefix, documentNumber, filename) {
+    return remember(record.document.id, typePrefix, documentNumber, filename) {
         when {
             !documentNumber.isNullOrBlank() -> {
                 "$typePrefix $documentNumber"
@@ -388,7 +388,7 @@ private fun getDocumentDisplayName(processing: DocumentProcessingDto): String {
 
             else -> {
                 // Fallback to document ID if no filename
-                "$typePrefix ${processing.documentId.toString().take(8).uppercase()}"
+                "$typePrefix ${record.document.id.toString().take(8).uppercase()}"
             }
         }
     }

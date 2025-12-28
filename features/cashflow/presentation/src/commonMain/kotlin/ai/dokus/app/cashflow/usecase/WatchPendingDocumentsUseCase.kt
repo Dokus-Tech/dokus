@@ -2,9 +2,9 @@ package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -27,13 +27,13 @@ class WatchPendingDocumentsUseCase(
 
     /**
      * Watch pending documents as a Flow.
-     * Returns documents in all pre-confirmation statuses.
+     * Returns documents with drafts that need review.
      *
      * @param limit Maximum number of documents to fetch (default 100, max 100)
      * @return Flow of [DokusState] containing pending documents
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    operator fun invoke(limit: Int = 100): Flow<DokusState<List<DocumentProcessingDto>>> {
+    operator fun invoke(limit: Int = 100): Flow<DokusState<List<DocumentRecordDto>>> {
         require(limit > 0) { "Limit must be positive" }
 
         return refreshTrigger
@@ -41,8 +41,8 @@ class WatchPendingDocumentsUseCase(
             .flatMapLatest {
                 flow {
                     emit(DokusState.loading())
-                    dataSource.listDocumentProcessing(
-                        statuses = PENDING_STATUSES,
+                    dataSource.listDocuments(
+                        draftStatus = DraftStatus.NeedsReview,
                         page = 0,
                         limit = limit.coerceAtMost(100)
                     ).fold(
@@ -62,18 +62,5 @@ class WatchPendingDocumentsUseCase(
      */
     fun refresh() {
         refreshTrigger.tryEmit(Unit)
-    }
-
-    companion object {
-        /**
-         * All statuses before user confirmation.
-         * Shows the full document processing pipeline.
-         */
-        private val PENDING_STATUSES = listOf(
-            ProcessingStatus.Pending,    // Uploaded, waiting for AI
-            ProcessingStatus.Queued,     // Picked up, in queue
-            ProcessingStatus.Processing, // AI working
-            ProcessingStatus.Processed   // Ready for user review
-        )
     }
 }

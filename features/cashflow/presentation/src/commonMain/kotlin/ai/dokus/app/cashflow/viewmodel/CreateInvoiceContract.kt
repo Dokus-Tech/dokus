@@ -6,7 +6,7 @@ import ai.dokus.app.cashflow.viewmodel.model.InvoiceDeliveryMethod
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.runtime.Immutable
 import kotlinx.datetime.LocalDate
 import pro.respawn.flowmvi.api.MVIAction

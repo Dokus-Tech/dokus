@@ -3,6 +3,8 @@ package ai.dokus.foundation.database.repository.cashflow
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.BillId
@@ -47,9 +49,9 @@ class BillRepository {
                 it[invoiceNumber] = request.invoiceNumber
                 it[issueDate] = request.issueDate
                 it[dueDate] = request.dueDate
-                it[amount] = java.math.BigDecimal(request.amount.value)
-                it[vatAmount] = request.vatAmount?.let { amount -> java.math.BigDecimal(amount.value) }
-                it[vatRate] = request.vatRate?.let { rate -> java.math.BigDecimal(rate.value) }
+                it[amount] = request.amount.toDbDecimal()
+                it[vatAmount] = request.vatAmount?.let { amount -> amount.toDbDecimal() }
+                it[vatRate] = request.vatRate?.let { rate -> rate.toDbDecimal() }
                 it[status] = BillStatus.Pending
                 it[category] = request.category
                 it[description] = request.description
@@ -70,16 +72,16 @@ class BillRepository {
                     invoiceNumber = row[BillsTable.invoiceNumber],
                     issueDate = row[BillsTable.issueDate],
                     dueDate = row[BillsTable.dueDate],
-                    amount = Money(row[BillsTable.amount].toString()),
-                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
-                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    amount = Money.fromDbDecimal(row[BillsTable.amount]),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
                     status = row[BillsTable.status],
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
-                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
                     paymentReference = row[BillsTable.paymentReference],
                     notes = row[BillsTable.notes],
@@ -111,16 +113,16 @@ class BillRepository {
                     invoiceNumber = row[BillsTable.invoiceNumber],
                     issueDate = row[BillsTable.issueDate],
                     dueDate = row[BillsTable.dueDate],
-                    amount = Money(row[BillsTable.amount].toString()),
-                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
-                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    amount = Money.fromDbDecimal(row[BillsTable.amount]),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
                     status = row[BillsTable.status],
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
-                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
                     paymentReference = row[BillsTable.paymentReference],
                     notes = row[BillsTable.notes],
@@ -177,16 +179,16 @@ class BillRepository {
                         invoiceNumber = row[BillsTable.invoiceNumber],
                         issueDate = row[BillsTable.issueDate],
                         dueDate = row[BillsTable.dueDate],
-                        amount = Money(row[BillsTable.amount].toString()),
-                        vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
-                        vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                        amount = Money.fromDbDecimal(row[BillsTable.amount]),
+                        vatAmount = row[BillsTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+                        vatRate = row[BillsTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
                         status = row[BillsTable.status],
                         category = row[BillsTable.category],
                         currency = row[BillsTable.currency],
                         description = row[BillsTable.description],
                         documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                         paidAt = row[BillsTable.paidAt],
-                        paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                        paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                         paymentMethod = row[BillsTable.paymentMethod],
                         paymentReference = row[BillsTable.paymentReference],
                             notes = row[BillsTable.notes],
@@ -227,16 +229,16 @@ class BillRepository {
                         invoiceNumber = row[BillsTable.invoiceNumber],
                         issueDate = row[BillsTable.issueDate],
                         dueDate = row[BillsTable.dueDate],
-                        amount = Money(row[BillsTable.amount].toString()),
-                        vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
-                        vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                        amount = Money.fromDbDecimal(row[BillsTable.amount]),
+                        vatAmount = row[BillsTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+                        vatRate = row[BillsTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
                         status = row[BillsTable.status],
                         category = row[BillsTable.category],
                         currency = row[BillsTable.currency],
                         description = row[BillsTable.description],
                         documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                         paidAt = row[BillsTable.paidAt],
-                        paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                        paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                         paymentMethod = row[BillsTable.paymentMethod],
                         paymentReference = row[BillsTable.paymentReference],
                             notes = row[BillsTable.notes],
@@ -297,9 +299,9 @@ class BillRepository {
                 it[invoiceNumber] = request.invoiceNumber
                 it[issueDate] = request.issueDate
                 it[dueDate] = request.dueDate
-                it[amount] = java.math.BigDecimal(request.amount.value)
-                it[vatAmount] = request.vatAmount?.let { amount -> java.math.BigDecimal(amount.value) }
-                it[vatRate] = request.vatRate?.let { rate -> java.math.BigDecimal(rate.value) }
+                it[amount] = request.amount.toDbDecimal()
+                it[vatAmount] = request.vatAmount?.let { amount -> amount.toDbDecimal() }
+                it[vatRate] = request.vatRate?.let { rate -> rate.toDbDecimal() }
                 it[category] = request.category
                 it[description] = request.description
                 it[notes] = request.notes
@@ -319,16 +321,16 @@ class BillRepository {
                     invoiceNumber = row[BillsTable.invoiceNumber],
                     issueDate = row[BillsTable.issueDate],
                     dueDate = row[BillsTable.dueDate],
-                    amount = Money(row[BillsTable.amount].toString()),
-                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
-                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    amount = Money.fromDbDecimal(row[BillsTable.amount]),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
                     status = row[BillsTable.status],
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
-                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
                     paymentReference = row[BillsTable.paymentReference],
                     notes = row[BillsTable.notes],
@@ -366,7 +368,7 @@ class BillRepository {
             }) {
                 it[status] = BillStatus.Paid
                 it[paidAt] = request.paidAt.toDateTime()
-                it[paidAmount] = java.math.BigDecimal(request.paidAmount.value)
+                it[paidAmount] = request.paidAmount.toDbDecimal()
                 it[paymentMethod] = request.paymentMethod
                 it[paymentReference] = request.paymentReference
             }
@@ -384,16 +386,16 @@ class BillRepository {
                     invoiceNumber = row[BillsTable.invoiceNumber],
                     issueDate = row[BillsTable.issueDate],
                     dueDate = row[BillsTable.dueDate],
-                    amount = Money(row[BillsTable.amount].toString()),
-                    vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
-                    vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                    amount = Money.fromDbDecimal(row[BillsTable.amount]),
+                    vatAmount = row[BillsTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+                    vatRate = row[BillsTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
                     status = row[BillsTable.status],
                     category = row[BillsTable.category],
                     currency = row[BillsTable.currency],
                     description = row[BillsTable.description],
                     documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
                     paidAt = row[BillsTable.paidAt],
-                    paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                    paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
                     paymentMethod = row[BillsTable.paymentMethod],
                     paymentReference = row[BillsTable.paymentReference],
                     notes = row[BillsTable.notes],
@@ -438,6 +440,45 @@ class BillRepository {
     }
 
     /**
+     * Find bill by document ID.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun findByDocumentId(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): FinancialDocumentDto.BillDto? = dbQuery {
+        BillsTable.selectAll().where {
+            (BillsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (BillsTable.documentId eq UUID.fromString(documentId.toString()))
+        }.singleOrNull()?.let { row ->
+            FinancialDocumentDto.BillDto(
+                id = BillId.parse(row[BillsTable.id].value.toString()),
+                tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                supplierName = row[BillsTable.supplierName],
+                supplierVatNumber = row[BillsTable.supplierVatNumber],
+                invoiceNumber = row[BillsTable.invoiceNumber],
+                issueDate = row[BillsTable.issueDate],
+                dueDate = row[BillsTable.dueDate],
+                amount = Money.fromDbDecimal(row[BillsTable.amount]),
+                vatAmount = row[BillsTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+                vatRate = row[BillsTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
+                status = row[BillsTable.status],
+                category = row[BillsTable.category],
+                currency = row[BillsTable.currency],
+                description = row[BillsTable.description],
+                documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                paidAt = row[BillsTable.paidAt],
+                paidAmount = row[BillsTable.paidAmount]?.let { Money.fromDbDecimal(it) },
+                paymentMethod = row[BillsTable.paymentMethod],
+                paymentReference = row[BillsTable.paymentReference],
+                notes = row[BillsTable.notes],
+                createdAt = row[BillsTable.createdAt],
+                updatedAt = row[BillsTable.updatedAt]
+            )
+        }
+    }
+
+    /**
      * Get bill statistics for cashflow overview
      * CRITICAL: MUST filter by tenant_id
      */
@@ -460,9 +501,9 @@ class BillRepository {
                 .sumOf { java.math.BigDecimal(it[BillsTable.amount].toString()) }
 
             BillStatistics(
-                total = Money(total.toString()),
-                paid = Money(paid.toString()),
-                pending = Money(pending.toString()),
+                total = Money.fromDbDecimal(total),
+                paid = Money.fromDbDecimal(paid),
+                pending = Money.fromDbDecimal(pending),
                 count = bills.size
             )
         }

@@ -20,13 +20,8 @@ fun Application.configureBackgroundWorkers(appConfig: AppBaseConfig) {
 
     monitor.subscribe(ApplicationStarted) {
         rateLimitCleanupWorker.start()
-
-        if (appConfig.processor.enabled) {
-            logger.info("Starting processor worker (enabled=true)")
-            processingWorker.start()
-        } else {
-            logger.info("Processor worker disabled (enabled=false)")
-        }
+        logger.info("Starting document processing worker")
+        processingWorker.start()
     }
 
     monitor.subscribe(ApplicationStopping) {

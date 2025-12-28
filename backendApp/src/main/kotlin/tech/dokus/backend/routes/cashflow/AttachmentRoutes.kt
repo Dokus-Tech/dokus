@@ -103,15 +103,14 @@ internal fun Route.attachmentRoutes() {
                 storageKey = uploadResult.key
             )
 
-            val linked = documentRepository.linkToEntity(
-                tenantId = tenantId,
-                documentId = documentId,
-                entityType = EntityType.Invoice,
-                entityId = invoiceId.toString()
-            )
-            if (!linked) {
-                throw DokusException.InternalError("Failed to link document to invoice")
-            }
+            // Link document to invoice by updating invoice's documentId
+            // Note: This replaces any existing attachment. Multiple attachments per invoice
+            // would require a join table approach in the future.
+            invoiceRepository.updateDocumentId(invoiceId, tenantId, documentId)
+                .onFailure {
+                    logger.error("Failed to link document to invoice: $invoiceId", it)
+                    throw DokusException.InternalError("Failed to link document to invoice")
+                }
 
             val attachmentId = AttachmentId.parse(documentId.toString())
             logger.info("Invoice document uploaded: $attachmentId for invoice: $invoiceId")
@@ -135,13 +134,11 @@ internal fun Route.attachmentRoutes() {
                 .getOrThrow()
                 ?: throw DokusException.BadRequest()
 
-            val attachments = documentRepository
-                .listByEntity(
-                    tenantId = tenantId,
-                    entityType = EntityType.Invoice,
-                    entityId = invoiceId.toString()
-                )
-                .map { it.toAttachmentDto() }
+            // Get attachment from invoice's documentId
+            val attachments = invoice.documentId?.let { docId ->
+                val document = documentRepository.getById(tenantId, docId)
+                document?.let { listOf(it.toAttachmentDto()) } ?: emptyList()
+            } ?: emptyList()
 
             logger.info("Retrieved ${attachments.size} attachments for invoice: $invoiceId")
 
@@ -198,15 +195,14 @@ internal fun Route.attachmentRoutes() {
                 storageKey = uploadResult.key
             )
 
-            val linked = documentRepository.linkToEntity(
-                tenantId = tenantId,
-                documentId = documentId,
-                entityType = EntityType.Expense,
-                entityId = expenseId.toString()
-            )
-            if (!linked) {
-                throw DokusException.InternalError("Failed to link document to expense")
-            }
+            // Link document to expense by updating expense's documentId
+            // Note: This replaces any existing attachment. Multiple attachments per expense
+            // would require a join table approach in the future.
+            expenseRepository.updateDocumentId(expenseId, tenantId, documentId)
+                .onFailure {
+                    logger.error("Failed to link document to expense: $expenseId", it)
+                    throw DokusException.InternalError("Failed to link document to expense")
+                }
 
             val attachmentId = AttachmentId.parse(documentId.toString())
             logger.info("Expense receipt uploaded: $attachmentId for expense: $expenseId")
@@ -230,13 +226,11 @@ internal fun Route.attachmentRoutes() {
                 .getOrThrow()
                 ?: throw DokusException.NotFound("Expense not found")
 
-            val attachments = documentRepository
-                .listByEntity(
-                    tenantId = tenantId,
-                    entityType = EntityType.Expense,
-                    entityId = expenseId.toString()
-                )
-                .map { it.toAttachmentDto() }
+            // Get attachment from expense's documentId
+            val attachments = expense.documentId?.let { docId ->
+                val document = documentRepository.getById(tenantId, docId)
+                document?.let { listOf(it.toAttachmentDto()) } ?: emptyList()
+            } ?: emptyList()
 
             logger.info("Retrieved ${attachments.size} attachments for expense: $expenseId")
 
@@ -296,8 +290,8 @@ private fun DocumentDto.toAttachmentDto(): AttachmentDto {
     return AttachmentDto(
         id = AttachmentId.parse(id.toString()),
         tenantId = tenantId,
-        entityType = entityType ?: EntityType.Attachment,
-        entityId = entityId.orEmpty(),
+        entityType = EntityType.Attachment,
+        entityId = "",
         filename = filename,
         mimeType = contentType,
         sizeBytes = sizeBytes,

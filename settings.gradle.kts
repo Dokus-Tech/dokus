@@ -44,8 +44,9 @@ include(":foundation:ktor-common")
 include(":foundation:database")
 include(":foundation:peppol-core")
 
-// AI backend library (shared by backendApp)
+// Backend library (shared by backendApp)
 include(":features:ai:backend")
+include(":foundation:ocr")
 
 // Auth domain for shared types
 include(":features:auth:presentation")

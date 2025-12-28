@@ -207,9 +207,9 @@ class BillService(
             invoiceNumber = peppolDocument.invoiceNumber ?: peppolDocument.id,
             issueDate = issueDate,
             dueDate = dueDate,
-            amount = Money(totalAmount.toString()),
-            vatAmount = taxAmount?.let { Money(it.toString()) },
-            vatRate = vatRate?.let { VatRate(it.toString()) },
+            amount = Money.fromDouble(totalAmount),
+            vatAmount = taxAmount?.let { Money.fromDouble(it) },
+            vatRate = vatRate?.let { VatRate.fromMultiplier(it.toDouble() / 100.0) },
             category = categorizeSupplier(peppolDocument.seller?.name),
             description = buildDescription(peppolDocument),
             notes = buildNotes(peppolDocument)

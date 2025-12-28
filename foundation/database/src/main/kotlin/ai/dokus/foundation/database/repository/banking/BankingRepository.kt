@@ -3,6 +3,8 @@ package ai.dokus.foundation.database.repository.banking
 import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.enums.BankProvider
 import tech.dokus.domain.enums.Currency
@@ -174,7 +176,7 @@ class BankingRepository {
                 it[BankTransactionsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[BankTransactionsTable.externalId] = externalId
                 it[BankTransactionsTable.date] = date
-                it[BankTransactionsTable.amount] = java.math.BigDecimal(amount.value)
+                it[BankTransactionsTable.amount] = amount.toDbDecimal()
                 it[BankTransactionsTable.description] = description
                 it[BankTransactionsTable.merchantName] = merchantName
                 it[BankTransactionsTable.category] = category
@@ -310,7 +312,7 @@ class BankingRepository {
             tenantId = TenantId.parse(this[BankTransactionsTable.tenantId].toString()),
             externalId = this[BankTransactionsTable.externalId],
             date = this[BankTransactionsTable.date],
-            amount = Money(this[BankTransactionsTable.amount].toString()),
+            amount = Money.fromDbDecimal(this[BankTransactionsTable.amount]),
             description = this[BankTransactionsTable.description],
             merchantName = this[BankTransactionsTable.merchantName],
             category = this[BankTransactionsTable.category],

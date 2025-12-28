@@ -4,7 +4,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
@@ -99,7 +99,7 @@ class PeppolMapper {
      */
     private fun toLineItem(item: InvoiceItemDto, lineNumber: Int): PeppolLineItem {
         val vatCategory = mapVatRateToCategory(item.vatRate)
-        val vatPercent = item.vatRate.value.toDoubleOrNull() ?: 0.0
+        val vatPercent = item.vatRate.toPercentDouble()
 
         return PeppolLineItem(
             id = lineNumber.toString(),
@@ -107,8 +107,8 @@ class PeppolMapper {
             description = item.description,
             quantity = item.quantity,
             unitCode = "C62",  // Unit. Use HUR for hours, DAY for days
-            unitPrice = item.unitPrice.value.toDoubleOrNull() ?: 0.0,
-            lineTotal = item.lineTotal.value.toDoubleOrNull() ?: 0.0,
+            unitPrice = item.unitPrice.toDouble(),
+            lineTotal = item.lineTotal.toDouble(),
             taxCategory = vatCategory,
             taxPercent = vatPercent
         )
@@ -132,10 +132,8 @@ class PeppolMapper {
      * Map VAT rate to Peppol tax category code.
      */
     private fun mapVatRateToCategory(vatRate: VatRate): String {
-        val rateValue = vatRate.value.toDoubleOrNull() ?: 0.0
         return when {
-            rateValue == 0.0 -> "Z"  // Zero rated
-            vatRate.value == "0.00" -> "E"  // Exempt
+            vatRate.basisPoints == 0 -> "Z"  // Zero rated
             else -> "S"  // Standard rate
         }
     }
@@ -160,15 +158,15 @@ class PeppolMapper {
         val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
 
         // Calculate amounts
-        val amount = totals?.payableAmount?.let { Money(it.toString()) }
-            ?: totals?.taxInclusiveAmount?.let { Money(it.toString()) }
+        val amount = totals?.payableAmount?.let { Money.fromDouble(it) }
+            ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it) }
             ?: Money.ZERO
 
-        val vatAmount = taxTotal?.taxAmount?.let { Money(it.toString()) }
+        val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it) }
 
-        // Determine VAT rate from tax subtotals
+        // Determine VAT rate from tax subtotals (percent is in %, e.g. 21.00 for 21%)
         val vatRate = taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent?.let { percent ->
-            VatRate(percent.toString())
+            VatRate.parse(percent.toString())
         }
 
         // Infer category from document content

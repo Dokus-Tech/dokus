@@ -14,17 +14,17 @@ sealed interface CashFlowDestination : NavigationDestination {
 
     /**
      * Document review screen for reviewing and editing AI-extracted data.
-     * @param processingId The document processing ID (UUID string)
+     * @param documentId The document ID (UUID string)
      */
     @Serializable
     @SerialName("cashflow/document_review")
-    data class DocumentReview(val processingId: String) : CashFlowDestination
+    data class DocumentReview(val documentId: String) : CashFlowDestination
 
     /**
      * Single-document chat screen for RAG-powered Q&A about a specific document.
-     * @param processingId The document processing ID (UUID string)
+     * @param documentId The document ID (UUID string)
      */
     @Serializable
     @SerialName("cashflow/document_chat")
-    data class DocumentChat(val processingId: String) : CashFlowDestination
+    data class DocumentChat(val documentId: String) : CashFlowDestination
 }

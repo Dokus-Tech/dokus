@@ -1,44 +1,5 @@
 package ai.dokus.app.cashflow.datasource
 
-import tech.dokus.domain.enums.BillStatus
-import tech.dokus.domain.enums.ExpenseCategory
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.enums.PeppolStatus
-import tech.dokus.domain.enums.PeppolTransmissionDirection
-import tech.dokus.domain.enums.ProcessingStatus
-import tech.dokus.domain.ids.AttachmentId
-import tech.dokus.domain.ids.BillId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.ExpenseId
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.model.AttachmentDto
-import tech.dokus.domain.model.CashflowOverview
-import tech.dokus.domain.model.CreateBillRequest
-import tech.dokus.domain.model.CreateExpenseRequest
-import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentProcessingListResponse
-import tech.dokus.domain.model.DocumentUploadResponse
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.MarkBillPaidRequest
-import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.domain.model.PeppolConnectRequest
-import tech.dokus.domain.model.PeppolConnectResponse
-import tech.dokus.domain.model.PeppolInboxPollResponse
-import tech.dokus.domain.model.PeppolSettingsDto
-import tech.dokus.domain.model.PeppolTransmissionDto
-import tech.dokus.domain.model.PeppolValidationResult
-import tech.dokus.domain.model.PeppolVerifyResponse
-import tech.dokus.domain.model.RecordPaymentRequest
-import tech.dokus.domain.model.SavePeppolSettingsRequest
-import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
-import tech.dokus.domain.routes.Attachments
-import tech.dokus.domain.routes.Bills
-import tech.dokus.domain.routes.Cashflow
-import tech.dokus.domain.routes.Documents
-import tech.dokus.domain.routes.Expenses
-import tech.dokus.domain.routes.Invoices
-import tech.dokus.domain.routes.Peppol
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
@@ -55,6 +16,53 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.datetime.LocalDate
+import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.ids.AttachmentId
+import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.InvoiceId
+import tech.dokus.domain.model.AttachmentDto
+import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.CreateBillRequest
+import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.MarkBillPaidRequest
+import tech.dokus.domain.model.PeppolConnectRequest
+import tech.dokus.domain.model.PeppolConnectResponse
+import tech.dokus.domain.model.PeppolInboxPollResponse
+import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.PeppolTransmissionDto
+import tech.dokus.domain.model.PeppolValidationResult
+import tech.dokus.domain.model.PeppolVerifyResponse
+import tech.dokus.domain.model.RecordPaymentRequest
+import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.SavePeppolSettingsRequest
+import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
+import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.UpdateDraftResponse
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.routes.Attachments
+import tech.dokus.domain.routes.Bills
+import tech.dokus.domain.routes.Cashflow
+import tech.dokus.domain.routes.Documents
+import tech.dokus.domain.routes.Expenses
+import tech.dokus.domain.routes.Invoices
+import tech.dokus.domain.routes.Peppol
 
 /**
  * HTTP-based implementation of CashflowRemoteDataSource.
@@ -91,13 +99,15 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
         return runCatching {
-            httpClient.get(Invoices(
-                status = status,
-                fromDate = fromDate,
-                toDate = toDate,
-                limit = limit,
-                offset = offset
-            )).body()
+            httpClient.get(
+                Invoices(
+                    status = status,
+                    fromDate = fromDate,
+                    toDate = toDate,
+                    limit = limit,
+                    offset = offset
+                )
+            ).body()
         }
     }
 
@@ -157,10 +167,12 @@ internal class CashflowRemoteDataSourceImpl(
             val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
             httpClient.post(Invoices.Id.Emails(parent = invoiceIdRoute)) {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "recipientEmail" to recipientEmail,
-                    "message" to message
-                ))
+                setBody(
+                    mapOf(
+                        "recipientEmail" to recipientEmail,
+                        "message" to message
+                    )
+                )
             }.body()
         }
     }
@@ -195,13 +207,15 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>> {
         return runCatching {
-            httpClient.get(Expenses(
-                category = category,
-                fromDate = fromDate,
-                toDate = toDate,
-                limit = limit,
-                offset = offset
-            )).body()
+            httpClient.get(
+                Expenses(
+                    category = category,
+                    fromDate = fromDate,
+                    toDate = toDate,
+                    limit = limit,
+                    offset = offset
+                )
+            ).body()
         }
     }
 
@@ -253,14 +267,16 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto.BillDto>> {
         return runCatching {
-            httpClient.get(Bills(
-                status = status,
-                category = category,
-                fromDate = fromDate,
-                toDate = toDate,
-                limit = limit,
-                offset = offset
-            )).body()
+            httpClient.get(
+                Bills(
+                    status = status,
+                    category = category,
+                    fromDate = fromDate,
+                    toDate = toDate,
+                    limit = limit,
+                    offset = offset
+                )
+            ).body()
         }
     }
 
@@ -312,7 +328,6 @@ internal class CashflowRemoteDataSourceImpl(
         contentType: String
     ): Result<AttachmentId> {
         return runCatching {
-            val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
             httpClient.submitFormWithBinaryData(
                 url = "/api/v1/invoices/$invoiceId/attachments",
                 formData = formData {
@@ -396,7 +411,7 @@ internal class CashflowRemoteDataSourceImpl(
         prefix: String
     ): Result<DocumentDto> {
         return runCatching {
-            val response: DocumentUploadResponse = httpClient.submitFormWithBinaryData(
+            val response: DocumentRecordDto = httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
                 formData = formData {
                     append(
@@ -425,7 +440,7 @@ internal class CashflowRemoteDataSourceImpl(
         onProgress: (Float) -> Unit
     ): Result<DocumentDto> {
         return runCatching {
-            val response: DocumentUploadResponse = httpClient.submitFormWithBinaryData(
+            val response: DocumentRecordDto = httpClient.submitFormWithBinaryData(
                 url = "/api/v1/documents/upload",
                 formData = formData {
                     append(
@@ -478,12 +493,14 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<PaginatedResponse<FinancialDocumentDto>> {
         return runCatching {
-            httpClient.get(Cashflow.CashflowDocuments(
-                fromDate = fromDate,
-                toDate = toDate,
-                limit = limit,
-                offset = offset
-            )).body()
+            httpClient.get(
+                Cashflow.CashflowDocuments(
+                    fromDate = fromDate,
+                    toDate = toDate,
+                    limit = limit,
+                    offset = offset
+                )
+            ).body()
         }
     }
 
@@ -492,32 +509,97 @@ internal class CashflowRemoteDataSourceImpl(
         toDate: LocalDate
     ): Result<CashflowOverview> {
         return runCatching {
-            httpClient.get(Cashflow.Overview(
-                fromDate = fromDate,
-                toDate = toDate
-            )).body()
+            httpClient.get(
+                Cashflow.Overview(
+                    fromDate = fromDate,
+                    toDate = toDate
+                )
+            ).body()
         }
     }
 
     // ============================================================================
-    // DOCUMENT PROCESSING (AI Extraction Pipeline)
+    // DOCUMENT MANAGEMENT (AI Extraction Pipeline)
     // ============================================================================
 
-    override suspend fun listDocumentProcessing(
-        statuses: List<ProcessingStatus>,
+    override suspend fun listDocuments(
+        draftStatus: DraftStatus?,
+        documentType: DocumentType?,
+        ingestionStatus: IngestionStatus?,
+        search: String?,
         page: Int,
         limit: Int
-    ): Result<DocumentProcessingListResponse> {
+    ): Result<PaginatedResponse<DocumentRecordDto>> {
         return runCatching {
-            // Use comma-separated dbValues for cleaner URLs
-            val statusParam = if (statuses.isNotEmpty()) {
-                statuses.joinToString(",") { it.dbValue }
-            } else null
-            httpClient.get(Documents.Processing(
-                status = statusParam,
-                page = page,
-                limit = limit
-            )).body()
+            httpClient.get(
+                Documents(
+                    draftStatus = draftStatus,
+                    documentType = documentType,
+                    ingestionStatus = ingestionStatus,
+                    search = search,
+                    page = page,
+                    limit = limit
+                )
+            ).body()
+        }
+    }
+
+    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+        return runCatching {
+            httpClient.get(Documents.Id(id = documentId.toString())).body()
+        }
+    }
+
+    override suspend fun getDocumentDraft(documentId: DocumentId): Result<DocumentDraftDto> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(Documents.Id.Draft(parent = docIdRoute)).body()
+        }
+    }
+
+    override suspend fun updateDocumentDraft(
+        documentId: DocumentId,
+        request: UpdateDraftRequest
+    ): Result<UpdateDraftResponse> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.patch(Documents.Id.Draft(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun reprocessDocument(
+        documentId: DocumentId,
+        request: ReprocessRequest
+    ): Result<ReprocessResponse> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.post(Documents.Id.Reprocess(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun confirmDocument(
+        documentId: DocumentId,
+        request: ConfirmDocumentRequest
+    ): Result<DocumentRecordDto> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.post(Documents.Id.Confirm(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun getDocumentIngestions(documentId: DocumentId): Result<List<DocumentIngestionDto>> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(Documents.Id.Ingestions(parent = docIdRoute)).body()
         }
     }
 
@@ -561,7 +643,8 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun testPeppolConnection(): Result<Boolean> {
         return runCatching {
             val settingsRoute = Peppol.Settings()
-            val response: TestConnectionResponse = httpClient.post(Peppol.Settings.ConnectionTests(parent = settingsRoute)).body()
+            val response: TestConnectionResponse =
+                httpClient.post(Peppol.Settings.ConnectionTests(parent = settingsRoute)).body()
             response.success
         }
     }
@@ -611,22 +694,26 @@ internal class CashflowRemoteDataSourceImpl(
         offset: Int
     ): Result<List<PeppolTransmissionDto>> {
         return runCatching {
-            httpClient.get(Peppol.Transmissions(
-                direction = direction,
-                status = status,
-                limit = limit,
-                offset = offset
-            )).body()
+            httpClient.get(
+                Peppol.Transmissions(
+                    direction = direction,
+                    status = status,
+                    limit = limit,
+                    offset = offset
+                )
+            ).body()
         }
     }
 
     override suspend fun getPeppolTransmissionForInvoice(invoiceId: InvoiceId): Result<PeppolTransmissionDto?> {
         return runCatching {
             // Use invoiceId filter on transmissions endpoint
-            val transmissions = httpClient.get(Peppol.Transmissions(
-                invoiceId = invoiceId.toString(),
-                limit = 1
-            )).body<List<PeppolTransmissionDto>>()
+            val transmissions = httpClient.get(
+                Peppol.Transmissions(
+                    invoiceId = invoiceId.toString(),
+                    limit = 1
+                )
+            ).body<List<PeppolTransmissionDto>>()
             transmissions.firstOrNull()
         }
     }

@@ -137,8 +137,8 @@ if [ -f "$local_compose" ]; then
   local_env_keys_relevant="$(
     (
       echo "$local_env_keys" \
-        | rg -N '^(DB_|JWT_|REDIS_|RABBITMQ_|MINIO_|PEPPOL_|AUTH_|SERVER_|CACHE_|CORS_|GEOIP_|EMAIL_|SMTP_|ENCRYPTION_KEY|LOG_|PORT|ENVIRONMENT)' \
-        | rg -N -v '^(MINIO_ROOT_|RABBITMQ_DEFAULT_)' \
+        | rg -N '^(DB_|JWT_|REDIS_|MINIO_|PEPPOL_|AUTH_|SERVER_|CACHE_|CORS_|GEOIP_|EMAIL_|SMTP_|ENCRYPTION_KEY|LOG_|PORT|ENVIRONMENT)' \
+        | rg -N -v '^(MINIO_ROOT_)' \
         || true
     )
   )"

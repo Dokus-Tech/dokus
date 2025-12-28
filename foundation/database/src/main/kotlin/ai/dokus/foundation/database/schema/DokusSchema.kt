@@ -13,7 +13,8 @@ import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
-import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentDraftsTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentIngestionRunsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
@@ -58,7 +59,8 @@ object DokusSchema {
                 // Cashflow foundation (docs)
                 // ----------------------------
                 DocumentsTable,
-                DocumentProcessingTable,
+                DocumentIngestionRunsTable,
+                DocumentDraftsTable,
 
                 // ----------------------------
                 // Contacts (depends on docs/users)

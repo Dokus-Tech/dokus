@@ -3,7 +3,7 @@ package ai.dokus.app.auth.components
 import ai.dokus.app.auth.model.EntityConfirmationState
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
-import tech.dokus.domain.model.EntityLookup
+import tech.dokus.domain.model.entity.EntityLookup
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

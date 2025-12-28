@@ -1,6 +1,6 @@
 package ai.dokus.app.auth.datasource
 
-import tech.dokus.domain.model.EntityLookupResponse
+import tech.dokus.domain.model.entity.EntityLookupResponse
 
 /**
  * Remote data source for external data lookups (CBE company search, etc.)

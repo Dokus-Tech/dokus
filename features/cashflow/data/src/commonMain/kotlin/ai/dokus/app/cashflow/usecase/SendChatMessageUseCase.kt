@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
-import tech.dokus.domain.ids.DocumentProcessingId
-import tech.dokus.domain.model.ChatResponse
-import tech.dokus.domain.model.ChatScope
-import tech.dokus.domain.model.ChatSessionId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ai.ChatResponse
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
 
 /**
  * Use case for sending chat messages to the document Q&A system.
@@ -56,7 +56,7 @@ class SendChatMessageUseCase(
     suspend operator fun invoke(
         message: String,
         scope: ChatScope,
-        documentId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         sessionId: ChatSessionId? = null,
         maxChunks: Int? = null,
         minSimilarity: Float? = null
@@ -98,7 +98,7 @@ class SendChatMessageUseCase(
      * @return Result containing the initial response with new session ID
      */
     suspend fun startDocumentChat(
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
         initialMessage: String
     ): Result<ChatResponse> {
         require(initialMessage.isNotBlank()) { "Initial message cannot be blank" }
@@ -144,7 +144,7 @@ class SendChatMessageUseCase(
         sessionId: ChatSessionId,
         message: String,
         scope: ChatScope,
-        documentId: DocumentProcessingId? = null
+        documentId: DocumentId? = null
     ): Result<ChatResponse> {
         require(message.isNotBlank()) { "Message cannot be blank" }
 

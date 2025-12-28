@@ -15,9 +15,9 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.ContactActivitySummary
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.ContactNoteDto
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactNoteDto
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
