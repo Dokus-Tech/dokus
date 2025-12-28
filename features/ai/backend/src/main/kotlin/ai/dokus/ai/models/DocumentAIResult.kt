@@ -111,22 +111,29 @@ fun DocumentAIResult.meetsMinimalThreshold(): Boolean {
         is DocumentAIResult.Invoice -> {
             val data = extractedData
             val hasTotal = !data.totalAmount.isNullOrBlank()
-            val hasSubtotalAndVat = !data.subtotal.isNullOrBlank() && !data.totalVatAmount.isNullOrBlank()
-            val hasTotalWithContext = hasTotal && (!data.issueDate.isNullOrBlank() || !data.vendorName.isNullOrBlank())
+            val hasSubtotalAndVat =
+                !data.subtotal.isNullOrBlank() && !data.totalVatAmount.isNullOrBlank()
+            val hasTotalWithContext =
+                hasTotal && (!data.issueDate.isNullOrBlank() || !data.vendorName.isNullOrBlank())
             hasTotal || hasSubtotalAndVat || hasTotalWithContext
         }
+
         is DocumentAIResult.Bill -> {
             val data = extractedData
             val hasAmount = !data.amount.isNullOrBlank()
-            val hasAmountWithContext = hasAmount && (!data.issueDate.isNullOrBlank() || !data.supplierName.isNullOrBlank())
+            val hasAmountWithContext =
+                hasAmount && (!data.issueDate.isNullOrBlank() || !data.supplierName.isNullOrBlank())
             hasAmount || hasAmountWithContext
         }
+
         is DocumentAIResult.Receipt -> {
             val data = extractedData
             val hasAmount = !data.totalAmount.isNullOrBlank()
-            val hasMerchantOrDate = !data.merchantName.isNullOrBlank() || !data.transactionDate.isNullOrBlank()
+            val hasMerchantOrDate =
+                !data.merchantName.isNullOrBlank() || !data.transactionDate.isNullOrBlank()
             hasAmount && hasMerchantOrDate
         }
+
         is DocumentAIResult.Unknown -> false
     }
 }
@@ -140,12 +147,15 @@ fun DocumentAIResult.getProvenanceJson(): String? {
         is DocumentAIResult.Invoice -> extractedData.provenance?.let {
             kotlinx.serialization.json.Json.encodeToString(InvoiceProvenance.serializer(), it)
         }
+
         is DocumentAIResult.Bill -> extractedData.provenance?.let {
             kotlinx.serialization.json.Json.encodeToString(BillProvenance.serializer(), it)
         }
+
         is DocumentAIResult.Receipt -> extractedData.provenance?.let {
             kotlinx.serialization.json.Json.encodeToString(ReceiptProvenance.serializer(), it)
         }
+
         is DocumentAIResult.Unknown -> null
     }
 }
@@ -238,6 +248,7 @@ fun DocumentAIResult.toExtractedDocumentData(): ExtractedDocumentData {
             overallConfidence = confidence,
             fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
         )
+
         is DocumentAIResult.Bill -> ExtractedDocumentData(
             documentType = DocumentType.Bill,
             rawText = rawText,
@@ -245,6 +256,7 @@ fun DocumentAIResult.toExtractedDocumentData(): ExtractedDocumentData {
             overallConfidence = confidence,
             fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
         )
+
         is DocumentAIResult.Receipt -> ExtractedDocumentData(
             documentType = DocumentType.Expense,
             rawText = rawText,
@@ -252,6 +264,7 @@ fun DocumentAIResult.toExtractedDocumentData(): ExtractedDocumentData {
             overallConfidence = confidence,
             fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
         )
+
         is DocumentAIResult.Unknown -> ExtractedDocumentData(
             documentType = DocumentType.Unknown,
             rawText = rawText,
@@ -285,7 +298,7 @@ private fun ExtractedInvoiceData.toInvoiceFields(): ExtractedInvoiceFields {
         subtotalAmount = subtotal?.parseMoney(currency),
         vatAmount = totalVatAmount?.parseMoney(currency),
         totalAmount = totalAmount?.parseMoney(currency),
-        currency = currency?.parseCurrency(),
+        currency = Currency.fromDisplay(currency),
         paymentTerms = paymentTerms,
         bankAccount = iban
     )
@@ -302,7 +315,7 @@ private fun ExtractedBillData.toBillFields(): ExtractedBillFields {
         amount = amount?.parseMoney(currency),
         vatAmount = vatAmount?.parseMoney(currency),
         vatRate = vatRate?.parseVatRate(),
-        currency = currency?.parseCurrency(),
+        currency = Currency.fromDisplay(currency),
         category = category?.parseExpenseCategory(),
         description = description,
         notes = notes,
@@ -319,7 +332,7 @@ private fun ExtractedReceiptData.toExpenseFields(): ExtractedExpenseFields {
         date = transactionDate?.parseLocalDate(),
         amount = totalAmount?.parseMoney(currency),
         vatAmount = vatAmount?.parseMoney(currency),
-        currency = currency?.parseCurrency(),
+        currency = Currency.fromDisplay(currency),
         category = suggestedCategory?.parseExpenseCategory()
     )
 }
@@ -355,19 +368,6 @@ private fun String.parseMoney(currencyCode: String?): Money? {
         formatted
     } catch (e: Exception) {
         null
-    }
-}
-
-private fun String.parseCurrency(): Currency? {
-    return try {
-        Currency.valueOf(this.uppercase())
-    } catch (e: Exception) {
-        when (this.lowercase()) {
-            "eur", "€" -> Currency.valueOf("EUR")
-            "usd", "$" -> Currency.valueOf("USD")
-            "gbp", "£" -> Currency.valueOf("GBP")
-            else -> null
-        }
     }
 }
 
