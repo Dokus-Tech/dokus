@@ -14,7 +14,7 @@ import ai.dokus.app.cashflow.usecase.SearchCashflowDocumentsUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
@@ -74,7 +74,7 @@ internal class CashflowContainer(
     private var paginationInfo = PaginationInfo()
 
     // Internal state for pending documents
-    private var allPendingDocuments: List<DocumentProcessingDto> = emptyList()
+    private var allPendingDocuments: List<DocumentRecordDto> = emptyList()
     private var pendingVisibleCount: Int = PENDING_PAGE_SIZE
 
     override val store: Store<CashflowState, CashflowIntent, CashflowAction> =
@@ -463,7 +463,7 @@ internal class CashflowContainer(
     /**
      * Builds the current state for pending documents.
      */
-    private fun buildPendingDocumentsState(): DokusState<PaginationState<DocumentProcessingDto>> {
+    private fun buildPendingDocumentsState(): DokusState<PaginationState<DocumentRecordDto>> {
         return DokusState.success(
             PaginationState(
                 data = allPendingDocuments.take(pendingVisibleCount),
