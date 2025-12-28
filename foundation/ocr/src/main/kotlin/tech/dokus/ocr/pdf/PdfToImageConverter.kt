@@ -60,12 +60,15 @@ internal class PdfToImageConverter {
 
         val outputPrefix = outputDir.resolve("page").toString()
 
-        // pdftoppm -png -r 300 -l <maxPages> input.pdf outputPrefix
+        // pdftoppm -png -r 300 -f 1 -l <maxPages> input.pdf outputPrefix
+        // -f 1 = first page (explicit), -l N = last page to convert
+        // This enforces maxPages at render time, not post-facto
         val command = listOf(
             PDFTOPPM_COMMAND,
             "-$OUTPUT_FORMAT",
             "-r", DPI.toString(),
-            "-l", maxPages.toString(), // -l = last page to convert
+            "-f", "1",                  // Start from first page (explicit)
+            "-l", maxPages.toString(),  // Stop at maxPages (hard limit)
             pdfPath.toAbsolutePath().toString(),
             outputPrefix
         )
