@@ -176,7 +176,7 @@ class PdfPreviewService(
     private fun renderPage(pdfBytes: ByteArray, page: Int, dpi: Int): ByteArray {
         require(page >= 1) { "Page number must be >= 1, got: $page" }
 
-        Loader.loadPDF(pdfBytes).use { document ->
+        return Loader.loadPDF(pdfBytes).use { document ->
             val totalPages = document.numberOfPages
             require(page <= totalPages) {
                 "Page $page is out of bounds. Document has $totalPages pages."
