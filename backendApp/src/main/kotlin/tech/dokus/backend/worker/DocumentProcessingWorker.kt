@@ -1,10 +1,10 @@
 package tech.dokus.backend.worker
 
-import ai.dokus.ai.models.DocumentAIResult
 import ai.dokus.ai.models.meetsMinimalThreshold
-import ai.dokus.ai.models.toExtractedDocumentData
 import ai.dokus.ai.models.toDomainType
+import ai.dokus.ai.models.toExtractedDocumentData
 import ai.dokus.ai.service.AIService
+import tech.dokus.domain.enums.IndexingStatus
 import ai.dokus.ai.services.ChunkingService
 import ai.dokus.ai.services.EmbeddingException
 import ai.dokus.ai.services.EmbeddingService
@@ -29,11 +29,11 @@ import tech.dokus.foundation.ktor.storage.DocumentStorageService
 import tech.dokus.ocr.OcrEngine
 import tech.dokus.ocr.OcrInput
 import tech.dokus.ocr.OcrResult
-import kotlin.time.Duration.Companion.seconds
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Background worker that polls for pending documents and processes them with AI extraction.
@@ -174,7 +174,7 @@ class DocumentProcessingWorker(
             // Step 2: Save to temp file for OCR
             tempFile = Files.createTempFile("dokus_ocr_", "_${ingestion.filename}")
             Files.write(tempFile, documentBytes)
-            logger.debug("Saved document to temp file: $tempFile")
+            logger.debug("Saved document to temp file: {}", tempFile)
 
             // Step 3: Extract text via OCR (use overrides if provided)
             val ocrResult = ocrEngine.extractText(
@@ -182,7 +182,7 @@ class DocumentProcessingWorker(
                     filePath = tempFile,
                     mimeType = ingestion.contentType,
                     maxPages = ingestion.overrideMaxPages ?: 10,
-                    dpi = ingestion.overrideDpi ?: 150,
+                    dpi = ingestion.overrideDpi ?: 300,
                     timeout = (ingestion.overrideTimeoutSeconds?.toLong() ?: 60).seconds
                 )
             )
@@ -228,7 +228,10 @@ class DocumentProcessingWorker(
             val extractedData = result.toExtractedDocumentData()
             val documentType = result.toDomainType()
 
-            // Only create draft if meets minimal threshold (checked in repository)
+            // Check threshold using AI-layer check (SINGLE source of truth)
+            val meetsThreshold = result.meetsMinimalThreshold()
+
+            // Create draft (always for classifiable types, with appropriate status)
             ingestionRepository.markAsSucceeded(
                 runId = runId,
                 tenantId = tenantId,
@@ -237,22 +240,35 @@ class DocumentProcessingWorker(
                 extractedData = extractedData,
                 confidence = result.confidence,
                 rawText = rawText,
+                meetsThreshold = meetsThreshold,
                 force = false // Don't overwrite user edits
             )
 
-            logger.info("Successfully processed document $documentId: type=$documentType, confidence=${result.confidence}")
+            logger.info("Successfully processed document $documentId: type=$documentType, confidence=${result.confidence}, meetsThreshold=$meetsThreshold")
 
             // RAG preparation: chunk and embed the extracted text
-            if (isRagEnabled) {
+            // This is independent of draft creation - chunks are created for all docs with rawText
+            if (isRagEnabled && rawText.isNotBlank()) {
                 try {
-                    chunkAndEmbedDocument(
+                    val chunksCount = chunkAndEmbedDocument(
                         tenantId = tenantId,
                         documentId = documentId,
                         rawText = rawText
                     )
+                    // Track successful indexing
+                    ingestionRepository.updateIndexingStatus(
+                        runId = runId,
+                        status = IndexingStatus.Succeeded,
+                        chunksCount = chunksCount
+                    )
                 } catch (e: Exception) {
-                    // Log but don't fail the extraction - RAG is enhancement, not critical
+                    // Log and track indexing failure (don't fail the extraction)
                     logger.error("Failed to chunk/embed document $documentId: ${e.message}", e)
+                    ingestionRepository.updateIndexingStatus(
+                        runId = runId,
+                        status = IndexingStatus.Failed,
+                        errorMessage = e.message
+                    )
                 }
             }
 
@@ -285,15 +301,16 @@ class DocumentProcessingWorker(
      * @param tenantId The tenant owning this document (for isolation)
      * @param documentId The document ID
      * @param rawText The extracted text to chunk and embed
+     * @return Number of chunks created (or existing if unchanged)
      */
     private suspend fun chunkAndEmbedDocument(
         tenantId: String,
         documentId: String,
         rawText: String
-    ) {
-        val chunkingSvc = chunkingService ?: return
-        val embeddingSvc = embeddingService ?: return
-        val chunkRepo = chunkRepository ?: return
+    ): Int {
+        val chunkingSvc = chunkingService ?: return 0
+        val embeddingSvc = embeddingService ?: return 0
+        val chunkRepo = chunkRepository ?: return 0
 
         val tenantIdParsed = TenantId.parse(tenantId)
         val documentIdParsed = DocumentId.parse(documentId)
@@ -307,7 +324,8 @@ class DocumentProcessingWorker(
         val existingHash = chunkRepo.getContentHashForDocument(tenantIdParsed, documentIdParsed)
         if (existingHash == contentHash) {
             logger.info("Content unchanged for document $documentId (hash=$contentHash), skipping chunk indexing")
-            return
+            // Return existing chunk count (assume it's already indexed)
+            return chunkRepo.countChunksForDocument(tenantIdParsed, documentIdParsed).toInt()
         }
 
         // Step 3: Delete old chunks if they exist (content has changed)
@@ -321,7 +339,7 @@ class DocumentProcessingWorker(
 
         if (chunkingResult.chunks.isEmpty()) {
             logger.warn("No chunks generated for document $documentId (empty text?)")
-            return
+            return 0
         }
 
         logger.info("Generated ${chunkingResult.totalChunks} chunks for document $documentId")
@@ -335,12 +353,12 @@ class DocumentProcessingWorker(
             if (e.isRetryable) {
                 throw e // Let it be retried
             }
-            return
+            throw e // Re-throw to track as failure
         }
 
         if (embeddings.size != chunkingResult.chunks.size) {
             logger.error("Embedding count mismatch: expected ${chunkingResult.chunks.size}, got ${embeddings.size}")
-            return
+            throw IllegalStateException("Embedding count mismatch: expected ${chunkingResult.chunks.size}, got ${embeddings.size}")
         }
 
         val embeddingModel = embeddings.firstOrNull()?.model ?: "unknown"
@@ -370,6 +388,7 @@ class DocumentProcessingWorker(
                 chunks = chunksWithEmbeddings
             )
             logger.info("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $documentId (hash=$contentHash)")
+            return chunksWithEmbeddings.size
         } catch (e: Exception) {
             logger.error("Failed to store chunks for document $documentId: ${e.message}", e)
             throw e
