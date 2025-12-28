@@ -13,7 +13,6 @@ internal class PdfToImageConverter {
 
     companion object {
         private const val PDFTOPPM_COMMAND = "pdftoppm"
-        private const val DPI = 300
         private const val OUTPUT_FORMAT = "png"
     }
 
@@ -33,7 +32,8 @@ internal class PdfToImageConverter {
         data class Failure(
             val reason: OcrFailureReason,
             val stderr: String?,
-            val exitCode: Int?
+            val exitCode: Int?,
+            val errorMessage: String? = null
         ) : ConversionOutcome()
     }
 
@@ -48,6 +48,7 @@ internal class PdfToImageConverter {
      * @param pdfPath Path to the PDF file
      * @param outputDir Directory to write images to
      * @param maxPages Maximum number of pages to convert (1-indexed)
+     * @param dpi Resolution for rendering (lower = faster, default 150)
      * @param timeout Timeout for the conversion process
      * @return ConversionOutcome with either success or failure
      */
@@ -55,18 +56,19 @@ internal class PdfToImageConverter {
         pdfPath: Path,
         outputDir: Path,
         maxPages: Int,
+        dpi: Int,
         timeout: Duration
     ): ConversionOutcome {
 
         val outputPrefix = outputDir.resolve("page").toString()
 
-        // pdftoppm -png -r 300 -f 1 -l <maxPages> input.pdf outputPrefix
+        // pdftoppm -png -r <dpi> -f 1 -l <maxPages> input.pdf outputPrefix
         // -f 1 = first page (explicit), -l N = last page to convert
         // This enforces maxPages at render time, not post-facto
         val command = listOf(
             PDFTOPPM_COMMAND,
             "-$OUTPUT_FORMAT",
-            "-r", DPI.toString(),
+            "-r", dpi.toString(),
             "-f", "1",                  // Start from first page (explicit)
             "-l", maxPages.toString(),  // Stop at maxPages (hard limit)
             pdfPath.toAbsolutePath().toString(),
@@ -76,14 +78,20 @@ internal class PdfToImageConverter {
         val result = ProcessExecutor.execute(command, timeout)
 
         if (result.timedOut) {
-            return ConversionOutcome.Failure(OcrFailureReason.TIMEOUT, result.stderr, null)
+            return ConversionOutcome.Failure(
+                reason = OcrFailureReason.TIMEOUT,
+                stderr = result.stderr,
+                exitCode = null,
+                errorMessage = "pdftoppm timeout after ${timeout.inWholeSeconds}s converting PDF to images"
+            )
         }
 
         if (result.exitCode != 0) {
             return ConversionOutcome.Failure(
-                OcrFailureReason.PROCESS_ERROR,
-                result.stderr,
-                result.exitCode
+                reason = OcrFailureReason.PROCESS_ERROR,
+                stderr = result.stderr,
+                exitCode = result.exitCode,
+                errorMessage = "pdftoppm failed with exit code ${result.exitCode}"
             )
         }
 

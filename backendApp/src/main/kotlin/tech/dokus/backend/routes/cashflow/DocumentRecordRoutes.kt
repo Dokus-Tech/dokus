@@ -290,7 +290,9 @@ internal fun Route.documentRecordRoutes() {
                 ReprocessRequest()
             }
 
-            logger.info("Reprocessing document: $documentId, force=${request.force}, tenant=$tenantId")
+            logger.info("Reprocessing document: $documentId, force=${request.force}, " +
+                "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}, timeout=${request.timeoutSeconds}s], " +
+                "tenant=$tenantId")
 
             // Check document exists
             if (!documentRepository.exists(tenantId, documentId)) {
@@ -314,8 +316,14 @@ internal fun Route.documentRecordRoutes() {
                 }
             }
 
-            // Create new ingestion run
-            val runId = ingestionRepository.createRun(documentId, tenantId)
+            // Create new ingestion run with optional overrides
+            val runId = ingestionRepository.createRun(
+                documentId = documentId,
+                tenantId = tenantId,
+                overrideMaxPages = request.maxPages,
+                overrideDpi = request.dpi,
+                overrideTimeoutSeconds = request.timeoutSeconds
+            )
 
             call.respond(
                 HttpStatusCode.Created,

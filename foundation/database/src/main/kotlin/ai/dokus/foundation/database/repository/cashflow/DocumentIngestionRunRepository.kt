@@ -57,10 +57,19 @@ class DocumentIngestionRunRepository {
     /**
      * Create a new ingestion run with status=Queued.
      * CRITICAL: Must provide tenantId.
+     *
+     * @param documentId Document to process
+     * @param tenantId Tenant owning the document
+     * @param overrideMaxPages Optional override for max pages (null = use default)
+     * @param overrideDpi Optional override for DPI (null = use default)
+     * @param overrideTimeoutSeconds Optional override for timeout (null = use default)
      */
     suspend fun createRun(
         documentId: DocumentId,
-        tenantId: TenantId
+        tenantId: TenantId,
+        overrideMaxPages: Int? = null,
+        overrideDpi: Int? = null,
+        overrideTimeoutSeconds: Int? = null
     ): IngestionRunId = newSuspendedTransaction {
         val id = IngestionRunId.generate()
         DocumentIngestionRunsTable.insert {
@@ -68,6 +77,9 @@ class DocumentIngestionRunRepository {
             it[DocumentIngestionRunsTable.documentId] = java.util.UUID.fromString(documentId.toString())
             it[DocumentIngestionRunsTable.tenantId] = java.util.UUID.fromString(tenantId.toString())
             it[status] = IngestionStatus.Queued
+            it[DocumentIngestionRunsTable.overrideMaxPages] = overrideMaxPages
+            it[DocumentIngestionRunsTable.overrideDpi] = overrideDpi
+            it[DocumentIngestionRunsTable.overrideTimeoutSeconds] = overrideTimeoutSeconds
         }
         id
     }
@@ -197,7 +209,10 @@ class DocumentIngestionRunRepository {
                     tenantId = row[DocumentIngestionRunsTable.tenantId].toString(),
                     storageKey = row[DocumentsTable.storageKey],
                     filename = row[DocumentsTable.filename],
-                    contentType = row[DocumentsTable.contentType]
+                    contentType = row[DocumentsTable.contentType],
+                    overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
+                    overrideDpi = row[DocumentIngestionRunsTable.overrideDpi],
+                    overrideTimeoutSeconds = row[DocumentIngestionRunsTable.overrideTimeoutSeconds]
                 )
             }
     }
