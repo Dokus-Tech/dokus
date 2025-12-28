@@ -10,5 +10,9 @@ data class IngestionItemEntity(
     val tenantId: String,
     val storageKey: String,
     val filename: String,
-    val contentType: String
+    val contentType: String,
+    // Processing overrides (null = use defaults)
+    val overrideMaxPages: Int? = null,
+    val overrideDpi: Int? = null,
+    val overrideTimeoutSeconds: Int? = null
 )

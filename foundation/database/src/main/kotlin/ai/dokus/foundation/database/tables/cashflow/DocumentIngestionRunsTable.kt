@@ -68,6 +68,12 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     // Per-field confidence scores as JSON
     val fieldConfidences = text("field_confidences").nullable()
 
+    // Processing overrides (nullable = use defaults)
+    // These allow per-reprocess customization for debugging/retries
+    val overrideMaxPages = integer("override_max_pages").nullable()
+    val overrideDpi = integer("override_dpi").nullable()
+    val overrideTimeoutSeconds = integer("override_timeout_seconds").nullable()
+
     init {
         // For processor: find runs to process by status
         index(false, tenantId, status, queuedAt)

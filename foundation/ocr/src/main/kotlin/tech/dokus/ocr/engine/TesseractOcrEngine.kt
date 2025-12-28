@@ -5,6 +5,8 @@ import tech.dokus.ocr.OcrFailureReason
 import tech.dokus.ocr.OcrInput
 import tech.dokus.ocr.OcrLanguage
 import tech.dokus.ocr.OcrResult
+import tech.dokus.ocr.TimeoutDetails
+import tech.dokus.ocr.TimeoutStage
 import tech.dokus.ocr.pdf.PdfToImageConverter
 import tech.dokus.ocr.process.ProcessExecutor
 import tech.dokus.ocr.process.ProcessResult
@@ -152,19 +154,28 @@ class TesseractOcrEngine : OcrEngine {
 
         return when {
             result.timedOut -> OcrResult.Failure(
-                OcrFailureReason.TIMEOUT,
-                result.stderr,
-                null
+                reason = OcrFailureReason.TIMEOUT,
+                stderr = result.stderr,
+                exitCode = null,
+                errorMessage = "tesseract timeout after ${input.timeout.inWholeSeconds}s processing image",
+                timeoutDetails = TimeoutDetails(
+                    stage = TimeoutStage.OCR_IMAGE,
+                    timeoutMs = input.timeout.inWholeMilliseconds,
+                    pagesProcessed = 0,
+                    totalPages = 1
+                )
             )
             result.exitCode != 0 -> OcrResult.Failure(
-                OcrFailureReason.PROCESS_ERROR,
-                result.stderr,
-                result.exitCode
+                reason = OcrFailureReason.PROCESS_ERROR,
+                stderr = result.stderr,
+                exitCode = result.exitCode,
+                errorMessage = "tesseract failed with exit code ${result.exitCode}"
             )
             result.stdout.isBlank() || result.stdout.length < MIN_OUTPUT_LENGTH -> OcrResult.Failure(
-                OcrFailureReason.EMPTY_OUTPUT,
-                null,
-                null
+                reason = OcrFailureReason.EMPTY_OUTPUT,
+                stderr = null,
+                exitCode = null,
+                errorMessage = "OCR produced no usable text (${result.stdout.length} characters)"
             )
             else -> OcrResult.Success(
                 text = TextNormalizer.normalize(result.stdout),
@@ -182,72 +193,92 @@ class TesseractOcrEngine : OcrEngine {
         // Check pdftoppm availability
         if (!pdfConverter.isAvailable()) {
             return OcrResult.Failure(
-                OcrFailureReason.ENGINE_NOT_FOUND,
-                "pdftoppm not found on PATH (required for PDF support)",
-                null
+                reason = OcrFailureReason.ENGINE_NOT_FOUND,
+                stderr = "pdftoppm not found on PATH (required for PDF support)",
+                exitCode = null,
+                errorMessage = "pdftoppm not found on PATH"
             )
         }
 
         return TempFileManager.withTempDir { tempDir ->
-            // Allocate 1/3 of timeout for PDF conversion, 2/3 for OCR
-            val conversionTimeout = (input.timeout.inWholeMilliseconds / 3)
-                .coerceAtLeast(5000)
+            // Calculate conversion timeout: ~30% of base timeout + 2s per estimated page
+            val conversionTimeout = ((input.timeout.inWholeMilliseconds * 0.3).toLong() +
+                (2000L * input.maxPages))
+                .coerceIn(5000, 60000)
                 .milliseconds
 
             val conversionResult = pdfConverter.convert(
                 pdfPath = input.filePath,
                 outputDir = tempDir,
                 maxPages = input.maxPages,
+                dpi = input.dpi,
                 timeout = conversionTimeout
             )
 
             when (conversionResult) {
                 is PdfToImageConverter.ConversionOutcome.Failure -> {
                     return@withTempDir OcrResult.Failure(
-                        conversionResult.reason,
-                        conversionResult.stderr,
-                        conversionResult.exitCode
+                        reason = conversionResult.reason,
+                        stderr = conversionResult.stderr,
+                        exitCode = conversionResult.exitCode,
+                        errorMessage = conversionResult.errorMessage
+                            ?: "PDF conversion failed: ${conversionResult.reason}",
+                        timeoutDetails = if (conversionResult.reason == OcrFailureReason.TIMEOUT) {
+                            TimeoutDetails(
+                                stage = TimeoutStage.PDF_CONVERSION,
+                                timeoutMs = conversionTimeout.inWholeMilliseconds,
+                                pagesProcessed = 0,
+                                totalPages = null
+                            )
+                        } else null
                     )
                 }
                 is PdfToImageConverter.ConversionOutcome.Success -> {
                     val imageFiles = conversionResult.result.imageFiles
+                    val actualPages = imageFiles.size
 
                     if (imageFiles.isEmpty()) {
                         return@withTempDir OcrResult.Failure(
-                            OcrFailureReason.EMPTY_OUTPUT,
-                            "No pages extracted from PDF",
-                            null
+                            reason = OcrFailureReason.EMPTY_OUTPUT,
+                            stderr = null,
+                            exitCode = null,
+                            errorMessage = "No pages extracted from PDF"
                         )
                     }
 
-                    // Note: maxPages is enforced by pdftoppm via -f 1 -l maxPages flags
-                    // so we don't need a post-facto check here
-
-                    // OCR each page with remaining timeout
-                    val remainingTimeout = (input.timeout.inWholeMilliseconds * 2 / 3)
-                        .coerceAtLeast(3000)
-                    val perPageTimeout = (remainingTimeout / imageFiles.size)
-                        .coerceAtLeast(3000)
+                    // Calculate dynamic OCR timeout based on actual page count
+                    val effectiveTimeout = computeEffectiveTimeout(input, actualPages)
+                    val perPageTimeout = (effectiveTimeout.inWholeMilliseconds / actualPages)
+                        .coerceAtLeast(8000) // Min 8s per page
                         .milliseconds
 
                     val pageTexts = mutableListOf<String>()
 
-                    for (imageFile in imageFiles) {
+                    for ((index, imageFile) in imageFiles.withIndex()) {
+                        val pageNumber = index + 1
                         val ocrResult = runTesseract(imageFile, input.languages, perPageTimeout)
 
                         when {
                             ocrResult.timedOut -> {
                                 return@withTempDir OcrResult.Failure(
-                                    OcrFailureReason.TIMEOUT,
-                                    ocrResult.stderr,
-                                    null
+                                    reason = OcrFailureReason.TIMEOUT,
+                                    stderr = ocrResult.stderr,
+                                    exitCode = null,
+                                    errorMessage = "tesseract timeout on page $pageNumber after ${perPageTimeout.inWholeSeconds}s",
+                                    timeoutDetails = TimeoutDetails(
+                                        stage = TimeoutStage.OCR_PAGE,
+                                        timeoutMs = perPageTimeout.inWholeMilliseconds,
+                                        pagesProcessed = index,
+                                        totalPages = actualPages
+                                    )
                                 )
                             }
                             ocrResult.exitCode != 0 -> {
                                 return@withTempDir OcrResult.Failure(
-                                    OcrFailureReason.PROCESS_ERROR,
-                                    ocrResult.stderr,
-                                    ocrResult.exitCode
+                                    reason = OcrFailureReason.PROCESS_ERROR,
+                                    stderr = ocrResult.stderr,
+                                    exitCode = ocrResult.exitCode,
+                                    errorMessage = "tesseract failed on page $pageNumber with exit code ${ocrResult.exitCode}"
                                 )
                             }
                             else -> {
@@ -262,21 +293,31 @@ class TesseractOcrEngine : OcrEngine {
                     val textWithoutMarkers = combinedText.replace(Regex("=== PAGE \\d+ ==="), "")
                     if (textWithoutMarkers.isBlank() || textWithoutMarkers.length < MIN_OUTPUT_LENGTH) {
                         return@withTempDir OcrResult.Failure(
-                            OcrFailureReason.EMPTY_OUTPUT,
-                            null,
-                            null
+                            reason = OcrFailureReason.EMPTY_OUTPUT,
+                            stderr = null,
+                            exitCode = null,
+                            errorMessage = "OCR produced no usable text from $actualPages pages"
                         )
                     }
 
                     OcrResult.Success(
                         text = combinedText,
-                        pages = imageFiles.size,
+                        pages = actualPages,
                         engine = ENGINE_NAME,
                         durationMs = 0 // Will be overwritten
                     )
                 }
             }
         }
+    }
+
+    /**
+     * Compute effective timeout based on page count.
+     * Formula: min(maxTimeout, baseTimeout + perPageBudget * pages)
+     */
+    private fun computeEffectiveTimeout(input: OcrInput, pages: Int): Duration {
+        val computed = input.timeout + (input.perPageBudget * pages)
+        return computed.coerceAtMost(input.maxTimeout)
     }
 
     /**

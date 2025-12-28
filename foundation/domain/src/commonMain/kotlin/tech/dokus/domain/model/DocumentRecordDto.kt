@@ -73,11 +73,20 @@ data class DocumentRecordDto(
 
 /**
  * Request to reprocess a document.
+ *
+ * @property force If true, create new run even if one is already processing
+ * @property preferredProvider AI provider to use (future feature)
+ * @property maxPages Override max pages to process (null = use default 10)
+ * @property dpi Override DPI for PDF rendering (null = use default 150)
+ * @property timeoutSeconds Override base timeout in seconds (null = use default 60)
  */
 @Serializable
 data class ReprocessRequest(
     val force: Boolean = false,
-    val preferredProvider: String? = null
+    val preferredProvider: String? = null,
+    val maxPages: Int? = null,
+    val dpi: Int? = null,
+    val timeoutSeconds: Int? = null
 )
 
 /**
