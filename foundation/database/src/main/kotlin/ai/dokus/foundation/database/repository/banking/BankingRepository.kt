@@ -310,7 +310,7 @@ class BankingRepository {
             tenantId = TenantId.parse(this[BankTransactionsTable.tenantId].toString()),
             externalId = this[BankTransactionsTable.externalId],
             date = this[BankTransactionsTable.date],
-            amount = Money(this[BankTransactionsTable.amount].toString()),
+            amount = Money.fromDbDecimal(this[BankTransactionsTable.amount]),
             description = this[BankTransactionsTable.description],
             merchantName = this[BankTransactionsTable.merchantName],
             category = this[BankTransactionsTable.category],

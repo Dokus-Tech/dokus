@@ -134,7 +134,7 @@ class PaymentRepository {
             val total = PaymentsTable.selectAll().where {
                 PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.sumOf { it[PaymentsTable.amount] }
-            Money(total.toString())
+            Money.fromDbDecimal(total)
         }
     }
 
@@ -177,7 +177,7 @@ class PaymentRepository {
             id = PaymentId.parse(this[PaymentsTable.id].value.toString()),
             tenantId = TenantId.parse(this[PaymentsTable.tenantId].toString()),
             invoiceId = InvoiceId.parse(this[PaymentsTable.invoiceId].toString()),
-            amount = Money(this[PaymentsTable.amount].toString()),
+            amount = Money.fromDbDecimal(this[PaymentsTable.amount]),
             paymentDate = this[PaymentsTable.paymentDate],
             paymentMethod = this[PaymentsTable.paymentMethod],
             transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },

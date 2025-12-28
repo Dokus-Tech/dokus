@@ -72,11 +72,11 @@ class InvoiceRepository(
                 it[issueDate] = request.issueDate ?: today
                 it[dueDate] = request.dueDate ?: today.plus(kotlinx.datetime.DatePeriod(days = 30))
                 it[subtotalAmount] =
-                    request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) }
+                    request.items.sumOf { item -> item.lineTotal.toDbDecimal() }
                 it[vatAmount] =
-                    request.items.sumOf { item -> java.math.BigDecimal(item.vatAmount.value) }
+                    request.items.sumOf { item -> item.vatAmount.toDbDecimal() }
                 it[totalAmount] = request.items.sumOf { item ->
-                    java.math.BigDecimal(item.lineTotal.value) + java.math.BigDecimal(item.vatAmount.value)
+                    item.lineTotal.toDbDecimal() + item.vatAmount.toDbDecimal()
                 }
                 it[paidAmount] = java.math.BigDecimal.ZERO
                 it[status] = InvoiceStatus.Draft
@@ -88,11 +88,11 @@ class InvoiceRepository(
                 InvoiceItemsTable.insert {
                     it[InvoiceItemsTable.invoiceId] = invoiceId.value
                     it[description] = item.description
-                    it[quantity] = java.math.BigDecimal(item.quantity)
-                    it[unitPrice] = java.math.BigDecimal(item.unitPrice.value)
-                    it[vatRate] = java.math.BigDecimal(item.vatRate.value)
-                    it[lineTotal] = java.math.BigDecimal(item.lineTotal.value)
-                    it[vatAmount] = java.math.BigDecimal(item.vatAmount.value)
+                    it[quantity] = java.math.BigDecimal.valueOf(item.quantity)
+                    it[unitPrice] = item.unitPrice.toDbDecimal()
+                    it[vatRate] = item.vatRate.toDbDecimal()
+                    it[lineTotal] = item.lineTotal.toDbDecimal()
+                    it[vatAmount] = item.vatAmount.toDbDecimal()
                     it[sortOrder] = index
                 }
             }
@@ -112,10 +112,10 @@ class InvoiceRepository(
                         invoiceId = InvoiceId.parse(invoiceId.value.toString()),
                         description = itemRow[InvoiceItemsTable.description],
                         quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
-                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
-                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
-                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
-                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        unitPrice = Money.fromDbDecimal(itemRow[InvoiceItemsTable.unitPrice]),
+                        vatRate = VatRate.fromDbDecimal(itemRow[InvoiceItemsTable.vatRate]),
+                        lineTotal = Money.fromDbDecimal(itemRow[InvoiceItemsTable.lineTotal]),
+                        vatAmount = Money.fromDbDecimal(itemRow[InvoiceItemsTable.vatAmount]),
                         sortOrder = itemRow[InvoiceItemsTable.sortOrder]
                     )
                 }
@@ -127,10 +127,10 @@ class InvoiceRepository(
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
                 dueDate = row[InvoicesTable.dueDate],
-                subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
-                vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
-                totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
-                paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
+                vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
+                totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
+                paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
                 status = row[InvoicesTable.status],
                 currency = row[InvoicesTable.currency],
                 notes = row[InvoicesTable.notes],
@@ -174,10 +174,10 @@ class InvoiceRepository(
                         invoiceId = invoiceId,
                         description = itemRow[InvoiceItemsTable.description],
                         quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
-                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
-                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
-                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
-                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        unitPrice = Money.fromDbDecimal(itemRow[InvoiceItemsTable.unitPrice]),
+                        vatRate = VatRate.fromDbDecimal(itemRow[InvoiceItemsTable.vatRate]),
+                        lineTotal = Money.fromDbDecimal(itemRow[InvoiceItemsTable.lineTotal]),
+                        vatAmount = Money.fromDbDecimal(itemRow[InvoiceItemsTable.vatAmount]),
                         sortOrder = itemRow[InvoiceItemsTable.sortOrder]
                     )
                 }
@@ -190,10 +190,10 @@ class InvoiceRepository(
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
                 dueDate = row[InvoicesTable.dueDate],
-                subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
-                vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
-                totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
-                paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
+                vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
+                totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
+                paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
                 status = row[InvoicesTable.status],
                 currency = row[InvoicesTable.currency],
                 notes = row[InvoicesTable.notes],
@@ -256,10 +256,10 @@ class InvoiceRepository(
                         invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                         issueDate = row[InvoicesTable.issueDate],
                         dueDate = row[InvoicesTable.dueDate],
-                        subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
-                        vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
-                        totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
-                        paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                        subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
+                        vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
+                        totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
+                        paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
                         status = row[InvoicesTable.status],
                         currency = row[InvoicesTable.currency],
                         notes = row[InvoicesTable.notes],
@@ -314,10 +314,10 @@ class InvoiceRepository(
                             invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                             issueDate = row[InvoicesTable.issueDate],
                             dueDate = row[InvoicesTable.dueDate],
-                            subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
-                            vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
-                            totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
-                            paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                            subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
+                            vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
+                            totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
+                            paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
                             status = row[InvoicesTable.status],
                             currency = row[InvoicesTable.currency],
                             notes = row[InvoicesTable.notes],
@@ -385,11 +385,11 @@ class InvoiceRepository(
             }) {
                 it[contactId] = UUID.fromString(request.contactId.toString())
                 it[subtotalAmount] =
-                    request.items.sumOf { item -> java.math.BigDecimal(item.lineTotal.value) }
+                    request.items.sumOf { item -> item.lineTotal.toDbDecimal() }
                 it[vatAmount] =
-                    request.items.sumOf { item -> java.math.BigDecimal(item.vatAmount.value) }
+                    request.items.sumOf { item -> item.vatAmount.toDbDecimal() }
                 it[totalAmount] = request.items.sumOf { item ->
-                    java.math.BigDecimal(item.lineTotal.value) + java.math.BigDecimal(item.vatAmount.value)
+                    item.lineTotal.toDbDecimal() + item.vatAmount.toDbDecimal()
                 }
                 request.issueDate?.let { date -> it[issueDate] = date }
                 request.dueDate?.let { date -> it[dueDate] = date }
@@ -406,11 +406,11 @@ class InvoiceRepository(
                 InvoiceItemsTable.insert {
                     it[InvoiceItemsTable.invoiceId] = UUID.fromString(invoiceId.toString())
                     it[description] = item.description
-                    it[quantity] = java.math.BigDecimal(item.quantity)
-                    it[unitPrice] = java.math.BigDecimal(item.unitPrice.value)
-                    it[vatRate] = java.math.BigDecimal(item.vatRate.value)
-                    it[lineTotal] = java.math.BigDecimal(item.lineTotal.value)
-                    it[vatAmount] = java.math.BigDecimal(item.vatAmount.value)
+                    it[quantity] = java.math.BigDecimal.valueOf(item.quantity)
+                    it[unitPrice] = item.unitPrice.toDbDecimal()
+                    it[vatRate] = item.vatRate.toDbDecimal()
+                    it[lineTotal] = item.lineTotal.toDbDecimal()
+                    it[vatAmount] = item.vatAmount.toDbDecimal()
                     it[sortOrder] = index
                 }
             }
@@ -430,10 +430,10 @@ class InvoiceRepository(
                         invoiceId = invoiceId,
                         description = itemRow[InvoiceItemsTable.description],
                         quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
-                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
-                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
-                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
-                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        unitPrice = Money.fromDbDecimal(itemRow[InvoiceItemsTable.unitPrice]),
+                        vatRate = VatRate.fromDbDecimal(itemRow[InvoiceItemsTable.vatRate]),
+                        lineTotal = Money.fromDbDecimal(itemRow[InvoiceItemsTable.lineTotal]),
+                        vatAmount = Money.fromDbDecimal(itemRow[InvoiceItemsTable.vatAmount]),
                         sortOrder = itemRow[InvoiceItemsTable.sortOrder]
                     )
                 }
@@ -445,10 +445,10 @@ class InvoiceRepository(
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
                 dueDate = row[InvoicesTable.dueDate],
-                subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
-                vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
-                totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
-                paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
+                vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
+                totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
+                paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
                 status = row[InvoicesTable.status],
                 currency = row[InvoicesTable.currency],
                 notes = row[InvoicesTable.notes],
@@ -554,10 +554,10 @@ class InvoiceRepository(
                         invoiceId = invoiceId,
                         description = itemRow[InvoiceItemsTable.description],
                         quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
-                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
-                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
-                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
-                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        unitPrice = Money.fromDbDecimal(itemRow[InvoiceItemsTable.unitPrice]),
+                        vatRate = VatRate.fromDbDecimal(itemRow[InvoiceItemsTable.vatRate]),
+                        lineTotal = Money.fromDbDecimal(itemRow[InvoiceItemsTable.lineTotal]),
+                        vatAmount = Money.fromDbDecimal(itemRow[InvoiceItemsTable.vatAmount]),
                         sortOrder = itemRow[InvoiceItemsTable.sortOrder]
                     )
                 }
@@ -569,10 +569,10 @@ class InvoiceRepository(
                 invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
                 issueDate = row[InvoicesTable.issueDate],
                 dueDate = row[InvoicesTable.dueDate],
-                subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
-                vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
-                totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
-                paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
+                vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
+                totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
+                paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
                 status = row[InvoicesTable.status],
                 currency = row[InvoicesTable.currency],
                 notes = row[InvoicesTable.notes],
