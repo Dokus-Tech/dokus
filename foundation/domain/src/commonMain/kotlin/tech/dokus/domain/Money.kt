@@ -378,6 +378,22 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
         fun parseOrThrow(value: String): Percentage {
             return parse(value) ?: throw DokusException.Validation.InvalidPercentage
         }
+
+        /**
+         * Create Percentage from a database decimal value.
+         * DB stores as DECIMAL like 100.00 (100%), we store as 10000 bp.
+         */
+        fun fromDbDecimal(dbValue: java.math.BigDecimal): Percentage {
+            return Percentage(dbValue.movePointRight(2).intValueExact())
+        }
+    }
+
+    /**
+     * Convert to database decimal value.
+     * We store as 10000 bp, DB stores as DECIMAL like 100.00.
+     */
+    fun toDbDecimal(): java.math.BigDecimal {
+        return java.math.BigDecimal.valueOf(basisPoints.toLong(), 2)
     }
 }
 
