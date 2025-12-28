@@ -56,6 +56,12 @@ value class Money(val minor: Long) : Comparable<Money> {
      */
     val isPositive: Boolean get() = minor > 0
 
+    /**
+     * Convert to Double value in major units.
+     * Example: Money(12345).toDouble() = 123.45
+     */
+    fun toDouble(): Double = minor / 100.0
+
     companion object {
         val ZERO = Money(0L)
 
@@ -138,22 +144,6 @@ value class Money(val minor: Long) : Comparable<Money> {
         fun parseOrThrow(value: String): Money {
             return parse(value) ?: throw DokusException.Validation.InvalidMoney
         }
-
-        /**
-         * Create Money from a database decimal value.
-         * DB stores as DECIMAL(12,2) like 123.45, we store as 12345.
-         */
-        fun fromDbDecimal(dbValue: java.math.BigDecimal): Money {
-            return Money(dbValue.movePointRight(2).longValueExact())
-        }
-    }
-
-    /**
-     * Convert to database decimal value.
-     * We store as 12345, DB stores as DECIMAL(12,2) like 123.45.
-     */
-    fun toDbDecimal(): java.math.BigDecimal {
-        return java.math.BigDecimal.valueOf(minor, 2)
     }
 }
 
@@ -205,6 +195,12 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
      * Check if this is a valid VAT rate (0-100%).
      */
     val isValid: Boolean get() = basisPoints in 0..10000
+
+    /**
+     * Convert to percentage as Double.
+     * Example: VatRate(2100).toPercentDouble() = 21.0
+     */
+    fun toPercentDouble(): Double = basisPoints / 100.0
 
     companion object {
         val ZERO = VatRate(0)
