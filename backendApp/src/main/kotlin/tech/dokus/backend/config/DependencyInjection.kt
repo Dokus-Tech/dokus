@@ -48,6 +48,7 @@ import tech.dokus.backend.services.cashflow.BillService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
@@ -234,6 +235,9 @@ private fun cashflowModule(appConfig: AppBaseConfig) = module {
     single { ExpenseService(get()) }
     single { BillService(get()) }
     single { CashflowOverviewService(get(), get(), get()) }
+
+    // PDF Preview
+    single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
 
     // Peppol
     single { PeppolModuleConfig.fromConfig(appConfig.config) }
