@@ -46,6 +46,9 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Document record routes using new canonical API.
@@ -252,7 +255,7 @@ internal fun Route.documentRecordRoutes() {
                     documentId = documentId,
                     draftVersion = newVersion,
                     extractedData = request.extractedData,
-                    updatedAt = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.UTC)
+                    updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
                 )
             )
         }
@@ -373,7 +376,7 @@ internal fun Route.documentRecordRoutes() {
             // Check if entity already exists for this document (idempotent check)
             val existingEntity = findConfirmedEntity(documentId, request.documentType, tenantId, invoiceRepository, billRepository, expenseRepository)
             if (existingEntity != null) {
-                throw DokusException.Conflict("Entity already exists for this document")
+                throw DokusException.BadRequest("Entity already exists for this document")
             }
 
             // Create entity based on type
@@ -470,7 +473,7 @@ internal fun Route.documentRecordRoutes() {
 
 // Helper functions
 
-private fun addDownloadUrl(
+private suspend fun addDownloadUrl(
     document: DocumentDto,
     minioStorage: MinioDocumentStorageService,
     logger: org.slf4j.Logger

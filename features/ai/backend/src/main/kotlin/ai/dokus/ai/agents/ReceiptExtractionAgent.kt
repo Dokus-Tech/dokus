@@ -1,13 +1,13 @@
 package ai.dokus.ai.agents
 
 import ai.dokus.ai.models.ExtractedReceiptData
-import tech.dokus.foundation.ktor.utils.loggerFor
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.json.Json
+import tech.dokus.foundation.ktor.utils.loggerFor
 
 /**
  * Agent responsible for extracting data from receipt documents.
@@ -122,7 +122,7 @@ class ReceiptExtractionAgent(
         val startIndex = cleaned.indexOf('{')
         val endIndex = cleaned.lastIndexOf('}')
 
-        return if (startIndex >= 0 && endIndex > startIndex) {
+        return if (startIndex in 0..<endIndex) {
             cleaned.substring(startIndex, endIndex + 1)
         } else {
             cleaned

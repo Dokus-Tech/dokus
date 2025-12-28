@@ -2,15 +2,14 @@ package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.enums.ProcessingStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.DocumentCorrections
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedLineItem
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -55,13 +54,13 @@ internal class DocumentReviewContainer(
     override val store: Store<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> =
         store(DocumentReviewState.Loading) {
             init {
-                // No auto-initialization - wait for LoadDocument intent with processingId
+                // No auto-initialization - wait for LoadDocument intent with documentId
             }
 
             reduce { intent ->
                 when (intent) {
                     // === Data Loading ===
-                    is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.processingId)
+                    is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.documentId)
                     is DocumentReviewIntent.Refresh -> handleRefresh()
 
                     // === Field Editing ===
@@ -93,48 +92,33 @@ internal class DocumentReviewContainer(
     // DATA LOADING
     // =========================================================================
 
-    private suspend fun DocumentReviewCtx.handleLoadDocument(processingId: DocumentProcessingId) {
-        logger.d { "Loading document: $processingId" }
+    private suspend fun DocumentReviewCtx.handleLoadDocument(documentId: DocumentId) {
+        logger.d { "Loading document: $documentId" }
         updateState { DocumentReviewState.Loading }
 
-        fetchDocumentProcessing(processingId)
+        fetchDocumentProcessing(documentId)
     }
 
     private suspend fun DocumentReviewCtx.handleRefresh() {
         withState<DocumentReviewState.Content, _> {
-            logger.d { "Refreshing document: $processingId" }
-            fetchDocumentProcessing(processingId)
+            logger.d { "Refreshing document: $documentId" }
+            fetchDocumentProcessing(documentId)
         }
     }
 
-    private suspend fun DocumentReviewCtx.fetchDocumentProcessing(processingId: DocumentProcessingId) {
-        // Fetch document processing from the list endpoint and find by ID
-        // Note: In production, you'd have a dedicated getDocumentProcessing(id) method
-        dataSource.listDocumentProcessing(
-            statuses = listOf(ProcessingStatus.Processed, ProcessingStatus.Pending, ProcessingStatus.Processing),
-            page = 0,
-            limit = 100
-        ).fold(
-            onSuccess = { response ->
-                val document = response.items.find { it.id == processingId }
-                if (document != null) {
-                    transitionToContent(processingId, document)
-                } else {
-                    logger.e { "Document not found: $processingId" }
-                    updateState {
-                        DocumentReviewState.Error(
-                            exception = DokusException.NotFound("Document not found"),
-                            retryHandler = { intent(DocumentReviewIntent.LoadDocument(processingId)) }
-                        )
-                    }
-                }
+    private suspend fun DocumentReviewCtx.fetchDocumentProcessing(documentId: DocumentId) {
+        // Fetch document record from the API
+        dataSource.getDocumentRecord(documentId)
+            .fold(
+            onSuccess = { document ->
+                transitionToContent(documentId, document)
             },
             onFailure = { error ->
-                logger.e(error) { "Failed to load document: $processingId" }
+                logger.e(error) { "Failed to load document: $documentId" }
                 updateState {
                     DocumentReviewState.Error(
                         exception = error.asDokusException,
-                        retryHandler = { intent(DocumentReviewIntent.LoadDocument(processingId)) }
+                        retryHandler = { intent(DocumentReviewIntent.LoadDocument(documentId)) }
                     )
                 }
             }
@@ -142,10 +126,10 @@ internal class DocumentReviewContainer(
     }
 
     private suspend fun DocumentReviewCtx.transitionToContent(
-        processingId: DocumentProcessingId,
-        document: DocumentProcessingDto
+        documentId: DocumentId,
+        document: DocumentRecordDto
     ) {
-        val extractedData = document.extractedData
+        val extractedData = document.draft?.extractedData
         val editableData = EditableExtractedData.fromExtractedData(extractedData)
 
         // Build contact suggestions from document if available
@@ -153,7 +137,7 @@ internal class DocumentReviewContainer(
 
         updateState {
             DocumentReviewState.Content(
-                processingId = processingId,
+                documentId = documentId,
                 document = document,
                 editableData = editableData,
                 originalData = extractedData,
@@ -161,28 +145,28 @@ internal class DocumentReviewContainer(
                 isSaving = false,
                 isConfirming = false,
                 selectedFieldPath = null,
-                previewUrl = document.document?.downloadUrl,
+                previewUrl = document.document.downloadUrl,
                 contactSuggestions = contactSuggestions
             )
         }
     }
 
-    private fun buildContactSuggestions(document: DocumentProcessingDto): List<ContactSuggestion> {
+    private fun buildContactSuggestions(document: DocumentRecordDto): List<ContactSuggestion> {
         val suggestions = mutableListOf<ContactSuggestion>()
 
         // Add suggested contact if available
-        document.suggestedContactId?.let { contactId ->
+        document.draft?.suggestedContactId?.let { contactId ->
             // Build suggestion from document's contact match info
-            val extractedName = when (document.documentType) {
-                DocumentType.Invoice -> document.extractedData?.invoice?.clientName
-                DocumentType.Bill -> document.extractedData?.bill?.supplierName
-                DocumentType.Expense -> document.extractedData?.expense?.merchant
+            val extractedName = when (document.draft?.documentType) {
+                DocumentType.Invoice -> document.draft?.extractedData?.invoice?.clientName
+                DocumentType.Bill -> document.draft?.extractedData?.bill?.supplierName
+                DocumentType.Expense -> document.draft?.extractedData?.expense?.merchant
                 else -> null
             }
-            val extractedVat = when (document.documentType) {
-                DocumentType.Invoice -> document.extractedData?.invoice?.clientVatNumber
-                DocumentType.Bill -> document.extractedData?.bill?.supplierVatNumber
-                DocumentType.Expense -> document.extractedData?.expense?.merchantVatNumber
+            val extractedVat = when (document.draft?.documentType) {
+                DocumentType.Invoice -> document.draft?.extractedData?.invoice?.clientVatNumber
+                DocumentType.Bill -> document.draft?.extractedData?.bill?.supplierVatNumber
+                DocumentType.Expense -> document.draft?.extractedData?.expense?.merchantVatNumber
                 else -> null
             }
 
@@ -191,8 +175,8 @@ internal class DocumentReviewContainer(
                     contactId = contactId,
                     name = extractedName ?: "Unknown",
                     vatNumber = extractedVat,
-                    matchConfidence = document.contactSuggestionConfidence ?: 0f,
-                    matchReason = document.contactSuggestionReason ?: "AI suggested"
+                    matchConfidence = 0f, // TODO: Add confidence to draft
+                    matchReason = "AI suggested"
                 )
             )
         }
@@ -431,7 +415,7 @@ internal class DocumentReviewContainer(
         withState<DocumentReviewState.Content, _> {
             if (!hasUnsavedChanges) return@withState
 
-            logger.d { "Saving draft for document: $processingId" }
+            logger.d { "Saving draft for document: $documentId" }
             updateState { copy(isSaving = true) }
 
             // Build ExtractedDocumentData from editable data
@@ -444,7 +428,7 @@ internal class DocumentReviewContainer(
             launch {
                 // Note: This requires adding updateDraft method to CashflowRemoteDataSource
                 // For now, we'll simulate success and show a message
-                logger.i { "Draft save requested (API method needed): $processingId" }
+                logger.i { "Draft save requested (API method needed): $documentId" }
 
                 withState<DocumentReviewState.Content, _> {
                     updateState {
@@ -474,7 +458,7 @@ internal class DocumentReviewContainer(
                 return@withState
             }
 
-            logger.d { "Confirming document: $processingId" }
+            logger.d { "Confirming document: $documentId" }
             updateState { copy(isConfirming = true) }
 
             // Build confirmation request
@@ -487,14 +471,14 @@ internal class DocumentReviewContainer(
             launch {
                 // Note: This requires adding confirmDocument method to CashflowRemoteDataSource
                 // For now, we'll simulate success
-                logger.i { "Confirmation requested (API method needed): $processingId" }
+                logger.i { "Confirmation requested (API method needed): $documentId" }
 
                 withState<DocumentReviewState.Content, _> {
                     updateState { copy(isConfirming = false) }
                     action(DocumentReviewAction.ShowSuccess("Document confirmed"))
                     action(
                         DocumentReviewAction.NavigateToEntity(
-                            entityId = processingId.toString(),
+                            entityId = documentId.toString(),
                             entityType = editableData.documentType
                         )
                     )
@@ -511,7 +495,7 @@ internal class DocumentReviewContainer(
 
     private suspend fun DocumentReviewCtx.handleOpenChat() {
         withState<DocumentReviewState.Content, _> {
-            action(DocumentReviewAction.NavigateToChat(processingId))
+            action(DocumentReviewAction.NavigateToChat(documentId))
         }
     }
 

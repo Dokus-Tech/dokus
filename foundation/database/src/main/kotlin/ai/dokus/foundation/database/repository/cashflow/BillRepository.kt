@@ -438,6 +438,45 @@ class BillRepository {
     }
 
     /**
+     * Find bill by document ID.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun findByDocumentId(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): FinancialDocumentDto.BillDto? = dbQuery {
+        BillsTable.selectAll().where {
+            (BillsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (BillsTable.documentId eq UUID.fromString(documentId.toString()))
+        }.singleOrNull()?.let { row ->
+            FinancialDocumentDto.BillDto(
+                id = BillId.parse(row[BillsTable.id].value.toString()),
+                tenantId = TenantId.parse(row[BillsTable.tenantId].toString()),
+                supplierName = row[BillsTable.supplierName],
+                supplierVatNumber = row[BillsTable.supplierVatNumber],
+                invoiceNumber = row[BillsTable.invoiceNumber],
+                issueDate = row[BillsTable.issueDate],
+                dueDate = row[BillsTable.dueDate],
+                amount = Money(row[BillsTable.amount].toString()),
+                vatAmount = row[BillsTable.vatAmount]?.let { Money(it.toString()) },
+                vatRate = row[BillsTable.vatRate]?.let { VatRate(it.toString()) },
+                status = row[BillsTable.status],
+                category = row[BillsTable.category],
+                currency = row[BillsTable.currency],
+                description = row[BillsTable.description],
+                documentId = row[BillsTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                paidAt = row[BillsTable.paidAt],
+                paidAmount = row[BillsTable.paidAmount]?.let { Money(it.toString()) },
+                paymentMethod = row[BillsTable.paymentMethod],
+                paymentReference = row[BillsTable.paymentReference],
+                notes = row[BillsTable.notes],
+                createdAt = row[BillsTable.createdAt],
+                updatedAt = row[BillsTable.updatedAt]
+            )
+        }
+    }
+
+    /**
      * Get bill statistics for cashflow overview
      * CRITICAL: MUST filter by tenant_id
      */

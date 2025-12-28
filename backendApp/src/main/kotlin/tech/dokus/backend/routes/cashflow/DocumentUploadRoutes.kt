@@ -1,7 +1,8 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentUploadResponse
@@ -38,7 +39,7 @@ private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses
 internal fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
-    val processingRepository by inject<DocumentProcessingRepository>()
+    val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
 
@@ -127,25 +128,25 @@ internal fun Route.documentUploadRoutes() {
 
             logger.info("Document created: id=$documentId, key=${result.key}, size=${result.sizeBytes}")
 
-            // Create processing record for AI extraction
-            val processing = processingRepository.create(
+            // Create ingestion run for AI extraction
+            val runId = ingestionRepository.createRun(
                 documentId = documentId,
                 tenantId = tenantId
             )
 
-            logger.info("Processing record created: id=${processing.id}, documentId=$documentId")
+            logger.info("Ingestion run created: id=$runId, documentId=$documentId")
 
             // Fetch the created document to return full DTO
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.InternalError("Failed to retrieve created document")
 
-            // Return with document and processing info
+            // Return with document and ingestion run info
             call.respond(
                 HttpStatusCode.Created,
                 DocumentUploadResponse(
                     document = document.copy(downloadUrl = result.url),
-                    processingId = processing.id,
-                    processingStatus = processing.status.name
+                    processingId = runId,
+                    processingStatus = IngestionStatus.Queued.name
                 )
             )
         }

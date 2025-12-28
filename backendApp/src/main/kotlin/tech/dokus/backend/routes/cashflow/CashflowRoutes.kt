@@ -71,8 +71,8 @@ fun Application.configureCashflowRoutes() {
         // Document upload routes (MinIO)
         documentUploadRoutes()
 
-        // Document processing routes (AI extraction)
-        documentProcessingRoutes()
+        // Document record routes (new canonical document API)
+        documentRecordRoutes()
 
         // Peppol e-invoicing routes
         peppolRoutes()

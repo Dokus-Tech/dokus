@@ -1,9 +1,8 @@
 package ai.dokus.foundation.database.repository.ai
 
 import ai.dokus.foundation.database.tables.ai.ChatMessagesTable
-import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ai.ChatCitation
@@ -80,7 +79,7 @@ class ChatRepositoryImpl : ChatRepository {
             it[role] = message.role.dbValue
             it[content] = message.content
             it[scope] = message.scope.dbValue
-            it[documentProcessingId] = message.documentProcessingId?.let { docId ->
+            it[documentId] = message.documentId?.let { docId ->
                 UUID.fromString(docId.toString())
             }
             it[citations] = citationsJson
@@ -146,18 +145,18 @@ class ChatRepositoryImpl : ChatRepository {
 
     override suspend fun getMessagesForDocument(
         tenantId: TenantId,
-        documentProcessingId: DocumentProcessingId,
+        documentId: DocumentId,
         limit: Int,
         offset: Int
     ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentProcessingId.toString())
+        val documentUuid = UUID.fromString(documentId.toString())
 
         val baseQuery = ChatMessagesTable
             .selectAll()
             .where {
                 (ChatMessagesTable.tenantId eq tenantUuid) and
-                        (ChatMessagesTable.documentProcessingId eq documentUuid)
+                        (ChatMessagesTable.documentId eq documentUuid)
             }
 
         val total = baseQuery.count()
@@ -197,7 +196,7 @@ class ChatRepositoryImpl : ChatRepository {
     override suspend fun listSessions(
         tenantId: TenantId,
         scope: ChatScope?,
-        documentProcessingId: DocumentProcessingId?,
+        documentId: DocumentId?,
         limit: Int,
         offset: Int
     ): Pair<List<ChatSessionSummary>, Long> = newSuspendedTransaction {
@@ -212,9 +211,9 @@ class ChatRepositoryImpl : ChatRepository {
             query = query.andWhere { ChatMessagesTable.scope eq scope.dbValue }
         }
 
-        if (documentProcessingId != null) {
-            val documentUuid = UUID.fromString(documentProcessingId.toString())
-            query = query.andWhere { ChatMessagesTable.documentProcessingId eq documentUuid }
+        if (documentId != null) {
+            val documentUuid = UUID.fromString(documentId.toString())
+            query = query.andWhere { ChatMessagesTable.documentId eq documentUuid }
         }
 
         // Get distinct sessions
@@ -239,8 +238,8 @@ class ChatRepositoryImpl : ChatRepository {
                 ChatSessionSummary(
                     sessionId = ChatSessionId.parse(sessionUuid.toString()),
                     scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
-                    documentProcessingId = firstMessage[ChatMessagesTable.documentProcessingId]?.let {
-                        DocumentProcessingId.parse(it.toString())
+                    documentId = firstMessage[ChatMessagesTable.documentId]?.let {
+                        DocumentId.parse(it.toString())
                     },
                     documentName = null, // Would need join for this
                     messageCount = messages.size,
@@ -275,13 +274,13 @@ class ChatRepositoryImpl : ChatRepository {
         val lastMessage = messages.last()
 
         // Try to get document name if single-doc scope
-        val documentName = firstMessage[ChatMessagesTable.documentProcessingId]?.let { docId ->
+        val documentName = firstMessage[ChatMessagesTable.documentId]?.let { docId ->
             try {
-                (DocumentProcessingTable innerJoin DocumentsTable)
+                (DocumentsTable innerJoin DocumentsTable)
                     .selectAll()
                     .where {
-                        (DocumentProcessingTable.id eq docId) and
-                                (DocumentProcessingTable.tenantId eq tenantUuid)
+                        (DocumentsTable.id eq docId) and
+                                (DocumentsTable.tenantId eq tenantUuid)
                     }
                     .singleOrNull()
                     ?.get(DocumentsTable.filename)
@@ -294,8 +293,8 @@ class ChatRepositoryImpl : ChatRepository {
         ChatSessionSummary(
             sessionId = ChatSessionId.parse(sessionUuid.toString()),
             scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
-            documentProcessingId = firstMessage[ChatMessagesTable.documentProcessingId]?.let {
-                DocumentProcessingId.parse(it.toString())
+            documentId = firstMessage[ChatMessagesTable.documentId]?.let {
+                DocumentId.parse(it.toString())
             },
             documentName = documentName,
             messageCount = messages.size,
@@ -375,8 +374,8 @@ class ChatRepositoryImpl : ChatRepository {
                 ChatSessionSummary(
                     sessionId = ChatSessionId.parse(sessionUuid.toString()),
                     scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
-                    documentProcessingId = firstMessage[ChatMessagesTable.documentProcessingId]?.let {
-                        DocumentProcessingId.parse(it.toString())
+                    documentId = firstMessage[ChatMessagesTable.documentId]?.let {
+                        DocumentId.parse(it.toString())
                     },
                     documentName = null,
                     messageCount = sessionMessages.size,
@@ -410,8 +409,8 @@ class ChatRepositoryImpl : ChatRepository {
             role = MessageRole.fromDbValue(this[ChatMessagesTable.role]),
             content = this[ChatMessagesTable.content],
             scope = ChatScope.fromDbValue(this[ChatMessagesTable.scope]),
-            documentProcessingId = this[ChatMessagesTable.documentProcessingId]?.let {
-                DocumentProcessingId.parse(it.toString())
+            documentId = this[ChatMessagesTable.documentId]?.let {
+                DocumentId.parse(it.toString())
             },
             citations = citations,
             chunksRetrieved = this[ChatMessagesTable.chunksRetrieved],

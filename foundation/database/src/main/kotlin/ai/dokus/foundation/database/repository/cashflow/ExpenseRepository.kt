@@ -24,6 +24,7 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
+import tech.dokus.foundation.ktor.database.dbQuery
 
 /**
  * Repository for managing expenses
@@ -285,6 +286,60 @@ class ExpenseRepository {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                 (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
+        }
+    }
+
+    /**
+     * Update expense's document reference.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun updateDocumentId(
+        expenseId: ExpenseId,
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): Result<Boolean> = runCatching {
+        dbQuery {
+            val updatedRows = ExpensesTable.update({
+                (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
+                (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
+            }) {
+                it[ExpensesTable.documentId] = UUID.fromString(documentId.toString())
+            }
+            updatedRows > 0
+        }
+    }
+
+    /**
+     * Find expense by document ID.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun findByDocumentId(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): FinancialDocumentDto.ExpenseDto? = dbQuery {
+        ExpensesTable.selectAll().where {
+            (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (ExpensesTable.documentId eq UUID.fromString(documentId.toString()))
+        }.singleOrNull()?.let { row ->
+            FinancialDocumentDto.ExpenseDto(
+                id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
+                tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
+                date = row[ExpensesTable.date],
+                merchant = row[ExpensesTable.merchant],
+                amount = Money(row[ExpensesTable.amount].toString()),
+                vatAmount = row[ExpensesTable.vatAmount]?.let { Money(it.toString()) },
+                vatRate = row[ExpensesTable.vatRate]?.let { VatRate(it.toString()) },
+                category = row[ExpensesTable.category],
+                description = row[ExpensesTable.description],
+                documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                isDeductible = row[ExpensesTable.isDeductible],
+                deductiblePercentage = Percentage(row[ExpensesTable.deductiblePercentage].toString()),
+                paymentMethod = row[ExpensesTable.paymentMethod],
+                isRecurring = row[ExpensesTable.isRecurring],
+                notes = row[ExpensesTable.notes],
+                createdAt = row[ExpensesTable.createdAt],
+                updatedAt = row[ExpensesTable.updatedAt]
+            )
         }
     }
 }
