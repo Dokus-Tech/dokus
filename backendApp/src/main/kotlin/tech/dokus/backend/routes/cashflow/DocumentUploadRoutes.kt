@@ -15,8 +15,6 @@ import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumen
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.request.*
-import io.ktor.server.resources.delete
-import io.ktor.server.resources.get
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -27,13 +25,13 @@ import org.slf4j.LoggerFactory
 private val ALLOWED_PREFIXES = setOf("documents", "invoices", "bills", "expenses", "receipts")
 
 /**
- * Document upload and retrieval routes using Ktor Type-Safe Routing.
+ * Document upload routes using Ktor Type-Safe Routing.
  * Documents are stored in MinIO and metadata is persisted in DocumentsTable.
  *
  * Endpoints:
- * - POST /api/v1/documents/upload - Upload a document, returns DocumentDto with id
- * - GET /api/v1/documents/{id} - Get document by id with fresh presigned download URL
- * - DELETE /api/v1/documents/{id} - Delete a document
+ * - POST /api/v1/documents/upload - Upload a document, returns DocumentRecordDto
+ *
+ * Note: GET/DELETE /api/v1/documents/{id} are handled in DocumentRecordRoutes.kt
  *
  * Base path: /api/v1/documents
  */
@@ -157,64 +155,8 @@ internal fun Route.documentUploadRoutes() {
             )
         }
 
-        /**
-         * GET /api/v1/documents/{id}
-         * Get a document by ID with a fresh presigned download URL.
-         *
-         * Path parameters:
-         * - id: The document ID (UUID)
-         *
-         * Response: DocumentDto with fresh downloadUrl
-         */
-        get<Documents.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
-            val documentId = DocumentId.parse(route.id)
-
-            logger.info("Getting document: id=$documentId, tenant=$tenantId")
-
-            // Fetch document (with tenant isolation)
-            val document = documentRepository.getById(tenantId, documentId)
-                ?: throw DokusException.NotFound("Document not found")
-
-            // Generate fresh presigned URL
-            val downloadUrl = minioStorage.getDownloadUrl(document.storageKey)
-
-            call.respond(HttpStatusCode.OK, document.copy(downloadUrl = downloadUrl))
-        }
-
-        /**
-         * DELETE /api/v1/documents/{id}
-         * Delete a document by ID.
-         *
-         * Path parameters:
-         * - id: The document ID (UUID)
-         */
-        delete<Documents.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
-            val documentId = DocumentId.parse(route.id)
-
-            logger.info("Deleting document: id=$documentId, tenant=$tenantId")
-
-            // Fetch document first to get storage key
-            val document = documentRepository.getById(tenantId, documentId)
-                ?: throw DokusException.NotFound("Document not found")
-
-            // Delete from MinIO
-            try {
-                minioStorage.deleteDocument(document.storageKey)
-            } catch (e: Exception) {
-                logger.warn("Failed to delete document from MinIO: ${e.message}")
-                // Continue with DB deletion even if MinIO delete fails
-            }
-
-            // Delete from database
-            val deleted = documentRepository.delete(tenantId, documentId)
-            if (!deleted) {
-                throw DokusException.InternalError("Failed to delete document from database")
-            }
-
-            call.respond(HttpStatusCode.NoContent)
-        }
+        // NOTE: GET /api/v1/documents/{id} and DELETE /api/v1/documents/{id}
+        // are handled in DocumentRecordRoutes.kt which returns the full DocumentRecordDto
     }
 }
 

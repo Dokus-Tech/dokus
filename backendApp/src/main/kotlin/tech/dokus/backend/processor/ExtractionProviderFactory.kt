@@ -1,7 +1,7 @@
 package tech.dokus.backend.processor
 
-import tech.dokus.domain.model.ai.AiProvider
 import io.ktor.client.HttpClient
+import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor
 
@@ -15,9 +15,9 @@ class ExtractionProviderFactory(
 ) {
     private val logger = loggerFor()
 
-    private val providers: Map<String, AIExtractionProvider> by lazy {
+    private val providers: Map<AiProvider, AIExtractionProvider> by lazy {
         mapOf(
-            "openai" to OpenAIExtractionProvider(
+            AiProvider.OpenAi to OpenAIExtractionProvider(
                 httpClient = httpClient,
                 apiKey = config.openai.apiKey,
                 model = config.models.documentExtraction.takeIf {
@@ -25,21 +25,13 @@ class ExtractionProviderFactory(
                 } ?: config.openai.defaultModel,
                 baseUrl = "https://api.openai.com/v1"
             ),
-            "ollama" to OllamaExtractionProvider(
+            AiProvider.Ollama to OllamaExtractionProvider(
                 httpClient = httpClient,
                 baseUrl = config.ollama.baseUrl,
                 model = config.models.documentExtraction.takeIf {
                     config.defaultProvider == AiProvider.Ollama
                 } ?: config.ollama.defaultModel
             ),
-            // Alias for convenience
-            "local" to OllamaExtractionProvider(
-                httpClient = httpClient,
-                baseUrl = config.ollama.baseUrl,
-                model = config.models.documentExtraction.takeIf {
-                    config.defaultProvider == AiProvider.Ollama
-                } ?: config.ollama.defaultModel
-            )
         )
     }
 
@@ -47,20 +39,7 @@ class ExtractionProviderFactory(
      * Get the default provider based on configuration.
      */
     fun getDefaultProvider(): AIExtractionProvider {
-        val providerName = when (config.defaultProvider) {
-            AiProvider.Ollama -> "ollama"
-            AiProvider.OpenAi -> "openai"
-        }
-        return providers[providerName]
-            ?: providers["openai"]
-            ?: throw IllegalStateException("No AI providers available")
-    }
-
-    /**
-     * Get a specific provider by name.
-     */
-    fun getProvider(name: String): AIExtractionProvider? {
-        return providers[name]
+        return providers[config.defaultProvider]!!
     }
 
     /**
