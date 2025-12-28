@@ -366,7 +366,7 @@ class BillRepository {
             }) {
                 it[status] = BillStatus.Paid
                 it[paidAt] = request.paidAt.toDateTime()
-                it[paidAmount] = java.math.BigDecimal(request.paidAmount.value)
+                it[paidAmount] = request.paidAmount.toDbDecimal()
                 it[paymentMethod] = request.paymentMethod
                 it[paymentReference] = request.paymentReference
             }

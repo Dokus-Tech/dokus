@@ -51,7 +51,7 @@ class PaymentRepository {
             val id = PaymentsTable.insert {
                 it[PaymentsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[PaymentsTable.invoiceId] = UUID.fromString(invoiceId.toString())
-                it[PaymentsTable.amount] = java.math.BigDecimal(amount.value)
+                it[PaymentsTable.amount] = amount.toDbDecimal()
                 it[PaymentsTable.paymentDate] = paymentDate
                 it[PaymentsTable.paymentMethod] = paymentMethod
                 it[PaymentsTable.transactionId] = transactionId?.value

@@ -174,7 +174,7 @@ class BankingRepository {
                 it[BankTransactionsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[BankTransactionsTable.externalId] = externalId
                 it[BankTransactionsTable.date] = date
-                it[BankTransactionsTable.amount] = java.math.BigDecimal(amount.value)
+                it[BankTransactionsTable.amount] = amount.toDbDecimal()
                 it[BankTransactionsTable.description] = description
                 it[BankTransactionsTable.merchantName] = merchantName
                 it[BankTransactionsTable.category] = category
