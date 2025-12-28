@@ -176,7 +176,7 @@ class DocumentChunksRepository : ChunkRepository {
      */
     override suspend fun deleteChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Int = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val documentUuid = UUID.fromString(documentId.toString())
@@ -185,7 +185,7 @@ class DocumentChunksRepository : ChunkRepository {
 
         val deleted = DocumentChunksTable.deleteWhere {
             (DocumentChunksTable.tenantId eq tenantUuid) and
-                    (DocumentChunksTable.documentProcessingId eq documentUuid)
+                    (DocumentChunksTable.documentId eq documentUuid)
         }
 
         logger.debug("Deleted $deleted chunks")
@@ -201,7 +201,7 @@ class DocumentChunksRepository : ChunkRepository {
      */
     override suspend fun getChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): List<DocumentChunkDto> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val documentUuid = UUID.fromString(documentId.toString())
@@ -210,7 +210,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                        (DocumentChunksTable.documentProcessingId eq documentUuid)
+                        (DocumentChunksTable.documentId eq documentUuid)
             }
             .orderBy(DocumentChunksTable.chunkIndex to SortOrder.ASC)
             .map { it.toChunkDto() }
@@ -241,7 +241,7 @@ class DocumentChunksRepository : ChunkRepository {
      */
     override suspend fun countChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Long = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val documentUuid = UUID.fromString(documentId.toString())
@@ -250,7 +250,7 @@ class DocumentChunksRepository : ChunkRepository {
             .selectAll()
             .where {
                 (DocumentChunksTable.tenantId eq tenantUuid) and
-                        (DocumentChunksTable.documentProcessingId eq documentUuid)
+                        (DocumentChunksTable.documentId eq documentUuid)
             }
             .count()
     }
@@ -260,7 +260,7 @@ class DocumentChunksRepository : ChunkRepository {
      */
     override suspend fun hasChunks(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Boolean = countChunksForDocument(tenantId, documentId) > 0
 
     /**
@@ -294,8 +294,8 @@ class DocumentChunksRepository : ChunkRepository {
 
         return DocumentChunkDto(
             id = DocumentChunkId.parse(this[DocumentChunksTable.id].value.toString()),
-            documentProcessingId = DocumentProcessingId.parse(
-                this[DocumentChunksTable.documentProcessingId].toString()
+            documentId = DocumentId.parse(
+                this[DocumentChunksTable.documentId].toString()
             ),
             tenantId = TenantId.parse(this[DocumentChunksTable.tenantId].toString()),
             content = this[DocumentChunksTable.content],
