@@ -160,15 +160,15 @@ class PeppolMapper {
         val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
 
         // Calculate amounts
-        val amount = totals?.payableAmount?.let { Money(it.toString()) }
-            ?: totals?.taxInclusiveAmount?.let { Money(it.toString()) }
+        val amount = totals?.payableAmount?.let { Money.fromDbDecimal(it) }
+            ?: totals?.taxInclusiveAmount?.let { Money.fromDbDecimal(it) }
             ?: Money.ZERO
 
-        val vatAmount = taxTotal?.taxAmount?.let { Money(it.toString()) }
+        val vatAmount = taxTotal?.taxAmount?.let { Money.fromDbDecimal(it) }
 
-        // Determine VAT rate from tax subtotals
+        // Determine VAT rate from tax subtotals (percent is in %, e.g. 21.00 for 21%)
         val vatRate = taxTotal?.taxSubtotals?.firstOrNull()?.taxPercent?.let { percent ->
-            VatRate(percent.toString())
+            VatRate.parse(percent.toString())
         }
 
         // Infer category from document content

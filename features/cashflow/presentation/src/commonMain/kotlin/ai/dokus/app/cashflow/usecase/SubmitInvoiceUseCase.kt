@@ -46,7 +46,7 @@ class SubmitInvoiceUseCase(
                         description = item.description,
                         quantity = item.quantity,
                         unitPrice = Money.fromDouble(item.unitPriceDouble),
-                        vatRate = VatRate("${item.vatRatePercent}.00"),
+                        vatRate = VatRate(item.vatRatePercent * 100),
                         lineTotal = Money.fromDouble(item.lineTotalDouble),
                         vatAmount = Money.fromDouble(item.vatAmountDouble),
                         sortOrder = index
