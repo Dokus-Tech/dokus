@@ -6,6 +6,7 @@ import ai.dokus.foundation.database.tables.auth.TenantTable
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.AddressId
 import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.Iban

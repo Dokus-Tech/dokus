@@ -8,6 +8,7 @@ import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
 // ContactType removed - roles are now derived from cashflow items
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId

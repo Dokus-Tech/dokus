@@ -316,7 +316,7 @@ private fun ContactInfoContent(
             ContactInfoRow(
                 icon = Icons.Default.Payments,
                 label = "Default VAT Rate",
-                value = "${rate.value}%"
+                value = "${rate.toDisplayString()}%"
             )
         }
 

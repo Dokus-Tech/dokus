@@ -3,6 +3,8 @@ package ai.dokus.foundation.database.repository.banking
 import ai.dokus.foundation.database.tables.banking.BankConnectionsTable
 import ai.dokus.foundation.database.tables.banking.BankTransactionsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.enums.BankProvider
 import tech.dokus.domain.enums.Currency

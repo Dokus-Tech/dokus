@@ -255,22 +255,6 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
         fun parseOrThrow(value: String): VatRate {
             return parse(value) ?: throw DokusException.Validation.InvalidVatRate
         }
-
-        /**
-         * Create VatRate from a database decimal value.
-         * DB stores as DECIMAL(5,4) multiplier like 0.2100 (21%), we store as 2100 bp.
-         */
-        fun fromDbDecimal(dbValue: java.math.BigDecimal): VatRate {
-            return VatRate(dbValue.movePointRight(4).intValueExact())
-        }
-    }
-
-    /**
-     * Convert to database decimal value.
-     * We store as 2100 bp, DB stores as DECIMAL(5,4) multiplier like 0.2100.
-     */
-    fun toDbDecimal(): java.math.BigDecimal {
-        return java.math.BigDecimal.valueOf(basisPoints.toLong(), 4)
     }
 }
 
@@ -374,22 +358,6 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
         fun parseOrThrow(value: String): Percentage {
             return parse(value) ?: throw DokusException.Validation.InvalidPercentage
         }
-
-        /**
-         * Create Percentage from a database decimal value.
-         * DB stores as DECIMAL like 100.00 (100%), we store as 10000 bp.
-         */
-        fun fromDbDecimal(dbValue: java.math.BigDecimal): Percentage {
-            return Percentage(dbValue.movePointRight(2).intValueExact())
-        }
-    }
-
-    /**
-     * Convert to database decimal value.
-     * We store as 10000 bp, DB stores as DECIMAL like 100.00.
-     */
-    fun toDbDecimal(): java.math.BigDecimal {
-        return java.math.BigDecimal.valueOf(basisPoints.toLong(), 2)
     }
 }
 
@@ -462,19 +430,5 @@ value class Quantity(val value: Double) : Comparable<Quantity> {
         fun parseOrThrow(value: String): Quantity {
             return parse(value) ?: throw DokusException.Validation.InvalidQuantity
         }
-
-        /**
-         * Create Quantity from a database decimal value.
-         */
-        fun fromDbDecimal(dbValue: java.math.BigDecimal): Quantity {
-            return Quantity(dbValue.toDouble())
-        }
-    }
-
-    /**
-     * Convert to database decimal value.
-     */
-    fun toDbDecimal(): java.math.BigDecimal {
-        return java.math.BigDecimal.valueOf(value)
     }
 }

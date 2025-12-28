@@ -2,6 +2,8 @@ package ai.dokus.foundation.database.repository.payment
 
 import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PaymentId
