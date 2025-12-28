@@ -5,6 +5,7 @@ import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -12,6 +13,9 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragData
 import androidx.compose.ui.draganddrop.dragData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URI
 import java.nio.file.Files
@@ -85,6 +89,7 @@ actual fun Modifier.fileDropTarget(
 ): Modifier {
     val currentOnDragStateChange by rememberUpdatedState(onDragStateChange)
     val currentOnFilesDropped by rememberUpdatedState(onFilesDropped)
+    val scope = rememberCoroutineScope()
 
     val dragAndDropTarget = remember {
         object : DragAndDropTarget {
@@ -109,45 +114,54 @@ actual fun Modifier.fileDropTarget(
 
                 val filesList = event.dragData() as? DragData.FilesList
                 if (filesList != null) {
+                    // Collect URIs quickly on main thread (fast operation)
                     val uris = filesList.readFiles()
+                    if (uris.isEmpty()) return false
 
-                    // First, collect all files from dropped items (both files and directories)
-                    val allFiles = mutableListOf<File>()
-                    uris.forEach { uriString ->
-                        try {
-                            val file = File(URI(uriString))
-                            if (file.exists()) {
-                                if (file.isDirectory) {
-                                    // Recursively collect all allowed files from directory
-                                    allFiles.addAll(collectFilesFromDirectory(file))
-                                } else if (isAllowedFileType(file)) {
-                                    // Single file with allowed type
-                                    allFiles.add(file)
+                    // Move all file I/O to background thread to avoid blocking UI
+                    scope.launch {
+                        val droppedFiles = withContext(Dispatchers.IO) {
+                            // Collect all files from dropped items (both files and directories)
+                            val allFiles = mutableListOf<File>()
+                            uris.forEach { uriString ->
+                                try {
+                                    val file = File(URI(uriString))
+                                    if (file.exists()) {
+                                        if (file.isDirectory) {
+                                            // Recursively collect all allowed files from directory
+                                            allFiles.addAll(collectFilesFromDirectory(file))
+                                        } else if (isAllowedFileType(file)) {
+                                            // Single file with allowed type
+                                            allFiles.add(file)
+                                        }
+                                    }
+                                } catch (_: Exception) {
+                                    // Skip items that can't be processed
                                 }
                             }
-                        } catch (e: Exception) {
-                            // Log error but continue processing other items
+
+                            // Convert collected files to DroppedFile objects
+                            allFiles.mapNotNull { file ->
+                                try {
+                                    DroppedFile(
+                                        name = file.name,
+                                        bytes = file.readBytes(),
+                                        mimeType = Files.probeContentType(file.toPath())
+                                    )
+                                } catch (_: Exception) {
+                                    // Skip files that can't be read (permissions, etc.)
+                                    null
+                                }
+                            }
+                        }
+
+                        if (droppedFiles.isNotEmpty()) {
+                            currentOnFilesDropped(droppedFiles)
                         }
                     }
 
-                    // Convert collected files to DroppedFile objects
-                    val droppedFiles = allFiles.mapNotNull { file ->
-                        try {
-                            DroppedFile(
-                                name = file.name,
-                                bytes = file.readBytes(),
-                                mimeType = Files.probeContentType(file.toPath())
-                            )
-                        } catch (e: Exception) {
-                            // Skip files that can't be read (permissions, etc.)
-                            null
-                        }
-                    }
-
-                    if (droppedFiles.isNotEmpty()) {
-                        currentOnFilesDropped(droppedFiles)
-                        return true
-                    }
+                    // Accept the drop immediately, file reading happens async
+                    return true
                 }
 
                 return false
