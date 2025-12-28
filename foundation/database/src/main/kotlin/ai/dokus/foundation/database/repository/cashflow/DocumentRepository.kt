@@ -1,25 +1,26 @@
 package ai.dokus.foundation.database.repository.cashflow
 
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.enums.EntityType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 /**
  * Repository for document CRUD operations.
+ * Documents are pure file metadata. Entity linkage is handled by
+ * financial entity tables (Invoice, Bill, Expense) which have documentId FK.
+ *
  * CRITICAL: All queries filter by tenantId for security.
  */
 @OptIn(ExperimentalUuidApi::class)
@@ -78,83 +79,37 @@ class DocumentRepository {
         }
 
     /**
-     * Get a document linked to a specific entity.
+     * List all documents for a tenant with pagination.
      * CRITICAL: Must filter by tenantId.
+     *
+     * @return Pair of (documents, totalCount)
      */
-    suspend fun getByEntity(
+    suspend fun listByTenant(
         tenantId: TenantId,
-        entityType: EntityType,
-        entityId: String
-    ): DocumentDto? = newSuspendedTransaction {
-        DocumentsTable.selectAll()
-            .where {
-                (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString())) and
-                (DocumentsTable.entityType eq entityType) and
-                (DocumentsTable.entityId eq entityId)
-            }
-            .map { it.toDocumentDto() }
-            .singleOrNull()
-    }
+        page: Int = 0,
+        limit: Int = 20
+    ): Pair<List<DocumentDto>, Long> = newSuspendedTransaction {
+        val tenantIdUuid = java.util.UUID.fromString(tenantId.toString())
 
-    /**
-     * Get all documents linked to a specific entity.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun listByEntity(
-        tenantId: TenantId,
-        entityType: EntityType,
-        entityId: String
-    ): List<DocumentDto> = newSuspendedTransaction {
-        DocumentsTable.selectAll()
-            .where {
-                (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString())) and
-                (DocumentsTable.entityType eq entityType) and
-                (DocumentsTable.entityId eq entityId)
-            }
+        val baseQuery = DocumentsTable.selectAll()
+            .where { DocumentsTable.tenantId eq tenantIdUuid }
+
+        val total = baseQuery.count()
+
+        val documents = baseQuery
             .orderBy(DocumentsTable.uploadedAt, SortOrder.DESC)
+            .limit(limit)
+            .offset((page * limit).toLong())
             .map { it.toDocumentDto() }
-    }
 
-    /**
-     * Link a document to an entity.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun linkToEntity(
-        tenantId: TenantId,
-        documentId: DocumentId,
-        entityType: EntityType,
-        entityId: String
-    ): Boolean = newSuspendedTransaction {
-        DocumentsTable.update({
-            (DocumentsTable.id eq java.util.UUID.fromString(documentId.toString())) and
-            (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
-        }) {
-            it[DocumentsTable.entityType] = entityType
-            it[DocumentsTable.entityId] = entityId
-        } > 0
-    }
-
-    /**
-     * Unlink a document from its entity.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun unlinkFromEntity(
-        tenantId: TenantId,
-        documentId: DocumentId
-    ): Boolean = newSuspendedTransaction {
-        DocumentsTable.update({
-            (DocumentsTable.id eq java.util.UUID.fromString(documentId.toString())) and
-            (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
-        }) {
-            it[DocumentsTable.entityType] = null
-            it[DocumentsTable.entityId] = null
-        } > 0
+        documents to total
     }
 
     /**
      * Delete a document.
      * CRITICAL: Must filter by tenantId.
      * Note: The actual file in MinIO should be deleted separately.
+     * Note: Cascades to ingestion runs and drafts.
      */
     suspend fun delete(tenantId: TenantId, documentId: DocumentId): Boolean =
         newSuspendedTransaction {
@@ -165,16 +120,17 @@ class DocumentRepository {
         }
 
     /**
-     * Get all unlinked documents for a tenant (for cleanup purposes).
+     * Check if a document exists.
+     * CRITICAL: Must filter by tenantId.
      */
-    suspend fun getUnlinkedDocuments(tenantId: TenantId): List<DocumentDto> =
+    suspend fun exists(tenantId: TenantId, documentId: DocumentId): Boolean =
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString())) and
-                    (DocumentsTable.entityType.isNull())
+                    (DocumentsTable.id eq java.util.UUID.fromString(documentId.toString())) and
+                    (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toDocumentDto() }
+                .count() > 0
         }
 
     private fun ResultRow.toDocumentDto(): DocumentDto {
@@ -185,8 +141,6 @@ class DocumentRepository {
             contentType = this[DocumentsTable.contentType],
             sizeBytes = this[DocumentsTable.sizeBytes],
             storageKey = this[DocumentsTable.storageKey],
-            entityType = this[DocumentsTable.entityType],
-            entityId = this[DocumentsTable.entityId],
             uploadedAt = this[DocumentsTable.uploadedAt],
             downloadUrl = null // Generated on-demand by the service layer
         )
