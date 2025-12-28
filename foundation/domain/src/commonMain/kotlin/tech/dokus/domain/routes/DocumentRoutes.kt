@@ -23,6 +23,8 @@ import tech.dokus.domain.enums.IngestionStatus
  * - PATCH /{id}/draft - Update draft
  * - POST /{id}/confirm - Confirm and create financial entity
  * - POST /{id}/chat - Document Q&A
+ * - GET /{id}/pages - List PDF page previews
+ * - GET /{id}/pages/{page}.png - Get rendered PDF page as PNG
  *
  * NOTE: Query parameters for listing are defined in Documents.List, NOT in the base class.
  * This prevents parameter leakage to single-document routes.
@@ -107,5 +109,35 @@ class Documents {
         @Serializable
         @Resource("chat")
         class Chat(val parent: Id)
+
+        /**
+         * GET /api/v1/documents/{id}/pages
+         * List available PDF pages for preview.
+         *
+         * @param dpi Resolution for rendered pages (72-300, default 150)
+         * @param maxPages Maximum pages to return (1-50, default 10)
+         */
+        @Serializable
+        @Resource("pages")
+        class Pages(
+            val parent: Id,
+            val dpi: Int = 150,
+            val maxPages: Int = 10
+        )
+
+        /**
+         * GET /api/v1/documents/{id}/pages/{page}.png
+         * Get a rendered PDF page as PNG image.
+         *
+         * @param page 1-based page number
+         * @param dpi Resolution for rendered page (72-300, default 150)
+         */
+        @Serializable
+        @Resource("pages/{page}.png")
+        class PageImage(
+            val parent: Id,
+            val page: Int,
+            val dpi: Int = 150
+        )
     }
 }
