@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.foundation.design.components.common.OfflineOverlay
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,8 +36,8 @@ import tech.dokus.foundation.app.state.DokusState
 fun CashflowSummarySection(
     vatSummaryState: DokusState<VatSummaryData>,
     businessHealthState: DokusState<BusinessHealthData>,
-    pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
-    onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
+    pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>>,
+    onPendingDocumentClick: (DocumentRecordDto) -> Unit,
     onPendingLoadMore: () -> Unit,
     isOnline: Boolean = true,
     modifier: Modifier = Modifier

@@ -10,7 +10,7 @@ import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionSummary
@@ -106,7 +106,7 @@ import tech.dokus.foundation.app.mvi.container
  */
 @Composable
 internal fun ChatScreen(
-    processingId: DocumentProcessingId? = null,
+    documentId: DocumentId? = null,
     container: ChatContainer = container(),
 ) {
     val navController = LocalNavController.current
@@ -162,10 +162,10 @@ internal fun ChatScreen(
         }
     }
 
-    // Initialize chat based on processingId
-    LaunchedEffect(processingId) {
-        if (processingId != null) {
-            container.store.intent(ChatIntent.InitSingleDocChat(processingId))
+    // Initialize chat based on documentId
+    LaunchedEffect(documentId) {
+        if (documentId != null) {
+            container.store.intent(ChatIntent.InitSingleDocChat(documentId))
         } else {
             container.store.intent(ChatIntent.InitCrossDocChat)
         }

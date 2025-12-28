@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components
 
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement
@@ -43,14 +43,14 @@ fun DesktopCashflowContent(
     documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
     vatSummaryState: DokusState<VatSummaryData>,
     businessHealthState: DokusState<BusinessHealthData>,
-    pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>>,
+    pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
     onSortOptionSelected: (DocumentSortOption) -> Unit,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
     onLoadMore: () -> Unit,
-    onPendingDocumentClick: (DocumentProcessingDto) -> Unit,
+    onPendingDocumentClick: (DocumentRecordDto) -> Unit,
     onPendingLoadMore: () -> Unit,
     isOnline: Boolean = true
 ) {
