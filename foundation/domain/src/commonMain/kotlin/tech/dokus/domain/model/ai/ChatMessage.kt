@@ -1,6 +1,7 @@
 package tech.dokus.domain.model.ai
 
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.database.DbEnum
 import tech.dokus.domain.ids.DocumentId
@@ -55,13 +56,13 @@ value class ChatSessionId(val value: Uuid) {
 @Serializable
 enum class MessageRole(override val dbValue: String) : DbEnum {
     /** User-submitted question */
-    User("USER"),
+    @SerialName("USER") User("USER"),
 
     /** AI-generated response */
-    Assistant("ASSISTANT"),
+    @SerialName("ASSISTANT") Assistant("ASSISTANT"),
 
     /** System message (for context injection) */
-    System("SYSTEM");
+    @SerialName("SYSTEM") System("SYSTEM");
 
     companion object {
         fun fromDbValue(value: String): MessageRole =
@@ -76,10 +77,10 @@ enum class MessageRole(override val dbValue: String) : DbEnum {
 @Serializable
 enum class ChatScope(override val dbValue: String) : DbEnum {
     /** Questions about a specific document */
-    SingleDoc("SINGLE_DOC"),
+    @SerialName("SINGLE_DOC") SingleDoc("SINGLE_DOC"),
 
     /** Cross-document queries on confirmed documents */
-    AllDocs("ALL_DOCS");
+    @SerialName("ALL_DOCS") AllDocs("ALL_DOCS");
 
     companion object {
         fun fromDbValue(value: String): ChatScope =

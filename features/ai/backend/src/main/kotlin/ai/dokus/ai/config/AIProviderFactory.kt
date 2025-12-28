@@ -1,6 +1,6 @@
 package ai.dokus.ai.config
 
-import tech.dokus.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AiProvider
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
@@ -49,12 +49,12 @@ object AIProviderFactory {
      */
     fun createExecutor(config: AIConfig): PromptExecutor {
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> {
+            AiProvider.Ollama -> {
                 logger.info("Creating Ollama executor: ${config.ollama.baseUrl}")
                 simpleOllamaAIExecutor(config.ollama.baseUrl)
             }
 
-            AIProvider.OPENAI -> {
+            AiProvider.OpenAi -> {
                 logger.info("Creating OpenAI executor")
                 simpleOpenAIExecutor(config.openai.apiKey)
             }
@@ -67,8 +67,8 @@ object AIProviderFactory {
     fun getModel(config: AIConfig, purpose: ModelPurpose): LLModel {
         val modelName = config.getModel(purpose)
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> createOllamaModel(modelName)
-            AIProvider.OPENAI -> createOpenAIModel(modelName)
+            AiProvider.Ollama -> createOllamaModel(modelName)
+            AiProvider.OpenAi -> createOpenAIModel(modelName)
         }
     }
 
@@ -150,14 +150,14 @@ object AIProviderFactory {
      */
     fun getEmbeddingConfig(config: AIConfig): EmbeddingConfig {
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> EmbeddingConfig(
+            AiProvider.Ollama -> EmbeddingConfig(
                 modelName = config.getEmbeddingModel(),
                 dimensions = getEmbeddingDimensions(config.getEmbeddingModel()),
                 provider = config.defaultProvider,
                 baseUrl = config.ollama.baseUrl
             )
 
-            AIProvider.OPENAI -> EmbeddingConfig(
+            AiProvider.OpenAi -> EmbeddingConfig(
                 modelName = config.getEmbeddingModel(),
                 dimensions = getEmbeddingDimensions(config.getEmbeddingModel()),
                 provider = config.defaultProvider,
@@ -212,8 +212,8 @@ object AIProviderFactory {
      */
     fun supportsEmbeddings(config: AIConfig): Boolean {
         return when (config.defaultProvider) {
-            AIProvider.OLLAMA -> config.ollama.enabled
-            AIProvider.OPENAI -> config.openai.enabled && config.openai.apiKey.isNotBlank()
+            AiProvider.Ollama -> config.ollama.enabled
+            AiProvider.OpenAi -> config.openai.enabled && config.openai.apiKey.isNotBlank()
         }
     }
 }
@@ -229,6 +229,6 @@ object AIProviderFactory {
 data class EmbeddingConfig(
     val modelName: String,
     val dimensions: Int,
-    val provider: AIProvider,
+    val provider: AiProvider,
     val baseUrl: String
 )

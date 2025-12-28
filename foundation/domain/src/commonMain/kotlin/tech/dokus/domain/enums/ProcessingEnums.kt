@@ -1,17 +1,18 @@
 package tech.dokus.domain.enums
 
-import tech.dokus.domain.database.DbEnum
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.database.DbEnum
 
 /**
  * Type of document detected during AI extraction.
  */
 @Serializable
 enum class DocumentType(override val dbValue: String) : DbEnum {
-    Invoice("INVOICE"),
-    Bill("BILL"),
-    Expense("EXPENSE"),
-    Unknown("UNKNOWN")
+    @SerialName("INVOICE") Invoice("INVOICE"),
+    @SerialName("BILL") Bill("BILL"),
+    @SerialName("EXPENSE") Expense("EXPENSE"),
+    @SerialName("UNKNOWN") Unknown("UNKNOWN")
 }
 
 /**
@@ -21,16 +22,16 @@ enum class DocumentType(override val dbValue: String) : DbEnum {
 @Serializable
 enum class IngestionStatus(override val dbValue: String) : DbEnum {
     /** Run is queued for processing */
-    Queued("QUEUED"),
+    @SerialName("QUEUED") Queued("QUEUED"),
 
     /** AI is actively extracting data */
-    Processing("PROCESSING"),
+    @SerialName("PROCESSING") Processing("PROCESSING"),
 
     /** Extraction completed successfully */
-    Succeeded("SUCCEEDED"),
+    @SerialName("SUCCEEDED") Succeeded("SUCCEEDED"),
 
     /** Extraction failed (may be retryable) */
-    Failed("FAILED");
+    @SerialName("FAILED") Failed("FAILED");
 
     companion object {
         fun fromDbValue(value: String): IngestionStatus = entries.find { it.dbValue == value }!!
@@ -44,16 +45,16 @@ enum class IngestionStatus(override val dbValue: String) : DbEnum {
 @Serializable
 enum class DraftStatus(override val dbValue: String) : DbEnum {
     /** Draft needs user review */
-    NeedsReview("NEEDS_REVIEW"),
+    @SerialName("NEEDS_REVIEW") NeedsReview("NEEDS_REVIEW"),
 
     /** Draft is ready for confirmation */
-    Ready("READY"),
+    @SerialName("READY") Ready("READY"),
 
     /** User confirmed, financial entity created */
-    Confirmed("CONFIRMED"),
+    @SerialName("CONFIRMED") Confirmed("CONFIRMED"),
 
     /** User rejected extraction */
-    Rejected("REJECTED");
+    @SerialName("REJECTED") Rejected("REJECTED");
 
     companion object {
         fun fromDbValue(value: String): DraftStatus = entries.find { it.dbValue == value }!!

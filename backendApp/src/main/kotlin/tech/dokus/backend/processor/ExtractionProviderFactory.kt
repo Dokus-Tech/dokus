@@ -1,6 +1,6 @@
 package tech.dokus.backend.processor
 
-import tech.dokus.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AiProvider
 import io.ktor.client.HttpClient
 import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.utils.loggerFor
@@ -21,7 +21,7 @@ class ExtractionProviderFactory(
                 httpClient = httpClient,
                 apiKey = config.openai.apiKey,
                 model = config.models.documentExtraction.takeIf {
-                    config.defaultProvider == AIProvider.OPENAI
+                    config.defaultProvider == AiProvider.OpenAi
                 } ?: config.openai.defaultModel,
                 baseUrl = "https://api.openai.com/v1"
             ),
@@ -29,7 +29,7 @@ class ExtractionProviderFactory(
                 httpClient = httpClient,
                 baseUrl = config.ollama.baseUrl,
                 model = config.models.documentExtraction.takeIf {
-                    config.defaultProvider == AIProvider.OLLAMA
+                    config.defaultProvider == AiProvider.Ollama
                 } ?: config.ollama.defaultModel
             ),
             // Alias for convenience
@@ -37,7 +37,7 @@ class ExtractionProviderFactory(
                 httpClient = httpClient,
                 baseUrl = config.ollama.baseUrl,
                 model = config.models.documentExtraction.takeIf {
-                    config.defaultProvider == AIProvider.OLLAMA
+                    config.defaultProvider == AiProvider.Ollama
                 } ?: config.ollama.defaultModel
             )
         )
@@ -48,8 +48,8 @@ class ExtractionProviderFactory(
      */
     fun getDefaultProvider(): AIExtractionProvider {
         val providerName = when (config.defaultProvider) {
-            AIProvider.OLLAMA -> "ollama"
-            AIProvider.OPENAI -> "openai"
+            AiProvider.Ollama -> "ollama"
+            AiProvider.OpenAi -> "openai"
         }
         return providers[providerName]
             ?: providers["openai"]

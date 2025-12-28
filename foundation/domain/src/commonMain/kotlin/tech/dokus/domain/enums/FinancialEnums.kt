@@ -16,11 +16,13 @@ enum class TenantType(
     /** Whether the legal name should be derived from the user's name (and locked) */
     val legalNameFromUser: Boolean
 ) : DbEnum {
+    @SerialName("FREELANCER")
     Freelancer(
         dbValue = "FREELANCER",
         requiresDisplayName = false,
         legalNameFromUser = true
     ),
+    @SerialName("COMPANY")
     Company(
         dbValue = "COMPANY",
         requiresDisplayName = true,
@@ -30,44 +32,44 @@ enum class TenantType(
 
 @Serializable
 enum class TenantPlan(override val dbValue: String) : DbEnum {
-    Free("FREE"),
-    Starter("STARTER"),
-    Professional("PROFESSIONAL"),
-    Enterprise("ENTERPRISE")
+    @SerialName("FREE") Free("FREE"),
+    @SerialName("STARTER") Starter("STARTER"),
+    @SerialName("PROFESSIONAL") Professional("PROFESSIONAL"),
+    @SerialName("ENTERPRISE") Enterprise("ENTERPRISE")
 }
 
 @Serializable
 enum class TenantStatus(override val dbValue: String) : DbEnum {
-    Active("ACTIVE"),
-    Suspended("SUSPENDED"),
-    Cancelled("CANCELLED"),
-    Trial("TRIAL")
+    @SerialName("ACTIVE") Active("ACTIVE"),
+    @SerialName("SUSPENDED") Suspended("SUSPENDED"),
+    @SerialName("CANCELLED") Cancelled("CANCELLED"),
+    @SerialName("TRIAL") Trial("TRIAL")
 }
 
 @Serializable
 enum class Language(override val dbValue: String) : DbEnum {
-    En("EN"),
-    Fr("FR"),
-    Nl("NL"),
-    De("DE"),
-    Es("ES"),
-    It("IT")
+    @SerialName("EN") En("EN"),
+    @SerialName("FR") Fr("FR"),
+    @SerialName("NL") Nl("NL"),
+    @SerialName("DE") De("DE"),
+    @SerialName("ES") Es("ES"),
+    @SerialName("IT") It("IT")
 }
 
 @Serializable
 enum class Country(override val dbValue: String) : DbEnum {
-    Belgium("BE"),
-    Netherlands("NL"),
-    France("FR")
+    @SerialName("BE") Belgium("BE"),
+    @SerialName("NL") Netherlands("NL"),
+    @SerialName("FR") France("FR")
 }
 
 @Serializable
 enum class UserRole(override val dbValue: String) : DbEnum {
-    Owner("OWNER"),
-    Admin("ADMIN"),
-    Accountant("ACCOUNTANT"),
-    Editor("EDITOR"),
-    Viewer("VIEWER");
+    @SerialName("OWNER") Owner("OWNER"),
+    @SerialName("ADMIN") Admin("ADMIN"),
+    @SerialName("ACCOUNTANT") Accountant("ACCOUNTANT"),
+    @SerialName("EDITOR") Editor("EDITOR"),
+    @SerialName("VIEWER") Viewer("VIEWER");
 
     companion object {
         val all = listOf(Owner, Admin, Accountant, Editor, Viewer)
@@ -78,44 +80,44 @@ enum class UserRole(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class InvitationStatus(override val dbValue: String) : DbEnum {
-    Pending("PENDING"),
-    Accepted("ACCEPTED"),
-    Expired("EXPIRED"),
-    Cancelled("CANCELLED")
+    @SerialName("PENDING") Pending("PENDING"),
+    @SerialName("ACCEPTED") Accepted("ACCEPTED"),
+    @SerialName("EXPIRED") Expired("EXPIRED"),
+    @SerialName("CANCELLED") Cancelled("CANCELLED")
 }
 
 @Serializable
 enum class Permission(override val dbValue: String) : DbEnum {
     // Invoices
-    InvoicesRead("INVOICES_READ"),
-    InvoicesCreate("INVOICES_CREATE"),
-    InvoicesEdit("INVOICES_EDIT"),
-    InvoicesDelete("INVOICES_DELETE"),
-    InvoicesSend("INVOICES_SEND"),
+    @SerialName("INVOICES_READ") InvoicesRead("INVOICES_READ"),
+    @SerialName("INVOICES_CREATE") InvoicesCreate("INVOICES_CREATE"),
+    @SerialName("INVOICES_EDIT") InvoicesEdit("INVOICES_EDIT"),
+    @SerialName("INVOICES_DELETE") InvoicesDelete("INVOICES_DELETE"),
+    @SerialName("INVOICES_SEND") InvoicesSend("INVOICES_SEND"),
 
     // Clients
-    ClientsRead("CLIENTS_READ"),
-    ClientsManage("CLIENTS_MANAGE"),
+    @SerialName("CLIENTS_READ") ClientsRead("CLIENTS_READ"),
+    @SerialName("CLIENTS_MANAGE") ClientsManage("CLIENTS_MANAGE"),
 
     // Settings
-    SettingsRead("SETTINGS_READ"),
-    SettingsManage("SETTINGS_MANAGE"),
+    @SerialName("SETTINGS_READ") SettingsRead("SETTINGS_READ"),
+    @SerialName("SETTINGS_MANAGE") SettingsManage("SETTINGS_MANAGE"),
 
     // Users & permissions
-    UsersRead("USERS_READ"),
-    UsersManage("USERS_MANAGE"),
+    @SerialName("USERS_READ") UsersRead("USERS_READ"),
+    @SerialName("USERS_MANAGE") UsersManage("USERS_MANAGE"),
 
     // Financial data
-    ReportsView("REPORTS_VIEW"),
-    ExportsCreate("EXPORTS_CREATE")
+    @SerialName("REPORTS_VIEW") ReportsView("REPORTS_VIEW"),
+    @SerialName("EXPORTS_CREATE") ExportsCreate("EXPORTS_CREATE")
 }
 
 @Serializable
 enum class SubscriptionTier(override val dbValue: String) : DbEnum {
-    SelfHosted("SELF_HOSTED"),
-    CloudFree("CLOUD_FREE"),
-    CloudBasic("CLOUD_BASIC"),
-    CloudPro("CLOUD_PRO");
+    @SerialName("SELF_HOSTED") SelfHosted("SELF_HOSTED"),
+    @SerialName("CLOUD_FREE") CloudFree("CLOUD_FREE"),
+    @SerialName("CLOUD_BASIC") CloudBasic("CLOUD_BASIC"),
+    @SerialName("CLOUD_PRO") CloudPro("CLOUD_PRO");
 
     companion object {
         val default = CloudFree
@@ -128,9 +130,9 @@ enum class SubscriptionTier(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class ClientType(override val dbValue: String) : DbEnum {
-    Individual("INDIVIDUAL"),
-    Business("BUSINESS"),
-    Government("GOVERNMENT")
+    @SerialName("INDIVIDUAL") Individual("INDIVIDUAL"),
+    @SerialName("BUSINESS") Business("BUSINESS"),
+    @SerialName("GOVERNMENT") Government("GOVERNMENT")
 }
 
 // ============================================================================
@@ -146,58 +148,58 @@ enum class ClientType(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class InvoiceStatus(override val dbValue: String) : DbEnum {
-    Draft("DRAFT"),
-    Sent("SENT"),
-    Viewed("VIEWED"),
-    PartiallyPaid("PARTIALLY_PAID"),
-    Paid("PAID"),
-    Overdue("OVERDUE"),
-    Cancelled("CANCELLED"),
-    Refunded("REFUNDED")
+    @SerialName("DRAFT") Draft("DRAFT"),
+    @SerialName("SENT") Sent("SENT"),
+    @SerialName("VIEWED") Viewed("VIEWED"),
+    @SerialName("PARTIALLY_PAID") PartiallyPaid("PARTIALLY_PAID"),
+    @SerialName("PAID") Paid("PAID"),
+    @SerialName("OVERDUE") Overdue("OVERDUE"),
+    @SerialName("CANCELLED") Cancelled("CANCELLED"),
+    @SerialName("REFUNDED") Refunded("REFUNDED")
 }
 
 @Serializable
 enum class BillStatus(override val dbValue: String) : DbEnum {
-    Draft("DRAFT"),
-    Pending("PENDING"),
-    Scheduled("SCHEDULED"),
-    Paid("PAID"),
-    Overdue("OVERDUE"),
-    Cancelled("CANCELLED")
+    @SerialName("DRAFT") Draft("DRAFT"),
+    @SerialName("PENDING") Pending("PENDING"),
+    @SerialName("SCHEDULED") Scheduled("SCHEDULED"),
+    @SerialName("PAID") Paid("PAID"),
+    @SerialName("OVERDUE") Overdue("OVERDUE"),
+    @SerialName("CANCELLED") Cancelled("CANCELLED")
 }
 
 @Serializable
 enum class Currency(override val dbValue: String) : DbEnum {
-    Eur("EUR"),
-    Usd("USD"),
-    Gbp("GBP"),
-    Chf("CHF"),
-    Cad("CAD"),
-    Aud("AUD")
+    @SerialName("EUR") Eur("EUR"),
+    @SerialName("USD") Usd("USD"),
+    @SerialName("GBP") Gbp("GBP"),
+    @SerialName("CHF") Chf("CHF"),
+    @SerialName("CAD") Cad("CAD"),
+    @SerialName("AUD") Aud("AUD")
 }
 
 @Serializable
 enum class PeppolStatus(override val dbValue: String) : DbEnum {
-    Pending("PENDING"),
-    Sent("SENT"),
-    Delivered("DELIVERED"),
-    Failed("FAILED"),
-    Rejected("REJECTED")
+    @SerialName("PENDING") Pending("PENDING"),
+    @SerialName("SENT") Sent("SENT"),
+    @SerialName("DELIVERED") Delivered("DELIVERED"),
+    @SerialName("FAILED") Failed("FAILED"),
+    @SerialName("REJECTED") Rejected("REJECTED")
 }
 
 @Serializable
 enum class PeppolTransmissionDirection(override val dbValue: String) : DbEnum {
-    Outbound("OUTBOUND"),  // Sending invoices to customers
-    Inbound("INBOUND")     // Receiving bills from suppliers
+    @SerialName("OUTBOUND") Outbound("OUTBOUND"),  // Sending invoices to customers
+    @SerialName("INBOUND") Inbound("INBOUND")     // Receiving bills from suppliers
 }
 
 @Serializable
 enum class PeppolDocumentType(override val dbValue: String) : DbEnum {
-    Invoice("INVOICE"),
-    CreditNote("CREDIT_NOTE"),
-    SelfBillingInvoice("SELF_BILLING_INVOICE"),
-    SelfBillingCreditNote("SELF_BILLING_CREDIT_NOTE"),
-    Xml("XML");  // Raw UBL XML
+    @SerialName("INVOICE") Invoice("INVOICE"),
+    @SerialName("CREDIT_NOTE") CreditNote("CREDIT_NOTE"),
+    @SerialName("SELF_BILLING_INVOICE") SelfBillingInvoice("SELF_BILLING_INVOICE"),
+    @SerialName("SELF_BILLING_CREDIT_NOTE") SelfBillingCreditNote("SELF_BILLING_CREDIT_NOTE"),
+    @SerialName("XML") Xml("XML");  // Raw UBL XML
 
     companion object {
         /** Map from Recommand API values to enum */
@@ -223,16 +225,16 @@ enum class PeppolDocumentType(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class PeppolVatCategory(override val dbValue: String) : DbEnum {
-    Standard("S"),           // Standard VAT rate
-    ZeroRated("Z"),          // Zero rated
-    Exempt("E"),             // VAT exempt
-    ReverseCharge("AE"),     // Reverse charge (EU cross-border)
-    IntraCommSupply("K"),    // Intra-community supply
-    ExportOutsideEU("G"),    // Export outside EU
-    NotSubject("O"),         // Not subject to VAT
-    CanaryIslands("L"),      // Canary Islands
-    Ceuta("M"),              // Ceuta and Melilla
-    ServiceOutsideScope("B"); // Services outside scope of VAT
+    @SerialName("S") Standard("S"),           // Standard VAT rate
+    @SerialName("Z") ZeroRated("Z"),          // Zero rated
+    @SerialName("E") Exempt("E"),             // VAT exempt
+    @SerialName("AE") ReverseCharge("AE"),     // Reverse charge (EU cross-border)
+    @SerialName("K") IntraCommSupply("K"),    // Intra-community supply
+    @SerialName("G") ExportOutsideEu("G"),    // Export outside EU
+    @SerialName("O") NotSubject("O"),         // Not subject to VAT
+    @SerialName("L") CanaryIslands("L"),      // Canary Islands
+    @SerialName("M") Ceuta("M"),              // Ceuta and Melilla
+    @SerialName("B") ServiceOutsideScope("B"); // Services outside scope of VAT
 
     companion object {
         fun fromCode(code: String): PeppolVatCategory = entries.find { it.dbValue == code } ?: Standard
@@ -297,18 +299,18 @@ enum class RecommandDocumentStatus {
  */
 @Serializable
 enum class PaymentMeansCode(val code: String, val description: String) {
-    NotDefined("1", "Not defined"),
-    Cash("10", "Cash"),
-    Cheque("20", "Cheque"),
-    CreditTransfer("30", "Credit transfer"),
-    DebitTransfer("31", "Debit transfer"),
-    CashOnDelivery("42", "Payment to bank account"),
-    BankCard("48", "Bank card"),
-    DirectDebit("49", "Direct debit"),
-    StandingAgreement("57", "Standing agreement"),
-    SEPACreditTransfer("58", "SEPA credit transfer"),
-    SEPADirectDebit("59", "SEPA direct debit"),
-    OnlinePayment("68", "Online payment service");
+    @SerialName("1") NotDefined("1", "Not defined"),
+    @SerialName("10") Cash("10", "Cash"),
+    @SerialName("20") Cheque("20", "Cheque"),
+    @SerialName("30") CreditTransfer("30", "Credit transfer"),
+    @SerialName("31") DebitTransfer("31", "Debit transfer"),
+    @SerialName("42") CashOnDelivery("42", "Payment to bank account"),
+    @SerialName("48") BankCard("48", "Bank card"),
+    @SerialName("49") DirectDebit("49", "Direct debit"),
+    @SerialName("57") StandingAgreement("57", "Standing agreement"),
+    @SerialName("58") SepaCreditTransfer("58", "SEPA credit transfer"),
+    @SerialName("59") SepaDirectDebit("59", "SEPA direct debit"),
+    @SerialName("68") OnlinePayment("68", "Online payment service");
 
     companion object {
         fun fromCode(code: String): PaymentMeansCode = entries.find { it.code == code } ?: CreditTransfer
@@ -320,29 +322,29 @@ enum class PaymentMeansCode(val code: String, val description: String) {
  */
 @Serializable
 enum class PeppolCurrency(val code: String, val displayName: String) {
-    EUR("EUR", "Euro"),
-    USD("USD", "US Dollar"),
-    GBP("GBP", "British Pound"),
-    CHF("CHF", "Swiss Franc"),
-    SEK("SEK", "Swedish Krona"),
-    NOK("NOK", "Norwegian Krone"),
-    DKK("DKK", "Danish Krone"),
-    PLN("PLN", "Polish Zloty"),
-    CZK("CZK", "Czech Koruna"),
-    HUF("HUF", "Hungarian Forint"),
-    RON("RON", "Romanian Leu"),
-    BGN("BGN", "Bulgarian Lev"),
-    HRK("HRK", "Croatian Kuna"),
-    ISK("ISK", "Icelandic Krona"),
-    JPY("JPY", "Japanese Yen"),
-    AUD("AUD", "Australian Dollar"),
-    CAD("CAD", "Canadian Dollar"),
-    NZD("NZD", "New Zealand Dollar"),
-    SGD("SGD", "Singapore Dollar");
+    @SerialName("EUR") Eur("EUR", "Euro"),
+    @SerialName("USD") Usd("USD", "US Dollar"),
+    @SerialName("GBP") Gbp("GBP", "British Pound"),
+    @SerialName("CHF") Chf("CHF", "Swiss Franc"),
+    @SerialName("SEK") Sek("SEK", "Swedish Krona"),
+    @SerialName("NOK") Nok("NOK", "Norwegian Krone"),
+    @SerialName("DKK") Dkk("DKK", "Danish Krone"),
+    @SerialName("PLN") Pln("PLN", "Polish Zloty"),
+    @SerialName("CZK") Czk("CZK", "Czech Koruna"),
+    @SerialName("HUF") Huf("HUF", "Hungarian Forint"),
+    @SerialName("RON") Ron("RON", "Romanian Leu"),
+    @SerialName("BGN") Bgn("BGN", "Bulgarian Lev"),
+    @SerialName("HRK") Hrk("HRK", "Croatian Kuna"),
+    @SerialName("ISK") Isk("ISK", "Icelandic Krona"),
+    @SerialName("JPY") Jpy("JPY", "Japanese Yen"),
+    @SerialName("AUD") Aud("AUD", "Australian Dollar"),
+    @SerialName("CAD") Cad("CAD", "Canadian Dollar"),
+    @SerialName("NZD") Nzd("NZD", "New Zealand Dollar"),
+    @SerialName("SGD") Sgd("SGD", "Singapore Dollar");
 
     companion object {
         fun fromCode(code: String): PeppolCurrency? = entries.find { it.code == code.uppercase() }
-        fun fromCodeOrDefault(code: String): PeppolCurrency = fromCode(code) ?: EUR
+        fun fromCodeOrDefault(code: String): PeppolCurrency = fromCode(code) ?: Eur
     }
 }
 
@@ -351,24 +353,24 @@ enum class PeppolCurrency(val code: String, val displayName: String) {
  */
 @Serializable
 enum class UnitCode(val code: String, val description: String) {
-    Each("C62", "One/Unit"),
-    Hour("HUR", "Hour"),
-    Day("DAY", "Day"),
-    Week("WEE", "Week"),
-    Month("MON", "Month"),
-    Year("ANN", "Year"),
-    Kilogram("KGM", "Kilogram"),
-    Gram("GRM", "Gram"),
-    Litre("LTR", "Litre"),
-    Metre("MTR", "Metre"),
-    SquareMetre("MTK", "Square metre"),
-    CubicMetre("MTQ", "Cubic metre"),
-    Piece("PCE", "Piece"),
-    Set("SET", "Set"),
-    Pair("PR", "Pair"),
-    Dozen("DZN", "Dozen"),
-    Package("PK", "Package"),
-    Box("BX", "Box");
+    @SerialName("C62") Each("C62", "One/Unit"),
+    @SerialName("HUR") Hour("HUR", "Hour"),
+    @SerialName("DAY") Day("DAY", "Day"),
+    @SerialName("WEE") Week("WEE", "Week"),
+    @SerialName("MON") Month("MON", "Month"),
+    @SerialName("ANN") Year("ANN", "Year"),
+    @SerialName("KGM") Kilogram("KGM", "Kilogram"),
+    @SerialName("GRM") Gram("GRM", "Gram"),
+    @SerialName("LTR") Litre("LTR", "Litre"),
+    @SerialName("MTR") Metre("MTR", "Metre"),
+    @SerialName("MTK") SquareMetre("MTK", "Square metre"),
+    @SerialName("MTQ") CubicMetre("MTQ", "Cubic metre"),
+    @SerialName("PCE") Piece("PCE", "Piece"),
+    @SerialName("SET") Set("SET", "Set"),
+    @SerialName("PR") Pair("PR", "Pair"),
+    @SerialName("DZN") Dozen("DZN", "Dozen"),
+    @SerialName("PK") Package("PK", "Package"),
+    @SerialName("BX") Box("BX", "Box");
 
     companion object {
         fun fromCode(code: String): UnitCode = entries.find { it.code == code } ?: Each
@@ -381,19 +383,19 @@ enum class UnitCode(val code: String, val description: String) {
 
 @Serializable
 enum class ExpenseCategory(override val dbValue: String) : DbEnum {
-    OfficeSupplies("OFFICE_SUPPLIES"),
-    Travel("TRAVEL"),
-    Meals("MEALS"),
-    Software("SOFTWARE"),
-    Hardware("HARDWARE"),
-    Utilities("UTILITIES"),
-    Rent("RENT"),
-    Insurance("INSURANCE"),
-    Marketing("MARKETING"),
-    ProfessionalServices("PROFESSIONAL_SERVICES"),
-    Telecommunications("TELECOMMUNICATIONS"),
-    Vehicle("VEHICLE"),
-    Other("OTHER")
+    @SerialName("OFFICE_SUPPLIES") OfficeSupplies("OFFICE_SUPPLIES"),
+    @SerialName("TRAVEL") Travel("TRAVEL"),
+    @SerialName("MEALS") Meals("MEALS"),
+    @SerialName("SOFTWARE") Software("SOFTWARE"),
+    @SerialName("HARDWARE") Hardware("HARDWARE"),
+    @SerialName("UTILITIES") Utilities("UTILITIES"),
+    @SerialName("RENT") Rent("RENT"),
+    @SerialName("INSURANCE") Insurance("INSURANCE"),
+    @SerialName("MARKETING") Marketing("MARKETING"),
+    @SerialName("PROFESSIONAL_SERVICES") ProfessionalServices("PROFESSIONAL_SERVICES"),
+    @SerialName("TELECOMMUNICATIONS") Telecommunications("TELECOMMUNICATIONS"),
+    @SerialName("VEHICLE") Vehicle("VEHICLE"),
+    @SerialName("OTHER") Other("OTHER")
 }
 
 // ============================================================================
@@ -402,14 +404,14 @@ enum class ExpenseCategory(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class PaymentMethod(override val dbValue: String) : DbEnum {
-    BankTransfer("BANK_TRANSFER"),
-    CreditCard("CREDIT_CARD"),
-    DebitCard("DEBIT_CARD"),
-    PayPal("PAYPAL"),
-    Stripe("STRIPE"),
-    Cash("CASH"),
-    Check("CHECK"),
-    Other("OTHER")
+    @SerialName("BANK_TRANSFER") BankTransfer("BANK_TRANSFER"),
+    @SerialName("CREDIT_CARD") CreditCard("CREDIT_CARD"),
+    @SerialName("DEBIT_CARD") DebitCard("DEBIT_CARD"),
+    @SerialName("PAYPAL") PayPal("PAYPAL"),
+    @SerialName("STRIPE") Stripe("STRIPE"),
+    @SerialName("CASH") Cash("CASH"),
+    @SerialName("CHECK") Check("CHECK"),
+    @SerialName("OTHER") Other("OTHER")
 }
 
 // ============================================================================
@@ -418,20 +420,20 @@ enum class PaymentMethod(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class BankProvider(override val dbValue: String) : DbEnum {
-    Plaid("PLAID"),
-    Yodlee("YODLEE"),
-    Tink("TINK"),
-    SaltEdge("SALT_EDGE"),
-    Manual("MANUAL")
+    @SerialName("PLAID") Plaid("PLAID"),
+    @SerialName("YODLEE") Yodlee("YODLEE"),
+    @SerialName("TINK") Tink("TINK"),
+    @SerialName("SALT_EDGE") SaltEdge("SALT_EDGE"),
+    @SerialName("MANUAL") Manual("MANUAL")
 }
 
 @Serializable
 enum class BankAccountType(override val dbValue: String) : DbEnum {
-    Checking("CHECKING"),
-    Savings("SAVINGS"),
-    CreditCard("CREDIT_CARD"),
-    Business("BUSINESS"),
-    Investment("INVESTMENT")
+    @SerialName("CHECKING") Checking("CHECKING"),
+    @SerialName("SAVINGS") Savings("SAVINGS"),
+    @SerialName("CREDIT_CARD") CreditCard("CREDIT_CARD"),
+    @SerialName("BUSINESS") Business("BUSINESS"),
+    @SerialName("INVESTMENT") Investment("INVESTMENT")
 }
 
 // ============================================================================
@@ -440,11 +442,11 @@ enum class BankAccountType(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class VatReturnStatus(override val dbValue: String) : DbEnum {
-    Draft("DRAFT"),
-    Submitted("SUBMITTED"),
-    Accepted("ACCEPTED"),
-    Rejected("REJECTED"),
-    Paid("PAID")
+    @SerialName("DRAFT") Draft("DRAFT"),
+    @SerialName("SUBMITTED") Submitted("SUBMITTED"),
+    @SerialName("ACCEPTED") Accepted("ACCEPTED"),
+    @SerialName("REJECTED") Rejected("REJECTED"),
+    @SerialName("PAID") Paid("PAID")
 }
 
 // ============================================================================
@@ -454,79 +456,79 @@ enum class VatReturnStatus(override val dbValue: String) : DbEnum {
 @Serializable
 enum class AuditAction(override val dbValue: String) : DbEnum {
     // Invoice actions
-    InvoiceCreated("INVOICE_CREATED"),
-    InvoiceUpdated("INVOICE_UPDATED"),
-    InvoiceDeleted("INVOICE_DELETED"),
-    InvoiceSent("INVOICE_SENT"),
-    InvoiceStatusChanged("INVOICE_STATUS_CHANGED"),
+    @SerialName("INVOICE_CREATED") InvoiceCreated("INVOICE_CREATED"),
+    @SerialName("INVOICE_UPDATED") InvoiceUpdated("INVOICE_UPDATED"),
+    @SerialName("INVOICE_DELETED") InvoiceDeleted("INVOICE_DELETED"),
+    @SerialName("INVOICE_SENT") InvoiceSent("INVOICE_SENT"),
+    @SerialName("INVOICE_STATUS_CHANGED") InvoiceStatusChanged("INVOICE_STATUS_CHANGED"),
 
     // Payment actions
-    PaymentRecorded("PAYMENT_RECORDED"),
-    PaymentUpdated("PAYMENT_UPDATED"),
-    PaymentDeleted("PAYMENT_DELETED"),
+    @SerialName("PAYMENT_RECORDED") PaymentRecorded("PAYMENT_RECORDED"),
+    @SerialName("PAYMENT_UPDATED") PaymentUpdated("PAYMENT_UPDATED"),
+    @SerialName("PAYMENT_DELETED") PaymentDeleted("PAYMENT_DELETED"),
 
     // Expense actions
-    ExpenseCreated("EXPENSE_CREATED"),
-    ExpenseUpdated("EXPENSE_UPDATED"),
-    ExpenseDeleted("EXPENSE_DELETED"),
+    @SerialName("EXPENSE_CREATED") ExpenseCreated("EXPENSE_CREATED"),
+    @SerialName("EXPENSE_UPDATED") ExpenseUpdated("EXPENSE_UPDATED"),
+    @SerialName("EXPENSE_DELETED") ExpenseDeleted("EXPENSE_DELETED"),
 
     // Bill actions
-    BillCreated("BILL_CREATED"),
-    BillUpdated("BILL_UPDATED"),
-    BillDeleted("BILL_DELETED"),
-    BillPaid("BILL_PAID"),
-    BillStatusChanged("BILL_STATUS_CHANGED"),
+    @SerialName("BILL_CREATED") BillCreated("BILL_CREATED"),
+    @SerialName("BILL_UPDATED") BillUpdated("BILL_UPDATED"),
+    @SerialName("BILL_DELETED") BillDeleted("BILL_DELETED"),
+    @SerialName("BILL_PAID") BillPaid("BILL_PAID"),
+    @SerialName("BILL_STATUS_CHANGED") BillStatusChanged("BILL_STATUS_CHANGED"),
 
     // Client actions (legacy)
-    ClientCreated("CLIENT_CREATED"),
-    ClientUpdated("CLIENT_UPDATED"),
-    ClientDeleted("CLIENT_DELETED"),
+    @SerialName("CLIENT_CREATED") ClientCreated("CLIENT_CREATED"),
+    @SerialName("CLIENT_UPDATED") ClientUpdated("CLIENT_UPDATED"),
+    @SerialName("CLIENT_DELETED") ClientDeleted("CLIENT_DELETED"),
 
     // Contact actions
-    ContactCreated("CONTACT_CREATED"),
-    ContactUpdated("CONTACT_UPDATED"),
-    ContactDeleted("CONTACT_DELETED"),
-    ContactNoteCreated("CONTACT_NOTE_CREATED"),
-    ContactNoteUpdated("CONTACT_NOTE_UPDATED"),
-    ContactNoteDeleted("CONTACT_NOTE_DELETED"),
+    @SerialName("CONTACT_CREATED") ContactCreated("CONTACT_CREATED"),
+    @SerialName("CONTACT_UPDATED") ContactUpdated("CONTACT_UPDATED"),
+    @SerialName("CONTACT_DELETED") ContactDeleted("CONTACT_DELETED"),
+    @SerialName("CONTACT_NOTE_CREATED") ContactNoteCreated("CONTACT_NOTE_CREATED"),
+    @SerialName("CONTACT_NOTE_UPDATED") ContactNoteUpdated("CONTACT_NOTE_UPDATED"),
+    @SerialName("CONTACT_NOTE_DELETED") ContactNoteDeleted("CONTACT_NOTE_DELETED"),
 
     // User actions
-    UserLogin("USER_LOGIN"),
-    UserLogout("USER_LOGOUT"),
-    UserCreated("USER_CREATED"),
-    UserUpdated("USER_UPDATED"),
-    UserDeleted("USER_DELETED"),
+    @SerialName("USER_LOGIN") UserLogin("USER_LOGIN"),
+    @SerialName("USER_LOGOUT") UserLogout("USER_LOGOUT"),
+    @SerialName("USER_CREATED") UserCreated("USER_CREATED"),
+    @SerialName("USER_UPDATED") UserUpdated("USER_UPDATED"),
+    @SerialName("USER_DELETED") UserDeleted("USER_DELETED"),
 
     // Settings actions
-    SettingsUpdated("SETTINGS_UPDATED"),
+    @SerialName("SETTINGS_UPDATED") SettingsUpdated("SETTINGS_UPDATED"),
 
     // Banking actions
-    BankConnected("BANK_CONNECTED"),
-    BankDisconnected("BANK_DISCONNECTED"),
-    BankSync("BANK_SYNC"),
+    @SerialName("BANK_CONNECTED") BankConnected("BANK_CONNECTED"),
+    @SerialName("BANK_DISCONNECTED") BankDisconnected("BANK_DISCONNECTED"),
+    @SerialName("BANK_SYNC") BankSync("BANK_SYNC"),
 
     // VAT actions
-    VatReturnCreated("VAT_RETURN_CREATED"),
-    VatReturnSubmitted("VAT_RETURN_SUBMITTED"),
-    VatReturnPaid("VAT_RETURN_PAID")
+    @SerialName("VAT_RETURN_CREATED") VatReturnCreated("VAT_RETURN_CREATED"),
+    @SerialName("VAT_RETURN_SUBMITTED") VatReturnSubmitted("VAT_RETURN_SUBMITTED"),
+    @SerialName("VAT_RETURN_PAID") VatReturnPaid("VAT_RETURN_PAID")
 }
 
 @Serializable
 enum class EntityType(override val dbValue: String) : DbEnum {
-    Invoice("INVOICE"),
-    InvoiceItem("INVOICE_ITEM"),
-    Client("CLIENT"),
-    Contact("CONTACT"),
-    ContactNote("CONTACT_NOTE"),
-    Expense("EXPENSE"),
-    Bill("BILL"),
-    Payment("PAYMENT"),
-    BankConnection("BANK_CONNECTION"),
-    BankTransaction("BANK_TRANSACTION"),
-    VatReturn("VAT_RETURN"),
-    User("USER"),
-    Tenant("TENANT"),
-    Settings("SETTINGS"),
-    Attachment("ATTACHMENT"),
-    Media("MEDIA")
+    @SerialName("INVOICE") Invoice("INVOICE"),
+    @SerialName("INVOICE_ITEM") InvoiceItem("INVOICE_ITEM"),
+    @SerialName("CLIENT") Client("CLIENT"),
+    @SerialName("CONTACT") Contact("CONTACT"),
+    @SerialName("CONTACT_NOTE") ContactNote("CONTACT_NOTE"),
+    @SerialName("EXPENSE") Expense("EXPENSE"),
+    @SerialName("BILL") Bill("BILL"),
+    @SerialName("PAYMENT") Payment("PAYMENT"),
+    @SerialName("BANK_CONNECTION") BankConnection("BANK_CONNECTION"),
+    @SerialName("BANK_TRANSACTION") BankTransaction("BANK_TRANSACTION"),
+    @SerialName("VAT_RETURN") VatReturn("VAT_RETURN"),
+    @SerialName("USER") User("USER"),
+    @SerialName("TENANT") Tenant("TENANT"),
+    @SerialName("SETTINGS") Settings("SETTINGS"),
+    @SerialName("ATTACHMENT") Attachment("ATTACHMENT"),
+    @SerialName("MEDIA") Media("MEDIA")
 }

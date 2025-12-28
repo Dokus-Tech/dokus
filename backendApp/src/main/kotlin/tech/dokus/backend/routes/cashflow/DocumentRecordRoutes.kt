@@ -16,26 +16,24 @@ import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
-import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
-import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.TrackedCorrection
@@ -46,9 +44,6 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
 import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 /**
  * Document record routes using new canonical API.
@@ -86,17 +81,12 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info("Listing documents: tenant=$tenantId, page=$page, limit=$limit")
 
-            // Parse filters
-            val draftStatus = route.draftStatus?.let { DraftStatus.fromDbValue(it) }
-            val documentType = route.documentType?.let { DocumentType.valueOf(it) }
-            val ingestionStatus = route.ingestionStatus?.let { IngestionStatus.valueOf(it) }
-
             // Query documents with optional drafts and ingestion info
             val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
                 tenantId = tenantId,
-                draftStatus = draftStatus,
-                documentType = documentType,
-                ingestionStatus = ingestionStatus,
+                draftStatus = route.draftStatus,
+                documentType = route.documentType,
+                ingestionStatus = route.ingestionStatus,
                 search = route.search,
                 page = page,
                 limit = limit
@@ -107,7 +97,14 @@ internal fun Route.documentRecordRoutes() {
                 val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
                 val draft = docInfo.draft
                 val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
-                    findConfirmedEntity(docInfo.document.id, draft.documentType, tenantId, invoiceRepository, billRepository, expenseRepository)
+                    findConfirmedEntity(
+                        docInfo.document.id,
+                        draft.documentType,
+                        tenantId,
+                        invoiceRepository,
+                        billRepository,
+                        expenseRepository
+                    )
                 } else null
 
                 DocumentRecordDto(
@@ -146,7 +143,14 @@ internal fun Route.documentRecordRoutes() {
             val draft = draftRepository.getByDocumentId(documentId, tenantId)
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
             val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
-                findConfirmedEntity(documentId, draft.documentType, tenantId, invoiceRepository, billRepository, expenseRepository)
+                findConfirmedEntity(
+                    documentId,
+                    draft.documentType,
+                    tenantId,
+                    invoiceRepository,
+                    billRepository,
+                    expenseRepository
+                )
             } else null
 
             call.respond(
@@ -343,7 +347,14 @@ internal fun Route.documentRecordRoutes() {
             // Check if already confirmed (idempotent)
             if (draft.draftStatus == DraftStatus.Confirmed) {
                 // Return existing confirmed entity
-                val confirmedEntity = findConfirmedEntity(documentId, draft.documentType, tenantId, invoiceRepository, billRepository, expenseRepository)
+                val confirmedEntity = findConfirmedEntity(
+                    documentId,
+                    draft.documentType,
+                    tenantId,
+                    invoiceRepository,
+                    billRepository,
+                    expenseRepository
+                )
                     ?: throw DokusException.InternalError("Draft is confirmed but entity not found")
 
                 val document = documentRepository.getById(tenantId, documentId)!!
@@ -368,10 +379,17 @@ internal fun Route.documentRecordRoutes() {
             }
 
             val extractedData = request.extractedData ?: draft.extractedData
-                ?: throw DokusException.BadRequest("No extracted data available for confirmation")
+            ?: throw DokusException.BadRequest("No extracted data available for confirmation")
 
             // Check if entity already exists for this document (idempotent check)
-            val existingEntity = findConfirmedEntity(documentId, request.documentType, tenantId, invoiceRepository, billRepository, expenseRepository)
+            val existingEntity = findConfirmedEntity(
+                documentId,
+                request.documentType,
+                tenantId,
+                invoiceRepository,
+                billRepository,
+                expenseRepository
+            )
             if (existingEntity != null) {
                 throw DokusException.BadRequest("Entity already exists for this document")
             }
@@ -513,33 +531,103 @@ private fun buildCorrections(
     val corrections = mutableListOf<TrackedCorrection>()
 
     if (oldData?.documentType != newData.documentType) {
-        corrections.add(TrackedCorrection("documentType", oldData?.documentType?.name, newData.documentType.name, now))
+        corrections.add(
+            TrackedCorrection(
+                "documentType",
+                oldData?.documentType?.name,
+                newData.documentType.name,
+                now
+            )
+        )
     }
 
     // Invoice fields
     oldData?.invoice?.let { old ->
         newData.invoice?.let { new ->
-            if (old.clientName != new.clientName) corrections.add(TrackedCorrection("invoice.clientName", old.clientName, new.clientName, now))
-            if (old.invoiceNumber != new.invoiceNumber) corrections.add(TrackedCorrection("invoice.invoiceNumber", old.invoiceNumber, new.invoiceNumber, now))
-            if (old.totalAmount != new.totalAmount) corrections.add(TrackedCorrection("invoice.totalAmount", old.totalAmount?.toString(), new.totalAmount?.toString(), now))
+            if (old.clientName != new.clientName) corrections.add(
+                TrackedCorrection(
+                    "invoice.clientName",
+                    old.clientName,
+                    new.clientName,
+                    now
+                )
+            )
+            if (old.invoiceNumber != new.invoiceNumber) corrections.add(
+                TrackedCorrection(
+                    "invoice.invoiceNumber",
+                    old.invoiceNumber,
+                    new.invoiceNumber,
+                    now
+                )
+            )
+            if (old.totalAmount != new.totalAmount) corrections.add(
+                TrackedCorrection(
+                    "invoice.totalAmount",
+                    old.totalAmount?.toString(),
+                    new.totalAmount?.toString(),
+                    now
+                )
+            )
         }
     }
 
     // Bill fields
     oldData?.bill?.let { old ->
         newData.bill?.let { new ->
-            if (old.supplierName != new.supplierName) corrections.add(TrackedCorrection("bill.supplierName", old.supplierName, new.supplierName, now))
-            if (old.invoiceNumber != new.invoiceNumber) corrections.add(TrackedCorrection("bill.invoiceNumber", old.invoiceNumber, new.invoiceNumber, now))
-            if (old.amount != new.amount) corrections.add(TrackedCorrection("bill.amount", old.amount?.toString(), new.amount?.toString(), now))
+            if (old.supplierName != new.supplierName) corrections.add(
+                TrackedCorrection(
+                    "bill.supplierName",
+                    old.supplierName,
+                    new.supplierName,
+                    now
+                )
+            )
+            if (old.invoiceNumber != new.invoiceNumber) corrections.add(
+                TrackedCorrection(
+                    "bill.invoiceNumber",
+                    old.invoiceNumber,
+                    new.invoiceNumber,
+                    now
+                )
+            )
+            if (old.amount != new.amount) corrections.add(
+                TrackedCorrection(
+                    "bill.amount",
+                    old.amount?.toString(),
+                    new.amount?.toString(),
+                    now
+                )
+            )
         }
     }
 
     // Expense fields
     oldData?.expense?.let { old ->
         newData.expense?.let { new ->
-            if (old.merchant != new.merchant) corrections.add(TrackedCorrection("expense.merchant", old.merchant, new.merchant, now))
-            if (old.amount != new.amount) corrections.add(TrackedCorrection("expense.amount", old.amount?.toString(), new.amount?.toString(), now))
-            if (old.category != new.category) corrections.add(TrackedCorrection("expense.category", old.category?.name, new.category?.name, now))
+            if (old.merchant != new.merchant) corrections.add(
+                TrackedCorrection(
+                    "expense.merchant",
+                    old.merchant,
+                    new.merchant,
+                    now
+                )
+            )
+            if (old.amount != new.amount) corrections.add(
+                TrackedCorrection(
+                    "expense.amount",
+                    old.amount?.toString(),
+                    new.amount?.toString(),
+                    now
+                )
+            )
+            if (old.category != new.category) corrections.add(
+                TrackedCorrection(
+                    "expense.category",
+                    old.category?.name,
+                    new.category?.name,
+                    now
+                )
+            )
         }
     }
 
