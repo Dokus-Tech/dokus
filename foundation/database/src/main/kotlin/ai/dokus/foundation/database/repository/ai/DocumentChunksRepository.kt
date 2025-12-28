@@ -54,13 +54,17 @@ class DocumentChunksRepository : ChunkRepository {
      *
      * Uses pgvector's `<=>` operator for cosine distance.
      * CRITICAL: Always filters by tenantId for multi-tenant security.
+     *
+     * @param confirmedOnly If true, only search chunks from documents with Confirmed draft status.
+     *                      This is the default for chat to ensure only verified documents are used.
      */
     override suspend fun searchSimilarChunks(
         tenantId: TenantId,
         queryEmbedding: List<Float>,
         documentId: DocumentId?,
         topK: Int,
-        minSimilarity: Float
+        minSimilarity: Float,
+        confirmedOnly: Boolean
     ): ChunkSearchResult = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
 
@@ -81,6 +85,7 @@ class DocumentChunksRepository : ChunkRepository {
         val totalSearched = countQuery.count()
 
         // Perform vector similarity search using raw SQL for pgvector operators
+        // When confirmedOnly=true, join with document_drafts to filter by draft_status = 'CONFIRMED'
         val sql = buildString {
             append("SELECT ")
             append("dc.id, dc.document_id, dc.content, dc.chunk_index, ")
@@ -89,17 +94,24 @@ class DocumentChunksRepository : ChunkRepository {
             append("d.filename as document_name ")
             append("FROM document_chunks dc ")
             append("LEFT JOIN documents d ON dc.document_id = d.id ")
+            if (confirmedOnly) {
+                // Join with drafts table to filter by Confirmed status
+                append("INNER JOIN document_drafts dd ON dc.document_id = dd.document_id AND dc.tenant_id = dd.tenant_id ")
+            }
             append("WHERE dc.tenant_id = '$tenantUuid' ")
             append("AND dc.embedding IS NOT NULL ")
             if (documentId != null) {
                 append("AND dc.document_id = '${UUID.fromString(documentId.toString())}' ")
+            }
+            if (confirmedOnly) {
+                append("AND dd.draft_status = 'CONFIRMED' ")
             }
             append("AND (1 - (dc.embedding <=> '$vectorString'::vector)) >= $minSimilarity ")
             append("ORDER BY dc.embedding <=> '$vectorString'::vector ")
             append("LIMIT $topK")
         }
 
-        logger.debug("Executing vector search SQL: ${sql.take(200)}...")
+        logger.debug("Executing vector search SQL (confirmedOnly=$confirmedOnly): ${sql.take(200)}...")
 
         val chunks = mutableListOf<RetrievedChunk>()
 

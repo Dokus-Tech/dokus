@@ -14,7 +14,7 @@ import tech.dokus.domain.enums.IngestionStatus
  *
  * Canonical endpoints:
  * - POST /upload - Upload document (creates ingestion run with status=Queued)
- * - GET / - List documents with filters
+ * - GET / - List documents with filters (uses Documents.List)
  * - GET /{id} - Get full DocumentRecordDto
  * - DELETE /{id} - Delete document (cascades to drafts, runs)
  * - POST /{id}/reprocess - Reprocess document (idempotent: returns existing run unless force)
@@ -23,17 +23,32 @@ import tech.dokus.domain.enums.IngestionStatus
  * - PATCH /{id}/draft - Update draft
  * - POST /{id}/confirm - Confirm and create financial entity
  * - POST /{id}/chat - Document Q&A
+ *
+ * NOTE: Query parameters for listing are defined in Documents.List, NOT in the base class.
+ * This prevents parameter leakage to single-document routes.
  */
 @Serializable
 @Resource("/api/v1/documents")
-class Documents(
-    val draftStatus: DraftStatus? = null,
-    val documentType: DocumentType? = null,
-    val ingestionStatus: IngestionStatus? = null,
-    val search: String? = null,
-    val page: Int = 0,
-    val limit: Int = 20
-) {
+class Documents {
+    /**
+     * GET /api/v1/documents
+     * List documents with optional filters and pagination.
+     *
+     * Query parameters are defined here, NOT in the parent class,
+     * to prevent them from leaking to child routes like /{id}.
+     */
+    @Serializable
+    @Resource("")
+    class Paginated(
+        val parent: Documents = Documents(),
+        val draftStatus: DraftStatus? = null,
+        val documentType: DocumentType? = null,
+        val ingestionStatus: IngestionStatus? = null,
+        val search: String? = null,
+        val page: Int = 0,
+        val limit: Int = 20
+    )
+
     /**
      * POST /api/v1/documents/upload
      * Upload a new document

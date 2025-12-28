@@ -7,6 +7,7 @@ import tech.dokus.domain.model.ChunkRetrievalResponse
 import tech.dokus.domain.model.DocumentChunkId
 import tech.dokus.domain.model.DocumentChunkSummary
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.DraftStatusChecker
 import tech.dokus.domain.repository.IngestionStatusChecker
 import tech.dokus.domain.repository.RetrievedChunk
 import org.slf4j.LoggerFactory
@@ -54,7 +55,8 @@ import kotlin.uuid.ExperimentalUuidApi
 class RAGService(
     private val embeddingService: EmbeddingService,
     private val chunkRepository: ChunkRepository,
-    private val ingestionStatusChecker: IngestionStatusChecker? = null
+    private val ingestionStatusChecker: IngestionStatusChecker? = null,
+    private val draftStatusChecker: DraftStatusChecker? = null
 ) {
     private val logger = LoggerFactory.getLogger(RAGService::class.java)
 
@@ -128,13 +130,15 @@ class RAGService(
         logger.debug("Query embedding generated: dimensions=${queryEmbedding.dimensions}, model=${queryEmbedding.model}")
 
         // Step 2: Perform vector similarity search via repository
+        // confirmedOnly=true ensures only chunks from Confirmed documents are returned
         val searchResult = try {
             chunkRepository.searchSimilarChunks(
                 tenantId = tenantId,
                 queryEmbedding = queryEmbedding.embedding,
                 documentId = documentId,
                 topK = effectiveTopK,
-                minSimilarity = minSimilarity
+                minSimilarity = minSimilarity,
+                confirmedOnly = true
             )
         } catch (e: Exception) {
             logger.error("Failed to search similar chunks", e)
@@ -321,6 +325,32 @@ class RAGService(
             checker.isProcessing(tenantId, documentId)
         } catch (e: Exception) {
             logger.warn("Failed to check processing status for document: $documentId", e)
+            false
+        }
+    }
+
+    /**
+     * Check if a document has been confirmed by the user.
+     *
+     * Chat is only allowed for Confirmed documents. This method checks the
+     * draft status to enforce this policy.
+     *
+     * Returns false if no DraftStatusChecker is configured (fail-safe).
+     *
+     * @param tenantId The tenant ID (REQUIRED for security)
+     * @param documentId The document ID to check
+     * @return true if document has status=Confirmed, false otherwise
+     */
+    suspend fun isDocumentConfirmed(tenantId: TenantId, documentId: DocumentId): Boolean {
+        val checker = draftStatusChecker
+        if (checker == null) {
+            logger.debug("No DraftStatusChecker configured, assuming document is not confirmed")
+            return false
+        }
+        return try {
+            checker.isConfirmed(tenantId, documentId)
+        } catch (e: Exception) {
+            logger.warn("Failed to check confirmation status for document: $documentId", e)
             false
         }
     }

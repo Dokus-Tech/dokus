@@ -32,6 +32,7 @@ interface ChunkRepository {
      * @param documentId Optional document ID to filter to a single document
      * @param topK Maximum number of chunks to return
      * @param minSimilarity Minimum cosine similarity threshold (0.0 - 1.0)
+     * @param confirmedOnly If true, only search chunks from confirmed documents (default: true for chat)
      * @return ChunkSearchResult containing matched chunks
      */
     suspend fun searchSimilarChunks(
@@ -39,7 +40,8 @@ interface ChunkRepository {
         queryEmbedding: List<Float>,
         documentId: DocumentId?,
         topK: Int,
-        minSimilarity: Float
+        minSimilarity: Float,
+        confirmedOnly: Boolean = true
     ): ChunkSearchResult
 
     /**
