@@ -1,9 +1,9 @@
 package ai.dokus.foundation.design.extensions
 
-import tech.dokus.domain.enums.DraftStatus
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import tech.dokus.domain.enums.DraftStatus
 
 /**
  * Extension property to get a localized display name for a DraftStatus.
@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
  */
 val DraftStatus.localized: String
     @Composable get() = when (this) {
+        DraftStatus.NeedsInput -> "Needs Input"
         DraftStatus.NeedsReview -> "Needs Review"
         DraftStatus.Ready -> "Ready"
         DraftStatus.Confirmed -> "Confirmed"
@@ -52,6 +53,7 @@ val DraftStatus.localizedUppercase: String
  */
 val DraftStatus.color: Color
     @Composable get() = when (this) {
+        DraftStatus.NeedsInput -> MaterialTheme.colorScheme.errorContainer
         DraftStatus.NeedsReview -> MaterialTheme.colorScheme.primaryContainer
         DraftStatus.Ready -> MaterialTheme.colorScheme.tertiaryContainer
         DraftStatus.Confirmed -> MaterialTheme.colorScheme.tertiaryContainer
@@ -71,6 +73,7 @@ val DraftStatus.color: Color
  */
 val DraftStatus.onColor: Color
     @Composable get() = when (this) {
+        DraftStatus.NeedsInput -> MaterialTheme.colorScheme.onErrorContainer
         DraftStatus.NeedsReview -> MaterialTheme.colorScheme.onPrimaryContainer
         DraftStatus.Ready -> MaterialTheme.colorScheme.onTertiaryContainer
         DraftStatus.Confirmed -> MaterialTheme.colorScheme.onTertiaryContainer
@@ -81,7 +84,7 @@ val DraftStatus.onColor: Color
  * Checks if this draft status indicates the document needs user attention.
  */
 val DraftStatus.needsAttention: Boolean
-    get() = this == DraftStatus.NeedsReview
+    get() = this == DraftStatus.NeedsInput || this == DraftStatus.NeedsReview
 
 /**
  * Checks if this draft status indicates the document is ready for confirmation.

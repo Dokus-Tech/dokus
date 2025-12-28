@@ -532,7 +532,7 @@ internal class CashflowRemoteDataSourceImpl(
     ): Result<PaginatedResponse<DocumentRecordDto>> {
         return runCatching {
             httpClient.get(
-                Documents(
+                Documents.Paginated(
                     draftStatus = draftStatus,
                     documentType = documentType,
                     ingestionStatus = ingestionStatus,
