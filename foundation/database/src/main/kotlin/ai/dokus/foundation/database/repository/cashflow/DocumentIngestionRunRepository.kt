@@ -1,13 +1,8 @@
 package ai.dokus.foundation.database.repository.cashflow
 
+import ai.dokus.foundation.database.entity.IngestionItemEntity
 import ai.dokus.foundation.database.tables.cashflow.DocumentIngestionRunsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.ExtractedDocumentData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -18,12 +13,16 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.ExtractedDocumentData
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
@@ -41,18 +40,6 @@ data class IngestionRunSummary(
     val finishedAt: LocalDateTime?,
     val errorMessage: String?,
     val confidence: Double?
-)
-
-/**
- * Item representing a run ready for processing.
- */
-data class IngestionItem(
-    val runId: String,
-    val documentId: String,
-    val tenantId: String,
-    val storageKey: String,
-    val filename: String,
-    val contentType: String
 )
 
 /**
@@ -195,7 +182,7 @@ class DocumentIngestionRunRepository {
      */
     suspend fun findPendingForProcessing(
         limit: Int = 10
-    ): List<IngestionItem> = newSuspendedTransaction {
+    ): List<IngestionItemEntity> = newSuspendedTransaction {
         (DocumentIngestionRunsTable innerJoin DocumentsTable)
             .selectAll()
             .where {
@@ -204,7 +191,7 @@ class DocumentIngestionRunRepository {
             .orderBy(DocumentIngestionRunsTable.queuedAt to SortOrder.ASC)
             .limit(limit)
             .map { row ->
-                IngestionItem(
+                IngestionItemEntity(
                     runId = row[DocumentIngestionRunsTable.id].value.toString(),
                     documentId = row[DocumentIngestionRunsTable.documentId].toString(),
                     tenantId = row[DocumentIngestionRunsTable.tenantId].toString(),

@@ -1,16 +1,10 @@
 package tech.dokus.backend.worker
 
-import tech.dokus.foundation.ktor.config.ProcessorConfig
 import ai.dokus.ai.services.ChunkingService
 import ai.dokus.ai.services.EmbeddingException
 import ai.dokus.ai.services.EmbeddingService
-import ai.dokus.foundation.database.repository.processor.IngestionItem
+import ai.dokus.foundation.database.entity.IngestionItemEntity
 import ai.dokus.foundation.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.repository.ChunkRepository
-import tech.dokus.domain.repository.ChunkWithEmbedding
-import tech.dokus.foundation.ktor.storage.DocumentStorageService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +17,12 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.processor.ExtractionException
 import tech.dokus.backend.processor.ExtractionProviderFactory
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.ChunkWithEmbedding
+import tech.dokus.foundation.ktor.config.ProcessorConfig
+import tech.dokus.foundation.ktor.storage.DocumentStorageService
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -124,7 +124,10 @@ class DocumentProcessingWorker(
             try {
                 processIngestionRun(ingestion)
             } catch (e: Exception) {
-                logger.error("Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}", e)
+                logger.error(
+                    "Failed to process ingestion run ${ingestion.runId} for document ${ingestion.documentId}",
+                    e
+                )
             }
         }
     }
@@ -135,7 +138,7 @@ class DocumentProcessingWorker(
      * Each ingestion run is a single processing attempt. If it fails, it stays failed.
      * Retries are handled via the /reprocess endpoint which creates new runs.
      */
-    private suspend fun processIngestionRun(ingestion: IngestionItem) {
+    private suspend fun processIngestionRun(ingestion: IngestionItemEntity) {
         val runId = ingestion.runId
         val documentId = ingestion.documentId
         val tenantId = ingestion.tenantId
@@ -291,7 +294,7 @@ class DocumentProcessingWorker(
      * Try a fallback provider after primary failure.
      */
     private suspend fun tryFallbackProvider(
-        ingestion: IngestionItem,
+        ingestion: IngestionItemEntity,
         failedProvider: String,
         originalError: ExtractionException
     ) {
@@ -338,7 +341,10 @@ class DocumentProcessingWorker(
                             rawText = result.rawText
                         )
                     } catch (e: Exception) {
-                        logger.error("Failed to chunk/embed document $documentId after fallback: ${e.message}", e)
+                        logger.error(
+                            "Failed to chunk/embed document $documentId after fallback: ${e.message}",
+                            e
+                        )
                     }
                 }
 

@@ -1,38 +1,26 @@
 package ai.dokus.foundation.database.repository.processor
 
+import ai.dokus.foundation.database.entity.IngestionItemEntity
 import ai.dokus.foundation.database.tables.cashflow.DocumentDraftsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentIngestionRunsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.model.ExtractedDocumentData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toStdlibInstant
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.model.ExtractedDocumentData
 import java.util.UUID
-
-/**
- * Item representing a document ready for processing.
- * Contains all info needed by the worker to process a document.
- */
-data class IngestionItem(
-    val runId: String,
-    val documentId: String,
-    val tenantId: String,
-    val storageKey: String,
-    val filename: String,
-    val contentType: String
-)
+import kotlin.time.ExperimentalTime
 
 /**
  * Repository for ingestion run operations in the processor worker.
@@ -57,7 +45,7 @@ class ProcessorIngestionRepository {
      * Find pending ingestion runs ready for processing.
      * Only picks up runs with status=Queued, ordered by queue time (FIFO).
      */
-    suspend fun findPendingForProcessing(limit: Int = 10): List<IngestionItem> =
+    suspend fun findPendingForProcessing(limit: Int = 10): List<IngestionItemEntity> =
         newSuspendedTransaction {
             (DocumentIngestionRunsTable innerJoin DocumentsTable)
                 .selectAll()
@@ -67,7 +55,7 @@ class ProcessorIngestionRepository {
                 .orderBy(DocumentIngestionRunsTable.queuedAt to SortOrder.ASC)
                 .limit(limit)
                 .map { row ->
-                    IngestionItem(
+                    IngestionItemEntity(
                         runId = row[DocumentIngestionRunsTable.id].value.toString(),
                         documentId = row[DocumentIngestionRunsTable.documentId].toString(),
                         tenantId = row[DocumentIngestionRunsTable.tenantId].toString(),
@@ -82,9 +70,10 @@ class ProcessorIngestionRepository {
      * Mark an ingestion run as currently being processed.
      * Sets status to Processing and records the AI provider.
      */
+    @OptIn(ExperimentalTime::class)
     suspend fun markAsProcessing(runId: String, provider: String): Boolean =
         newSuspendedTransaction {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
             DocumentIngestionRunsTable.update({
                 DocumentIngestionRunsTable.id eq UUID.fromString(runId)
             }) {
@@ -127,7 +116,7 @@ class ProcessorIngestionRepository {
         val documentUuid = UUID.fromString(documentId)
         val tenantUuid = UUID.fromString(tenantId)
         val extractedDataJson = json.encodeToString(extractedData)
-        val fieldConfidencesJson = extractedData.fieldConfidences?.let { json.encodeToString(it) }
+        val fieldConfidencesJson = extractedData.fieldConfidences.let { json.encodeToString(it) }
 
         // Update the ingestion run
         val runUpdated = DocumentIngestionRunsTable.update({
@@ -199,9 +188,10 @@ class ProcessorIngestionRepository {
     /**
      * Mark an ingestion run as failed.
      */
+    @OptIn(ExperimentalTime::class)
     suspend fun markAsFailed(runId: String, error: String): Boolean =
         newSuspendedTransaction {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
             DocumentIngestionRunsTable.update({
                 DocumentIngestionRunsTable.id eq UUID.fromString(runId)
             }) {
