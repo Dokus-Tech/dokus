@@ -4,6 +4,7 @@ import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.Quantity
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId

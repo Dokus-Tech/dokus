@@ -1,99 +1,468 @@
 package tech.dokus.domain
 
-import tech.dokus.domain.exceptions.DokusException
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.validators.ValidateMoneyUseCase
-import tech.dokus.domain.validators.ValidatePercentageUseCase
-import tech.dokus.domain.validators.ValidateQuantityUseCase
-import tech.dokus.domain.validators.ValidateVatRateUseCase
+import tech.dokus.domain.exceptions.DokusException
 import kotlin.jvm.JvmInline
 
+/**
+ * Money represented in minor units (cents for EUR/USD/GBP).
+ *
+ * Examples:
+ * - €123.45 = Money(12345)
+ * - $0.01 = Money(1)
+ * - €-50.00 = Money(-5000)
+ *
+ * Using minor units (Long) avoids all floating-point precision issues.
+ */
 @Serializable
 @JvmInline
-value class Money(override val value: String) : ValueClass<String>, Validatable<Money> {
-    override fun toString(): String = value
+value class Money(val minor: Long) : Comparable<Money> {
 
-    override val isValid: Boolean
-        get() = ValidateMoneyUseCase(this)
+    /**
+     * Display string with 2 decimal places.
+     * Examples: "123.45", "-50.00", "0.00"
+     */
+    fun toDisplayString(): String {
+        val isNegative = minor < 0
+        val absMinor = if (minor < 0) -minor else minor
+        val whole = absMinor / 100
+        val cents = absMinor % 100
+        val sign = if (isNegative) "-" else ""
+        return "$sign$whole.${cents.toString().padStart(2, '0')}"
+    }
 
-    override val validOrThrows: Money
-        get() = if (isValid) this else throw DokusException.Validation.InvalidMoney
+    override fun toString(): String = toDisplayString()
+
+    override fun compareTo(other: Money): Int = minor.compareTo(other.minor)
+
+    operator fun plus(other: Money): Money = Money(minor + other.minor)
+    operator fun minus(other: Money): Money = Money(minor - other.minor)
+    operator fun times(quantity: Int): Money = Money(minor * quantity)
+    operator fun times(quantity: Long): Money = Money(minor * quantity)
+    operator fun unaryMinus(): Money = Money(-minor)
+
+    /**
+     * Check if this amount is zero.
+     */
+    val isZero: Boolean get() = minor == 0L
+
+    /**
+     * Check if this amount is negative.
+     */
+    val isNegative: Boolean get() = minor < 0
+
+    /**
+     * Check if this amount is positive (> 0).
+     */
+    val isPositive: Boolean get() = minor > 0
 
     companion object {
-        val ZERO = Money("0.00")
+        val ZERO = Money(0L)
 
-        fun parse(value: String): Money = Money(value)
+        /**
+         * Parse a display string like "123.45" or "-50.00" into Money.
+         * Returns null if the string is not a valid money format.
+         *
+         * Handles:
+         * - Currency symbols (€$£) - stripped
+         * - Whitespace - stripped
+         * - Comma as decimal separator - converted to dot
+         * - Optional negative sign
+         */
+        fun parse(value: String): Money? {
+            val cleaned = value
+                .replace("€", "")
+                .replace("$", "")
+                .replace("£", "")
+                .replace(" ", "")
+                .replace(",", ".")
+                .trim()
 
-        fun fromDouble(value: Double): Money {
-            val formatted = ((value * 100).toLong() / 100.0).toString()
-            return if (formatted.contains('.')) {
-                val parts = formatted.split('.')
-                val decimals = if (parts[1].length == 1) "${parts[1]}0" else parts[1].take(2)
-                Money("${parts[0]}.$decimals")
-            } else {
-                Money("$formatted.00")
+            if (cleaned.isEmpty()) return null
+
+            return try {
+                val isNegative = cleaned.startsWith("-")
+                val absValue = if (isNegative) cleaned.substring(1) else cleaned
+
+                val parts = absValue.split(".")
+                when (parts.size) {
+                    1 -> {
+                        // No decimal part: "123" -> 12300
+                        val whole = parts[0].toLongOrNull() ?: return null
+                        val minor = whole * 100
+                        Money(if (isNegative) -minor else minor)
+                    }
+                    2 -> {
+                        // Has decimal part: "123.45" -> 12345
+                        val whole = parts[0].toLongOrNull() ?: return null
+                        val decimalPart = parts[1]
+                        if (decimalPart.length > 2) return null // Too many decimals
+
+                        val cents = when (decimalPart.length) {
+                            0 -> 0L
+                            1 -> (decimalPart.toLongOrNull() ?: return null) * 10
+                            2 -> decimalPart.toLongOrNull() ?: return null
+                            else -> return null
+                        }
+                        val minor = whole * 100 + cents
+                        Money(if (isNegative) -minor else minor)
+                    }
+                    else -> null // Multiple decimal points
+                }
+            } catch (e: NumberFormatException) {
+                null
             }
         }
 
-        fun fromInt(value: Int): Money = Money("$value.00")
+        /**
+         * Create Money from a Double value.
+         * Uses rounding to handle floating-point imprecision.
+         *
+         * @param value The amount in major units (e.g., 123.45)
+         */
+        fun fromDouble(value: Double): Money {
+            val minor = kotlin.math.round(value * 100).toLong()
+            return Money(minor)
+        }
+
+        /**
+         * Create Money from an Int value (whole units, no cents).
+         *
+         * @param value The amount in major units (e.g., 123 becomes €123.00)
+         */
+        fun fromInt(value: Int): Money = Money(value.toLong() * 100)
+
+        /**
+         * Parse a string with validation, throwing if invalid.
+         */
+        fun parseOrThrow(value: String): Money {
+            return parse(value) ?: throw DokusException.Validation.InvalidMoney
+        }
+
+        /**
+         * Create Money from a database decimal value.
+         * DB stores as DECIMAL(12,2) like 123.45, we store as 12345.
+         */
+        fun fromDbDecimal(dbValue: java.math.BigDecimal): Money {
+            return Money(dbValue.movePointRight(2).longValueExact())
+        }
+    }
+
+    /**
+     * Convert to database decimal value.
+     * We store as 12345, DB stores as DECIMAL(12,2) like 123.45.
+     */
+    fun toDbDecimal(): java.math.BigDecimal {
+        return java.math.BigDecimal.valueOf(minor, 2)
     }
 }
 
+/**
+ * VAT rate represented in basis points.
+ *
+ * Examples:
+ * - 21.00% = VatRate(2100)
+ * - 6.00% = VatRate(600)
+ * - 0% = VatRate(0)
+ *
+ * Basis points allow 2 decimal places of precision (0.01% = 1 bp).
+ * Maximum representable: 327.67% (Int.MAX_VALUE / 100)
+ */
 @Serializable
 @JvmInline
-value class VatRate(override val value: String) : ValueClass<String>, Validatable<VatRate> {
-    override fun toString(): String = value
+value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
 
-    override val isValid: Boolean
-        get() = ValidateVatRateUseCase(this)
+    /**
+     * Display string with 2 decimal places.
+     * Examples: "21.00", "6.00", "0.00"
+     */
+    fun toDisplayString(): String {
+        val whole = basisPoints / 100
+        val fraction = basisPoints % 100
+        return "$whole.${fraction.toString().padStart(2, '0')}"
+    }
 
-    override val validOrThrows: VatRate
-        get() = if (isValid) this else throw DokusException.Validation.InvalidVatRate
+    override fun toString(): String = toDisplayString()
+
+    override fun compareTo(other: VatRate): Int = basisPoints.compareTo(other.basisPoints)
+
+    /**
+     * Convert to decimal multiplier for calculations.
+     * 21.00% -> 0.21
+     */
+    fun toMultiplier(): Double = basisPoints / 10000.0
+
+    /**
+     * Apply this VAT rate to a money amount.
+     * Returns the VAT amount (not the total including VAT).
+     */
+    fun applyTo(amount: Money): Money {
+        val vatMinor = (amount.minor * basisPoints) / 10000
+        return Money(vatMinor)
+    }
+
+    /**
+     * Check if this is a valid VAT rate (0-100%).
+     */
+    val isValid: Boolean get() = basisPoints in 0..10000
 
     companion object {
-        val ZERO = VatRate("0.00")
-        val STANDARD_BE = VatRate("21.00")  // Belgium standard rate
-        val REDUCED_BE = VatRate("6.00")     // Belgium reduced rate
+        val ZERO = VatRate(0)
+        val STANDARD_BE = VatRate(2100)  // Belgium standard rate 21%
+        val REDUCED_BE = VatRate(600)    // Belgium reduced rate 6%
 
-        fun parse(value: String): VatRate = VatRate(value)
+        /**
+         * Parse a display string like "21.00" or "21" into VatRate.
+         */
+        fun parse(value: String): VatRate? {
+            val cleaned = value.replace("%", "").replace(",", ".").trim()
+            if (cleaned.isEmpty()) return null
+
+            return try {
+                val parts = cleaned.split(".")
+                when (parts.size) {
+                    1 -> {
+                        val whole = parts[0].toIntOrNull() ?: return null
+                        VatRate(whole * 100)
+                    }
+                    2 -> {
+                        val whole = parts[0].toIntOrNull() ?: return null
+                        val decimalPart = parts[1]
+                        if (decimalPart.length > 2) return null
+
+                        val fraction = when (decimalPart.length) {
+                            0 -> 0
+                            1 -> (decimalPart.toIntOrNull() ?: return null) * 10
+                            2 -> decimalPart.toIntOrNull() ?: return null
+                            else -> return null
+                        }
+                        VatRate(whole * 100 + fraction)
+                    }
+                    else -> null
+                }
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
+
+        /**
+         * Create from a decimal multiplier (0.21 -> 21.00%).
+         */
+        fun fromMultiplier(multiplier: Double): VatRate {
+            val bp = kotlin.math.round(multiplier * 10000).toInt()
+            return VatRate(bp)
+        }
+
+        /**
+         * Parse with validation, throwing if invalid.
+         */
+        fun parseOrThrow(value: String): VatRate {
+            return parse(value) ?: throw DokusException.Validation.InvalidVatRate
+        }
+
+        /**
+         * Create VatRate from a database decimal value.
+         * DB stores as DECIMAL(5,4) multiplier like 0.2100 (21%), we store as 2100 bp.
+         */
+        fun fromDbDecimal(dbValue: java.math.BigDecimal): VatRate {
+            return VatRate(dbValue.movePointRight(4).intValueExact())
+        }
+    }
+
+    /**
+     * Convert to database decimal value.
+     * We store as 2100 bp, DB stores as DECIMAL(5,4) multiplier like 0.2100.
+     */
+    fun toDbDecimal(): java.math.BigDecimal {
+        return java.math.BigDecimal.valueOf(basisPoints.toLong(), 4)
     }
 }
 
+/**
+ * Percentage represented in basis points.
+ *
+ * Examples:
+ * - 100.00% = Percentage(10000)
+ * - 50.00% = Percentage(5000)
+ * - 33.33% = Percentage(3333)
+ *
+ * Basis points allow 2 decimal places of precision (0.01% = 1 bp).
+ */
 @Serializable
 @JvmInline
-value class Percentage(override val value: String) : ValueClass<String>, Validatable<Percentage> {
-    override fun toString(): String = value
+value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
 
-    override val isValid: Boolean
-        get() = ValidatePercentageUseCase(this)
+    /**
+     * Display string with 2 decimal places.
+     * Examples: "100.00", "50.00", "33.33"
+     */
+    fun toDisplayString(): String {
+        val whole = basisPoints / 100
+        val fraction = basisPoints % 100
+        return "$whole.${fraction.toString().padStart(2, '0')}"
+    }
 
-    override val validOrThrows: Percentage
-        get() = if (isValid) this else throw DokusException.Validation.InvalidPercentage
+    override fun toString(): String = toDisplayString()
+
+    override fun compareTo(other: Percentage): Int = basisPoints.compareTo(other.basisPoints)
+
+    /**
+     * Convert to decimal multiplier for calculations.
+     * 50.00% -> 0.50
+     */
+    fun toMultiplier(): Double = basisPoints / 10000.0
+
+    /**
+     * Apply this percentage to a money amount.
+     */
+    fun applyTo(amount: Money): Money {
+        val result = (amount.minor * basisPoints) / 10000
+        return Money(result)
+    }
+
+    /**
+     * Check if this is a valid percentage (0-100%).
+     */
+    val isValid: Boolean get() = basisPoints in 0..10000
 
     companion object {
-        val ZERO = Percentage("0.00")
-        val FULL = Percentage("100.00")
+        val ZERO = Percentage(0)
+        val FULL = Percentage(10000)  // 100%
+        val HALF = Percentage(5000)   // 50%
 
-        fun parse(value: String): Percentage = Percentage(value)
+        /**
+         * Parse a display string like "50.00" or "50" into Percentage.
+         */
+        fun parse(value: String): Percentage? {
+            val cleaned = value.replace("%", "").replace(",", ".").trim()
+            if (cleaned.isEmpty()) return null
+
+            return try {
+                val parts = cleaned.split(".")
+                when (parts.size) {
+                    1 -> {
+                        val whole = parts[0].toIntOrNull() ?: return null
+                        Percentage(whole * 100)
+                    }
+                    2 -> {
+                        val whole = parts[0].toIntOrNull() ?: return null
+                        val decimalPart = parts[1]
+                        if (decimalPart.length > 2) return null
+
+                        val fraction = when (decimalPart.length) {
+                            0 -> 0
+                            1 -> (decimalPart.toIntOrNull() ?: return null) * 10
+                            2 -> decimalPart.toIntOrNull() ?: return null
+                            else -> return null
+                        }
+                        Percentage(whole * 100 + fraction)
+                    }
+                    else -> null
+                }
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
+
+        /**
+         * Create from a decimal multiplier (0.50 -> 50.00%).
+         */
+        fun fromMultiplier(multiplier: Double): Percentage {
+            val bp = kotlin.math.round(multiplier * 10000).toInt()
+            return Percentage(bp)
+        }
+
+        /**
+         * Parse with validation, throwing if invalid.
+         */
+        fun parseOrThrow(value: String): Percentage {
+            return parse(value) ?: throw DokusException.Validation.InvalidPercentage
+        }
     }
 }
 
+/**
+ * Quantity for line items, supporting decimal quantities.
+ *
+ * Examples:
+ * - 1 unit = Quantity(1.0)
+ * - 2.5 hours = Quantity(2.5)
+ * - 0.25 kg = Quantity(0.25)
+ *
+ * Uses Double for simplicity. For high-precision use cases,
+ * consider a scaled Long representation.
+ */
 @Serializable
 @JvmInline
-value class Quantity(override val value: String) : ValueClass<String>, Validatable<Quantity> {
-    override fun toString(): String = value
+value class Quantity(val value: Double) : Comparable<Quantity> {
 
-    override val isValid: Boolean
-        get() = ValidateQuantityUseCase(this)
+    override fun toString(): String {
+        // Format without unnecessary trailing zeros
+        return if (value == value.toLong().toDouble()) {
+            value.toLong().toString()
+        } else {
+            value.toString()
+        }
+    }
 
-    override val validOrThrows: Quantity
-        get() = if (isValid) this else throw DokusException.Validation.InvalidQuantity
+    override fun compareTo(other: Quantity): Int = value.compareTo(other.value)
+
+    operator fun plus(other: Quantity): Quantity = Quantity(value + other.value)
+    operator fun minus(other: Quantity): Quantity = Quantity(value - other.value)
+    operator fun times(factor: Double): Quantity = Quantity(value * factor)
+
+    /**
+     * Check if quantity is positive (> 0).
+     */
+    val isPositive: Boolean get() = value > 0.0
+
+    /**
+     * Check if quantity is a whole number.
+     */
+    val isWhole: Boolean get() = value == value.toLong().toDouble()
 
     companion object {
-        val ONE = Quantity("1")
+        val ONE = Quantity(1.0)
+        val ZERO = Quantity(0.0)
 
-        fun parse(value: String): Quantity = Quantity(value)
-        fun fromDouble(value: Double): Quantity = Quantity(value.toString())
-        fun fromInt(value: Int): Quantity = Quantity(value.toString())
+        /**
+         * Parse a string into Quantity.
+         */
+        fun parse(value: String): Quantity? {
+            val cleaned = value.replace(",", ".").trim()
+            if (cleaned.isEmpty()) return null
+
+            return try {
+                val d = cleaned.toDoubleOrNull() ?: return null
+                if (d <= 0) return null // Quantity must be positive
+                Quantity(d)
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
+
+        fun fromDouble(value: Double): Quantity = Quantity(value)
+        fun fromInt(value: Int): Quantity = Quantity(value.toDouble())
+
+        /**
+         * Parse with validation, throwing if invalid.
+         */
+        fun parseOrThrow(value: String): Quantity {
+            return parse(value) ?: throw DokusException.Validation.InvalidQuantity
+        }
+
+        /**
+         * Create Quantity from a database decimal value.
+         */
+        fun fromDbDecimal(dbValue: java.math.BigDecimal): Quantity {
+            return Quantity(dbValue.toDouble())
+        }
+    }
+
+    /**
+     * Convert to database decimal value.
+     */
+    fun toDbDecimal(): java.math.BigDecimal {
+        return java.math.BigDecimal.valueOf(value)
     }
 }
