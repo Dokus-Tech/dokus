@@ -1,11 +1,13 @@
 package ai.dokus.app.cashflow.datasource
 
 import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
-import tech.dokus.domain.enums.ProcessingStatus
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.DocumentId
@@ -16,9 +18,16 @@ import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentProcessingListResponse
+import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.DocumentUploadResponse
+import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -500,24 +509,85 @@ internal class CashflowRemoteDataSourceImpl(
     }
 
     // ============================================================================
-    // DOCUMENT PROCESSING (AI Extraction Pipeline)
+    // DOCUMENT MANAGEMENT (AI Extraction Pipeline)
     // ============================================================================
 
-    override suspend fun listDocumentProcessing(
-        statuses: List<ProcessingStatus>,
+    override suspend fun listDocuments(
+        draftStatus: DraftStatus?,
+        documentType: DocumentType?,
+        ingestionStatus: IngestionStatus?,
+        search: String?,
         page: Int,
         limit: Int
-    ): Result<DocumentProcessingListResponse> {
+    ): Result<PaginatedResponse<DocumentRecordDto>> {
         return runCatching {
-            // Use comma-separated dbValues for cleaner URLs
-            val statusParam = if (statuses.isNotEmpty()) {
-                statuses.joinToString(",") { it.dbValue }
-            } else null
-            httpClient.get(Documents.Processing(
-                status = statusParam,
+            httpClient.get(Documents(
+                draftStatus = draftStatus?.name,
+                documentType = documentType?.name,
+                ingestionStatus = ingestionStatus?.name,
+                search = search,
                 page = page,
                 limit = limit
             )).body()
+        }
+    }
+
+    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+        return runCatching {
+            httpClient.get(Documents.Id(id = documentId.toString())).body()
+        }
+    }
+
+    override suspend fun getDocumentDraft(documentId: DocumentId): Result<DocumentDraftDto> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(Documents.Id.Draft(parent = docIdRoute)).body()
+        }
+    }
+
+    override suspend fun updateDocumentDraft(
+        documentId: DocumentId,
+        request: UpdateDraftRequest
+    ): Result<UpdateDraftResponse> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.patch(Documents.Id.Draft(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun reprocessDocument(
+        documentId: DocumentId,
+        request: ReprocessRequest
+    ): Result<ReprocessResponse> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.post(Documents.Id.Reprocess(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun confirmDocument(
+        documentId: DocumentId,
+        request: ConfirmDocumentRequest
+    ): Result<DocumentRecordDto> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.post(Documents.Id.Confirm(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun getDocumentIngestions(documentId: DocumentId): Result<List<DocumentIngestionDto>> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(Documents.Id.Ingestions(parent = docIdRoute)).body()
         }
     }
 
