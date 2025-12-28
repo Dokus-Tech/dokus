@@ -6,13 +6,13 @@ import ai.dokus.foundation.design.tooling.PreviewParametersProvider
 import ai.dokus.foundation.design.tooling.TestWrapper
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.DocumentProcessingId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedBillFields
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedExpenseFields
@@ -155,25 +155,14 @@ fun PendingDocumentsCardWithMoreItemsPreview(
  * Generates sample pending documents for preview.
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
+private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
     // Use static date for preview stability
     val now = LocalDateTime(2024, 5, 25, 10, 30, 0, 0)
     val tenantId = TenantId.generate()
 
     return listOf(
-        // Invoice with extraction data - Processed status
-        DocumentProcessingDto(
-            id = DocumentProcessingId.generate(),
-            documentId = DocumentId.generate(),
-            tenantId = tenantId,
-            status = ProcessingStatus.Processed,
-            documentType = DocumentType.Invoice,
-            extractedData = ExtractedDocumentData(
-                invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4400")
-            ),
-            confidence = 0.95,
-            createdAt = now,
-            updatedAt = now,
+        // Invoice with extraction data - NeedsReview status
+        DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
@@ -182,24 +171,32 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
                 sizeBytes = 125000,
                 storageKey = "documents/invoice-2024-001.pdf",
                 uploadedAt = now
-            )
-        ),
-        // Bill with extraction data - Processing status
-        DocumentProcessingDto(
-            id = DocumentProcessingId.generate(),
-            documentId = DocumentId.generate(),
-            tenantId = tenantId,
-            status = ProcessingStatus.Processing,
-            documentType = DocumentType.Bill,
-            extractedData = ExtractedDocumentData(
-                bill = ExtractedBillFields(
-                    invoiceNumber = "BILL-2024-123",
-                    supplierName = "Office Supplies Inc."
-                )
             ),
-            confidence = 0.87,
-            createdAt = now,
-            updatedAt = now,
+            draft = DocumentDraftDto(
+                documentId = DocumentId.generate(),
+                tenantId = tenantId,
+                draftStatus = DraftStatus.NeedsReview,
+                documentType = DocumentType.Invoice,
+                extractedData = ExtractedDocumentData(
+                    invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4400")
+                ),
+                aiDraftData = null,
+                aiDraftSourceRunId = null,
+                draftVersion = 1,
+                draftEditedAt = null,
+                draftEditedBy = null,
+                suggestedContactId = null,
+                contactSuggestionConfidence = null,
+                contactSuggestionReason = null,
+                lastSuccessfulRunId = null,
+                createdAt = now,
+                updatedAt = now
+            ),
+            latestIngestion = null,
+            confirmedEntity = null
+        ),
+        // Bill with extraction data - NeedsReview status
+        DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
@@ -208,21 +205,35 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
                 sizeBytes = 98000,
                 storageKey = "documents/supplier-bill.pdf",
                 uploadedAt = now
-            )
-        ),
-        // Expense - Pending status (just uploaded)
-        DocumentProcessingDto(
-            id = DocumentProcessingId.generate(),
-            documentId = DocumentId.generate(),
-            tenantId = tenantId,
-            status = ProcessingStatus.Pending,
-            documentType = DocumentType.Expense,
-            extractedData = ExtractedDocumentData(
-                expense = ExtractedExpenseFields(merchant = "Restaurant ABC")
             ),
-            confidence = null,
-            createdAt = now,
-            updatedAt = now,
+            draft = DocumentDraftDto(
+                documentId = DocumentId.generate(),
+                tenantId = tenantId,
+                draftStatus = DraftStatus.NeedsReview,
+                documentType = DocumentType.Bill,
+                extractedData = ExtractedDocumentData(
+                    bill = ExtractedBillFields(
+                        invoiceNumber = "BILL-2024-123",
+                        supplierName = "Office Supplies Inc."
+                    )
+                ),
+                aiDraftData = null,
+                aiDraftSourceRunId = null,
+                draftVersion = 1,
+                draftEditedAt = null,
+                draftEditedBy = null,
+                suggestedContactId = null,
+                contactSuggestionConfidence = null,
+                contactSuggestionReason = null,
+                lastSuccessfulRunId = null,
+                createdAt = now,
+                updatedAt = now
+            ),
+            latestIngestion = null,
+            confirmedEntity = null
+        ),
+        // Expense - NeedsReview status
+        DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
@@ -231,19 +242,32 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
                 sizeBytes = 45000,
                 storageKey = "documents/receipt-lunch-meeting.jpg",
                 uploadedAt = now
-            )
+            ),
+            draft = DocumentDraftDto(
+                documentId = DocumentId.generate(),
+                tenantId = tenantId,
+                draftStatus = DraftStatus.NeedsReview,
+                documentType = DocumentType.Expense,
+                extractedData = ExtractedDocumentData(
+                    expense = ExtractedExpenseFields(merchant = "Restaurant ABC")
+                ),
+                aiDraftData = null,
+                aiDraftSourceRunId = null,
+                draftVersion = 1,
+                draftEditedAt = null,
+                draftEditedBy = null,
+                suggestedContactId = null,
+                contactSuggestionConfidence = null,
+                contactSuggestionReason = null,
+                lastSuccessfulRunId = null,
+                createdAt = now,
+                updatedAt = now
+            ),
+            latestIngestion = null,
+            confirmedEntity = null
         ),
-        // Document without extraction (unknown type) - Queued status
-        DocumentProcessingDto(
-            id = DocumentProcessingId.generate(),
-            documentId = DocumentId.generate(),
-            tenantId = tenantId,
-            status = ProcessingStatus.Queued,
-            documentType = null,
-            extractedData = null,
-            confidence = null,
-            createdAt = now,
-            updatedAt = now,
+        // Document without draft yet (still processing)
+        DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
@@ -252,21 +276,13 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
                 sizeBytes = 200000,
                 storageKey = "documents/scan-20240525.pdf",
                 uploadedAt = now
-            )
-        ),
-        // Another invoice - Processed status
-        DocumentProcessingDto(
-            id = DocumentProcessingId.generate(),
-            documentId = DocumentId.generate(),
-            tenantId = tenantId,
-            status = ProcessingStatus.Processed,
-            documentType = DocumentType.Invoice,
-            extractedData = ExtractedDocumentData(
-                invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4401")
             ),
-            confidence = 0.92,
-            createdAt = now,
-            updatedAt = now,
+            draft = null,
+            latestIngestion = null,
+            confirmedEntity = null
+        ),
+        // Another invoice - NeedsReview status
+        DocumentRecordDto(
             document = DocumentDto(
                 id = DocumentId.generate(),
                 tenantId = tenantId,
@@ -275,7 +291,29 @@ private fun getSamplePendingDocuments(): List<DocumentProcessingDto> {
                 sizeBytes = 150000,
                 storageKey = "documents/invoice-client-abc.pdf",
                 uploadedAt = now
-            )
+            ),
+            draft = DocumentDraftDto(
+                documentId = DocumentId.generate(),
+                tenantId = tenantId,
+                draftStatus = DraftStatus.NeedsReview,
+                documentType = DocumentType.Invoice,
+                extractedData = ExtractedDocumentData(
+                    invoice = ExtractedInvoiceFields(invoiceNumber = "INV-3006-4401")
+                ),
+                aiDraftData = null,
+                aiDraftSourceRunId = null,
+                draftVersion = 1,
+                draftEditedAt = null,
+                draftEditedBy = null,
+                suggestedContactId = null,
+                contactSuggestionConfidence = null,
+                contactSuggestionReason = null,
+                lastSuccessfulRunId = null,
+                createdAt = now,
+                updatedAt = now
+            ),
+            latestIngestion = null,
+            confirmedEntity = null
         )
     )
 }

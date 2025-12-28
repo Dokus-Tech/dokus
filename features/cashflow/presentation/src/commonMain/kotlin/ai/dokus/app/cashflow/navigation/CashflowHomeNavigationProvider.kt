@@ -13,7 +13,7 @@ internal object CashflowHomeNavigationProvider : NavigationProvider {
             CashflowScreen()
         }
         composable<HomeDestination.AiChat> {
-            ChatScreen(processingId = null)
+            ChatScreen(documentId = null)
         }
     }
 }

@@ -114,7 +114,7 @@ internal class ChatContainer(
         updateState {
             ChatState.Content(
                 scope = ChatScope.SingleDoc,
-                documentId = documentId,
+                documentId = docId,
                 documentName = null, // TODO: Fetch document name if needed
                 configuration = config
             )
