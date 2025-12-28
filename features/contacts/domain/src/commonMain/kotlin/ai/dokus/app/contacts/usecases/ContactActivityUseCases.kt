@@ -1,10 +1,10 @@
 package ai.dokus.app.contacts.usecases
 
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.ContactActivitySummary
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.ContactMergeResult
-import tech.dokus.domain.model.UpdateContactPeppolRequest
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
 
 /**
  * Use case for getting contact activity summary (invoices, bills, expenses).

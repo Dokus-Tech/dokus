@@ -2,9 +2,9 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.app.contacts.usecases.MergeContactsUseCase
-import tech.dokus.domain.model.ContactActivitySummary
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.ContactMergeResult
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactMergeResult
 import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -1091,8 +1091,8 @@ private fun computeFieldConflicts(
     }
 
     // VAT rate (VatRate comparison)
-    val sourceVatRate = source.defaultVatRate?.value?.toString()
-    val targetVatRate = target.defaultVatRate?.value?.toString()
+    val sourceVatRate = source.defaultVatRate?.toString()
+    val targetVatRate = target.defaultVatRate?.toString()
     if (sourceVatRate != null && targetVatRate != null && sourceVatRate != targetVatRate) {
         conflicts.add(
             MergeFieldConflict(

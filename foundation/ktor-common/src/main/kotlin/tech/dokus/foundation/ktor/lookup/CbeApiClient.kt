@@ -2,9 +2,9 @@ package tech.dokus.foundation.ktor.lookup
 
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.EntityAddress
-import tech.dokus.domain.model.EntityLookup
-import tech.dokus.domain.model.EntityStatus
+import tech.dokus.domain.model.entity.EntityAddress
+import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.domain.model.entity.EntityStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get

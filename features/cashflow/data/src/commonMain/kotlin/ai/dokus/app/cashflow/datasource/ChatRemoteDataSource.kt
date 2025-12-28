@@ -1,13 +1,13 @@
 package ai.dokus.app.cashflow.datasource
 
-import tech.dokus.domain.ids.DocumentProcessingId
-import tech.dokus.domain.model.ChatConfiguration
-import tech.dokus.domain.model.ChatHistoryResponse
-import tech.dokus.domain.model.ChatRequest
-import tech.dokus.domain.model.ChatResponse
-import tech.dokus.domain.model.ChatScope
-import tech.dokus.domain.model.ChatSessionId
-import tech.dokus.domain.model.ChatSessionListResponse
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ai.ChatConfiguration
+import tech.dokus.domain.model.ai.ChatHistoryResponse
+import tech.dokus.domain.model.ai.ChatRequest
+import tech.dokus.domain.model.ai.ChatResponse
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
+import tech.dokus.domain.model.ai.ChatSessionListResponse
 import io.ktor.client.HttpClient
 
 /**
@@ -50,7 +50,7 @@ interface ChatRemoteDataSource {
      * @return Chat response with AI-generated answer and source citations
      */
     suspend fun sendSingleDocumentMessage(
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
         request: ChatRequest
     ): Result<ChatResponse>
 
@@ -78,7 +78,7 @@ interface ChatRemoteDataSource {
      */
     suspend fun listSessions(
         scope: ChatScope? = null,
-        documentId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         page: Int = 0,
         limit: Int = 20
     ): Result<ChatSessionListResponse>

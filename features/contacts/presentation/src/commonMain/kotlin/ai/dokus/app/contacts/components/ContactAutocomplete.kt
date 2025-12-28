@@ -3,7 +3,7 @@ package ai.dokus.app.contacts.components
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -244,7 +244,7 @@ fun ContactAutocomplete(
                                 postalCode = contact.postalCode,
                                 country = contact.country,
                                 defaultPaymentTerms = contact.defaultPaymentTerms,
-                                defaultVatRate = contact.defaultVatRate?.value?.toString()
+                                defaultVatRate = contact.defaultVatRate?.toString()
                             )
                             searchQuery = contact.name.value
                             onValueChange(contact.name.value)

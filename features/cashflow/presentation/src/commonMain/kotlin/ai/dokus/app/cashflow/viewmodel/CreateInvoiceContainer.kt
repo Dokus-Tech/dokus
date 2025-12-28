@@ -9,7 +9,7 @@ import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.ContactDto
+import tech.dokus.domain.model.contact.ContactDto
 import ai.dokus.foundation.platform.Logger
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate

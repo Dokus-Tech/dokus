@@ -2,7 +2,7 @@ package ai.dokus.foundation.database.tables.ai
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.auth.UsersTable
-import ai.dokus.foundation.database.tables.cashflow.DocumentProcessingTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
@@ -57,8 +57,8 @@ object ChatMessagesTable : UUIDTable("chat_messages") {
     val scope = varchar("scope", 20)
 
     // Optional: Document reference when scoped to single document
-    val documentProcessingId = uuid("document_processing_id")
-        .references(DocumentProcessingTable.id, onDelete = ReferenceOption.SET_NULL)
+    val documentId = uuid("document_id")
+        .references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()
 
     // Source citations as JSON (for ASSISTANT messages)
@@ -98,7 +98,7 @@ object ChatMessagesTable : UUIDTable("chat_messages") {
         index(false, tenantId, userId)
 
         // For finding messages about a specific document
-        index(false, tenantId, documentProcessingId)
+        index(false, tenantId, documentId)
 
         // For recent conversations
         index(false, tenantId, createdAt)

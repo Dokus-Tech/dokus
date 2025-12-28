@@ -8,7 +8,7 @@ import ai.dokus.app.cashflow.model.DocumentUploadTask
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.runtime.Immutable
@@ -67,8 +67,8 @@ sealed interface CashflowState : MVIState, DokusState<Nothing> {
         val sortOption: DocumentSortOption = DocumentSortOption.Default,
         val isSidebarOpen: Boolean = false,
         val isQrDialogOpen: Boolean = false,
-        val pendingDocuments: PaginationState<DocumentProcessingDto> = PaginationState(pageSize = PENDING_PAGE_SIZE),
-        val pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>> = DokusState.idle(),
+        val pendingDocuments: PaginationState<DocumentRecordDto> = PaginationState(pageSize = PENDING_PAGE_SIZE),
+        val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
         val vatSummaryState: DokusState<VatSummaryData> = DokusState.loading(),
         val businessHealthState: DokusState<BusinessHealthData> = DokusState.loading(),
         val uploadTasks: List<DocumentUploadTask> = emptyList(),

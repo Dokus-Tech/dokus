@@ -1,13 +1,13 @@
 package ai.dokus.app.cashflow.datasource
 
-import tech.dokus.domain.ids.DocumentProcessingId
-import tech.dokus.domain.model.ChatConfiguration
-import tech.dokus.domain.model.ChatHistoryResponse
-import tech.dokus.domain.model.ChatRequest
-import tech.dokus.domain.model.ChatResponse
-import tech.dokus.domain.model.ChatScope
-import tech.dokus.domain.model.ChatSessionId
-import tech.dokus.domain.model.ChatSessionListResponse
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ai.ChatConfiguration
+import tech.dokus.domain.model.ai.ChatHistoryResponse
+import tech.dokus.domain.model.ai.ChatRequest
+import tech.dokus.domain.model.ai.ChatResponse
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
+import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.routes.Chat
 import tech.dokus.domain.routes.Documents
 import io.ktor.client.HttpClient
@@ -42,7 +42,7 @@ internal class ChatRemoteDataSourceImpl(
     }
 
     override suspend fun sendSingleDocumentMessage(
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
         request: ChatRequest
     ): Result<ChatResponse> {
         return runCatching {
@@ -57,9 +57,9 @@ internal class ChatRemoteDataSourceImpl(
     override suspend fun sendMessage(request: ChatRequest): Result<ChatResponse> {
         return when (request.scope) {
             ChatScope.SingleDoc -> {
-                val documentId = request.documentProcessingId
+                val documentId = request.documentId
                     ?: return Result.failure(
-                        IllegalArgumentException("documentProcessingId is required for SINGLE_DOC scope")
+                        IllegalArgumentException("documentId is required for SINGLE_DOC scope")
                     )
                 sendSingleDocumentMessage(documentId, request)
             }
@@ -75,7 +75,7 @@ internal class ChatRemoteDataSourceImpl(
 
     override suspend fun listSessions(
         scope: ChatScope?,
-        documentId: DocumentProcessingId?,
+        documentId: DocumentId?,
         page: Int,
         limit: Int
     ): Result<ChatSessionListResponse> {

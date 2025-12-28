@@ -57,7 +57,6 @@ micrometerCore = "1.16.1"
 micrometerRegistryPrometheus = "1.16.1"
 commonsPool2 = "2.13.0"
 javaMail = "1.6.2"
-amqpClient = "5.28.0"
 resilience4j = "2.3.0"
 minio = "8.6.0"
 koog = "0.5.4"
@@ -153,8 +152,6 @@ micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "mic
 exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 
 javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javaMail" }
-
-amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqpClient" }
 minio = { module = "io.minio:minio", version.ref = "minio" }
 
 # Image Processing (server-side)
@@ -243,7 +240,7 @@ rpc-client = ["kotlinx-rpc-krpc-client", "kotlinx-rpc-krpc-ktor-client", "kotlin
 rpc-server = ["kotlinx-rpc-krpc-server", "kotlinx-rpc-krpc-ktor-server", "kotlinx-rpc-krpc-serialization-json"]
 #krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
 koin-compose = ["koin-core", "koin-compose", "koin-viewmodel", "koin-navigation"]
-messaging-queue = ["resilience4j-kotlin", "resilience4j-circuitbreaker", "resilience4j-retry", "amqp-client"]
+messaging-queue = ["resilience4j-kotlin", "resilience4j-circuitbreaker", "resilience4j-retry"]
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

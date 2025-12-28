@@ -29,7 +29,11 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.processor.ExtractionProviderFactory
+import ai.dokus.ai.service.AIService
+import ai.dokus.ai.services.ChunkingService
+import ai.dokus.ai.services.EmbeddingService
+import tech.dokus.ocr.OcrEngine
+import tech.dokus.ocr.engine.TesseractOcrEngine
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.DisabledEmailService
 import tech.dokus.backend.services.auth.EmailConfig
@@ -251,17 +255,26 @@ private val contactsModule = module {
 }
 
 private fun processorModule(appConfig: AppBaseConfig) = module {
-    single { ExtractionProviderFactory(get<HttpClient>(), appConfig.ai) }
+    // AI Service (uses Koog agents for extraction)
+    single { AIService(appConfig.ai) }
+
+    // OCR Engine (Tesseract-based)
+    single<OcrEngine> { TesseractOcrEngine() }
+
+    // Optional RAG services - can be enabled when embeddings are needed
+    // single { ChunkingService() }
+    // single { EmbeddingService(appConfig.ai) }
 
     single {
         DocumentProcessingWorker(
-            processingRepository = get(),
+            ingestionRepository = get(),
             documentStorage = get<DocumentStorageService>(),
-            providerFactory = get(),
+            aiService = get(),
+            ocrEngine = get(),
             config = appConfig.processor,
             // RAG chunking/embedding - use repositories from foundation:database
-            chunkingService = null,
-            embeddingService = null,
+            chunkingService = getOrNull<ChunkingService>(),
+            embeddingService = getOrNull<EmbeddingService>(),
             chunkRepository = getOrNull<ChunkRepository>(),
         )
     }

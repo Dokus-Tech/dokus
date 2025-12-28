@@ -1,29 +1,59 @@
 package ai.dokus.foundation.database.repository.cashflow
 
+import ai.dokus.foundation.database.tables.cashflow.DocumentDraftsTable
+import ai.dokus.foundation.database.tables.cashflow.DocumentIngestionRunsTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
-import tech.dokus.domain.enums.EntityType
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.ExtractedDocumentData
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 /**
+ * Result of listing documents with their optional drafts and ingestion info.
+ */
+data class DocumentWithDraftAndIngestion(
+    val document: DocumentDto,
+    val draft: DraftSummary?,
+    val latestIngestion: IngestionRunSummary?
+)
+
+/**
  * Repository for document CRUD operations.
+ * Documents are pure file metadata. Entity linkage is handled by
+ * financial entity tables (Invoice, Bill, Expense) which have documentId FK.
+ *
  * CRITICAL: All queries filter by tenantId for security.
  */
 @OptIn(ExperimentalUuidApi::class)
 class DocumentRepository {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
 
     /**
      * Create a new document record.
@@ -78,83 +108,235 @@ class DocumentRepository {
         }
 
     /**
-     * Get a document linked to a specific entity.
+     * List all documents for a tenant with pagination.
      * CRITICAL: Must filter by tenantId.
+     *
+     * @return Pair of (documents, totalCount)
      */
-    suspend fun getByEntity(
+    suspend fun listByTenant(
         tenantId: TenantId,
-        entityType: EntityType,
-        entityId: String
-    ): DocumentDto? = newSuspendedTransaction {
-        DocumentsTable.selectAll()
-            .where {
-                (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString())) and
-                (DocumentsTable.entityType eq entityType) and
-                (DocumentsTable.entityId eq entityId)
-            }
-            .map { it.toDocumentDto() }
-            .singleOrNull()
-    }
+        page: Int = 0,
+        limit: Int = 20
+    ): Pair<List<DocumentDto>, Long> = newSuspendedTransaction {
+        val tenantIdUuid = java.util.UUID.fromString(tenantId.toString())
 
-    /**
-     * Get all documents linked to a specific entity.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun listByEntity(
-        tenantId: TenantId,
-        entityType: EntityType,
-        entityId: String
-    ): List<DocumentDto> = newSuspendedTransaction {
-        DocumentsTable.selectAll()
-            .where {
-                (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString())) and
-                (DocumentsTable.entityType eq entityType) and
-                (DocumentsTable.entityId eq entityId)
-            }
+        val baseQuery = DocumentsTable.selectAll()
+            .where { DocumentsTable.tenantId eq tenantIdUuid }
+
+        val total = baseQuery.count()
+
+        val documents = baseQuery
             .orderBy(DocumentsTable.uploadedAt, SortOrder.DESC)
+            .limit(limit)
+            .offset((page * limit).toLong())
             .map { it.toDocumentDto() }
+
+        documents to total
     }
 
     /**
-     * Link a document to an entity.
+     * List documents with optional drafts and latest ingestion info.
+     * This is the primary query for the document list endpoint.
+     *
+     * Documents are returned regardless of whether they have drafts.
+     * Filters:
+     * - draftStatus: Only applies when draft exists (documents without drafts pass this filter)
+     * - documentType: Only applies when draft exists
+     * - ingestionStatus: Filters by latest ingestion status
+     * - search: Filters by filename (ILIKE)
+     *
      * CRITICAL: Must filter by tenantId.
+     *
+     * @return Pair of (documents with drafts/ingestion, totalCount)
      */
-    suspend fun linkToEntity(
+    suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
+        draftStatus: DraftStatus? = null,
+        documentType: DocumentType? = null,
+        ingestionStatus: IngestionStatus? = null,
+        search: String? = null,
+        page: Int = 0,
+        limit: Int = 20
+    ): Pair<List<DocumentWithDraftAndIngestion>, Long> = newSuspendedTransaction {
+        val tenantIdUuid = java.util.UUID.fromString(tenantId.toString())
+
+        // Step 1: Query documents with optional LEFT JOIN to drafts
+        // We use a subquery approach since Exposed doesn't support complex LEFT JOINs well
+        val documentsQuery = DocumentsTable
+            .leftJoin(DocumentDraftsTable)
+            .selectAll()
+            .where { DocumentsTable.tenantId eq tenantIdUuid }
+
+        // Apply search filter on filename (case-insensitive)
+        val filteredQuery = if (!search.isNullOrBlank()) {
+            documentsQuery.andWhere {
+                DocumentsTable.filename like "%${search}%"
+            }
+        } else {
+            documentsQuery
+        }
+
+        // Apply draft status filter (null-safe: documents without drafts pass)
+        // When draft doesn't exist (LEFT JOIN null), the document should still be included
+        val statusFilteredQuery = if (draftStatus != null) {
+            filteredQuery.andWhere {
+                DocumentDraftsTable.tenantId.isNull() or
+                (DocumentDraftsTable.draftStatus eq draftStatus)
+            }
+        } else {
+            filteredQuery
+        }
+
+        // Apply document type filter (null-safe: documents without drafts pass)
+        val typeFilteredQuery = if (documentType != null) {
+            statusFilteredQuery.andWhere {
+                DocumentDraftsTable.tenantId.isNull() or
+                (DocumentDraftsTable.documentType eq documentType)
+            }
+        } else {
+            statusFilteredQuery
+        }
+
+        // Get total count before pagination
+        val total = typeFilteredQuery.count()
+
+        // Get paginated results
+        val rows = typeFilteredQuery
+            .orderBy(DocumentsTable.uploadedAt, SortOrder.DESC)
+            .limit(limit)
+            .offset((page * limit).toLong())
+            .toList()
+
+        // Step 2: For each document, get the latest ingestion run
+        // We need to do this as separate queries due to the priority logic
+        val documentIds = rows.map { java.util.UUID.fromString(it[DocumentsTable.id].toString()) }
+
+        // Build result list
+        val results = rows.mapNotNull { row ->
+            val documentId = DocumentId.parse(row[DocumentsTable.id].toString())
+            val document = row.toDocumentDto()
+
+            // Extract draft if present
+            val draft = if (row.getOrNull(DocumentDraftsTable.documentId) != null) {
+                row.toDraftSummary()
+            } else {
+                null
+            }
+
+            // Get latest ingestion for this document (using priority logic)
+            val latestIngestion = getLatestIngestionForDocument(documentId, tenantIdUuid)
+
+            // Apply ingestion status filter
+            if (ingestionStatus != null && latestIngestion?.status != ingestionStatus) {
+                return@mapNotNull null
+            }
+
+            DocumentWithDraftAndIngestion(
+                document = document,
+                draft = draft,
+                latestIngestion = latestIngestion
+            )
+        }
+
+        // Adjust total count if ingestion filter was applied
+        // (This is a simplification - ideally we'd filter in the query)
+        val adjustedTotal = if (ingestionStatus != null) {
+            results.size.toLong()
+        } else {
+            total
+        }
+
+        results to adjustedTotal
+    }
+
+    /**
+     * Get the latest ingestion run for a document with priority logic.
+     * Priority: Processing > latest Succeeded/Failed (by finishedAt) > latest Queued (by queuedAt)
+     */
+    private fun getLatestIngestionForDocument(
         documentId: DocumentId,
-        entityType: EntityType,
-        entityId: String
-    ): Boolean = newSuspendedTransaction {
-        DocumentsTable.update({
-            (DocumentsTable.id eq java.util.UUID.fromString(documentId.toString())) and
-            (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
-        }) {
-            it[DocumentsTable.entityType] = entityType
-            it[DocumentsTable.entityId] = entityId
-        } > 0
+        tenantIdUuid: java.util.UUID
+    ): IngestionRunSummary? {
+        val docIdUuid = java.util.UUID.fromString(documentId.toString())
+
+        // First, check for Processing status
+        val processing = DocumentIngestionRunsTable.selectAll()
+            .where {
+                (DocumentIngestionRunsTable.documentId eq docIdUuid) and
+                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
+            }
+            .map { it.toIngestionRunSummary() }
+            .firstOrNull()
+
+        if (processing != null) return processing
+
+        // Then, check for latest Succeeded/Failed by finishedAt
+        val finished = DocumentIngestionRunsTable.selectAll()
+            .where {
+                (DocumentIngestionRunsTable.documentId eq docIdUuid) and
+                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Succeeded, IngestionStatus.Failed))
+            }
+            .orderBy(DocumentIngestionRunsTable.finishedAt, SortOrder.DESC_NULLS_LAST)
+            .map { it.toIngestionRunSummary() }
+            .firstOrNull()
+
+        if (finished != null) return finished
+
+        // Finally, check for latest Queued by queuedAt
+        return DocumentIngestionRunsTable.selectAll()
+            .where {
+                (DocumentIngestionRunsTable.documentId eq docIdUuid) and
+                (DocumentIngestionRunsTable.tenantId eq tenantIdUuid) and
+                (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
+            }
+            .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
+            .map { it.toIngestionRunSummary() }
+            .firstOrNull()
     }
 
-    /**
-     * Unlink a document from its entity.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun unlinkFromEntity(
-        tenantId: TenantId,
-        documentId: DocumentId
-    ): Boolean = newSuspendedTransaction {
-        DocumentsTable.update({
-            (DocumentsTable.id eq java.util.UUID.fromString(documentId.toString())) and
-            (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
-        }) {
-            it[DocumentsTable.entityType] = null
-            it[DocumentsTable.entityId] = null
-        } > 0
+    private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
+        return IngestionRunSummary(
+            id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
+            documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
+            tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+            status = this[DocumentIngestionRunsTable.status],
+            provider = this[DocumentIngestionRunsTable.provider],
+            queuedAt = this[DocumentIngestionRunsTable.queuedAt],
+            startedAt = this[DocumentIngestionRunsTable.startedAt],
+            finishedAt = this[DocumentIngestionRunsTable.finishedAt],
+            errorMessage = this[DocumentIngestionRunsTable.errorMessage],
+            confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble()
+        )
+    }
+
+    private fun ResultRow.toDraftSummary(): DraftSummary {
+        return DraftSummary(
+            documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
+            tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
+            draftStatus = this[DocumentDraftsTable.draftStatus],
+            documentType = this[DocumentDraftsTable.documentType],
+            extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
+            aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
+            aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
+            draftVersion = this[DocumentDraftsTable.draftVersion],
+            draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
+            draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
+            suggestedContactId = this[DocumentDraftsTable.suggestedContactId]?.let { ContactId(it.toKotlinUuid()) },
+            contactSuggestionConfidence = this[DocumentDraftsTable.contactSuggestionConfidence],
+            contactSuggestionReason = this[DocumentDraftsTable.contactSuggestionReason],
+            lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
+            createdAt = this[DocumentDraftsTable.createdAt],
+            updatedAt = this[DocumentDraftsTable.updatedAt]
+        )
     }
 
     /**
      * Delete a document.
      * CRITICAL: Must filter by tenantId.
      * Note: The actual file in MinIO should be deleted separately.
+     * Note: Cascades to ingestion runs and drafts.
      */
     suspend fun delete(tenantId: TenantId, documentId: DocumentId): Boolean =
         newSuspendedTransaction {
@@ -165,16 +347,17 @@ class DocumentRepository {
         }
 
     /**
-     * Get all unlinked documents for a tenant (for cleanup purposes).
+     * Check if a document exists.
+     * CRITICAL: Must filter by tenantId.
      */
-    suspend fun getUnlinkedDocuments(tenantId: TenantId): List<DocumentDto> =
+    suspend fun exists(tenantId: TenantId, documentId: DocumentId): Boolean =
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString())) and
-                    (DocumentsTable.entityType.isNull())
+                    (DocumentsTable.id eq java.util.UUID.fromString(documentId.toString())) and
+                    (DocumentsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toDocumentDto() }
+                .count() > 0
         }
 
     private fun ResultRow.toDocumentDto(): DocumentDto {
@@ -185,8 +368,6 @@ class DocumentRepository {
             contentType = this[DocumentsTable.contentType],
             sizeBytes = this[DocumentsTable.sizeBytes],
             storageKey = this[DocumentsTable.storageKey],
-            entityType = this[DocumentsTable.entityType],
-            entityId = this[DocumentsTable.entityId],
             uploadedAt = this[DocumentsTable.uploadedAt],
             downloadUrl = null // Generated on-demand by the service layer
         )

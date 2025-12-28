@@ -7,8 +7,8 @@ import ai.dokus.app.resources.generated.contacts_inactive
 import ai.dokus.app.resources.generated.contacts_peppol
 import ai.dokus.app.resources.generated.contacts_supplier
 import ai.dokus.app.resources.generated.contacts_vendor
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.DerivedContactRoles
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.DerivedContactRoles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi

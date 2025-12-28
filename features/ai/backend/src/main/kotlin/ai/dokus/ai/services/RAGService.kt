@@ -1,12 +1,13 @@
 package ai.dokus.ai.services
 
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ChunkRetrievalRequest
 import tech.dokus.domain.model.ChunkRetrievalResponse
 import tech.dokus.domain.model.DocumentChunkId
 import tech.dokus.domain.model.DocumentChunkSummary
 import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.domain.repository.IngestionStatusChecker
 import tech.dokus.domain.repository.RetrievedChunk
 import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
@@ -52,7 +53,8 @@ import kotlin.uuid.ExperimentalUuidApi
  */
 class RAGService(
     private val embeddingService: EmbeddingService,
-    private val chunkRepository: ChunkRepository
+    private val chunkRepository: ChunkRepository,
+    private val ingestionStatusChecker: IngestionStatusChecker? = null
 ) {
     private val logger = LoggerFactory.getLogger(RAGService::class.java)
 
@@ -102,7 +104,7 @@ class RAGService(
     suspend fun retrieveRelevantChunks(
         tenantId: TenantId,
         query: String,
-        documentId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         topK: Int = DEFAULT_TOP_K,
         minSimilarity: Float = DEFAULT_MIN_SIMILARITY
     ): RetrievalResult {
@@ -166,7 +168,7 @@ class RAGService(
         val result = retrieveRelevantChunks(
             tenantId = tenantId,
             query = request.query,
-            documentId = request.documentProcessingId,
+            documentId = request.documentId,
             topK = request.topK,
             minSimilarity = request.minSimilarity
         )
@@ -175,7 +177,7 @@ class RAGService(
             chunks = result.chunks.map { chunk ->
                 DocumentChunkSummary(
                     id = DocumentChunkId.parse(chunk.id),
-                    documentProcessingId = DocumentProcessingId.parse(chunk.documentProcessingId),
+                    documentId = DocumentId.parse(chunk.documentId),
                     chunkIndex = chunk.chunkIndex,
                     content = chunk.content,
                     pageNumber = chunk.pageNumber,
@@ -279,6 +281,48 @@ class RAGService(
      */
     fun getEmbeddingDimensions(): Int {
         return embeddingService.getEmbeddingDimensions()
+    }
+
+    /**
+     * Check if a document has indexed chunks.
+     *
+     * Used by ChatAgent to determine document state for chat availability.
+     *
+     * @param tenantId The tenant ID (REQUIRED for security)
+     * @param documentId The document ID to check
+     * @return true if the document has indexed chunks, false otherwise
+     */
+    suspend fun hasChunksForDocument(tenantId: TenantId, documentId: DocumentId): Boolean {
+        return try {
+            chunkRepository.hasChunks(tenantId, documentId)
+        } catch (e: Exception) {
+            logger.warn("Failed to check chunks for document: $documentId", e)
+            false
+        }
+    }
+
+    /**
+     * Check if a document is currently being processed (ingestion run active).
+     *
+     * Used by ChatAgent to determine if a document is PROCESSING vs NOT_INDEXED.
+     * Returns false if no IngestionStatusChecker is configured.
+     *
+     * @param tenantId The tenant ID (REQUIRED for security)
+     * @param documentId The document ID to check
+     * @return true if document has an active ingestion run, false otherwise
+     */
+    suspend fun isDocumentProcessing(tenantId: TenantId, documentId: DocumentId): Boolean {
+        val checker = ingestionStatusChecker
+        if (checker == null) {
+            logger.debug("No IngestionStatusChecker configured, assuming document is not processing")
+            return false
+        }
+        return try {
+            checker.isProcessing(tenantId, documentId)
+        } catch (e: Exception) {
+            logger.warn("Failed to check processing status for document: $documentId", e)
+            false
+        }
     }
 }
 

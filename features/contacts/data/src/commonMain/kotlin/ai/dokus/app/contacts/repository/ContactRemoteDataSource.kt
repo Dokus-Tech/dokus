@@ -2,16 +2,16 @@ package ai.dokus.app.contacts.repository
 
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
-import tech.dokus.domain.model.ContactActivitySummary
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.ContactMergeResult
-import tech.dokus.domain.model.ContactNoteDto
-import tech.dokus.domain.model.ContactStats
-import tech.dokus.domain.model.CreateContactNoteRequest
-import tech.dokus.domain.model.CreateContactRequest
-import tech.dokus.domain.model.UpdateContactNoteRequest
-import tech.dokus.domain.model.UpdateContactPeppolRequest
-import tech.dokus.domain.model.UpdateContactRequest
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.domain.model.contact.ContactStats
+import tech.dokus.domain.model.contact.CreateContactNoteRequest
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactNoteRequest
+import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 
 /**
  * Remote data source for Contact API operations.

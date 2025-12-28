@@ -8,18 +8,19 @@ import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
 // ContactType removed - roles are now derived from cashflow items
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.ContactActivitySummary
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.ContactMergeResult
-import tech.dokus.domain.model.ContactStats
-import tech.dokus.domain.model.CreateContactRequest
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.domain.model.contact.ContactStats
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.domain.model.UpdateContactRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.foundation.ktor.database.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -757,7 +758,7 @@ class ContactRepository {
             phone = row[ContactsTable.phone],
             companyNumber = row[ContactsTable.companyNumber],
             defaultPaymentTerms = row[ContactsTable.defaultPaymentTerms],
-            defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate(it.toString()) },
+            defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate.fromDbDecimal(it) },
             peppolId = row[ContactsTable.peppolId],
             peppolEnabled = row[ContactsTable.peppolEnabled],
             tags = row[ContactsTable.tags],

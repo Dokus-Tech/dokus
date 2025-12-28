@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.repository
 
 import ai.dokus.app.auth.datasource.LookupRemoteDataSource
-import tech.dokus.domain.model.EntityLookupResponse
+import tech.dokus.domain.model.entity.EntityLookupResponse
 import ai.dokus.foundation.platform.Logger
 
 /**

@@ -3,9 +3,9 @@ package ai.dokus.app.contacts.viewmodel
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.ContactActivitySummary
-import tech.dokus.domain.model.ContactDto
-import tech.dokus.domain.model.ContactNoteDto
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactNoteDto
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import pro.respawn.flowmvi.api.MVIAction

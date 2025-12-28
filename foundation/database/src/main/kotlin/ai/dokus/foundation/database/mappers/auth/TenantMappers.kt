@@ -6,6 +6,7 @@ import ai.dokus.foundation.database.tables.auth.TenantTable
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.AddressId
 import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.Iban
@@ -41,7 +42,7 @@ object TenantMappers {
         invoicePrefix = this[TenantSettingsTable.invoicePrefix],
         nextInvoiceNumber = this[TenantSettingsTable.nextInvoiceNumber],
         defaultPaymentTerms = this[TenantSettingsTable.defaultPaymentTerms],
-        defaultVatRate = VatRate(this[TenantSettingsTable.defaultVatRate].toString()),
+        defaultVatRate = VatRate.fromDbDecimal(this[TenantSettingsTable.defaultVatRate]),
         invoiceYearlyReset = this[TenantSettingsTable.invoiceYearlyReset],
         invoicePadding = this[TenantSettingsTable.invoicePadding],
         invoiceIncludeYear = this[TenantSettingsTable.invoiceIncludeYear],

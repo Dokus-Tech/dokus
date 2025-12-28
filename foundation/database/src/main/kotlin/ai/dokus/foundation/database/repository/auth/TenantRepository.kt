@@ -7,6 +7,7 @@ import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.TenantPlan
 import tech.dokus.domain.enums.TenantStatus
@@ -118,7 +119,7 @@ class TenantRepository {
             it[invoicePrefix] = settings.invoicePrefix
             it[nextInvoiceNumber] = settings.nextInvoiceNumber
             it[defaultPaymentTerms] = settings.defaultPaymentTerms
-            it[defaultVatRate] = BigDecimal(settings.defaultVatRate.value)
+            it[defaultVatRate] = settings.defaultVatRate.toDbDecimal()
             it[invoiceYearlyReset] = settings.invoiceYearlyReset
             it[invoicePadding] = settings.invoicePadding
             it[invoiceIncludeYear] = settings.invoiceIncludeYear

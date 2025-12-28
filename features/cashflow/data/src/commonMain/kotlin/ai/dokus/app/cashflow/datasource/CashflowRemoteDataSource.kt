@@ -1,11 +1,13 @@
 package ai.dokus.app.cashflow.datasource
 
 import tech.dokus.domain.enums.BillStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
-import tech.dokus.domain.enums.ProcessingStatus
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
 import tech.dokus.domain.ids.DocumentId
@@ -16,9 +18,16 @@ import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentProcessingListResponse
+import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.PeppolConnectRequest
@@ -370,27 +379,79 @@ interface CashflowRemoteDataSource {
     ): Result<CashflowOverview>
 
     // ============================================================================
-    // DOCUMENT PROCESSING (AI Extraction Pipeline)
+    // DOCUMENT MANAGEMENT (AI Extraction Pipeline)
     // ============================================================================
 
     /**
-     * List documents by processing status for pending documents view.
-     * GET /api/v1/documents/processing?status={status}&page={page}&limit={limit}
+     * List documents with optional filtering.
+     * GET /api/v1/documents?draftStatus={draftStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&search={search}&page={page}&limit={limit}
      *
-     * This endpoint returns documents that have been uploaded and are in the AI
-     * processing pipeline. Use this to show documents awaiting user confirmation.
+     * Returns DocumentRecordDto envelope containing document, draft, and latest ingestion.
      *
-     * @param statuses Filter by processing status (PENDING, QUEUED, PROCESSING, PROCESSED, etc.)
-     *                 Can specify multiple statuses.
+     * @param draftStatus Filter by draft status (NeedsReview, Ready, Confirmed, Rejected)
+     * @param documentType Filter by document type (Invoice, Bill, Expense)
+     * @param ingestionStatus Filter by ingestion status (Queued, Processing, Succeeded, Failed)
+     * @param search Full-text search query
      * @param page Page number (0-indexed)
      * @param limit Items per page (max 100)
-     * @return Paginated list of documents with processing status and extracted data
      */
-    suspend fun listDocumentProcessing(
-        statuses: List<ProcessingStatus>,
+    suspend fun listDocuments(
+        draftStatus: DraftStatus? = null,
+        documentType: DocumentType? = null,
+        ingestionStatus: IngestionStatus? = null,
+        search: String? = null,
         page: Int = 0,
         limit: Int = 20
-    ): Result<DocumentProcessingListResponse>
+    ): Result<PaginatedResponse<DocumentRecordDto>>
+
+    /**
+     * Get a document record by ID with full envelope (document + draft + latest ingestion + confirmed entity).
+     * GET /api/v1/documents/{id}
+     */
+    suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto>
+
+    /**
+     * Get the draft for a document.
+     * GET /api/v1/documents/{id}/draft
+     */
+    suspend fun getDocumentDraft(documentId: DocumentId): Result<DocumentDraftDto>
+
+    /**
+     * Update a document draft.
+     * PATCH /api/v1/documents/{id}/draft
+     */
+    suspend fun updateDocumentDraft(
+        documentId: DocumentId,
+        request: UpdateDraftRequest
+    ): Result<UpdateDraftResponse>
+
+    /**
+     * Reprocess a document (create new ingestion run).
+     * POST /api/v1/documents/{id}/reprocess
+     *
+     * IDEMPOTENT: Returns existing Queued/Processing run unless force=true.
+     */
+    suspend fun reprocessDocument(
+        documentId: DocumentId,
+        request: ReprocessRequest = ReprocessRequest()
+    ): Result<ReprocessResponse>
+
+    /**
+     * Confirm a document and create financial entity (Invoice/Bill/Expense).
+     * POST /api/v1/documents/{id}/confirm
+     *
+     * TRANSACTIONAL + IDEMPOTENT: Fails if entity already exists for documentId.
+     */
+    suspend fun confirmDocument(
+        documentId: DocumentId,
+        request: ConfirmDocumentRequest
+    ): Result<DocumentRecordDto>
+
+    /**
+     * Get ingestion history for a document.
+     * GET /api/v1/documents/{id}/ingestions
+     */
+    suspend fun getDocumentIngestions(documentId: DocumentId): Result<List<DocumentIngestionDto>>
 
     // ============================================================================
     // PEPPOL E-INVOICING

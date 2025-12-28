@@ -2,7 +2,7 @@ package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
 import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +36,7 @@ internal class DashboardContainer(
     private val logger = Logger.forClass<DashboardContainer>()
 
     // Internal state for pending documents pagination
-    private val allPendingDocuments = MutableStateFlow<List<DocumentProcessingDto>>(emptyList())
+    private val allPendingDocuments = MutableStateFlow<List<DocumentRecordDto>>(emptyList())
     private val pendingVisibleCount = MutableStateFlow(DashboardState.PENDING_PAGE_SIZE)
 
     override val store: Store<DashboardState, DashboardIntent, DashboardAction> =

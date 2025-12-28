@@ -2,6 +2,8 @@ package ai.dokus.foundation.database.repository.payment
 
 import ai.dokus.foundation.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PaymentId
@@ -51,7 +53,7 @@ class PaymentRepository {
             val id = PaymentsTable.insert {
                 it[PaymentsTable.tenantId] = UUID.fromString(tenantId.toString())
                 it[PaymentsTable.invoiceId] = UUID.fromString(invoiceId.toString())
-                it[PaymentsTable.amount] = java.math.BigDecimal(amount.value)
+                it[PaymentsTable.amount] = amount.toDbDecimal()
                 it[PaymentsTable.paymentDate] = paymentDate
                 it[PaymentsTable.paymentMethod] = paymentMethod
                 it[PaymentsTable.transactionId] = transactionId?.value
@@ -134,7 +136,7 @@ class PaymentRepository {
             val total = PaymentsTable.selectAll().where {
                 PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.sumOf { it[PaymentsTable.amount] }
-            Money(total.toString())
+            Money.fromDbDecimal(total)
         }
     }
 
@@ -177,7 +179,7 @@ class PaymentRepository {
             id = PaymentId.parse(this[PaymentsTable.id].value.toString()),
             tenantId = TenantId.parse(this[PaymentsTable.tenantId].toString()),
             invoiceId = InvoiceId.parse(this[PaymentsTable.invoiceId].toString()),
-            amount = Money(this[PaymentsTable.amount].toString()),
+            amount = Money.fromDbDecimal(this[PaymentsTable.amount]),
             paymentDate = this[PaymentsTable.paymentDate],
             paymentMethod = this[PaymentsTable.paymentMethod],
             transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },

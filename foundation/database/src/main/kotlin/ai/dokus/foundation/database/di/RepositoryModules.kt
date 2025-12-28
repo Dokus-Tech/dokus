@@ -11,7 +11,8 @@ import ai.dokus.foundation.database.repository.auth.UserRepository
 import ai.dokus.foundation.database.repository.banking.BankingRepository
 import ai.dokus.foundation.database.repository.cashflow.BillRepository
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
-import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentDraftRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepository
 import ai.dokus.foundation.database.repository.contacts.ContactNoteRepository
 import ai.dokus.foundation.database.repository.contacts.ContactRepository
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
@@ -22,7 +23,7 @@ import ai.dokus.foundation.database.repository.payment.PaymentRepository
 import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
 import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
-import ai.dokus.foundation.database.repository.processor.ProcessorDocumentProcessingRepository
+import ai.dokus.foundation.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
@@ -48,7 +49,8 @@ val repositoryModuleAuth = module {
  */
 val repositoryModuleCashflow = module {
     single { DocumentRepository() }
-    single { DocumentProcessingRepository() }
+    single { DocumentIngestionRunRepository() }
+    single { DocumentDraftRepository() }
     single { InvoiceNumberRepository() }
     single { InvoiceNumberGenerator(get()) }
     single { InvoiceRepository(get()) }
@@ -71,10 +73,10 @@ val repositoryModulePeppol = module {
 
 /**
  * Processor repositories module.
- * Provides repositories for document processing operations.
+ * Provides repositories for document ingestion operations.
  */
 val repositoryModuleProcessor = module {
-    single { ProcessorDocumentProcessingRepository() }
+    single { ProcessorIngestionRepository() }
 }
 
 /**

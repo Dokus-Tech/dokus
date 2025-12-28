@@ -1,15 +1,16 @@
 package tech.dokus.domain
 
-import tech.dokus.domain.database.DbEnum
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.database.DbEnum
 
 @Serializable
 enum class DeviceType(override val dbValue: String) : DbEnum {
-    Android("ANDROID"),
-    IOS("IOS"),
-    Desktop("DESKTOP"),
-    Web("WEB"),
-    Tablet("TABLET");
+    @SerialName("ANDROID") Android("ANDROID"),
+    @SerialName("IOS") Ios("IOS"),
+    @SerialName("DESKTOP") Desktop("DESKTOP"),
+    @SerialName("WEB") Web("WEB"),
+    @SerialName("TABLET") Tablet("TABLET");
 
     companion object {
         fun fromAgent(agent: String?): DeviceType {
@@ -19,7 +20,7 @@ enum class DeviceType(override val dbValue: String) : DbEnum {
                     Android
 
                 lowerAgent.contains("mobile") && lowerAgent.contains("iphone") ->
-                    IOS
+                    Ios
 
                 lowerAgent.contains("tablet") || lowerAgent.contains("ipad") ->
                     Tablet
@@ -34,4 +35,4 @@ expect val DeviceType.Companion.current: DeviceType
 
 val DeviceType.isWeb: Boolean get() = this == DeviceType.Web
 val DeviceType.isDesktop: Boolean get() = this == DeviceType.Desktop
-val DeviceType.isMobile: Boolean get() = this == DeviceType.Android || this == DeviceType.IOS
+val DeviceType.isMobile: Boolean get() = this == DeviceType.Android || this == DeviceType.Ios

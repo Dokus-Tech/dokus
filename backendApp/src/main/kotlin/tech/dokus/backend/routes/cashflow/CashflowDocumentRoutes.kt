@@ -1,16 +1,16 @@
 package tech.dokus.backend.routes.cashflow
 
 import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.resources.get
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.routes.Cashflow
 import tech.dokus.foundation.ktor.security.authenticateJwt
 import tech.dokus.foundation.ktor.security.dokusPrincipal
-import io.ktor.http.*
-import io.ktor.server.resources.get
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
 
 /**
  * Cashflow Document Routes using Ktor Type-Safe Routing
@@ -27,7 +27,7 @@ internal fun Route.cashflowDocumentRoutes() {
         get<Cashflow.CashflowDocuments> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
 
-            if (route.limit < 1 || route.limit > 200) {
+            if (route.limit !in 1..200) {
                 throw DokusException.BadRequest("Limit must be between 1 and 200")
             }
             if (route.offset < 0) {

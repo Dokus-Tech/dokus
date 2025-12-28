@@ -44,10 +44,6 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
 
-// ============================================================================
-// TENANT & USER MANAGEMENT
-// ============================================================================
-
 @Serializable
 data class Tenant(
     val id: TenantId,

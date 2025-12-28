@@ -91,11 +91,11 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
 
     // Format amount with comma separator
     val formattedAmount = try {
-        val amountValue = amount.value.toDoubleOrNull() ?: 0.0
+        val amountValue = amount.toDouble()
         val intAmount = amountValue.toInt()
         "€${intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")}"
     } catch (e: Exception) {
-        "€${amount.value}"
+        "€${amount.toDisplayString()}"
     }
 
     return FinancialDocumentRow(

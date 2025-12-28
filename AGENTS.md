@@ -5,7 +5,7 @@
 - `foundation/*`: Shared design system, navigation, platform glue, domain models, storage.
 - `features/<domain>/{backend,data,presentation,domain}`: Vertical slices (auth, cashflow, payment, reporting, audit, banking).
 - `build-logic/`: Gradle convention plugins; prefer adding settings here instead of per-module hacks.
-- `deployment/`, `k8s/`, `rabbitmq/`, `docker-compose.local.yml`: Ops manifests and local orchestration; `docs/` holds architecture, setup, and security references.
+- `deployment/`, `k8s/`, `docker-compose.local.yml`: Ops manifests and local orchestration; `docs/` holds architecture, setup, and security references.
 
 ## Build, Test, and Development Commands
 - Local stack (databases, Redis, helpers): `./dev.sh` uses compose profiles in `docker-compose.local.yml`.

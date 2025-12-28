@@ -1,13 +1,13 @@
 package tech.dokus.domain.repository
 
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ChatMessageDto
-import tech.dokus.domain.model.ChatMessageId
-import tech.dokus.domain.model.ChatScope
-import tech.dokus.domain.model.ChatSessionId
-import tech.dokus.domain.model.ChatSessionSummary
+import tech.dokus.domain.model.ai.ChatMessageDto
+import tech.dokus.domain.model.ai.ChatMessageId
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
+import tech.dokus.domain.model.ai.ChatSessionSummary
 import tech.dokus.domain.model.DocumentChunkDto
 import tech.dokus.domain.model.DocumentChunkId
 
@@ -37,7 +37,7 @@ interface ChunkRepository {
     suspend fun searchSimilarChunks(
         tenantId: TenantId,
         queryEmbedding: List<Float>,
-        documentId: DocumentProcessingId?,
+        documentId: DocumentId?,
         topK: Int,
         minSimilarity: Float
     ): ChunkSearchResult
@@ -46,25 +46,39 @@ interface ChunkRepository {
      * Store chunks with embeddings for a document.
      *
      * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
+     * @param documentId The document ID
+     * @param contentHash SHA-256 hash of the source text for deduplication
      * @param chunks The chunks to store with their embeddings
      */
     suspend fun storeChunks(
         tenantId: TenantId,
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
+        contentHash: String,
         chunks: List<ChunkWithEmbedding>
     )
+
+    /**
+     * Get the content hash for a document's chunks (for deduplication).
+     *
+     * @param tenantId The tenant owning the document
+     * @param documentId The document ID
+     * @return The content hash if chunks exist, null otherwise
+     */
+    suspend fun getContentHashForDocument(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): String?
 
     /**
      * Delete all chunks for a document.
      *
      * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
+     * @param documentId The document ID
      * @return Number of chunks deleted
      */
     suspend fun deleteChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Int
 
     /**
@@ -72,7 +86,7 @@ interface ChunkRepository {
      */
     suspend fun getChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): List<DocumentChunkDto>
 
     /**
@@ -88,7 +102,7 @@ interface ChunkRepository {
      */
     suspend fun countChunksForDocument(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Long
 
     /**
@@ -96,7 +110,7 @@ interface ChunkRepository {
      */
     suspend fun hasChunks(
         tenantId: TenantId,
-        documentId: DocumentProcessingId
+        documentId: DocumentId
     ): Boolean
 
     /**
@@ -121,8 +135,8 @@ data class ChunkSearchResult(
 data class RetrievedChunk(
     /** Chunk ID */
     val id: String,
-    /** Document processing ID */
-    val documentProcessingId: String,
+    /** Document ID */
+    val documentId: String,
     /** Text content of the chunk */
     val content: String,
     /** Position within the document (0-indexed) */
@@ -209,7 +223,7 @@ interface ChatRepository {
      */
     suspend fun getMessagesForDocument(
         tenantId: TenantId,
-        documentProcessingId: DocumentProcessingId,
+        documentId: DocumentId,
         limit: Int = 50,
         offset: Int = 0
     ): Pair<List<ChatMessageDto>, Long>
@@ -232,7 +246,7 @@ interface ChatRepository {
     suspend fun listSessions(
         tenantId: TenantId,
         scope: ChatScope? = null,
-        documentProcessingId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         limit: Int = 20,
         offset: Int = 0
     ): Pair<List<ChatSessionSummary>, Long>

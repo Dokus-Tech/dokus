@@ -6,7 +6,7 @@ import ai.dokus.app.cashflow.screens.AddDocumentScreen
 import ai.dokus.app.cashflow.screens.CreateInvoiceScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolConnectScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.PeppolProvider
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
@@ -25,13 +25,13 @@ internal object CashflowNavigationProvider : NavigationProvider {
         }
         composable<CashFlowDestination.DocumentReview> { backStackEntry ->
             val route = backStackEntry.toRoute<CashFlowDestination.DocumentReview>()
-            val processingId = DocumentProcessingId.parse(route.processingId)
-            DocumentReviewScreen(processingId = processingId)
+            val documentId = DocumentId.parse(route.documentId)
+            DocumentReviewScreen(documentId = documentId)
         }
         composable<CashFlowDestination.DocumentChat> { backStackEntry ->
             val route = backStackEntry.toRoute<CashFlowDestination.DocumentChat>()
-            val processingId = DocumentProcessingId.parse(route.processingId)
-            ChatScreen(processingId = processingId)
+            val documentId = DocumentId.parse(route.documentId)
+            ChatScreen(documentId = documentId)
         }
         composable<SettingsDestination.PeppolSettings> {
             PeppolSettingsScreen()

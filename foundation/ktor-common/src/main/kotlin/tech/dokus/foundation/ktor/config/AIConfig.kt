@@ -1,6 +1,6 @@
 package tech.dokus.foundation.ktor.config
 
-import tech.dokus.domain.model.ai.AIProvider
+import tech.dokus.domain.model.ai.AiProvider
 import com.typesafe.config.Config
 
 /**
@@ -8,7 +8,7 @@ import com.typesafe.config.Config
  * Supports multiple providers (Ollama for local/self-hosted, OpenAI for cloud).
  */
 data class AIConfig(
-    val defaultProvider: AIProvider,
+    val defaultProvider: AiProvider,
     val ollama: OllamaConfig,
     val openai: OpenAIConfig,
     val models: ModelConfig
@@ -75,7 +75,7 @@ data class AIConfig(
          * Load AI config from HOCON configuration.
          */
         fun fromConfig(config: Config): AIConfig = AIConfig(
-            defaultProvider = AIProvider.fromDbValue(config.getString("default-provider")),
+            defaultProvider = AiProvider.fromDbValue(config.getString("default-provider")),
             ollama = OllamaConfig.fromConfig(config.getConfig("ollama")),
             openai = OpenAIConfig.fromConfig(config.getConfig("openai")),
             models = ModelConfig.fromConfig(config.getConfig("models"))
@@ -99,8 +99,8 @@ data class AIConfig(
      * Returns provider-appropriate embedding model.
      */
     fun getEmbeddingModel(): String = when (defaultProvider) {
-        AIProvider.OLLAMA -> models.embedding
-        AIProvider.OPENAI -> if (models.embedding == "nomic-embed-text") "text-embedding-3-small" else models.embedding
+        AiProvider.Ollama -> models.embedding
+        AiProvider.OpenAi -> if (models.embedding == "nomic-embed-text") "text-embedding-3-small" else models.embedding
     }
 }
 

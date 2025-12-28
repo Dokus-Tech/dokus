@@ -6,7 +6,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ContactNoteDto
+import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.ktor.database.dbQuery
 import org.jetbrains.exposed.v1.core.ResultRow
