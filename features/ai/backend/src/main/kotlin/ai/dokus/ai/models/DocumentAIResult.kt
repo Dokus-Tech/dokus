@@ -1,7 +1,19 @@
 package ai.dokus.ai.models
 
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.model.ExtractedBillFields
+import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.ExtractedExpenseFields
+import tech.dokus.domain.model.ExtractedInvoiceFields
+import tech.dokus.domain.model.ExtractedLineItem
+import java.math.BigDecimal
 
 /**
  * Sealed class representing the result of AI document processing.
@@ -206,4 +218,170 @@ private fun ReceiptProvenance.toFieldConfidences(): Map<String, Double> {
     paymentMethod?.fieldConfidence?.let { map["paymentMethod"] = it }
     category?.fieldConfidence?.let { map["category"] = it }
     return map
+}
+
+// =============================================================================
+// Conversion to Domain Models (without provenance)
+// =============================================================================
+
+/**
+ * Convert DocumentAIResult to domain ExtractedDocumentData.
+ *
+ * This strips provenance information and creates a business-only DTO
+ * suitable for persistence in the extracted_data column.
+ */
+fun DocumentAIResult.toExtractedDocumentData(): ExtractedDocumentData {
+    return when (this) {
+        is DocumentAIResult.Invoice -> ExtractedDocumentData(
+            documentType = DocumentType.Invoice,
+            rawText = rawText,
+            invoice = extractedData.toInvoiceFields(),
+            overallConfidence = confidence,
+            fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
+        )
+        is DocumentAIResult.Bill -> ExtractedDocumentData(
+            documentType = DocumentType.Bill,
+            rawText = rawText,
+            bill = extractedData.toBillFields(),
+            overallConfidence = confidence,
+            fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
+        )
+        is DocumentAIResult.Receipt -> ExtractedDocumentData(
+            documentType = DocumentType.Expense,
+            rawText = rawText,
+            expense = extractedData.toExpenseFields(),
+            overallConfidence = confidence,
+            fieldConfidences = extractedData.provenance?.toFieldConfidences() ?: emptyMap()
+        )
+        is DocumentAIResult.Unknown -> ExtractedDocumentData(
+            documentType = DocumentType.Unknown,
+            rawText = rawText,
+            overallConfidence = confidence
+        )
+    }
+}
+
+/**
+ * Get the domain DocumentType for this result.
+ */
+fun DocumentAIResult.toDomainType(): DocumentType {
+    return when (this) {
+        is DocumentAIResult.Invoice -> DocumentType.Invoice
+        is DocumentAIResult.Bill -> DocumentType.Bill
+        is DocumentAIResult.Receipt -> DocumentType.Expense
+        is DocumentAIResult.Unknown -> DocumentType.Unknown
+    }
+}
+
+// Helper converters
+private fun ExtractedInvoiceData.toInvoiceFields(): ExtractedInvoiceFields {
+    return ExtractedInvoiceFields(
+        clientName = vendorName, // Invoice vendor is the sender, client is recipient in context
+        clientVatNumber = vendorVatNumber,
+        clientAddress = vendorAddress,
+        invoiceNumber = invoiceNumber,
+        issueDate = issueDate?.parseLocalDate(),
+        dueDate = dueDate?.parseLocalDate(),
+        items = lineItems.map { it.toExtractedLineItem() },
+        subtotalAmount = subtotal?.parseMoney(currency),
+        vatAmount = totalVatAmount?.parseMoney(currency),
+        totalAmount = totalAmount?.parseMoney(currency),
+        currency = currency?.parseCurrency(),
+        paymentTerms = paymentTerms,
+        bankAccount = iban
+    )
+}
+
+private fun ExtractedBillData.toBillFields(): ExtractedBillFields {
+    return ExtractedBillFields(
+        supplierName = supplierName,
+        supplierVatNumber = supplierVatNumber,
+        supplierAddress = supplierAddress,
+        invoiceNumber = invoiceNumber,
+        issueDate = issueDate?.parseLocalDate(),
+        dueDate = dueDate?.parseLocalDate(),
+        amount = amount?.parseMoney(currency),
+        vatAmount = vatAmount?.parseMoney(currency),
+        vatRate = vatRate?.parseVatRate(),
+        currency = currency?.parseCurrency(),
+        category = category?.parseExpenseCategory(),
+        description = description,
+        notes = notes,
+        paymentTerms = paymentTerms,
+        bankAccount = bankAccount
+    )
+}
+
+private fun ExtractedReceiptData.toExpenseFields(): ExtractedExpenseFields {
+    return ExtractedExpenseFields(
+        merchant = merchantName,
+        merchantAddress = merchantAddress,
+        merchantVatNumber = merchantVatNumber,
+        date = transactionDate?.parseLocalDate(),
+        amount = totalAmount?.parseMoney(currency),
+        vatAmount = vatAmount?.parseMoney(currency),
+        currency = currency?.parseCurrency(),
+        category = suggestedCategory?.parseExpenseCategory()
+    )
+}
+
+private fun InvoiceLineItem.toExtractedLineItem(): ExtractedLineItem {
+    return ExtractedLineItem(
+        description = description,
+        quantity = quantity,
+        unitPrice = unitPrice?.parseMoney(null),
+        vatRate = vatRate?.parseVatRate(),
+        lineTotal = total?.parseMoney(null)
+    )
+}
+
+// Parsing helpers
+private fun String.parseLocalDate(): LocalDate? {
+    return try {
+        LocalDate.parse(this)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+private fun String.parseMoney(currencyCode: String?): Money? {
+    return try {
+        val amount = this.replace(",", ".").replace(" ", "")
+            .replace("€", "").replace("$", "").replace("£", "")
+            .trim()
+            .toBigDecimalOrNull() ?: return null
+        Money(amount, currencyCode?.parseCurrency() ?: Currency.EUR)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+private fun String.parseCurrency(): Currency? {
+    return try {
+        Currency.valueOf(this.uppercase())
+    } catch (e: Exception) {
+        when (this.lowercase()) {
+            "eur", "€" -> Currency.EUR
+            "usd", "$" -> Currency.USD
+            "gbp", "£" -> Currency.GBP
+            else -> null
+        }
+    }
+}
+
+private fun String.parseVatRate(): VatRate? {
+    return try {
+        val rate = this.replace("%", "").trim().toDoubleOrNull() ?: return null
+        VatRate(BigDecimal.valueOf(rate))
+    } catch (e: Exception) {
+        null
+    }
+}
+
+private fun String.parseExpenseCategory(): ExpenseCategory? {
+    return try {
+        ExpenseCategory.valueOf(this.uppercase().replace(" ", "_"))
+    } catch (e: Exception) {
+        null
+    }
 }
