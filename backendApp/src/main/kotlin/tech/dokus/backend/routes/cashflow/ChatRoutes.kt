@@ -7,11 +7,11 @@ import tech.dokus.foundation.ktor.config.AIConfig
 import tech.dokus.foundation.ktor.config.ModelPurpose
 import ai.dokus.ai.services.EmbeddingService
 import ai.dokus.ai.services.RAGService
-import ai.dokus.foundation.database.repository.cashflow.DocumentProcessingRepository
+import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ai.ChatCitation
@@ -59,7 +59,7 @@ import ai.dokus.ai.agents.MessageRole as AgentMessageRole
 internal fun Route.chatRoutes() {
     val chatRepository by inject<ChatRepository>()
     val chunksRepository by inject<ChunkRepository>()
-    val processingRepository by inject<DocumentProcessingRepository>()
+    val documentRepository by inject<DocumentRepository>()
     val httpClient by inject<HttpClient>()
     val aiConfig by inject<AIConfig>()
     val logger = LoggerFactory.getLogger("ChatRoutes")
@@ -143,7 +143,7 @@ internal fun Route.chatRoutes() {
                 ?: throw DokusException.BadRequest("Document ID is required")
 
             val documentId = try {
-                DocumentProcessingId.parse(documentIdParam)
+                DocumentId.parse(documentIdParam)
             } catch (e: Exception) {
                 throw DokusException.BadRequest("Invalid document ID format")
             }
@@ -153,12 +153,11 @@ internal fun Route.chatRoutes() {
             logger.info("Single-doc chat request: tenant=$tenantId, document=$documentId")
 
             // Verify document exists and belongs to tenant
-            val processing = processingRepository.getById(
-                processingId = documentId,
+            val document = documentRepository.getById(
                 tenantId = tenantId,
-                includeDocument = false
+                documentId = documentId
             )
-            if (processing == null) {
+            if (document == null) {
                 throw DokusException.NotFound("Document not found")
             }
 
@@ -216,7 +215,7 @@ internal fun Route.chatRoutes() {
 
             val documentId = documentIdParam?.let {
                 try {
-                    DocumentProcessingId.parse(it)
+                    DocumentId.parse(it)
                 } catch (e: Exception) {
                     throw DokusException.BadRequest("Invalid document ID format")
                 }
@@ -227,7 +226,7 @@ internal fun Route.chatRoutes() {
             val (sessions, total) = chatRepository.listSessions(
                 tenantId = tenantId,
                 scope = scope,
-                documentProcessingId = documentId,
+                documentId = documentId,
                 limit = limit,
                 offset = page * limit
             )
@@ -343,7 +342,7 @@ private suspend fun processChat(
     request: ChatRequest,
     tenantId: TenantId,
     userId: UserId,
-    documentId: DocumentProcessingId?,
+    documentId: DocumentId?,
     chatAgent: ChatAgent,
     chatRepository: ChatRepository,
     aiConfig: AIConfig,
@@ -399,7 +398,7 @@ private suspend fun processChat(
         role = MessageRole.User,
         content = request.message,
         scope = request.scope,
-        documentProcessingId = documentId,
+        documentId = documentId,
         citations = null,
         chunksRetrieved = null,
         aiModel = null,
@@ -467,7 +466,7 @@ private suspend fun processChat(
         role = MessageRole.Assistant,
         content = chatResult.answer,
         scope = request.scope,
-        documentProcessingId = documentId,
+        documentId = documentId,
         citations = citations,
         chunksRetrieved = chatResult.chunksRetrieved,
         aiModel = aiConfig.models.chat,

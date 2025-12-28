@@ -1,6 +1,6 @@
 package ai.dokus.ai.services
 
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ChunkRetrievalRequest
 import tech.dokus.domain.model.ChunkRetrievalResponse
@@ -102,7 +102,7 @@ class RAGService(
     suspend fun retrieveRelevantChunks(
         tenantId: TenantId,
         query: String,
-        documentId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         topK: Int = DEFAULT_TOP_K,
         minSimilarity: Float = DEFAULT_MIN_SIMILARITY
     ): RetrievalResult {
@@ -166,7 +166,7 @@ class RAGService(
         val result = retrieveRelevantChunks(
             tenantId = tenantId,
             query = request.query,
-            documentId = request.documentProcessingId,
+            documentId = request.documentId,
             topK = request.topK,
             minSimilarity = request.minSimilarity
         )
@@ -175,7 +175,7 @@ class RAGService(
             chunks = result.chunks.map { chunk ->
                 DocumentChunkSummary(
                     id = DocumentChunkId.parse(chunk.id),
-                    documentProcessingId = DocumentProcessingId.parse(chunk.documentProcessingId),
+                    documentId = DocumentId.parse(chunk.documentId),
                     chunkIndex = chunk.chunkIndex,
                     content = chunk.content,
                     pageNumber = chunk.pageNumber,

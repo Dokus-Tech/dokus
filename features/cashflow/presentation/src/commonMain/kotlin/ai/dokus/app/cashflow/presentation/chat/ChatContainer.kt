@@ -2,7 +2,7 @@ package ai.dokus.app.cashflow.presentation.chat
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
 import ai.dokus.app.cashflow.usecase.SendChatMessageUseCase
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ai.ChatConfiguration
@@ -66,7 +66,7 @@ internal class ChatContainer(
             reduce { intent ->
                 when (intent) {
                     // === Initialization ===
-                    is ChatIntent.InitSingleDocChat -> handleInitSingleDocChat(intent.processingId)
+                    is ChatIntent.InitSingleDocChat -> handleInitSingleDocChat(intent.documentId)
                     is ChatIntent.InitCrossDocChat -> handleInitCrossDocChat()
                     is ChatIntent.LoadSession -> handleLoadSession(intent.sessionId)
                     is ChatIntent.Refresh -> handleRefresh()
@@ -77,7 +77,7 @@ internal class ChatContainer(
                     is ChatIntent.SendMessage -> handleSendMessage()
 
                     // === Scope Selection ===
-                    is ChatIntent.SwitchToSingleDoc -> handleSwitchToSingleDoc(intent.processingId)
+                    is ChatIntent.SwitchToSingleDoc -> handleSwitchToSingleDoc(intent.documentId)
                     is ChatIntent.SwitchToCrossDoc -> handleSwitchToCrossDoc()
 
                     // === Citation Interaction ===
@@ -104,8 +104,8 @@ internal class ChatContainer(
     // INITIALIZATION
     // =========================================================================
 
-    private suspend fun ChatCtx.handleInitSingleDocChat(processingId: DocumentProcessingId) {
-        logger.d { "Initializing single-doc chat for document: $processingId" }
+    private suspend fun ChatCtx.handleInitSingleDocChat(docId: DocumentId) {
+        logger.d { "Initializing single-doc chat for document: $docId" }
         updateState { ChatState.Loading }
 
         // Load configuration
@@ -114,7 +114,7 @@ internal class ChatContainer(
         updateState {
             ChatState.Content(
                 scope = ChatScope.SingleDoc,
-                documentProcessingId = processingId,
+                documentId = documentId,
                 documentName = null, // TODO: Fetch document name if needed
                 configuration = config
             )
@@ -155,7 +155,7 @@ internal class ChatContainer(
                             sessionId = sessionId,
                             messages = history.messages,
                             scope = history.session.scope,
-                            documentProcessingId = history.session.documentProcessingId,
+                            documentId = history.session.documentId,
                             documentName = history.session.documentName,
                             isSending = false,
                             showSessionPicker = false
@@ -230,13 +230,13 @@ internal class ChatContainer(
                         sessionId = sessionId,
                         message = message,
                         scope = scope,
-                        documentId = documentProcessingId
+                        documentId = documentId
                     )
                 } else {
                     // Start new session
                     when (scope) {
                         ChatScope.SingleDoc -> {
-                            val docId = documentProcessingId
+                            val docId = documentId
                             if (docId == null) {
                                 action(ChatAction.ShowError("No document selected"))
                                 withState<ChatState.Content, _> {
@@ -319,15 +319,15 @@ internal class ChatContainer(
     // SCOPE SELECTION
     // =========================================================================
 
-    private suspend fun ChatCtx.handleSwitchToSingleDoc(processingId: DocumentProcessingId) {
-        logger.d { "Switching to single-doc mode: $processingId" }
+    private suspend fun ChatCtx.handleSwitchToSingleDoc(docId: DocumentId) {
+        logger.d { "Switching to single-doc mode: $docId" }
 
         withState<ChatState.Content, _> {
             // Clear current session and start fresh
             updateState {
                 copy(
                     scope = ChatScope.SingleDoc,
-                    documentProcessingId = processingId,
+                    documentId = documentId,
                     sessionId = null,
                     messages = emptyList()
                 )
@@ -343,7 +343,7 @@ internal class ChatContainer(
             updateState {
                 copy(
                     scope = ChatScope.AllDocs,
-                    documentProcessingId = null,
+                    documentId = null,
                     documentName = null,
                     sessionId = null,
                     messages = emptyList()
@@ -420,7 +420,7 @@ internal class ChatContainer(
             loadSessionsJob = launch {
                 chatRepository.listSessions(
                     scope = scope.takeIf { it == ChatScope.AllDocs },
-                    documentId = documentProcessingId,
+                    documentId = documentId,
                     page = 0,
                     limit = 10
                 ).fold(
@@ -443,19 +443,19 @@ internal class ChatContainer(
     // NAVIGATION
     // =========================================================================
 
-    private suspend fun ChatCtx.handleViewCitationSource(documentId: String, pageNumber: Int?) {
-        logger.d { "Navigating to citation source: document=$documentId, page=$pageNumber" }
+    private suspend fun ChatCtx.handleViewCitationSource(documentIdStr: String, pageNumber: Int?) {
+        logger.d { "Navigating to citation source: document=$documentIdStr, page=$pageNumber" }
 
         // Parse document ID
-        val processingId = try {
-            DocumentProcessingId.parse(documentId)
+        val docId = try {
+            DocumentId.parse(documentIdStr)
         } catch (e: Exception) {
-            logger.e(e) { "Invalid document ID: $documentId" }
+            logger.e(e) { "Invalid document ID: $documentIdStr" }
             action(ChatAction.ShowError("Invalid document reference"))
             return
         }
 
-        action(ChatAction.NavigateToDocumentPreview(processingId, pageNumber))
+        action(ChatAction.NavigateToDocumentPreview(docId, pageNumber))
     }
 
     // =========================================================================
@@ -480,7 +480,7 @@ internal class ChatContainer(
             role = MessageRole.User,
             content = content,
             scope = scope,
-            documentProcessingId = documentProcessingId,
+            documentId = documentId,
             citations = null,
             sequenceNumber = messages.size + 1,
             createdAt = now

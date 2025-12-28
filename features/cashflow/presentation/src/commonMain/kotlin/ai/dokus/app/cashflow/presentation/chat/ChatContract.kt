@@ -2,7 +2,7 @@ package ai.dokus.app.cashflow.presentation.chat
 
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatCitation
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatMessageDto
@@ -55,7 +55,7 @@ sealed interface ChatState : MVIState, DokusState<Nothing> {
      * Content state - chat is ready for interaction.
      *
      * @property scope Current chat scope (SINGLE_DOC or ALL_DOCS)
-     * @property documentProcessingId Document ID for single-doc scope (null for cross-doc)
+     * @property documentId Document ID for single-doc scope (null for cross-doc)
      * @property documentName Document name for display (null for cross-doc)
      * @property sessionId Current session ID (null if new conversation)
      * @property messages List of messages in the current conversation
@@ -68,7 +68,7 @@ sealed interface ChatState : MVIState, DokusState<Nothing> {
      */
     data class Content(
         val scope: ChatScope,
-        val documentProcessingId: DocumentProcessingId? = null,
+        val documentId: DocumentId? = null,
         val documentName: String? = null,
         val sessionId: ChatSessionId? = null,
         val messages: List<ChatMessageDto> = emptyList(),
@@ -172,9 +172,9 @@ sealed interface ChatIntent : MVIIntent {
 
     /**
      * Initialize chat for single-document mode.
-     * @param processingId The document to chat about
+     * @param documentId The document to chat about
      */
-    data class InitSingleDocChat(val processingId: DocumentProcessingId) : ChatIntent
+    data class InitSingleDocChat(val documentId: DocumentId) : ChatIntent
 
     /**
      * Initialize chat for cross-document mode.
@@ -208,9 +208,9 @@ sealed interface ChatIntent : MVIIntent {
 
     /**
      * Switch to single-document chat mode.
-     * @param processingId The document to switch to
+     * @param documentId The document to switch to
      */
-    data class SwitchToSingleDoc(val processingId: DocumentProcessingId) : ChatIntent
+    data class SwitchToSingleDoc(val documentId: DocumentId) : ChatIntent
 
     /** Switch to cross-document chat mode */
     data object SwitchToCrossDoc : ChatIntent
@@ -270,17 +270,17 @@ sealed interface ChatAction : MVIAction {
 
     /**
      * Navigate to document review screen.
-     * @param processingId Document to view
+     * @param documentId Document to view
      */
-    data class NavigateToDocumentReview(val processingId: DocumentProcessingId) : ChatAction
+    data class NavigateToDocumentReview(val documentId: DocumentId) : ChatAction
 
     /**
      * Navigate to document preview at a specific page.
-     * @param processingId Document to preview
+     * @param documentId Document to preview
      * @param pageNumber Optional page number
      */
     data class NavigateToDocumentPreview(
-        val processingId: DocumentProcessingId,
+        val documentId: DocumentId,
         val pageNumber: Int? = null,
     ) : ChatAction
 

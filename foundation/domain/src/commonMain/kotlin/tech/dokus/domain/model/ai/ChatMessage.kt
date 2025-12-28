@@ -3,7 +3,7 @@ package tech.dokus.domain.model.ai
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.database.DbEnum
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import kotlin.jvm.JvmInline
@@ -153,7 +153,7 @@ data class ChatMessageDto(
     val scope: ChatScope,
 
     /** Document reference when scoped to single document */
-    val documentProcessingId: DocumentProcessingId? = null,
+    val documentId: DocumentId? = null,
 
     /** Source citations for ASSISTANT messages */
     val citations: List<ChatCitation>? = null,
@@ -194,7 +194,7 @@ data class ChatMessageSummary(
     val role: MessageRole,
     val content: String,
     val scope: ChatScope,
-    val documentProcessingId: DocumentProcessingId? = null,
+    val documentId: DocumentId? = null,
     val hasCitations: Boolean = false,
     val createdAt: LocalDateTime
 )
@@ -211,7 +211,7 @@ data class ChatSessionSummary(
     val scope: ChatScope,
 
     /** Document reference (if SINGLE_DOC scope) */
-    val documentProcessingId: DocumentProcessingId? = null,
+    val documentId: DocumentId? = null,
 
     /** Document name (if SINGLE_DOC scope) */
     val documentName: String? = null,

@@ -1,7 +1,7 @@
 package ai.dokus.ai.agents
 
 import ai.dokus.ai.services.RAGService
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.RetrievedChunk
 import ai.koog.agents.core.agent.AIAgent
@@ -139,7 +139,7 @@ class ChatAgent(
     suspend fun chat(
         tenantId: TenantId,
         question: String,
-        documentId: DocumentProcessingId? = null,
+        documentId: DocumentId? = null,
         conversationHistory: List<ConversationMessage>? = null,
         topK: Int = DEFAULT_TOP_K,
         minSimilarity: Float = DEFAULT_MIN_SIMILARITY
@@ -209,7 +209,7 @@ class ChatAgent(
         val citations = chunks.map { chunk ->
             Citation(
                 chunkId = chunk.id,
-                documentId = chunk.documentProcessingId,
+                documentId = chunk.documentId,
                 documentName = chunk.documentName,
                 pageNumber = chunk.pageNumber,
                 excerpt = chunk.content.take(200) + if (chunk.content.length > 200) "..." else "",
@@ -241,7 +241,7 @@ class ChatAgent(
     suspend fun ask(
         tenantId: TenantId,
         question: String,
-        documentId: DocumentProcessingId? = null
+        documentId: DocumentId? = null
     ): ChatResponse {
         return chat(
             tenantId = tenantId,

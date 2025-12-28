@@ -167,17 +167,7 @@ data class ExtractedLineItem(
 // Used when user confirms extracted data to create financial entity
 // ============================================================================
 
-/**
- * Request to confirm extracted document and create entity.
- */
-@Serializable
-data class ConfirmDocumentRequest(
-    /** Entity type to create (invoice, bill, expense) */
-    val entityType: DocumentType,
-
-    /** Corrections/overrides to apply to extracted data */
-    val corrections: DocumentCorrections? = null
-)
+// Note: ConfirmDocumentRequest moved to DocumentRecordDto.kt
 
 /**
  * Corrections that user can make to extracted data before confirmation.
@@ -231,36 +221,7 @@ data class ConfirmDocumentResponse(
 // Used when user edits extracted data before confirmation
 // ============================================================================
 
-/**
- * Request to update the extracted draft with user corrections.
- * This preserves the original AI draft for audit purposes.
- */
-@Serializable
-data class UpdateDraftRequest(
-    /** Updated extracted data (merged with user corrections) */
-    val extractedData: ExtractedDocumentData,
-
-    /** Optional description of what was changed */
-    val changeDescription: String? = null
-)
-
-/**
- * Response after updating draft.
- */
-@Serializable
-data class UpdateDraftResponse(
-    /** The processing record ID */
-    val processingId: String,
-
-    /** Current draft version after update */
-    val draftVersion: Int,
-
-    /** The updated extracted data */
-    val extractedData: ExtractedDocumentData,
-
-    /** Timestamp of the update */
-    val updatedAt: String
-)
+// Note: UpdateDraftRequest and UpdateDraftResponse moved to DocumentRecordDto.kt
 
 /**
  * Tracked user correction for audit trail.

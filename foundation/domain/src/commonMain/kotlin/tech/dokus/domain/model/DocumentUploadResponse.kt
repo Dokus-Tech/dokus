@@ -1,6 +1,6 @@
 package tech.dokus.domain.model
 
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.IngestionRunId
 import kotlinx.serialization.Serializable
 
 /**
@@ -10,6 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DocumentUploadResponse(
     val document: DocumentDto,
-    val processingId: DocumentProcessingId,
+    val processingId: IngestionRunId,
     val processingStatus: String
 )

@@ -255,7 +255,7 @@ private fun processorModule(appConfig: AppBaseConfig) = module {
 
     single {
         DocumentProcessingWorker(
-            processingRepository = get(),
+            ingestionRepository = get(),
             documentStorage = get<DocumentStorageService>(),
             providerFactory = get(),
             config = appConfig.processor,

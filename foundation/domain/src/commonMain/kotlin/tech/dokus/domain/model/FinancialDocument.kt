@@ -1,5 +1,9 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
@@ -17,10 +21,6 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 /**
  * Sealed interface representing a financial document that can be an Invoice, Expense, or Bill.
@@ -156,15 +156,6 @@ data class InvoiceItemDto(
     val vatAmount: Money,
     val sortOrder: Int = 0
 )
-
-/**
- * Extension function to get a human-readable type name.
- */
-fun FinancialDocumentDto.typeName(): String = when (this) {
-    is FinancialDocumentDto.InvoiceDto -> "Invoice"
-    is FinancialDocumentDto.ExpenseDto -> "Expense"
-    is FinancialDocumentDto.BillDto -> "Bill"
-}
 
 /**
  * Extension function to check if document is an invoice.

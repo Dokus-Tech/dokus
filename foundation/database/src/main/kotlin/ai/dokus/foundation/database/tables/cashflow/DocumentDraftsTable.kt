@@ -5,7 +5,7 @@ import ai.dokus.foundation.database.tables.auth.UsersTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
-import ai.dokus.foundation.ktor.database.dbEnumeration
+import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime

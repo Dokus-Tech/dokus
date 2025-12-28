@@ -509,4 +509,85 @@ class InvoiceRepository(
             }.count() > 0
         }
     }
+
+    /**
+     * Update invoice's document reference.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun updateDocumentId(
+        invoiceId: InvoiceId,
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): Result<Boolean> = runCatching {
+        dbQuery {
+            val updatedRows = InvoicesTable.update({
+                (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
+                (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
+            }) {
+                it[InvoicesTable.documentId] = UUID.fromString(documentId.toString())
+            }
+            updatedRows > 0
+        }
+    }
+
+    /**
+     * Find invoice by document ID.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun findByDocumentId(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): FinancialDocumentDto.InvoiceDto? = dbQuery {
+        InvoicesTable.selectAll().where {
+            (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (InvoicesTable.documentId eq UUID.fromString(documentId.toString()))
+        }.singleOrNull()?.let { row ->
+            // Fetch invoice items
+            val invoiceId = InvoiceId.parse(row[InvoicesTable.id].value.toString())
+            val items = InvoiceItemsTable.selectAll().where {
+                InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
+            }.orderBy(InvoiceItemsTable.sortOrder)
+                .map { itemRow ->
+                    InvoiceItemDto(
+                        id = itemRow[InvoiceItemsTable.id].value.toString(),
+                        invoiceId = invoiceId,
+                        description = itemRow[InvoiceItemsTable.description],
+                        quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
+                        unitPrice = Money(itemRow[InvoiceItemsTable.unitPrice].toString()),
+                        vatRate = VatRate(itemRow[InvoiceItemsTable.vatRate].toString()),
+                        lineTotal = Money(itemRow[InvoiceItemsTable.lineTotal].toString()),
+                        vatAmount = Money(itemRow[InvoiceItemsTable.vatAmount].toString()),
+                        sortOrder = itemRow[InvoiceItemsTable.sortOrder]
+                    )
+                }
+
+            FinancialDocumentDto.InvoiceDto(
+                id = invoiceId,
+                tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
+                contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
+                invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
+                issueDate = row[InvoicesTable.issueDate],
+                dueDate = row[InvoicesTable.dueDate],
+                subtotalAmount = Money(row[InvoicesTable.subtotalAmount].toString()),
+                vatAmount = Money(row[InvoicesTable.vatAmount].toString()),
+                totalAmount = Money(row[InvoicesTable.totalAmount].toString()),
+                paidAmount = Money(row[InvoicesTable.paidAmount].toString()),
+                status = row[InvoicesTable.status],
+                currency = row[InvoicesTable.currency],
+                notes = row[InvoicesTable.notes],
+                termsAndConditions = row[InvoicesTable.termsAndConditions],
+                items = items,
+                peppolId = row[InvoicesTable.peppolId]?.let { PeppolId(it) },
+                peppolSentAt = row[InvoicesTable.peppolSentAt],
+                peppolStatus = row[InvoicesTable.peppolStatus],
+                paymentLink = row[InvoicesTable.paymentLink],
+                paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
+                paidAt = row[InvoicesTable.paidAt],
+                paymentMethod = row[InvoicesTable.paymentMethod],
+                documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
+                createdAt = row[InvoicesTable.createdAt],
+                updatedAt = row[InvoicesTable.updatedAt]
+            )
+        }
+    }
 }
