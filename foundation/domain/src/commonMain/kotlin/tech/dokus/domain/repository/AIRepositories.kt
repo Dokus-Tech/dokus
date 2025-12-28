@@ -1,6 +1,6 @@
 package tech.dokus.domain.repository
 
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ai.ChatMessageDto
@@ -37,7 +37,7 @@ interface ChunkRepository {
     suspend fun searchSimilarChunks(
         tenantId: TenantId,
         queryEmbedding: List<Float>,
-        documentId: DocumentProcessingId?,
+        documentId: DocumentId?,
         topK: Int,
         minSimilarity: Float
     ): ChunkSearchResult
@@ -46,12 +46,12 @@ interface ChunkRepository {
      * Store chunks with embeddings for a document.
      *
      * @param tenantId The tenant owning the document
-     * @param documentId The document processing ID
+     * @param documentId The document ID
      * @param chunks The chunks to store with their embeddings
      */
     suspend fun storeChunks(
         tenantId: TenantId,
-        documentId: DocumentProcessingId,
+        documentId: DocumentId,
         chunks: List<ChunkWithEmbedding>
     )
 
