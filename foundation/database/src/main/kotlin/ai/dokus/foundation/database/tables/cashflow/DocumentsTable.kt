@@ -1,8 +1,6 @@
 package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
-import tech.dokus.domain.enums.EntityType
-import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
@@ -11,9 +9,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
 /**
  * Documents table - stores metadata for files uploaded to object storage (MinIO).
  *
- * Documents have their own lifecycle:
- * 1. Created on upload (entityType/entityId null)
- * 2. Optionally linked to an entity (Invoice, Bill, Expense)
+ * Documents are pure file metadata. Entity linkage is handled by the financial
+ * entity tables (Invoice, Bill, Expense) which have a documentId FK.
  *
  * The actual file content is stored in MinIO, referenced by storageKey.
  * Download URLs are generated on-demand (presigned URLs expire).
@@ -37,17 +34,11 @@ object DocumentsTable : UUIDTable("documents") {
     // Storage reference (MinIO key)
     val storageKey = varchar("storage_key", 500).index()
 
-    // Optional link to entity (null until attached)
-    val entityType = dbEnumeration<EntityType>("entity_type").nullable()
-    val entityId = varchar("entity_id", 36).nullable()
-
     // Timestamps
     val uploadedAt = datetime("uploaded_at").defaultExpression(CurrentDateTime)
 
     init {
-        // Index for fetching documents by entity
-        index(false, tenantId, entityType, entityId)
-
+        // Unique constraint: one storage key per tenant
         uniqueIndex(tenantId, storageKey)
     }
 }
