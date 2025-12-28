@@ -218,7 +218,7 @@ internal fun CashflowScreen(
                             onMoreClick = { /* TODO: Show context menu */ },
                             onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
                             onPendingDocumentClick = { doc ->
-                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.id.toString()))
+                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.document.id.toString()))
                             },
                             onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
                             isOnline = isOnline
@@ -250,7 +250,7 @@ internal fun CashflowScreen(
                             onMoreClick = { /* TODO: Show context menu */ },
                             onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
                             onPendingDocumentClick = { doc ->
-                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.id.toString()))
+                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.document.id.toString()))
                             },
                             onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
                             isOnline = isOnline
@@ -283,7 +283,7 @@ internal fun CashflowScreen(
                             onMoreClick = { /* TODO: Show context menu */ },
                             onLoadMore = { container.store.intent(CashflowIntent.LoadMore) },
                             onPendingDocumentClick = { doc ->
-                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.id.toString()))
+                                navController.navigateTo(CashFlowDestination.DocumentReview(doc.document.id.toString()))
                             },
                             onPendingLoadMore = { container.store.intent(CashflowIntent.LoadMorePendingDocuments) },
                             isOnline = isOnline
