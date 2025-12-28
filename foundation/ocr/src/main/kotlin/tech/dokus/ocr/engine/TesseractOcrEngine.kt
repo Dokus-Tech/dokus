@@ -220,14 +220,8 @@ class TesseractOcrEngine : OcrEngine {
                         )
                     }
 
-                    // Check if extracted page count exceeds limit
-                    if (imageFiles.size > input.maxPages) {
-                        return@withTempDir OcrResult.Failure(
-                            OcrFailureReason.TOO_MANY_PAGES,
-                            "PDF has ${imageFiles.size} pages, exceeds limit of ${input.maxPages}",
-                            null
-                        )
-                    }
+                    // Note: maxPages is enforced by pdftoppm via -f 1 -l maxPages flags
+                    // so we don't need a post-facto check here
 
                     // OCR each page with remaining timeout
                     val remainingTimeout = (input.timeout.inWholeMilliseconds * 2 / 3)
