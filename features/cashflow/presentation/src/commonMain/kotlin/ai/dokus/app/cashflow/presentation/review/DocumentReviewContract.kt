@@ -68,6 +68,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
      * @property selectedFieldPath Currently selected field for provenance highlight
      * @property previewUrl URL to preview the original document
      * @property contactSuggestions Suggested contacts based on extraction
+     * @property previewState State of the PDF page preview (loading, ready, error)
      */
     data class Content(
         val documentId: DocumentId,
@@ -80,6 +81,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val selectedFieldPath: String? = null,
         val previewUrl: String? = null,
         val contactSuggestions: List<ContactSuggestion> = emptyList(),
+        val previewState: DocumentPreviewState = DocumentPreviewState.Loading,
     ) : DocumentReviewState {
 
         /**
@@ -344,6 +346,17 @@ sealed interface DocumentReviewIntent : MVIIntent {
 
     /** Refresh the document data */
     data object Refresh : DocumentReviewIntent
+
+    // === Preview ===
+
+    /** Load PDF page previews for the document */
+    data object LoadPreviewPages : DocumentReviewIntent
+
+    /** Load more PDF pages with increased max pages */
+    data class LoadMorePages(val maxPages: Int) : DocumentReviewIntent
+
+    /** Retry loading preview pages after an error */
+    data object RetryLoadPreview : DocumentReviewIntent
 
     // === Field Editing ===
 

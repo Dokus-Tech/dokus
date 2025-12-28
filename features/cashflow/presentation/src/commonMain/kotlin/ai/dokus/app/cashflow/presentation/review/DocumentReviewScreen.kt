@@ -348,8 +348,9 @@ private fun DesktopReviewContent(
     ) {
         // Left side: Document preview
         DocumentPreviewPane(
-            previewUrl = state.previewUrl,
+            previewState = state.previewState,
             selectedFieldPath = state.selectedFieldPath,
+            onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
@@ -368,8 +369,9 @@ private fun DesktopReviewContent(
 
 @Composable
 private fun DocumentPreviewPane(
-    previewUrl: String?,
+    previewState: DocumentPreviewState,
     selectedFieldPath: String?,
+    onLoadMore: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -379,41 +381,12 @@ private fun DocumentPreviewPane(
         ),
         shape = MaterialTheme.shapes.medium
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            if (previewUrl != null) {
-                // TODO: Implement actual document preview (PDF viewer, image viewer)
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
-                ) {
-                    Icon(
-                        imageVector = FeatherIcons.FileText,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Document Preview",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Preview will highlight: ${selectedFieldPath ?: "no field selected"}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                }
-            } else {
-                Text(
-                    text = "No preview available",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        PdfPreviewPane(
+            state = previewState,
+            selectedFieldPath = selectedFieldPath,
+            onLoadMore = onLoadMore,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
@@ -537,8 +510,9 @@ private fun MobileReviewContent(
             onToggle = { isPreviewExpanded = !isPreviewExpanded }
         ) {
             DocumentPreviewPane(
-                previewUrl = state.previewUrl,
+                previewState = state.previewState,
                 selectedFieldPath = state.selectedFieldPath,
+                onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)

@@ -38,6 +38,7 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
@@ -63,13 +64,15 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.domain.routes.Peppol
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
 
 /**
  * HTTP-based implementation of CashflowRemoteDataSource.
  * Uses Ktor HttpClient with type-safe routing to communicate with the cashflow management API.
  */
 internal class CashflowRemoteDataSourceImpl(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val endpointProvider: DynamicDokusEndpointProvider
 ) : CashflowRemoteDataSource {
 
     // ============================================================================
@@ -600,6 +603,28 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.get(Documents.Id.Ingestions(parent = docIdRoute)).body()
+        }
+    }
+
+    override suspend fun getDocumentPages(
+        documentId: DocumentId,
+        dpi: Int,
+        maxPages: Int
+    ): Result<DocumentPagesResponse> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            val response: DocumentPagesResponse = httpClient.get(
+                Documents.Id.Pages(parent = docIdRoute, dpi = dpi, maxPages = maxPages)
+            ).body()
+
+            // Convert relative URLs to full URLs for authenticated image loading
+            val endpoint = endpointProvider.currentEndpointSnapshot()
+            val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
+            response.copy(
+                pages = response.pages.map { page ->
+                    page.copy(imageUrl = "$baseUrl${page.imageUrl}")
+                }
+            )
         }
     }
 
