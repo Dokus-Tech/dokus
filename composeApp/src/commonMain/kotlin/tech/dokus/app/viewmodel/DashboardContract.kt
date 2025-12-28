@@ -2,7 +2,7 @@ package tech.dokus.app.viewmodel
 
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.DocumentProcessingDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.common.Thumbnail
@@ -48,7 +48,7 @@ sealed interface DashboardState : MVIState, DokusState<Nothing> {
     data class Content(
         val tenantState: DokusState<Tenant?> = DokusState.idle(),
         val currentAvatar: Thumbnail? = null,
-        val pendingDocumentsState: DokusState<PaginationState<DocumentProcessingDto>> = DokusState.idle(),
+        val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
     ) : DashboardState
 
     /**

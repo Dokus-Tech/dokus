@@ -461,11 +461,11 @@ internal class DocumentReviewContainer(
             logger.d { "Confirming document: $documentId" }
             updateState { copy(isConfirming = true) }
 
-            // Build confirmation request
-            val corrections = buildDocumentCorrections(editableData)
+            // Build confirmation request with current extracted data
+            val updatedExtractedData = buildExtractedDataFromEditable(editableData, originalData)
             val request = ConfirmDocumentRequest(
-                entityType = editableData.documentType,
-                corrections = corrections
+                documentType = editableData.documentType,
+                extractedData = updatedExtractedData
             )
 
             launch {
@@ -559,45 +559,4 @@ internal class DocumentReviewContainer(
         )
     }
 
-    private fun buildDocumentCorrections(editable: EditableExtractedData): DocumentCorrections {
-        return when (editable.documentType) {
-            DocumentType.Invoice -> {
-                val invoice = editable.invoice
-                DocumentCorrections(
-                    contactId = invoice?.selectedContactId?.toString(),
-                    invoiceNumber = invoice?.invoiceNumber,
-                    date = invoice?.issueDate,
-                    dueDate = invoice?.dueDate,
-                    notes = invoice?.notes,
-                    items = invoice?.items
-                )
-            }
-            DocumentType.Bill -> {
-                val bill = editable.bill
-                DocumentCorrections(
-                    supplierName = bill?.supplierName,
-                    supplierVatNumber = bill?.supplierVatNumber,
-                    invoiceNumber = bill?.invoiceNumber,
-                    date = bill?.issueDate,
-                    dueDate = bill?.dueDate,
-                    category = bill?.category,
-                    description = bill?.description,
-                    notes = bill?.notes
-                )
-            }
-            DocumentType.Expense -> {
-                val expense = editable.expense
-                DocumentCorrections(
-                    merchant = expense?.merchant,
-                    date = expense?.date,
-                    category = expense?.category,
-                    description = expense?.description,
-                    isDeductible = expense?.isDeductible,
-                    paymentMethod = expense?.paymentMethod,
-                    notes = expense?.notes
-                )
-            }
-            else -> DocumentCorrections()
-        }
-    }
 }

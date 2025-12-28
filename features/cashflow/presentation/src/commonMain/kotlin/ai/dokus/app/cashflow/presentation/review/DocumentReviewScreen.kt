@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.foundation.design.components.DraftStatusBadge
 import ai.dokus.foundation.design.components.PBackButton
 import ai.dokus.foundation.design.components.PDatePickerDialog
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.ProcessingStatusBadge
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.Constrains
@@ -13,7 +13,7 @@ import ai.dokus.foundation.design.local.isLarge
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.ids.DocumentProcessingId
+import tech.dokus.domain.ids.DocumentId
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -101,7 +101,7 @@ import tech.dokus.foundation.app.mvi.container
  */
 @Composable
 internal fun DocumentReviewScreen(
-    processingId: DocumentProcessingId,
+    documentId: DocumentId,
     container: DocumentReviewContainer = container(),
 ) {
     val navController = LocalNavController.current
@@ -142,8 +142,8 @@ internal fun DocumentReviewScreen(
     }
 
     // Load document on first composition
-    LaunchedEffect(processingId) {
-        container.store.intent(DocumentReviewIntent.LoadDocument(processingId))
+    LaunchedEffect(documentId) {
+        container.store.intent(DocumentReviewIntent.LoadDocument(documentId))
     }
 
     Scaffold(
@@ -218,7 +218,10 @@ private fun ReviewTopBar(
                             horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ProcessingStatusBadge(status = content.document.status)
+                            // Show draft status badge
+                            content.document.draft?.draftStatus?.let { draftStatus ->
+                                DraftStatusBadge(status = draftStatus)
+                            }
                             if (content.showConfidence) {
                                 ConfidenceBadge(percent = content.confidencePercent)
                             }
