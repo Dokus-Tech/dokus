@@ -63,6 +63,11 @@ internal class DocumentReviewContainer(
                     is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.documentId)
                     is DocumentReviewIntent.Refresh -> handleRefresh()
 
+                    // === Preview ===
+                    is DocumentReviewIntent.LoadPreviewPages -> handleLoadPreviewPages()
+                    is DocumentReviewIntent.LoadMorePages -> handleLoadMorePages(intent.maxPages)
+                    is DocumentReviewIntent.RetryLoadPreview -> handleLoadPreviewPages()
+
                     // === Field Editing ===
                     is DocumentReviewIntent.UpdateInvoiceField -> handleUpdateInvoiceField(intent.field, intent.value)
                     is DocumentReviewIntent.UpdateBillField -> handleUpdateBillField(intent.field, intent.value)
@@ -146,9 +151,13 @@ internal class DocumentReviewContainer(
                 isConfirming = false,
                 selectedFieldPath = null,
                 previewUrl = document.document.downloadUrl,
-                contactSuggestions = contactSuggestions
+                contactSuggestions = contactSuggestions,
+                previewState = DocumentPreviewState.Loading
             )
         }
+
+        // Trigger preview loading after content is ready
+        intent(DocumentReviewIntent.LoadPreviewPages)
     }
 
     private fun buildContactSuggestions(document: DocumentRecordDto): List<ContactSuggestion> {
@@ -405,6 +414,87 @@ internal class DocumentReviewContainer(
         withState<DocumentReviewState.Content, _> {
             updateState { copy(selectedFieldPath = fieldPath) }
         }
+    }
+
+    // =========================================================================
+    // PDF PREVIEW
+    // =========================================================================
+
+    private suspend fun DocumentReviewCtx.handleLoadPreviewPages() {
+        withState<DocumentReviewState.Content, _> {
+            loadPreviewPages(
+                documentId = documentId,
+                contentType = document.document.contentType,
+                dpi = PreviewConfig.dpi.value,
+                maxPages = PreviewConfig.DEFAULT_MAX_PAGES
+            )
+        }
+    }
+
+    private suspend fun DocumentReviewCtx.handleLoadMorePages(maxPages: Int) {
+        withState<DocumentReviewState.Content, _> {
+            loadPreviewPages(
+                documentId = documentId,
+                contentType = document.document.contentType,
+                dpi = PreviewConfig.dpi.value,
+                maxPages = maxPages
+            )
+        }
+    }
+
+    private suspend fun DocumentReviewCtx.loadPreviewPages(
+        documentId: DocumentId,
+        contentType: String,
+        dpi: Int,
+        maxPages: Int
+    ) {
+        // Check if document is a PDF
+        if (!contentType.contains("pdf", ignoreCase = true)) {
+            withState<DocumentReviewState.Content, _> {
+                updateState { copy(previewState = DocumentPreviewState.NotPdf) }
+            }
+            return
+        }
+
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(previewState = DocumentPreviewState.Loading) }
+        }
+
+        dataSource.getDocumentPages(documentId, dpi, maxPages)
+            .fold(
+                onSuccess = { response ->
+                    withState<DocumentReviewState.Content, _> {
+                        if (response.pages.isEmpty()) {
+                            updateState { copy(previewState = DocumentPreviewState.NoPreview) }
+                        } else {
+                            updateState {
+                                copy(
+                                    previewState = DocumentPreviewState.Ready(
+                                        pages = response.pages,
+                                        totalPages = response.totalPages,
+                                        renderedPages = response.renderedPages,
+                                        dpi = response.dpi,
+                                        hasMore = response.totalPages > response.renderedPages
+                                    )
+                                )
+                            }
+                        }
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load preview pages for document: $documentId" }
+                    withState<DocumentReviewState.Content, _> {
+                        updateState {
+                            copy(
+                                previewState = DocumentPreviewState.Error(
+                                    message = error.message ?: "Failed to load preview",
+                                    retry = { intent(DocumentReviewIntent.RetryLoadPreview) }
+                                )
+                            )
+                        }
+                    }
+                }
+            )
     }
 
     // =========================================================================

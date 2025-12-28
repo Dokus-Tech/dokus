@@ -14,6 +14,7 @@ import ai.dokus.app.cashflow.usecase.SendChatMessageUseCase
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
 
 /**
  * Koin DI module for Cashflow feature network configuration.
@@ -34,8 +35,10 @@ val cashflowNetworkModule = module {
     // REMOTE DATA SOURCES
     // ============================================================================
 
-    // Invoice/expense data source
-    singleOf(::CashflowRemoteDataSourceImpl) bind CashflowRemoteDataSource::class
+    // Invoice/expense data source (needs explicit DI for endpointProvider)
+    single<CashflowRemoteDataSource> {
+        CashflowRemoteDataSourceImpl(get(), get<DynamicDokusEndpointProvider>())
+    }
 
     // Chat data source for document Q&A and RAG
     singleOf(::ChatRemoteDataSourceImpl) bind ChatRemoteDataSource::class

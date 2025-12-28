@@ -22,6 +22,7 @@ import tech.dokus.domain.model.ConfirmDocumentRequest
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.ReprocessRequest
@@ -42,6 +43,7 @@ import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import io.ktor.client.HttpClient
 import kotlinx.datetime.LocalDate
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
 
 /**
  * Remote data source for cashflow operations
@@ -453,6 +455,22 @@ interface CashflowRemoteDataSource {
      */
     suspend fun getDocumentIngestions(documentId: DocumentId): Result<List<DocumentIngestionDto>>
 
+    /**
+     * Get available PDF pages for preview rendering.
+     * GET /api/v1/documents/{id}/pages?dpi={dpi}&maxPages={maxPages}
+     *
+     * Returns page metadata with full URLs for authenticated image loading.
+     *
+     * @param documentId The document ID
+     * @param dpi Resolution for rendered pages (72-300, default 150)
+     * @param maxPages Maximum pages to return (1-50, default 10)
+     */
+    suspend fun getDocumentPages(
+        documentId: DocumentId,
+        dpi: Int = 150,
+        maxPages: Int = 10
+    ): Result<DocumentPagesResponse>
+
     // ============================================================================
     // PEPPOL E-INVOICING
     // ============================================================================
@@ -553,8 +571,11 @@ interface CashflowRemoteDataSource {
     suspend fun getPeppolTransmissionForInvoice(invoiceId: InvoiceId): Result<PeppolTransmissionDto?>
 
     companion object {
-        internal fun create(httpClient: HttpClient): CashflowRemoteDataSource {
-            return CashflowRemoteDataSourceImpl(httpClient)
+        internal fun create(
+            httpClient: HttpClient,
+            endpointProvider: DynamicDokusEndpointProvider
+        ): CashflowRemoteDataSource {
+            return CashflowRemoteDataSourceImpl(httpClient, endpointProvider)
         }
     }
 }
