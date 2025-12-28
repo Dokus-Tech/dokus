@@ -1091,8 +1091,8 @@ private fun computeFieldConflicts(
     }
 
     // VAT rate (VatRate comparison)
-    val sourceVatRate = source.defaultVatRate?.value?.toString()
-    val targetVatRate = target.defaultVatRate?.value?.toString()
+    val sourceVatRate = source.defaultVatRate?.toString()
+    val targetVatRate = target.defaultVatRate?.toString()
     if (sourceVatRate != null && targetVatRate != null && sourceVatRate != targetVatRate) {
         conflicts.add(
             MergeFieldConflict(

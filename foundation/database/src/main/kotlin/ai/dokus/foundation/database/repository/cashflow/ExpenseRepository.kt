@@ -4,6 +4,8 @@ import ai.dokus.foundation.database.tables.cashflow.ExpensesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId

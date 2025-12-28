@@ -244,7 +244,7 @@ fun ContactAutocomplete(
                                 postalCode = contact.postalCode,
                                 country = contact.country,
                                 defaultPaymentTerms = contact.defaultPaymentTerms,
-                                defaultVatRate = contact.defaultVatRate?.value?.toString()
+                                defaultVatRate = contact.defaultVatRate?.toString()
                             )
                             searchQuery = contact.name.value
                             onValueChange(contact.name.value)

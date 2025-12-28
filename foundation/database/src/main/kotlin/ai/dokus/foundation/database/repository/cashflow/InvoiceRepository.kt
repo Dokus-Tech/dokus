@@ -6,6 +6,8 @@ import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.Quantity
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId

@@ -69,7 +69,7 @@ internal class FilterDocumentsUseCase {
     }
 
     private fun extractAmount(document: FinancialDocumentDto): Double {
-        return document.amount.value.toDoubleOrNull() ?: 0.0
+        return document.amount.toDouble()
     }
 
     companion object {

@@ -244,7 +244,7 @@ private fun AmountColumn(
  */
 private fun formatAmount(amount: Money): String {
     return try {
-        val value = amount.value.toDoubleOrNull() ?: 0.0
+        val value = amount.toDouble()
         val formattedValue = when {
             value >= 1000 -> {
                 val thousands = (value / 1000).toInt()

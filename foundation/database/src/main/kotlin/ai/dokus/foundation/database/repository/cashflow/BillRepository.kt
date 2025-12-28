@@ -3,6 +3,8 @@ package ai.dokus.foundation.database.repository.cashflow
 import ai.dokus.foundation.database.tables.cashflow.BillsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.toDbDecimal
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.BillId
