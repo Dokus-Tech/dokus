@@ -77,6 +77,7 @@ internal fun Route.documentRecordRoutes() {
         /**
          * GET /api/v1/documents
          * List documents with filters and pagination.
+         * Now document-centric: includes documents without drafts (queued/processing/failed).
          */
         get<Documents> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
@@ -88,35 +89,31 @@ internal fun Route.documentRecordRoutes() {
             // Parse filters
             val draftStatus = route.draftStatus?.let { DraftStatus.fromDbValue(it) }
             val documentType = route.documentType?.let { DocumentType.valueOf(it) }
+            val ingestionStatus = route.ingestionStatus?.let { IngestionStatus.valueOf(it) }
 
-            // Get drafts with filters (drafts drive the list)
-            val statuses = if (draftStatus != null) {
-                listOf(draftStatus)
-            } else {
-                DraftStatus.entries.toList()
-            }
-
-            val (drafts, total) = draftRepository.listByStatus(
+            // Query documents with optional drafts and ingestion info
+            val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
                 tenantId = tenantId,
-                statuses = statuses,
+                draftStatus = draftStatus,
                 documentType = documentType,
+                ingestionStatus = ingestionStatus,
+                search = route.search,
                 page = page,
                 limit = limit
             )
 
             // Build full records
-            val records = drafts.mapNotNull { draft ->
-                val document = documentRepository.getById(tenantId, draft.documentId) ?: return@mapNotNull null
-                val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-                val latestIngestion = ingestionRepository.getLatestForDocument(draft.documentId, tenantId)
-                val confirmedEntity = if (draft.draftStatus == DraftStatus.Confirmed) {
-                    findConfirmedEntity(draft.documentId, draft.documentType, tenantId, invoiceRepository, billRepository, expenseRepository)
+            val records = documentsWithInfo.map { docInfo ->
+                val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
+                val draft = docInfo.draft
+                val confirmedEntity = if (draft?.draftStatus == DraftStatus.Confirmed) {
+                    findConfirmedEntity(docInfo.document.id, draft.documentType, tenantId, invoiceRepository, billRepository, expenseRepository)
                 } else null
 
                 DocumentRecordDto(
                     document = documentWithUrl,
-                    draft = draft.toDto(),
-                    latestIngestion = latestIngestion?.toDto(),
+                    draft = draft?.toDto(),
+                    latestIngestion = docInfo.latestIngestion?.toDto(),
                     confirmedEntity = confirmedEntity
                 )
             }

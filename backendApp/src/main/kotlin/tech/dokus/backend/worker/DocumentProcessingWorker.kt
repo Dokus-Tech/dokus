@@ -23,6 +23,7 @@ import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
 import tech.dokus.foundation.ktor.config.ProcessorConfig
 import tech.dokus.foundation.ktor.storage.DocumentStorageService
+import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -216,6 +217,10 @@ class DocumentProcessingWorker(
      * This step prepares the document for vector similarity search in the chat feature.
      * Chunks are stored in the database with their embeddings for later retrieval.
      *
+     * Uses contentHash-based deduplication:
+     * - If content hash matches existing chunks, skip indexing
+     * - If content hash differs, delete old chunks and insert new ones
+     *
      * @param tenantId The tenant owning this document (for isolation)
      * @param documentId The document ID
      * @param rawText The extracted text to chunk and embed
@@ -229,9 +234,28 @@ class DocumentProcessingWorker(
         val embeddingSvc = embeddingService ?: return
         val chunkRepo = chunkRepository ?: return
 
+        val tenantIdParsed = TenantId.parse(tenantId)
+        val documentIdParsed = DocumentId.parse(documentId)
+
         logger.info("Starting RAG preparation for document $documentId")
 
-        // Step 1: Chunk the text
+        // Step 1: Compute content hash for deduplication
+        val contentHash = rawText.sha256()
+
+        // Step 2: Check if content has changed since last indexing
+        val existingHash = chunkRepo.getContentHashForDocument(tenantIdParsed, documentIdParsed)
+        if (existingHash == contentHash) {
+            logger.info("Content unchanged for document $documentId (hash=$contentHash), skipping chunk indexing")
+            return
+        }
+
+        // Step 3: Delete old chunks if they exist (content has changed)
+        if (existingHash != null) {
+            val deletedCount = chunkRepo.deleteChunksForDocument(tenantIdParsed, documentIdParsed)
+            logger.info("Deleted $deletedCount old chunks for document $documentId (old hash=$existingHash, new hash=$contentHash)")
+        }
+
+        // Step 4: Chunk the text
         val chunkingResult = chunkingSvc.chunk(rawText)
 
         if (chunkingResult.chunks.isEmpty()) {
@@ -241,7 +265,7 @@ class DocumentProcessingWorker(
 
         logger.info("Generated ${chunkingResult.totalChunks} chunks for document $documentId")
 
-        // Step 2: Generate embeddings for each chunk
+        // Step 5: Generate embeddings for each chunk
         val chunkTexts = chunkingResult.chunks.map { it.content }
         val embeddings = try {
             embeddingSvc.generateEmbeddings(chunkTexts)
@@ -261,7 +285,7 @@ class DocumentProcessingWorker(
         val embeddingModel = embeddings.firstOrNull()?.model ?: "unknown"
         logger.info("Generated embeddings for ${embeddings.size} chunks (model=$embeddingModel)")
 
-        // Step 3: Store chunks with embeddings
+        // Step 6: Store chunks with embeddings and contentHash
         val chunksWithEmbeddings = chunkingResult.chunks.mapIndexed { index, chunk ->
             ChunkWithEmbedding(
                 content = chunk.content,
@@ -279,15 +303,25 @@ class DocumentProcessingWorker(
 
         try {
             chunkRepo.storeChunks(
-                tenantId = TenantId.parse(tenantId),
-                documentId = DocumentId.parse(documentId),
+                tenantId = tenantIdParsed,
+                documentId = documentIdParsed,
+                contentHash = contentHash,
                 chunks = chunksWithEmbeddings
             )
-            logger.info("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $documentId")
+            logger.info("Stored ${chunksWithEmbeddings.size} chunks with embeddings for document $documentId (hash=$contentHash)")
         } catch (e: Exception) {
             logger.error("Failed to store chunks for document $documentId: ${e.message}", e)
             throw e
         }
+    }
+
+    /**
+     * Compute SHA-256 hash of a string.
+     */
+    private fun String.sha256(): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashBytes = digest.digest(this.toByteArray(Charsets.UTF_8))
+        return hashBytes.joinToString("") { "%02x".format(it) }
     }
 
     /**
