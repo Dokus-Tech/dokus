@@ -28,6 +28,9 @@ dependencies {
     // AI backend (kept as separate library)
     implementation(projects.features.ai.backend)
 
+    // OCR module for text extraction
+    implementation(projects.foundation.ocr)
+
     // Auth domain for shared types
     implementation(projects.features.auth.domain)
 
