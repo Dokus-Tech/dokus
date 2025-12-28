@@ -357,29 +357,11 @@ private fun String.parseLocalDate(): LocalDate? {
 }
 
 private fun String.parseMoney(currencyCode: String?): Money? {
-    return try {
-        val cleaned = this.replace(",", ".").replace(" ", "")
-            .replace("€", "").replace("$", "").replace("£", "")
-            .trim()
-        // Validate it's a valid decimal number
-        cleaned.toBigDecimalOrNull() ?: return null
-        // Format to 2 decimal places
-        val formatted = Money.fromDouble(cleaned.toDouble())
-        formatted
-    } catch (e: Exception) {
-        null
-    }
+    return Money.parse(this)
 }
 
 private fun String.parseVatRate(): VatRate? {
-    return try {
-        val rate = this.replace("%", "").trim().toDoubleOrNull() ?: return null
-        // Format as string with 2 decimal places
-        val formatted = String.format("%.2f", rate)
-        VatRate(formatted)
-    } catch (e: Exception) {
-        null
-    }
+    return VatRate.parse(this)
 }
 
 private fun String.parseExpenseCategory(): ExpenseCategory? {
