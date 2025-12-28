@@ -69,6 +69,19 @@ class ChatAgent(
     }
 
     /**
+     * Document state for chat availability.
+     * Mirrors tech.dokus.domain.model.ai.DocumentState.
+     */
+    enum class DocumentState {
+        /** Document is ready, chunks indexed */
+        READY,
+        /** Document is still being processed */
+        PROCESSING,
+        /** Document is not indexed for chat */
+        NOT_INDEXED
+    }
+
+    /**
      * Result of a chat interaction.
      */
     @Serializable
@@ -84,7 +97,16 @@ class ChatAgent(
         /** Response generation time in milliseconds */
         val generationTimeMs: Long,
         /** Confidence indicator (based on chunk similarity and context quality) */
-        val confidence: Float
+        val confidence: Float,
+        /**
+         * Document state for single-document chat.
+         * - READY: Chunks indexed, can chat normally
+         * - PROCESSING: Still being processed
+         * - NOT_INDEXED: No chunks available
+         *
+         * Null for cross-document chat.
+         */
+        val documentState: DocumentState? = null
     )
 
     /**
@@ -128,6 +150,9 @@ class ChatAgent(
     /**
      * Process a chat question with RAG-backed context retrieval.
      *
+     * CRITICAL: Chat requires indexed chunks. If documentId is provided and
+     * no chunks exist, returns NOT_INDEXED state. No rawText fallback.
+     *
      * @param tenantId The tenant ID (REQUIRED for multi-tenant isolation)
      * @param question The user's question
      * @param documentId Optional document ID to scope the search to a single document
@@ -148,6 +173,42 @@ class ChatAgent(
         val scope = if (documentId != null) "single-doc" else "cross-doc"
 
         logger.debug("Chat request: tenantId=$tenantId, scope=$scope, question=${question.take(100)}...")
+
+        // For single-document chat, determine document state based on chunks
+        val documentState: DocumentState? = if (documentId != null) {
+            val hasChunks = ragService.hasChunksForDocument(tenantId, documentId)
+            if (hasChunks) {
+                DocumentState.READY
+            } else {
+                // Check if document is still processing (via RAG service or repository)
+                val isProcessing = ragService.isDocumentProcessing(tenantId, documentId)
+                if (isProcessing) {
+                    DocumentState.PROCESSING
+                } else {
+                    DocumentState.NOT_INDEXED
+                }
+            }
+        } else {
+            null // Cross-document chat
+        }
+
+        // If document is not ready, return early with appropriate message
+        if (documentState != null && documentState != DocumentState.READY) {
+            val message = when (documentState) {
+                DocumentState.PROCESSING -> "Document is still being processed. Please wait and try again shortly."
+                DocumentState.NOT_INDEXED -> "Document has not been indexed for chat. Please ensure the document has been processed."
+                else -> "Document is not available for chat."
+            }
+            return ChatResponse(
+                answer = message,
+                citations = emptyList(),
+                chunksRetrieved = 0,
+                usedContext = false,
+                generationTimeMs = System.currentTimeMillis() - startTime,
+                confidence = 0f,
+                documentState = documentState
+            )
+        }
 
         // Step 1: Retrieve relevant chunks using RAG
         val retrievalResult = try {
@@ -230,7 +291,8 @@ class ChatAgent(
             chunksRetrieved = chunks.size,
             usedContext = usedContext,
             generationTimeMs = generationTimeMs,
-            confidence = confidence
+            confidence = confidence,
+            documentState = documentState
         )
     }
 

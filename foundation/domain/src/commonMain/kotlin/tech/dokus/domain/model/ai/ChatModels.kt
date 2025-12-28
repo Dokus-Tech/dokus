@@ -4,6 +4,39 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 
 // =============================================================================
+// Document State for Chat
+// =============================================================================
+
+/**
+ * State of a document for chat purposes.
+ *
+ * Chat requires indexed chunks to function. This enum indicates
+ * whether a document is ready for chat queries.
+ */
+@Serializable
+enum class DocumentState {
+    /**
+     * Document is still being processed.
+     * Ingestion run exists but is queued or in progress.
+     * Chat is not available - user should wait.
+     */
+    PROCESSING,
+
+    /**
+     * Document has indexed chunks and is ready for chat.
+     * RAG retrieval will work normally.
+     */
+    READY,
+
+    /**
+     * Document exists but has not been indexed.
+     * No chunks available for RAG retrieval.
+     * Chat is not available.
+     */
+    NOT_INDEXED
+}
+
+// =============================================================================
 // Chat API Request/Response Models
 // =============================================================================
 
@@ -79,7 +112,19 @@ data class ChatResponse(
     val isNewSession: Boolean,
 
     /** Generation metadata for monitoring/debugging */
-    val metadata: ChatResponseMetadata? = null
+    val metadata: ChatResponseMetadata? = null,
+
+    /**
+     * Document state for single-document chat.
+     *
+     * Indicates whether the document is ready for chat:
+     * - READY: Chunks indexed, RAG works normally
+     * - PROCESSING: Still being processed, chat not available
+     * - NOT_INDEXED: No chunks, chat not available
+     *
+     * Null for cross-document chat (ALL_DOCS scope).
+     */
+    val documentState: DocumentState? = null
 )
 
 /**
