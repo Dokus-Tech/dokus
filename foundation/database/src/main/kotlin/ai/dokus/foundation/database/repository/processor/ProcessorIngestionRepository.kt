@@ -18,6 +18,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.ExtractedDocumentData
 import java.util.UUID
@@ -42,35 +43,9 @@ class ProcessorIngestionRepository {
         encodeDefaults = true
     }
 
-    /**
-     * Check if extracted data meets the minimal threshold to create a draft.
-     *
-     * Thresholds:
-     * - Invoice: has totalAmount OR (subtotal + vat) OR (amount + date + clientName)
-     * - Bill: has amount OR (amount + date + supplierName)
-     * - Expense: has amount AND (merchant OR date)
-     * - Unknown: never creates draft
-     */
-    private fun meetsMinimalThreshold(type: DocumentType, data: ExtractedDocumentData): Boolean {
-        return when (type) {
-            DocumentType.Invoice -> {
-                val inv = data.invoice ?: return false
-                inv.totalAmount != null ||
-                (inv.subtotalAmount != null && inv.vatAmount != null) ||
-                (inv.totalAmount != null && inv.issueDate != null && inv.clientName != null)
-            }
-            DocumentType.Bill -> {
-                val bill = data.bill ?: return false
-                bill.amount != null ||
-                (bill.amount != null && bill.issueDate != null && bill.supplierName != null)
-            }
-            DocumentType.Expense -> {
-                val exp = data.expense ?: return false
-                exp.amount != null && (exp.merchant != null || exp.date != null)
-            }
-            DocumentType.Unknown -> false
-        }
-    }
+    // NOTE: meetsMinimalThreshold() was REMOVED from this file.
+    // The ONLY threshold check is DocumentAIResult.meetsMinimalThreshold() in the AI module.
+    // The worker passes the threshold result to markAsSucceeded() via the meetsThreshold parameter.
 
     /**
      * Determine the draft status based on extracted data validation.
@@ -164,6 +139,12 @@ class ProcessorIngestionRepository {
      * - extracted_data: Set ONLY if draftVersion == 0 (not user-edited) or force=true
      * - last_successful_run_id: Always updated to this run
      *
+     * Draft creation rules:
+     * - Unknown type: NO draft created (ingestion still SUCCEEDED)
+     * - Classifiable types (Invoice/Bill/Expense): ALWAYS create draft
+     *   - meetsThreshold=false → DraftStatus.NeedsInput
+     *   - meetsThreshold=true → DraftStatus.Ready or NeedsReview based on completeness
+     *
      * @param runId The ingestion run ID
      * @param tenantId The tenant ID (required for draft operations)
      * @param documentId The document ID
@@ -171,6 +152,7 @@ class ProcessorIngestionRepository {
      * @param extractedData The extracted data structure
      * @param confidence Overall confidence score (0.0 - 1.0)
      * @param rawText Raw OCR/extracted text
+     * @param meetsThreshold Result of AI-layer threshold check (from DocumentAIResult.meetsMinimalThreshold())
      * @param force If true, overwrite extracted_data even if user has edited
      */
     suspend fun markAsSucceeded(
@@ -181,103 +163,111 @@ class ProcessorIngestionRepository {
         extractedData: ExtractedDocumentData,
         confidence: Double,
         rawText: String?,
+        meetsThreshold: Boolean,
         force: Boolean = false
     ): Boolean {
         // Defense-in-depth: Validate tenantId is provided
         require(tenantId.isNotBlank()) { "tenantId is required for draft operations" }
 
         return newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val runUuid = UUID.fromString(runId)
-        val documentUuid = UUID.fromString(documentId)
-        val tenantUuid = UUID.fromString(tenantId)
-        val extractedDataJson = json.encodeToString(extractedData)
-        val fieldConfidencesJson = extractedData.fieldConfidences.let { json.encodeToString(it) }
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            val runUuid = UUID.fromString(runId)
+            val documentUuid = UUID.fromString(documentId)
+            val tenantUuid = UUID.fromString(tenantId)
+            val extractedDataJson = json.encodeToString(extractedData)
+            val fieldConfidencesJson = extractedData.fieldConfidences.let { json.encodeToString(it) }
 
-        // Update the ingestion run
-        val runUpdated = DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq runUuid
-        }) {
-            it[status] = IngestionStatus.Succeeded
-            it[finishedAt] = now
-            it[DocumentIngestionRunsTable.rawText] = rawText
-            it[rawExtractionJson] = extractedDataJson
-            it[DocumentIngestionRunsTable.confidence] = confidence.toBigDecimal()
-            it[fieldConfidences] = fieldConfidencesJson
-            it[errorMessage] = null
-        } > 0
-
-        if (!runUpdated) return@newSuspendedTransaction false
-
-        // Only create/update draft if extraction meets minimal threshold
-        if (!meetsMinimalThreshold(documentType, extractedData)) {
-            // Extraction didn't produce meaningful data - don't create draft
-            // Ingestion run is still marked as succeeded with artifacts
-            return@newSuspendedTransaction true
-        }
-
-        // Determine draft status based on validation
-        val calculatedStatus = determineDraftStatus(documentType, extractedData)
-
-        // Check if draft exists and get current state
-        // SECURITY: Always filter by tenantId to prevent cross-tenant access
-        val existingDraft = DocumentDraftsTable.selectAll()
-            .where {
-                (DocumentDraftsTable.documentId eq documentUuid) and
-                (DocumentDraftsTable.tenantId eq tenantUuid)
-            }
-            .singleOrNull()
-
-        if (existingDraft == null) {
-            // Create new draft - set both ai_draft_data and extracted_data
-            DocumentDraftsTable.insert {
-                it[DocumentDraftsTable.documentId] = documentUuid
-                it[DocumentDraftsTable.tenantId] = tenantUuid
-                it[draftStatus] = calculatedStatus
-                it[DocumentDraftsTable.documentType] = documentType
-                it[aiDraftData] = extractedDataJson
-                it[aiDraftSourceRunId] = runUuid
-                it[DocumentDraftsTable.extractedData] = extractedDataJson
-                it[draftVersion] = 0
-                it[lastSuccessfulRunId] = runUuid
-                it[createdAt] = now
-                it[updatedAt] = now
-            }
-        } else {
-            // Update existing draft
-            val currentAiDraftData = existingDraft[DocumentDraftsTable.aiDraftData]
-            val currentVersion = existingDraft[DocumentDraftsTable.draftVersion]
-
-            // ai_draft_data: set ONLY if null (first successful run)
-            val shouldSetAiDraft = currentAiDraftData == null
-
-            // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
-            val shouldSetExtracted = currentVersion == 0 || force
-
-            // SECURITY: Always filter by tenantId to prevent cross-tenant modification
-            DocumentDraftsTable.update({
-                (DocumentDraftsTable.documentId eq documentUuid) and
-                (DocumentDraftsTable.tenantId eq tenantUuid)
+            // Update the ingestion run (always, regardless of draft creation)
+            val runUpdated = DocumentIngestionRunsTable.update({
+                DocumentIngestionRunsTable.id eq runUuid
             }) {
-                it[DocumentDraftsTable.documentType] = documentType
-                it[lastSuccessfulRunId] = runUuid
-                it[updatedAt] = now
+                it[status] = IngestionStatus.Succeeded
+                it[finishedAt] = now
+                it[DocumentIngestionRunsTable.rawText] = rawText
+                it[rawExtractionJson] = extractedDataJson
+                it[DocumentIngestionRunsTable.confidence] = confidence.toBigDecimal()
+                it[fieldConfidences] = fieldConfidencesJson
+                it[errorMessage] = null
+            } > 0
 
-                if (shouldSetAiDraft) {
+            if (!runUpdated) return@newSuspendedTransaction false
+
+            // Skip draft creation ONLY for Unknown type
+            // For all classifiable types, we ALWAYS create a draft
+            if (documentType == DocumentType.Unknown) {
+                // Unknown type - no draft, but ingestion is still SUCCEEDED
+                // Artifacts (raw_text, raw_extraction_json) are saved for debugging
+                return@newSuspendedTransaction true
+            }
+
+            // Determine draft status based on threshold and field completeness
+            val calculatedStatus = if (!meetsThreshold) {
+                // AI ran but threshold not met - user must fill fields manually
+                DraftStatus.NeedsInput
+            } else {
+                // Threshold met - determine Ready vs NeedsReview based on completeness
+                determineDraftStatus(documentType, extractedData)
+            }
+
+            // Check if draft exists and get current state
+            // SECURITY: Always filter by tenantId to prevent cross-tenant access
+            val existingDraft = DocumentDraftsTable.selectAll()
+                .where {
+                    (DocumentDraftsTable.documentId eq documentUuid) and
+                    (DocumentDraftsTable.tenantId eq tenantUuid)
+                }
+                .singleOrNull()
+
+            if (existingDraft == null) {
+                // Create new draft - set both ai_draft_data and extracted_data
+                DocumentDraftsTable.insert {
+                    it[DocumentDraftsTable.documentId] = documentUuid
+                    it[DocumentDraftsTable.tenantId] = tenantUuid
+                    it[draftStatus] = calculatedStatus
+                    it[DocumentDraftsTable.documentType] = documentType
                     it[aiDraftData] = extractedDataJson
                     it[aiDraftSourceRunId] = runUuid
-                }
-
-                if (shouldSetExtracted) {
                     it[DocumentDraftsTable.extractedData] = extractedDataJson
-                    // Update status when we update extracted data
-                    it[draftStatus] = calculatedStatus
+                    it[draftVersion] = 0
+                    it[lastSuccessfulRunId] = runUuid
+                    it[createdAt] = now
+                    it[updatedAt] = now
+                }
+            } else {
+                // Update existing draft
+                val currentAiDraftData = existingDraft[DocumentDraftsTable.aiDraftData]
+                val currentVersion = existingDraft[DocumentDraftsTable.draftVersion]
+
+                // ai_draft_data: set ONLY if null (first successful run)
+                val shouldSetAiDraft = currentAiDraftData == null
+
+                // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
+                val shouldSetExtracted = currentVersion == 0 || force
+
+                // SECURITY: Always filter by tenantId to prevent cross-tenant modification
+                DocumentDraftsTable.update({
+                    (DocumentDraftsTable.documentId eq documentUuid) and
+                    (DocumentDraftsTable.tenantId eq tenantUuid)
+                }) {
+                    it[DocumentDraftsTable.documentType] = documentType
+                    it[lastSuccessfulRunId] = runUuid
+                    it[updatedAt] = now
+
+                    if (shouldSetAiDraft) {
+                        it[aiDraftData] = extractedDataJson
+                        it[aiDraftSourceRunId] = runUuid
+                    }
+
+                    if (shouldSetExtracted) {
+                        it[DocumentDraftsTable.extractedData] = extractedDataJson
+                        // Update status when we update extracted data
+                        it[draftStatus] = calculatedStatus
+                    }
                 }
             }
-        }
 
-        true
-    }
+            true
+        }
     }
 
     /**
@@ -295,4 +285,38 @@ class ProcessorIngestionRepository {
                 it[errorMessage] = error
             } > 0
         }
+
+    /**
+     * Update the indexing status for an ingestion run.
+     *
+     * This is called after chunk indexing completes (success or failure).
+     * Indexing status is tracked separately from ingestion status to allow
+     * retry of RAG indexing independently.
+     *
+     * @param runId The ingestion run ID
+     * @param status The new indexing status
+     * @param chunksCount Number of chunks created (for SUCCEEDED)
+     * @param errorMessage Error message (for FAILED)
+     */
+    @OptIn(ExperimentalTime::class)
+    suspend fun updateIndexingStatus(
+        runId: String,
+        status: IndexingStatus,
+        chunksCount: Int? = null,
+        errorMessage: String? = null
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
+        DocumentIngestionRunsTable.update({
+            DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+        }) {
+            it[indexingStatus] = status
+            it[indexedAt] = now
+            if (chunksCount != null) {
+                it[DocumentIngestionRunsTable.chunksCount] = chunksCount
+            }
+            if (errorMessage != null) {
+                it[indexingErrorMessage] = errorMessage
+            }
+        } > 0
+    }
 }

@@ -44,10 +44,13 @@ enum class IngestionStatus(override val dbValue: String) : DbEnum {
  */
 @Serializable
 enum class DraftStatus(override val dbValue: String) : DbEnum {
-    /** Draft needs user review */
+    /** AI ran but threshold not met - user must fill fields manually */
+    @SerialName("NEEDS_INPUT") NeedsInput("NEEDS_INPUT"),
+
+    /** Draft has partial data and needs user review */
     @SerialName("NEEDS_REVIEW") NeedsReview("NEEDS_REVIEW"),
 
-    /** Draft is ready for confirmation */
+    /** Draft is ready for confirmation (all required fields present) */
     @SerialName("READY") Ready("READY"),
 
     /** User confirmed, financial entity created */
@@ -58,5 +61,25 @@ enum class DraftStatus(override val dbValue: String) : DbEnum {
 
     companion object {
         fun fromDbValue(value: String): DraftStatus = entries.find { it.dbValue == value }!!
+    }
+}
+
+/**
+ * Status of document chunk indexing (RAG preparation).
+ * Tracked separately from ingestion status to allow retry of indexing.
+ */
+@Serializable
+enum class IndexingStatus(override val dbValue: String) : DbEnum {
+    /** Indexing not yet started */
+    @SerialName("PENDING") Pending("PENDING"),
+
+    /** Chunks created and indexed successfully */
+    @SerialName("SUCCEEDED") Succeeded("SUCCEEDED"),
+
+    /** Indexing failed (retryable) */
+    @SerialName("FAILED") Failed("FAILED");
+
+    companion object {
+        fun fromDbValue(value: String): IndexingStatus = entries.find { it.dbValue == value }!!
     }
 }

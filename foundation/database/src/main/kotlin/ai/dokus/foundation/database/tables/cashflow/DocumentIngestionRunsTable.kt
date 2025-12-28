@@ -1,6 +1,7 @@
 package ai.dokus.foundation.database.tables.cashflow
 
 import ai.dokus.foundation.database.tables.auth.TenantTable
+import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.foundation.ktor.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
@@ -67,6 +68,20 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
 
     // Per-field confidence scores as JSON
     val fieldConfidences = text("field_confidences").nullable()
+
+    // Chunk indexing status (tracked separately from ingestion status)
+    // Allows RAG indexing to be retried independently
+    val indexingStatus = dbEnumeration<IndexingStatus>("indexing_status")
+        .default(IndexingStatus.Pending)
+
+    // Error message if chunk indexing failed
+    val indexingErrorMessage = text("indexing_error_message").nullable()
+
+    // When chunk indexing completed
+    val indexedAt = datetime("indexed_at").nullable()
+
+    // Number of chunks created (for diagnostics)
+    val chunksCount = integer("chunks_count").nullable()
 
     // Processing overrides (nullable = use defaults)
     // These allow per-reprocess customization for debugging/retries
