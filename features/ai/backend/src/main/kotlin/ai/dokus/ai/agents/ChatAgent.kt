@@ -73,12 +73,14 @@ class ChatAgent(
      * Mirrors tech.dokus.domain.model.ai.DocumentState.
      */
     enum class DocumentState {
-        /** Document is ready, chunks indexed */
+        /** Document is ready, chunks indexed, and confirmed */
         READY,
         /** Document is still being processed */
         PROCESSING,
         /** Document is not indexed for chat */
-        NOT_INDEXED
+        NOT_INDEXED,
+        /** Document has not been confirmed by the user - chat not allowed */
+        NOT_CONFIRMED
     }
 
     /**
@@ -174,27 +176,36 @@ class ChatAgent(
 
         logger.debug("Chat request: tenantId=$tenantId, scope=$scope, question=${question.take(100)}...")
 
-        // For single-document chat, determine document state based on chunks
+        // For single-document chat, determine document state
+        // CRITICAL: Chat is only allowed for Confirmed documents
         val documentState: DocumentState? = if (documentId != null) {
-            val hasChunks = ragService.hasChunksForDocument(tenantId, documentId)
-            if (hasChunks) {
-                DocumentState.READY
+            // First check: Is the document confirmed?
+            val isConfirmed = ragService.isDocumentConfirmed(tenantId, documentId)
+            if (!isConfirmed) {
+                DocumentState.NOT_CONFIRMED
             } else {
-                // Check if document is still processing (via RAG service or repository)
-                val isProcessing = ragService.isDocumentProcessing(tenantId, documentId)
-                if (isProcessing) {
-                    DocumentState.PROCESSING
+                // Document is confirmed, now check for chunks
+                val hasChunks = ragService.hasChunksForDocument(tenantId, documentId)
+                if (hasChunks) {
+                    DocumentState.READY
                 } else {
-                    DocumentState.NOT_INDEXED
+                    // Check if document is still processing (via RAG service or repository)
+                    val isProcessing = ragService.isDocumentProcessing(tenantId, documentId)
+                    if (isProcessing) {
+                        DocumentState.PROCESSING
+                    } else {
+                        DocumentState.NOT_INDEXED
+                    }
                 }
             }
         } else {
-            null // Cross-document chat
+            null // Cross-document chat (confirmedOnly filter applied in search)
         }
 
         // If document is not ready, return early with appropriate message
         if (documentState != null && documentState != DocumentState.READY) {
             val message = when (documentState) {
+                DocumentState.NOT_CONFIRMED -> "Please confirm the document first before using chat."
                 DocumentState.PROCESSING -> "Document is still being processed. Please wait and try again shortly."
                 DocumentState.NOT_INDEXED -> "Document has not been indexed for chat. Please ensure the document has been processed."
                 else -> "Document is not available for chat."

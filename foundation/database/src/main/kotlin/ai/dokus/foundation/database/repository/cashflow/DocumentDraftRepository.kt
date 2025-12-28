@@ -10,6 +10,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.TrackedCorrection
+import tech.dokus.domain.repository.DraftStatusChecker
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -54,9 +55,11 @@ data class DraftSummary(
 /**
  * Repository for document draft operations.
  * CRITICAL: All queries filter by tenantId for security.
+ *
+ * Implements DraftStatusChecker for chat confirmation checks.
  */
 @OptIn(ExperimentalUuidApi::class)
-class DocumentDraftRepository {
+class DocumentDraftRepository : DraftStatusChecker {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -295,6 +298,30 @@ class DocumentDraftRepository {
             (DocumentDraftsTable.documentId eq java.util.UUID.fromString(documentId.toString())) and
             (DocumentDraftsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
         } > 0
+    }
+
+    // =========================================================================
+    // DraftStatusChecker Implementation
+    // =========================================================================
+
+    /**
+     * Check if a document has been confirmed by the user.
+     * Used by ChatAgent to enforce chat-only-for-confirmed policy.
+     *
+     * CRITICAL: Must filter by tenantId for multi-tenant security.
+     */
+    override suspend fun isConfirmed(
+        tenantId: TenantId,
+        documentId: DocumentId
+    ): Boolean = newSuspendedTransaction {
+        val draft = DocumentDraftsTable.selectAll()
+            .where {
+                (DocumentDraftsTable.documentId eq java.util.UUID.fromString(documentId.toString())) and
+                (DocumentDraftsTable.tenantId eq java.util.UUID.fromString(tenantId.toString()))
+            }
+            .singleOrNull()
+
+        draft?.get(DocumentDraftsTable.draftStatus) == DraftStatus.Confirmed
     }
 
     private fun ResultRow.toDraftSummary(): DraftSummary {

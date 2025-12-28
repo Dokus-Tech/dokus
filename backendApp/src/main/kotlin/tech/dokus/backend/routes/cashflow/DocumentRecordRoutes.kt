@@ -74,7 +74,7 @@ internal fun Route.documentRecordRoutes() {
          * List documents with filters and pagination.
          * Now document-centric: includes documents without drafts (queued/processing/failed).
          */
-        get<Documents> { route ->
+        get<Documents.Paginated> { route ->
             val tenantId = dokusPrincipal.requireTenantId()
             val page = route.page.coerceAtLeast(0)
             val limit = route.limit.coerceIn(1, 100)
