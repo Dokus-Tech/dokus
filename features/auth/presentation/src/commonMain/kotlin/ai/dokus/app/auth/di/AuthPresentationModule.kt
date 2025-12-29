@@ -56,7 +56,7 @@ val authPresentationModule = module {
         WorkspaceSelectContainer(tenantDataSource = get(), selectTenantUseCase = get())
     }
     container<WorkspaceCreateContainer, WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> {
-        WorkspaceCreateContainer(authRepository = get(), lookupRepository = get())
+        WorkspaceCreateContainer(authRepository = get(), searchCompanyUseCase = get())
     }
     container<ProfileSettingsContainer, ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
         ProfileSettingsContainer(authRepository = get())
