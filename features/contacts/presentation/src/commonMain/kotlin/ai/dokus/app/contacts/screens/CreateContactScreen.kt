@@ -9,12 +9,9 @@ import ai.dokus.app.contacts.viewmodel.CreateContactIntent
 import ai.dokus.app.contacts.viewmodel.CreateContactState
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import ai.dokus.foundation.navigation.destinations.ContactsDestination
+import ai.dokus.foundation.navigation.local.LocalNavController
+import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -28,14 +25,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import ai.dokus.foundation.navigation.LocalNavController
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
@@ -45,40 +39,39 @@ import tech.dokus.foundation.app.mvi.container
  *
  * On desktop: Shows as a side pane sliding from right
  * On mobile: Shows as a full-screen view
+ *
+ * Navigation is handled internally using LocalNavController.
  */
 @Composable
-fun CreateContactScreen(
-    onDismiss: () -> Unit,
-    onContactCreated: ((contactId: String, displayName: String) -> Unit)? = null,
-    container: CreateContactContainer = container { CreateContactContainer(get(), get(), get()) },
+internal fun CreateContactScreen(
+    container: CreateContactContainer = container(),
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
 
     // Subscribe to actions
-    val state by container.subscribe(DefaultLifecycle) { action ->
+    val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            is CreateContactAction.NavigateBack -> onDismiss()
+            is CreateContactAction.NavigateBack -> navController.popBackStack()
             is CreateContactAction.NavigateToContact -> {
-                navController.navigate(
-                    ai.dokus.foundation.navigation.ContactsDestination.ContactDetails(action.contactId.value)
+                navController.navigateTo(
+                    ContactsDestination.ContactDetails(action.contactId.toString())
                 )
             }
             is CreateContactAction.ContactCreated -> {
-                onContactCreated?.invoke(action.contactId.value, action.displayName)
-                onDismiss()
+                navController.popBackStack()
             }
             is CreateContactAction.ShowError -> {
                 // TODO: Show snackbar
             }
         }
-    }.collectAsState()
+    }
 
     if (isLargeScreen) {
         CreateContactPane(
             state = state,
             onIntent = { container.store.intent(it) },
-            onDismiss = onDismiss,
+            onDismiss = { navController.popBackStack() },
         )
     } else {
         CreateContactFullScreen(

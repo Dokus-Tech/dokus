@@ -102,7 +102,7 @@ fun ConfirmStepContent(
         PPrimaryButton(
             text = if (state.isSubmitting) "Creating..." else "Create Contact",
             enabled = !state.isSubmitting && state.emailError == null,
-            loading = state.isSubmitting,
+            isLoading = state.isSubmitting,
             onClick = { onIntent(CreateContactIntent.ConfirmAndCreate) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -161,7 +161,8 @@ private fun CompanyInfoCard(
             Spacer(modifier = Modifier.height(Constrains.Spacing.small))
 
             // VAT number
-            if (entity.vatNumber != null) {
+            val vatNumber = entity.vatNumber
+            if (vatNumber != null) {
                 Row {
                     Text(
                         text = "VAT: ",
@@ -169,7 +170,7 @@ private fun CompanyInfoCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = entity.vatNumber.value,
+                        text = vatNumber.value,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -177,7 +178,9 @@ private fun CompanyInfoCard(
             }
 
             // Country
-            if (entity.address?.country != null) {
+            val address = entity.address
+            val country = address?.country
+            if (country != null) {
                 Row {
                     Text(
                         text = "Country: ",
@@ -185,7 +188,7 @@ private fun CompanyInfoCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = entity.address.country.dbValue,
+                        text = country.dbValue,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -193,7 +196,7 @@ private fun CompanyInfoCard(
             }
 
             // Address toggle
-            if (entity.address != null) {
+            if (address != null) {
                 Spacer(modifier = Modifier.height(Constrains.Spacing.small))
 
                 Row(
@@ -223,19 +226,20 @@ private fun CompanyInfoCard(
                         modifier = Modifier.padding(top = Constrains.Spacing.small)
                     ) {
                         Text(
-                            text = entity.address.streetLine1,
+                            text = address.streetLine1,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (entity.address.streetLine2 != null) {
+                        val streetLine2 = address.streetLine2
+                        if (streetLine2 != null) {
                             Text(
-                                text = entity.address.streetLine2,
+                                text = streetLine2,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Text(
-                            text = "${entity.address.postalCode} ${entity.address.city}",
+                            text = "${address.postalCode} ${address.city}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

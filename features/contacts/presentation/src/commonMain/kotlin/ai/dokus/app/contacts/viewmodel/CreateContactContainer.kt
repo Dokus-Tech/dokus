@@ -14,6 +14,7 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
@@ -42,9 +43,6 @@ internal class CreateContactContainer(
     companion object {
         private const val SEARCH_DEBOUNCE_MS = 300L
         private const val MIN_SEARCH_LENGTH = 3
-
-        // VAT pattern: 2-letter country code + 8-12 digits
-        private val VAT_PATTERN = Regex("^[A-Z]{2}\\d{8,12}$")
     }
 
     private val logger = Logger.forClass<CreateContactContainer>()
@@ -97,11 +95,12 @@ internal class CreateContactContainer(
             // Update query immediately
             updateState { copy(query = query, duplicateVat = null) }
 
-            val normalizedQuery = normalizeVatInput(query)
+            // Use VatNumber for validation and normalization
+            val vatNumber = VatNumber(query)
 
-            if (looksLikeVat(normalizedQuery)) {
-                // VAT pattern detected - check local first, then immediate remote
-                handleVatQuery(normalizedQuery)
+            if (vatNumber.isValid) {
+                // Valid VAT pattern detected - check local first, then immediate remote
+                handleVatQuery(vatNumber.normalized)
             } else if (query.length >= MIN_SEARCH_LENGTH) {
                 // Name search - debounce
                 updateState { copy(lookupState = LookupUiState.Loading) }
@@ -448,21 +447,4 @@ internal class CreateContactContainer(
         )
     }
 
-    // ============================================================================
-    // VAT HELPERS
-    // ============================================================================
-
-    /**
-     * Normalize VAT input: remove spaces, dots, dashes and uppercase.
-     */
-    private fun normalizeVatInput(input: String): String {
-        return input.replace(Regex("[.\\s-]"), "").uppercase()
-    }
-
-    /**
-     * Check if input looks like a VAT number (2-letter country code + 8-12 digits).
-     */
-    private fun looksLikeVat(normalized: String): Boolean {
-        return VAT_PATTERN.matches(normalized)
-    }
 }

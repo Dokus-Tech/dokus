@@ -2,12 +2,13 @@ package ai.dokus.app.contacts.navigation
 
 import ai.dokus.app.contacts.screens.ContactDetailsScreen
 import ai.dokus.app.contacts.screens.ContactFormScreen
-import tech.dokus.domain.ids.ContactId
+import ai.dokus.app.contacts.screens.CreateContactScreen
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import tech.dokus.domain.ids.ContactId
 
 /**
  * Navigation provider for the Contacts feature.
@@ -18,7 +19,7 @@ import androidx.navigation.toRoute
 internal object ContactsNavigationProvider : NavigationProvider {
     override fun NavGraphBuilder.registerGraph() {
         composable<ContactsDestination.CreateContact> {
-            ContactFormScreen(contactId = null)
+            CreateContactScreen()
         }
         composable<ContactsDestination.EditContact> { backStackEntry ->
             val route = backStackEntry.toRoute<ContactsDestination.EditContact>()
