@@ -1,17 +1,11 @@
 package ai.dokus.app.contacts.screens
 
-import ai.dokus.app.contacts.components.ContactFormContentCompact
 import ai.dokus.app.contacts.components.ContactsFilters
 import ai.dokus.app.contacts.components.ContactsFiltersMobile
 import ai.dokus.app.contacts.components.ContactsHeaderActions
 import ai.dokus.app.contacts.components.ContactsHeaderSearch
 import ai.dokus.app.contacts.components.ContactsList
 import ai.dokus.app.contacts.viewmodel.ContactActiveFilter
-import ai.dokus.app.contacts.viewmodel.ContactFormAction
-import ai.dokus.app.contacts.viewmodel.ContactFormContainer
-import ai.dokus.app.contacts.viewmodel.ContactFormData
-import ai.dokus.app.contacts.viewmodel.ContactFormIntent
-import ai.dokus.app.contacts.viewmodel.ContactFormState
 import ai.dokus.app.contacts.viewmodel.ContactRoleFilter
 import ai.dokus.app.contacts.viewmodel.ContactSortOption
 import ai.dokus.app.contacts.viewmodel.ContactsAction
@@ -24,8 +18,6 @@ import ai.dokus.app.resources.generated.contacts_select_contact_hint
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.contact.ContactDto
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -61,10 +53,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
-import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.state.DokusState
@@ -83,9 +76,6 @@ import tech.dokus.foundation.app.state.DokusState
 @Composable
 internal fun ContactsScreen(
     container: ContactsContainer = container(),
-    formContainer: ContactFormContainer = container {
-        parametersOf(ContactFormContainer.Companion.Params(null))
-    }
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.isLarge
@@ -126,64 +116,6 @@ internal fun ContactsScreen(
     val sortOption = contentState?.sortOption ?: ContactSortOption.Default
     val roleFilter = contentState?.roleFilter ?: ContactRoleFilter.All
     val activeFilter = contentState?.activeFilter ?: ContactActiveFilter.All
-    val showCreateContactPane = contentState?.showCreateContactPane ?: false
-
-    // Subscribe to form container state and handle actions
-    val formState by formContainer.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is ContactFormAction.NavigateBack -> {
-                container.store.intent(ContactsIntent.HideCreateContactPane)
-            }
-
-            is ContactFormAction.NavigateToContact -> {
-                container.store.intent(ContactsIntent.HideCreateContactPane)
-                container.store.intent(ContactsIntent.Refresh)
-                container.store.intent(ContactsIntent.SelectContact(action.contactId))
-            }
-
-            is ContactFormAction.ShowError -> {
-                // TODO: Show snackbar error
-            }
-
-            is ContactFormAction.ShowSuccess -> {
-                // TODO: Show snackbar success
-            }
-
-            is ContactFormAction.ShowFieldError -> {
-                // TODO: Show field-specific error
-            }
-        }
-    }
-
-    // Extract form data from the form state
-    val formData: ContactFormData
-    val duplicates: List<ai.dokus.app.contacts.viewmodel.PotentialDuplicate>
-    val isSaving: Boolean
-    val isDeleting: Boolean
-    when (formState) {
-        is ContactFormState.Editing -> {
-            val editingState = formState as ContactFormState.Editing
-            formData = editingState.formData
-            duplicates = editingState.duplicates
-            isSaving = editingState.isSaving
-            isDeleting = editingState.isDeleting
-        }
-
-        is ContactFormState.Error -> {
-            val errorState = formState as ContactFormState.Error
-            formData = errorState.formData
-            duplicates = emptyList()
-            isSaving = false
-            isDeleting = false
-        }
-
-        is ContactFormState.LoadingContact -> {
-            formData = ContactFormData()
-            duplicates = emptyList()
-            isSaving = false
-            isDeleting = false
-        }
-    }
 
     // Snackbar for connection status changes
     val snackbarHostState = remember { SnackbarHostState() }
@@ -201,13 +133,6 @@ internal fun ContactsScreen(
     // Reset mobile search expansion when rotating to large screen (desktop)
     LaunchedEffect(isLargeScreen) {
         if (isLargeScreen) isSearchExpanded = false
-    }
-
-    // Initialize form when pane opens
-    LaunchedEffect(showCreateContactPane) {
-        if (showCreateContactPane) {
-            formContainer.store.intent(ContactFormIntent.InitForCreate)
-        }
     }
 
     Scaffold(
@@ -231,13 +156,8 @@ internal fun ContactsScreen(
                 actions = {
                     ContactsHeaderActions(
                         onAddContactClick = {
-                            if (isLargeScreen) {
-                                // Desktop: Show form pane
-                                container.store.intent(ContactsIntent.ShowCreateContactPane)
-                            } else {
-                                // Mobile: Navigate to full-screen form
-                                navController.navigateTo(ContactsDestination.CreateContact)
-                            }
+                            // Navigate to new CreateContactScreen (VAT-first flow)
+                            navController.navigateTo(ContactsDestination.CreateContact)
                         }
                     )
                 }
@@ -265,47 +185,20 @@ internal fun ContactsScreen(
                 sortOption = sortOption,
                 roleFilter = roleFilter,
                 activeFilter = activeFilter,
-                showCreateForm = showCreateContactPane,
-                formData = formData,
-                duplicates = duplicates,
-                isSaving = isSaving,
                 contentPadding = contentPadding,
                 onContactClick = { contact ->
                     container.store.intent(ContactsIntent.SelectContact(contact.id))
                 },
                 onLoadMore = { container.store.intent(ContactsIntent.LoadMore) },
                 onAddContactClick = {
-                    container.store.intent(ContactsIntent.ShowCreateContactPane)
+                    // Navigate to new CreateContactScreen (VAT-first flow)
+                    navController.navigateTo(ContactsDestination.CreateContact)
                 },
                 onSortOptionSelected = { container.store.intent(ContactsIntent.UpdateSortOption(it)) },
                 onRoleFilterSelected = { container.store.intent(ContactsIntent.UpdateRoleFilter(it)) },
                 onActiveFilterSelected = {
                     container.store.intent(ContactsIntent.UpdateActiveFilter(it))
                 },
-                // Form callbacks
-                onCancelForm = { container.store.intent(ContactsIntent.HideCreateContactPane) },
-                onSaveForm = { formContainer.store.intent(ContactFormIntent.Save) },
-                onNameChange = { formContainer.store.intent(ContactFormIntent.UpdateName(it)) },
-                onEmailChange = { formContainer.store.intent(ContactFormIntent.UpdateEmail(it)) },
-                onPhoneChange = { formContainer.store.intent(ContactFormIntent.UpdatePhone(it)) },
-                onContactPersonChange = { formContainer.store.intent(ContactFormIntent.UpdateContactPerson(it)) },
-                onVatNumberChange = { formContainer.store.intent(ContactFormIntent.UpdateVatNumber(it)) },
-                onCompanyNumberChange = { formContainer.store.intent(ContactFormIntent.UpdateCompanyNumber(it)) },
-                onBusinessTypeChange = { formContainer.store.intent(ContactFormIntent.UpdateBusinessType(it)) },
-                onAddressLine1Change = { formContainer.store.intent(ContactFormIntent.UpdateAddressLine1(it)) },
-                onAddressLine2Change = { formContainer.store.intent(ContactFormIntent.UpdateAddressLine2(it)) },
-                onCityChange = { formContainer.store.intent(ContactFormIntent.UpdateCity(it)) },
-                onPostalCodeChange = { formContainer.store.intent(ContactFormIntent.UpdatePostalCode(it)) },
-                onCountryChange = { formContainer.store.intent(ContactFormIntent.UpdateCountry(it)) },
-                onPeppolIdChange = { formContainer.store.intent(ContactFormIntent.UpdatePeppolId(it)) },
-                onPeppolEnabledChange = { formContainer.store.intent(ContactFormIntent.UpdatePeppolEnabled(it)) },
-                onDefaultPaymentTermsChange = { formContainer.store.intent(ContactFormIntent.UpdateDefaultPaymentTerms(it)) },
-                onDefaultVatRateChange = { formContainer.store.intent(ContactFormIntent.UpdateDefaultVatRate(it)) },
-                onTagsChange = { formContainer.store.intent(ContactFormIntent.UpdateTags(it)) },
-                onInitialNoteChange = { formContainer.store.intent(ContactFormIntent.UpdateInitialNote(it)) },
-                onIsActiveChange = { formContainer.store.intent(ContactFormIntent.UpdateIsActive(it)) },
-                onDismissDuplicates = { formContainer.store.intent(ContactFormIntent.DismissDuplicateWarnings) },
-                onMergeWithExisting = { /* TODO: Handle merge flow */ }
             )
         } else {
             // Mobile: Full-screen list
@@ -350,10 +243,6 @@ private fun DesktopContactsContent(
     sortOption: ContactSortOption,
     roleFilter: ContactRoleFilter,
     activeFilter: ContactActiveFilter,
-    showCreateForm: Boolean,
-    formData: ContactFormData,
-    duplicates: List<ai.dokus.app.contacts.viewmodel.PotentialDuplicate>,
-    isSaving: Boolean,
     contentPadding: PaddingValues,
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
@@ -361,30 +250,6 @@ private fun DesktopContactsContent(
     onSortOptionSelected: (ContactSortOption) -> Unit,
     onRoleFilterSelected: (ContactRoleFilter) -> Unit,
     onActiveFilterSelected: (ContactActiveFilter) -> Unit,
-    // Form callbacks
-    onCancelForm: () -> Unit,
-    onSaveForm: () -> Unit,
-    onNameChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
-    onPhoneChange: (String) -> Unit,
-    onContactPersonChange: (String) -> Unit,
-    onVatNumberChange: (String) -> Unit,
-    onCompanyNumberChange: (String) -> Unit,
-    onBusinessTypeChange: (tech.dokus.domain.enums.ClientType) -> Unit,
-    onAddressLine1Change: (String) -> Unit,
-    onAddressLine2Change: (String) -> Unit,
-    onCityChange: (String) -> Unit,
-    onPostalCodeChange: (String) -> Unit,
-    onCountryChange: (String) -> Unit,
-    onPeppolIdChange: (String) -> Unit,
-    onPeppolEnabledChange: (Boolean) -> Unit,
-    onDefaultPaymentTermsChange: (Int) -> Unit,
-    onDefaultVatRateChange: (String) -> Unit,
-    onTagsChange: (String) -> Unit,
-    onInitialNoteChange: (String) -> Unit,
-    onIsActiveChange: (Boolean) -> Unit,
-    onDismissDuplicates: () -> Unit,
-    onMergeWithExisting: (ai.dokus.app.contacts.viewmodel.PotentialDuplicate) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -429,62 +294,23 @@ private fun DesktopContactsContent(
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
-        // Right panel: Contact details, create form, or placeholder (60%)
+        // Right panel: Contact details or placeholder (60%)
+        // Create contact is now handled via CreateContactScreen navigation
         Box(
             modifier = Modifier
                 .weight(0.6f)
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceContainerLowest)
         ) {
-            when {
-                showCreateForm -> {
-                    // Show create contact form inline
-                    ContactFormContentCompact(
-                        isEditMode = false,
-                        formData = formData,
-                        isSaving = isSaving,
-                        isDeleting = false,
-                        duplicates = duplicates,
-                        showBackButton = false,
-                        onBackPress = onCancelForm,
-                        onNameChange = onNameChange,
-                        onEmailChange = onEmailChange,
-                        onPhoneChange = onPhoneChange,
-                        onContactPersonChange = onContactPersonChange,
-                        onVatNumberChange = onVatNumberChange,
-                        onCompanyNumberChange = onCompanyNumberChange,
-                        onBusinessTypeChange = onBusinessTypeChange,
-                        onAddressLine1Change = onAddressLine1Change,
-                        onAddressLine2Change = onAddressLine2Change,
-                        onCityChange = onCityChange,
-                        onPostalCodeChange = onPostalCodeChange,
-                        onCountryChange = onCountryChange,
-                        onPeppolIdChange = onPeppolIdChange,
-                        onPeppolEnabledChange = onPeppolEnabledChange,
-                        onDefaultPaymentTermsChange = onDefaultPaymentTermsChange,
-                        onDefaultVatRateChange = onDefaultVatRateChange,
-                        onTagsChange = onTagsChange,
-                        onInitialNoteChange = onInitialNoteChange,
-                        onIsActiveChange = onIsActiveChange,
-                        onSave = onSaveForm,
-                        onCancel = onCancelForm,
-                        onDelete = { /* No delete in create mode */ },
-                        onDismissDuplicates = onDismissDuplicates,
-                        onMergeWithExisting = onMergeWithExisting,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                selectedContactId != null -> {
-                    // Show contact details
-                    ContactDetailsScreen(
-                        contactId = selectedContactId,
-                        showBackButton = false
-                    )
-                }
-                else -> {
-                    // No contact selected placeholder
-                    NoContactSelectedPlaceholder()
-                }
+            if (selectedContactId != null) {
+                // Show contact details
+                ContactDetailsScreen(
+                    contactId = selectedContactId,
+                    showBackButton = false
+                )
+            } else {
+                // No contact selected placeholder
+                NoContactSelectedPlaceholder()
             }
         }
     }

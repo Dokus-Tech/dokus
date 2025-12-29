@@ -53,6 +53,14 @@ fun ConfirmStepContent(
             onBack = { onIntent(CreateContactIntent.BackToLookup) }
         )
 
+        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+
+        // Step indicator
+        StepIndicator(
+            currentStep = CreateContactStep.Confirm,
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
         // Scrollable content

@@ -61,6 +61,14 @@ fun LookupStepContent(
             onClose = { onIntent(CreateContactIntent.Cancel) }
         )
 
+        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+
+        // Step indicator
+        StepIndicator(
+            currentStep = CreateContactStep.Search,
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
         // Search field

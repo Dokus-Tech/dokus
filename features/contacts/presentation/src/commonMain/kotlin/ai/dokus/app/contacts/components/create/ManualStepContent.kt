@@ -53,6 +53,14 @@ fun ManualStepContent(
             onBack = { onIntent(CreateContactIntent.BackFromManual) }
         )
 
+        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+
+        // Step indicator
+        StepIndicator(
+            currentStep = CreateContactStep.Details,
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
         // Scrollable content
