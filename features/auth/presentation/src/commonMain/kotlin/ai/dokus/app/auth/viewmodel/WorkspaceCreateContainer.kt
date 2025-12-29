@@ -5,7 +5,7 @@ import ai.dokus.app.auth.model.EntityConfirmationState
 import ai.dokus.app.auth.model.LookupState
 import ai.dokus.app.auth.model.WorkspaceWizardStep
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.app.auth.repository.LookupRepository
+import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Language
@@ -34,7 +34,7 @@ internal typealias WorkspaceCreateCtx = PipelineContext<WorkspaceCreateState, Wo
  */
 internal class WorkspaceCreateContainer(
     private val authRepository: AuthRepository,
-    private val lookupRepository: LookupRepository,
+    private val searchCompanyUseCase: SearchCompanyUseCase,
 ) : Container<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> {
 
     private val logger = Logger.forClass<WorkspaceCreateContainer>()
@@ -141,7 +141,7 @@ internal class WorkspaceCreateContainer(
             updateState { copy(lookupState = LookupState.Loading) }
 
             logger.d { "Looking up company: $name" }
-            lookupRepository.searchCompany(name).fold(
+            searchCompanyUseCase(name).fold(
                 onSuccess = { response ->
                     logger.d { "Company lookup returned ${response.results.size} results" }
                     updateState {

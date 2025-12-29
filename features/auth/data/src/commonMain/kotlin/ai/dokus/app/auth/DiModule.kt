@@ -17,7 +17,6 @@ import ai.dokus.app.auth.manager.AuthManagerMutable
 import ai.dokus.app.auth.manager.TokenManagerImpl
 import ai.dokus.app.auth.manager.TokenManagerMutable
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.app.auth.repository.LookupRepository
 import ai.dokus.app.auth.storage.TokenStorage
 import ai.dokus.app.auth.usecases.CheckAccountUseCase
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
@@ -28,9 +27,11 @@ import ai.dokus.app.auth.usecases.GetCurrentTenantUseCaseImpl
 import ai.dokus.app.auth.usecases.LoginUseCase
 import ai.dokus.app.auth.usecases.LogoutUseCase
 import ai.dokus.app.auth.usecases.RegisterAndLoginUseCase
+import ai.dokus.app.auth.usecases.SearchCompanyUseCaseImpl
 import ai.dokus.app.auth.usecases.SelectTenantUseCase
 import ai.dokus.app.auth.usecases.SelectTenantUseCaseImpl
 import ai.dokus.app.auth.usecases.ValidateServerUseCase
+import tech.dokus.domain.usecases.SearchCompanyUseCase
 import ai.dokus.app.auth.utils.JwtDecoder
 import tech.dokus.domain.asbtractions.AuthManager
 import tech.dokus.domain.asbtractions.TokenManager
@@ -83,9 +84,6 @@ val authDataModule = module {
 
     // Repositories
     singleOf(::AuthRepository)
-
-    // Lookup repository for CBE company search
-    singleOf(::LookupRepository)
 }
 
 val authDomainModule = module {
@@ -100,4 +98,7 @@ val authDomainModule = module {
     // Server connection use cases
     singleOf(::ValidateServerUseCase) bind ValidateServerUseCase::class
     singleOf(::ConnectToServerUseCase)
+
+    // Company lookup use case (CBE API)
+    singleOf(::SearchCompanyUseCaseImpl) bind SearchCompanyUseCase::class
 }
