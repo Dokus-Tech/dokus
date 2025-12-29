@@ -1,6 +1,8 @@
 package ai.dokus.foundation.design.components.navigation
 
+import ai.dokus.foundation.design.constrains.Constrains
 import ai.dokus.foundation.design.model.HomeItem
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -23,7 +25,13 @@ fun DokusNavigationBar(
     NavigationBar(modifier = modifier) {
         navItems.forEach {
             NavigationBarItem(
-                icon = { Icon(painterResource(it.iconRes), contentDescription = null) },
+                icon = {
+                    Icon(
+                        painter = painterResource(it.iconRes),
+                        contentDescription = stringResource(it.titleRes),
+                        modifier = Modifier.size(Constrains.IconSize.small)
+                    )
+                },
                 label = {
                     Text(
                         stringResource(it.titleRes),
