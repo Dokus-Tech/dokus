@@ -67,7 +67,11 @@ internal class CreateContactContainer(
 
                     // Manual step
                     is CreateContactIntent.ManualTypeChanged -> handleManualTypeChanged(intent.type)
-                    is CreateContactIntent.ManualFieldChanged -> handleManualFieldChanged(intent.field, intent.value)
+                    is CreateContactIntent.ManualFieldChanged -> handleManualFieldChanged(
+                        intent.field,
+                        intent.value
+                    )
+
                     is CreateContactIntent.ManualCountryChanged -> handleManualCountryChanged(intent.country)
                     is CreateContactIntent.ShowCountryPicker -> handleShowCountryPicker()
                     is CreateContactIntent.HideCountryPicker -> handleHideCountryPicker()
@@ -78,7 +82,11 @@ internal class CreateContactContainer(
 
                     // Common
                     is CreateContactIntent.Cancel -> action(CreateContactAction.NavigateBack)
-                    is CreateContactIntent.ViewExistingContact -> action(CreateContactAction.NavigateToContact(intent.contactId))
+                    is CreateContactIntent.ViewExistingContact -> action(
+                        CreateContactAction.NavigateToContact(
+                            intent.contactId
+                        )
+                    )
                 }
             }
         }
@@ -93,7 +101,13 @@ internal class CreateContactContainer(
 
         withState<CreateContactState.LookupStep, _> {
             // Update query immediately
-            updateState { copy(query = query, duplicateVat = null) }
+            updateState {
+                copy(
+                    query = query,
+                    lookupState = LookupUiState.Idle,
+                    duplicateVat = null
+                )
+            }
 
             // Use VatNumber for validation and normalization
             val vatNumber = VatNumber(query)
@@ -156,6 +170,7 @@ internal class CreateContactContainer(
                                 LookupUiState.Success(response.results)
                             }
                         )
+
                         else -> this
                     }
                 }
@@ -167,6 +182,7 @@ internal class CreateContactContainer(
                         is CreateContactState.LookupStep -> copy(
                             lookupState = LookupUiState.Error(error.message ?: "Search failed")
                         )
+
                         else -> this
                     }
                 }
@@ -266,7 +282,11 @@ internal class CreateContactContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to create contact" }
                     updateState { copy(isSubmitting = false) }
-                    action(CreateContactAction.ShowError(error.message ?: "Failed to create contact"))
+                    action(
+                        CreateContactAction.ShowError(
+                            error.message ?: "Failed to create contact"
+                        )
+                    )
                 }
             )
         }
@@ -289,12 +309,24 @@ internal class CreateContactContainer(
     private suspend fun CreateContactCtx.handleManualFieldChanged(field: String, value: String) {
         withState<CreateContactState.ManualStep, _> {
             val newFormData = when (field) {
-                "companyName" -> formData.copy(companyName = value, errors = formData.errors - "companyName")
+                "companyName" -> formData.copy(
+                    companyName = value,
+                    errors = formData.errors - "companyName"
+                )
+
                 "vatNumber" -> formData.copy(vatNumber = value)
                 "email" -> formData.copy(email = value)
                 "fullName" -> formData.copy(fullName = value, errors = formData.errors - "fullName")
-                "personEmail" -> formData.copy(personEmail = value, errors = formData.errors - "contact")
-                "personPhone" -> formData.copy(personPhone = value, errors = formData.errors - "contact")
+                "personEmail" -> formData.copy(
+                    personEmail = value,
+                    errors = formData.errors - "contact"
+                )
+
+                "personPhone" -> formData.copy(
+                    personPhone = value,
+                    errors = formData.errors - "contact"
+                )
+
                 else -> formData
             }
             updateState { copy(formData = newFormData) }
@@ -388,7 +420,11 @@ internal class CreateContactContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to create contact" }
                     updateState { copy(isSubmitting = false) }
-                    action(CreateContactAction.ShowError(error.message ?: "Failed to create contact"))
+                    action(
+                        CreateContactAction.ShowError(
+                            error.message ?: "Failed to create contact"
+                        )
+                    )
                 }
             )
         }
@@ -398,7 +434,10 @@ internal class CreateContactContainer(
     // VALIDATION HELPERS
     // ============================================================================
 
-    private fun validateManualForm(type: ClientType, data: ManualContactFormData): Map<String, String> {
+    private fun validateManualForm(
+        type: ClientType,
+        data: ManualContactFormData
+    ): Map<String, String> {
         val errors = mutableMapOf<String, String>()
 
         if (type == ClientType.Business) {
@@ -429,7 +468,7 @@ internal class CreateContactContainer(
                 contacts
                     .filter { contact ->
                         contact.name.value.equals(name, ignoreCase = true) &&
-                            (type != ClientType.Business || contact.country == data.country.dbValue)
+                                (type != ClientType.Business || contact.country == data.country.dbValue)
                     }
                     .map { contact ->
                         SoftDuplicateUi(
