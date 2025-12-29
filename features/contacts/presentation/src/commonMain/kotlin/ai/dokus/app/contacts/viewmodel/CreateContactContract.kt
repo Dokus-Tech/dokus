@@ -1,6 +1,7 @@
 package ai.dokus.app.contacts.viewmodel
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
@@ -8,7 +9,6 @@ import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.entity.EntityLookup
 
 /**
@@ -92,7 +92,7 @@ data class SoftDuplicateUi(
 // STATE
 // ============================================================================
 
-@Immutable
+@Stable
 sealed interface CreateContactState : MVIState {
 
     /**
