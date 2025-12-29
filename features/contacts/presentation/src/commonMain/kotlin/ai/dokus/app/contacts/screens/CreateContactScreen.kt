@@ -13,14 +13,13 @@ import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +40,7 @@ import tech.dokus.foundation.app.mvi.container
  * On mobile: Shows as a full-screen view
  *
  * Navigation is handled internally using LocalNavController.
+ * All user interactions go through intents → container → actions → navigation.
  */
 @Composable
 internal fun CreateContactScreen(
@@ -49,7 +49,7 @@ internal fun CreateContactScreen(
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    // Subscribe to actions
+    // Subscribe to actions - all navigation happens here
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is CreateContactAction.NavigateBack -> navController.popBackStack()
@@ -67,73 +67,54 @@ internal fun CreateContactScreen(
         }
     }
 
+    val onIntent: (CreateContactIntent) -> Unit = { container.store.intent(it) }
+
     if (isLargeScreen) {
-        CreateContactPane(
+        CreateContactPage(
             state = state,
-            onIntent = { container.store.intent(it) },
-            onDismiss = { navController.popBackStack() },
+            onIntent = onIntent,
         )
     } else {
         CreateContactFullScreen(
             state = state,
-            onIntent = { container.store.intent(it) },
+            onIntent = onIntent,
         )
     }
 }
 
 /**
- * Desktop version: Side pane with backdrop
+ * Desktop version: Full-page centered card layout.
+ * Clean, professional design without overlay/backdrop.
  */
 @Composable
-private fun CreateContactPane(
+private fun CreateContactPage(
     state: CreateContactState,
     onIntent: (CreateContactIntent) -> Unit,
-    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        // Backdrop
-        Box(
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onDismiss
-                )
-        )
-
-        // Side pane
-        BoxWithConstraints(
-            modifier = Modifier.align(Alignment.CenterEnd)
+                .widthIn(max = 560.dp)
+                .fillMaxHeight()
+                .padding(vertical = 32.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            val paneWidth = (maxWidth * 0.4f).coerceIn(400.dp, 600.dp)
-
-            Card(
+            CreateContactContent(
+                state = state,
+                onIntent = onIntent,
                 modifier = Modifier
-                    .width(paneWidth)
-                    .fillMaxHeight()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { /* Consume click */ }
-                    ),
-                shape = MaterialTheme.shapes.large.copy(
-                    topEnd = MaterialTheme.shapes.extraSmall.topEnd,
-                    bottomEnd = MaterialTheme.shapes.extraSmall.bottomEnd
-                ),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                CreateContactContent(
-                    state = state,
-                    onIntent = onIntent,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+                    .fillMaxSize()
+                    .padding(32.dp)
+            )
         }
     }
 }
