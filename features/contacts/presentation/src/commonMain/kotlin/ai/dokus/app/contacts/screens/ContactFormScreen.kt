@@ -48,22 +48,24 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
 
 /**
- * Screen for creating a new contact or editing an existing contact.
+ * Screen for editing an existing contact.
+ *
+ * For creating new contacts, use [CreateContactScreen] instead.
  *
  * Features:
- * - Create mode: Empty form for new contact with initial note field
- * - Edit mode: Pre-populated form with contact data, delete button
+ * - Pre-populated form with contact data
+ * - Delete button with confirmation dialog
  * - Duplicate detection: Warning banner when similar contacts exist
  * - Validation: Real-time field validation with error display
  * - Responsive: Different layouts for desktop and mobile
  *
  * Navigation is handled internally using LocalNavController.
  *
- * @param contactId If provided, opens in edit mode; otherwise opens in create mode
+ * @param contactId The ID of the contact to edit (required)
  */
 @Composable
 internal fun ContactFormScreen(
-    contactId: ContactId? = null,
+    contactId: ContactId,
     container: ContactFormContainer = container {
         parametersOf(
             ContactFormContainer.Companion.Params(contactId)
@@ -247,17 +249,13 @@ private fun IntentReceiver<ContactFormIntent>.MobileFormLayout(
 
             // Header with back button
             SectionTitle(
-                text = if (state.isEditMode) "Edit Contact" else "Create Contact",
+                text = "Edit Contact",
                 onBackPress = onBackPress
             )
 
             // Description (shorter for mobile)
             Text(
-                text = if (state.isEditMode) {
-                    "Update contact information."
-                } else {
-                    "Required fields are marked with *."
-                },
+                text = "Update contact information.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -305,7 +303,7 @@ private fun IntentReceiver<ContactFormIntent>.MobileFormLayout(
                 onTagsChange = { intent(ContactFormIntent.UpdateTags(it)) },
                 onInitialNoteChange = { intent(ContactFormIntent.UpdateInitialNote(it)) },
                 onIsActiveChange = { intent(ContactFormIntent.UpdateIsActive(it)) },
-                showInitialNote = !state.isEditMode
+                showInitialNote = false  // Initial note is only for create mode (use CreateContactScreen)
             )
 
             Spacer(modifier = Modifier.height(16.dp))

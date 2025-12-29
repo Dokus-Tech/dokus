@@ -246,16 +246,18 @@ private fun LookupResultCard(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            if (entity.vatNumber != null) {
+            val vatNumber = entity.vatNumber
+            if (vatNumber != null) {
                 Text(
-                    text = entity.vatNumber.value,
+                    text = vatNumber.value,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            if (entity.address != null) {
+            val address = entity.address
+            if (address != null) {
                 Text(
-                    text = "${entity.address.city}, ${entity.address.country.dbValue}",
+                    text = "${address.city}, ${address.country.dbValue}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

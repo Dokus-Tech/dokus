@@ -93,7 +93,7 @@ fun ManualStepContent(
         PPrimaryButton(
             text = if (state.isSubmitting) "Creating..." else "Create Contact",
             enabled = !state.isSubmitting && isFormValid(state.contactType, state.formData),
-            loading = state.isSubmitting,
+            isLoading = state.isSubmitting,
             onClick = { onIntent(CreateContactIntent.CreateManualContact) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -174,7 +174,7 @@ private fun BusinessFields(
             fieldName = "Company Name *",
             value = formData.companyName,
             error = formData.errors["companyName"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.RequiredFieldMissing
+                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
             },
             onValueChange = { onFieldChanged("companyName", it) },
             modifier = Modifier.fillMaxWidth()
@@ -217,7 +217,7 @@ private fun IndividualFields(
             fieldName = "Full Name *",
             value = formData.fullName,
             error = formData.errors["fullName"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.RequiredFieldMissing
+                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
             },
             onValueChange = { onFieldChanged("fullName", it) },
             modifier = Modifier.fillMaxWidth()
@@ -227,7 +227,7 @@ private fun IndividualFields(
             fieldName = "Email",
             value = Email(formData.personEmail),
             error = formData.errors["contact"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.RequiredFieldMissing
+                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
             },
             onValueChange = { onFieldChanged("personEmail", it.value) },
             modifier = Modifier.fillMaxWidth()
@@ -237,7 +237,7 @@ private fun IndividualFields(
             fieldName = "Phone",
             value = PhoneNumber(formData.personPhone),
             error = formData.errors["contact"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.RequiredFieldMissing
+                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
             },
             onValueChange = { onFieldChanged("personPhone", it.value) },
             modifier = Modifier.fillMaxWidth()

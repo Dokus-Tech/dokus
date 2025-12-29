@@ -12,6 +12,10 @@ import ai.dokus.app.contacts.viewmodel.ContactsAction
 import ai.dokus.app.contacts.viewmodel.ContactsContainer
 import ai.dokus.app.contacts.viewmodel.ContactsIntent
 import ai.dokus.app.contacts.viewmodel.ContactsState
+import ai.dokus.app.contacts.viewmodel.CreateContactAction
+import ai.dokus.app.contacts.viewmodel.CreateContactContainer
+import ai.dokus.app.contacts.viewmodel.CreateContactIntent
+import ai.dokus.app.contacts.viewmodel.CreateContactState
 import org.koin.dsl.module
 import tech.dokus.foundation.app.mvi.container
 
@@ -50,6 +54,15 @@ val contactsPresentationModule = module {
             createContact = get(),
             updateContact = get(),
             deleteContact = get()
+        )
+    }
+
+    // Create Contact flow (new VAT-first split flow)
+    container<CreateContactContainer, CreateContactState, CreateContactIntent, CreateContactAction> {
+        CreateContactContainer(
+            searchCompanyUseCase = get(),
+            listContacts = get(),
+            createContact = get()
         )
     }
 }
