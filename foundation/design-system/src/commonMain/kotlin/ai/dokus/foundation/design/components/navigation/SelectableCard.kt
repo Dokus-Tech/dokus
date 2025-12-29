@@ -46,7 +46,10 @@ fun SelectableCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onClick() }
-                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
+                .padding(
+                    horizontal = Constrains.Spacing.large,
+                    vertical = Constrains.Spacing.small
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -100,7 +103,10 @@ fun SelectableOutlineCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onClick() }
-                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
+                .padding(
+                    horizontal = Constrains.Spacing.large,
+                    vertical = Constrains.Spacing.small
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
