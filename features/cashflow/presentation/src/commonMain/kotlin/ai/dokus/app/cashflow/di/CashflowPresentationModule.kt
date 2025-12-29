@@ -88,7 +88,7 @@ val cashflowViewModelModule = module {
         )
     }
     container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
-        DocumentReviewContainer(dataSource = get())
+        DocumentReviewContainer(dataSource = get(), getContact = get())
     }
     container<ChatContainer, ChatState, ChatIntent, ChatAction> {
         ChatContainer(

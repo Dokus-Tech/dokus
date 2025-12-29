@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,20 +18,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
@@ -133,6 +131,10 @@ private fun ErrorPreview(
     }
 }
 
+/**
+ * Desktop-optimized preview with fit-width pages and max 920dp constraint.
+ * Pages render as paper cards with shadow for a document-like appearance.
+ */
 @Composable
 private fun ReadyPreview(
     pages: List<DocumentPagePreviewDto>,
@@ -144,61 +146,70 @@ private fun ReadyPreview(
     selectedFieldPath: String?,
     modifier: Modifier = Modifier
 ) {
-    var zoomLevel by remember { mutableFloatStateOf(1f) }
     val scrollState = rememberLazyListState()
 
-    Box(modifier = modifier.fillMaxSize()) {
-        LazyColumn(
-            state = scrollState,
+    // Container with subtle background for paper contrast
+    Card(
+        modifier = modifier.fillMaxSize(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+        shape = RoundedCornerShape(0.dp),
+    ) {
+        Box(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentAlignment = Alignment.TopCenter,
         ) {
-            itemsIndexed(pages) { index, page ->
-                PdfPageImage(
-                    page = page,
-                    imageLoader = imageLoader,
-                    zoomLevel = zoomLevel,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            if (hasMore) {
-                item {
-                    LoadMoreButton(
-                        currentCount = renderedPages,
-                        totalCount = totalPages,
-                        onClick = { onLoadMore(renderedPages + 10) }
+            LazyColumn(
+                state = scrollState,
+                modifier = Modifier
+                    .widthIn(max = 920.dp) // Constrain preview width
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                itemsIndexed(pages) { index, page ->
+                    PdfPageImage(
+                        page = page,
+                        imageLoader = imageLoader,
+                        modifier = Modifier.fillMaxWidth(),
                     )
+                }
+
+                if (hasMore) {
+                    item {
+                        LoadMoreButton(
+                            currentCount = renderedPages,
+                            totalCount = totalPages,
+                            onClick = { onLoadMore(renderedPages + 10) },
+                        )
+                    }
                 }
             }
         }
-
-        // Zoom controls overlay
-        ZoomControls(
-            zoomLevel = zoomLevel,
-            onZoomChange = { zoomLevel = it },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        )
     }
 }
 
+/**
+ * Individual PDF page rendered as a paper card with shadow.
+ * Uses fit-width scaling to maximize readability.
+ */
 @Composable
 private fun PdfPageImage(
     page: DocumentPagePreviewDto,
     imageLoader: ImageLoader,
-    zoomLevel: Float,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .graphicsLayer(
-                scaleX = zoomLevel,
-                scaleY = zoomLevel
-            )
-            .clip(RoundedCornerShape(8.dp))
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White,
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp,
+        ),
     ) {
         SubcomposeAsyncImage(
             model = page.imageUrl,
@@ -209,8 +220,8 @@ private fun PdfPageImage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(0.707f) // A4 aspect ratio
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -221,24 +232,24 @@ private fun PdfPageImage(
                         .fillMaxWidth()
                         .aspectRatio(0.707f)
                         .background(MaterialTheme.colorScheme.errorContainer),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
                         )
                         Text(
                             text = "Page ${page.page} failed",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            color = MaterialTheme.colorScheme.onErrorContainer,
                         )
                     }
                 }
             },
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxWidth()
+            contentScale = ContentScale.FillWidth,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

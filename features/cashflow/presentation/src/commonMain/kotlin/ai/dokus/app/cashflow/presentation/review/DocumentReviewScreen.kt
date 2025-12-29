@@ -233,8 +233,8 @@ private fun ReviewTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
-                if (content != null) {
-                    // Chat button
+                // Chat button - only visible when document is confirmed
+                if (content != null && content.isDocumentConfirmed) {
                     IconButton(onClick = onChatClick) {
                         Icon(
                             imageVector = Icons.Default.Message,
@@ -397,77 +397,114 @@ private fun EditableFormPane(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+        modifier = modifier,
     ) {
-        // Unsaved changes indicator
-        AnimatedVisibility(
-            visible = state.hasUnsavedChanges,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = Constrains.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
         ) {
-            UnsavedChangesBar(
-                isSaving = state.isSaving,
-                onSave = { onIntent(DocumentReviewIntent.SaveDraft) },
-                onDiscard = { onIntent(DocumentReviewIntent.DiscardChanges) }
-            )
-        }
-
-        // Document type specific form
-        when (state.editableData.documentType) {
-            DocumentType.Invoice -> InvoiceForm(
-                fields = state.editableData.invoice ?: EditableInvoiceFields(),
-                onFieldUpdate = { field, value ->
-                    onIntent(DocumentReviewIntent.UpdateInvoiceField(field, value))
-                },
-                onFieldFocus = { fieldPath ->
-                    onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                },
-                contactSuggestions = state.contactSuggestions,
-                onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) }
-            )
-            DocumentType.Bill -> BillForm(
-                fields = state.editableData.bill ?: EditableBillFields(),
-                onFieldUpdate = { field, value ->
-                    onIntent(DocumentReviewIntent.UpdateBillField(field, value))
-                },
-                onFieldFocus = { fieldPath ->
-                    onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                },
-                contactSuggestions = state.contactSuggestions,
-                onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) }
-            )
-            DocumentType.Expense -> ExpenseForm(
-                fields = state.editableData.expense ?: EditableExpenseFields(),
-                onFieldUpdate = { field, value ->
-                    onIntent(DocumentReviewIntent.UpdateExpenseField(field, value))
-                },
-                onFieldFocus = { fieldPath ->
-                    onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                }
-            )
-            else -> {
-                Text(
-                    text = "Unknown document type",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
+            // Unsaved changes indicator (hidden when confirmed)
+            AnimatedVisibility(
+                visible = state.hasUnsavedChanges && !state.isDocumentConfirmed,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                UnsavedChangesBar(
+                    isSaving = state.isSaving,
+                    onSave = { onIntent(DocumentReviewIntent.SaveDraft) },
+                    onDiscard = { onIntent(DocumentReviewIntent.DiscardChanges) }
                 )
+            }
+
+            // Contact Selection Section (Invoice/Bill only)
+            if (state.isContactRequired) {
+                ContactSelectionSection(
+                    documentType = state.editableData.documentType,
+                    selectionState = state.contactSelectionState,
+                    selectedContactSnapshot = state.selectedContactSnapshot,
+                    isBindingContact = state.isBindingContact,
+                    isReadOnly = state.isDocumentConfirmed,
+                    validationError = state.contactValidationError,
+                    onAcceptSuggestion = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
+                    onChooseDifferent = { onIntent(DocumentReviewIntent.OpenContactPicker) },
+                    onSelectContact = { onIntent(DocumentReviewIntent.OpenContactPicker) },
+                    onClearContact = { onIntent(DocumentReviewIntent.ClearSelectedContact) },
+                    onCreateNewContact = { onIntent(DocumentReviewIntent.OpenCreateContactSheet) },
+                )
+            }
+
+            // Document type specific form
+            when (state.editableData.documentType) {
+                DocumentType.Invoice -> InvoiceForm(
+                    fields = state.editableData.invoice ?: EditableInvoiceFields(),
+                    onFieldUpdate = { field, value ->
+                        onIntent(DocumentReviewIntent.UpdateInvoiceField(field, value))
+                    },
+                    onFieldFocus = { fieldPath ->
+                        onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
+                    },
+                    contactSuggestions = state.contactSuggestions,
+                    onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) },
+                    isReadOnly = state.isDocumentConfirmed,
+                )
+                DocumentType.Bill -> BillForm(
+                    fields = state.editableData.bill ?: EditableBillFields(),
+                    onFieldUpdate = { field, value ->
+                        onIntent(DocumentReviewIntent.UpdateBillField(field, value))
+                    },
+                    onFieldFocus = { fieldPath ->
+                        onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
+                    },
+                    contactSuggestions = state.contactSuggestions,
+                    onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) },
+                    isReadOnly = state.isDocumentConfirmed,
+                )
+                DocumentType.Expense -> ExpenseForm(
+                    fields = state.editableData.expense ?: EditableExpenseFields(),
+                    onFieldUpdate = { field, value ->
+                        onIntent(DocumentReviewIntent.UpdateExpenseField(field, value))
+                    },
+                    onFieldFocus = { fieldPath ->
+                        onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
+                    },
+                    isReadOnly = state.isDocumentConfirmed,
+                )
+                else -> {
+                    Text(
+                        text = "Unknown document type",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
-
-        // Action buttons
-        ActionButtonsRow(
+        // Footer with action buttons
+        DocumentReviewFooter(
             canConfirm = state.canConfirm,
             isConfirming = state.isConfirming,
+            isSaving = state.isSaving,
+            isBindingContact = state.isBindingContact,
+            hasUnsavedChanges = state.hasUnsavedChanges,
+            isDocumentConfirmed = state.isDocumentConfirmed,
+            confirmBlockedReason = state.confirmBlockedReason,
             onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
-            onReject = { onIntent(DocumentReviewIntent.Reject) }
+            onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
+            onReject = { onIntent(DocumentReviewIntent.Reject) },
+            onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
         )
-
-        Spacer(modifier = Modifier.height(Constrains.Spacing.large))
     }
+
+    // Contact Create Sheet
+    ContactCreateSheet(
+        isVisible = state.showCreateContactSheet,
+        onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
+        preFillData = state.createContactPreFill,
+        onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
+    )
 }
 
 // ============================================================================
@@ -480,116 +517,158 @@ private fun MobileReviewContent(
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
-    var isPreviewExpanded by remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(contentPadding)
-            .verticalScroll(rememberScrollState())
-            .padding(Constrains.Spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            .padding(contentPadding),
     ) {
-        // Unsaved changes indicator
-        AnimatedVisibility(
-            visible = state.hasUnsavedChanges,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(Constrains.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
         ) {
-            UnsavedChangesBar(
-                isSaving = state.isSaving,
-                onSave = { onIntent(DocumentReviewIntent.SaveDraft) },
-                onDiscard = { onIntent(DocumentReviewIntent.DiscardChanges) }
-            )
-        }
-
-        // Collapsible preview section
-        CollapsibleSection(
-            title = "Document Preview",
-            isExpanded = isPreviewExpanded,
-            onToggle = { isPreviewExpanded = !isPreviewExpanded }
-        ) {
-            DocumentPreviewPane(
-                previewState = state.previewState,
-                selectedFieldPath = state.selectedFieldPath,
-                onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            )
-        }
-
-        // Form section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Column(
-                modifier = Modifier.padding(Constrains.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+            // Unsaved changes indicator (hidden when confirmed)
+            AnimatedVisibility(
+                visible = state.hasUnsavedChanges && !state.isDocumentConfirmed,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                Text(
-                    text = "Details",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                UnsavedChangesBar(
+                    isSaving = state.isSaving,
+                    onSave = { onIntent(DocumentReviewIntent.SaveDraft) },
+                    onDiscard = { onIntent(DocumentReviewIntent.DiscardChanges) }
                 )
+            }
 
-                when (state.editableData.documentType) {
-                    DocumentType.Invoice -> InvoiceForm(
-                        fields = state.editableData.invoice ?: EditableInvoiceFields(),
-                        onFieldUpdate = { field, value ->
-                            onIntent(DocumentReviewIntent.UpdateInvoiceField(field, value))
-                        },
-                        onFieldFocus = { fieldPath ->
-                            onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                        },
-                        contactSuggestions = state.contactSuggestions,
-                        onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) }
+            // PDF Preview row (thumbnail + tap to open sheet)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                PdfPreviewRow(
+                    previewState = state.previewState,
+                    onClick = { onIntent(DocumentReviewIntent.OpenPreviewSheet) },
+                )
+            }
+
+            // Contact Selection Section (Invoice/Bill only)
+            if (state.isContactRequired) {
+                ContactSelectionSection(
+                    documentType = state.editableData.documentType,
+                    selectionState = state.contactSelectionState,
+                    selectedContactSnapshot = state.selectedContactSnapshot,
+                    isBindingContact = state.isBindingContact,
+                    isReadOnly = state.isDocumentConfirmed,
+                    validationError = state.contactValidationError,
+                    onAcceptSuggestion = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
+                    onChooseDifferent = { onIntent(DocumentReviewIntent.OpenContactPicker) },
+                    onSelectContact = { onIntent(DocumentReviewIntent.OpenContactPicker) },
+                    onClearContact = { onIntent(DocumentReviewIntent.ClearSelectedContact) },
+                    onCreateNewContact = { onIntent(DocumentReviewIntent.OpenCreateContactSheet) },
+                )
+            }
+
+            // Form section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(
+                    modifier = Modifier.padding(Constrains.Spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
+                ) {
+                    Text(
+                        text = "Details",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
-                    DocumentType.Bill -> BillForm(
-                        fields = state.editableData.bill ?: EditableBillFields(),
-                        onFieldUpdate = { field, value ->
-                            onIntent(DocumentReviewIntent.UpdateBillField(field, value))
-                        },
-                        onFieldFocus = { fieldPath ->
-                            onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                        },
-                        contactSuggestions = state.contactSuggestions,
-                        onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) }
-                    )
-                    DocumentType.Expense -> ExpenseForm(
-                        fields = state.editableData.expense ?: EditableExpenseFields(),
-                        onFieldUpdate = { field, value ->
-                            onIntent(DocumentReviewIntent.UpdateExpenseField(field, value))
-                        },
-                        onFieldFocus = { fieldPath ->
-                            onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                        }
-                    )
-                    else -> {
-                        Text(
-                            text = "Unknown document type",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
+
+                    when (state.editableData.documentType) {
+                        DocumentType.Invoice -> InvoiceForm(
+                            fields = state.editableData.invoice ?: EditableInvoiceFields(),
+                            onFieldUpdate = { field, value ->
+                                onIntent(DocumentReviewIntent.UpdateInvoiceField(field, value))
+                            },
+                            onFieldFocus = { fieldPath ->
+                                onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
+                            },
+                            contactSuggestions = state.contactSuggestions,
+                            onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) },
+                            isReadOnly = state.isDocumentConfirmed,
                         )
+                        DocumentType.Bill -> BillForm(
+                            fields = state.editableData.bill ?: EditableBillFields(),
+                            onFieldUpdate = { field, value ->
+                                onIntent(DocumentReviewIntent.UpdateBillField(field, value))
+                            },
+                            onFieldFocus = { fieldPath ->
+                                onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
+                            },
+                            contactSuggestions = state.contactSuggestions,
+                            onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) },
+                            isReadOnly = state.isDocumentConfirmed,
+                        )
+                        DocumentType.Expense -> ExpenseForm(
+                            fields = state.editableData.expense ?: EditableExpenseFields(),
+                            onFieldUpdate = { field, value ->
+                                onIntent(DocumentReviewIntent.UpdateExpenseField(field, value))
+                            },
+                            onFieldFocus = { fieldPath ->
+                                onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
+                            },
+                            isReadOnly = state.isDocumentConfirmed,
+                        )
+                        else -> {
+                            Text(
+                                text = "Unknown document type",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // Action buttons
-        ActionButtonsRow(
+        // Footer with action buttons
+        DocumentReviewFooter(
             canConfirm = state.canConfirm,
             isConfirming = state.isConfirming,
+            isSaving = state.isSaving,
+            isBindingContact = state.isBindingContact,
+            hasUnsavedChanges = state.hasUnsavedChanges,
+            isDocumentConfirmed = state.isDocumentConfirmed,
+            confirmBlockedReason = state.confirmBlockedReason,
             onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
-            onReject = { onIntent(DocumentReviewIntent.Reject) }
+            onSaveChanges = { onIntent(DocumentReviewIntent.SaveDraft) },
+            onReject = { onIntent(DocumentReviewIntent.Reject) },
+            onOpenChat = { onIntent(DocumentReviewIntent.OpenChat) },
         )
-
-        Spacer(modifier = Modifier.height(Constrains.Spacing.large))
     }
+
+    // PDF Preview Bottom Sheet
+    PdfPreviewBottomSheet(
+        isVisible = state.showPreviewSheet,
+        onDismiss = { onIntent(DocumentReviewIntent.ClosePreviewSheet) },
+        previewState = state.previewState,
+        onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
+    )
+
+    // Contact Create Sheet
+    ContactCreateSheet(
+        isVisible = state.showCreateContactSheet,
+        onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
+        preFillData = state.createContactPreFill,
+        onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
+    )
 }
 
 @Composable
@@ -725,6 +804,7 @@ private fun InvoiceForm(
     onFieldFocus: (String) -> Unit,
     contactSuggestions: List<ContactSuggestion>,
     onContactSelect: (ContactId) -> Unit,
+    isReadOnly: Boolean = false,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
@@ -862,6 +942,7 @@ private fun BillForm(
     onFieldFocus: (String) -> Unit,
     contactSuggestions: List<ContactSuggestion>,
     onContactSelect: (ContactId) -> Unit,
+    isReadOnly: Boolean = false,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
@@ -989,6 +1070,7 @@ private fun ExpenseForm(
     fields: EditableExpenseFields,
     onFieldUpdate: (ExpenseField, Any?) -> Unit,
     onFieldFocus: (String) -> Unit,
+    isReadOnly: Boolean = false,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
