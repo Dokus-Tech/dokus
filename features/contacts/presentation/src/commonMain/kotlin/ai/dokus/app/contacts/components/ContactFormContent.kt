@@ -177,8 +177,9 @@ internal fun ContactFormContent(
 }
 
 /**
- * Compact variant of ContactFormContent for use in panes with limited width.
- * Uses a more compact layout suitable for side panels.
+ * Compact variant of ContactFormContent for use in panes or detail panels.
+ * Uses a more compact layout suitable for side panels and inline detail views.
+ * Includes vertical scrolling for long forms.
  */
 @Composable
 internal fun ContactFormContentCompact(
@@ -216,16 +217,17 @@ internal fun ContactFormContentCompact(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header (optional back button for pane mode)
-        if (showBackButton) {
-            SectionTitle(
-                text = if (isEditMode) "Edit Contact" else "Create Contact",
-                onBackPress = onBackPress
-            )
-        }
+        // Header with title (always show for inline detail panel use)
+        SectionTitle(
+            text = if (isEditMode) "Edit Contact" else "Create Contact",
+            onBackPress = if (showBackButton) onBackPress else null
+        )
 
         // Description (shorter for compact mode)
         Text(
@@ -285,6 +287,8 @@ internal fun ContactFormContentCompact(
             onCancel = onCancel,
             onDelete = onDelete
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

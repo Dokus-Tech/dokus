@@ -1,6 +1,6 @@
 package ai.dokus.app.contacts.screens
 
-import ai.dokus.app.contacts.components.ContactFormPane
+import ai.dokus.app.contacts.components.ContactFormContentCompact
 import ai.dokus.app.contacts.components.ContactsFilters
 import ai.dokus.app.contacts.components.ContactsFiltersMobile
 import ai.dokus.app.contacts.components.ContactsHeaderActions
@@ -258,130 +258,52 @@ internal fun ContactsScreen(
             }
 
         if (isLargeScreen) {
-            // Desktop: Master-detail layout
+            // Desktop: Master-detail layout with inline create form
             DesktopContactsContent(
                 contactsState = contactsState,
                 selectedContactId = selectedContactId,
                 sortOption = sortOption,
                 roleFilter = roleFilter,
                 activeFilter = activeFilter,
+                showCreateForm = showCreateContactPane,
+                formData = formData,
+                duplicates = duplicates,
+                isSaving = isSaving,
                 contentPadding = contentPadding,
                 onContactClick = { contact ->
                     container.store.intent(ContactsIntent.SelectContact(contact.id))
                 },
                 onLoadMore = { container.store.intent(ContactsIntent.LoadMore) },
                 onAddContactClick = {
-                    // Desktop: Show form pane
                     container.store.intent(ContactsIntent.ShowCreateContactPane)
                 },
                 onSortOptionSelected = { container.store.intent(ContactsIntent.UpdateSortOption(it)) },
                 onRoleFilterSelected = { container.store.intent(ContactsIntent.UpdateRoleFilter(it)) },
                 onActiveFilterSelected = {
-                    container.store.intent(
-                        ContactsIntent.UpdateActiveFilter(
-                            it
-                        )
-                    )
-                }
-            )
-
-            // Contact form pane overlay for desktop
-            ContactFormPane(
-                isVisible = showCreateContactPane,
-                isEditMode = false,
-                formData = formData,
-                isSaving = isSaving,
-                isDeleting = isDeleting,
-                duplicates = duplicates,
-                onDismiss = { container.store.intent(ContactsIntent.HideCreateContactPane) },
+                    container.store.intent(ContactsIntent.UpdateActiveFilter(it))
+                },
+                // Form callbacks
+                onCancelForm = { container.store.intent(ContactsIntent.HideCreateContactPane) },
+                onSaveForm = { formContainer.store.intent(ContactFormIntent.Save) },
                 onNameChange = { formContainer.store.intent(ContactFormIntent.UpdateName(it)) },
                 onEmailChange = { formContainer.store.intent(ContactFormIntent.UpdateEmail(it)) },
                 onPhoneChange = { formContainer.store.intent(ContactFormIntent.UpdatePhone(it)) },
-                onContactPersonChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateContactPerson(
-                            it
-                        )
-                    )
-                },
-                onVatNumberChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateVatNumber(
-                            it
-                        )
-                    )
-                },
-                onCompanyNumberChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateCompanyNumber(
-                            it
-                        )
-                    )
-                },
-                onBusinessTypeChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateBusinessType(
-                            it
-                        )
-                    )
-                },
-                onAddressLine1Change = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateAddressLine1(
-                            it
-                        )
-                    )
-                },
-                onAddressLine2Change = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateAddressLine2(
-                            it
-                        )
-                    )
-                },
+                onContactPersonChange = { formContainer.store.intent(ContactFormIntent.UpdateContactPerson(it)) },
+                onVatNumberChange = { formContainer.store.intent(ContactFormIntent.UpdateVatNumber(it)) },
+                onCompanyNumberChange = { formContainer.store.intent(ContactFormIntent.UpdateCompanyNumber(it)) },
+                onBusinessTypeChange = { formContainer.store.intent(ContactFormIntent.UpdateBusinessType(it)) },
+                onAddressLine1Change = { formContainer.store.intent(ContactFormIntent.UpdateAddressLine1(it)) },
+                onAddressLine2Change = { formContainer.store.intent(ContactFormIntent.UpdateAddressLine2(it)) },
                 onCityChange = { formContainer.store.intent(ContactFormIntent.UpdateCity(it)) },
-                onPostalCodeChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdatePostalCode(
-                            it
-                        )
-                    )
-                },
+                onPostalCodeChange = { formContainer.store.intent(ContactFormIntent.UpdatePostalCode(it)) },
                 onCountryChange = { formContainer.store.intent(ContactFormIntent.UpdateCountry(it)) },
                 onPeppolIdChange = { formContainer.store.intent(ContactFormIntent.UpdatePeppolId(it)) },
-                onPeppolEnabledChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdatePeppolEnabled(
-                            it
-                        )
-                    )
-                },
-                onDefaultPaymentTermsChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateDefaultPaymentTerms(
-                            it
-                        )
-                    )
-                },
-                onDefaultVatRateChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateDefaultVatRate(
-                            it
-                        )
-                    )
-                },
+                onPeppolEnabledChange = { formContainer.store.intent(ContactFormIntent.UpdatePeppolEnabled(it)) },
+                onDefaultPaymentTermsChange = { formContainer.store.intent(ContactFormIntent.UpdateDefaultPaymentTerms(it)) },
+                onDefaultVatRateChange = { formContainer.store.intent(ContactFormIntent.UpdateDefaultVatRate(it)) },
                 onTagsChange = { formContainer.store.intent(ContactFormIntent.UpdateTags(it)) },
-                onInitialNoteChange = {
-                    formContainer.store.intent(
-                        ContactFormIntent.UpdateInitialNote(
-                            it
-                        )
-                    )
-                },
+                onInitialNoteChange = { formContainer.store.intent(ContactFormIntent.UpdateInitialNote(it)) },
                 onIsActiveChange = { formContainer.store.intent(ContactFormIntent.UpdateIsActive(it)) },
-                onSave = { formContainer.store.intent(ContactFormIntent.Save) },
-                onCancel = { container.store.intent(ContactsIntent.HideCreateContactPane) },
-                onDelete = { /* No delete in create mode */ },
                 onDismissDuplicates = { formContainer.store.intent(ContactFormIntent.DismissDuplicateWarnings) },
                 onMergeWithExisting = { /* TODO: Handle merge flow */ }
             )
@@ -419,6 +341,7 @@ internal fun ContactsScreen(
 
 /**
  * Desktop layout with master-detail panels.
+ * Shows contact list on left (40%) and either contact details, create form, or placeholder on right (60%).
  */
 @Composable
 private fun DesktopContactsContent(
@@ -427,13 +350,41 @@ private fun DesktopContactsContent(
     sortOption: ContactSortOption,
     roleFilter: ContactRoleFilter,
     activeFilter: ContactActiveFilter,
+    showCreateForm: Boolean,
+    formData: ContactFormData,
+    duplicates: List<ai.dokus.app.contacts.viewmodel.PotentialDuplicate>,
+    isSaving: Boolean,
     contentPadding: PaddingValues,
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
     onAddContactClick: () -> Unit,
     onSortOptionSelected: (ContactSortOption) -> Unit,
     onRoleFilterSelected: (ContactRoleFilter) -> Unit,
-    onActiveFilterSelected: (ContactActiveFilter) -> Unit
+    onActiveFilterSelected: (ContactActiveFilter) -> Unit,
+    // Form callbacks
+    onCancelForm: () -> Unit,
+    onSaveForm: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
+    onContactPersonChange: (String) -> Unit,
+    onVatNumberChange: (String) -> Unit,
+    onCompanyNumberChange: (String) -> Unit,
+    onBusinessTypeChange: (tech.dokus.domain.enums.ClientType) -> Unit,
+    onAddressLine1Change: (String) -> Unit,
+    onAddressLine2Change: (String) -> Unit,
+    onCityChange: (String) -> Unit,
+    onPostalCodeChange: (String) -> Unit,
+    onCountryChange: (String) -> Unit,
+    onPeppolIdChange: (String) -> Unit,
+    onPeppolEnabledChange: (Boolean) -> Unit,
+    onDefaultPaymentTermsChange: (Int) -> Unit,
+    onDefaultVatRateChange: (String) -> Unit,
+    onTagsChange: (String) -> Unit,
+    onInitialNoteChange: (String) -> Unit,
+    onIsActiveChange: (Boolean) -> Unit,
+    onDismissDuplicates: () -> Unit,
+    onMergeWithExisting: (ai.dokus.app.contacts.viewmodel.PotentialDuplicate) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -478,22 +429,62 @@ private fun DesktopContactsContent(
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
-        // Right panel: Contact details (60%)
+        // Right panel: Contact details, create form, or placeholder (60%)
         Box(
             modifier = Modifier
                 .weight(0.6f)
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceContainerLowest)
         ) {
-            if (selectedContactId != null) {
-                // Show the actual ContactDetailsScreen embedded in the detail panel
-                ContactDetailsScreen(
-                    contactId = selectedContactId,
-                    showBackButton = false
-                )
-            } else {
-                // No contact selected placeholder
-                NoContactSelectedPlaceholder()
+            when {
+                showCreateForm -> {
+                    // Show create contact form inline
+                    ContactFormContentCompact(
+                        isEditMode = false,
+                        formData = formData,
+                        isSaving = isSaving,
+                        isDeleting = false,
+                        duplicates = duplicates,
+                        showBackButton = false,
+                        onBackPress = onCancelForm,
+                        onNameChange = onNameChange,
+                        onEmailChange = onEmailChange,
+                        onPhoneChange = onPhoneChange,
+                        onContactPersonChange = onContactPersonChange,
+                        onVatNumberChange = onVatNumberChange,
+                        onCompanyNumberChange = onCompanyNumberChange,
+                        onBusinessTypeChange = onBusinessTypeChange,
+                        onAddressLine1Change = onAddressLine1Change,
+                        onAddressLine2Change = onAddressLine2Change,
+                        onCityChange = onCityChange,
+                        onPostalCodeChange = onPostalCodeChange,
+                        onCountryChange = onCountryChange,
+                        onPeppolIdChange = onPeppolIdChange,
+                        onPeppolEnabledChange = onPeppolEnabledChange,
+                        onDefaultPaymentTermsChange = onDefaultPaymentTermsChange,
+                        onDefaultVatRateChange = onDefaultVatRateChange,
+                        onTagsChange = onTagsChange,
+                        onInitialNoteChange = onInitialNoteChange,
+                        onIsActiveChange = onIsActiveChange,
+                        onSave = onSaveForm,
+                        onCancel = onCancelForm,
+                        onDelete = { /* No delete in create mode */ },
+                        onDismissDuplicates = onDismissDuplicates,
+                        onMergeWithExisting = onMergeWithExisting,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                selectedContactId != null -> {
+                    // Show contact details
+                    ContactDetailsScreen(
+                        contactId = selectedContactId,
+                        showBackButton = false
+                    )
+                }
+                else -> {
+                    // No contact selected placeholder
+                    NoContactSelectedPlaceholder()
+                }
             }
         }
     }
