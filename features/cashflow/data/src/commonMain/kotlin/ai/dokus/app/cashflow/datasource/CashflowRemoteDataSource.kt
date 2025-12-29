@@ -10,6 +10,7 @@ import tech.dokus.domain.enums.DraftStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
@@ -426,6 +427,20 @@ interface CashflowRemoteDataSource {
         documentId: DocumentId,
         request: UpdateDraftRequest
     ): Result<UpdateDraftResponse>
+
+    /**
+     * Update the selected contact for a document draft.
+     * PATCH /api/v1/documents/{id}/draft
+     *
+     * Binds or unbinds a contact to the document. This is persisted before confirmation.
+     *
+     * @param documentId The document ID
+     * @param contactId The contact to bind, or null to clear
+     */
+    suspend fun updateDocumentDraftContact(
+        documentId: DocumentId,
+        contactId: ContactId?
+    ): Result<Unit>
 
     /**
      * Reprocess a document (create new ingestion run).

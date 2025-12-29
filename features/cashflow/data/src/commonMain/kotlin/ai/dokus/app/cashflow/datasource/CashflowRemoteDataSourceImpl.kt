@@ -26,6 +26,7 @@ import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BillId
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
@@ -570,6 +571,19 @@ internal class CashflowRemoteDataSourceImpl(
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
+        }
+    }
+
+    override suspend fun updateDocumentDraftContact(
+        documentId: DocumentId,
+        contactId: ContactId?
+    ): Result<Unit> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.patch(Documents.Id.Draft(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("contactId" to contactId?.toString()))
+            }
         }
     }
 

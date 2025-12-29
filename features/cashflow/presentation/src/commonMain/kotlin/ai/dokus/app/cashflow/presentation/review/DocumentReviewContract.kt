@@ -69,6 +69,16 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
      * @property previewUrl URL to preview the original document
      * @property contactSuggestions Suggested contacts based on extraction
      * @property previewState State of the PDF page preview (loading, ready, error)
+     * @property selectedContactId The selected contact ID (source of truth, persisted to backend)
+     * @property selectedContactSnapshot Contact details for display (not source of truth)
+     * @property contactSelectionState Current UI state for contact selection
+     * @property isContactRequired Whether contact is required for confirmation (Invoice/Bill)
+     * @property showCreateContactSheet Whether to show the contact creation sheet
+     * @property createContactPreFill Pre-fill data for contact creation
+     * @property contactValidationError Error message for contact binding failures
+     * @property isBindingContact Whether a contact binding operation is in progress
+     * @property isDocumentConfirmed Whether the document has been confirmed (read-only mode)
+     * @property showPreviewSheet Whether to show the mobile preview bottom sheet
      */
     data class Content(
         val documentId: DocumentId,
@@ -82,18 +92,51 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val previewUrl: String? = null,
         val contactSuggestions: List<ContactSuggestion> = emptyList(),
         val previewState: DocumentPreviewState = DocumentPreviewState.Loading,
+        // Contact selection state
+        val selectedContactId: ContactId? = null,
+        val selectedContactSnapshot: ContactSnapshot? = null,
+        val contactSelectionState: ContactSelectionState = ContactSelectionState.NoContact,
+        val isContactRequired: Boolean = false,
+        val showCreateContactSheet: Boolean = false,
+        val createContactPreFill: ContactPreFillData? = null,
+        val contactValidationError: String? = null,
+        val isBindingContact: Boolean = false,
+        // Document confirmation state
+        val isDocumentConfirmed: Boolean = false,
+        // Mobile preview sheet
+        val showPreviewSheet: Boolean = false,
     ) : DocumentReviewState {
 
         /**
          * Whether the document can be confirmed.
-         * Must have draft in NeedsReview/Ready status and have valid required fields.
+         * Must have draft in NeedsReview/Ready status, have valid required fields,
+         * and have a contact selected if required (Invoice/Bill).
          */
         val canConfirm: Boolean
-            get() = (document.draft?.draftStatus == DraftStatus.NeedsReview ||
-                    document.draft?.draftStatus == DraftStatus.Ready) &&
-                    !isConfirming &&
-                    !isSaving &&
-                    editableData.isValid
+            get() {
+                val baseValid = (document.draft?.draftStatus == DraftStatus.NeedsReview ||
+                        document.draft?.draftStatus == DraftStatus.Ready) &&
+                        !isConfirming &&
+                        !isSaving &&
+                        !isBindingContact &&
+                        editableData.isValid
+
+                // Contact MUST be selected (not just suggested) for Invoice/Bill
+                val contactBound = selectedContactId != null
+                val contactValid = !isContactRequired || contactBound
+
+                return baseValid && contactValid
+            }
+
+        /**
+         * Reason why confirmation is blocked, if any.
+         */
+        val confirmBlockedReason: String?
+            get() = when {
+                isContactRequired && selectedContactId == null -> "Select a contact to continue"
+                !editableData.isValid -> "Required fields missing"
+                else -> null
+            }
 
         /**
          * Whether the document shows AI confidence indicators.
@@ -333,6 +376,63 @@ data class ContactSuggestion(
 )
 
 // ============================================================================
+// CONTACT SELECTION STATE
+// ============================================================================
+
+/**
+ * Minimal snapshot for UI display (not source of truth).
+ * The actual source of truth is selectedContactId stored in the draft.
+ */
+@Immutable
+data class ContactSnapshot(
+    val id: ContactId,
+    val name: String,
+    val vatNumber: String?,
+    val email: String?,
+)
+
+/**
+ * Contact selection state for the Document Review screen.
+ * Determines what UI to show in the contact section.
+ */
+@Immutable
+sealed interface ContactSelectionState {
+    /**
+     * No contact selected and no suggestion available.
+     */
+    data object NoContact : ContactSelectionState
+
+    /**
+     * AI suggested a contact but user has not yet accepted it.
+     * This state blocks confirmation for Invoice/Bill documents.
+     */
+    data class Suggested(
+        val contactId: ContactId,
+        val name: String,
+        val vatNumber: String?,
+        val confidence: Float,
+        val reason: String,
+    ) : ContactSelectionState
+
+    /**
+     * User has explicitly selected/accepted a contact.
+     * Use selectedContactSnapshot for display details.
+     */
+    data object Selected : ContactSelectionState
+}
+
+/**
+ * Pre-fill data for contact creation from extracted fields.
+ */
+@Immutable
+data class ContactPreFillData(
+    val name: String,
+    val vatNumber: String?,
+    val email: String?,
+    val address: String?,
+)
+
+// ============================================================================
 // INTENTS (User Actions)
 // ============================================================================
 
@@ -378,11 +478,39 @@ sealed interface DocumentReviewIntent : MVIIntent {
         val value: Any?,
     ) : DocumentReviewIntent
 
-    /** Select a contact from suggestions */
+    /** Select a contact from search/picker (triggers backend persist) */
     data class SelectContact(val contactId: ContactId) : DocumentReviewIntent
 
-    /** Clear selected contact */
-    data object ClearContact : DocumentReviewIntent
+    /** Accept the AI-suggested contact (triggers backend persist) */
+    data object AcceptSuggestedContact : DocumentReviewIntent
+
+    /** Clear selected contact (triggers backend persist) */
+    data object ClearSelectedContact : DocumentReviewIntent
+
+    /** Open contact picker/search UI */
+    data object OpenContactPicker : DocumentReviewIntent
+
+    /** Close contact picker/search UI */
+    data object CloseContactPicker : DocumentReviewIntent
+
+    // === Contact Creation ===
+
+    /** Open contact creation sheet */
+    data object OpenCreateContactSheet : DocumentReviewIntent
+
+    /** Close contact creation sheet */
+    data object CloseCreateContactSheet : DocumentReviewIntent
+
+    /** Contact was created, bind it to this document */
+    data class ContactCreated(val contactId: ContactId) : DocumentReviewIntent
+
+    // === Mobile Preview Sheet ===
+
+    /** Open the mobile preview bottom sheet */
+    data object OpenPreviewSheet : DocumentReviewIntent
+
+    /** Close the mobile preview bottom sheet */
+    data object ClosePreviewSheet : DocumentReviewIntent
 
     // === Line Items (Invoice) ===
 

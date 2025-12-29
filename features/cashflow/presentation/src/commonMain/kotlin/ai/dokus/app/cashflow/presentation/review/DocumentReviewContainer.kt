@@ -1,18 +1,7 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DraftStatus
-import tech.dokus.domain.enums.ExpenseCategory
-import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.ConfirmDocumentRequest
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.ExtractedDocumentData
-import tech.dokus.domain.model.ExtractedLineItem
-import tech.dokus.domain.model.UpdateDraftRequest
+import ai.dokus.app.contacts.usecases.GetContactUseCase
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -23,7 +12,19 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.DraftStatus
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ConfirmDocumentRequest
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.ExtractedDocumentData
+import tech.dokus.domain.model.ExtractedLineItem
+import tech.dokus.domain.model.UpdateDraftRequest
 
 internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction>
 
@@ -47,6 +48,7 @@ internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, Docu
  */
 internal class DocumentReviewContainer(
     private val dataSource: CashflowRemoteDataSource,
+    private val getContact: GetContactUseCase,
 ) : Container<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
 
     private val logger = Logger.forClass<DocumentReviewContainer>()
@@ -67,13 +69,25 @@ internal class DocumentReviewContainer(
                     is DocumentReviewIntent.LoadPreviewPages -> handleLoadPreviewPages()
                     is DocumentReviewIntent.LoadMorePages -> handleLoadMorePages(intent.maxPages)
                     is DocumentReviewIntent.RetryLoadPreview -> handleLoadPreviewPages()
+                    is DocumentReviewIntent.OpenPreviewSheet -> handleOpenPreviewSheet()
+                    is DocumentReviewIntent.ClosePreviewSheet -> handleClosePreviewSheet()
 
                     // === Field Editing ===
                     is DocumentReviewIntent.UpdateInvoiceField -> handleUpdateInvoiceField(intent.field, intent.value)
                     is DocumentReviewIntent.UpdateBillField -> handleUpdateBillField(intent.field, intent.value)
                     is DocumentReviewIntent.UpdateExpenseField -> handleUpdateExpenseField(intent.field, intent.value)
+
+                    // === Contact Selection (with backend persist) ===
                     is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
-                    is DocumentReviewIntent.ClearContact -> handleClearContact()
+                    is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
+                    is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
+                    is DocumentReviewIntent.OpenContactPicker -> handleOpenContactPicker()
+                    is DocumentReviewIntent.CloseContactPicker -> handleCloseContactPicker()
+
+                    // === Contact Creation ===
+                    is DocumentReviewIntent.OpenCreateContactSheet -> handleOpenCreateContactSheet()
+                    is DocumentReviewIntent.CloseCreateContactSheet -> handleCloseCreateContactSheet()
+                    is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
 
                     // === Line Items ===
                     is DocumentReviewIntent.AddLineItem -> handleAddLineItem()
@@ -136,9 +150,20 @@ internal class DocumentReviewContainer(
     ) {
         val extractedData = document.draft?.extractedData
         val editableData = EditableExtractedData.fromExtractedData(extractedData)
+        val documentType = document.draft?.documentType
 
         // Build contact suggestions from document if available
         val contactSuggestions = buildContactSuggestions(document)
+
+        // Determine if contact is required (Invoice/Bill only)
+        val isContactRequired = documentType == DocumentType.Invoice || documentType == DocumentType.Bill
+
+        // Check if document is confirmed (read-only mode)
+        val isDocumentConfirmed = document.draft?.draftStatus == DraftStatus.Confirmed
+
+        // Build contact selection state from draft
+        val (contactSelectionState, selectedContactId, selectedContactSnapshot) =
+            buildContactSelectionState(document)
 
         updateState {
             DocumentReviewState.Content(
@@ -152,12 +177,86 @@ internal class DocumentReviewContainer(
                 selectedFieldPath = null,
                 previewUrl = document.document.downloadUrl,
                 contactSuggestions = contactSuggestions,
-                previewState = DocumentPreviewState.Loading
+                previewState = DocumentPreviewState.Loading,
+                // Contact selection state
+                selectedContactId = selectedContactId,
+                selectedContactSnapshot = selectedContactSnapshot,
+                contactSelectionState = contactSelectionState,
+                isContactRequired = isContactRequired,
+                isDocumentConfirmed = isDocumentConfirmed,
             )
         }
 
         // Trigger preview loading after content is ready
         intent(DocumentReviewIntent.LoadPreviewPages)
+
+        // If we have a selectedContactId but no snapshot, fetch contact details
+        if (selectedContactId != null && selectedContactSnapshot == null) {
+            fetchContactSnapshot(selectedContactId)
+        }
+    }
+
+    /**
+     * Build initial contact selection state from document draft.
+     *
+     * Note: Selected contact is persisted via PATCH and would be tracked separately.
+     * For now, we start with suggested contact if available, otherwise no contact.
+     * Selected state is set after user explicitly accepts a suggestion or selects from picker.
+     */
+    private fun buildContactSelectionState(
+        document: DocumentRecordDto
+    ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
+        val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)
+
+        // Check for AI suggested contact (not yet accepted by user)
+        val suggestedContactId = draft.suggestedContactId
+        if (suggestedContactId != null) {
+            val extractedName = when (draft.documentType) {
+                DocumentType.Invoice -> draft.extractedData?.invoice?.clientName
+                DocumentType.Bill -> draft.extractedData?.bill?.supplierName
+                else -> null
+            }
+            val extractedVat = when (draft.documentType) {
+                DocumentType.Invoice -> draft.extractedData?.invoice?.clientVatNumber
+                DocumentType.Bill -> draft.extractedData?.bill?.supplierVatNumber
+                else -> null
+            }
+            val suggested = ContactSelectionState.Suggested(
+                contactId = suggestedContactId,
+                name = extractedName ?: "Unknown",
+                vatNumber = extractedVat,
+                confidence = draft.contactSuggestionConfidence ?: 0f,
+                reason = draft.contactSuggestionReason ?: "AI suggested",
+            )
+            return Triple(suggested, null, null)
+        }
+
+        return Triple(ContactSelectionState.NoContact, null, null)
+    }
+
+    /**
+     * Fetch contact details for display snapshot.
+     */
+    private suspend fun DocumentReviewCtx.fetchContactSnapshot(contactId: ContactId) {
+        getContact(contactId).fold(
+            onSuccess = { contact ->
+                withState<DocumentReviewState.Content, _> {
+                    updateState {
+                        copy(
+                            selectedContactSnapshot = ContactSnapshot(
+                                id = contact.id,
+                                name = contact.name.value,
+                                vatNumber = contact.vatNumber?.value,
+                                email = contact.email?.value,
+                            )
+                        )
+                    }
+                }
+            },
+            onFailure = { error ->
+                logger.w(error) { "Failed to fetch contact snapshot for $contactId" }
+            }
+        )
     }
 
     private fun buildContactSuggestions(document: DocumentRecordDto): List<ContactSuggestion> {
@@ -289,55 +388,201 @@ internal class DocumentReviewContainer(
         }
     }
 
+    // =========================================================================
+    // CONTACT SELECTION (with backend persist)
+    // =========================================================================
+
+    /**
+     * Handle selecting a contact from picker - binds to backend immediately.
+     */
     private suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) {
         withState<DocumentReviewState.Content, _> {
-            when (editableData.documentType) {
-                DocumentType.Invoice -> {
-                    val updatedInvoice = editableData.invoice?.copy(selectedContactId = contactId)
-                    updateState {
-                        copy(
-                            editableData = editableData.copy(invoice = updatedInvoice),
-                            hasUnsavedChanges = true
-                        )
-                    }
-                }
-                DocumentType.Bill -> {
-                    val updatedBill = editableData.bill?.copy(selectedContactId = contactId)
-                    updateState {
-                        copy(
-                            editableData = editableData.copy(bill = updatedBill),
-                            hasUnsavedChanges = true
-                        )
-                    }
-                }
-                else -> { /* No contact for expenses */ }
-            }
+            bindContact(documentId, contactId)
         }
     }
 
-    private suspend fun DocumentReviewCtx.handleClearContact() {
+    /**
+     * Handle accepting the AI-suggested contact - binds to backend immediately.
+     */
+    private suspend fun DocumentReviewCtx.handleAcceptSuggestedContact() {
         withState<DocumentReviewState.Content, _> {
-            when (editableData.documentType) {
-                DocumentType.Invoice -> {
-                    val updatedInvoice = editableData.invoice?.copy(selectedContactId = null)
-                    updateState {
-                        copy(
-                            editableData = editableData.copy(invoice = updatedInvoice),
-                            hasUnsavedChanges = true
-                        )
+            val suggested = contactSelectionState as? ContactSelectionState.Suggested
+                ?: return@withState
+            bindContact(documentId, suggested.contactId)
+        }
+    }
+
+    /**
+     * Handle clearing the selected contact - persists to backend immediately.
+     */
+    private suspend fun DocumentReviewCtx.handleClearSelectedContact() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(isBindingContact = true) }
+        }
+
+        // PATCH draft to clear contactId
+        withState<DocumentReviewState.Content, _> {
+            dataSource.updateDocumentDraftContact(documentId, null)
+                .fold(
+                    onSuccess = {
+                        // Revert to Suggested if one exists, else NoContact
+                        val newState = document.draft?.suggestedContactId?.let { suggestedId ->
+                            ContactSelectionState.Suggested(
+                                contactId = suggestedId,
+                                name = document.draft?.extractedData?.invoice?.clientName
+                                    ?: document.draft?.extractedData?.bill?.supplierName
+                                    ?: "Unknown",
+                                vatNumber = document.draft?.extractedData?.invoice?.clientVatNumber
+                                    ?: document.draft?.extractedData?.bill?.supplierVatNumber,
+                                confidence = document.draft?.contactSuggestionConfidence ?: 0f,
+                                reason = document.draft?.contactSuggestionReason ?: "AI suggested",
+                            )
+                        } ?: ContactSelectionState.NoContact
+
+                        updateState {
+                            copy(
+                                selectedContactId = null,
+                                selectedContactSnapshot = null,
+                                contactSelectionState = newState,
+                                isBindingContact = false,
+                                contactValidationError = null,
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to clear contact" }
+                        updateState { copy(isBindingContact = false) }
+                        action(DocumentReviewAction.ShowError("Failed to clear contact"))
                     }
-                }
-                DocumentType.Bill -> {
-                    val updatedBill = editableData.bill?.copy(selectedContactId = null)
-                    updateState {
-                        copy(
-                            editableData = editableData.copy(bill = updatedBill),
-                            hasUnsavedChanges = true
-                        )
+                )
+        }
+    }
+
+    /**
+     * Persist contact binding to backend, then update local state.
+     * Flow: Set loading → PATCH draft → Fetch contact snapshot → Update state
+     */
+    private suspend fun DocumentReviewCtx.bindContact(documentId: DocumentId, contactId: ContactId) {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(isBindingContact = true, contactValidationError = null) }
+        }
+
+        // 1. PATCH draft with contactId
+        dataSource.updateDocumentDraftContact(documentId, contactId)
+            .fold(
+                onSuccess = {
+                    // 2. Fetch contact details for snapshot
+                    getContact(contactId).fold(
+                        onSuccess = { contact ->
+                            withState<DocumentReviewState.Content, _> {
+                                updateState {
+                                    copy(
+                                        selectedContactId = contactId,
+                                        selectedContactSnapshot = ContactSnapshot(
+                                            id = contact.id,
+                                            name = contact.name.value,
+                                            vatNumber = contact.vatNumber?.value,
+                                            email = contact.email?.value,
+                                        ),
+                                        contactSelectionState = ContactSelectionState.Selected,
+                                        isBindingContact = false,
+                                    )
+                                }
+                            }
+                        },
+                        onFailure = { error ->
+                            // Contact bound but couldn't fetch details - still proceed
+                            logger.w(error) { "Contact bound but fetch failed" }
+                            withState<DocumentReviewState.Content, _> {
+                                updateState {
+                                    copy(
+                                        selectedContactId = contactId,
+                                        selectedContactSnapshot = null,
+                                        contactSelectionState = ContactSelectionState.Selected,
+                                        isBindingContact = false,
+                                    )
+                                }
+                            }
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to bind contact to draft" }
+                    withState<DocumentReviewState.Content, _> {
+                        updateState {
+                            copy(
+                                isBindingContact = false,
+                                contactValidationError = "Failed to save contact selection",
+                            )
+                        }
                     }
+                    action(DocumentReviewAction.ShowError("Failed to bind contact"))
                 }
-                else -> { /* No contact for expenses */ }
+            )
+    }
+
+    private suspend fun DocumentReviewCtx.handleOpenContactPicker() {
+        // This triggers navigation action to open picker UI
+        // For now, the picker is part of the screen, so just an intent marker
+        // Could emit action if needed: action(DocumentReviewAction.OpenContactPicker)
+    }
+
+    private suspend fun DocumentReviewCtx.handleCloseContactPicker() {
+        // Picker closed without selection - no state change needed
+    }
+
+    // =========================================================================
+    // CONTACT CREATION
+    // =========================================================================
+
+    private suspend fun DocumentReviewCtx.handleOpenCreateContactSheet() {
+        withState<DocumentReviewState.Content, _> {
+            // Build pre-fill data from extracted fields
+            val preFill = when (editableData.documentType) {
+                DocumentType.Invoice -> ContactPreFillData(
+                    name = editableData.invoice?.clientName ?: "",
+                    vatNumber = editableData.invoice?.clientVatNumber,
+                    email = editableData.invoice?.clientEmail,
+                    address = editableData.invoice?.clientAddress,
+                )
+                DocumentType.Bill -> ContactPreFillData(
+                    name = editableData.bill?.supplierName ?: "",
+                    vatNumber = editableData.bill?.supplierVatNumber,
+                    email = null,
+                    address = editableData.bill?.supplierAddress,
+                )
+                else -> null
             }
+            updateState { copy(showCreateContactSheet = true, createContactPreFill = preFill) }
+        }
+    }
+
+    private suspend fun DocumentReviewCtx.handleCloseCreateContactSheet() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(showCreateContactSheet = false, createContactPreFill = null) }
+        }
+    }
+
+    private suspend fun DocumentReviewCtx.handleContactCreated(contactId: ContactId) {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(showCreateContactSheet = false, createContactPreFill = null) }
+            bindContact(documentId, contactId)
+        }
+    }
+
+    // =========================================================================
+    // MOBILE PREVIEW SHEET
+    // =========================================================================
+
+    private suspend fun DocumentReviewCtx.handleOpenPreviewSheet() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(showPreviewSheet = true) }
+        }
+    }
+
+    private suspend fun DocumentReviewCtx.handleClosePreviewSheet() {
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(showPreviewSheet = false) }
         }
     }
 
