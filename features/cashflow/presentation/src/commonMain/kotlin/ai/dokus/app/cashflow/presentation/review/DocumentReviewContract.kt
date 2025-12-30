@@ -2,7 +2,6 @@ package ai.dokus.app.cashflow.presentation.review
 
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_confirm_missing_fields
-import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import org.jetbrains.compose.resources.StringResource
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
@@ -124,12 +123,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                         !isSaving &&
                         !isBindingContact &&
                         editableData.isValid
-
-                // Contact MUST be selected (not just suggested) for Invoice/Bill
-                val contactBound = selectedContactId != null
-                val contactValid = !isContactRequired || contactBound
-
-                return baseValid && contactValid
+                return baseValid
             }
 
         /**
@@ -137,8 +131,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
          */
         val confirmBlockedReason: StringResource?
             get() = when {
-                isContactRequired && selectedContactId == null ->
-                    Res.string.cashflow_confirm_select_contact
                 !editableData.isValid -> Res.string.cashflow_confirm_missing_fields
                 else -> null
             }
