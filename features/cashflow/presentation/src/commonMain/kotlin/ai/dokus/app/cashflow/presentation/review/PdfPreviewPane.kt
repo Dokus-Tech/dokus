@@ -7,6 +7,7 @@ import tech.dokus.aura.resources.cashflow_preview_load_more
 import tech.dokus.aura.resources.cashflow_preview_page_failed
 import tech.dokus.aura.resources.cashflow_preview_page_label
 import tech.dokus.aura.resources.state_retry
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,13 +22,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -159,12 +157,8 @@ private fun ReadyPreview(
     val scrollState = rememberLazyListState()
 
     // Container with subtle background for paper contrast
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxSize(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        ),
-        shape = RoundedCornerShape(0.dp),
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -211,15 +205,8 @@ private fun PdfPageImage(
     imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier,
-        shape = RoundedCornerShape(2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White,
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp,
-        ),
     ) {
         SubcomposeAsyncImage(
             model = page.imageUrl,

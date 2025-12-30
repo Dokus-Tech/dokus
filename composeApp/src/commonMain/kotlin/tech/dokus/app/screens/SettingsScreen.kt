@@ -8,6 +8,9 @@ import tech.dokus.aura.resources.settings_select_hint
 import tech.dokus.aura.resources.settings_select_prompt
 import tech.dokus.aura.resources.settings_select_workspace
 import tech.dokus.aura.resources.settings_unknown_section
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.ListSettingsItem
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.localized
@@ -17,7 +20,6 @@ import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,7 +41,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -421,14 +422,13 @@ private fun WorkspacePickerCard(
     isLoading: Boolean,
     onClick: () -> Unit
 ) {
-    OutlinedCard(
-        modifier = Modifier.fillMaxWidth()
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        padding = DokusCardPadding.Default,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClick() }
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -467,7 +467,7 @@ private fun SettingsGroupCard(
     selectedSection: ModuleSettingsSection?,
     onSectionClick: (ModuleSettingsSection) -> Unit
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column {
             Text(
                 text = stringResource(title),

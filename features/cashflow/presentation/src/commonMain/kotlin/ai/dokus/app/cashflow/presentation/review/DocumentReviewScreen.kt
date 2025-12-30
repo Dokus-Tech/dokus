@@ -84,6 +84,8 @@ import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -122,8 +124,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Message
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -473,12 +473,8 @@ private fun DocumentPreviewPane(
     onLoadMore: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = MaterialTheme.shapes.medium
     ) {
         PdfPreviewPane(
             state = previewState,
@@ -642,12 +638,8 @@ private fun MobileReviewContent(
             }
 
             // PDF Preview row (thumbnail + tap to open sheet)
-            Card(
+            DokusCardSurface(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                shape = MaterialTheme.shapes.medium
             ) {
                 PdfPreviewRow(
                     previewState = state.previewState,
@@ -673,12 +665,8 @@ private fun MobileReviewContent(
             }
 
             // Form section
-            Card(
+            DokusCardSurface(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                shape = MaterialTheme.shapes.medium
             ) {
                 Column(
                     modifier = Modifier.padding(Constrains.Spacing.medium),
@@ -777,12 +765,8 @@ private fun CollapsibleSection(
     onToggle: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = MaterialTheme.shapes.medium
     ) {
         Column {
             Row(
@@ -829,12 +813,9 @@ private fun UnsavedChangesBar(
     onSave: () -> Unit,
     onDiscard: () -> Unit,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        ),
-        shape = MaterialTheme.shapes.small
+        variant = DokusCardVariant.Soft,
     ) {
         Row(
             modifier = Modifier
@@ -846,7 +827,7 @@ private fun UnsavedChangesBar(
             Text(
                 text = stringResource(Res.string.state_unsaved_changes),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
                 OutlinedButton(

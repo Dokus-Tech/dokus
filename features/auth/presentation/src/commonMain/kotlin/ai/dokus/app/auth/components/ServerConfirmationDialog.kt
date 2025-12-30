@@ -12,6 +12,8 @@ import tech.dokus.aura.resources.auth_server_reauth_warning
 import tech.dokus.aura.resources.auth_server_reset_warning
 import tech.dokus.aura.resources.auth_server_url
 import tech.dokus.aura.resources.auth_server_version
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
 import androidx.compose.foundation.layout.Arrangement
@@ -27,8 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -82,11 +82,9 @@ fun ServerConfirmationDialog(
         text = {
             Column {
                 // Server info card
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                DokusCardSurface(
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = DokusCardVariant.Soft,
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         ServerInfoRow(stringResource(Res.string.auth_server_name_label), serverInfo.name)

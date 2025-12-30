@@ -8,6 +8,7 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,8 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -120,22 +119,18 @@ private fun CreateContactPage(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        Card(
+        DokusCardSurface(
             modifier = Modifier
                 .widthIn(max = 560.dp)
                 .fillMaxHeight()
-                .padding(vertical = 32.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                .padding(vertical = 24.dp),
         ) {
             CreateContactContent(
                 state = state,
                 onIntent = onIntent,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(32.dp)
+                    .padding(24.dp)
             )
         }
     }

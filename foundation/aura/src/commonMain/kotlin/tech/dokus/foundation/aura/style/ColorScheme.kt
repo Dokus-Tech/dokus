@@ -4,6 +4,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 // Dokus brand accent (signature only)
 internal val dokusGold = Color(0xFFD4AF37) // Brand accent only (never primary UI color)
@@ -110,6 +111,9 @@ fun createColorScheme(useDarkTheme: Boolean): ColorScheme = if (useDarkTheme) {
 
 // Calm ripple color - use onSurface for neutral ripple effects instead of primary (gold)
 val ColorScheme.rippleColor: Color get() = onSurface
+
+// Helper for surface decisions that depend on theme brightness.
+val ColorScheme.isDark: Boolean get() = background.luminance() < 0.5f
 
 // Brand accent access (use intentionally; do not map to primary)
 @Suppress("UnusedReceiverParameter")

@@ -59,7 +59,7 @@ internal fun InvoiceDocumentHeader(
             Text(
                 text = stringResource(Res.string.invoice_title).uppercase(),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimary,
                 letterSpacing = 2.sp
             )
@@ -111,14 +111,14 @@ internal fun InvoiceTotalsSection(
             Text(
                 text = stringResource(Res.string.invoice_total).uppercase(),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 letterSpacing = 1.sp
             )
             Text(
                 text = total,
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
             )
         }

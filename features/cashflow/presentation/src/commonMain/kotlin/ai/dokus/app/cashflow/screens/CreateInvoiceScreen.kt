@@ -27,6 +27,8 @@ import tech.dokus.aura.resources.invoice_selected_contact
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PDatePickerDialog
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -59,8 +61,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -460,7 +460,7 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
             BoxWithConstraints {
                 val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
 
-                Card(
+                DokusCardSurface(
                     modifier = Modifier
                         .width(sidebarWidth)
                         .fillMaxHeight()
@@ -469,14 +469,10 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                             indication = null,
                             onClick = { /* Consume click to prevent backdrop dismissal */ }
                         ),
-                    shape = MaterialTheme.shapes.large.copy(
+                    shape = MaterialTheme.shapes.medium.copy(
                         topEnd = MaterialTheme.shapes.extraSmall.topEnd,
                         bottomEnd = MaterialTheme.shapes.extraSmall.bottomEnd
                     ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -533,13 +529,9 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                         if (selectedContact != null) {
                             Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
-                            Card(
+                            DokusCardSurface(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
-                                        alpha = 0.5f
-                                    )
-                                )
+                                variant = DokusCardVariant.Soft,
                             ) {
                                 Column(
                                     modifier = Modifier.padding(Constrains.Spacing.medium),
@@ -548,29 +540,25 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                                     Text(
                                         text = stringResource(Res.string.invoice_selected_contact),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
                                         text = selectedContact.name.value,
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     selectedContact.email?.let { email ->
                                         Text(
                                             text = email.value,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                                alpha = 0.7f
-                                            )
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                     selectedContact.vatNumber?.let { vat ->
                                         Text(
                                             text = stringResource(Res.string.common_vat_value, vat.value),
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                                alpha = 0.7f
-                                            )
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }

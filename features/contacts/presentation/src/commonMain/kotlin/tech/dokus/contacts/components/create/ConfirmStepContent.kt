@@ -18,6 +18,8 @@ import tech.dokus.aura.resources.country_belgium
 import tech.dokus.aura.resources.country_france
 import tech.dokus.aura.resources.country_netherlands
 import tech.dokus.aura.resources.field_optional
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
@@ -38,8 +40,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -177,11 +177,9 @@ private fun CompanyInfoCard(
     onToggleAddress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+        variant = DokusCardVariant.Soft,
     ) {
         Column(
             modifier = Modifier.padding(Constrains.Spacing.medium)

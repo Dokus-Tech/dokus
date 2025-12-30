@@ -18,6 +18,7 @@ import tech.dokus.aura.resources.contacts_note_by
 import tech.dokus.aura.resources.contacts_note_content
 import tech.dokus.aura.resources.contacts_notes
 import tech.dokus.aura.resources.contacts_saving
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -53,8 +54,6 @@ import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -154,7 +153,7 @@ fun NotesSidePanel(
             BoxWithConstraints {
                 val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
 
-                Card(
+                DokusCardSurface(
                     modifier = Modifier
                         .width(sidebarWidth)
                         .fillMaxHeight()
@@ -163,14 +162,10 @@ fun NotesSidePanel(
                             indication = null,
                             onClick = { /* Consume click to prevent backdrop dismissal */ }
                         ),
-                    shape = MaterialTheme.shapes.large.copy(
+                    shape = MaterialTheme.shapes.medium.copy(
                         topEnd = MaterialTheme.shapes.extraSmall.topEnd,
                         bottomEnd = MaterialTheme.shapes.extraSmall.bottomEnd
                     ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
                         modifier = Modifier

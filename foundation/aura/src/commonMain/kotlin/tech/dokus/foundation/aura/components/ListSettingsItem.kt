@@ -1,6 +1,7 @@
 package tech.dokus.foundation.aura.components
 
 import tech.dokus.foundation.aura.constrains.Constrains
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -9,14 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -33,46 +33,37 @@ fun ListSettingsItem(
     isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.small,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.surfaceVariant
-            } else {
-                Color.Transparent
-            }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = Constrains.Elevation.none)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
+            )
+            .clickable { onClick() }
+            .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClick() }
-                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.small),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = text,
-                tint = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-                modifier = Modifier.size(Constrains.IconSize.small)
-            )
-            Spacer(modifier = Modifier.width(Constrains.Spacing.small))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = text,
+            tint = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            modifier = Modifier.size(Constrains.IconSize.small)
+        )
+        Spacer(modifier = Modifier.width(Constrains.Spacing.small))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+        )
     }
 }

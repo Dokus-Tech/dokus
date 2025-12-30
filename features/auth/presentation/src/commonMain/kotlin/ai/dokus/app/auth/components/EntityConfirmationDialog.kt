@@ -1,7 +1,6 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.app.auth.model.EntityConfirmationState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,17 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,6 +38,9 @@ import tech.dokus.aura.resources.auth_entity_single_confirm
 import tech.dokus.aura.resources.auth_entity_single_prompt
 import tech.dokus.aura.resources.common_vat_value
 import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 
@@ -63,11 +61,7 @@ internal fun EntityConfirmationDialog(
             dismissOnClickOutside = true
         )
     ) {
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
-        ) {
+        DokusGlassSurface {
             Column(
                 modifier = Modifier
                     .padding(24.dp)
@@ -211,15 +205,11 @@ private fun EntityCard(
     isClickable: Boolean,
     onClick: () -> Unit,
 ) {
-    Card(
+    DokusCardSurface(
+        modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         enabled = isClickable,
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+        variant = DokusCardVariant.Soft,
     ) {
         Column(
             modifier = Modifier

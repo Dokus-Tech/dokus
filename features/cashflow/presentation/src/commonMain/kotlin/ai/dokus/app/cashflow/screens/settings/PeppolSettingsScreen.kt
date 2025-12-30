@@ -21,13 +21,16 @@ import tech.dokus.aura.resources.peppol_provider_recommand_description
 import tech.dokus.aura.resources.peppol_select_provider_hint
 import tech.dokus.aura.resources.peppol_settings_title
 import tech.dokus.aura.resources.profile_danger_zone
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,20 +43,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -251,11 +250,14 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
             .withContentPaddingForScrollable(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Connection Status Card
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        DokusCard(
+            modifier = Modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
+        ) {
+            Column {
                 Text(
                     text = stringResource(Res.string.peppol_connection_status),
                     style = MaterialTheme.typography.titleMedium
@@ -311,8 +313,11 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
 
         // Provider Selection - Only show if not connected
         if (!isConnected) {
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
+            DokusCard(
+                modifier = Modifier.fillMaxWidth(),
+                padding = DokusCardPadding.Default,
+            ) {
+                Column {
                     Text(
                         text = stringResource(Res.string.peppol_connect_title),
                         style = MaterialTheme.typography.titleMedium
@@ -354,8 +359,11 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
 
         // Danger Zone - Delete Settings (only when connected)
         if (isConnected) {
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
+            DokusCard(
+                modifier = Modifier.fillMaxWidth(),
+                padding = DokusCardPadding.Default,
+            ) {
+                Column {
                     Text(
                         text = stringResource(Res.string.profile_danger_zone),
                         style = MaterialTheme.typography.titleMedium,
@@ -399,22 +407,16 @@ private fun ProviderCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor = MaterialTheme.colorScheme.surface
-    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     val contentColor = MaterialTheme.colorScheme.onSurface
 
-    Card(
-        onClick = onClick,
+    DokusCard(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        border = BorderStroke(width = 1.dp, color = borderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        onClick = onClick,
+        variant = DokusCardVariant.Soft,
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(

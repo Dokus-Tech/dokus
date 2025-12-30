@@ -4,6 +4,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.invoice_client
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.contact.ContactDto
@@ -21,7 +22,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,11 +56,9 @@ fun InvoiceClientSelector(
         Spacer(modifier = Modifier.height(8.dp))
 
         Box {
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true },
-                shape = MaterialTheme.shapes.small
+            DokusCardSurface(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { expanded = true },
             ) {
                 Row(
                     modifier = Modifier

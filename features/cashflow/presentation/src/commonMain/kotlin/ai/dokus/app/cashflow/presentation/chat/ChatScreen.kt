@@ -34,6 +34,8 @@ import tech.dokus.aura.resources.chat_this_document
 import tech.dokus.aura.resources.chat_title_all_documents
 import tech.dokus.aura.resources.chat_try_asking
 import tech.dokus.foundation.aura.components.PBackButton
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.chat.ChatMessageBubble
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.ChatSourceCitationList
@@ -83,8 +85,6 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -516,11 +516,8 @@ private fun ChatContent(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = Constrains.Spacing.medium)
                 ) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        shape = RoundedCornerShape(16.dp)
+                    DokusCardSurface(
+                        variant = DokusCardVariant.Soft,
                     ) {
                         Row(
                             modifier = Modifier.padding(
@@ -911,14 +908,10 @@ private fun SessionListItem(
         stringResource(Res.string.chat_message_count_plural, session.messageCount)
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = MaterialTheme.shapes.small
+    DokusCardSurface(
+        modifier = Modifier.fillMaxWidth(),
+        variant = DokusCardVariant.Soft,
+        onClick = onClick,
     ) {
         Column(
             modifier = Modifier.padding(Constrains.Spacing.medium),

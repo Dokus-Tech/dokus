@@ -22,6 +22,11 @@ import tech.dokus.aura.resources.auth_validating
 import tech.dokus.aura.resources.connect_to_server
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
@@ -50,8 +55,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -189,13 +192,11 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
             }
 
             // Server details card
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                modifier = Modifier.fillMaxWidth()
+            DokusCard(
+                modifier = Modifier.fillMaxWidth(),
+                padding = DokusCardPadding.Default,
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column {
                     Text(
                         text = stringResource(Res.string.auth_server_details_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -328,11 +329,9 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
 
 @Composable
 private fun CurrentServerCard(currentServer: ServerConfig) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        modifier = Modifier.fillMaxWidth()
+    DokusCardSurface(
+        modifier = Modifier.fillMaxWidth(),
+        variant = DokusCardVariant.Soft,
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -363,11 +362,8 @@ private fun CurrentServerCard(currentServer: ServerConfig) {
 
 @Composable
 private fun HelpCard() {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        modifier = Modifier.fillMaxWidth()
+    DokusGlassSurface(
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

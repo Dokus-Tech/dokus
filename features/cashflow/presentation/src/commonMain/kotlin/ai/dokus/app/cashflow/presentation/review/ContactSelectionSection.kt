@@ -18,6 +18,8 @@ import tech.dokus.aura.resources.common_percent_value
 import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.common_vat_value
 import tech.dokus.aura.resources.contacts_create_contact
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized
@@ -41,8 +43,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -187,11 +187,9 @@ fun ContactSelectionSection(
 private fun LoadingState(
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+        variant = DokusCardVariant.Soft,
     ) {
         Row(
             modifier = Modifier
@@ -221,12 +219,9 @@ private fun NoContactState(
     onCreateNewContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-        shape = RoundedCornerShape(12.dp),
+        variant = DokusCardVariant.Soft,
     ) {
         Column(
             modifier = Modifier
@@ -296,12 +291,9 @@ private fun SuggestedContactCard(
         is ContactSuggestionReason.Custom -> reason.value
     }
 
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-        ),
-        shape = RoundedCornerShape(12.dp),
+        variant = DokusCardVariant.Soft,
     ) {
         Column(
             modifier = Modifier
@@ -416,12 +408,9 @@ private fun SelectedContactCard(
     onChangeContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-        shape = RoundedCornerShape(12.dp),
+        variant = DokusCardVariant.Soft,
     ) {
         Row(
             modifier = Modifier
@@ -482,12 +471,9 @@ private fun BoundContactCard(
     sectionLabel: String,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f),
-        ),
-        shape = RoundedCornerShape(12.dp),
+        variant = DokusCardVariant.Soft,
     ) {
         Row(
             modifier = Modifier

@@ -1,5 +1,6 @@
 package ai.dokus.app.auth.components.steps
 
+import androidx.compose.foundation.border
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.auth_workspace_type_company_description
 import tech.dokus.aura.resources.auth_workspace_type_freelancer_description
@@ -10,7 +11,6 @@ import tech.dokus.aura.resources.workspace_type_freelancer
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.domain.enums.TenantType
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -20,12 +20,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.foundation.aura.components.DokusCardSurface
 
 @Composable
 internal fun TypeSelectionStep(
@@ -142,39 +140,24 @@ private fun TypeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor = when {
-        isSelected -> MaterialTheme.colorScheme.primaryContainer
-        !isEnabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        else -> MaterialTheme.colorScheme.surface
-    }
-    val borderColor = when {
-        isSelected -> MaterialTheme.colorScheme.primary
-        !isEnabled -> MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-        else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-    }
-    val contentColor = when {
-        !isEnabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-        isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-        else -> MaterialTheme.colorScheme.onSurface
+    val contentColor = if (!isEnabled) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    } else {
+        MaterialTheme.colorScheme.onSurface
     }
 
-    Card(
+    DokusCardSurface(
         onClick = onClick,
         enabled = isEnabled,
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        border = BorderStroke(
-            width = if (isSelected) 2.dp else 1.dp,
-            color = borderColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 4.dp else 0.dp
-        )
+        modifier = if (isSelected) {
+            modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+        } else {
+            modifier
+        },
     ) {
         Column(
             modifier = Modifier
-                .padding(24.dp)
+                .padding(16.dp)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

@@ -18,6 +18,7 @@ import tech.dokus.aura.resources.country_belgium
 import tech.dokus.aura.resources.country_france
 import tech.dokus.aura.resources.country_netherlands
 import tech.dokus.aura.resources.state_retry
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized
@@ -37,8 +38,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -289,13 +288,9 @@ private fun LookupResultCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+    DokusCardSurface(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
     ) {
         Column(
             modifier = Modifier.padding(Constrains.Spacing.medium)
