@@ -2,8 +2,8 @@
 
 package tech.dokus.backend.services.auth
 
-import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
+import tech.dokus.database.repository.auth.RefreshTokenRepository
+import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.UserRole

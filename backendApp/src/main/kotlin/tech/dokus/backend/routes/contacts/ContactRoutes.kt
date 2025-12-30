@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.contacts
 
-import ai.dokus.foundation.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId

@@ -7,7 +7,7 @@ import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.ai.services.EmbeddingService
 import tech.dokus.ai.services.RAGService
-import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.exceptions.DokusException

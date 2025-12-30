@@ -1,9 +1,9 @@
 package tech.dokus.backend.routes.auth
 
-import ai.dokus.foundation.database.repository.auth.AddressRepository
-import ai.dokus.foundation.database.repository.auth.TenantRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.database.services.InvoiceNumberGenerator
+import tech.dokus.database.repository.auth.AddressRepository
+import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId

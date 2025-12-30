@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-group = "ai.dokus.foundation.database"
+group = "tech.dokus.database"
 version = "1.0.0"
 
 kotlin {
