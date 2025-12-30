@@ -104,6 +104,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val createContactPreFill: ContactPreFillData? = null,
         val contactValidationError: DokusException? = null,
         val isBindingContact: Boolean = false,
+        val showContactPicker: Boolean = false,
         // Document confirmation state
         val isDocumentConfirmed: Boolean = false,
         // Mobile preview sheet

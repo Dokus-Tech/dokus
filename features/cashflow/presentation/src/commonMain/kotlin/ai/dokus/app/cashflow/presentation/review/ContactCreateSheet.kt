@@ -1,6 +1,47 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.contacts.usecases.CreateContactUseCase
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.X
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_close
@@ -13,53 +54,13 @@ import tech.dokus.aura.resources.contacts_name
 import tech.dokus.aura.resources.contacts_name_placeholder
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.contacts_vat_placeholder
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.X
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.extensions.localized
 
 /**
  * Simplified contact creation sheet embedded in Document Review flow.
@@ -73,19 +74,16 @@ import tech.dokus.domain.exceptions.asDokusException
  * @param preFillData Optional data extracted from document
  * @param onContactCreated Callback with new contact ID on success
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactCreateSheet(
     isVisible: Boolean,
+    isLargeScreen: Boolean,
     onDismiss: () -> Unit,
     preFillData: ContactPreFillData?,
     onContactCreated: (ContactId) -> Unit,
     createContactUseCase: CreateContactUseCase = koinInject(),
     modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-    )
     val scope = rememberCoroutineScope()
 
     // Form state
@@ -99,7 +97,6 @@ fun ContactCreateSheet(
 
     val canSubmit = name.isNotBlank() && !isSubmitting
 
-    // Handle submission
     fun submit() {
         if (!canSubmit) return
 
@@ -133,125 +130,129 @@ fun ContactCreateSheet(
     }
 
     if (isVisible) {
-        ModalBottomSheet(
+        Dialog(
             onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            modifier = modifier,
-            dragHandle = null,
+            properties = DialogProperties(usePlatformDefaultWidth = isLargeScreen),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Constrains.Spacing.large),
+            Surface(
+                modifier = modifier
+                    .then(
+                        if (isLargeScreen) {
+                            Modifier.widthIn(min = 480.dp, max = 640.dp)
+                        } else {
+                            Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                        }
+                    ),
+                shape = MaterialTheme.shapes.medium,
             ) {
-                // Header
-                SheetHeader(
-                    onClose = onDismiss,
-                    isSubmitting = isSubmitting,
-                )
-
-                // Form content
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = Constrains.Spacing.medium),
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
+                        .padding(bottom = Constrains.Spacing.large),
                 ) {
-                    // Error banner
-                    if (errorMessage != null) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.errorContainer,
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            errorMessage?.let { exception ->
-                                Text(
-                                    text = exception.localized,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(Constrains.Spacing.small),
-                                )
-                            }
-                        }
-                    }
-
-                    // Name field (required)
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text(stringResource(Res.string.contacts_name)) },
-                        placeholder = { Text(stringResource(Res.string.contacts_name_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !isSubmitting,
-                        isError = name.isBlank(),
+                    SheetHeader(
+                        onClose = onDismiss,
+                        isSubmitting = isSubmitting,
                     )
 
-                    // VAT number field
-                    OutlinedTextField(
-                        value = vatNumber,
-                        onValueChange = { vatNumber = it },
-                        label = { Text(stringResource(Res.string.contacts_vat_number)) },
-                        placeholder = { Text(stringResource(Res.string.contacts_vat_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !isSubmitting,
-                    )
-
-                    // Email field
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text(stringResource(Res.string.contacts_email)) },
-                        placeholder = { Text(stringResource(Res.string.contacts_email_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !isSubmitting,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    )
-
-                    // Address field
-                    OutlinedTextField(
-                        value = address,
-                        onValueChange = { address = it },
-                        label = { Text(stringResource(Res.string.contacts_address)) },
-                        placeholder = { Text(stringResource(Res.string.contacts_address_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2,
-                        maxLines = 3,
-                        enabled = !isSubmitting,
-                    )
-
-                    Spacer(modifier = Modifier.height(Constrains.Spacing.small))
-
-                    // Action buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = Constrains.Spacing.medium),
+                        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
                     ) {
-                        OutlinedButton(
-                            onClick = onDismiss,
-                            modifier = Modifier.weight(1f),
-                            enabled = !isSubmitting,
-                        ) {
-                            Text(stringResource(Res.string.action_cancel))
+                        if (errorMessage != null) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                errorMessage?.let { exception ->
+                                    Text(
+                                        text = exception.localized,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.padding(Constrains.Spacing.small),
+                                    )
+                                }
+                            }
                         }
 
-                        Button(
-                            onClick = { submit() },
-                            modifier = Modifier.weight(1f),
-                            enabled = canSubmit,
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = { name = it },
+                            label = { Text(stringResource(Res.string.contacts_name)) },
+                            placeholder = { Text(stringResource(Res.string.contacts_name_placeholder)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !isSubmitting,
+                            isError = name.isBlank(),
+                        )
+
+                        OutlinedTextField(
+                            value = vatNumber,
+                            onValueChange = { vatNumber = it },
+                            label = { Text(stringResource(Res.string.contacts_vat_number)) },
+                            placeholder = { Text(stringResource(Res.string.contacts_vat_placeholder)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !isSubmitting,
+                        )
+
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            label = { Text(stringResource(Res.string.contacts_email)) },
+                            placeholder = { Text(stringResource(Res.string.contacts_email_placeholder)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !isSubmitting,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        )
+
+                        OutlinedTextField(
+                            value = address,
+                            onValueChange = { address = it },
+                            label = { Text(stringResource(Res.string.contacts_address)) },
+                            placeholder = { Text(stringResource(Res.string.contacts_address_placeholder)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 2,
+                            maxLines = 3,
+                            enabled = !isSubmitting,
+                        )
+
+                        Spacer(modifier = Modifier.height(Constrains.Spacing.small))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
                         ) {
-                            if (isSubmitting) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                            OutlinedButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.weight(1f),
+                                enabled = !isSubmitting,
+                            ) {
+                                Text(stringResource(Res.string.action_cancel))
                             }
-                            Text(stringResource(Res.string.contacts_create_contact))
+
+                            Button(
+                                onClick = { submit() },
+                                modifier = Modifier.weight(1f),
+                                enabled = canSubmit,
+                            ) {
+                                if (isSubmitting) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+                                Text(stringResource(Res.string.contacts_create_contact))
+                            }
                         }
                     }
                 }
