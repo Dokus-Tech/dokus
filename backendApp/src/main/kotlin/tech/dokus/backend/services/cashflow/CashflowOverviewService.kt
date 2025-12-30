@@ -11,14 +11,13 @@ import tech.dokus.domain.model.CashInSummary
 import tech.dokus.domain.model.CashOutSummary
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPeriod
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
-import java.math.BigDecimal
 
 /**
  * Service for cashflow overview calculations.

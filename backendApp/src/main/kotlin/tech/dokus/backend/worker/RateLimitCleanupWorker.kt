@@ -1,6 +1,6 @@
 package tech.dokus.backend.worker
 
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

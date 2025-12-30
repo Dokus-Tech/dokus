@@ -15,7 +15,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow

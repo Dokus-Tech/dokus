@@ -2,7 +2,7 @@
 
 package tech.dokus.backend.services.auth
 
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

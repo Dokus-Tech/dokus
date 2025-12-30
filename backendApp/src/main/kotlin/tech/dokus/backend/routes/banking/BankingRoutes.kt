@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.banking
 
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
 

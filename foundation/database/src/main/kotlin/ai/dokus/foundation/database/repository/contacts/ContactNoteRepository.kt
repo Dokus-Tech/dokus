@@ -8,7 +8,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and

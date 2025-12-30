@@ -4,7 +4,7 @@ import tech.dokus.domain.model.RecommandDocumentsResponse
 import tech.dokus.domain.model.RecommandInboxDocument
 import tech.dokus.domain.model.RecommandMarkAsReadRequest
 import tech.dokus.domain.model.RecommandSendResponse
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import ai.dokus.peppol.model.PeppolDirection
 import ai.dokus.peppol.model.PeppolDocumentList
 import ai.dokus.peppol.model.PeppolInboxItem

@@ -41,9 +41,9 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Documents
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
  * Document record routes using new canonical API.

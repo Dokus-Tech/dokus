@@ -1,7 +1,7 @@
 package ai.dokus.foundation.database.tables.auth
 
 import tech.dokus.domain.enums.UserRole
-import tech.dokus.foundation.ktor.database.dbEnumeration
+import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime

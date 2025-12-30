@@ -6,7 +6,7 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PeppolStatus
-import tech.dokus.foundation.ktor.database.dbEnumeration
+import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime

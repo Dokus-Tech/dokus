@@ -10,8 +10,8 @@ import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolTransmissionDto
-import tech.dokus.foundation.ktor.database.dbQuery
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

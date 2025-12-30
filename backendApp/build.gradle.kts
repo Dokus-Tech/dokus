@@ -21,7 +21,7 @@ kotlin {
 dependencies {
     // Foundation modules
     implementation(projects.foundation.domain)
-    implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.backendCommon)
     implementation(projects.foundation.database)
     implementation(projects.foundation.peppolCore)
 
@@ -88,7 +88,7 @@ dependencies {
     implementation(libs.flywaydb.flyway.database.postgresql)
 
     // PDF/Image processing (for document processor)
-    implementation("org.apache.pdfbox:pdfbox:3.0.3")
+    implementation(libs.pdfbox)
 
     // Testing
     testImplementation(libs.junit.jupiter)
@@ -96,7 +96,7 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutinesTest)
     testImplementation(libs.h2)
-    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation(libs.mockk)
 }
 
 tasks.test {

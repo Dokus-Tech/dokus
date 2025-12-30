@@ -24,8 +24,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
-import tech.dokus.foundation.ktor.config.ProcessorConfig
-import tech.dokus.foundation.ktor.storage.DocumentStorageService
+import tech.dokus.foundation.backend.config.ProcessorConfig
+import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.ocr.OcrEngine
 import tech.dokus.ocr.OcrInput
 import tech.dokus.ocr.OcrResult

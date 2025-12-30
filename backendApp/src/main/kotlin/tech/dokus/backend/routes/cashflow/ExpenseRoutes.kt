@@ -5,8 +5,8 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.routes.Expenses
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete

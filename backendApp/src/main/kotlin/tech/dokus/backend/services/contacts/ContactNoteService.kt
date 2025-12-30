@@ -7,7 +7,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Service for contact notes business operations.

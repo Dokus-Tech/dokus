@@ -3,7 +3,7 @@ package ai.dokus.foundation.database.tables.contacts
 import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.cashflow.DocumentsTable
 import tech.dokus.domain.enums.ClientType
-import tech.dokus.foundation.ktor.database.dbEnumeration
+import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime

@@ -14,7 +14,7 @@ import tech.dokus.domain.model.CreateBillRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.MarkBillPaidRequest
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

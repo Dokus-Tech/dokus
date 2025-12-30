@@ -8,9 +8,9 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.OllamaModels
-import tech.dokus.foundation.ktor.config.AIConfig
-import tech.dokus.foundation.ktor.config.ModelPurpose
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ModelPurpose
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Factory for creating AI prompt executors and models based on configuration.

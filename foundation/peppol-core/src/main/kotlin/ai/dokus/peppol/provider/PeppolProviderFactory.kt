@@ -1,6 +1,6 @@
 package ai.dokus.peppol.provider
 
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import ai.dokus.peppol.config.PeppolModuleConfig
 import ai.dokus.peppol.providers.recommand.RecommandProvider
 import io.ktor.client.HttpClient

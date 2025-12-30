@@ -7,8 +7,8 @@ import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.SelectTenantRequest
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get

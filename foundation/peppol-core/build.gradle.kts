@@ -10,10 +10,10 @@ dependencies {
     // Foundation modules
     implementation(projects.foundation.domain)
     implementation(projects.foundation.database)
-    implementation(projects.foundation.ktorCommon)
+    implementation(projects.foundation.backendCommon)
 
     // Configuration (HOCON)
-    implementation("com.typesafe:config:1.4.3")
+    implementation(libs.hoconConfig)
 
     // Kotlin
     implementation(libs.kotlinx.serialization)
@@ -34,7 +34,7 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutinesTest)
-    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation(libs.mockk)
 }
 
 tasks.test {

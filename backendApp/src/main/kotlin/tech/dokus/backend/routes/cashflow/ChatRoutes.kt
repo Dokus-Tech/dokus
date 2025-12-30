@@ -3,8 +3,8 @@ package tech.dokus.backend.routes.cashflow
 import ai.dokus.ai.agents.ChatAgent
 import ai.dokus.ai.agents.ConversationMessage
 import ai.dokus.ai.config.AIProviderFactory
-import tech.dokus.foundation.ktor.config.AIConfig
-import tech.dokus.foundation.ktor.config.ModelPurpose
+import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ModelPurpose
 import ai.dokus.ai.services.EmbeddingService
 import ai.dokus.ai.services.RAGService
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
@@ -26,8 +26,8 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.model.ai.MessageRole
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive

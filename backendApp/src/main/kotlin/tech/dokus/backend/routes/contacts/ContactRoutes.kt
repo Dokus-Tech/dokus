@@ -10,8 +10,8 @@ import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
