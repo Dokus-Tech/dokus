@@ -134,7 +134,7 @@ private fun IntentReceiver<LoginIntent>.LoginContent(
                 Text(
                     text = stringResource(Res.string.app_name),
                     style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
 

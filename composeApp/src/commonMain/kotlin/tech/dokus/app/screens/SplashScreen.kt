@@ -105,7 +105,7 @@ internal fun SplashScreen(
                     color = MaterialTheme.colorScheme.primaryContainer,
                     style = TextStyle(
                         fontSize = 64.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         letterSpacing = 16.sp
                     )
                 )

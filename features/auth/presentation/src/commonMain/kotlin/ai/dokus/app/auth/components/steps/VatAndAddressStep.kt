@@ -8,6 +8,7 @@ import tech.dokus.aura.resources.contacts_address_line1
 import tech.dokus.aura.resources.contacts_address_line2
 import tech.dokus.aura.resources.contacts_city
 import tech.dokus.aura.resources.contacts_country
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.aura.resources.contacts_postal_code
 import tech.dokus.aura.resources.country_belgium
 import tech.dokus.aura.resources.country_france
@@ -33,7 +34,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -169,11 +169,9 @@ private fun CountrySelector(
         Spacer(modifier = Modifier.height(8.dp))
 
         Box {
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true },
-                shape = MaterialTheme.shapes.small
+            DokusCardSurface(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { expanded = true },
             ) {
                 Text(
                     text = selectedCountry.localizedName(),

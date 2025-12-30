@@ -44,6 +44,8 @@ import tech.dokus.aura.resources.contacts_merge_select_target_prompt
 import tech.dokus.aura.resources.contacts_merge_source_archive
 import tech.dokus.aura.resources.contacts_merge_source_archived
 import tech.dokus.aura.resources.contacts_merge_source_archived_check
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.aura.resources.contacts_merge_success
 import tech.dokus.aura.resources.contacts_merge_success_message
 import tech.dokus.aura.resources.contacts_merge_summary
@@ -83,8 +85,6 @@ import androidx.compose.material.icons.filled.MergeType
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -839,10 +839,9 @@ private fun ConfirmationStep(
 ) {
     Column {
         // Warning banner
-        Surface(
-            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.fillMaxWidth()
+        DokusCardSurface(
+            modifier = Modifier.fillMaxWidth(),
+            variant = DokusCardVariant.Soft,
         ) {
             Row(
                 modifier = Modifier.padding(12.dp),
@@ -879,11 +878,9 @@ private fun ConfirmationStep(
 
         // Items to be reassigned
         if (sourceActivity != null) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                modifier = Modifier.fillMaxWidth()
+            DokusCardSurface(
+                modifier = Modifier.fillMaxWidth(),
+                variant = DokusCardVariant.Soft,
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
@@ -1014,11 +1011,9 @@ private fun ResultStep(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Reassignment summary
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            ),
-            modifier = Modifier.fillMaxWidth()
+        DokusCardSurface(
+            modifier = Modifier.fillMaxWidth(),
+            variant = DokusCardVariant.Soft,
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(

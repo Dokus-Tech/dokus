@@ -1,14 +1,5 @@
 package tech.dokus.contacts.components
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_active
-import tech.dokus.aura.resources.contacts_customer
-import tech.dokus.aura.resources.contacts_inactive
-import tech.dokus.aura.resources.contacts_peppol
-import tech.dokus.aura.resources.contacts_supplier
-import tech.dokus.aura.resources.contacts_vendor
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.DerivedContactRoles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -19,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +20,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_active
+import tech.dokus.aura.resources.contacts_customer
+import tech.dokus.aura.resources.contacts_inactive
+import tech.dokus.aura.resources.contacts_peppol
+import tech.dokus.aura.resources.contacts_supplier
+import tech.dokus.aura.resources.contacts_vendor
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.DerivedContactRoles
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -38,14 +38,12 @@ internal fun ContactCard(
     contact: ContactDto,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCard(
         modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Name and active status
             Row(

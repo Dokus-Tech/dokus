@@ -3,6 +3,7 @@ package ai.dokus.app.cashflow.components.invoice
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_percent_value
 import tech.dokus.aura.resources.invoice_vat_rate
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,11 +47,9 @@ fun InvoiceVatRateSelector(
         Spacer(modifier = Modifier.height(8.dp))
 
         Box {
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true },
-                shape = MaterialTheme.shapes.small
+            DokusCardSurface(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { expanded = true },
             ) {
                 Text(
                     text = stringResource(Res.string.common_percent_value, selectedRatePercent),

@@ -6,6 +6,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.contacts_continue_anyway
 import tech.dokus.aura.resources.contacts_duplicate_warning
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.aura.resources.contacts_merge
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
@@ -21,8 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -129,12 +128,8 @@ private fun DuplicateContactItem(
     onMerge: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier

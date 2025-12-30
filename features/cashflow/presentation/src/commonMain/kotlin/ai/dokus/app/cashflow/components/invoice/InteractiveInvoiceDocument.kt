@@ -2,14 +2,13 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -55,15 +54,10 @@ fun InteractiveInvoiceDocument(
         // Calculate minimum height based on A4 ratio (content can exceed this)
         val minPaperHeight = paperWidth / A4_ASPECT_RATIO
 
-        Card(
+        DokusCardSurface(
             modifier = Modifier
                 .widthIn(max = paperWidth)
                 .padding(vertical = 16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            shape = MaterialTheme.shapes.medium,
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -75,7 +69,7 @@ fun InteractiveInvoiceDocument(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     // Client section - clickable

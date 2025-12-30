@@ -4,6 +4,9 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_add_first
 import tech.dokus.aura.resources.contacts_add_first_hint
 import tech.dokus.aura.resources.contacts_empty
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
@@ -28,8 +31,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -217,13 +218,9 @@ private fun ContactsEmptyState(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Empty state CTA card
-            Card(
+            DokusCardSurface(
                 onClick = onAddContactClick,
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -235,13 +232,13 @@ private fun ContactsEmptyState(
                     Icon(
                         imageVector = Icons.Default.PersonAdd,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(Res.string.contacts_add_first),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -275,14 +272,12 @@ private fun ContactsListSkeleton(
 private fun ContactCardSkeleton(
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCard(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Name and status row
             Row(

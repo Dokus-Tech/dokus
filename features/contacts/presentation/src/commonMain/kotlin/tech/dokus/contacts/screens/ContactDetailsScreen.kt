@@ -430,7 +430,7 @@ private fun ContactDetailsTopBar(
                         Text(
                             text = contactState.data.name.value,
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -444,7 +444,7 @@ private fun ContactDetailsTopBar(
                         Text(
                             text = stringResource(Res.string.contacts_contact_details),
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }

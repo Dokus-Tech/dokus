@@ -19,6 +19,7 @@ import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total
 import tech.dokus.aura.resources.invoice_vat
 import tech.dokus.foundation.aura.components.PDashedDivider
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,8 +29,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,13 +52,8 @@ fun InvoiceSummaryCard(
     formState: CreateInvoiceFormState,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth().padding(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -71,7 +65,7 @@ fun InvoiceSummaryCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Client section
@@ -236,14 +230,14 @@ fun InvoiceSummaryCard(
                         Text(
                             text = stringResource(Res.string.invoice_total).uppercase(),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                             letterSpacing = 1.sp
                         )
                         Text(
                             text = formState.total,
                             style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }

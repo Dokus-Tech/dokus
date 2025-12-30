@@ -11,6 +11,7 @@ import tech.dokus.aura.resources.health_status_critical
 import tech.dokus.aura.resources.health_status_good
 import tech.dokus.aura.resources.health_status_warning
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerCircle
 import tech.dokus.foundation.aura.components.common.ShimmerLine
@@ -28,9 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -95,23 +93,11 @@ fun BusinessHealthCard(
     state: DokusState<BusinessHealthData>,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    DokusCardSurface(modifier = modifier) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(24.dp)
+                .padding(16.dp)
         ) {
             when (state) {
                 is DokusState.Loading, is DokusState.Idle -> {
@@ -337,7 +323,7 @@ private fun DonutChart(
             Text(
                 text = stringResource(Res.string.common_percent_value, actualPercentage),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(

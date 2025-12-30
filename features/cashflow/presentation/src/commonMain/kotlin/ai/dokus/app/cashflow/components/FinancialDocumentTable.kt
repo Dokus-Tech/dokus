@@ -24,13 +24,13 @@ import tech.dokus.aura.resources.document_table_date
 import tech.dokus.aura.resources.document_table_invoice
 import tech.dokus.aura.resources.document_table_more_options
 import tech.dokus.aura.resources.document_table_view_details
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.CashflowType
 import tech.dokus.foundation.aura.components.CashflowTypeBadge
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,13 +42,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -189,22 +186,9 @@ fun FinancialDocumentTable(
     onMoreClick: (FinancialDocumentDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    DokusCardSurface(modifier = modifier) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp)
-                )
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Header Row
             FinancialDocumentTableHeader()
@@ -448,22 +432,9 @@ fun FinancialDocumentList(
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    DokusCardSurface(modifier = modifier) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp)
-                )
+            modifier = Modifier.fillMaxWidth()
         ) {
             documents.forEachIndexed { index, document ->
                 key(document.documentId) {

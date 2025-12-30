@@ -8,6 +8,7 @@ import tech.dokus.aura.resources.contacts_create_contact
 import tech.dokus.aura.resources.contacts_edit_contact
 import tech.dokus.aura.resources.contacts_required_fields_hint
 import tech.dokus.aura.resources.contacts_update_mobile_hint
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -33,8 +34,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -162,7 +161,7 @@ fun ContactFormPane(
                 // Calculate pane width: 40% of screen, between 400dp and 600dp
                 val paneWidth = (maxWidth * 0.4f).coerceIn(400.dp, 600.dp)
 
-                Card(
+                DokusCardSurface(
                     modifier = Modifier
                         .width(paneWidth)
                         .fillMaxHeight()
@@ -171,14 +170,10 @@ fun ContactFormPane(
                             indication = null,
                             onClick = { /* Consume click to prevent backdrop dismissal */ }
                         ),
-                    shape = MaterialTheme.shapes.large.copy(
+                    shape = MaterialTheme.shapes.medium.copy(
                         topEnd = MaterialTheme.shapes.extraSmall.topEnd,
                         bottomEnd = MaterialTheme.shapes.extraSmall.bottomEnd
                     ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize()

@@ -252,7 +252,7 @@ internal fun UnderDevelopmentScreen() {
             Text(
                 text = stringResource(Res.string.under_development_title),
                 style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.alpha(titleAlpha.value)

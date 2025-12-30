@@ -2,6 +2,7 @@ package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
 import tech.dokus.aura.resources.Res
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.cashflow_add_document
 import tech.dokus.aura.resources.upload_instructions
@@ -33,8 +34,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -119,7 +118,7 @@ fun DocumentUploadSidebar(
             BoxWithConstraints {
                 val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
 
-                Card(
+                DokusCardSurface(
                     modifier = Modifier
                         .width(sidebarWidth)
                         .fillMaxHeight()
@@ -128,14 +127,10 @@ fun DocumentUploadSidebar(
                             indication = null,
                             onClick = { /* Consume click to prevent backdrop dismissal */ }
                         ),
-                    shape = MaterialTheme.shapes.large.copy(
+                    shape = MaterialTheme.shapes.medium.copy(
                         topEnd = MaterialTheme.shapes.extraSmall.topEnd,
                         bottomEnd = MaterialTheme.shapes.extraSmall.bottomEnd
                     ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
                         modifier = Modifier

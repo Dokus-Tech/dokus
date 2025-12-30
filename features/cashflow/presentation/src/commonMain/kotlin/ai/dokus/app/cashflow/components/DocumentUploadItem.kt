@@ -25,6 +25,8 @@ import tech.dokus.aura.resources.common_file_size_bytes
 import tech.dokus.aura.resources.common_file_size_kb
 import tech.dokus.aura.resources.common_file_size_mb
 import tech.dokus.aura.resources.upload_status_waiting
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedContent
@@ -40,7 +42,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -98,9 +99,9 @@ private fun DocumentUploadItemContent(
 
     val currentState = displayState ?: return
 
-    OutlinedCard(
+    DokusCardSurface(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.small
+        variant = DokusCardVariant.Soft,
     ) {
         // Use contentKey to only animate on STATE TYPE changes, not progress updates
         AnimatedContent(

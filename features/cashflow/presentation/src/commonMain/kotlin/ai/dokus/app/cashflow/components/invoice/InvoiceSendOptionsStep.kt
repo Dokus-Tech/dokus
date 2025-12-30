@@ -29,6 +29,9 @@ import tech.dokus.aura.resources.peppol_belgian_client_warning
 import tech.dokus.aura.resources.peppol_id_missing
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,8 +50,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -158,17 +159,13 @@ private fun MobileInvoiceSummaryCard(
     formState: CreateInvoiceFormState,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        shape = MaterialTheme.shapes.medium
+        variant = DokusCardVariant.Soft,
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
@@ -212,13 +209,13 @@ private fun MobileInvoiceSummaryCard(
                 Text(
                     text = stringResource(Res.string.invoice_total),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = formState.total,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }

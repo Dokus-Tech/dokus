@@ -1,12 +1,5 @@
 package ai.dokus.app.cashflow.presentation.review
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_document_preview_title
-import tech.dokus.aura.resources.cashflow_no_preview
-import tech.dokus.aura.resources.cashflow_page_plural
-import tech.dokus.aura.resources.cashflow_page_single
-import tech.dokus.aura.resources.state_loading
-import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_document_preview_title
+import tech.dokus.aura.resources.cashflow_no_preview
+import tech.dokus.aura.resources.cashflow_page_plural
+import tech.dokus.aura.resources.cashflow_page_single
+import tech.dokus.aura.resources.state_loading
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.constrains.Constrains
 
 /**
  * Small clickable thumbnail preview for mobile Document Review.
@@ -61,21 +60,16 @@ fun PdfThumbnail(
 ) {
     val imageLoader = rememberAuthenticatedImageLoader()
 
-    Card(
+    DokusCardSurface(
         modifier = modifier
             .clickable(onClick = onClick)
             .width(80.dp)
             .height(113.dp),
-        shape = RoundedCornerShape(4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White,
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp,
-        ),
     ) {
         Box(
-            modifier = Modifier.size(80.dp, 113.dp),
+            modifier = Modifier
+                .size(80.dp, 113.dp)
+                .background(Color.White),
             contentAlignment = Alignment.Center,
         ) {
             when {

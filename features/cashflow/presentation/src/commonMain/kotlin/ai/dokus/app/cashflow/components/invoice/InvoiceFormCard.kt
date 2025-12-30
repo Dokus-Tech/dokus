@@ -1,24 +1,12 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.invoice_details_title
-import tech.dokus.aura.resources.invoice_notes_optional
-import tech.dokus.aura.resources.invoice_save_as_draft
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.PButton
-import tech.dokus.foundation.aura.components.PButtonVariant
-import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +16,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_details_title
+import tech.dokus.aura.resources.invoice_notes_optional
+import tech.dokus.aura.resources.invoice_save_as_draft
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.extensions.localized
 
 /**
  * Main form card for creating an invoice.
@@ -49,18 +49,13 @@ fun InvoiceFormCard(
     onSaveAsDraft: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = MaterialTheme.shapes.medium
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = stringResource(Res.string.invoice_details_title),

@@ -1,6 +1,54 @@
 package tech.dokus.contacts.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_percent_value
 import tech.dokus.aura.resources.contacts_active
 import tech.dokus.aura.resources.contacts_activity_summary
 import tech.dokus.aura.resources.contacts_add_note
@@ -34,63 +82,17 @@ import tech.dokus.aura.resources.contacts_supplier
 import tech.dokus.aura.resources.contacts_tags
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.contacts_vendor
-import tech.dokus.aura.resources.common_percent_value
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.ShimmerLine
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Note
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import kotlinx.datetime.LocalDateTime
-import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerLine
 
 // ============================================================================
 // CONTACT INFO SECTION
@@ -112,20 +114,18 @@ internal fun ContactInfoSection(
     isTogglingPeppol: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCard(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = stringResource(Res.string.contacts_contact_info),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
 
             when (state) {
@@ -178,7 +178,7 @@ private fun ContactInfoContent(
             Text(
                 text = contact.name.value,
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
@@ -452,20 +452,18 @@ internal fun ActivitySummarySection(
     state: DokusState<ContactActivitySummary>,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCard(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = stringResource(Res.string.contacts_activity_summary),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
 
             when (state) {
@@ -566,9 +564,8 @@ private fun ActivitySummaryContent(
             } else {
                 stringResource(Res.string.contacts_pending_approval_plural, pendingCount)
             }
-            Surface(
-                color = MaterialTheme.colorScheme.tertiaryContainer,
-                shape = RoundedCornerShape(8.dp)
+            DokusCardSurface(
+                variant = DokusCardVariant.Soft,
             ) {
                 Row(
                     modifier = Modifier
@@ -580,7 +577,7 @@ private fun ActivitySummaryContent(
                     Text(
                         text = pendingText,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -597,13 +594,11 @@ private fun ActivityStatCard(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    DokusCard(
         modifier = modifier,
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp)
+        padding = DokusCardPadding.Dense,
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -616,7 +611,7 @@ private fun ActivityStatCard(
             Text(
                 text = count,
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = color
             )
             Text(
@@ -640,10 +635,9 @@ private fun ActivitySummarySkeleton() {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         repeat(3) {
-            Surface(
+            DokusCardSurface(
                 modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(8.dp)
+                variant = DokusCardVariant.Soft,
             ) {
                 Column(
                     modifier = Modifier.padding(12.dp),
@@ -682,14 +676,12 @@ internal fun NotesSection(
     onDeleteNote: (ContactNoteDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DokusCard(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
@@ -700,7 +692,7 @@ internal fun NotesSection(
                 Text(
                     text = stringResource(Res.string.contacts_notes),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 TextButton(onClick = onAddNote) {

@@ -37,6 +37,10 @@ import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.aura.resources.workspace_vat_number
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
@@ -62,14 +66,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -257,11 +258,14 @@ private fun WorkspaceSettingsContentInternal(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .withContentPaddingForScrollable(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 // Company Information Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                DokusCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    padding = DokusCardPadding.Default,
+                ) {
+                    Column {
                         Text(
                             text = stringResource(Res.string.workspace_company_info),
                             style = MaterialTheme.typography.titleMedium
@@ -322,8 +326,11 @@ private fun WorkspaceSettingsContentInternal(
                 }
 
                 // Banking Details Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                DokusCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    padding = DokusCardPadding.Default,
+                ) {
+                    Column {
                         Text(
                             text = stringResource(Res.string.workspace_banking),
                             style = MaterialTheme.typography.titleMedium
@@ -350,8 +357,11 @@ private fun WorkspaceSettingsContentInternal(
                 }
 
                 // Invoice Settings Section
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                DokusCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    padding = DokusCardPadding.Default,
+                ) {
+                    Column {
                         Text(
                             text = stringResource(Res.string.workspace_invoice_settings),
                             style = MaterialTheme.typography.titleMedium
@@ -503,11 +513,9 @@ private fun WorkspaceSettingsContentInternal(
                         Spacer(Modifier.height(8.dp))
 
                         // Preview in highlighted card
-                        Card(
+                        DokusCardSurface(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
+                            variant = DokusCardVariant.Soft,
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),

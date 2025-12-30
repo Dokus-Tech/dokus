@@ -25,6 +25,8 @@ import tech.dokus.aura.resources.peppol_no_companies_title
 import tech.dokus.aura.resources.peppol_open_provider
 import tech.dokus.aura.resources.peppol_select_company_title
 import tech.dokus.aura.resources.state_connecting
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
@@ -57,8 +59,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -213,7 +213,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
             Text(
                 text = stringResource(Res.string.peppol_connect_title_with_provider, state.provider.displayName),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(Modifier.height(32.dp))
@@ -309,7 +309,7 @@ private fun InstructionsPane(provider: PeppolProvider) {
             Text(
                 text = stringResource(Res.string.peppol_get_credentials_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(Modifier.height(24.dp))
@@ -367,7 +367,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CompanyListPane(
             Text(
                 text = stringResource(Res.string.peppol_select_company_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(Modifier.height(8.dp))
@@ -401,12 +401,10 @@ private fun CompanyCard(
     company: RecommandCompanySummary,
     onClick: () -> Unit
 ) {
-    Card(
+    DokusCardSurface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        variant = DokusCardVariant.Soft,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -457,7 +455,7 @@ private fun IntentReceiver<PeppolConnectIntent>.NoCompaniesPane(
             Text(
                 text = stringResource(Res.string.peppol_no_companies_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(Modifier.height(8.dp))

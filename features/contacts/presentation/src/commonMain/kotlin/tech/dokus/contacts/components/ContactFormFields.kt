@@ -36,6 +36,9 @@ import tech.dokus.aura.resources.contacts_tags_hint
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.field_optional
 import tech.dokus.aura.resources.field_required
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.extensions.localized
@@ -48,14 +51,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -412,18 +411,12 @@ private fun ContactFormSection(
     title: String,
     content: @Composable () -> Unit
 ) {
-    Card(
+    DokusCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        padding = DokusCardPadding.Default,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = title,
@@ -432,7 +425,7 @@ private fun ContactFormSection(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             content()
         }
@@ -483,11 +476,9 @@ private fun BusinessTypeSelector(
         Spacer(modifier = Modifier.height(8.dp))
 
         Box {
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true },
-                shape = MaterialTheme.shapes.small
+            DokusCardSurface(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { expanded = true },
             ) {
                 Text(
                     text = selectedType.displayName(),

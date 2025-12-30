@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.font.FontFamily
 import tech.dokus.foundation.aura.local.LocalThemeManager
 
 /**
@@ -39,13 +40,12 @@ fun Themed(
     }
     val colorScheme = createColorScheme(useDarkTheme)
 
-    val fontFamilyDisplay = createFontFamilyDisplay()
     val fontFamily = createFontFamily()
-    val typography = MaterialTheme.typography.run {
-        // For some reason, rendering of custom fonts fails on the web. They do load but render incorrectly
-        // For now we'll keep typography default only for web and use custom for all other platforms
-        if (activePlatform.isWeb) this
-        else withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay).tuned()
+    val typography = if (activePlatform.isWeb) {
+        // Web rendering for custom fonts is unstable; keep sizing/weights while using default family.
+        createDokusTypography(FontFamily.Default)
+    } else {
+        createDokusTypography(fontFamily)
     }
     // Calm ripple configuration: neutral color with low alpha (≤ 0.12) for subtle feedback
     val calmRippleAlpha = RippleAlpha(

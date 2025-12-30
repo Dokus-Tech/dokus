@@ -8,6 +8,9 @@ import tech.dokus.aura.resources.invoice_line_total
 import tech.dokus.aura.resources.invoice_price
 import tech.dokus.aura.resources.invoice_qty
 import tech.dokus.aura.resources.invoice_remove
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +22,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,14 +45,13 @@ fun InvoiceLineItemCard(
     onUpdateVatRate: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OutlinedCard(
+    DokusCard(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.small
+        variant = DokusCardVariant.Soft,
+        padding = DokusCardPadding.Dense,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(

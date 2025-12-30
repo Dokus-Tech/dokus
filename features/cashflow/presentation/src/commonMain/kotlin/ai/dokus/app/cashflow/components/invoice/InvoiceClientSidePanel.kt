@@ -11,6 +11,7 @@ import tech.dokus.aura.resources.invoice_no_clients_match
 import tech.dokus.aura.resources.invoice_search_clients
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.aura.resources.peppol_id_missing
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.domain.model.contact.ContactDto
@@ -44,8 +45,6 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -113,7 +112,7 @@ fun InvoiceClientSidePanel(
             BoxWithConstraints {
                 val sidebarWidth = (maxWidth / 3).coerceIn(320.dp, 400.dp)
 
-                Card(
+                DokusCardSurface(
                     modifier = Modifier
                         .width(sidebarWidth)
                         .fillMaxHeight()
@@ -122,14 +121,10 @@ fun InvoiceClientSidePanel(
                             indication = null,
                             onClick = { /* Consume click to prevent backdrop dismissal */ }
                         ),
-                    shape = MaterialTheme.shapes.large.copy(
+                    shape = MaterialTheme.shapes.medium.copy(
                         topEnd = MaterialTheme.shapes.extraSmall.topEnd,
                         bottomEnd = MaterialTheme.shapes.extraSmall.bottomEnd
                     ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
                         modifier = Modifier

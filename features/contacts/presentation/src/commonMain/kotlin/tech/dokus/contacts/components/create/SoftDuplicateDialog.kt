@@ -10,6 +10,7 @@ import tech.dokus.aura.resources.contacts_duplicate_list_hint
 import tech.dokus.aura.resources.contacts_duplicate_match_name
 import tech.dokus.aura.resources.contacts_duplicate_match_name_country
 import tech.dokus.aura.resources.contacts_duplicate_warning
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -107,13 +106,9 @@ private fun DuplicateItem(
             stringResource(Res.string.contacts_duplicate_match_name)
     }
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+    DokusCardSurface(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
     ) {
         Row(
             modifier = Modifier

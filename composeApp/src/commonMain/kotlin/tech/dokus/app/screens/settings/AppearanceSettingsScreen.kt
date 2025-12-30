@@ -7,6 +7,8 @@ import tech.dokus.aura.resources.appearance_theme_dark
 import tech.dokus.aura.resources.appearance_theme_light
 import tech.dokus.aura.resources.appearance_theme_system
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalThemeManager
 import tech.dokus.foundation.aura.style.ThemeMode
@@ -22,7 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -74,8 +75,11 @@ fun AppearanceSettingsContent(
             .padding(contentPadding)
             .withContentPaddingForScrollable()
     ) {
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        DokusCard(
+            modifier = Modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
+        ) {
+            Column {
                 Text(
                     text = stringResource(Res.string.appearance_theme),
                     style = MaterialTheme.typography.titleMedium

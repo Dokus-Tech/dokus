@@ -9,10 +9,10 @@ import tech.dokus.aura.resources.vat_predicted_net_amount
 import tech.dokus.aura.resources.vat_quarter_sublabel
 import tech.dokus.aura.resources.vat_summary_title
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.domain.Money
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +20,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,23 +47,11 @@ fun VatSummaryCard(
     state: DokusState<VatSummaryData>,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    DokusCardSurface(modifier = modifier) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .padding(16.dp)
         ) {
             when (state) {
                 is DokusState.Loading, is DokusState.Idle -> {

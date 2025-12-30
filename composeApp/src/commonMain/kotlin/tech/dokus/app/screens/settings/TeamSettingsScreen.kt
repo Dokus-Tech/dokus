@@ -38,6 +38,8 @@ import tech.dokus.aura.resources.team_send_invitation
 import tech.dokus.aura.resources.team_settings_title
 import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
@@ -73,7 +75,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -278,7 +279,7 @@ private fun TeamSettingsContentInternal(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .withContentPaddingForScrollable(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Invite Member Button
         PPrimaryButton(
@@ -288,8 +289,11 @@ private fun TeamSettingsContentInternal(
         )
 
         // Team Members Section
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        DokusCard(
+            modifier = Modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
+        ) {
+            Column {
                 Text(
                     text = stringResource(Res.string.team_members),
                     style = MaterialTheme.typography.titleMedium
@@ -331,8 +335,11 @@ private fun TeamSettingsContentInternal(
         }
 
         // Pending Invitations Section
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        DokusCard(
+            modifier = Modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
+        ) {
+            Column {
                 Text(
                     text = stringResource(Res.string.team_pending_invitations),
                     style = MaterialTheme.typography.titleMedium

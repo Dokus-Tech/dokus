@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
@@ -78,6 +79,77 @@ fun Typography.tuned(): Typography = copy(
     labelMedium = labelMedium.withLineHeightMultiplier(1.2f),
     labelSmall = labelSmall.withLineHeightMultiplier(1.2f),
 )
+
+fun createDokusTypography(fontFamily: FontFamily): Typography {
+    val displayLarge = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 48.sp
+    )
+    val headlineLarge = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 32.sp
+    )
+    val headlineMedium = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp
+    )
+    val titleLarge = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 20.sp
+    )
+    val titleMedium = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.sp
+    )
+    val bodyLarge = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp
+    )
+    val bodyMedium = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp
+    )
+    val labelLarge = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp
+    )
+    val labelMedium = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp
+    )
+    val labelSmall = TextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp
+    )
+
+    return Typography(
+        displayLarge = displayLarge,
+        displayMedium = headlineLarge,
+        displaySmall = headlineMedium,
+        headlineLarge = headlineLarge,
+        headlineMedium = headlineMedium,
+        headlineSmall = titleLarge,
+        titleLarge = titleLarge,
+        titleMedium = titleMedium,
+        titleSmall = labelLarge,
+        bodyLarge = bodyLarge,
+        bodyMedium = bodyMedium,
+        bodySmall = bodyMedium,
+        labelLarge = labelLarge,
+        labelMedium = labelMedium,
+        labelSmall = labelSmall,
+    ).tuned()
+}
 
 // Helper: keeps your intent readable
 private fun TextStyle.withLineHeightMultiplier(multiplier: Float): TextStyle {

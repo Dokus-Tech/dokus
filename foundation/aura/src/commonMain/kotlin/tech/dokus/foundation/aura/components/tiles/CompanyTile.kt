@@ -6,7 +6,6 @@ import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.constrains.Constrains
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,18 +13,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.foundation.aura.components.DokusCardSurface
 
 /**
  * Small square tile showing a company's avatar (or initial if no avatar) with its name below.
@@ -46,13 +42,8 @@ fun CompanyTile(
     onClick: () -> Unit
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Card(
+        DokusCardSurface(
             onClick = onClick,
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = Color.Transparent
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = Constrains.Elevation.none)
         ) {
             CompanyAvatarImage(
                 avatarUrl = avatarUrl,
@@ -83,11 +74,8 @@ fun AddCompanyTile(
     onClick: () -> Unit
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        OutlinedCard(
+        DokusCardSurface(
             onClick = onClick,
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.outlinedCardColors(containerColor = Color.Transparent),
-            border = BorderStroke(Constrains.Stroke.thin, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
         ) {
             Box(
                 modifier = Modifier.size(Constrains.AvatarSize.tile),

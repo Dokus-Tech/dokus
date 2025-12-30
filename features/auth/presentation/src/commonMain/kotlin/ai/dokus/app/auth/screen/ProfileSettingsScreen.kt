@@ -28,6 +28,8 @@ import tech.dokus.aura.resources.profile_save_success
 import tech.dokus.aura.resources.profile_settings_title
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldName
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
@@ -55,7 +57,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -178,7 +179,7 @@ fun IntentReceiver<ProfileSettingsIntent>.ProfileSettingsContent(
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
             .withContentPaddingForScrollable(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Profile content based on state
         when (state) {
@@ -275,8 +276,11 @@ private fun ProfileViewingSection(
     state: ProfileSettingsState.Viewing,
     onEditClick: () -> Unit
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default,
+    ) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -325,8 +329,11 @@ private fun ProfileEditingSection(
     onSave: () -> Unit,
     onCancel: () -> Unit
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default,
+    ) {
+        Column {
             Text(
                 text = stringResource(Res.string.profile_personal_info),
                 style = MaterialTheme.typography.titleMedium
@@ -395,8 +402,11 @@ private fun ProfileEditingSection(
 private fun ProfileSavingSection(
     state: ProfileSettingsState.Saving
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default,
+    ) {
+        Column {
             Text(
                 text = stringResource(Res.string.profile_personal_info),
                 style = MaterialTheme.typography.titleMedium
@@ -444,11 +454,11 @@ private fun ProfileSavingSection(
 
 @Composable
 private fun ProfileErrorSection() {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = stringResource(Res.string.profile_load_failed),
                 style = MaterialTheme.typography.bodyLarge,
@@ -460,8 +470,11 @@ private fun ProfileErrorSection() {
 
 @Composable
 private fun DangerZoneSection() {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default,
+    ) {
+        Column {
             Text(
                 text = stringResource(Res.string.profile_danger_zone),
                 style = MaterialTheme.typography.titleMedium,
@@ -492,8 +505,11 @@ private fun LogoutSection(
     isLoggingOut: Boolean,
     onLogout: () -> Unit
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default,
+    ) {
+        Column {
             Text(
                 text = stringResource(Res.string.profile_logout),
                 style = MaterialTheme.typography.titleMedium

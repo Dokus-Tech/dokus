@@ -1,18 +1,6 @@
 package ai.dokus.app.cashflow.components
 
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.pending_documents_empty
-import tech.dokus.aura.resources.pending_documents_need_confirmation
-import tech.dokus.aura.resources.pending_documents_title
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.ShimmerBox
-import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.foundation.aura.extensions.localizedUppercase
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,8 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,6 +32,18 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.pending_documents_empty
+import tech.dokus.aura.resources.pending_documents_need_confirmation
+import tech.dokus.aura.resources.pending_documents_title
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerBox
+import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.extensions.localizedUppercase
 
 /**
  * A card component displaying pending documents that need confirmation.
@@ -65,23 +63,11 @@ fun PendingDocumentsCard(
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    DokusCardSurface(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(24.dp)
+                .padding(16.dp)
         ) {
             // Title
             Text(

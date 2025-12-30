@@ -8,6 +8,8 @@ import tech.dokus.aura.resources.auth_server_connection
 import tech.dokus.aura.resources.auth_server_label
 import tech.dokus.aura.resources.auth_server_url
 import tech.dokus.aura.resources.auth_server_version
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +26,6 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,8 +56,11 @@ fun CurrentServerSection(
     onResetToCloud: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OutlinedCard(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    DokusCard(
+        modifier = modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default,
+    ) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
