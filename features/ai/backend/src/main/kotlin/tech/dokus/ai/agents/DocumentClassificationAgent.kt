@@ -1,7 +1,7 @@
-package ai.dokus.ai.agents
+package tech.dokus.ai.agents
 
-import ai.dokus.ai.models.ClassifiedDocumentType
-import ai.dokus.ai.models.DocumentClassification
+import tech.dokus.ai.models.ClassifiedDocumentType
+import tech.dokus.ai.models.DocumentClassification
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry

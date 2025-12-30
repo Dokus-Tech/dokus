@@ -1,12 +1,12 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.ai.agents.ChatAgent
-import ai.dokus.ai.agents.ConversationMessage
-import ai.dokus.ai.config.AIProviderFactory
+import tech.dokus.ai.agents.ChatAgent
+import tech.dokus.ai.agents.ConversationMessage
+import tech.dokus.ai.config.AIProviderFactory
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.ModelPurpose
-import ai.dokus.ai.services.EmbeddingService
-import ai.dokus.ai.services.RAGService
+import tech.dokus.ai.services.EmbeddingService
+import tech.dokus.ai.services.RAGService
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
@@ -40,7 +40,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
-import ai.dokus.ai.agents.MessageRole as AgentMessageRole
+import tech.dokus.ai.agents.MessageRole as AgentMessageRole
 
 /**
  * Chat routes for RAG-powered document Q&A.

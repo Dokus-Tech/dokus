@@ -1,6 +1,6 @@
-package ai.dokus.ai.agents
+package tech.dokus.ai.agents
 
-import ai.dokus.ai.models.CategorySuggestion
+import tech.dokus.ai.models.CategorySuggestion
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry

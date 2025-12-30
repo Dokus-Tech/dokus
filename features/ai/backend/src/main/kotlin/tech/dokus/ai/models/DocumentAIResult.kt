@@ -1,8 +1,10 @@
-package ai.dokus.ai.models
+package tech.dokus.ai.models
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.Currency
@@ -145,15 +147,15 @@ fun DocumentAIResult.meetsMinimalThreshold(): Boolean {
 fun DocumentAIResult.getProvenanceJson(): String? {
     return when (this) {
         is DocumentAIResult.Invoice -> extractedData.provenance?.let {
-            kotlinx.serialization.json.Json.encodeToString(InvoiceProvenance.serializer(), it)
+            Json.encodeToString(InvoiceProvenance.serializer(), it)
         }
 
         is DocumentAIResult.Bill -> extractedData.provenance?.let {
-            kotlinx.serialization.json.Json.encodeToString(BillProvenance.serializer(), it)
+            Json.encodeToString(BillProvenance.serializer(), it)
         }
 
         is DocumentAIResult.Receipt -> extractedData.provenance?.let {
-            kotlinx.serialization.json.Json.encodeToString(ReceiptProvenance.serializer(), it)
+            Json.encodeToString(ReceiptProvenance.serializer(), it)
         }
 
         is DocumentAIResult.Unknown -> null
@@ -171,8 +173,8 @@ fun DocumentAIResult.getFieldConfidencesJson(): String? {
         is DocumentAIResult.Unknown -> null
     }
     return confidences?.let {
-        kotlinx.serialization.json.Json.encodeToString(
-            kotlinx.serialization.serializer<Map<String, Double>>(),
+        Json.encodeToString(
+            serializer<Map<String, Double>>(),
             it
         )
     }
