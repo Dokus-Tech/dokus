@@ -176,7 +176,7 @@ private fun RailNavigationLayout(
             Modifier
                 .fillMaxSize()
                 .padding(start = 16.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.TopStart
         ) {
             content()
         }

@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,30 +27,34 @@ fun AppNameText(modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         // Sigil
         Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
-            border = BorderStroke(1.dp, gold.copy(alpha = 0.35f)),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
+            border = BorderStroke(1.dp, gold.copy(alpha = 0.28f)),
             tonalElevation = 0.dp,
             shadowElevation = 0.dp
         ) {
             Text(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
                 text = "[#]",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = gold,
-                letterSpacing = (-0.6).sp
+                letterSpacing = (-0.8).sp
             )
         }
 
         Spacer(Modifier.width(10.dp))
 
-        // Wordmark (clean)
+        // Wordmark (mystical lockup with subtle gold spark)
         Text(
-            text = "Dokus",
-            style = MaterialTheme.typography.titleLarge, // use your display font if you want here
+            text = buildAnnotatedString {
+                withStyle(SpanStyle(color = onSurface)) { append("Dokus") }
+                // Mystical accent (subtle): a tiny gold spark dot, not a second word.
+                withStyle(SpanStyle(color = gold.copy(alpha = 0.75f))) { append("·") }
+            },
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = (-0.2).sp,
+            letterSpacing = (-0.3).sp,
             color = onSurface
         )
     }
