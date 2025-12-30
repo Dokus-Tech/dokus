@@ -1,16 +1,5 @@
 package tech.dokus.app.screens
 
-import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
-import tech.dokus.foundation.aura.components.navigation.DokusNavigationRail
-import tech.dokus.foundation.aura.components.text.AppNameText
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.local.isLarge
-import tech.dokus.foundation.aura.model.HomeItem
-import tech.dokus.navigation.NavigationProvider
-import tech.dokus.navigation.animation.TransitionsProvider
-import tech.dokus.navigation.navigateTo
-import tech.dokus.navigation.rememberSelectedDestination
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -45,6 +34,17 @@ import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
+import tech.dokus.foundation.aura.components.navigation.DokusNavigationRail
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.animation.TransitionsProvider
+import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.rememberSelectedDestination
 
 /**
  * Home screen using FlowMVI Container pattern.
@@ -139,20 +139,28 @@ private fun RailNavigationLayout(
     onSelectedItemChange: (HomeItem) -> Unit,
     content: @Composable () -> Unit
 ) {
-    Row(Modifier.fillMaxSize()) {
+    // Detached, calm desktop shell (Revolut structure × Perplexity calm)
+    Row(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
+    ) {
+        // Detached glass rail panel
         Surface(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(240.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            shape = MaterialTheme.shapes.large,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f))
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(16.dp)
             ) {
-                AppNameText(modifier = Modifier.padding(bottom = 32.dp))
+                AppNameText(modifier = Modifier.padding(bottom = 24.dp))
 
                 DokusNavigationRail(
                     selectedItem = selectedItem,
@@ -163,10 +171,11 @@ private fun RailNavigationLayout(
             }
         }
 
+        // Main content area
         Box(
             Modifier
                 .fillMaxSize()
-                .padding(start = 8.dp),
+                .padding(start = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             content()
