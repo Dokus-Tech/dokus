@@ -1,6 +1,19 @@
 package ai.dokus.app.auth.components.steps
 
 import ai.dokus.app.auth.model.AddressFormState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_business_details
+import ai.dokus.app.resources.generated.auth_business_details_subtitle
+import ai.dokus.app.resources.generated.contacts_address_line1
+import ai.dokus.app.resources.generated.contacts_address_line2
+import ai.dokus.app.resources.generated.contacts_city
+import ai.dokus.app.resources.generated.contacts_country
+import ai.dokus.app.resources.generated.contacts_postal_code
+import ai.dokus.app.resources.generated.country_belgium
+import ai.dokus.app.resources.generated.country_france
+import ai.dokus.app.resources.generated.country_netherlands
+import ai.dokus.app.resources.generated.workspace_address
+import ai.dokus.app.resources.generated.workspace_vat_number
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
 import ai.dokus.foundation.design.components.text.SectionTitle
@@ -31,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun VatAndAddressStep(
@@ -48,7 +62,7 @@ internal fun VatAndAddressStep(
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
     ) {
         SectionTitle(
-            text = "Business details",
+            text = stringResource(Res.string.auth_business_details),
             horizontalArrangement = Arrangement.Start,
             onBackPress = onBackPress
         )
@@ -56,7 +70,7 @@ internal fun VatAndAddressStep(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Enter your VAT number and business address",
+            text = stringResource(Res.string.auth_business_details_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -66,7 +80,7 @@ internal fun VatAndAddressStep(
 
         // VAT Number
         PTextFieldTaxNumber(
-            fieldName = "VAT number",
+            fieldName = stringResource(Res.string.workspace_vat_number),
             value = vatNumber.value,
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { onVatNumberChanged(VatNumber(it)) }
@@ -76,7 +90,7 @@ internal fun VatAndAddressStep(
 
         // Address Section Header
         Text(
-            text = "Address",
+            text = stringResource(Res.string.workspace_address),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
@@ -87,7 +101,7 @@ internal fun VatAndAddressStep(
 
         // Street Line 1
         PTextFieldStandard(
-            fieldName = "Street address",
+            fieldName = stringResource(Res.string.contacts_address_line1),
             value = address.streetLine1,
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { onAddressChanged(address.copy(streetLine1 = it)) }
@@ -97,7 +111,7 @@ internal fun VatAndAddressStep(
 
         // Street Line 2 (Optional)
         PTextFieldStandard(
-            fieldName = "Address line 2 (optional)",
+            fieldName = stringResource(Res.string.contacts_address_line2),
             value = address.streetLine2,
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { onAddressChanged(address.copy(streetLine2 = it)) }
@@ -111,14 +125,14 @@ internal fun VatAndAddressStep(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             PTextFieldStandard(
-                fieldName = "Postal code",
+                fieldName = stringResource(Res.string.contacts_postal_code),
                 value = address.postalCode,
                 modifier = Modifier.weight(1f),
                 onValueChange = { onAddressChanged(address.copy(postalCode = it)) }
             )
 
             PTextFieldStandard(
-                fieldName = "City",
+                fieldName = stringResource(Res.string.contacts_city),
                 value = address.city,
                 modifier = Modifier.weight(2f),
                 onValueChange = { onAddressChanged(address.copy(city = it)) }
@@ -146,7 +160,7 @@ private fun CountrySelector(
 
     Column(modifier = modifier) {
         Text(
-            text = "Country",
+            text = stringResource(Res.string.contacts_country),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -162,7 +176,7 @@ private fun CountrySelector(
                 shape = MaterialTheme.shapes.small
             ) {
                 Text(
-                    text = selectedCountry.displayName,
+                    text = selectedCountry.localizedName(),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -174,7 +188,7 @@ private fun CountrySelector(
             ) {
                 Country.entries.forEach { country ->
                     DropdownMenuItem(
-                        text = { Text(country.displayName) },
+                        text = { Text(country.localizedName()) },
                         onClick = {
                             onCountrySelected(country)
                             expanded = false
@@ -186,9 +200,10 @@ private fun CountrySelector(
     }
 }
 
-private val Country.displayName: String
-    get() = when (this) {
-        Country.Belgium -> "Belgium"
-        Country.Netherlands -> "Netherlands"
-        Country.France -> "France"
+@Composable
+private fun Country.localizedName(): String =
+    when (this) {
+        Country.Belgium -> stringResource(Res.string.country_belgium)
+        Country.Netherlands -> stringResource(Res.string.country_netherlands)
+        Country.France -> stringResource(Res.string.country_france)
     }

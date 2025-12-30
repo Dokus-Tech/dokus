@@ -1,15 +1,28 @@
 package ai.dokus.app.contacts.viewmodel
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_active
+import ai.dokus.app.resources.generated.contacts_filter_all
+import ai.dokus.app.resources.generated.contacts_filter_customers
+import ai.dokus.app.resources.generated.contacts_filter_vendors
+import ai.dokus.app.resources.generated.contacts_inactive
+import ai.dokus.app.resources.generated.contacts_sort_activity_recent
+import ai.dokus.app.resources.generated.contacts_sort_created_newest
+import ai.dokus.app.resources.generated.contacts_sort_created_oldest
+import ai.dokus.app.resources.generated.contacts_sort_default
+import ai.dokus.app.resources.generated.contacts_sort_name_asc
+import ai.dokus.app.resources.generated.contacts_sort_name_desc
 import ai.dokus.foundation.design.components.dropdown.FilterOption
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.runtime.Immutable
+import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -35,31 +48,31 @@ import tech.dokus.foundation.app.state.DokusState
 /**
  * Sort options for contacts list.
  */
-enum class ContactSortOption(override val displayName: String) : FilterOption {
-    Default("Default"),
-    NameAsc("Name (A-Z)"),
-    NameDesc("Name (Z-A)"),
-    CreatedNewest("Created (Newest)"),
-    CreatedOldest("Created (Oldest)"),
-    ActivityRecent("Recent Activity")
+enum class ContactSortOption(override val labelRes: StringResource) : FilterOption {
+    Default(Res.string.contacts_sort_default),
+    NameAsc(Res.string.contacts_sort_name_asc),
+    NameDesc(Res.string.contacts_sort_name_desc),
+    CreatedNewest(Res.string.contacts_sort_created_newest),
+    CreatedOldest(Res.string.contacts_sort_created_oldest),
+    ActivityRecent(Res.string.contacts_sort_activity_recent)
 }
 
 /**
  * Filter options for contact role.
  */
-enum class ContactRoleFilter(override val displayName: String) : FilterOption {
-    All("All"),
-    Customers("Customers"),
-    Vendors("Vendors")
+enum class ContactRoleFilter(override val labelRes: StringResource) : FilterOption {
+    All(Res.string.contacts_filter_all),
+    Customers(Res.string.contacts_filter_customers),
+    Vendors(Res.string.contacts_filter_vendors)
 }
 
 /**
  * Filter options for active status.
  */
-enum class ContactActiveFilter(override val displayName: String) : FilterOption {
-    All("All"),
-    Active("Active"),
-    Inactive("Inactive")
+enum class ContactActiveFilter(override val labelRes: StringResource) : FilterOption {
+    All(Res.string.contacts_filter_all),
+    Active(Res.string.contacts_active),
+    Inactive(Res.string.contacts_inactive)
 }
 
 // ============================================================================

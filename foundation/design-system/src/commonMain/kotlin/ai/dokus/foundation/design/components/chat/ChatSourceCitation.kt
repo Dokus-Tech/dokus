@@ -1,5 +1,14 @@
 package ai.dokus.foundation.design.components.chat
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.chat_collapse_citation
+import ai.dokus.app.resources.generated.chat_collapse_sources
+import ai.dokus.app.resources.generated.chat_document_fallback
+import ai.dokus.app.resources.generated.chat_expand_citation
+import ai.dokus.app.resources.generated.chat_expand_sources
+import ai.dokus.app.resources.generated.chat_page_number
+import ai.dokus.app.resources.generated.chat_sources_count
+import ai.dokus.app.resources.generated.chat_view_source_document
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -35,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing a source citation for display.
@@ -117,7 +127,7 @@ fun ChatSourceCitation(
                 Spacer(modifier = Modifier.width(Constrains.Spacing.small))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = citation.documentName ?: "Document",
+                        text = citation.documentName ?: stringResource(Res.string.chat_document_fallback),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
@@ -125,7 +135,7 @@ fun ChatSourceCitation(
                     )
                     if (citation.pageNumber != null) {
                         Text(
-                            text = "Page ${citation.pageNumber}",
+                            text = stringResource(Res.string.chat_page_number, citation.pageNumber),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -144,7 +154,10 @@ fun ChatSourceCitation(
             // Expand/collapse icon
             Icon(
                 imageVector = Icons.Default.ExpandMore,
-                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                contentDescription = stringResource(
+                    if (isExpanded) Res.string.chat_collapse_citation
+                    else Res.string.chat_expand_citation
+                ),
                 modifier = Modifier
                     .size(Constrains.IconSize.medium)
                     .rotate(rotationAngle),
@@ -195,7 +208,7 @@ fun ChatSourceCitation(
                 if (onDocumentClick != null) {
                     Spacer(modifier = Modifier.height(Constrains.Spacing.small))
                     Text(
-                        text = "View source document",
+                        text = stringResource(Res.string.chat_view_source_document),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -283,13 +296,16 @@ fun ChatSourceCitationList(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Sources (${citations.size})",
+                text = stringResource(Res.string.chat_sources_count, citations.size),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Icon(
                 imageVector = Icons.Default.ExpandMore,
-                contentDescription = if (isExpanded) "Collapse sources" else "Expand sources",
+                contentDescription = stringResource(
+                    if (isExpanded) Res.string.chat_collapse_sources
+                    else Res.string.chat_expand_sources
+                ),
                 modifier = Modifier
                     .size(Constrains.IconSize.medium)
                     .rotate(rotationAngle),

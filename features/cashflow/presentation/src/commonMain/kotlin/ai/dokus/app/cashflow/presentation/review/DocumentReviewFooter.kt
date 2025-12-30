@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
@@ -37,6 +38,8 @@ import compose.icons.feathericons.CheckCircle
 import compose.icons.feathericons.MessageSquare
 import compose.icons.feathericons.Save
 import compose.icons.feathericons.X
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Redesigned approval footer for Document Review screen.
@@ -69,7 +72,7 @@ fun DocumentReviewFooter(
     isBindingContact: Boolean,
     hasUnsavedChanges: Boolean,
     isDocumentConfirmed: Boolean,
-    confirmBlockedReason: String?,
+    confirmBlockedReason: StringResource?,
     onConfirm: () -> Unit,
     onSaveChanges: () -> Unit,
     onReject: () -> Unit,
@@ -108,7 +111,7 @@ private fun PendingFooter(
     isSaving: Boolean,
     isBindingContact: Boolean,
     hasUnsavedChanges: Boolean,
-    confirmBlockedReason: String?,
+    confirmBlockedReason: StringResource?,
     onConfirm: () -> Unit,
     onSaveChanges: () -> Unit,
     onReject: () -> Unit,
@@ -145,11 +148,13 @@ private fun PendingFooter(
                         tint = MaterialTheme.colorScheme.onErrorContainer,
                     )
                     Spacer(modifier = Modifier.width(Constrains.Spacing.small))
-                    Text(
-                        text = confirmBlockedReason ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                    )
+                    confirmBlockedReason?.let { reason ->
+                        Text(
+                            text = stringResource(reason),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
                 }
             }
         }
@@ -174,7 +179,7 @@ private fun PendingFooter(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Reject")
+                Text(stringResource(Res.string.action_reject))
             }
 
             // Save + Confirm buttons (right side)
@@ -200,7 +205,7 @@ private fun PendingFooter(
                             )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Save")
+                        Text(stringResource(Res.string.action_save))
                     }
                 }
 
@@ -223,7 +228,7 @@ private fun PendingFooter(
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Confirm")
+                    Text(stringResource(Res.string.action_confirm))
                 }
             }
         }
@@ -254,7 +259,7 @@ private fun ConfirmedFooter(
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
-                text = "Document confirmed",
+                text = stringResource(Res.string.cashflow_document_confirmed),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.tertiary,
@@ -272,7 +277,7 @@ private fun ConfirmedFooter(
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
-            Text("Chat with Document")
+            Text(stringResource(Res.string.cashflow_chat_with_document))
         }
     }
 }

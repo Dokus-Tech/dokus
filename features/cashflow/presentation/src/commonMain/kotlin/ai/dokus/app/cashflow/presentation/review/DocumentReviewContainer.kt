@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.contacts.usecases.GetContactUseCase
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedLineItem
 import tech.dokus.domain.model.UpdateDraftRequest
+import org.jetbrains.compose.resources.getString
 
 internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction>
 
@@ -203,7 +205,7 @@ internal class DocumentReviewContainer(
      * For now, we start with suggested contact if available, otherwise no contact.
      * Selected state is set after user explicitly accepts a suggestion or selects from picker.
      */
-    private fun buildContactSelectionState(
+    private suspend fun buildContactSelectionState(
         document: DocumentRecordDto
     ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
         val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)
@@ -223,10 +225,10 @@ internal class DocumentReviewContainer(
             }
             val suggested = ContactSelectionState.Suggested(
                 contactId = suggestedContactId,
-                name = extractedName ?: "Unknown",
+                name = extractedName ?: getString(Res.string.common_unknown),
                 vatNumber = extractedVat,
                 confidence = draft.contactSuggestionConfidence ?: 0f,
-                reason = draft.contactSuggestionReason ?: "AI suggested",
+                reason = draft.contactSuggestionReason ?: getString(Res.string.cashflow_ai_suggested),
             )
             return Triple(suggested, null, null)
         }
@@ -259,7 +261,7 @@ internal class DocumentReviewContainer(
         )
     }
 
-    private fun buildContactSuggestions(document: DocumentRecordDto): List<ContactSuggestion> {
+    private suspend fun buildContactSuggestions(document: DocumentRecordDto): List<ContactSuggestion> {
         val suggestions = mutableListOf<ContactSuggestion>()
 
         // Add suggested contact if available
@@ -281,10 +283,10 @@ internal class DocumentReviewContainer(
             suggestions.add(
                 ContactSuggestion(
                     contactId = contactId,
-                    name = extractedName ?: "Unknown",
+                    name = extractedName ?: getString(Res.string.common_unknown),
                     vatNumber = extractedVat,
                     matchConfidence = 0f, // TODO: Add confidence to draft
-                    matchReason = "AI suggested"
+                    matchReason = getString(Res.string.cashflow_ai_suggested)
                 )
             )
         }
@@ -431,11 +433,12 @@ internal class DocumentReviewContainer(
                                 contactId = suggestedId,
                                 name = document.draft?.extractedData?.invoice?.clientName
                                     ?: document.draft?.extractedData?.bill?.supplierName
-                                    ?: "Unknown",
+                                    ?: getString(Res.string.common_unknown),
                                 vatNumber = document.draft?.extractedData?.invoice?.clientVatNumber
                                     ?: document.draft?.extractedData?.bill?.supplierVatNumber,
                                 confidence = document.draft?.contactSuggestionConfidence ?: 0f,
-                                reason = document.draft?.contactSuggestionReason ?: "AI suggested",
+                                reason = document.draft?.contactSuggestionReason
+                                    ?: getString(Res.string.cashflow_ai_suggested),
                             )
                         } ?: ContactSelectionState.NoContact
 
@@ -452,7 +455,11 @@ internal class DocumentReviewContainer(
                     onFailure = { error ->
                         logger.e(error) { "Failed to clear contact" }
                         updateState { copy(isBindingContact = false) }
-                        action(DocumentReviewAction.ShowError("Failed to clear contact"))
+                        action(
+                            DocumentReviewAction.ShowError(
+                                getString(Res.string.cashflow_contact_clear_failed)
+                            )
+                        )
                     }
                 )
         }
@@ -512,11 +519,15 @@ internal class DocumentReviewContainer(
                         updateState {
                             copy(
                                 isBindingContact = false,
-                                contactValidationError = "Failed to save contact selection",
+                                contactValidationError = getString(Res.string.cashflow_contact_save_failed),
                             )
                         }
                     }
-                    action(DocumentReviewAction.ShowError("Failed to bind contact"))
+                    action(
+                        DocumentReviewAction.ShowError(
+                            getString(Res.string.cashflow_contact_bind_failed)
+                        )
+                    )
                 }
             )
     }
@@ -731,8 +742,9 @@ internal class DocumentReviewContainer(
                     withState<DocumentReviewState.Content, _> {
                         updateState {
                             copy(
-                                previewState = DocumentPreviewState.Error(
-                                    message = error.message ?: "Failed to load preview",
+                                    previewState = DocumentPreviewState.Error(
+                                    message = error.message
+                                        ?: getString(Res.string.cashflow_preview_load_failed),
                                     retry = { intent(DocumentReviewIntent.RetryLoadPreview) }
                                 )
                             )
@@ -772,7 +784,7 @@ internal class DocumentReviewContainer(
                             hasUnsavedChanges = false
                         )
                     }
-                    action(DocumentReviewAction.ShowSuccess("Draft saved"))
+                    action(DocumentReviewAction.ShowSuccess(getString(Res.string.cashflow_draft_saved)))
                 }
             }
         }
@@ -789,7 +801,11 @@ internal class DocumentReviewContainer(
     private suspend fun DocumentReviewCtx.handleConfirm() {
         withState<DocumentReviewState.Content, _> {
             if (!canConfirm) {
-                action(DocumentReviewAction.ShowError("Cannot confirm: required fields missing"))
+                action(
+                    DocumentReviewAction.ShowError(
+                        getString(Res.string.cashflow_confirm_missing_fields)
+                    )
+                )
                 return@withState
             }
 
@@ -810,7 +826,11 @@ internal class DocumentReviewContainer(
 
                 withState<DocumentReviewState.Content, _> {
                     updateState { copy(isConfirming = false) }
-                    action(DocumentReviewAction.ShowSuccess("Document confirmed"))
+                    action(
+                        DocumentReviewAction.ShowSuccess(
+                            getString(Res.string.cashflow_document_confirmed)
+                        )
+                    )
                     action(
                         DocumentReviewAction.NavigateToEntity(
                             entityId = documentId.toString(),

@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Zoom control component for PDF preview.
@@ -52,7 +54,7 @@ fun ZoomControls(
         ) {
             Icon(
                 imageVector = Icons.Default.ZoomOut,
-                contentDescription = "Zoom out"
+                contentDescription = stringResource(Res.string.action_zoom_out)
             )
         }
 
@@ -67,14 +69,14 @@ fun ZoomControls(
         ) {
             Icon(
                 imageVector = Icons.Default.ZoomIn,
-                contentDescription = "Zoom in"
+                contentDescription = stringResource(Res.string.action_zoom_in)
             )
         }
 
         TextButton(
             onClick = { onZoomChange(1f) }
         ) {
-            Text("Fit")
+            Text(stringResource(Res.string.action_fit))
         }
     }
 }

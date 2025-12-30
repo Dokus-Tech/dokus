@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,6 +28,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Clickable client section in the invoice document.
@@ -64,7 +66,7 @@ fun InvoiceClientSection(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "BILL TO",
+            text = stringResource(Res.string.invoice_bill_to).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium,
@@ -87,7 +89,7 @@ fun InvoiceClientSection(
                 if (showPeppolWarning) {
                     Icon(
                         imageVector = Icons.Default.Warning,
-                        contentDescription = "Peppol not configured",
+                        contentDescription = stringResource(Res.string.peppol_id_missing),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(16.dp)
                     )
@@ -120,7 +122,7 @@ fun InvoiceClientSection(
             // Show Peppol warning message
             if (showPeppolWarning) {
                 Text(
-                    text = "⚠ Belgian client without Peppol ID - e-invoicing required from 2026",
+                    text = stringResource(Res.string.peppol_belgian_client_warning_short),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 4.dp)
@@ -129,7 +131,7 @@ fun InvoiceClientSection(
         } else {
             // No client selected - show placeholder
             Text(
-                text = "Click to select a client",
+                text = stringResource(Res.string.invoice_click_to_select_client),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -138,7 +140,7 @@ fun InvoiceClientSection(
         // Hover hint
         if (isHovered) {
             Text(
-                text = "Click to change",
+                text = stringResource(Res.string.invoice_click_to_change),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )

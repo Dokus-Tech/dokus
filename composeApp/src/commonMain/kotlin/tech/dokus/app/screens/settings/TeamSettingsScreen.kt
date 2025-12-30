@@ -499,7 +499,11 @@ private fun InviteDialog(
         },
         confirmButton = {
             PPrimaryButton(
-                text = if (isInviting) "Sending..." else stringResource(Res.string.team_send_invitation),
+                text = if (isInviting) {
+                    stringResource(Res.string.state_sending)
+                } else {
+                    stringResource(Res.string.team_send_invitation)
+                },
                 enabled = !isInviting && email.isNotBlank(),
                 onClick = onInvite
             )
@@ -531,7 +535,7 @@ private fun ChangeRoleDialog(
         },
         confirmButton = {
             PPrimaryButton(
-                text = "Save",
+                text = stringResource(Res.string.action_save),
                 enabled = selectedRole != currentRole,
                 onClick = { onRoleSelected(selectedRole) }
             )
@@ -596,7 +600,7 @@ private fun ConfirmationDialog(
         text = { Text(message) },
         confirmButton = {
             PPrimaryButton(
-                text = "Confirm",
+                text = stringResource(Res.string.action_confirm),
                 onClick = onConfirm
             )
         },

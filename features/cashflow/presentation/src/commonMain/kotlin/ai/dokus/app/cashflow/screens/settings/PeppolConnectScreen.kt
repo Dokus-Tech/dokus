@@ -4,6 +4,7 @@ import ai.dokus.app.cashflow.viewmodel.PeppolConnectAction
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectContainer
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectIntent
 import ai.dokus.app.cashflow.viewmodel.PeppolConnectState
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.common.DokusErrorContent
@@ -52,6 +53,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -94,7 +96,9 @@ internal fun PeppolConnectScreen(
 
     Scaffold(
         topBar = {
-            PTopAppBar(title = "Connect to ${provider.displayName}")
+            PTopAppBar(
+                title = stringResource(Res.string.peppol_connect_title_with_provider, provider.displayName)
+            )
         }
     ) { contentPadding ->
         if (isLarge) {
@@ -132,7 +136,7 @@ internal fun PeppolConnectScreen(
 
                         is PeppolConnectState.CreatingCompany,
                         is PeppolConnectState.Connecting -> {
-                            LoadingPane("Connecting...")
+                            LoadingPane(stringResource(Res.string.state_connecting))
                         }
 
                         is PeppolConnectState.Error -> {
@@ -187,7 +191,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "Connect to ${state.provider.displayName}",
+                text = stringResource(Res.string.peppol_connect_title_with_provider, state.provider.displayName),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -196,7 +200,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
 
             // API Key field - shows error if ApiKeyRequired
             PTextFieldStandard(
-                fieldName = "API Key",
+                fieldName = stringResource(Res.string.peppol_api_key),
                 value = state.apiKey,
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiKey(it)) },
                 error = fieldsError.takeIf { it is DokusException.Validation.ApiKeyRequired },
@@ -207,7 +211,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
 
             // API Secret field - shows error if ApiSecretRequired or InvalidApiCredentials
             PTextFieldPassword(
-                fieldName = "API Secret",
+                fieldName = stringResource(Res.string.peppol_api_secret),
                 value = Password(state.apiSecret),
                 onValueChange = { intent(PeppolConnectIntent.UpdateApiSecret(it.value)) },
                 error = fieldsError.takeIf {
@@ -222,8 +226,8 @@ private fun IntentReceiver<PeppolConnectIntent>.CredentialsPane(
             // Continue button - enabled in EnteringCredentials or Error state (for retry)
             PPrimaryButton(
                 text = when {
-                    isLoading -> "Connecting..."
-                    else -> "Continue"
+                    isLoading -> stringResource(Res.string.state_connecting)
+                    else -> stringResource(Res.string.action_continue)
                 },
                 enabled = state is PeppolConnectState.EnteringCredentials || state is PeppolConnectState.Error,
                 onClick = { intent(PeppolConnectIntent.ContinueClicked) },
@@ -258,7 +262,7 @@ private fun IntentReceiver<PeppolConnectIntent>.RightPane(
 
         is PeppolConnectState.CreatingCompany,
         is PeppolConnectState.Connecting -> {
-            LoadingPane("Connecting...")
+            LoadingPane(stringResource(Res.string.state_connecting))
         }
 
         is PeppolConnectState.Error -> {
@@ -283,7 +287,7 @@ private fun InstructionsPane(provider: PeppolProvider) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Get your credentials",
+                text = stringResource(Res.string.peppol_get_credentials_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -294,11 +298,11 @@ private fun InstructionsPane(provider: PeppolProvider) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                InstructionStep(1, "Visit ${provider.displayName} website")
-                InstructionStep(2, "Create an account or log in")
-                InstructionStep(3, "Navigate to API settings")
-                InstructionStep(4, "Generate API Key and Secret")
-                InstructionStep(5, "Copy credentials here")
+                InstructionStep(1, stringResource(Res.string.peppol_instruction_visit_site, provider.displayName))
+                InstructionStep(2, stringResource(Res.string.peppol_instruction_create_account))
+                InstructionStep(3, stringResource(Res.string.peppol_instruction_navigate_api))
+                InstructionStep(4, stringResource(Res.string.peppol_instruction_generate_keys))
+                InstructionStep(5, stringResource(Res.string.peppol_instruction_copy_credentials))
             }
 
             Spacer(Modifier.height(32.dp))
@@ -307,7 +311,7 @@ private fun InstructionsPane(provider: PeppolProvider) {
                 onClick = { uriHandler.openUri("https://app.recommand.eu") }
             ) {
                 Text(
-                    text = "Open Recommand",
+                    text = stringResource(Res.string.peppol_open_provider, provider.displayName),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Medium
@@ -320,7 +324,7 @@ private fun InstructionsPane(provider: PeppolProvider) {
 @Composable
 private fun InstructionStep(number: Int, text: String) {
     Text(
-        text = "$number. $text",
+        text = stringResource(Res.string.common_numbered_step, number, text),
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurface
     )
@@ -341,7 +345,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CompanyListPane(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Select your company",
+                text = stringResource(Res.string.peppol_select_company_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -349,7 +353,7 @@ private fun IntentReceiver<PeppolConnectIntent>.CompanyListPane(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Multiple companies found matching your VAT number",
+                text = stringResource(Res.string.peppol_multiple_companies_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -392,13 +396,13 @@ private fun CompanyCard(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "VAT: ${company.vatNumber}",
+                text = stringResource(Res.string.common_vat_value, company.vatNumber),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (company.enterpriseNumber.isNotBlank()) {
                 Text(
-                    text = "Enterprise: ${company.enterpriseNumber}",
+                    text = stringResource(Res.string.peppol_enterprise_value, company.enterpriseNumber),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -431,7 +435,7 @@ private fun IntentReceiver<PeppolConnectIntent>.NoCompaniesPane(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "No companies found",
+                text = stringResource(Res.string.peppol_no_companies_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -439,7 +443,7 @@ private fun IntentReceiver<PeppolConnectIntent>.NoCompaniesPane(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Your Recommand account has no companies matching your VAT number.",
+                text = stringResource(Res.string.peppol_no_companies_hint, state.provider.displayName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -448,7 +452,10 @@ private fun IntentReceiver<PeppolConnectIntent>.NoCompaniesPane(
             Spacer(Modifier.height(32.dp))
 
             PPrimaryButton(
-                text = "Create Company on Recommand",
+                text = stringResource(
+                    Res.string.peppol_create_company_on_provider,
+                    state.provider.displayName
+                ),
                 onClick = { intent(PeppolConnectIntent.CreateCompanyClicked) },
                 modifier = Modifier.fillMaxWidth()
             )

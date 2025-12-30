@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.UploadCloud
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.foundation.app.network.rememberIsOnline
 
 /**
@@ -62,7 +64,7 @@ fun CashflowHeaderSearch(
             ) {
                 Icon(
                     imageVector = FeatherIcons.Search,
-                    contentDescription = "Search"
+                    contentDescription = stringResource(Res.string.action_search)
                 )
             }
         }
@@ -76,7 +78,7 @@ fun CashflowHeaderSearch(
             PSearchFieldCompact(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = "Search...",
+                placeholder = stringResource(Res.string.cashflow_search_placeholder),
                 modifier = if (isLargeScreen) Modifier else Modifier.fillMaxWidth()
             )
         }
@@ -116,7 +118,7 @@ fun CashflowHeaderActions(
         ) {
             Icon(
                 imageVector = FeatherIcons.UploadCloud,
-                contentDescription = "Upload document",
+                contentDescription = stringResource(Res.string.cashflow_upload_document),
                 tint = if (!isOnline) {
                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 } else {
@@ -128,7 +130,7 @@ fun CashflowHeaderActions(
         // Create Invoice button (primary action)
         // Disabled when server is unreachable since creating invoices requires network
         PButton(
-            text = "Create Invoice",
+            text = stringResource(Res.string.cashflow_create_invoice),
             variant = PButtonVariant.Outline,
             icon = Icons.Default.Add,
             iconPosition = PIconPosition.Trailing,

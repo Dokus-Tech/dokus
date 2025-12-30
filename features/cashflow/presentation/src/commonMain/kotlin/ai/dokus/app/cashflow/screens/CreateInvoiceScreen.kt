@@ -11,6 +11,7 @@ import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.app.contacts.components.ContactAutoFillData
 import ai.dokus.app.contacts.components.ContactAutocomplete
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PDatePickerDialog
@@ -59,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.plus
 import pro.respawn.flowmvi.api.IntentReceiver
@@ -304,18 +306,18 @@ private fun DesktopLayout(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             SectionTitle(
-                text = "Create Invoice",
+                text = stringResource(Res.string.cashflow_create_invoice),
                 onBackPress = onBackPress
             )
             if (invoiceNumberPreview != null) {
                 Text(
-                    text = "Invoice #: $invoiceNumberPreview",
+                    text = stringResource(Res.string.invoice_number_preview, invoiceNumberPreview),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
             Text(
-                text = "Click on any element to edit it. The invoice updates in real-time.",
+                text = stringResource(Res.string.invoice_edit_hint_desktop),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -359,18 +361,18 @@ private fun MobileEditLayout(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             SectionTitle(
-                text = "Create Invoice",
+                text = stringResource(Res.string.cashflow_create_invoice),
                 onBackPress = onBackPress
             )
             if (invoiceNumberPreview != null) {
                 Text(
-                    text = "Invoice #: $invoiceNumberPreview",
+                    text = stringResource(Res.string.invoice_number_preview, invoiceNumberPreview),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
             Text(
-                text = "Tap any element to edit it.",
+                text = stringResource(Res.string.invoice_edit_hint_mobile),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -386,7 +388,7 @@ private fun MobileEditLayout(
             horizontalArrangement = Arrangement.End
         ) {
             PButton(
-                text = "Next",
+                text = stringResource(Res.string.action_next),
                 variant = PButtonVariant.Default,
                 onClick = onNextClick,
                 isEnabled = isNextEnabled
@@ -476,7 +478,7 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Select Client",
+                                text = stringResource(Res.string.invoice_select_client),
                                 style = MaterialTheme.typography.titleLarge,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -484,7 +486,7 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                             IconButton(onClick = onDismiss) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Close",
+                                    contentDescription = stringResource(Res.string.action_close),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -501,8 +503,8 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                                 onContactSelected(autoFillData)
                             },
                             onAddNewContact = onAddNewContact,
-                            placeholder = "Search by name, email, or VAT...",
-                            label = "Search Contacts",
+                            placeholder = stringResource(Res.string.invoice_contact_search_placeholder),
+                            label = stringResource(Res.string.invoice_contact_search_label),
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -510,7 +512,7 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
 
                         // Help text
                         Text(
-                            text = "Type to search contacts by name, email, or VAT number. Select a contact to auto-fill invoice details.",
+                            text = stringResource(Res.string.invoice_contact_search_help),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -532,7 +534,7 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                                     verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
                                 ) {
                                     Text(
-                                        text = "Selected Contact",
+                                        text = stringResource(Res.string.invoice_selected_contact),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
@@ -552,7 +554,7 @@ private fun IntentReceiver<CreateInvoiceIntent>.ContactSelectionPanel(
                                     }
                                     selectedContact.vatNumber?.let { vat ->
                                         Text(
-                                            text = "VAT: ${vat.value}",
+                                            text = stringResource(Res.string.common_vat_value, vat.value),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
                                                 alpha = 0.7f

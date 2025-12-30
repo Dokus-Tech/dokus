@@ -1,5 +1,14 @@
 package ai.dokus.app.auth.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_your_name
+import ai.dokus.app.resources.generated.workspace_create_button
+import ai.dokus.app.resources.generated.workspace_create_title
+import ai.dokus.app.resources.generated.workspace_display_name
+import ai.dokus.app.resources.generated.workspace_legal_name
+import ai.dokus.app.resources.generated.workspace_type_company
+import ai.dokus.app.resources.generated.workspace_type_freelancer
+import ai.dokus.app.resources.generated.workspace_vat_number
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
 import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
@@ -21,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Internal data class for workspace creation form fields.
@@ -112,7 +122,7 @@ fun WorkspaceCreateContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SectionTitle(
-            text = "Create your workspace",
+            text = stringResource(Res.string.workspace_create_title),
             horizontalArrangement = Arrangement.Center
         )
 
@@ -152,7 +162,11 @@ private fun FormFields(
 
     // Legal name field - locked for Freelancer (uses user's name)
     PTextFieldWorkspaceName(
-        fieldName = if (formFields.tenantType == TenantType.Company) "Legal name" else "Your name",
+        fieldName = if (formFields.tenantType == TenantType.Company) {
+            stringResource(Res.string.workspace_legal_name)
+        } else {
+            stringResource(Res.string.auth_your_name)
+        },
         value = formFields.effectiveLegalName,
         enabled = !formFields.tenantType.legalNameFromUser,
         modifier = Modifier.fillMaxWidth()
@@ -167,7 +181,7 @@ private fun FormFields(
         Spacer(modifier = Modifier.height(12.dp))
 
         PTextFieldWorkspaceName(
-            fieldName = "Display name",
+            fieldName = stringResource(Res.string.workspace_display_name),
             value = formFields.displayName.value,
             modifier = Modifier.fillMaxWidth()
         ) { onDisplayNameChange(DisplayName(it)) }
@@ -176,7 +190,7 @@ private fun FormFields(
     Spacer(modifier = Modifier.height(12.dp))
 
     PTextFieldTaxNumber(
-        fieldName = "VAT number",
+        fieldName = stringResource(Res.string.workspace_vat_number),
         value = formFields.vatNumber.value,
         modifier = Modifier.fillMaxWidth()
     ) { onVatNumberChange(VatNumber(it)) }
@@ -184,7 +198,7 @@ private fun FormFields(
     Spacer(modifier = Modifier.height(24.dp))
 
     PPrimaryButton(
-        text = "Create workspace",
+        text = stringResource(Res.string.workspace_create_button),
         enabled = formFields.canSubmit && !isSubmitting,
         modifier = Modifier.fillMaxWidth(),
         onClick = onSubmit
@@ -210,8 +224,8 @@ private fun WorkspaceTypeSelector(
                 label = {
                     Text(
                         when (type) {
-                            TenantType.Freelancer -> "Freelancer"
-                            TenantType.Company -> "Company"
+                            TenantType.Freelancer -> stringResource(Res.string.workspace_type_freelancer)
+                            TenantType.Company -> stringResource(Res.string.workspace_type_company)
                         }
                     )
                 }

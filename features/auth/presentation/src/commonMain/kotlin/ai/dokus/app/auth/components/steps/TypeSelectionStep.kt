@@ -1,5 +1,12 @@
 package ai.dokus.app.auth.components.steps
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_workspace_type_company_description
+import ai.dokus.app.resources.generated.auth_workspace_type_freelancer_description
+import ai.dokus.app.resources.generated.auth_workspace_type_prompt
+import ai.dokus.app.resources.generated.auth_workspace_type_unavailable
+import ai.dokus.app.resources.generated.workspace_type_company
+import ai.dokus.app.resources.generated.workspace_type_freelancer
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.constrains.Constrains
 import tech.dokus.domain.enums.TenantType
@@ -29,6 +36,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun TypeSelectionStep(
@@ -43,7 +51,7 @@ internal fun TypeSelectionStep(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SectionTitle(
-            text = "Choose your workspace type",
+            text = stringResource(Res.string.auth_workspace_type_prompt),
             horizontalArrangement = Arrangement.Start,
             onBackPress = onBackPress
         )
@@ -64,8 +72,8 @@ internal fun TypeSelectionStep(
                     TypeCard(
                         type = TenantType.Company,
                         icon = Icons.Outlined.Business,
-                        title = "Company",
-                        description = "For businesses with employees and multiple team members",
+                        title = stringResource(Res.string.workspace_type_company),
+                        description = stringResource(Res.string.auth_workspace_type_company_description),
                         isSelected = selectedType == TenantType.Company,
                         isEnabled = true,
                         onClick = { onTypeSelected(TenantType.Company) },
@@ -74,8 +82,8 @@ internal fun TypeSelectionStep(
                     TypeCard(
                         type = TenantType.Freelancer,
                         icon = Icons.Outlined.Person,
-                        title = "Freelancer",
-                        description = "For independent professionals managing their own business",
+                        title = stringResource(Res.string.workspace_type_freelancer),
+                        description = stringResource(Res.string.auth_workspace_type_freelancer_description),
                         isSelected = selectedType == TenantType.Freelancer,
                         isEnabled = !hasFreelancerWorkspace,
                         onClick = { onTypeSelected(TenantType.Freelancer) },
@@ -90,8 +98,8 @@ internal fun TypeSelectionStep(
                     TypeCard(
                         type = TenantType.Company,
                         icon = Icons.Outlined.Business,
-                        title = "Company",
-                        description = "For businesses with employees and multiple team members",
+                        title = stringResource(Res.string.workspace_type_company),
+                        description = stringResource(Res.string.auth_workspace_type_company_description),
                         isSelected = selectedType == TenantType.Company,
                         isEnabled = true,
                         onClick = { onTypeSelected(TenantType.Company) },
@@ -100,8 +108,8 @@ internal fun TypeSelectionStep(
                     TypeCard(
                         type = TenantType.Freelancer,
                         icon = Icons.Outlined.Person,
-                        title = "Freelancer",
-                        description = "For independent professionals managing their own business",
+                        title = stringResource(Res.string.workspace_type_freelancer),
+                        description = stringResource(Res.string.auth_workspace_type_freelancer_description),
                         isSelected = selectedType == TenantType.Freelancer,
                         isEnabled = !hasFreelancerWorkspace,
                         onClick = { onTypeSelected(TenantType.Freelancer) },
@@ -114,7 +122,7 @@ internal fun TypeSelectionStep(
         if (hasFreelancerWorkspace) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "You already have a freelancer workspace",
+                text = stringResource(Res.string.auth_workspace_type_unavailable),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

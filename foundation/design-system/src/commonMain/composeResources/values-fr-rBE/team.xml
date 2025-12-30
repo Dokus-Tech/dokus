@@ -19,11 +19,22 @@
     <string name="team_no_members">Aucun membre dans l\'équipe</string>
     <string name="team_no_invitations">Aucune invitation en attente</string>
     <string name="team_invite_success">Invitation envoyée avec succès</string>
+    <string name="team_invite_failed">Échec de l\'envoi de l\'invitation</string>
+    <string name="team_invite_cancelled">Invitation annulée</string>
+    <string name="team_invite_cancel_failed">Échec de l\'annulation de l\'invitation</string>
     <string name="team_remove_confirm">Êtes-vous sûr de vouloir retirer ce membre ?</string>
+    <string name="team_member_removed_success">Membre supprimé</string>
+    <string name="team_member_removed_failed">Échec de la suppression du membre</string>
     <string name="team_transfer_confirm">Êtes-vous sûr de vouloir transférer la propriété ? Vous deviendrez Administrateur.</string>
+    <string name="team_ownership_transferred_success">Propriété transférée</string>
+    <string name="team_ownership_transferred_failed">Échec du transfert de propriété</string>
     <string name="team_only_owner_can_manage">Seul le propriétaire de l\'espace de travail peut gérer les membres</string>
     <string name="team_load_members_failed">Échec du chargement des membres</string>
     <string name="team_load_invitations_failed">Échec du chargement des invitations</string>
+    <string name="team_email_required">L\'adresse e-mail est requise</string>
+    <string name="team_email_invalid">Format d\'e-mail invalide</string>
+    <string name="team_role_update_success">Rôle mis à jour</string>
+    <string name="team_role_update_failed">Échec de la mise à jour du rôle</string>
 
     <!-- Role names and descriptions -->
     <string name="role_owner">Propriétaire</string>

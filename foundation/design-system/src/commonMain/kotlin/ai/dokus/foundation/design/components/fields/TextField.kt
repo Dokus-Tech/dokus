@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_clear
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
@@ -37,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PTextField(
@@ -142,7 +145,7 @@ fun PTextField(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear",
+                        contentDescription = stringResource(Res.string.action_clear),
                         modifier = Modifier.size(Constrains.IconSize.xSmall),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )

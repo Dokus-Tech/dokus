@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Main form card for creating an invoice.
@@ -57,7 +59,7 @@ fun InvoiceFormCard(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
-                text = "Invoice Details",
+                text = stringResource(Res.string.invoice_details_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -73,7 +75,7 @@ fun InvoiceFormCard(
 
             // Notes
             PTextFieldStandard(
-                fieldName = "Notes (optional)",
+                fieldName = stringResource(Res.string.invoice_notes_optional),
                 value = formState.notes,
                 onValueChange = onUpdateNotes,
                 modifier = Modifier.fillMaxWidth()
@@ -115,7 +117,7 @@ fun InvoiceFormCard(
                 }
 
                 PButton(
-                    text = "Save as Draft",
+                    text = stringResource(Res.string.invoice_save_as_draft),
                     variant = PButtonVariant.Default,
                     onClick = onSaveAsDraft,
                     isEnabled = formState.isValid && !formState.isSaving

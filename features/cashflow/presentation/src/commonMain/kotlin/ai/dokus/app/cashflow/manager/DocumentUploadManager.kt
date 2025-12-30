@@ -5,6 +5,7 @@ import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.model.UploadStatus
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.model.DocumentDto
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.CompletableDeferred
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.compose.resources.getString
 import tech.dokus.domain.utils.currentTimeMillis
 import kotlin.time.Duration.Companion.seconds
 
@@ -272,6 +274,7 @@ class DocumentUploadManager(
             }
         )
 
+        val uploadFailedMessage = getString(Res.string.upload_failed_message)
         result.fold(
             onSuccess = { document ->
                 updateTask(task.id) {
@@ -289,7 +292,7 @@ class DocumentUploadManager(
                 onUploadCompleteCallback?.invoke()
             },
             onFailure = { error ->
-                val errorMessage = error.message ?: "Upload failed"
+                val errorMessage = error.message ?: uploadFailedMessage
                 updateTask(task.id) {
                     it.copy(
                         status = UploadStatus.FAILED,

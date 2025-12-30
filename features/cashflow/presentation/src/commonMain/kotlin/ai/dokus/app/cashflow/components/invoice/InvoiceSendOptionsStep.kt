@@ -9,6 +9,7 @@ import ai.dokus.app.cashflow.viewmodel.isComingSoon
 import ai.dokus.app.cashflow.viewmodel.isEnabled
 import ai.dokus.app.cashflow.viewmodel.localized
 import ai.dokus.app.cashflow.viewmodel.localizedDescription
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import androidx.compose.foundation.background
@@ -44,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Full-screen send options step for mobile invoice creation.
@@ -75,12 +77,12 @@ fun InvoiceSendOptionsStep(
             IconButton(onClick = onBackToEdit) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back to invoice",
+                    contentDescription = stringResource(Res.string.invoice_back_to_edit),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(
-                text = "Send Options",
+                text = stringResource(Res.string.invoice_send_options),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -97,7 +99,7 @@ fun InvoiceSendOptionsStep(
 
         // Delivery method options
         Text(
-            text = "Choose delivery method",
+            text = stringResource(Res.string.invoice_choose_delivery_method),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -115,7 +117,7 @@ fun InvoiceSendOptionsStep(
 
         // Info text
         Text(
-            text = "Sending features are coming soon. For now, save your invoice as a draft.",
+            text = stringResource(Res.string.invoice_send_coming_soon_message),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -123,7 +125,7 @@ fun InvoiceSendOptionsStep(
 
         // Save as Draft button
         PButton(
-            text = "Save as Draft",
+            text = stringResource(Res.string.invoice_save_as_draft),
             variant = PButtonVariant.Default,
             onClick = onSaveAsDraft,
             isEnabled = formState.isValid && !isSaving,
@@ -153,7 +155,7 @@ private fun MobileInvoiceSummaryCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Invoice Summary",
+                text = stringResource(Res.string.invoice_summary),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -162,23 +164,26 @@ private fun MobileInvoiceSummaryCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             SummaryRow(
-                label = "Client",
-                value = formState.selectedClient?.name?.value ?: "Not selected"
+                label = stringResource(Res.string.invoice_client),
+                value = formState.selectedClient?.name?.value ?: stringResource(Res.string.invoice_not_selected)
             )
 
             SummaryRow(
-                label = "Issue Date",
-                value = formState.issueDate?.toString() ?: "Not set"
+                label = stringResource(Res.string.invoice_issue_date),
+                value = formState.issueDate?.toString() ?: stringResource(Res.string.invoice_not_set)
             )
 
             SummaryRow(
-                label = "Due Date",
-                value = formState.dueDate?.toString() ?: "Not set"
+                label = stringResource(Res.string.invoice_due_date),
+                value = formState.dueDate?.toString() ?: stringResource(Res.string.invoice_not_set)
             )
 
             SummaryRow(
-                label = "Items",
-                value = "${formState.items.count { it.isValid }} line item(s)"
+                label = stringResource(Res.string.invoice_items),
+                value = stringResource(
+                    Res.string.invoice_line_items_count,
+                    formState.items.count { it.isValid }
+                )
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -188,7 +193,7 @@ private fun MobileInvoiceSummaryCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Total",
+                    text = stringResource(Res.string.invoice_total),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -248,13 +253,13 @@ private fun MobilePeppolWarningBanner(
         )
         Column {
             Text(
-                text = "Peppol ID Missing",
+                text = stringResource(Res.string.peppol_id_missing),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.error
             )
             Text(
-                text = "This Belgian client needs a Peppol ID for e-invoicing (mandatory from 2026)",
+                text = stringResource(Res.string.peppol_belgian_client_warning),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -372,7 +377,7 @@ private fun MobileComingSoonBadge(
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "Coming soon",
+            text = stringResource(Res.string.invoice_coming_soon),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onTertiaryContainer,
             letterSpacing = 0.5.sp

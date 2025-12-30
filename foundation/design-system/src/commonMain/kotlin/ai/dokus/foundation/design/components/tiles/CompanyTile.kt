@@ -1,8 +1,15 @@
 package ai.dokus.foundation.design.components.tiles
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.workspace_add
+import ai.dokus.foundation.design.components.AvatarShape
+import ai.dokus.foundation.design.components.AvatarSize
+import ai.dokus.foundation.design.components.CompanyAvatarImage
+import ai.dokus.foundation.design.constrains.Constrains
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -18,11 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.BorderStroke
-import ai.dokus.foundation.design.components.AvatarShape
-import ai.dokus.foundation.design.components.AvatarSize
-import ai.dokus.foundation.design.components.CompanyAvatarImage
-import ai.dokus.foundation.design.constrains.Constrains
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Small square tile showing a company's avatar (or initial if no avatar) with its name below.
@@ -76,7 +79,7 @@ fun CompanyTile(
 @Composable
 fun AddCompanyTile(
     modifier: Modifier = Modifier,
-    label: String = "Add workspace",
+    label: String = stringResource(Res.string.workspace_add),
     onClick: () -> Unit
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {

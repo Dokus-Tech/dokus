@@ -2,9 +2,61 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.app.contacts.usecases.MergeContactsUseCase
-import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactMergeResult
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_back
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.action_continue
+import ai.dokus.app.resources.generated.action_done
+import ai.dokus.app.resources.generated.common_action_irreversible
+import ai.dokus.app.resources.generated.common_empty_value
+import ai.dokus.app.resources.generated.common_vat_value
+import ai.dokus.app.resources.generated.contacts_address_line1
+import ai.dokus.app.resources.generated.contacts_address_line2
+import ai.dokus.app.resources.generated.contacts_bills
+import ai.dokus.app.resources.generated.contacts_city
+import ai.dokus.app.resources.generated.contacts_company_number
+import ai.dokus.app.resources.generated.contacts_contact_person
+import ai.dokus.app.resources.generated.contacts_country
+import ai.dokus.app.resources.generated.contacts_default_vat_rate
+import ai.dokus.app.resources.generated.contacts_email
+import ai.dokus.app.resources.generated.contacts_expenses
+import ai.dokus.app.resources.generated.contacts_invoices
+import ai.dokus.app.resources.generated.contacts_merge_all_items_belong
+import ai.dokus.app.resources.generated.contacts_merge_bills_reassigned
+import ai.dokus.app.resources.generated.contacts_merge_compare_fields
+import ai.dokus.app.resources.generated.contacts_merge_confirm
+import ai.dokus.app.resources.generated.contacts_merge_dialog_title
+import ai.dokus.app.resources.generated.contacts_merge_expenses_reassigned
+import ai.dokus.app.resources.generated.contacts_merge_failed
+import ai.dokus.app.resources.generated.contacts_merge_from_label
+import ai.dokus.app.resources.generated.contacts_merge_invoices_reassigned
+import ai.dokus.app.resources.generated.contacts_merge_items_to_target
+import ai.dokus.app.resources.generated.contacts_merge_move_items_info
+import ai.dokus.app.resources.generated.contacts_merge_no_conflicts
+import ai.dokus.app.resources.generated.contacts_merge_notes_reassigned
+import ai.dokus.app.resources.generated.contacts_merge_resolve_conflict_plural
+import ai.dokus.app.resources.generated.contacts_merge_resolve_conflict_single
+import ai.dokus.app.resources.generated.contacts_merge_search_min_length
+import ai.dokus.app.resources.generated.contacts_merge_search_no_results
+import ai.dokus.app.resources.generated.contacts_merge_search_placeholder
+import ai.dokus.app.resources.generated.contacts_merge_select_target
+import ai.dokus.app.resources.generated.contacts_merge_select_target_prompt
+import ai.dokus.app.resources.generated.contacts_merge_source_archive
+import ai.dokus.app.resources.generated.contacts_merge_source_archived
+import ai.dokus.app.resources.generated.contacts_merge_source_archived_check
+import ai.dokus.app.resources.generated.contacts_merge_success
+import ai.dokus.app.resources.generated.contacts_merge_success_message
+import ai.dokus.app.resources.generated.contacts_merge_summary
+import ai.dokus.app.resources.generated.contacts_merge_target_keep
+import ai.dokus.app.resources.generated.contacts_merging
+import ai.dokus.app.resources.generated.contacts_payment_terms
+import ai.dokus.app.resources.generated.contacts_payment_terms_value
+import ai.dokus.app.resources.generated.contacts_peppol_id
+import ai.dokus.app.resources.generated.contacts_phone
+import ai.dokus.app.resources.generated.contacts_postal_code
+import ai.dokus.app.resources.generated.contacts_searching
+import ai.dokus.app.resources.generated.contacts_tags
+import ai.dokus.app.resources.generated.contacts_vat_number
 import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -58,7 +110,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactMergeResult
 
 // ============================================================================
 // MERGE DIALOG STATE
@@ -80,11 +137,19 @@ internal enum class MergeDialogStep {
  */
 internal data class MergeFieldConflict(
     val fieldName: String,
-    val fieldLabel: String,
+    val fieldLabelRes: StringResource,
     val sourceValue: String?,
     val targetValue: String?,
     val keepSource: Boolean = false  // true = use source value, false = use target value
 )
+
+/**
+ * Represents a merge error message that can come from resources or raw text.
+ */
+private sealed interface MergeError {
+    data class Message(val value: String) : MergeError
+    data class Resource(val res: StringResource) : MergeError
+}
 
 // ============================================================================
 // MAIN DIALOG
@@ -125,7 +190,7 @@ internal fun ContactMergeDialog(
     var selectedTarget by remember { mutableStateOf(preselectedTarget) }
     var mergeResult by remember { mutableStateOf<ContactMergeResult?>(null) }
     var isMerging by remember { mutableStateOf(false) }
-    var mergeError by remember { mutableStateOf<String?>(null) }
+    var mergeError by remember { mutableStateOf<MergeError?>(null) }
 
     // Field conflicts (computed when target is selected)
     val fieldConflicts = remember { mutableStateListOf<MergeFieldConflict>() }
@@ -160,7 +225,8 @@ internal fun ContactMergeDialog(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Merge failed" }
-                    mergeError = error.message ?: "Failed to merge contacts"
+                    mergeError = error.message?.let { MergeError.Message(it) }
+                        ?: MergeError.Resource(Res.string.contacts_merge_failed)
                     isMerging = false
                 }
             )
@@ -182,10 +248,10 @@ internal fun ContactMergeDialog(
         title = {
             Text(
                 text = when (currentStep) {
-                    MergeDialogStep.SelectTarget -> "Select Target Contact"
-                    MergeDialogStep.CompareFields -> "Review Merge"
-                    MergeDialogStep.Confirmation -> "Confirm Merge"
-                    MergeDialogStep.Result -> "Merge Complete"
+                    MergeDialogStep.SelectTarget -> stringResource(Res.string.contacts_merge_select_target)
+                    MergeDialogStep.CompareFields -> stringResource(Res.string.contacts_merge_compare_fields)
+                    MergeDialogStep.Confirmation -> stringResource(Res.string.contacts_merge_confirm)
+                    MergeDialogStep.Result -> stringResource(Res.string.contacts_merge_success)
                 },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
@@ -250,7 +316,7 @@ internal fun ContactMergeDialog(
                         onClick = { currentStep = MergeDialogStep.Confirmation }
                     ) {
                         Text(
-                            text = "Continue",
+                            text = stringResource(Res.string.action_continue),
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -268,14 +334,14 @@ internal fun ContactMergeDialog(
                                 strokeWidth = 2.dp
                             )
                             Text(
-                                text = "Merging...",
+                                text = stringResource(Res.string.contacts_merging),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                     } else {
                         TextButton(onClick = { performMerge() }) {
                             Text(
-                                text = "Merge Contacts",
+                                text = stringResource(Res.string.contacts_merge_dialog_title),
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -291,7 +357,7 @@ internal fun ContactMergeDialog(
                         }
                     ) {
                         Text(
-                            text = "Done",
+                            text = stringResource(Res.string.action_done),
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -318,7 +384,11 @@ internal fun ContactMergeDialog(
                     }
                 ) {
                     Text(
-                        text = if (currentStep == MergeDialogStep.SelectTarget) "Cancel" else "Back",
+                        text = if (currentStep == MergeDialogStep.SelectTarget) {
+                            stringResource(Res.string.action_cancel)
+                        } else {
+                            stringResource(Res.string.action_back)
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -383,7 +453,7 @@ private fun SelectTargetStep(
     ) {
         // Source contact info
         Text(
-            text = "Merging from:",
+            text = stringResource(Res.string.contacts_merge_from_label),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -400,7 +470,7 @@ private fun SelectTargetStep(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search contacts...") },
+            placeholder = { Text(stringResource(Res.string.contacts_merge_search_placeholder)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -423,7 +493,7 @@ private fun SelectTargetStep(
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Searching...",
+                        text = stringResource(Res.string.contacts_searching),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -432,7 +502,7 @@ private fun SelectTargetStep(
 
             searchQuery.length < 2 -> {
                 Text(
-                    text = "Type at least 2 characters to search",
+                    text = stringResource(Res.string.contacts_merge_search_min_length),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 16.dp)
@@ -441,7 +511,7 @@ private fun SelectTargetStep(
 
             searchResults.isEmpty() -> {
                 Text(
-                    text = "No contacts found matching \"$searchQuery\"",
+                    text = stringResource(Res.string.contacts_merge_search_no_results, searchQuery),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 16.dp)
@@ -450,7 +520,7 @@ private fun SelectTargetStep(
 
             else -> {
                 Text(
-                    text = "Select target contact:",
+                    text = stringResource(Res.string.contacts_merge_select_target_prompt),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -500,7 +570,7 @@ private fun CompareFieldsStep(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Source (Archive)",
+                    text = stringResource(Res.string.contacts_merge_source_archive),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -524,7 +594,7 @@ private fun CompareFieldsStep(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Target (Keep)",
+                    text = stringResource(Res.string.contacts_merge_target_keep),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -559,7 +629,7 @@ private fun CompareFieldsStep(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "No conflicts found. All data can be merged automatically.",
+                        text = stringResource(Res.string.contacts_merge_no_conflicts),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -567,7 +637,11 @@ private fun CompareFieldsStep(
         } else {
             // Show conflicts
             Text(
-                text = "Resolve ${conflicts.size} conflict${if (conflicts.size > 1) "s" else ""}:",
+                text = if (conflicts.size == 1) {
+                    stringResource(Res.string.contacts_merge_resolve_conflict_single, conflicts.size)
+                } else {
+                    stringResource(Res.string.contacts_merge_resolve_conflict_plural, conflicts.size)
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.tertiary,
                 fontWeight = FontWeight.Medium
@@ -601,7 +675,7 @@ private fun CompareFieldsStep(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "All invoices, bills, expenses, and notes from the source contact will be moved to the target contact.",
+                text = stringResource(Res.string.contacts_merge_move_items_info),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(12.dp)
@@ -620,7 +694,7 @@ private fun ConflictResolutionRow(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = conflict.fieldLabel,
+            text = stringResource(conflict.fieldLabelRes),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -662,7 +736,7 @@ private fun ConflictResolutionRow(
                         onClick = { onKeepSourceChange(true) }
                     )
                     Text(
-                        text = conflict.sourceValue ?: "(empty)",
+                        text = formatConflictValue(conflict.fieldName, conflict.sourceValue),
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -705,7 +779,7 @@ private fun ConflictResolutionRow(
                         onClick = { onKeepSourceChange(false) }
                     )
                     Text(
-                        text = conflict.targetValue ?: "(empty)",
+                        text = formatConflictValue(conflict.fieldName, conflict.targetValue),
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -718,6 +792,25 @@ private fun ConflictResolutionRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun formatConflictValue(fieldName: String, value: String?): String {
+    if (value == null) {
+        return stringResource(Res.string.common_empty_value)
+    }
+    return when (fieldName) {
+        "defaultPaymentTerms" -> {
+            val days = value.toIntOrNull()
+            if (days != null) {
+                stringResource(Res.string.contacts_payment_terms_value, days)
+            } else {
+                value
+            }
+        }
+        "defaultVatRate" -> "$value%"
+        else -> value
     }
 }
 
@@ -734,7 +827,7 @@ private fun ConfirmationStep(
     sourceContact: ContactDto,
     targetContact: ContactDto,
     sourceActivity: ContactActivitySummary?,
-    mergeError: String?,
+    mergeError: MergeError?,
     isMerging: Boolean
 ) {
     Column {
@@ -757,14 +850,17 @@ private fun ConfirmationStep(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
-                        text = "This action cannot be undone",
+                        text = stringResource(Res.string.common_action_irreversible),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "\"${sourceContact.name.value}\" will be archived after the merge.",
+                        text = stringResource(
+                            Res.string.contacts_merge_source_archived,
+                            sourceContact.name.value
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -784,7 +880,10 @@ private fun ConfirmationStep(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "Items to be moved to \"${targetContact.name.value}\":",
+                        text = stringResource(
+                            Res.string.contacts_merge_items_to_target,
+                            targetContact.name.value
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -796,7 +895,7 @@ private fun ConfirmationStep(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Invoices",
+                            text = stringResource(Res.string.contacts_invoices),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
@@ -811,7 +910,7 @@ private fun ConfirmationStep(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Bills",
+                            text = stringResource(Res.string.contacts_bills),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
@@ -826,7 +925,7 @@ private fun ConfirmationStep(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Expenses",
+                            text = stringResource(Res.string.contacts_expenses),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
@@ -847,8 +946,12 @@ private fun ConfirmationStep(
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
+                val errorText = when (mergeError) {
+                    is MergeError.Message -> mergeError.value
+                    is MergeError.Resource -> stringResource(mergeError.res)
+                }
                 Text(
-                    text = mergeError,
+                    text = errorText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(12.dp)
@@ -885,7 +988,7 @@ private fun ResultStep(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Contacts merged successfully!",
+            text = stringResource(Res.string.contacts_merge_success_message),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
@@ -895,7 +998,7 @@ private fun ResultStep(
 
         targetContact?.let {
             Text(
-                text = "All items now belong to \"${it.name.value}\"",
+                text = stringResource(Res.string.contacts_merge_all_items_belong, it.name.value),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -913,24 +1016,36 @@ private fun ResultStep(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Summary",
+                    text = stringResource(Res.string.contacts_merge_summary),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                ReassignmentRow("Invoices reassigned", result.invoicesReassigned)
-                ReassignmentRow("Bills reassigned", result.billsReassigned)
-                ReassignmentRow("Expenses reassigned", result.expensesReassigned)
-                ReassignmentRow("Notes reassigned", result.notesReassigned)
+                ReassignmentRow(
+                    stringResource(Res.string.contacts_merge_invoices_reassigned),
+                    result.invoicesReassigned
+                )
+                ReassignmentRow(
+                    stringResource(Res.string.contacts_merge_bills_reassigned),
+                    result.billsReassigned
+                )
+                ReassignmentRow(
+                    stringResource(Res.string.contacts_merge_expenses_reassigned),
+                    result.expensesReassigned
+                )
+                ReassignmentRow(
+                    stringResource(Res.string.contacts_merge_notes_reassigned),
+                    result.notesReassigned
+                )
 
                 if (result.sourceArchived) {
                     Spacer(modifier = Modifier.height(8.dp))
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "✓ Source contact archived",
+                        text = stringResource(Res.string.contacts_merge_source_archived_check),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1018,7 +1133,7 @@ private fun ContactMiniCard(
 
             contact.vatNumber?.let { vat ->
                 Text(
-                    text = "VAT: ${vat.value}",
+                    text = stringResource(Res.string.common_vat_value, vat.value),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -1046,7 +1161,7 @@ private fun computeFieldConflicts(
     // Helper to add conflict if both values are different and non-null
     fun addConflictIfDifferent(
         fieldName: String,
-        fieldLabel: String,
+        fieldLabelRes: StringResource,
         sourceValue: String?,
         targetValue: String?
     ) {
@@ -1054,7 +1169,7 @@ private fun computeFieldConflicts(
             conflicts.add(
                 MergeFieldConflict(
                     fieldName = fieldName,
-                    fieldLabel = fieldLabel,
+                    fieldLabelRes = fieldLabelRes,
                     sourceValue = sourceValue,
                     targetValue = targetValue,
                     keepSource = false  // Default to keeping target
@@ -1064,27 +1179,52 @@ private fun computeFieldConflicts(
     }
 
     // Check each field for conflicts
-    addConflictIfDifferent("email", "Email", source.email?.value, target.email?.value)
-    addConflictIfDifferent("phone", "Phone", source.phone, target.phone)
-    addConflictIfDifferent("vatNumber", "VAT Number", source.vatNumber?.value, target.vatNumber?.value)
-    addConflictIfDifferent("companyNumber", "Company Number", source.companyNumber, target.companyNumber)
-    addConflictIfDifferent("contactPerson", "Contact Person", source.contactPerson, target.contactPerson)
-    addConflictIfDifferent("addressLine1", "Address Line 1", source.addressLine1, target.addressLine1)
-    addConflictIfDifferent("addressLine2", "Address Line 2", source.addressLine2, target.addressLine2)
-    addConflictIfDifferent("city", "City", source.city, target.city)
-    addConflictIfDifferent("postalCode", "Postal Code", source.postalCode, target.postalCode)
-    addConflictIfDifferent("country", "Country", source.country, target.country)
-    addConflictIfDifferent("peppolId", "Peppol ID", source.peppolId, target.peppolId)
-    addConflictIfDifferent("tags", "Tags", source.tags, target.tags)
+    addConflictIfDifferent("email", Res.string.contacts_email, source.email?.value, target.email?.value)
+    addConflictIfDifferent("phone", Res.string.contacts_phone, source.phone, target.phone)
+    addConflictIfDifferent(
+        "vatNumber",
+        Res.string.contacts_vat_number,
+        source.vatNumber?.value,
+        target.vatNumber?.value
+    )
+    addConflictIfDifferent(
+        "companyNumber",
+        Res.string.contacts_company_number,
+        source.companyNumber,
+        target.companyNumber
+    )
+    addConflictIfDifferent(
+        "contactPerson",
+        Res.string.contacts_contact_person,
+        source.contactPerson,
+        target.contactPerson
+    )
+    addConflictIfDifferent(
+        "addressLine1",
+        Res.string.contacts_address_line1,
+        source.addressLine1,
+        target.addressLine1
+    )
+    addConflictIfDifferent(
+        "addressLine2",
+        Res.string.contacts_address_line2,
+        source.addressLine2,
+        target.addressLine2
+    )
+    addConflictIfDifferent("city", Res.string.contacts_city, source.city, target.city)
+    addConflictIfDifferent("postalCode", Res.string.contacts_postal_code, source.postalCode, target.postalCode)
+    addConflictIfDifferent("country", Res.string.contacts_country, source.country, target.country)
+    addConflictIfDifferent("peppolId", Res.string.contacts_peppol_id, source.peppolId, target.peppolId)
+    addConflictIfDifferent("tags", Res.string.contacts_tags, source.tags, target.tags)
 
     // Payment terms (Int comparison)
     if (source.defaultPaymentTerms != target.defaultPaymentTerms) {
         conflicts.add(
             MergeFieldConflict(
                 fieldName = "defaultPaymentTerms",
-                fieldLabel = "Payment Terms",
-                sourceValue = "${source.defaultPaymentTerms} days",
-                targetValue = "${target.defaultPaymentTerms} days",
+                fieldLabelRes = Res.string.contacts_payment_terms,
+                sourceValue = source.defaultPaymentTerms.toString(),
+                targetValue = target.defaultPaymentTerms.toString(),
                 keepSource = false
             )
         )
@@ -1097,9 +1237,9 @@ private fun computeFieldConflicts(
         conflicts.add(
             MergeFieldConflict(
                 fieldName = "defaultVatRate",
-                fieldLabel = "Default VAT Rate",
-                sourceValue = "$sourceVatRate%",
-                targetValue = "$targetVatRate%",
+                fieldLabelRes = Res.string.contacts_default_vat_rate,
+                sourceValue = sourceVatRate,
+                targetValue = targetVatRate,
                 keepSource = false
             )
         )

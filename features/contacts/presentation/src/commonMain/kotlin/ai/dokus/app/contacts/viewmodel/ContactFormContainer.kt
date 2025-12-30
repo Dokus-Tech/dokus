@@ -5,6 +5,15 @@ import ai.dokus.app.contacts.usecases.DeleteContactUseCase
 import ai.dokus.app.contacts.usecases.GetContactUseCase
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.app.contacts.usecases.UpdateContactUseCase
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_create_success
+import ai.dokus.app.resources.generated.contacts_delete_failed
+import ai.dokus.app.resources.generated.contacts_delete_success
+import ai.dokus.app.resources.generated.contacts_invalid_email
+import ai.dokus.app.resources.generated.contacts_invalid_peppol_id
+import ai.dokus.app.resources.generated.contacts_name_required
+import ai.dokus.app.resources.generated.contacts_peppol_id_required
+import ai.dokus.app.resources.generated.contacts_update_success
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
@@ -15,6 +24,7 @@ import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -180,7 +190,7 @@ internal class ContactFormContainer(
     private suspend fun ContactFormCtx.handleUpdateEmail(value: String) {
         updateFormData {
             val errors = if (value.isNotBlank() && !value.contains("@")) {
-                errors + ("email" to "Invalid email format")
+                errors + ("email" to getString(Res.string.contacts_invalid_email))
             } else {
                 errors - "email"
             }
@@ -248,7 +258,7 @@ internal class ContactFormContainer(
     private suspend fun ContactFormCtx.handleUpdatePeppolId(value: String) {
         updateFormData {
             val errors = if (value.isNotBlank() && !value.contains(":")) {
-                errors + ("peppolId" to "Invalid Peppol ID format (expected scheme:identifier)")
+                errors + ("peppolId" to getString(Res.string.contacts_invalid_peppol_id))
             } else {
                 errors - "peppolId"
             }
@@ -445,27 +455,27 @@ internal class ContactFormContainer(
     // VALIDATION
     // ============================================================================
 
-    private fun validateForm(formData: ContactFormData): Map<String, String> {
+    private suspend fun validateForm(formData: ContactFormData): Map<String, String> {
         val errors = mutableMapOf<String, String>()
 
         // Required field: name
         if (formData.name.isBlank()) {
-            errors["name"] = "Name is required"
+            errors["name"] = getString(Res.string.contacts_name_required)
         }
 
         // Optional validation: email format
         if (formData.email.isNotBlank() && !formData.email.contains("@")) {
-            errors["email"] = "Invalid email format"
+            errors["email"] = getString(Res.string.contacts_invalid_email)
         }
 
         // Optional validation: Peppol ID format
         if (formData.peppolId.isNotBlank() && !formData.peppolId.contains(":")) {
-            errors["peppolId"] = "Invalid Peppol ID format (expected scheme:identifier)"
+            errors["peppolId"] = getString(Res.string.contacts_invalid_peppol_id)
         }
 
         // Optional validation: Peppol ID required if enabled
         if (formData.peppolEnabled && formData.peppolId.isBlank()) {
-            errors["peppolId"] = "Peppol ID is required when Peppol is enabled"
+            errors["peppolId"] = getString(Res.string.contacts_peppol_id_required)
         }
 
         return errors
@@ -509,7 +519,7 @@ internal class ContactFormContainer(
                 onSuccess = { contact ->
                     logger.i { "Contact created: ${contact.id}" }
                     updateState { copy(isSaving = false) }
-                    action(ContactFormAction.ShowSuccess("Contact created"))
+                    action(ContactFormAction.ShowSuccess(getString(Res.string.contacts_create_success)))
                     action(ContactFormAction.NavigateToContact(contact.id))
                 },
                 onFailure = { error ->
@@ -539,7 +549,7 @@ internal class ContactFormContainer(
                 onSuccess = { contact ->
                     logger.i { "Contact updated: ${contact.id}" }
                     updateState { copy(isSaving = false) }
-                    action(ContactFormAction.ShowSuccess("Contact updated"))
+                    action(ContactFormAction.ShowSuccess(getString(Res.string.contacts_update_success)))
                     action(ContactFormAction.NavigateToContact(contact.id))
                 },
                 onFailure = { error ->
@@ -578,13 +588,13 @@ internal class ContactFormContainer(
                 onSuccess = {
                     logger.i { "Contact deleted: $id" }
                     updateState { copy(isDeleting = false) }
-                    action(ContactFormAction.ShowSuccess("Contact deleted"))
+                    action(ContactFormAction.ShowSuccess(getString(Res.string.contacts_delete_success)))
                     action(ContactFormAction.NavigateBack)
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to delete contact: $id" }
                     updateState { copy(isDeleting = false) }
-                    action(ContactFormAction.ShowError("Failed to delete contact"))
+                    action(ContactFormAction.ShowError(getString(Res.string.contacts_delete_failed)))
                 }
             )
         }

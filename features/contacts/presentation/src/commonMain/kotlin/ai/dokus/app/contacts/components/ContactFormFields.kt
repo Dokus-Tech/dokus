@@ -1,11 +1,43 @@
 package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.viewmodel.ContactFormData
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_active
+import ai.dokus.app.resources.generated.contacts_address
+import ai.dokus.app.resources.generated.contacts_address_line1
+import ai.dokus.app.resources.generated.contacts_address_line2
+import ai.dokus.app.resources.generated.contacts_basic_info
+import ai.dokus.app.resources.generated.contacts_business
+import ai.dokus.app.resources.generated.contacts_business_info
+import ai.dokus.app.resources.generated.contacts_business_type
+import ai.dokus.app.resources.generated.contacts_city
+import ai.dokus.app.resources.generated.contacts_company_number
+import ai.dokus.app.resources.generated.contacts_contact_person
+import ai.dokus.app.resources.generated.contacts_country
+import ai.dokus.app.resources.generated.contacts_default_vat_rate
+import ai.dokus.app.resources.generated.contacts_email
+import ai.dokus.app.resources.generated.contacts_government
+import ai.dokus.app.resources.generated.contacts_inactive
+import ai.dokus.app.resources.generated.contacts_individual
+import ai.dokus.app.resources.generated.contacts_initial_note
+import ai.dokus.app.resources.generated.contacts_name
+import ai.dokus.app.resources.generated.contacts_note
+import ai.dokus.app.resources.generated.contacts_payment_defaults
+import ai.dokus.app.resources.generated.contacts_payment_terms
+import ai.dokus.app.resources.generated.contacts_peppol_enabled
+import ai.dokus.app.resources.generated.contacts_peppol_id
+import ai.dokus.app.resources.generated.contacts_peppol_id_hint
+import ai.dokus.app.resources.generated.contacts_peppol_settings
+import ai.dokus.app.resources.generated.contacts_phone
+import ai.dokus.app.resources.generated.contacts_postal_code
+import ai.dokus.app.resources.generated.contacts_status
+import ai.dokus.app.resources.generated.contacts_tags
+import ai.dokus.app.resources.generated.contacts_tags_hint
+import ai.dokus.app.resources.generated.contacts_vat_number
+import ai.dokus.app.resources.generated.field_optional
+import ai.dokus.app.resources.generated.field_required
 import ai.dokus.foundation.design.components.fields.PTextFieldPhone
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import tech.dokus.domain.PhoneNumber
-import tech.dokus.domain.enums.ClientType
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +70,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.exceptions.DokusException
 
 // ============================================================================
 // CONTACT FORM FIELDS
@@ -77,10 +113,10 @@ internal fun ContactFormFields(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Basic Information Section
-        ContactFormSection(title = "Basic Information") {
+        ContactFormSection(title = stringResource(Res.string.contacts_basic_info)) {
             // Name (Required)
             PTextFieldStandard(
-                fieldName = "Name *",
+                fieldName = stringResource(Res.string.contacts_name),
                 value = formData.name,
                 onValueChange = onNameChange,
                 error = formData.errors["name"]?.toValidationError(),
@@ -91,7 +127,7 @@ internal fun ContactFormFields(
 
             // Email
             PTextFieldStandard(
-                fieldName = "Email",
+                fieldName = stringResource(Res.string.contacts_email),
                 value = formData.email,
                 onValueChange = onEmailChange,
                 error = formData.errors["email"]?.toValidationError(),
@@ -107,7 +143,7 @@ internal fun ContactFormFields(
 
             // Phone
             PTextFieldPhone(
-                fieldName = "Phone",
+                fieldName = stringResource(Res.string.contacts_phone),
                 value = PhoneNumber(formData.phone),
                 onValueChange = { onPhoneChange(it.value) },
                 modifier = Modifier.fillMaxWidth()
@@ -117,7 +153,7 @@ internal fun ContactFormFields(
 
             // Contact Person
             PTextFieldStandard(
-                fieldName = "Contact Person",
+                fieldName = stringResource(Res.string.contacts_contact_person),
                 value = formData.contactPerson,
                 onValueChange = onContactPersonChange,
                 modifier = Modifier.fillMaxWidth()
@@ -125,7 +161,7 @@ internal fun ContactFormFields(
         }
 
         // Business Information Section
-        ContactFormSection(title = "Business Information") {
+        ContactFormSection(title = stringResource(Res.string.contacts_business_info)) {
             // Business Type
             BusinessTypeSelector(
                 selectedType = formData.businessType,
@@ -136,7 +172,7 @@ internal fun ContactFormFields(
 
             // VAT Number
             PTextFieldStandard(
-                fieldName = "VAT Number",
+                fieldName = stringResource(Res.string.contacts_vat_number),
                 value = formData.vatNumber,
                 onValueChange = onVatNumberChange,
                 error = formData.errors["vatNumber"]?.toValidationError(),
@@ -152,7 +188,7 @@ internal fun ContactFormFields(
 
             // Company Number
             PTextFieldStandard(
-                fieldName = "Company Number",
+                fieldName = stringResource(Res.string.contacts_company_number),
                 value = formData.companyNumber,
                 onValueChange = onCompanyNumberChange,
                 modifier = Modifier.fillMaxWidth()
@@ -160,10 +196,10 @@ internal fun ContactFormFields(
         }
 
         // Address Section
-        ContactFormSection(title = "Address") {
+        ContactFormSection(title = stringResource(Res.string.contacts_address)) {
             // Address Line 1
             PTextFieldStandard(
-                fieldName = "Street Address",
+                fieldName = stringResource(Res.string.contacts_address_line1),
                 value = formData.addressLine1,
                 onValueChange = onAddressLine1Change,
                 modifier = Modifier.fillMaxWidth()
@@ -173,7 +209,10 @@ internal fun ContactFormFields(
 
             // Address Line 2
             PTextFieldStandard(
-                fieldName = "Address Line 2 (optional)",
+                fieldName = stringResource(
+                    Res.string.field_optional,
+                    stringResource(Res.string.contacts_address_line2)
+                ),
                 value = formData.addressLine2,
                 onValueChange = onAddressLine2Change,
                 modifier = Modifier.fillMaxWidth()
@@ -187,14 +226,14 @@ internal fun ContactFormFields(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 PTextFieldStandard(
-                    fieldName = "Postal Code",
+                    fieldName = stringResource(Res.string.contacts_postal_code),
                     value = formData.postalCode,
                     onValueChange = onPostalCodeChange,
                     modifier = Modifier.weight(1f)
                 )
 
                 PTextFieldStandard(
-                    fieldName = "City",
+                    fieldName = stringResource(Res.string.contacts_city),
                     value = formData.city,
                     onValueChange = onCityChange,
                     modifier = Modifier.weight(2f)
@@ -205,7 +244,7 @@ internal fun ContactFormFields(
 
             // Country
             PTextFieldStandard(
-                fieldName = "Country",
+                fieldName = stringResource(Res.string.contacts_country),
                 value = formData.country,
                 onValueChange = onCountryChange,
                 modifier = Modifier.fillMaxWidth()
@@ -213,9 +252,9 @@ internal fun ContactFormFields(
         }
 
         // Peppol Settings Section
-        ContactFormSection(title = "Peppol Settings") {
+        ContactFormSection(title = stringResource(Res.string.contacts_peppol_settings)) {
             // Peppol Enabled Toggle
-            FormField(label = "Peppol Enabled") {
+            FormField(label = stringResource(Res.string.contacts_peppol_enabled)) {
                 Switch(
                     checked = formData.peppolEnabled,
                     onCheckedChange = onPeppolEnabledChange
@@ -226,7 +265,14 @@ internal fun ContactFormFields(
 
             // Peppol ID (only shown/required when Peppol is enabled)
             PTextFieldStandard(
-                fieldName = if (formData.peppolEnabled) "Peppol ID *" else "Peppol ID",
+                fieldName = if (formData.peppolEnabled) {
+                    stringResource(
+                        Res.string.field_required,
+                        stringResource(Res.string.contacts_peppol_id)
+                    )
+                } else {
+                    stringResource(Res.string.contacts_peppol_id)
+                },
                 value = formData.peppolId,
                 onValueChange = onPeppolIdChange,
                 error = formData.errors["peppolId"]?.toValidationError(),
@@ -235,21 +281,21 @@ internal fun ContactFormFields(
 
             // Peppol ID format hint
             Text(
-                text = "Format: scheme:identifier (e.g., 0208:BE0123456789)",
+                text = stringResource(Res.string.contacts_peppol_id_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         // Defaults Section
-        ContactFormSection(title = "Payment Defaults") {
+        ContactFormSection(title = stringResource(Res.string.contacts_payment_defaults)) {
             // Default Payment Terms
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 PTextFieldStandard(
-                    fieldName = "Payment Terms (days)",
+                    fieldName = stringResource(Res.string.contacts_payment_terms),
                     value = formData.defaultPaymentTerms.toString(),
                     onValueChange = { value ->
                         value.toIntOrNull()?.let { onDefaultPaymentTermsChange(it) }
@@ -263,7 +309,7 @@ internal fun ContactFormFields(
 
                 // Default VAT Rate
                 PTextFieldStandard(
-                    fieldName = "Default VAT Rate (%)",
+                    fieldName = stringResource(Res.string.contacts_default_vat_rate),
                     value = formData.defaultVatRate,
                     onValueChange = onDefaultVatRateChange,
                     keyboardOptions = KeyboardOptions(
@@ -276,16 +322,16 @@ internal fun ContactFormFields(
         }
 
         // Tags Section
-        ContactFormSection(title = "Tags") {
+        ContactFormSection(title = stringResource(Res.string.contacts_tags)) {
             PTextFieldStandard(
-                fieldName = "Tags (comma-separated)",
+                fieldName = stringResource(Res.string.contacts_tags),
                 value = formData.tags,
                 onValueChange = onTagsChange,
                 modifier = Modifier.fillMaxWidth()
             )
 
             Text(
-                text = "Enter tags separated by commas (e.g., VIP, Partner, EU)",
+                text = stringResource(Res.string.contacts_tags_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -293,9 +339,12 @@ internal fun ContactFormFields(
 
         // Initial Note Section (only for create mode)
         if (showInitialNote) {
-            ContactFormSection(title = "Initial Note") {
+            ContactFormSection(title = stringResource(Res.string.contacts_initial_note)) {
                 PTextFieldStandard(
-                    fieldName = "Note (optional)",
+                    fieldName = stringResource(
+                        Res.string.field_optional,
+                        stringResource(Res.string.contacts_note)
+                    ),
                     value = formData.initialNote,
                     onValueChange = onInitialNoteChange,
                     singleLine = false,
@@ -305,8 +354,8 @@ internal fun ContactFormFields(
         }
 
         // Status Section
-        ContactFormSection(title = "Status") {
-            FormField(label = "Active") {
+        ContactFormSection(title = stringResource(Res.string.contacts_status)) {
+            FormField(label = stringResource(Res.string.contacts_active)) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -319,7 +368,7 @@ internal fun ContactFormFields(
                             onClick = { onIsActiveChange(true) }
                         )
                         Text(
-                            text = "Active",
+                            text = stringResource(Res.string.contacts_active),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -331,7 +380,7 @@ internal fun ContactFormFields(
                             onClick = { onIsActiveChange(false) }
                         )
                         Text(
-                            text = "Inactive",
+                            text = stringResource(Res.string.contacts_inactive),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -425,7 +474,7 @@ private fun BusinessTypeSelector(
 
     Column(modifier = modifier) {
         Text(
-            text = "Business Type",
+            text = stringResource(Res.string.contacts_business_type),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -441,7 +490,7 @@ private fun BusinessTypeSelector(
                 shape = MaterialTheme.shapes.small
             ) {
                 Text(
-                    text = selectedType.displayName,
+                    text = selectedType.displayName(),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -453,7 +502,7 @@ private fun BusinessTypeSelector(
             ) {
                 ClientType.entries.forEach { type ->
                     DropdownMenuItem(
-                        text = { Text(type.displayName) },
+                        text = { Text(type.displayName()) },
                         onClick = {
                             onTypeSelected(type)
                             expanded = false
@@ -472,11 +521,12 @@ private fun BusinessTypeSelector(
 /**
  * Display name for ClientType enum.
  */
-private val ClientType.displayName: String
-    get() = when (this) {
-        ClientType.Individual -> "Individual"
-        ClientType.Business -> "Business"
-        ClientType.Government -> "Government"
+@Composable
+private fun ClientType.displayName(): String =
+    when (this) {
+        ClientType.Individual -> stringResource(Res.string.contacts_individual)
+        ClientType.Business -> stringResource(Res.string.contacts_business)
+        ClientType.Government -> stringResource(Res.string.contacts_government)
     }
 
 /**

@@ -1,8 +1,15 @@
 package ai.dokus.foundation.design.extensions
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.draft_status_confirmed
+import ai.dokus.app.resources.generated.draft_status_needs_input
+import ai.dokus.app.resources.generated.draft_status_needs_review
+import ai.dokus.app.resources.generated.draft_status_ready
+import ai.dokus.app.resources.generated.draft_status_rejected
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.enums.DraftStatus
 
 /**
@@ -18,11 +25,11 @@ import tech.dokus.domain.enums.DraftStatus
  */
 val DraftStatus.localized: String
     @Composable get() = when (this) {
-        DraftStatus.NeedsInput -> "Needs Input"
-        DraftStatus.NeedsReview -> "Needs Review"
-        DraftStatus.Ready -> "Ready"
-        DraftStatus.Confirmed -> "Confirmed"
-        DraftStatus.Rejected -> "Rejected"
+        DraftStatus.NeedsInput -> stringResource(Res.string.draft_status_needs_input)
+        DraftStatus.NeedsReview -> stringResource(Res.string.draft_status_needs_review)
+        DraftStatus.Ready -> stringResource(Res.string.draft_status_ready)
+        DraftStatus.Confirmed -> stringResource(Res.string.draft_status_confirmed)
+        DraftStatus.Rejected -> stringResource(Res.string.draft_status_rejected)
     }
 
 /**

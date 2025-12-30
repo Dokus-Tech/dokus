@@ -103,6 +103,40 @@
     <string name="peppol_connection_successful">Connexion réussie !</string>
     <string name="peppol_delete_warning">La suppression des paramètres Peppol désactivera les capacités de facturation électronique.</string>
 
+    <!-- Additional Settings -->
+    <string name="settings_save_failed">Échec de l'enregistrement des paramètres</string>
+    <string name="settings_unknown_section">Section des paramètres inconnue</string>
+    <string name="profile_logging_out">Déconnexion...</string>
+    <string name="profile_reset_to_cloud_failed">Échec de la réinitialisation vers le cloud</string>
+    <string name="workspace_add">Ajouter un espace de travail</string>
+    <string name="workspace_type_company">Entreprise</string>
+    <string name="workspace_type_freelancer">Freelance</string>
+    <string name="workspace_create_failed">Impossible de créer l'espace de travail</string>
+    <string name="workspace_select_failed">Impossible de sélectionner l'espace de travail</string>
+    <string name="workspace_settings_load_failed">Impossible de charger les paramètres de l'espace de travail</string>
+    <string name="workspace_company_logo">Logo de l'entreprise</string>
+    <string name="workspace_avatar_upload_failed">Impossible de téléverser le logo de l'entreprise</string>
+    <string name="workspace_avatar_delete_failed">Impossible de supprimer le logo de l'entreprise</string>
+    <string name="peppol_connect_title">Connecter un fournisseur Peppol</string>
+    <string name="peppol_connect_title_with_provider">Connecter %1$s</string>
+    <string name="peppol_select_provider_hint">Sélectionnez un fournisseur pour continuer</string>
+    <string name="peppol_provider_recommand_description">Recommandé pour un démarrage rapide</string>
+    <string name="peppol_more_providers_coming">Plus de fournisseurs bientôt</string>
+    <string name="peppol_connected_to">Connecté à %1$s</string>
+    <string name="peppol_get_credentials_title">Obtenez vos identifiants API</string>
+    <string name="peppol_instruction_visit_site">Visitez le site du fournisseur</string>
+    <string name="peppol_instruction_create_account">Créez un compte</string>
+    <string name="peppol_instruction_navigate_api">Accédez aux identifiants API</string>
+    <string name="peppol_instruction_generate_keys">Générez des clés API</string>
+    <string name="peppol_instruction_copy_credentials">Copiez les identifiants ci-dessous</string>
+    <string name="peppol_open_provider">Ouvrir le site du fournisseur</string>
+    <string name="peppol_select_company_title">Sélectionnez une entreprise</string>
+    <string name="peppol_multiple_companies_hint">Plusieurs entreprises trouvées, choisissez-en une pour continuer</string>
+    <string name="peppol_enterprise_value">Entreprise</string>
+    <string name="peppol_no_companies_title">Aucune entreprise trouvée</string>
+    <string name="peppol_no_companies_hint">Créez une entreprise sur la plateforme du fournisseur pour continuer</string>
+    <string name="peppol_create_company_on_provider">Créer une entreprise chez le fournisseur</string>
+
     <!-- Appearance Settings -->
     <string name="appearance_settings_title">Apparence</string>
     <string name="appearance_theme">Thème</string>

@@ -1,5 +1,9 @@
 package ai.dokus.app.contacts.components.create
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_step_confirm
+import ai.dokus.app.resources.generated.contacts_step_details
+import ai.dokus.app.resources.generated.contacts_step_search
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,14 +26,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Step in the create contact flow.
  */
-enum class CreateContactStep(val label: String) {
-    Search("Search"),
-    Confirm("Confirm"),
-    Details("Details")
+enum class CreateContactStep(val labelRes: StringResource) {
+    Search(Res.string.contacts_step_search),
+    Confirm(Res.string.contacts_step_confirm),
+    Details(Res.string.contacts_step_details)
 }
 
 /**
@@ -85,7 +91,7 @@ fun StepIndicator(
         ) {
             steps.forEachIndexed { index, step ->
                 Text(
-                    text = step.label,
+                    text = stringResource(step.labelRes),
                     style = MaterialTheme.typography.labelSmall,
                     color = when {
                         index < currentIndex -> MaterialTheme.colorScheme.primary

@@ -9,6 +9,11 @@ import ai.dokus.app.auth.viewmodel.WorkspaceCreateAction
 import ai.dokus.app.auth.viewmodel.WorkspaceCreateContainer
 import ai.dokus.app.auth.viewmodel.WorkspaceCreateIntent
 import ai.dokus.app.auth.viewmodel.WorkspaceCreateState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_continue
+import ai.dokus.app.resources.generated.auth_step_of
+import ai.dokus.app.resources.generated.state_creating
+import ai.dokus.app.resources.generated.workspace_create_button
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.WarpJumpEffect
@@ -52,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
@@ -205,7 +211,11 @@ private fun IntentReceiver<WorkspaceCreateIntent>.WorkspaceCreateContent(
         ) {
             // Step indicator
             Text(
-                text = "Step ${wizardState.currentStepNumber} of ${wizardState.totalSteps}",
+                text = stringResource(
+                    Res.string.auth_step_of,
+                    wizardState.currentStepNumber,
+                    wizardState.totalSteps
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -275,8 +285,13 @@ private fun IntentReceiver<WorkspaceCreateIntent>.WorkspaceCreateContent(
 
                 PPrimaryButton(
                     text = when (wizardState.step) {
-                        WorkspaceWizardStep.VatAndAddress -> if (isSubmitting) "Creating..." else "Create workspace"
-                        else -> "Continue"
+                        WorkspaceWizardStep.VatAndAddress -> if (isSubmitting) {
+                            stringResource(Res.string.state_creating)
+                        } else {
+                            stringResource(Res.string.workspace_create_button)
+                        }
+
+                        else -> stringResource(Res.string.action_continue)
                     },
                     enabled = wizardState.canProceed && !isSubmitting,
                     modifier = Modifier.fillMaxWidth(),

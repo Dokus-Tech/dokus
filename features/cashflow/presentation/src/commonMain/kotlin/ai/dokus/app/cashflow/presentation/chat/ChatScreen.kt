@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.chat
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PBackButton
 import ai.dokus.foundation.design.components.chat.ChatMessageBubble
 import ai.dokus.foundation.design.components.chat.ChatMessageRole
@@ -84,6 +85,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.MessageCircle
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.domain.model.ai.ChatSessionId
@@ -254,9 +256,9 @@ private fun ChatTopBar(
                     Text(
                         text = when {
                             content?.isSingleDocMode == true -> content.documentName
-                                ?: "Document Chat"
+                                ?: stringResource(Res.string.chat_document_title_fallback)
 
-                            else -> "Chat with Documents"
+                            else -> stringResource(Res.string.chat_title_all_documents)
                         },
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
@@ -264,7 +266,11 @@ private fun ChatTopBar(
                     )
                     if (content != null) {
                         Text(
-                            text = if (content.isSingleDocMode) "Single document" else "All documents",
+                            text = if (content.isSingleDocMode) {
+                                stringResource(Res.string.chat_scope_single_document)
+                            } else {
+                                stringResource(Res.string.chat_scope_all_documents)
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -280,7 +286,7 @@ private fun ChatTopBar(
                     IconButton(onClick = onNewChat) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "New conversation",
+                            contentDescription = stringResource(Res.string.chat_new_conversation),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -289,7 +295,7 @@ private fun ChatTopBar(
                     IconButton(onClick = onShowHistory) {
                         Icon(
                             imageVector = Icons.Default.History,
-                            contentDescription = "Chat history",
+                            contentDescription = stringResource(Res.string.chat_history_action),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -299,7 +305,7 @@ private fun ChatTopBar(
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More options",
+                                contentDescription = stringResource(Res.string.chat_more_options),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -310,7 +316,7 @@ private fun ChatTopBar(
                         ) {
                             if (content.isSingleDocMode) {
                                 DropdownMenuItem(
-                                    text = { Text("Switch to all documents") },
+                                    text = { Text(stringResource(Res.string.chat_switch_to_all_documents)) },
                                     onClick = {
                                         showMenu = false
                                         onSwitchScope(ChatScope.AllDocs)
@@ -318,14 +324,14 @@ private fun ChatTopBar(
                                 )
                             }
                             DropdownMenuItem(
-                                text = { Text("Expand all citations") },
+                                text = { Text(stringResource(Res.string.chat_expand_all_citations)) },
                                 onClick = {
                                     showMenu = false
                                     // Will be handled by intent
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Collapse all citations") },
+                                text = { Text(stringResource(Res.string.chat_collapse_all_citations)) },
                                 onClick = {
                                     showMenu = false
                                     // Will be handled by intent
@@ -367,7 +373,7 @@ private fun LoadingContent(contentPadding: PaddingValues) {
         ) {
             CircularProgressIndicator()
             Text(
-                text = "Loading chat...",
+                text = stringResource(Res.string.chat_loading),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -488,7 +494,7 @@ private fun ChatContent(
                                 strokeWidth = 2.dp
                             )
                             Text(
-                                text = "Thinking...",
+                                text = stringResource(Res.string.chat_thinking),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -543,7 +549,7 @@ private fun ScopeSelectorChips(
         FilterChip(
             selected = currentScope == ChatScope.AllDocs,
             onClick = { onScopeChange(ChatScope.AllDocs) },
-            label = { Text("All Documents") },
+            label = { Text(stringResource(Res.string.chat_scope_all_documents)) },
             leadingIcon = if (currentScope == ChatScope.AllDocs) {
                 {
                     Icon(
@@ -567,6 +573,18 @@ private fun EmptyStateContent(
     documentName: String?,
     modifier: Modifier = Modifier,
 ) {
+    val documentLabel = documentName ?: stringResource(Res.string.chat_this_document)
+    val promptText = if (isSingleDocMode) {
+        stringResource(Res.string.chat_prompt_single_document, documentLabel)
+    } else {
+        stringResource(Res.string.chat_prompt_all_documents)
+    }
+    val descriptionText = if (isSingleDocMode) {
+        stringResource(Res.string.chat_empty_description_single)
+    } else {
+        stringResource(Res.string.chat_empty_description_all)
+    }
+
     Column(
         modifier = modifier.padding(Constrains.Spacing.xLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -582,11 +600,7 @@ private fun EmptyStateContent(
         Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
         Text(
-            text = if (isSingleDocMode) {
-                "Ask a question about ${documentName ?: "this document"}"
-            } else {
-                "Ask a question about your documents"
-            },
+            text = promptText,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -594,11 +608,7 @@ private fun EmptyStateContent(
         Spacer(modifier = Modifier.height(Constrains.Spacing.small))
 
         Text(
-            text = if (isSingleDocMode) {
-                "I can help you find information, summarize content, or answer specific questions about the document."
-            } else {
-                "I can search across all your confirmed documents to find relevant information and answer your questions."
-            },
+            text = descriptionText,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.widthIn(max = 300.dp)
@@ -612,15 +622,23 @@ private fun EmptyStateContent(
             verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
         ) {
             Text(
-                text = "Try asking:",
+                text = stringResource(Res.string.chat_try_asking),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             ExampleQuestionChip(
-                text = if (isSingleDocMode) "What is the total amount?" else "What did I spend last month?"
+                text = if (isSingleDocMode) {
+                    stringResource(Res.string.chat_example_total_amount)
+                } else {
+                    stringResource(Res.string.chat_example_spend_last_month)
+                }
             )
             ExampleQuestionChip(
-                text = if (isSingleDocMode) "When is the due date?" else "Show invoices from Company X"
+                text = if (isSingleDocMode) {
+                    stringResource(Res.string.chat_example_due_date)
+                } else {
+                    stringResource(Res.string.chat_example_invoices_company)
+                }
             )
         }
     }
@@ -635,7 +653,7 @@ private fun ExampleQuestionChip(text: String) {
             .padding(horizontal = Constrains.Spacing.medium, vertical = Constrains.Spacing.small)
     ) {
         Text(
-            text = "\"$text\"",
+            text = stringResource(Res.string.chat_example_format, text),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -753,7 +771,7 @@ private fun ChatInputSection(
             exit = shrinkVertically() + fadeOut()
         ) {
             Text(
-                text = "Message too long (max $maxLength characters)",
+                text = stringResource(Res.string.chat_message_too_long, maxLength),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(bottom = Constrains.Spacing.xSmall)
@@ -764,7 +782,7 @@ private fun ChatInputSection(
             value = inputText,
             onValueChange = onInputChange,
             onSend = onSend,
-            placeholder = "Ask a question...",
+            placeholder = stringResource(Res.string.chat_input_placeholder),
             enabled = !isSending,
             modifier = Modifier.fillMaxWidth()
         )
@@ -786,7 +804,7 @@ private fun SessionPickerDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Chat History",
+                text = stringResource(Res.string.chat_history_title),
                 style = MaterialTheme.typography.titleLarge
             )
         },
@@ -804,7 +822,7 @@ private fun SessionPickerDialog(
                     )
                     Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
                     Text(
-                        text = "No previous conversations",
+                        text = stringResource(Res.string.chat_history_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -830,12 +848,12 @@ private fun SessionPickerDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
-                Text("New Chat")
+                Text(stringResource(Res.string.chat_new_chat))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.action_cancel))
             }
         }
     )
@@ -846,6 +864,12 @@ private fun SessionListItem(
     session: ChatSessionSummary,
     onClick: () -> Unit,
 ) {
+    val messageCountText = if (session.messageCount == 1) {
+        stringResource(Res.string.chat_message_count_single, session.messageCount)
+    } else {
+        stringResource(Res.string.chat_message_count_plural, session.messageCount)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -865,7 +889,7 @@ private fun SessionListItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = session.documentName ?: "General Chat",
+                    text = session.documentName ?: stringResource(Res.string.chat_general_chat),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -873,7 +897,7 @@ private fun SessionListItem(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "${session.messageCount} messages",
+                    text = messageCountText,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

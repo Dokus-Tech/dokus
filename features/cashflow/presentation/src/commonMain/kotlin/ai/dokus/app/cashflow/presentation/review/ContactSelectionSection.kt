@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.animation.AnimatedContent
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Link
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.enums.DocumentType
 
 /**
@@ -88,9 +90,9 @@ fun ContactSelectionSection(
     modifier: Modifier = Modifier,
 ) {
     val sectionLabel = when (documentType) {
-        DocumentType.Invoice -> "Client"
-        DocumentType.Bill -> "Supplier"
-        else -> "Contact"
+        DocumentType.Invoice -> stringResource(Res.string.cashflow_client_label)
+        DocumentType.Bill -> stringResource(Res.string.cashflow_supplier_label)
+        else -> stringResource(Res.string.cashflow_contact_label)
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -192,7 +194,7 @@ private fun LoadingState(
             )
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Text(
-                text = "Saving contact...",
+                text = stringResource(Res.string.cashflow_saving_contact),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -228,7 +230,7 @@ private fun NoContactState(
             )
             Spacer(modifier = Modifier.height(Constrains.Spacing.small))
             Text(
-                text = "No $sectionLabel selected",
+                text = stringResource(Res.string.cashflow_no_contact_selected, sectionLabel),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -248,7 +250,7 @@ private fun NoContactState(
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
-                    Text("Select contact")
+                    Text(stringResource(Res.string.cashflow_select_contact))
                 }
 
                 OutlinedButton(
@@ -261,7 +263,7 @@ private fun NoContactState(
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
-                    Text("Create new")
+                    Text(stringResource(Res.string.contacts_create_contact))
                 }
             }
         }
@@ -294,7 +296,7 @@ private fun SuggestedContactCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Suggested contact",
+                    text = stringResource(Res.string.cashflow_suggested_contact),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold,
@@ -317,7 +319,7 @@ private fun SuggestedContactCard(
             )
             if (suggestion.vatNumber != null) {
                 Text(
-                    text = "VAT: ${suggestion.vatNumber}",
+                    text = stringResource(Res.string.common_vat_value, suggestion.vatNumber),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -348,14 +350,14 @@ private fun SuggestedContactCard(
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(Constrains.Spacing.xSmall))
-                    Text("Use this contact")
+                    Text(stringResource(Res.string.cashflow_use_this_contact))
                 }
 
                 OutlinedButton(
                     onClick = onChooseDifferent,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Choose different")
+                    Text(stringResource(Res.string.cashflow_choose_different))
                 }
             }
         }
@@ -421,7 +423,7 @@ private fun SelectedContactCard(
                     )
                     if (snapshot.vatNumber != null) {
                         Text(
-                            text = "VAT: ${snapshot.vatNumber}",
+                            text = stringResource(Res.string.common_vat_value, snapshot.vatNumber),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -435,7 +437,7 @@ private fun SelectedContactCard(
                     }
                 } else {
                     Text(
-                        text = "Contact selected",
+                        text = stringResource(Res.string.cashflow_contact_selected),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -445,11 +447,11 @@ private fun SelectedContactCard(
             TextButton(onClick = onChangeContact) {
                 PIcon(
                     icon = FeatherIcons.Edit2,
-                    description = "Change",
+                    description = stringResource(Res.string.action_change),
                     modifier = Modifier.size(16.dp),
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Change")
+                Text(stringResource(Res.string.action_change))
             }
         }
     }
@@ -483,7 +485,7 @@ private fun BoundContactCard(
             Spacer(modifier = Modifier.width(Constrains.Spacing.small))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Bound to $sectionLabel",
+                    text = stringResource(Res.string.cashflow_bound_to, sectionLabel),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary,
                 )
@@ -497,7 +499,7 @@ private fun BoundContactCard(
                 )
                 if (snapshot.vatNumber != null) {
                     Text(
-                        text = "VAT: ${snapshot.vatNumber}",
+                        text = stringResource(Res.string.common_vat_value, snapshot.vatNumber),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

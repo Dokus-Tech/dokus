@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components.upload
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -11,6 +12,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Cancel action button for pending/uploading items.
@@ -31,7 +33,7 @@ fun CancelUploadAction(
     ) {
         Icon(
             imageVector = Icons.Default.Close,
-            contentDescription = "Cancel",
+            contentDescription = stringResource(Res.string.upload_action_cancel),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -56,7 +58,7 @@ fun RetryUploadAction(
     ) {
         Icon(
             imageVector = Icons.Default.Refresh,
-            contentDescription = "Retry",
+            contentDescription = stringResource(Res.string.upload_action_retry),
             tint = MaterialTheme.colorScheme.primary
         )
     }
@@ -81,7 +83,7 @@ fun DeleteDocumentAction(
     ) {
         Icon(
             imageVector = Icons.Default.Delete,
-            contentDescription = "Delete",
+            contentDescription = stringResource(Res.string.upload_action_delete),
             tint = MaterialTheme.colorScheme.error
         )
     }
@@ -106,7 +108,7 @@ fun UndoDeleteAction(
     ) {
         Icon(
             imageVector = Icons.Default.Undo,
-            contentDescription = "Undo delete",
+            contentDescription = stringResource(Res.string.upload_action_undo),
             tint = MaterialTheme.colorScheme.primary
         )
     }

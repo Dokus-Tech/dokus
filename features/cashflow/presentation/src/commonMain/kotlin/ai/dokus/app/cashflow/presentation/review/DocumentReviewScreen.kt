@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.DraftStatusBadge
 import ai.dokus.foundation.design.components.PBackButton
 import ai.dokus.foundation.design.components.PDatePickerDialog
@@ -80,6 +81,7 @@ import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.FileText
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.domain.ids.ContactId
@@ -208,7 +210,8 @@ private fun ReviewTopBar(
             title = {
                 Column {
                     Text(
-                        text = content?.document?.document?.filename ?: "Document Review",
+                        text = content?.document?.document?.filename
+                            ?: stringResource(Res.string.cashflow_document_review_title),
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -238,7 +241,7 @@ private fun ReviewTopBar(
                     IconButton(onClick = onChatClick) {
                         Icon(
                             imageVector = Icons.Default.Message,
-                            contentDescription = "Chat with document",
+                            contentDescription = stringResource(Res.string.cashflow_chat_with_document),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -273,7 +276,7 @@ private fun ConfidenceBadge(percent: Int) {
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "$percent% confident",
+            text = stringResource(Res.string.cashflow_confidence_badge, percent),
             style = MaterialTheme.typography.labelSmall,
             color = color
         )
@@ -298,7 +301,7 @@ private fun LoadingContent(contentPadding: PaddingValues) {
         ) {
             CircularProgressIndicator()
             Text(
-                text = "Loading document...",
+                text = stringResource(Res.string.cashflow_loading_document),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -474,7 +477,7 @@ private fun EditableFormPane(
                 )
                 else -> {
                     Text(
-                        text = "Unknown document type",
+                        text = stringResource(Res.string.cashflow_unknown_document_type),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -586,7 +589,7 @@ private fun MobileReviewContent(
                     verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
                 ) {
                     Text(
-                        text = "Details",
+                        text = stringResource(Res.string.invoice_details),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -628,7 +631,7 @@ private fun MobileReviewContent(
                         )
                         else -> {
                             Text(
-                                text = "Unknown document type",
+                                text = stringResource(Res.string.cashflow_unknown_document_type),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -701,7 +704,9 @@ private fun CollapsibleSection(
                 )
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand"
+                    contentDescription = stringResource(
+                        if (isExpanded) Res.string.action_collapse else Res.string.action_expand
+                    )
                 )
             }
 
@@ -743,7 +748,7 @@ private fun UnsavedChangesBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "You have unsaved changes",
+                text = stringResource(Res.string.state_unsaved_changes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
@@ -753,10 +758,17 @@ private fun UnsavedChangesBar(
                     enabled = !isSaving,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                 ) {
-                    Text("Discard", style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        stringResource(Res.string.action_discard),
+                        style = MaterialTheme.typography.labelMedium
+                    )
                 }
                 POutlinedButton(
-                    text = if (isSaving) "Saving..." else "Save",
+                    text = if (isSaving) {
+                        stringResource(Res.string.state_saving)
+                    } else {
+                        stringResource(Res.string.action_save)
+                    },
                     enabled = !isSaving,
                     isLoading = isSaving,
                     onClick = onSave
@@ -778,13 +790,17 @@ private fun ActionButtonsRow(
         horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
         POutlinedButton(
-            text = "Reject",
+            text = stringResource(Res.string.action_reject),
             modifier = Modifier.weight(1f),
             enabled = !isConfirming,
             onClick = onReject
         )
         PPrimaryButton(
-            text = if (isConfirming) "Confirming..." else "Confirm",
+            text = if (isConfirming) {
+                stringResource(Res.string.state_confirming)
+            } else {
+                stringResource(Res.string.action_confirm)
+            },
             modifier = Modifier.weight(1f),
             enabled = canConfirm,
             isLoading = isConfirming,
@@ -810,10 +826,10 @@ private fun InvoiceForm(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
         // Client section
-        SectionHeader("Client Information")
+        SectionHeader(stringResource(Res.string.cashflow_client_information))
 
         PTextFieldStandard(
-            fieldName = "Client Name",
+            fieldName = stringResource(Res.string.cashflow_client_name),
             value = fields.clientName,
             onValueChange = { onFieldUpdate(InvoiceField.CLIENT_NAME, it) },
             modifier = Modifier.fillMaxWidth()
@@ -826,21 +842,21 @@ private fun InvoiceForm(
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Number",
+            fieldName = stringResource(Res.string.contacts_vat_number),
             value = fields.clientVatNumber,
             onValueChange = { onFieldUpdate(InvoiceField.CLIENT_VAT_NUMBER, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Email",
+            fieldName = stringResource(Res.string.contacts_email),
             value = fields.clientEmail,
             onValueChange = { onFieldUpdate(InvoiceField.CLIENT_EMAIL, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Address",
+            fieldName = stringResource(Res.string.contacts_address),
             value = fields.clientAddress,
             onValueChange = { onFieldUpdate(InvoiceField.CLIENT_ADDRESS, it) },
             modifier = Modifier.fillMaxWidth()
@@ -849,23 +865,23 @@ private fun InvoiceForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Invoice details section
-        SectionHeader("Invoice Details")
+        SectionHeader(stringResource(Res.string.cashflow_invoice_details_section))
 
         PTextFieldStandard(
-            fieldName = "Invoice Number",
+            fieldName = stringResource(Res.string.cashflow_invoice_number),
             value = fields.invoiceNumber,
             onValueChange = { onFieldUpdate(InvoiceField.INVOICE_NUMBER, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         DatePickerField(
-            label = "Issue Date",
+            label = stringResource(Res.string.invoice_issue_date),
             value = fields.issueDate,
             onValueChange = { onFieldUpdate(InvoiceField.ISSUE_DATE, it) }
         )
 
         DatePickerField(
-            label = "Due Date",
+            label = stringResource(Res.string.invoice_due_date),
             value = fields.dueDate,
             onValueChange = { onFieldUpdate(InvoiceField.DUE_DATE, it) }
         )
@@ -873,31 +889,31 @@ private fun InvoiceForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Amounts section
-        SectionHeader("Amounts")
+        SectionHeader(stringResource(Res.string.cashflow_section_amounts))
 
         PTextFieldStandard(
-            fieldName = "Subtotal",
+            fieldName = stringResource(Res.string.invoice_subtotal),
             value = fields.subtotalAmount,
             onValueChange = { onFieldUpdate(InvoiceField.SUBTOTAL_AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Amount",
+            fieldName = stringResource(Res.string.cashflow_vat_amount),
             value = fields.vatAmount,
             onValueChange = { onFieldUpdate(InvoiceField.VAT_AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Total Amount",
+            fieldName = stringResource(Res.string.invoice_total_amount),
             value = fields.totalAmount,
             onValueChange = { onFieldUpdate(InvoiceField.TOTAL_AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Currency",
+            fieldName = stringResource(Res.string.common_currency),
             value = fields.currency,
             onValueChange = { onFieldUpdate(InvoiceField.CURRENCY, it) },
             modifier = Modifier.fillMaxWidth()
@@ -906,24 +922,24 @@ private fun InvoiceForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Additional info
-        SectionHeader("Additional Information")
+        SectionHeader(stringResource(Res.string.cashflow_section_additional_information))
 
         PTextFieldStandard(
-            fieldName = "Payment Terms",
+            fieldName = stringResource(Res.string.contacts_payment_terms),
             value = fields.paymentTerms,
             onValueChange = { onFieldUpdate(InvoiceField.PAYMENT_TERMS, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Bank Account",
+            fieldName = stringResource(Res.string.common_bank_account),
             value = fields.bankAccount,
             onValueChange = { onFieldUpdate(InvoiceField.BANK_ACCOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Notes",
+            fieldName = stringResource(Res.string.common_notes),
             value = fields.notes,
             onValueChange = { onFieldUpdate(InvoiceField.NOTES, it) },
             modifier = Modifier.fillMaxWidth()
@@ -948,10 +964,10 @@ private fun BillForm(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
         // Supplier section
-        SectionHeader("Supplier Information")
+        SectionHeader(stringResource(Res.string.cashflow_supplier_information))
 
         PTextFieldStandard(
-            fieldName = "Supplier Name",
+            fieldName = stringResource(Res.string.cashflow_supplier_name),
             value = fields.supplierName,
             onValueChange = { onFieldUpdate(BillField.SUPPLIER_NAME, it) },
             modifier = Modifier.fillMaxWidth()
@@ -964,14 +980,14 @@ private fun BillForm(
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Number",
+            fieldName = stringResource(Res.string.contacts_vat_number),
             value = fields.supplierVatNumber,
             onValueChange = { onFieldUpdate(BillField.SUPPLIER_VAT_NUMBER, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Address",
+            fieldName = stringResource(Res.string.contacts_address),
             value = fields.supplierAddress,
             onValueChange = { onFieldUpdate(BillField.SUPPLIER_ADDRESS, it) },
             modifier = Modifier.fillMaxWidth()
@@ -980,29 +996,29 @@ private fun BillForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Bill details section
-        SectionHeader("Bill Details")
+        SectionHeader(stringResource(Res.string.cashflow_bill_details_section))
 
         PTextFieldStandard(
-            fieldName = "Invoice Number",
+            fieldName = stringResource(Res.string.cashflow_invoice_number),
             value = fields.invoiceNumber,
             onValueChange = { onFieldUpdate(BillField.INVOICE_NUMBER, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         DatePickerField(
-            label = "Issue Date",
+            label = stringResource(Res.string.invoice_issue_date),
             value = fields.issueDate,
             onValueChange = { onFieldUpdate(BillField.ISSUE_DATE, it) }
         )
 
         DatePickerField(
-            label = "Due Date",
+            label = stringResource(Res.string.invoice_due_date),
             value = fields.dueDate,
             onValueChange = { onFieldUpdate(BillField.DUE_DATE, it) }
         )
 
         CategoryDropdown(
-            label = "Category",
+            label = stringResource(Res.string.invoice_category),
             value = fields.category,
             onValueChange = { onFieldUpdate(BillField.CATEGORY, it) }
         )
@@ -1010,31 +1026,31 @@ private fun BillForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Amounts section
-        SectionHeader("Amounts")
+        SectionHeader(stringResource(Res.string.cashflow_section_amounts))
 
         PTextFieldStandard(
-            fieldName = "Amount",
+            fieldName = stringResource(Res.string.invoice_amount),
             value = fields.amount,
             onValueChange = { onFieldUpdate(BillField.AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Amount",
+            fieldName = stringResource(Res.string.cashflow_vat_amount),
             value = fields.vatAmount,
             onValueChange = { onFieldUpdate(BillField.VAT_AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Rate",
+            fieldName = stringResource(Res.string.invoice_vat_rate),
             value = fields.vatRate,
             onValueChange = { onFieldUpdate(BillField.VAT_RATE, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Currency",
+            fieldName = stringResource(Res.string.common_currency),
             value = fields.currency,
             onValueChange = { onFieldUpdate(BillField.CURRENCY, it) },
             modifier = Modifier.fillMaxWidth()
@@ -1043,17 +1059,17 @@ private fun BillForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Additional info
-        SectionHeader("Additional Information")
+        SectionHeader(stringResource(Res.string.cashflow_section_additional_information))
 
         PTextFieldStandard(
-            fieldName = "Description",
+            fieldName = stringResource(Res.string.invoice_description),
             value = fields.description,
             onValueChange = { onFieldUpdate(BillField.DESCRIPTION, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Notes",
+            fieldName = stringResource(Res.string.common_notes),
             value = fields.notes,
             onValueChange = { onFieldUpdate(BillField.NOTES, it) },
             modifier = Modifier.fillMaxWidth()
@@ -1076,24 +1092,24 @@ private fun ExpenseForm(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
         // Merchant section
-        SectionHeader("Merchant Information")
+        SectionHeader(stringResource(Res.string.cashflow_merchant_information))
 
         PTextFieldStandard(
-            fieldName = "Merchant",
+            fieldName = stringResource(Res.string.cashflow_merchant),
             value = fields.merchant,
             onValueChange = { onFieldUpdate(ExpenseField.MERCHANT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Address",
+            fieldName = stringResource(Res.string.contacts_address),
             value = fields.merchantAddress,
             onValueChange = { onFieldUpdate(ExpenseField.MERCHANT_ADDRESS, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Number",
+            fieldName = stringResource(Res.string.contacts_vat_number),
             value = fields.merchantVatNumber,
             onValueChange = { onFieldUpdate(ExpenseField.MERCHANT_VAT_NUMBER, it) },
             modifier = Modifier.fillMaxWidth()
@@ -1102,29 +1118,29 @@ private fun ExpenseForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Expense details section
-        SectionHeader("Expense Details")
+        SectionHeader(stringResource(Res.string.cashflow_expense_details_section))
 
         DatePickerField(
-            label = "Date",
+            label = stringResource(Res.string.common_date),
             value = fields.date,
             onValueChange = { onFieldUpdate(ExpenseField.DATE, it) }
         )
 
         PTextFieldStandard(
-            fieldName = "Receipt Number",
+            fieldName = stringResource(Res.string.cashflow_receipt_number),
             value = fields.receiptNumber,
             onValueChange = { onFieldUpdate(ExpenseField.RECEIPT_NUMBER, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         CategoryDropdown(
-            label = "Category",
+            label = stringResource(Res.string.invoice_category),
             value = fields.category,
             onValueChange = { onFieldUpdate(ExpenseField.CATEGORY, it) }
         )
 
         PaymentMethodDropdown(
-            label = "Payment Method",
+            label = stringResource(Res.string.cashflow_payment_method),
             value = fields.paymentMethod,
             onValueChange = { onFieldUpdate(ExpenseField.PAYMENT_METHOD, it) }
         )
@@ -1132,31 +1148,31 @@ private fun ExpenseForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Amounts section
-        SectionHeader("Amounts")
+        SectionHeader(stringResource(Res.string.cashflow_section_amounts))
 
         PTextFieldStandard(
-            fieldName = "Amount",
+            fieldName = stringResource(Res.string.invoice_amount),
             value = fields.amount,
             onValueChange = { onFieldUpdate(ExpenseField.AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Amount",
+            fieldName = stringResource(Res.string.cashflow_vat_amount),
             value = fields.vatAmount,
             onValueChange = { onFieldUpdate(ExpenseField.VAT_AMOUNT, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Rate",
+            fieldName = stringResource(Res.string.invoice_vat_rate),
             value = fields.vatRate,
             onValueChange = { onFieldUpdate(ExpenseField.VAT_RATE, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Currency",
+            fieldName = stringResource(Res.string.common_currency),
             value = fields.currency,
             onValueChange = { onFieldUpdate(ExpenseField.CURRENCY, it) },
             modifier = Modifier.fillMaxWidth()
@@ -1165,7 +1181,7 @@ private fun ExpenseForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Deductibility section
-        SectionHeader("Tax Deductibility")
+        SectionHeader(stringResource(Res.string.cashflow_tax_deductibility))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1173,7 +1189,7 @@ private fun ExpenseForm(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Is Deductible",
+                text = stringResource(Res.string.cashflow_is_deductible),
                 style = MaterialTheme.typography.bodyMedium
             )
             Switch(
@@ -1184,7 +1200,7 @@ private fun ExpenseForm(
 
         if (fields.isDeductible) {
             PTextFieldStandard(
-                fieldName = "Deductible Percentage",
+                fieldName = stringResource(Res.string.cashflow_deductible_percentage),
                 value = fields.deductiblePercentage,
                 onValueChange = { onFieldUpdate(ExpenseField.DEDUCTIBLE_PERCENTAGE, it) },
                 modifier = Modifier.fillMaxWidth()
@@ -1194,17 +1210,17 @@ private fun ExpenseForm(
         HorizontalDivider(modifier = Modifier.padding(vertical = Constrains.Spacing.small))
 
         // Additional info
-        SectionHeader("Additional Information")
+        SectionHeader(stringResource(Res.string.cashflow_section_additional_information))
 
         PTextFieldStandard(
-            fieldName = "Description",
+            fieldName = stringResource(Res.string.invoice_description),
             value = fields.description,
             onValueChange = { onFieldUpdate(ExpenseField.DESCRIPTION, it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldStandard(
-            fieldName = "Notes",
+            fieldName = stringResource(Res.string.common_notes),
             value = fields.notes,
             onValueChange = { onFieldUpdate(ExpenseField.NOTES, it) },
             modifier = Modifier.fillMaxWidth()
@@ -1259,7 +1275,7 @@ private fun DatePickerField(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = value?.toString() ?: "Select date",
+                text = value?.toString() ?: stringResource(Res.string.action_select_date),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (value != null) {
                     MaterialTheme.colorScheme.onSurface
@@ -1269,7 +1285,7 @@ private fun DatePickerField(
             )
             Icon(
                 imageVector = FeatherIcons.Calendar,
-                contentDescription = "Select date",
+                contentDescription = stringResource(Res.string.action_select_date),
                 modifier = Modifier.size(Constrains.IconSize.small),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1321,7 +1337,8 @@ private fun CategoryDropdown(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = value?.name ?: "Select category",
+                    text = value?.let { categoryDisplayName(it) }
+                        ?: stringResource(Res.string.cashflow_select_category),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (value != null) {
                         MaterialTheme.colorScheme.onSurface
@@ -1331,7 +1348,7 @@ private fun CategoryDropdown(
                 )
                 Icon(
                     imageVector = FeatherIcons.ChevronDown,
-                    contentDescription = "Select",
+                    contentDescription = stringResource(Res.string.action_select),
                     modifier = Modifier.size(Constrains.IconSize.small),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1343,7 +1360,7 @@ private fun CategoryDropdown(
             ) {
                 ExpenseCategory.entries.forEach { category ->
                     DropdownMenuItem(
-                        text = { Text(category.name) },
+                        text = { Text(categoryDisplayName(category)) },
                         onClick = {
                             onValueChange(category)
                             expanded = false
@@ -1388,7 +1405,8 @@ private fun PaymentMethodDropdown(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = value?.name ?: "Select payment method",
+                    text = value?.let { paymentMethodDisplayName(it) }
+                        ?: stringResource(Res.string.cashflow_select_payment_method),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (value != null) {
                         MaterialTheme.colorScheme.onSurface
@@ -1398,7 +1416,7 @@ private fun PaymentMethodDropdown(
                 )
                 Icon(
                     imageVector = FeatherIcons.ChevronDown,
-                    contentDescription = "Select",
+                    contentDescription = stringResource(Res.string.action_select),
                     modifier = Modifier.size(Constrains.IconSize.small),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1410,7 +1428,7 @@ private fun PaymentMethodDropdown(
             ) {
                 PaymentMethod.entries.forEach { method ->
                     DropdownMenuItem(
-                        text = { Text(method.name) },
+                        text = { Text(paymentMethodDisplayName(method)) },
                         onClick = {
                             onValueChange(method)
                             expanded = false
@@ -1434,7 +1452,7 @@ private fun ContactSuggestionsChips(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
     ) {
         Text(
-            text = "Suggested contacts:",
+            text = stringResource(Res.string.cashflow_suggested_contacts),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -1470,4 +1488,41 @@ private fun ContactSuggestionsChips(
             }
         }
     }
+}
+
+@Composable
+private fun categoryDisplayName(category: ExpenseCategory): String {
+    val labelRes = when (category) {
+        ExpenseCategory.OfficeSupplies -> Res.string.expense_category_office_supplies
+        ExpenseCategory.Travel -> Res.string.expense_category_travel
+        ExpenseCategory.Meals -> Res.string.expense_category_meals
+        ExpenseCategory.Software -> Res.string.expense_category_software
+        ExpenseCategory.Hardware -> Res.string.expense_category_hardware
+        ExpenseCategory.Utilities -> Res.string.expense_category_utilities
+        ExpenseCategory.Rent -> Res.string.expense_category_rent
+        ExpenseCategory.Insurance -> Res.string.expense_category_insurance
+        ExpenseCategory.Marketing -> Res.string.expense_category_marketing
+        ExpenseCategory.ProfessionalServices -> Res.string.expense_category_professional_services
+        ExpenseCategory.Telecommunications -> Res.string.expense_category_telecommunications
+        ExpenseCategory.Vehicle -> Res.string.expense_category_vehicle
+        ExpenseCategory.Other -> Res.string.expense_category_other
+    }
+
+    return stringResource(labelRes)
+}
+
+@Composable
+private fun paymentMethodDisplayName(method: PaymentMethod): String {
+    val labelRes = when (method) {
+        PaymentMethod.BankTransfer -> Res.string.payment_method_bank_transfer
+        PaymentMethod.CreditCard -> Res.string.payment_method_credit_card
+        PaymentMethod.DebitCard -> Res.string.payment_method_debit_card
+        PaymentMethod.PayPal -> Res.string.payment_method_paypal
+        PaymentMethod.Stripe -> Res.string.payment_method_stripe
+        PaymentMethod.Cash -> Res.string.payment_method_cash
+        PaymentMethod.Check -> Res.string.payment_method_check
+        PaymentMethod.Other -> Res.string.payment_method_other
+    }
+
+    return stringResource(labelRes)
 }

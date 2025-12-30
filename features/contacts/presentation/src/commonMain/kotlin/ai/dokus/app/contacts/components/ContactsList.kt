@@ -1,5 +1,9 @@
 package ai.dokus.app.contacts.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_add_first
+import ai.dokus.app.resources.generated.contacts_add_first_hint
+import ai.dokus.app.resources.generated.contacts_empty
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerBox
 import ai.dokus.foundation.design.components.common.ShimmerLine
@@ -38,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.flow.filter
 import tech.dokus.foundation.app.state.DokusState
 
@@ -194,7 +199,7 @@ private fun ContactsEmptyState(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "No contacts yet",
+                text = stringResource(Res.string.contacts_empty),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -203,7 +208,7 @@ private fun ContactsEmptyState(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Add your first contact to get started with invoices and bills",
+                text = stringResource(Res.string.contacts_add_first_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
@@ -234,7 +239,7 @@ private fun ContactsEmptyState(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Add your first contact",
+                        text = stringResource(Res.string.contacts_add_first),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )

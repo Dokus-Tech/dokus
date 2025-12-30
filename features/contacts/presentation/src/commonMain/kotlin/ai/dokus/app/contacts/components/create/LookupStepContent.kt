@@ -4,6 +4,21 @@ import ai.dokus.app.contacts.viewmodel.CreateContactIntent
 import ai.dokus.app.contacts.viewmodel.CreateContactState
 import ai.dokus.app.contacts.viewmodel.DuplicateVatUi
 import ai.dokus.app.contacts.viewmodel.LookupUiState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_close
+import ai.dokus.app.resources.generated.contacts_add_contact
+import ai.dokus.app.resources.generated.contacts_add_without_vat
+import ai.dokus.app.resources.generated.contacts_lookup_empty
+import ai.dokus.app.resources.generated.contacts_lookup_hint
+import ai.dokus.app.resources.generated.contacts_lookup_label
+import ai.dokus.app.resources.generated.contacts_lookup_location
+import ai.dokus.app.resources.generated.contacts_lookup_no_results
+import ai.dokus.app.resources.generated.contacts_lookup_query_hint
+import ai.dokus.app.resources.generated.contacts_lookup_search_failed
+import ai.dokus.app.resources.generated.country_belgium
+import ai.dokus.app.resources.generated.country_france
+import ai.dokus.app.resources.generated.country_netherlands
+import ai.dokus.app.resources.generated.state_retry
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.clickable
@@ -48,7 +63,9 @@ import compose.icons.feathericons.Search
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import tech.dokus.domain.enums.Country
 import tech.dokus.domain.model.entity.EntityLookup
+import org.jetbrains.compose.resources.stringResource
 
 private const val SEARCH_DEBOUNCE_MS = 300L
 private const val MIN_SEARCH_LENGTH = 3
@@ -105,7 +122,7 @@ fun LookupStepContent(
 
         // Search field - uses local state, NOT MVI state
         PTextFieldStandard(
-            fieldName = "Search by company name or VAT number",
+            fieldName = stringResource(Res.string.contacts_lookup_label),
             value = query,
             icon = FeatherIcons.Search,
             singleLine = true,
@@ -183,7 +200,7 @@ fun LookupStepContent(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             Text(
-                text = "Add without VAT lookup",
+                text = stringResource(Res.string.contacts_add_without_vat),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -202,14 +219,14 @@ private fun LookupHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Add Contact",
+            text = stringResource(Res.string.contacts_add_contact),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.action_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -234,12 +251,12 @@ private fun LookupHint(
         )
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
         Text(
-            text = "Search for a company",
+            text = stringResource(Res.string.contacts_lookup_hint),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = "Enter a company name or VAT number",
+            text = stringResource(Res.string.contacts_lookup_query_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
@@ -298,7 +315,11 @@ private fun LookupResultCard(
             val address = entity.address
             if (address != null) {
                 Text(
-                    text = "${address.city}, ${address.country.dbValue}",
+                    text = stringResource(
+                        Res.string.contacts_lookup_location,
+                        address.city,
+                        address.country.localizedName()
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -318,12 +339,12 @@ private fun LookupEmptyState(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "No companies found",
+            text = stringResource(Res.string.contacts_lookup_empty),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = "No results for \"$query\"",
+            text = stringResource(Res.string.contacts_lookup_no_results, query),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
@@ -342,7 +363,7 @@ private fun LookupErrorState(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Search failed",
+            text = stringResource(Res.string.contacts_lookup_search_failed),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.error
         )
@@ -353,7 +374,15 @@ private fun LookupErrorState(
         )
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
         TextButton(onClick = onRetry) {
-            Text("Retry")
+            Text(stringResource(Res.string.state_retry))
         }
     }
 }
+
+@Composable
+private fun Country.localizedName(): String =
+    when (this) {
+        Country.Belgium -> stringResource(Res.string.country_belgium)
+        Country.Netherlands -> stringResource(Res.string.country_netherlands)
+        Country.France -> stringResource(Res.string.country_france)
+    }

@@ -1,5 +1,7 @@
 package ai.dokus.foundation.design.components.dropdown
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_expand_options
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -25,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Default values for [PFilterDropdown] component.
@@ -61,10 +64,10 @@ object PFilterDropdownDefaults {
  *
  * Example usage:
  * ```kotlin
- * enum class SortOption(override val displayName: String) : FilterOption {
- *     Newest("Newest First"),
- *     Oldest("Oldest First"),
- *     Name("By Name")
+ * enum class SortOption(override val labelRes: StringResource) : FilterOption {
+ *     Newest(Res.string.contacts_sort_created_newest),
+ *     Oldest(Res.string.contacts_sort_created_oldest),
+ *     Name(Res.string.contacts_sort_name_asc)
  * }
  *
  * PFilterDropdown(
@@ -90,7 +93,10 @@ fun <T : FilterOption> PFilterDropdown(
     options: List<T>,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    contentDescription: String = "Expand ${label.removeSuffix(":")} options"
+    contentDescription: String = stringResource(
+        Res.string.action_expand_options,
+        label.removeSuffix(":")
+    )
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -121,7 +127,7 @@ fun <T : FilterOption> PFilterDropdown(
                 Spacer(modifier = Modifier.width(PFilterDropdownDefaults.spacing))
 
                 Text(
-                    text = selectedOption.displayName,
+                    text = stringResource(selectedOption.labelRes),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -145,7 +151,7 @@ fun <T : FilterOption> PFilterDropdown(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = option.displayName,
+                            text = stringResource(option.labelRes),
                             style = MaterialTheme.typography.bodySmall,
                             color = if (option == selectedOption) {
                                 MaterialTheme.colorScheme.primary
@@ -193,7 +199,7 @@ inline fun <reified T> PFilterDropdown(
     selectedOption: T,
     noinline onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    contentDescription: String = "Expand ${label.removeSuffix(":")} options"
+    contentDescription: String
 ) where T : Enum<T>, T : FilterOption {
     PFilterDropdown(
         label = label,

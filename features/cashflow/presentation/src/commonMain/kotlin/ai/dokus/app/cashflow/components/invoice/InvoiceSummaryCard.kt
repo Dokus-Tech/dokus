@@ -111,7 +111,8 @@ fun InvoiceSummaryCard(
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = formState.issueDate?.toString() ?: "-",
+                            text = formState.issueDate?.toString()
+                                ?: stringResource(Res.string.common_empty_value),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -128,7 +129,8 @@ fun InvoiceSummaryCard(
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = formState.dueDate?.toString() ?: "-",
+                            text = formState.dueDate?.toString()
+                                ?: stringResource(Res.string.common_empty_value),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -261,7 +263,7 @@ private fun InvoiceLineItemRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = item.description.ifBlank { "-" },
+            text = item.description.ifBlank { stringResource(Res.string.common_empty_value) },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
@@ -276,14 +278,30 @@ private fun InvoiceLineItemRow(
             modifier = Modifier.weight(0.5f)
         )
         Text(
-            text = if (item.unitPriceDouble > 0) "€${formatDecimal(item.unitPriceDouble)}" else "-",
+            text = if (item.unitPriceDouble > 0) {
+                stringResource(
+                    Res.string.cashflow_amount_with_currency,
+                    stringResource(Res.string.currency_symbol_eur),
+                    formatDecimal(item.unitPriceDouble)
+                )
+            } else {
+                stringResource(Res.string.common_empty_value)
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
         Text(
-            text = if (item.lineTotalDouble > 0) "€${formatDecimal(item.lineTotalDouble)}" else "-",
+            text = if (item.lineTotalDouble > 0) {
+                stringResource(
+                    Res.string.cashflow_amount_with_currency,
+                    stringResource(Res.string.currency_symbol_eur),
+                    formatDecimal(item.lineTotalDouble)
+                )
+            } else {
+                stringResource(Res.string.common_empty_value)
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Medium,

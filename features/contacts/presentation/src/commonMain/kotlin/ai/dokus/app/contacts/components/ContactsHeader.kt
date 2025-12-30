@@ -1,5 +1,9 @@
 package ai.dokus.app.contacts.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_add_contact
+import ai.dokus.app.resources.generated.contacts_search_content_description
+import ai.dokus.app.resources.generated.contacts_search_placeholder
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition
@@ -23,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.foundation.app.network.rememberIsOnline
 
 /**
@@ -60,7 +65,7 @@ internal fun ContactsHeaderSearch(
             ) {
                 Icon(
                     imageVector = FeatherIcons.Search,
-                    contentDescription = "Search contacts"
+                    contentDescription = stringResource(Res.string.contacts_search_content_description)
                 )
             }
         }
@@ -74,7 +79,7 @@ internal fun ContactsHeaderSearch(
             PSearchFieldCompact(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = "Search contacts...",
+                placeholder = stringResource(Res.string.contacts_search_placeholder),
                 modifier = if (isLargeScreen) Modifier else Modifier.fillMaxWidth()
             )
         }
@@ -106,7 +111,7 @@ internal fun ContactsHeaderActions(
         // Add Contact button (primary action)
         // Disabled when server is unreachable since creating contacts requires network
         PButton(
-            text = "Add contact",
+            text = stringResource(Res.string.contacts_add_contact),
             variant = PButtonVariant.Outline,
             icon = Icons.Default.Add,
             iconPosition = PIconPosition.Trailing,

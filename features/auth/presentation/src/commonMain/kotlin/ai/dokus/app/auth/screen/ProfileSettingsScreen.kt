@@ -8,6 +8,7 @@ import ai.dokus.app.auth.viewmodel.ProfileSettingsContainer
 import ai.dokus.app.auth.viewmodel.ProfileSettingsIntent
 import ai.dokus.app.auth.viewmodel.ProfileSettingsState
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.common_empty_value
 import ai.dokus.app.resources.generated.profile_cancel
 import ai.dokus.app.resources.generated.profile_danger_zone
 import ai.dokus.app.resources.generated.profile_deactivate_account
@@ -16,10 +17,14 @@ import ai.dokus.app.resources.generated.profile_edit
 import ai.dokus.app.resources.generated.profile_email
 import ai.dokus.app.resources.generated.profile_first_name
 import ai.dokus.app.resources.generated.profile_last_name
+import ai.dokus.app.resources.generated.profile_load_failed
+import ai.dokus.app.resources.generated.profile_logging_out
 import ai.dokus.app.resources.generated.profile_logout
 import ai.dokus.app.resources.generated.profile_logout_description
 import ai.dokus.app.resources.generated.profile_personal_info
+import ai.dokus.app.resources.generated.profile_reset_to_cloud_failed
 import ai.dokus.app.resources.generated.profile_save
+import ai.dokus.app.resources.generated.profile_save_success
 import ai.dokus.app.resources.generated.profile_settings_title
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
@@ -85,11 +90,12 @@ fun ProfileSettingsScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val navController = LocalNavController.current
+    val saveSuccessMessage = stringResource(Res.string.profile_save_success)
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             ProfileSettingsAction.ShowSaveSuccess -> {
-                snackbarHostState.showSnackbar("Profile saved successfully")
+                snackbarHostState.showSnackbar(saveSuccessMessage)
             }
             is ProfileSettingsAction.ShowSaveError -> {
                 snackbarHostState.showSnackbar(action.message)
@@ -129,6 +135,8 @@ fun IntentReceiver<ProfileSettingsIntent>.ProfileSettingsContent(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
+    val resetToCloudFailedMessage = stringResource(Res.string.profile_reset_to_cloud_failed)
+
     val logger = remember { Logger.withTag("ProfileSettingsContent") }
     val logoutUseCase: LogoutUseCase = koinInject()
     val serverConfigManager: ServerConfigManager = koinInject()
@@ -203,7 +211,7 @@ fun IntentReceiver<ProfileSettingsIntent>.ProfileSettingsContent(
                         },
                         onFailure = { error ->
                             logger.e(error) { "Failed to reset to cloud" }
-                            snackbarHostState.showSnackbar("Failed to reset to cloud")
+                            snackbarHostState.showSnackbar(resetToCloudFailedMessage)
                             isResettingToCloud = false
                         }
                     )
@@ -270,14 +278,16 @@ private fun ProfileViewingSection(
 
             ProfileField(
                 label = stringResource(Res.string.profile_first_name),
-                value = state.user.firstName?.value ?: "-"
+                value = state.user.firstName?.value
+                    ?: stringResource(Res.string.common_empty_value)
             )
 
             Spacer(Modifier.height(12.dp))
 
             ProfileField(
                 label = stringResource(Res.string.profile_last_name),
-                value = state.user.lastName?.value ?: "-"
+                value = state.user.lastName?.value
+                    ?: stringResource(Res.string.common_empty_value)
             )
         }
     }
@@ -416,7 +426,7 @@ private fun ProfileErrorSection() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Failed to load profile",
+                text = stringResource(Res.string.profile_load_failed),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.error
             )
@@ -476,7 +486,11 @@ private fun LogoutSection(
             Spacer(Modifier.height(12.dp))
 
             POutlinedButton(
-                text = if (isLoggingOut) "Logging out..." else stringResource(Res.string.profile_logout),
+                text = if (isLoggingOut) {
+                    stringResource(Res.string.profile_logging_out)
+                } else {
+                    stringResource(Res.string.profile_logout)
+                },
                 enabled = !isLoggingOut,
                 onClick = onLogout,
                 modifier = Modifier.fillMaxWidth()

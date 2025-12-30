@@ -1,5 +1,21 @@
 package ai.dokus.foundation.design.components.navigation
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow
+import ai.dokus.app.resources.generated.cashflow_title
+import ai.dokus.app.resources.generated.chart_bar_trend_up
+import ai.dokus.app.resources.generated.contacts_title
+import ai.dokus.app.resources.generated.home_dashboard
+import ai.dokus.app.resources.generated.nav_banking
+import ai.dokus.app.resources.generated.nav_items
+import ai.dokus.app.resources.generated.nav_profile
+import ai.dokus.app.resources.generated.nav_simulations
+import ai.dokus.app.resources.generated.plus
+import ai.dokus.app.resources.generated.simulations
+import ai.dokus.app.resources.generated.tasks_2
+import ai.dokus.app.resources.generated.user
+import ai.dokus.app.resources.generated.users
+import ai.dokus.app.resources.generated.wallet_2
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,16 +35,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow
-import ai.dokus.app.resources.generated.chart_bar_trend_up
-import ai.dokus.app.resources.generated.plus
-import ai.dokus.app.resources.generated.simulations
-import ai.dokus.app.resources.generated.tasks_2
-import ai.dokus.app.resources.generated.user
-import ai.dokus.app.resources.generated.users
-import ai.dokus.app.resources.generated.wallet_2
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 
 sealed interface TabNavItem {
@@ -42,49 +50,49 @@ sealed interface TabNavItem {
 
     data object Dashboard : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.chart_bar_trend_up)
-        override val title: String @Composable get() = "Dashboard"
+        override val title: String @Composable get() = stringResource(Res.string.home_dashboard)
         override val route: String = "tab/dashboard"
         override val showTopBar: Boolean = false
     }
 
     data object Contacts : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.users)
-        override val title: String @Composable get() = "Contacts"
+        override val title: String @Composable get() = stringResource(Res.string.contacts_title)
         override val route: String = "tab/contacts"
         override val showTopBar: Boolean = false
     }
 
     data object Cashflow : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.cashflow)
-        override val title: String @Composable get() = "Cashflow"
+        override val title: String @Composable get() = stringResource(Res.string.cashflow_title)
         override val route: String = "tab/cashflow"
         override val showTopBar: Boolean = false
     }
 
     data object Simulations : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.simulations)
-        override val title: String @Composable get() = "Simulations"
+        override val title: String @Composable get() = stringResource(Res.string.nav_simulations)
         override val route: String = "tab/simulations"
         override val showTopBar: Boolean = false
     }
 
     data object Items : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.tasks_2)
-        override val title: String @Composable get() = "Items"
+        override val title: String @Composable get() = stringResource(Res.string.nav_items)
         override val route: String = "tab/inventory"
         override val showTopBar: Boolean = false
     }
 
     data object Banking : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.wallet_2)
-        override val title: String @Composable get() = "Banking"
+        override val title: String @Composable get() = stringResource(Res.string.nav_banking)
         override val route: String = "tab/banking"
         override val showTopBar: Boolean = false
     }
 
     data object Profile : TabNavItem {
         override val icon: Painter @Composable get() = painterResource(Res.drawable.user)
-        override val title: String @Composable get() = "Profile"
+        override val title: String @Composable get() = stringResource(Res.string.nav_profile)
         override val route: String = "tab/profile"
         override val showTopBar: Boolean = false
     }

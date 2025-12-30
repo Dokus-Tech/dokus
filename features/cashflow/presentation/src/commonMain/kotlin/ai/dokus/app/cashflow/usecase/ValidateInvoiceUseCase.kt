@@ -1,7 +1,11 @@
 package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
-import kotlinx.datetime.LocalDate
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_validation_client_required
+import ai.dokus.app.resources.generated.invoice_validation_due_date_before_issue
+import ai.dokus.app.resources.generated.invoice_validation_items_required
+import org.jetbrains.compose.resources.getString
 
 /**
  * Validation result for invoice form.
@@ -28,22 +32,22 @@ class ValidateInvoiceUseCase {
      * @param formState The current form state to validate.
      * @return [InvoiceValidationResult] with validation status and any errors.
      */
-    operator fun invoke(formState: CreateInvoiceFormState): InvoiceValidationResult {
+    suspend operator fun invoke(formState: CreateInvoiceFormState): InvoiceValidationResult {
         val errors = mutableMapOf<String, String>()
 
         // Validate client selection
         if (formState.selectedClient == null) {
-            errors[FIELD_CLIENT] = ERROR_CLIENT_REQUIRED
+            errors[FIELD_CLIENT] = getString(Res.string.invoice_validation_client_required)
         }
 
         // Validate line items - at least one valid item required
         if (!formState.items.any { it.isValid }) {
-            errors[FIELD_ITEMS] = ERROR_ITEMS_REQUIRED
+            errors[FIELD_ITEMS] = getString(Res.string.invoice_validation_items_required)
         }
 
         // Validate date constraints
-        validateDates(formState.issueDate, formState.dueDate)?.let { error ->
-            errors[FIELD_DUE_DATE] = error
+        if (formState.issueDate != null && formState.dueDate != null && formState.dueDate < formState.issueDate) {
+            errors[FIELD_DUE_DATE] = getString(Res.string.invoice_validation_due_date_before_issue)
         }
 
         return InvoiceValidationResult(
@@ -52,29 +56,10 @@ class ValidateInvoiceUseCase {
         )
     }
 
-    /**
-     * Validate date constraints.
-     *
-     * @param issueDate The issue date.
-     * @param dueDate The due date.
-     * @return Error message if dates are invalid, null otherwise.
-     */
-    private fun validateDates(issueDate: LocalDate?, dueDate: LocalDate?): String? {
-        if (issueDate != null && dueDate != null && dueDate < issueDate) {
-            return ERROR_DUE_DATE_BEFORE_ISSUE
-        }
-        return null
-    }
-
     companion object {
         // Field keys for error mapping
         const val FIELD_CLIENT = "client"
         const val FIELD_ITEMS = "items"
         const val FIELD_DUE_DATE = "dueDate"
-
-        // Error messages
-        const val ERROR_CLIENT_REQUIRED = "Please select a client"
-        const val ERROR_ITEMS_REQUIRED = "Please add at least one valid line item"
-        const val ERROR_DUE_DATE_BEFORE_ISSUE = "Due date cannot be before issue date"
     }
 }

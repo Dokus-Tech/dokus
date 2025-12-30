@@ -1,6 +1,9 @@
 package ai.dokus.app.contacts.components.create
 
 import ai.dokus.app.contacts.viewmodel.DuplicateVatUi
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_view
+import ai.dokus.app.resources.generated.contacts_duplicate_exists
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Banner shown when a contact with the same VAT number already exists.
@@ -53,7 +57,7 @@ fun DuplicateVatBanner(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = "Contact already exists",
+                text = stringResource(Res.string.contacts_duplicate_exists),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -66,7 +70,7 @@ fun DuplicateVatBanner(
 
         TextButton(onClick = onViewContact) {
             Text(
-                text = "View",
+                text = stringResource(Res.string.action_view),
                 color = MaterialTheme.colorScheme.error
             )
         }

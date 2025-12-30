@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun InvoiceCard(
@@ -61,7 +63,7 @@ internal fun InvoiceCard(
 
             // Due date
             Text(
-                text = "Due: ${invoice.dueDate}",
+                text = stringResource(Res.string.invoice_due_prefix) + " " + invoice.dueDate,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -75,11 +77,11 @@ private fun InvoiceStatusBadge(
     modifier: Modifier = Modifier
 ) {
     val (color, text) = when (status) {
-        InvoiceStatus.Draft -> MaterialTheme.colorScheme.outline to "Draft"
-        InvoiceStatus.Sent -> MaterialTheme.colorScheme.primary to "Sent"
-        InvoiceStatus.Paid -> MaterialTheme.colorScheme.tertiary to "Paid"
-        InvoiceStatus.Overdue -> MaterialTheme.colorScheme.error to "Overdue"
-        InvoiceStatus.Cancelled -> MaterialTheme.colorScheme.onSurfaceVariant to "Cancelled"
+        InvoiceStatus.Draft -> MaterialTheme.colorScheme.outline to stringResource(Res.string.invoice_status_draft)
+        InvoiceStatus.Sent -> MaterialTheme.colorScheme.primary to stringResource(Res.string.invoice_status_sent)
+        InvoiceStatus.Paid -> MaterialTheme.colorScheme.tertiary to stringResource(Res.string.invoice_status_paid)
+        InvoiceStatus.Overdue -> MaterialTheme.colorScheme.error to stringResource(Res.string.invoice_status_overdue)
+        InvoiceStatus.Cancelled -> MaterialTheme.colorScheme.onSurfaceVariant to stringResource(Res.string.invoice_status_cancelled)
         else -> MaterialTheme.colorScheme.onSurfaceVariant to status.name
     }
 

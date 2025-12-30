@@ -1,6 +1,11 @@
 package tech.dokus.app.screens
 
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_search
+import ai.dokus.app.resources.generated.search_placeholder
+import ai.dokus.app.resources.generated.settings_select_workspace
+import ai.dokus.app.resources.generated.settings_switch_workspace
 import ai.dokus.foundation.design.components.AvatarShape
 import ai.dokus.foundation.design.components.AvatarSize
 import ai.dokus.foundation.design.components.CompanyAvatarImage
@@ -57,6 +62,7 @@ import tech.dokus.app.viewmodel.DashboardIntent
 import tech.dokus.app.viewmodel.DashboardState
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.isSuccess
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Dashboard screen using FlowMVI Container pattern.
@@ -116,7 +122,7 @@ internal fun DashboardScreen(
                             ) {
                                 Icon(
                                     imageVector = FeatherIcons.Search,
-                                    contentDescription = "Search"
+                                    contentDescription = stringResource(Res.string.action_search)
                                 )
                             }
                         }
@@ -129,7 +135,7 @@ internal fun DashboardScreen(
                             PSearchFieldCompact(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                placeholder = "Search...",
+                                placeholder = stringResource(Res.string.search_placeholder),
                                 modifier = if (isLargeScreen) Modifier else Modifier.fillMaxWidth()
                             )
                         }
@@ -152,13 +158,14 @@ internal fun DashboardScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = currentTenant?.displayName?.value ?: "Select Workspace",
+                            text = currentTenant?.displayName?.value
+                                ?: stringResource(Res.string.settings_select_workspace),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.SwitchAccount,
-                            contentDescription = "Switch workspace",
+                            contentDescription = stringResource(Res.string.settings_switch_workspace),
                             modifier = Modifier.size(20.dp)
                         )
                     }

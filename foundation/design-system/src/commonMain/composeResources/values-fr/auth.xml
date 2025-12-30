@@ -15,4 +15,67 @@
     <string name="auth_register_button">S\'inscrire</string>
     <string name="auth_has_account_prefix">Vous avez déjà un compte ? </string>
     <string name="auth_login_link">Se connecter</string>
+
+    <!-- Register Steps -->
+    <string name="auth_register_profile_title">Votre profil</string>
+    <string name="auth_register_credentials_title">Identifiants</string>
+    <string name="auth_register_success_title">Inscription terminée</string>
+
+    <!-- Workspace Wizard -->
+    <string name="auth_step_of">Étape %1$d sur %2$d</string>
+    <string name="auth_workspace_type_prompt">Choisissez votre type d\'espace de travail</string>
+    <string name="auth_workspace_type_company_description">Pour les entreprises enregistrées</string>
+    <string name="auth_workspace_type_freelancer_description">Pour les freelances individuels</string>
+    <string name="auth_workspace_type_unavailable">L\'espace de travail freelance existe déjà</string>
+    <string name="auth_your_name">Votre nom</string>
+    <string name="auth_company_name_prompt">Nom de l\'entreprise</string>
+    <string name="auth_company_name_subtitle">Nous rechercherons les détails de votre entreprise</string>
+    <string name="auth_company_name_label">Nom de l\'entreprise</string>
+    <string name="auth_company_name_searching">Recherche...</string>
+    <string name="auth_company_lookup_failed">Échec de la recherche de l\'entreprise</string>
+    <string name="auth_business_details">Détails de l\'entreprise</string>
+    <string name="auth_business_details_subtitle">Ajoutez la TVA et l\'adresse</string>
+
+    <!-- Entity Confirmation -->
+    <string name="auth_entity_single_prompt">Est-ce votre entreprise ?</string>
+    <string name="auth_entity_single_confirm">Utiliser cette entreprise</string>
+    <string name="auth_entity_manual_entry">Saisir manuellement</string>
+    <string name="auth_entity_multiple_title">Sélectionnez votre entreprise</string>
+    <string name="auth_entity_multiple_subtitle">Nous avons trouvé plusieurs correspondances. Choisissez-en une ou saisissez-la manuellement.</string>
+
+    <!-- Server Connection -->
+    <string name="auth_server_connection">Connexion au serveur</string>
+    <string name="auth_server_label">Serveur</string>
+    <string name="auth_dokus_cloud">Dokus Cloud</string>
+    <string name="auth_server_url">URL du serveur</string>
+    <string name="auth_server_version">Version</string>
+    <string name="auth_change_server">Changer de serveur</string>
+    <string name="auth_reset_cloud">Réinitialiser vers le cloud</string>
+    <string name="auth_protocol_http">HTTP</string>
+    <string name="auth_protocol_https">HTTPS</string>
+    <string name="auth_protocol_selector">Sélecteur de protocole</string>
+    <string name="auth_server_found">Serveur trouvé</string>
+    <string name="auth_server_name_label">Nom du serveur</string>
+    <string name="auth_server_features_label">Fonctionnalités</string>
+    <string name="auth_server_connecting_will">La connexion va :</string>
+    <string name="auth_server_logout_warning">Vous serez déconnecté du serveur actuel.</string>
+    <string name="auth_server_reset_warning">Les données locales seront effacées.</string>
+    <string name="auth_server_reauth_warning">Vous devrez vous reconnecter.</string>
+    <string name="auth_server_details_title">Détails du serveur</string>
+    <string name="auth_protocol_label">Protocole</string>
+    <string name="auth_host_label">Hôte</string>
+    <string name="auth_port_label">Port</string>
+    <string name="auth_validating">Validation...</string>
+    <string name="auth_connecting">Connexion...</string>
+    <string name="auth_validate_connection">Valider la connexion</string>
+    <string name="auth_checking_server">Vérification du serveur...</string>
+    <string name="auth_use_cloud">Utiliser Dokus Cloud</string>
+    <string name="auth_currently_connected_to">Actuellement connecté à</string>
+    <string name="auth_need_help">Besoin d\'aide ?</string>
+    <string name="auth_help_description">Saisissez les détails du serveur ou passez au cloud.</string>
+    <string name="auth_host_required">L\'hôte est requis</string>
+    <string name="auth_host_no_spaces">L\'hôte ne peut pas contenir d\'espaces</string>
+    <string name="auth_port_required">Le port est requis</string>
+    <string name="auth_port_invalid_number">Le port doit être un nombre</string>
+    <string name="auth_port_out_of_range">Le port doit être compris entre 1 et 65535</string>
 </resources>

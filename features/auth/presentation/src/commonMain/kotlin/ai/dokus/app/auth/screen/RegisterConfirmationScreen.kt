@@ -1,5 +1,9 @@
 package ai.dokus.app.auth.screen
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_continue
+import ai.dokus.app.resources.generated.auth_register_success_title
+import ai.dokus.app.resources.generated.registration_success_message
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.text.AppNameText
 import ai.dokus.foundation.design.components.text.CopyRightText
@@ -23,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RegisterConfirmationScreen() {
@@ -74,12 +79,15 @@ internal fun RegistrationConfirmationForm(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        SectionTitle("Great news", horizontalArrangement = Arrangement.Center)
+        SectionTitle(
+            text = stringResource(Res.string.auth_register_success_title),
+            horizontalArrangement = Arrangement.Center
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "You have successfully registered, and now you can continue to explore all the exciting features we have to offer.",
+            text = stringResource(Res.string.registration_success_message),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.bodyLarge
@@ -88,7 +96,7 @@ internal fun RegistrationConfirmationForm(
         Spacer(modifier = Modifier.height(24.dp))
 
         PPrimaryButton(
-            text = "Continue",
+            text = stringResource(Res.string.action_continue),
             modifier = Modifier.fillMaxWidth(),
             onClick = onContinueClick
         )

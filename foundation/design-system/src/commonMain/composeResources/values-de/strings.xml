@@ -33,4 +33,57 @@
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">STRG</string>
+
+    <!-- Navigation -->
+    <string name="nav_simulations">Simulationen</string>
+    <string name="nav_items">Posten</string>
+    <string name="nav_banking">Banking</string>
+    <string name="nav_profile">Profil</string>
+
+    <!-- Chat -->
+    <string name="chat_title">KI-Chat</string>
+    <string name="chat_document_title_fallback">Dokumenten-Chat</string>
+    <string name="chat_title_all_documents">Chat mit Dokumenten</string>
+    <string name="chat_scope_single_document">Einzelnes Dokument</string>
+    <string name="chat_scope_all_documents">Alle Dokumente</string>
+    <string name="chat_new_conversation">Neue Konversation</string>
+    <string name="chat_history_action">Chatverlauf</string>
+    <string name="chat_more_options">Weitere Optionen</string>
+    <string name="chat_switch_to_all_documents">Zu allen Dokumenten wechseln</string>
+    <string name="chat_expand_all_citations">Alle Zitate erweitern</string>
+    <string name="chat_collapse_all_citations">Alle Zitate einklappen</string>
+    <string name="chat_loading">Chat wird geladen...</string>
+    <string name="chat_thinking">Denke nach...</string>
+    <string name="chat_prompt_single_document">Stelle eine Frage zu %1$s</string>
+    <string name="chat_this_document">diesem Dokument</string>
+    <string name="chat_prompt_all_documents">Stelle eine Frage zu deinen Dokumenten</string>
+    <string name="chat_empty_description_single">Ich kann Informationen finden, Inhalte zusammenfassen oder spezifische Fragen zum Dokument beantworten.</string>
+    <string name="chat_empty_description_all">Ich kann alle bestätigten Dokumente durchsuchen, um relevante Informationen zu finden und deine Fragen zu beantworten.</string>
+    <string name="chat_try_asking">Versuche zu fragen:</string>
+    <string name="chat_example_total_amount">Wie hoch ist der Gesamtbetrag?</string>
+    <string name="chat_example_spend_last_month">Was habe ich letzten Monat ausgegeben?</string>
+    <string name="chat_example_due_date">Wann ist das Fälligkeitsdatum?</string>
+    <string name="chat_example_invoices_company">Zeige Rechnungen von Firma X</string>
+    <string name="chat_example_format">"%1$s"</string>
+    <string name="chat_message_too_long">Nachricht zu lang (max. %1$d Zeichen)</string>
+    <string name="chat_input_placeholder">Stelle eine Frage...</string>
+    <string name="chat_history_title">Chatverlauf</string>
+    <string name="chat_history_empty">Keine vorherigen Unterhaltungen</string>
+    <string name="chat_new_chat">Neuer Chat</string>
+    <string name="chat_general_chat">Allgemeiner Chat</string>
+    <string name="chat_message_count_single">%1$d Nachricht</string>
+    <string name="chat_message_count_plural">%1$d Nachrichten</string>
+    <string name="chat_error_load_conversation">Konversation konnte nicht geladen werden: %1$s</string>
+    <string name="chat_error_no_document_selected">Kein Dokument ausgewählt</string>
+    <string name="chat_error_send_message">Nachricht konnte nicht gesendet werden: %1$s</string>
+    <string name="chat_error_invalid_document_reference">Ungültige Dokumentreferenz</string>
+    <string name="chat_send_message">Nachricht senden</string>
+    <string name="chat_document_fallback">Dokument</string>
+    <string name="chat_page_number">Seite %1$d</string>
+    <string name="chat_expand_citation">Zitat erweitern</string>
+    <string name="chat_collapse_citation">Zitat einklappen</string>
+    <string name="chat_view_source_document">Quelldokument anzeigen</string>
+    <string name="chat_sources_count">Quellen (%1$d)</string>
+    <string name="chat_expand_sources">Quellen erweitern</string>
+    <string name="chat_collapse_sources">Quellen einklappen</string>
 </resources>

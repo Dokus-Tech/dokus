@@ -15,4 +15,67 @@
     <string name="auth_register_button">Registrarse</string>
     <string name="auth_has_account_prefix">¿Ya tienes cuenta? </string>
     <string name="auth_login_link">Iniciar sesión</string>
+
+    <!-- Register Steps -->
+    <string name="auth_register_profile_title">Tu perfil</string>
+    <string name="auth_register_credentials_title">Credenciales</string>
+    <string name="auth_register_success_title">Registro completo</string>
+
+    <!-- Workspace Wizard -->
+    <string name="auth_step_of">Paso %1$d de %2$d</string>
+    <string name="auth_workspace_type_prompt">Elige tu tipo de espacio de trabajo</string>
+    <string name="auth_workspace_type_company_description">Para empresas registradas</string>
+    <string name="auth_workspace_type_freelancer_description">Para freelancers individuales</string>
+    <string name="auth_workspace_type_unavailable">El espacio de trabajo de freelancer ya existe</string>
+    <string name="auth_your_name">Tu nombre</string>
+    <string name="auth_company_name_prompt">Nombre de la empresa</string>
+    <string name="auth_company_name_subtitle">Buscaremos los detalles de tu empresa</string>
+    <string name="auth_company_name_label">Nombre de la empresa</string>
+    <string name="auth_company_name_searching">Buscando...</string>
+    <string name="auth_company_lookup_failed">Falló la búsqueda de la empresa</string>
+    <string name="auth_business_details">Detalles de la empresa</string>
+    <string name="auth_business_details_subtitle">Añade IVA y dirección</string>
+
+    <!-- Entity Confirmation -->
+    <string name="auth_entity_single_prompt">¿Es esta tu empresa?</string>
+    <string name="auth_entity_single_confirm">Usar esta empresa</string>
+    <string name="auth_entity_manual_entry">Introducir manualmente</string>
+    <string name="auth_entity_multiple_title">Selecciona tu empresa</string>
+    <string name="auth_entity_multiple_subtitle">Encontramos varias coincidencias. Elige una o introdúcela manualmente.</string>
+
+    <!-- Server Connection -->
+    <string name="auth_server_connection">Conexión del servidor</string>
+    <string name="auth_server_label">Servidor</string>
+    <string name="auth_dokus_cloud">Dokus Cloud</string>
+    <string name="auth_server_url">URL del servidor</string>
+    <string name="auth_server_version">Versión</string>
+    <string name="auth_change_server">Cambiar servidor</string>
+    <string name="auth_reset_cloud">Restablecer a la nube</string>
+    <string name="auth_protocol_http">HTTP</string>
+    <string name="auth_protocol_https">HTTPS</string>
+    <string name="auth_protocol_selector">Selector de protocolo</string>
+    <string name="auth_server_found">Servidor encontrado</string>
+    <string name="auth_server_name_label">Nombre del servidor</string>
+    <string name="auth_server_features_label">Funciones</string>
+    <string name="auth_server_connecting_will">Conectar hará:</string>
+    <string name="auth_server_logout_warning">Se cerrará la sesión en el servidor actual.</string>
+    <string name="auth_server_reset_warning">Se borrarán los datos locales.</string>
+    <string name="auth_server_reauth_warning">Tendrás que iniciar sesión de nuevo.</string>
+    <string name="auth_server_details_title">Detalles del servidor</string>
+    <string name="auth_protocol_label">Protocolo</string>
+    <string name="auth_host_label">Host</string>
+    <string name="auth_port_label">Puerto</string>
+    <string name="auth_validating">Validando...</string>
+    <string name="auth_connecting">Conectando...</string>
+    <string name="auth_validate_connection">Validar conexión</string>
+    <string name="auth_checking_server">Comprobando servidor...</string>
+    <string name="auth_use_cloud">Usar Dokus Cloud</string>
+    <string name="auth_currently_connected_to">Actualmente conectado a</string>
+    <string name="auth_need_help">¿Necesitas ayuda?</string>
+    <string name="auth_help_description">Introduce los datos del servidor o cambia a la nube.</string>
+    <string name="auth_host_required">El host es obligatorio</string>
+    <string name="auth_host_no_spaces">El host no puede contener espacios</string>
+    <string name="auth_port_required">El puerto es obligatorio</string>
+    <string name="auth_port_invalid_number">El puerto debe ser un número</string>
+    <string name="auth_port_out_of_range">El puerto debe estar entre 1 y 65535</string>
 </resources>

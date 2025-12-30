@@ -5,6 +5,7 @@ import ai.dokus.app.auth.viewmodel.LoginContainer
 import ai.dokus.app.auth.viewmodel.LoginIntent
 import ai.dokus.app.auth.viewmodel.LoginState
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_or
 import ai.dokus.app.resources.generated.app_name
 import ai.dokus.app.resources.generated.auth_email_label
 import ai.dokus.app.resources.generated.auth_forgot_password
@@ -12,6 +13,7 @@ import ai.dokus.app.resources.generated.auth_no_account_prefix
 import ai.dokus.app.resources.generated.auth_password_label
 import ai.dokus.app.resources.generated.auth_sign_in_button
 import ai.dokus.app.resources.generated.auth_sign_up_link
+import ai.dokus.app.resources.generated.connect_to_server
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
@@ -23,7 +25,6 @@ import ai.dokus.foundation.design.components.fields.PTextFieldPasswordDefaults
 import ai.dokus.foundation.design.components.layout.TwoPaneContainer
 import ai.dokus.foundation.design.constrains.limitWidthCenteredContent
 import ai.dokus.foundation.design.constrains.withContentPadding
-import tech.dokus.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -62,6 +63,7 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.exceptionIfError
 
@@ -203,7 +205,7 @@ private fun IntentReceiver<LoginIntent>.LoginContent(
 
                 // "or" divider
                 Text(
-                    text = "or",
+                    text = stringResource(Res.string.action_or),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -213,7 +215,7 @@ private fun IntentReceiver<LoginIntent>.LoginContent(
 
                 // Connect to Server Button
                 POutlinedButton(
-                    text = "Connect to server",
+                    text = stringResource(Res.string.connect_to_server),
                     onClick = {
                         navController.navigateTo(AuthDestination.ServerConnection())
                     },

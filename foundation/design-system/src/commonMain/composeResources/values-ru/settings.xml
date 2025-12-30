@@ -103,6 +103,40 @@
     <string name="peppol_connection_successful">Подключение успешно!</string>
     <string name="peppol_delete_warning">Удаление настроек Peppol отключит возможности электронного выставления счетов.</string>
 
+    <!-- Additional Settings -->
+    <string name="settings_save_failed">Не удалось сохранить настройки</string>
+    <string name="settings_unknown_section">Неизвестный раздел настроек</string>
+    <string name="profile_logging_out">Выход из системы...</string>
+    <string name="profile_reset_to_cloud_failed">Не удалось сбросить на облако</string>
+    <string name="workspace_add">Добавить рабочее пространство</string>
+    <string name="workspace_type_company">Компания</string>
+    <string name="workspace_type_freelancer">Фрилансер</string>
+    <string name="workspace_create_failed">Не удалось создать рабочее пространство</string>
+    <string name="workspace_select_failed">Не удалось выбрать рабочее пространство</string>
+    <string name="workspace_settings_load_failed">Не удалось загрузить настройки рабочего пространства</string>
+    <string name="workspace_company_logo">Логотип компании</string>
+    <string name="workspace_avatar_upload_failed">Не удалось загрузить логотип компании</string>
+    <string name="workspace_avatar_delete_failed">Не удалось удалить логотип компании</string>
+    <string name="peppol_connect_title">Подключить провайдера Peppol</string>
+    <string name="peppol_connect_title_with_provider">Подключить %1$s</string>
+    <string name="peppol_select_provider_hint">Выберите провайдера, чтобы продолжить</string>
+    <string name="peppol_provider_recommand_description">Рекомендуется для быстрого подключения</string>
+    <string name="peppol_more_providers_coming">Скоро появятся новые провайдеры</string>
+    <string name="peppol_connected_to">Подключено к %1$s</string>
+    <string name="peppol_get_credentials_title">Получите ваши API-данные</string>
+    <string name="peppol_instruction_visit_site">Посетите сайт провайдера</string>
+    <string name="peppol_instruction_create_account">Создайте аккаунт</string>
+    <string name="peppol_instruction_navigate_api">Перейдите к API-данным</string>
+    <string name="peppol_instruction_generate_keys">Сгенерируйте API-ключи</string>
+    <string name="peppol_instruction_copy_credentials">Скопируйте данные ниже</string>
+    <string name="peppol_open_provider">Открыть сайт провайдера</string>
+    <string name="peppol_select_company_title">Выберите компанию</string>
+    <string name="peppol_multiple_companies_hint">Найдено несколько компаний, выберите одну</string>
+    <string name="peppol_enterprise_value">Компания</string>
+    <string name="peppol_no_companies_title">Компании не найдены</string>
+    <string name="peppol_no_companies_hint">Создайте компанию на платформе провайдера, чтобы продолжить</string>
+    <string name="peppol_create_company_on_provider">Создать компанию у провайдера</string>
+
     <!-- Appearance Settings -->
     <string name="appearance_settings_title">Оформление</string>
     <string name="appearance_theme">Тема</string>

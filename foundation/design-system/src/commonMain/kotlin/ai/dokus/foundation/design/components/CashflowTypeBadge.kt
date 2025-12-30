@@ -1,12 +1,16 @@
 package ai.dokus.foundation.design.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_cash_in
+import ai.dokus.app.resources.generated.cashflow_cash_out
+import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import ai.dokus.foundation.design.constrains.Constrains
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Type of cashflow transaction badge
@@ -33,13 +37,13 @@ fun CashflowTypeBadge(
         CashflowType.CashIn -> Triple(
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer,
-            "CASH-IN"
+            stringResource(Res.string.cashflow_cash_in).uppercase()
         )
 
         CashflowType.CashOut -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "CASH-OUT"
+            stringResource(Res.string.cashflow_cash_out).uppercase()
         )
     }
 

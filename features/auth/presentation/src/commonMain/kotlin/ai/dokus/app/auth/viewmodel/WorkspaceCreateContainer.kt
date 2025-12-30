@@ -5,17 +5,11 @@ import ai.dokus.app.auth.model.EntityConfirmationState
 import ai.dokus.app.auth.model.LookupState
 import ai.dokus.app.auth.model.WorkspaceWizardStep
 import ai.dokus.app.auth.repository.AuthRepository
-import tech.dokus.domain.usecases.SearchCompanyUseCase
-import tech.dokus.domain.DisplayName
-import tech.dokus.domain.LegalName
-import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.TenantPlan
-import tech.dokus.domain.enums.TenantType
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.entity.EntityLookup
-import tech.dokus.domain.model.UpsertTenantAddressRequest
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_company_lookup_failed
+import ai.dokus.app.resources.generated.workspace_create_failed
 import ai.dokus.foundation.platform.Logger
+import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -23,6 +17,16 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.TenantPlan
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.domain.usecases.SearchCompanyUseCase
 
 internal typealias WorkspaceCreateCtx = PipelineContext<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction>
 
@@ -167,7 +171,7 @@ internal class WorkspaceCreateContainer(
                     logger.e(error) { "Company lookup failed" }
                     updateState {
                         copy(
-                            lookupState = LookupState.Error(error.message ?: "Lookup failed"),
+                            lookupState = LookupState.Error(Res.string.auth_company_lookup_failed),
                             // Still allow manual entry
                             step = WorkspaceWizardStep.VatAndAddress
                         )
@@ -333,7 +337,11 @@ internal class WorkspaceCreateContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to create workspace" }
-                    action(WorkspaceCreateAction.ShowCreationError(error.message ?: "Failed to create workspace"))
+                    action(
+                        WorkspaceCreateAction.ShowCreationError(
+                            getString(Res.string.workspace_create_failed)
+                        )
+                    )
                     updateState {
                         WorkspaceCreateState.Error(
                             exception = error.asDokusException,

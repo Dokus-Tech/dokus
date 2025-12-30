@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import tech.dokus.domain.model.DocumentDto
@@ -42,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Document upload sidebar for desktop.
@@ -160,7 +162,7 @@ fun DocumentUploadSidebar(
 
                         // Instructions
                         Text(
-                            text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format.",
+                            text = stringResource(Res.string.upload_instructions),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -173,7 +175,7 @@ fun DocumentUploadSidebar(
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
                             Text(
-                                text = "Don't have the application? Click here",
+                                text = stringResource(Res.string.upload_no_app_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -184,7 +186,7 @@ fun DocumentUploadSidebar(
                         // Upload list section header
                         if (tasks.isNotEmpty()) {
                             Text(
-                                text = "Uploads",
+                                text = stringResource(Res.string.upload_uploads_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -221,7 +223,7 @@ private fun SidebarHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Add Document",
+            text = stringResource(Res.string.cashflow_add_document),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -229,7 +231,7 @@ private fun SidebarHeader(
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.action_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

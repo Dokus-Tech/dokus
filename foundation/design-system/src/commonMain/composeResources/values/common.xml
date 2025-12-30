@@ -11,6 +11,25 @@
     <string name="action_reject">Reject</string>
     <string name="action_search">Search</string>
     <string name="action_or">or</string>
+    <string name="action_next">Next</string>
+    <string name="action_change">Change</string>
+    <string name="action_close">Close</string>
+    <string name="action_upload">Upload</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_view">View</string>
+    <string name="action_done">Done</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_clear_field">Clear %1$s</string>
+    <string name="action_expand_options">Expand options</string>
+    <string name="action_expand">Expand</string>
+    <string name="action_collapse">Collapse</string>
+    <string name="action_select">Select</string>
+    <string name="action_select_date">Select date</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_fit">Fit</string>
+    <string name="action_zoom_in">Zoom in</string>
+    <string name="action_zoom_out">Zoom out</string>
 
     <!-- Legacy aliases for backward compatibility -->
     <string name="back">Back</string>
@@ -25,6 +44,68 @@
     <string name="state_error">An error occurred</string>
     <string name="state_empty">No data available</string>
     <string name="state_retry">Retry</string>
+    <string name="state_connecting">Connecting...</string>
+    <string name="state_saving">Saving...</string>
+    <string name="state_confirming">Confirming...</string>
+    <string name="state_unsaved_changes">You have unsaved changes</string>
+    <string name="state_offline">Offline</string>
+    <string name="state_creating">Creating...</string>
+    <string name="state_uploading">Uploading...</string>
+    <string name="state_sending">Sending...</string>
+    <string name="state_removing">Removing...</string>
+
+    <!-- Common Values -->
+    <string name="common_unknown">Unknown</string>
+    <string name="common_empty_value">-</string>
+    <string name="common_label_value">%1$s: %2$s</string>
+    <string name="common_numbered_step">%1$d. %2$s</string>
+    <string name="common_currency">Currency</string>
+    <string name="common_bank_account">Bank account</string>
+    <string name="common_notes">Notes</string>
+    <string name="common_date">Date</string>
+    <string name="common_vat_value">VAT: %1$s</string>
+    <string name="common_country_value">Country: %1$s</string>
+    <string name="common_action_irreversible">This action is irreversible</string>
+    <string name="search_placeholder">Search...</string>
+    <string name="field_required">%1$s *</string>
+    <string name="field_optional">%1$s (optional)</string>
+
+    <!-- Connection -->
+    <string name="connection_server_unreachable">Server unreachable</string>
+    <string name="connection_connected">Connected</string>
+
+    <!-- Dates -->
+    <string name="date_format_long">%1$s %2$d, %3$d</string>
+    <string name="date_format_short">%1$s %2$d, %3$d</string>
+    <string name="date_month_long_january">January</string>
+    <string name="date_month_long_february">February</string>
+    <string name="date_month_long_march">March</string>
+    <string name="date_month_long_april">April</string>
+    <string name="date_month_long_may">May</string>
+    <string name="date_month_long_june">June</string>
+    <string name="date_month_long_july">July</string>
+    <string name="date_month_long_august">August</string>
+    <string name="date_month_long_september">September</string>
+    <string name="date_month_long_october">October</string>
+    <string name="date_month_long_november">November</string>
+    <string name="date_month_long_december">December</string>
+    <string name="date_month_short_jan">Jan</string>
+    <string name="date_month_short_feb">Feb</string>
+    <string name="date_month_short_mar">Mar</string>
+    <string name="date_month_short_apr">Apr</string>
+    <string name="date_month_short_may">May</string>
+    <string name="date_month_short_jun">Jun</string>
+    <string name="date_month_short_jul">Jul</string>
+    <string name="date_month_short_aug">Aug</string>
+    <string name="date_month_short_sep">Sep</string>
+    <string name="date_month_short_oct">Oct</string>
+    <string name="date_month_short_nov">Nov</string>
+    <string name="date_month_short_dec">Dec</string>
+
+    <!-- Countries -->
+    <string name="country_belgium">Belgium</string>
+    <string name="country_france">France</string>
+    <string name="country_netherlands">Netherlands</string>
 
     <!-- Under Development -->
     <string name="under_development_title">Building Something Reliable</string>

@@ -1,5 +1,17 @@
 package ai.dokus.app.auth.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.action_connect
+import ai.dokus.app.resources.generated.auth_server_connecting_will
+import ai.dokus.app.resources.generated.auth_server_features_label
+import ai.dokus.app.resources.generated.auth_server_found
+import ai.dokus.app.resources.generated.auth_server_logout_warning
+import ai.dokus.app.resources.generated.auth_server_name_label
+import ai.dokus.app.resources.generated.auth_server_reauth_warning
+import ai.dokus.app.resources.generated.auth_server_reset_warning
+import ai.dokus.app.resources.generated.auth_server_url
+import ai.dokus.app.resources.generated.auth_server_version
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Confirmation dialog shown after server validation.
@@ -60,7 +73,7 @@ fun ServerConfirmationDialog(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Server Found",
+                    text = stringResource(Res.string.auth_server_found),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -76,14 +89,17 @@ fun ServerConfirmationDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        ServerInfoRow("Name", serverInfo.name)
+                        ServerInfoRow(stringResource(Res.string.auth_server_name_label), serverInfo.name)
                         Spacer(modifier = Modifier.height(8.dp))
-                        ServerInfoRow("Version", serverInfo.version)
+                        ServerInfoRow(stringResource(Res.string.auth_server_version), serverInfo.version)
                         Spacer(modifier = Modifier.height(8.dp))
-                        ServerInfoRow("URL", config.baseUrl)
+                        ServerInfoRow(stringResource(Res.string.auth_server_url), config.baseUrl)
                         if (serverInfo.features.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            ServerInfoRow("Features", serverInfo.features.joinToString(", "))
+                            ServerInfoRow(
+                                stringResource(Res.string.auth_server_features_label),
+                                serverInfo.features.joinToString(", ")
+                            )
                         }
                     }
                 }
@@ -107,24 +123,24 @@ fun ServerConfirmationDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Connecting will:",
+                            text = stringResource(Res.string.auth_server_connecting_will),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "\u2022 Log you out of the current server",
+                            text = stringResource(Res.string.auth_server_logout_warning),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "\u2022 Clear all local data and cached files",
+                            text = stringResource(Res.string.auth_server_reset_warning),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "\u2022 Require you to sign in again",
+                            text = stringResource(Res.string.auth_server_reauth_warning),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -135,7 +151,7 @@ fun ServerConfirmationDialog(
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
-                    text = "Connect",
+                    text = stringResource(Res.string.action_connect),
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -144,7 +160,7 @@ fun ServerConfirmationDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Cancel",
+                    text = stringResource(Res.string.action_cancel),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

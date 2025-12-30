@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.presentation.chat
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.cashflow.usecase.SendChatMessageUseCase
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -166,7 +168,12 @@ internal class ChatContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to load session: $sessionId" }
                     updateState { copy(isSending = false) }
-                    action(ChatAction.ShowError("Failed to load conversation: ${error.message}"))
+                    val reason = error.message ?: getString(Res.string.common_unknown)
+                    action(
+                        ChatAction.ShowError(
+                            getString(Res.string.chat_error_load_conversation, reason)
+                        )
+                    )
                 }
             )
         }
@@ -238,7 +245,11 @@ internal class ChatContainer(
                         ChatScope.SingleDoc -> {
                             val docId = documentId
                             if (docId == null) {
-                                action(ChatAction.ShowError("No document selected"))
+                                action(
+                                    ChatAction.ShowError(
+                                        getString(Res.string.chat_error_no_document_selected)
+                                    )
+                                )
                                 withState<ChatState.Content, _> {
                                     updateState {
                                         copy(
@@ -309,7 +320,12 @@ internal class ChatContainer(
                             isSending = false
                         )
                     }
-                    action(ChatAction.ShowError("Failed to send message: ${error.message}"))
+                    val reason = error.message ?: getString(Res.string.common_unknown)
+                    action(
+                        ChatAction.ShowError(
+                            getString(Res.string.chat_error_send_message, reason)
+                        )
+                    )
                 }
             }
         )
@@ -451,7 +467,7 @@ internal class ChatContainer(
             DocumentId.parse(documentIdStr)
         } catch (e: Exception) {
             logger.e(e) { "Invalid document ID: $documentIdStr" }
-            action(ChatAction.ShowError("Invalid document reference"))
+            action(ChatAction.ShowError(getString(Res.string.chat_error_invalid_document_reference)))
             return
         }
 

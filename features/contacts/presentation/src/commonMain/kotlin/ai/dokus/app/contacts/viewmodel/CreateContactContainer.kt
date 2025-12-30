@@ -2,9 +2,19 @@ package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.app.contacts.usecases.CreateContactUseCase
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_company_name_required
+import ai.dokus.app.resources.generated.contacts_create_failed
+import ai.dokus.app.resources.generated.contacts_duplicate_match_name
+import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
+import ai.dokus.app.resources.generated.contacts_email_or_phone_required
+import ai.dokus.app.resources.generated.contacts_full_name_required
+import ai.dokus.app.resources.generated.contacts_invalid_email
+import ai.dokus.app.resources.generated.contacts_lookup_search_failed
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -181,7 +191,9 @@ internal class CreateContactContainer(
                 updateState {
                     when (this) {
                         is CreateContactState.LookupStep -> copy(
-                            lookupState = LookupUiState.Error(error.message ?: "Search failed")
+                            lookupState = LookupUiState.Error(
+                                error.message ?: getString(Res.string.contacts_lookup_search_failed)
+                            )
                         )
 
                         else -> this
@@ -221,7 +233,7 @@ internal class CreateContactContainer(
     private suspend fun CreateContactCtx.handleBillingEmailChanged(email: String) {
         withState<CreateContactState.ConfirmStep, _> {
             val error = if (email.isNotBlank() && !email.contains("@")) {
-                "Invalid email format"
+                getString(Res.string.contacts_invalid_email)
             } else {
                 null
             }
@@ -251,7 +263,7 @@ internal class CreateContactContainer(
         withState<CreateContactState.ConfirmStep, _> {
             // Validate email format only if provided
             if (billingEmail.isNotBlank() && !billingEmail.contains("@")) {
-                updateState { copy(emailError = "Invalid email format") }
+                updateState { copy(emailError = getString(Res.string.contacts_invalid_email)) }
                 return@withState
             }
 
@@ -281,7 +293,7 @@ internal class CreateContactContainer(
                     updateState { copy(isSubmitting = false) }
                     action(
                         CreateContactAction.ShowError(
-                            error.message ?: "Failed to create contact"
+                            error.message ?: getString(Res.string.contacts_create_failed)
                         )
                     )
                 }
@@ -419,7 +431,7 @@ internal class CreateContactContainer(
                     updateState { copy(isSubmitting = false) }
                     action(
                         CreateContactAction.ShowError(
-                            error.message ?: "Failed to create contact"
+                            error.message ?: getString(Res.string.contacts_create_failed)
                         )
                     )
                 }
@@ -431,7 +443,7 @@ internal class CreateContactContainer(
     // VALIDATION HELPERS
     // ============================================================================
 
-    private fun validateManualForm(
+    private suspend fun validateManualForm(
         type: ClientType,
         data: ManualContactFormData
     ): Map<String, String> {
@@ -439,14 +451,14 @@ internal class CreateContactContainer(
 
         if (type == ClientType.Business) {
             if (data.companyName.isBlank()) {
-                errors["companyName"] = "Company name is required"
+                errors["companyName"] = getString(Res.string.contacts_company_name_required)
             }
         } else {
             if (data.fullName.isBlank()) {
-                errors["fullName"] = "Full name is required"
+                errors["fullName"] = getString(Res.string.contacts_full_name_required)
             }
             if (data.personEmail.isBlank() && data.personPhone.isBlank()) {
-                errors["contact"] = "Email or phone is required"
+                errors["contact"] = getString(Res.string.contacts_email_or_phone_required)
             }
         }
 
@@ -472,9 +484,9 @@ internal class CreateContactContainer(
                             contactId = contact.id,
                             displayName = contact.name.value,
                             matchReason = if (type == ClientType.Business) {
-                                "Same name and country"
+                                getString(Res.string.contacts_duplicate_match_name_country)
                             } else {
-                                "Same name"
+                                getString(Res.string.contacts_duplicate_match_name)
                             }
                         )
                     }

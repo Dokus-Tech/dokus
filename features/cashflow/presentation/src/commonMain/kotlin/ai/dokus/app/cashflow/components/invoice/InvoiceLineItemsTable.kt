@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Table component for invoice line items.
@@ -77,7 +79,7 @@ fun InvoiceLineItemsTable(
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "Add Line Item",
+                text = stringResource(Res.string.invoice_add_line_item),
                 color = MaterialTheme.colorScheme.primary
             )
         }
@@ -99,7 +101,7 @@ private fun LineItemsTableHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "DESCRIPTION",
+            text = stringResource(Res.string.invoice_description).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium,
@@ -107,7 +109,7 @@ private fun LineItemsTableHeader(
             modifier = Modifier.weight(2f)
         )
         Text(
-            text = "QTY",
+            text = stringResource(Res.string.invoice_qty).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium,
@@ -116,7 +118,7 @@ private fun LineItemsTableHeader(
             modifier = Modifier.width(48.dp)
         )
         Text(
-            text = "PRICE",
+            text = stringResource(Res.string.invoice_price).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium,
@@ -125,7 +127,7 @@ private fun LineItemsTableHeader(
             modifier = Modifier.width(80.dp)
         )
         Text(
-            text = "AMOUNT",
+            text = stringResource(Res.string.invoice_amount).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium,

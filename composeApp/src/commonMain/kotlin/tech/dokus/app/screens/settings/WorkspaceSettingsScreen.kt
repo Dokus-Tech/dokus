@@ -1,11 +1,18 @@
 package tech.dokus.app.screens.settings
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_change
+import ai.dokus.app.resources.generated.action_remove
+import ai.dokus.app.resources.generated.action_upload
 import ai.dokus.app.resources.generated.save_changes
+import ai.dokus.app.resources.generated.settings_saved_successfully
+import ai.dokus.app.resources.generated.state_removing
+import ai.dokus.app.resources.generated.state_uploading
 import ai.dokus.app.resources.generated.workspace_address
 import ai.dokus.app.resources.generated.workspace_banking
 import ai.dokus.app.resources.generated.workspace_bic
 import ai.dokus.app.resources.generated.workspace_company_info
+import ai.dokus.app.resources.generated.workspace_company_logo
 import ai.dokus.app.resources.generated.workspace_company_name
 import ai.dokus.app.resources.generated.workspace_iban
 import ai.dokus.app.resources.generated.workspace_invoice_include_year
@@ -526,13 +533,13 @@ private fun WorkspaceSettingsContentInternal(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Failed to load workspace settings",
+                        text = stringResource(Res.string.workspace_settings_load_failed),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(Modifier.height(16.dp))
                     PPrimaryButton(
-                        text = "Retry",
+                        text = stringResource(Res.string.state_retry),
                         onClick = { onIntent(WorkspaceSettingsIntent.Load) }
                     )
                 }
@@ -569,7 +576,7 @@ private fun CompanyAvatarSection(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Company Logo",
+                text = stringResource(Res.string.workspace_company_logo),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -591,7 +598,13 @@ private fun CompanyAvatarSection(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(if (currentAvatar != null) "Change" else "Upload")
+                    Text(
+                        if (currentAvatar != null) {
+                            stringResource(Res.string.action_change)
+                        } else {
+                            stringResource(Res.string.action_upload)
+                        }
+                    )
                 }
 
                 if (currentAvatar != null) {
@@ -605,7 +618,7 @@ private fun CompanyAvatarSection(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Remove")
+                        Text(stringResource(Res.string.action_remove))
                     }
                 }
             }
@@ -640,7 +653,7 @@ private fun AvatarStateIndicator(
                     strokeWidth = 2.dp
                 )
                 Text(
-                    text = "Uploading...",
+                    text = stringResource(Res.string.state_uploading),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -657,7 +670,7 @@ private fun AvatarStateIndicator(
                     strokeWidth = 2.dp
                 )
                 Text(
-                    text = "Removing...",
+                    text = stringResource(Res.string.state_removing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -694,7 +707,7 @@ private fun SaveStateFeedback(
     when (saveState) {
         is WorkspaceSettingsState.Content.SaveState.Success -> {
             Text(
-                text = "Settings saved successfully",
+                text = stringResource(Res.string.settings_saved_successfully),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = modifier
             )

@@ -1,7 +1,11 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
+import androidx.compose.runtime.Composable
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Extension functions for working with FinancialDocumentDto types in the cashflow presentation layer.
@@ -60,18 +64,21 @@ fun combineFinancialDocuments(
  *
  * @return Status text suitable for display
  */
-fun InvoiceStatus.toDisplayText(): String {
+fun InvoiceStatus.labelRes(): StringResource {
     return when (this) {
-        InvoiceStatus.Draft -> "Draft"
-        InvoiceStatus.Sent -> "Sent"
-        InvoiceStatus.Viewed -> "Viewed"
-        InvoiceStatus.PartiallyPaid -> "Partially Paid"
-        InvoiceStatus.Paid -> "Paid"
-        InvoiceStatus.Overdue -> "Overdue"
-        InvoiceStatus.Cancelled -> "Cancelled"
-        InvoiceStatus.Refunded -> "Refunded"
+        InvoiceStatus.Draft -> Res.string.invoice_status_draft
+        InvoiceStatus.Sent -> Res.string.invoice_status_sent
+        InvoiceStatus.Viewed -> Res.string.invoice_status_viewed
+        InvoiceStatus.PartiallyPaid -> Res.string.invoice_status_partial
+        InvoiceStatus.Paid -> Res.string.invoice_status_paid
+        InvoiceStatus.Overdue -> Res.string.invoice_status_overdue
+        InvoiceStatus.Cancelled -> Res.string.invoice_status_cancelled
+        InvoiceStatus.Refunded -> Res.string.invoice_status_refunded
     }
 }
+
+@Composable
+fun InvoiceStatus.toDisplayText(): String = stringResource(labelRes())
 
 /**
  * Checks if an invoice requires user attention (confirmation/payment).

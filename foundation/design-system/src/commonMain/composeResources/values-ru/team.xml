@@ -19,11 +19,22 @@
     <string name="team_no_members">Пока нет участников команды</string>
     <string name="team_no_invitations">Нет ожидающих приглашений</string>
     <string name="team_invite_success">Приглашение успешно отправлено</string>
+    <string name="team_invite_failed">Не удалось отправить приглашение</string>
+    <string name="team_invite_cancelled">Приглашение отменено</string>
+    <string name="team_invite_cancel_failed">Не удалось отменить приглашение</string>
     <string name="team_remove_confirm">Вы уверены, что хотите удалить этого участника?</string>
+    <string name="team_member_removed_success">Участник удалён</string>
+    <string name="team_member_removed_failed">Не удалось удалить участника</string>
     <string name="team_transfer_confirm">Вы уверены, что хотите передать владение? Вы станете Администратором.</string>
+    <string name="team_ownership_transferred_success">Право собственности передано</string>
+    <string name="team_ownership_transferred_failed">Не удалось передать право собственности</string>
     <string name="team_only_owner_can_manage">Только владелец рабочего пространства может управлять участниками команды</string>
     <string name="team_load_members_failed">Не удалось загрузить участников команды</string>
     <string name="team_load_invitations_failed">Не удалось загрузить приглашения</string>
+    <string name="team_email_required">Требуется e-mail</string>
+    <string name="team_email_invalid">Неверный формат e-mail</string>
+    <string name="team_role_update_success">Роль обновлена</string>
+    <string name="team_role_update_failed">Не удалось обновить роль</string>
 
     <!-- Role names and descriptions -->
     <string name="role_owner">Владелец</string>

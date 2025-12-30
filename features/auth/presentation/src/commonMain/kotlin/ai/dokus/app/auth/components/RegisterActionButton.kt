@@ -2,12 +2,16 @@ package ai.dokus.app.auth.components
 
 import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.auth.model.RegisterPage
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_continue
+import ai.dokus.app.resources.generated.auth_register_title
 import ai.dokus.foundation.design.components.PPrimaryButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun RegisterActionButton(
@@ -18,8 +22,8 @@ internal fun RegisterActionButton(
     modifier: Modifier = Modifier,
 ) {
     val text = when (page) {
-        RegisterPage.Profile -> "Continue"
-        RegisterPage.Credentials -> "Create Account"
+        RegisterPage.Profile -> stringResource(Res.string.action_continue)
+        RegisterPage.Credentials -> stringResource(Res.string.auth_register_title)
     }
     val namesAreValid = fields.namesAreValid
     val credentialsAreValid = fields.credentialsAreValid

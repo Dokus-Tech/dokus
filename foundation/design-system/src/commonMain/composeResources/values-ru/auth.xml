@@ -15,4 +15,67 @@
     <string name="auth_register_button">Зарегистрироваться</string>
     <string name="auth_has_account_prefix">Уже есть аккаунт? </string>
     <string name="auth_login_link">Войти</string>
+
+    <!-- Register Steps -->
+    <string name="auth_register_profile_title">Ваш профиль</string>
+    <string name="auth_register_credentials_title">Учетные данные</string>
+    <string name="auth_register_success_title">Регистрация завершена</string>
+
+    <!-- Workspace Wizard -->
+    <string name="auth_step_of">Шаг %1$d из %2$d</string>
+    <string name="auth_workspace_type_prompt">Выберите тип рабочего пространства</string>
+    <string name="auth_workspace_type_company_description">Для зарегистрированных компаний</string>
+    <string name="auth_workspace_type_freelancer_description">Для индивидуальных фрилансеров</string>
+    <string name="auth_workspace_type_unavailable">Рабочее пространство фрилансера уже существует</string>
+    <string name="auth_your_name">Ваше имя</string>
+    <string name="auth_company_name_prompt">Название компании</string>
+    <string name="auth_company_name_subtitle">Мы найдем данные вашей компании</string>
+    <string name="auth_company_name_label">Название компании</string>
+    <string name="auth_company_name_searching">Поиск...</string>
+    <string name="auth_company_lookup_failed">Поиск компании не удался</string>
+    <string name="auth_business_details">Данные компании</string>
+    <string name="auth_business_details_subtitle">Добавьте НДС и адрес</string>
+
+    <!-- Entity Confirmation -->
+    <string name="auth_entity_single_prompt">Это ваша компания?</string>
+    <string name="auth_entity_single_confirm">Использовать эту компанию</string>
+    <string name="auth_entity_manual_entry">Ввести вручную</string>
+    <string name="auth_entity_multiple_title">Выберите компанию</string>
+    <string name="auth_entity_multiple_subtitle">Найдено несколько совпадений. Выберите одно или введите вручную.</string>
+
+    <!-- Server Connection -->
+    <string name="auth_server_connection">Подключение к серверу</string>
+    <string name="auth_server_label">Сервер</string>
+    <string name="auth_dokus_cloud">Dokus Cloud</string>
+    <string name="auth_server_url">URL сервера</string>
+    <string name="auth_server_version">Версия</string>
+    <string name="auth_change_server">Сменить сервер</string>
+    <string name="auth_reset_cloud">Сбросить на облако</string>
+    <string name="auth_protocol_http">HTTP</string>
+    <string name="auth_protocol_https">HTTPS</string>
+    <string name="auth_protocol_selector">Выбор протокола</string>
+    <string name="auth_server_found">Сервер найден</string>
+    <string name="auth_server_name_label">Имя сервера</string>
+    <string name="auth_server_features_label">Функции</string>
+    <string name="auth_server_connecting_will">Подключение приведет к:</string>
+    <string name="auth_server_logout_warning">Вы выйдете из текущего сервера.</string>
+    <string name="auth_server_reset_warning">Локальные данные будут очищены.</string>
+    <string name="auth_server_reauth_warning">Вам нужно будет войти снова.</string>
+    <string name="auth_server_details_title">Детали сервера</string>
+    <string name="auth_protocol_label">Протокол</string>
+    <string name="auth_host_label">Хост</string>
+    <string name="auth_port_label">Порт</string>
+    <string name="auth_validating">Проверка...</string>
+    <string name="auth_connecting">Подключение...</string>
+    <string name="auth_validate_connection">Проверить соединение</string>
+    <string name="auth_checking_server">Проверка сервера...</string>
+    <string name="auth_use_cloud">Использовать Dokus Cloud</string>
+    <string name="auth_currently_connected_to">Сейчас подключено к</string>
+    <string name="auth_need_help">Нужна помощь?</string>
+    <string name="auth_help_description">Введите данные сервера или переключитесь на облако.</string>
+    <string name="auth_host_required">Хост обязателен</string>
+    <string name="auth_host_no_spaces">Хост не может содержать пробелы</string>
+    <string name="auth_port_required">Порт обязателен</string>
+    <string name="auth_port_invalid_number">Порт должен быть числом</string>
+    <string name="auth_port_out_of_range">Порт должен быть между 1 и 65535</string>
 </resources>

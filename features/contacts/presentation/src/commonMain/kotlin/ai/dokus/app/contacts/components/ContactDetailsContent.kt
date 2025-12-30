@@ -1,11 +1,41 @@
 package ai.dokus.app.contacts.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_active
+import ai.dokus.app.resources.generated.contacts_activity_summary
+import ai.dokus.app.resources.generated.contacts_add_note
+import ai.dokus.app.resources.generated.contacts_address
+import ai.dokus.app.resources.generated.contacts_bills
+import ai.dokus.app.resources.generated.contacts_business_info
+import ai.dokus.app.resources.generated.contacts_company_number
+import ai.dokus.app.resources.generated.contacts_contact_info
+import ai.dokus.app.resources.generated.contacts_contact_person
+import ai.dokus.app.resources.generated.contacts_customer
+import ai.dokus.app.resources.generated.contacts_default_vat_rate
+import ai.dokus.app.resources.generated.contacts_delete_note
+import ai.dokus.app.resources.generated.contacts_edit_note
+import ai.dokus.app.resources.generated.contacts_email
+import ai.dokus.app.resources.generated.contacts_expenses
+import ai.dokus.app.resources.generated.contacts_inactive
+import ai.dokus.app.resources.generated.contacts_invoices
+import ai.dokus.app.resources.generated.contacts_last_activity_value
+import ai.dokus.app.resources.generated.contacts_no_notes
+import ai.dokus.app.resources.generated.contacts_note_by
+import ai.dokus.app.resources.generated.contacts_notes
+import ai.dokus.app.resources.generated.contacts_payment_defaults
+import ai.dokus.app.resources.generated.contacts_payment_terms
+import ai.dokus.app.resources.generated.contacts_payment_terms_value
+import ai.dokus.app.resources.generated.contacts_pending_approval_plural
+import ai.dokus.app.resources.generated.contacts_pending_approval_single
+import ai.dokus.app.resources.generated.contacts_peppol_enabled
+import ai.dokus.app.resources.generated.contacts_peppol_settings
+import ai.dokus.app.resources.generated.contacts_phone
+import ai.dokus.app.resources.generated.contacts_supplier
+import ai.dokus.app.resources.generated.contacts_tags
+import ai.dokus.app.resources.generated.contacts_vat_number
+import ai.dokus.app.resources.generated.contacts_vendor
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactNoteDto
-import tech.dokus.domain.model.contact.DerivedContactRoles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,6 +84,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.app.state.DokusState
 
 // ============================================================================
@@ -87,7 +122,7 @@ internal fun ContactInfoSection(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Contact Information",
+                text = stringResource(Res.string.contacts_contact_info),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -167,7 +202,7 @@ private fun ContactInfoContent(
         contact.email?.let {
             ContactInfoRow(
                 icon = Icons.Default.Email,
-                label = "Email",
+                label = stringResource(Res.string.contacts_email),
                 value = it.value
             )
         }
@@ -175,7 +210,7 @@ private fun ContactInfoContent(
         contact.phone?.let {
             ContactInfoRow(
                 icon = Icons.Default.Phone,
-                label = "Phone",
+                label = stringResource(Res.string.contacts_phone),
                 value = it
             )
         }
@@ -183,7 +218,7 @@ private fun ContactInfoContent(
         contact.contactPerson?.let {
             ContactInfoRow(
                 icon = Icons.Default.Person,
-                label = "Contact Person",
+                label = stringResource(Res.string.contacts_contact_person),
                 value = it
             )
         }
@@ -193,7 +228,7 @@ private fun ContactInfoContent(
             HorizontalDivider()
 
             Text(
-                text = "Business Information",
+                text = stringResource(Res.string.contacts_business_info),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -201,7 +236,7 @@ private fun ContactInfoContent(
             contact.vatNumber?.let {
                 ContactInfoRow(
                     icon = Icons.Default.Receipt,
-                    label = "VAT Number",
+                    label = stringResource(Res.string.contacts_vat_number),
                     value = it.value
                 )
             }
@@ -209,7 +244,7 @@ private fun ContactInfoContent(
             contact.companyNumber?.let {
                 ContactInfoRow(
                     icon = Icons.Default.Business,
-                    label = "Company Number",
+                    label = stringResource(Res.string.contacts_company_number),
                     value = it
                 )
             }
@@ -228,7 +263,7 @@ private fun ContactInfoContent(
             HorizontalDivider()
 
             Text(
-                text = "Address",
+                text = stringResource(Res.string.contacts_address),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -246,7 +281,7 @@ private fun ContactInfoContent(
 
             ContactInfoRow(
                 icon = Icons.Default.LocationOn,
-                label = "Address",
+                label = stringResource(Res.string.contacts_address),
                 value = addressLines.joinToString("\n")
             )
         }
@@ -255,7 +290,7 @@ private fun ContactInfoContent(
         HorizontalDivider()
 
         Text(
-            text = "Peppol Settings",
+            text = stringResource(Res.string.contacts_peppol_settings),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -277,7 +312,7 @@ private fun ContactInfoContent(
                 )
                 Column {
                     Text(
-                        text = "Peppol Enabled",
+                        text = stringResource(Res.string.contacts_peppol_enabled),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     contact.peppolId?.let { id ->
@@ -301,21 +336,21 @@ private fun ContactInfoContent(
         HorizontalDivider()
 
         Text(
-            text = "Payment Defaults",
+            text = stringResource(Res.string.contacts_payment_defaults),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         ContactInfoRow(
             icon = Icons.Default.Schedule,
-            label = "Payment Terms",
-            value = "${contact.defaultPaymentTerms} days"
+            label = stringResource(Res.string.contacts_payment_terms),
+            value = stringResource(Res.string.contacts_payment_terms_value, contact.defaultPaymentTerms)
         )
 
         contact.defaultVatRate?.let { rate ->
             ContactInfoRow(
                 icon = Icons.Default.Payments,
-                label = "Default VAT Rate",
+                label = stringResource(Res.string.contacts_default_vat_rate),
                 value = "${rate.toDisplayString()}%"
             )
         }
@@ -327,7 +362,7 @@ private fun ContactInfoContent(
                 HorizontalDivider()
 
                 Text(
-                    text = "Tags",
+                    text = stringResource(Res.string.contacts_tags),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -427,7 +462,7 @@ internal fun ActivitySummarySection(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Activity Summary",
+                text = stringResource(Res.string.contacts_activity_summary),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -473,7 +508,7 @@ private fun ActivitySummaryContent(
         ) {
             ActivityStatCard(
                 icon = Icons.Default.Description,
-                title = "Invoices",
+                title = stringResource(Res.string.contacts_invoices),
                 count = activity.invoiceCount.toString(),
                 total = activity.invoiceTotal,
                 color = MaterialTheme.colorScheme.primary,
@@ -482,7 +517,7 @@ private fun ActivitySummaryContent(
 
             ActivityStatCard(
                 icon = Icons.Default.Receipt,
-                title = "Bills",
+                title = stringResource(Res.string.contacts_bills),
                 count = activity.billCount.toString(),
                 total = activity.billTotal,
                 color = MaterialTheme.colorScheme.tertiary,
@@ -491,7 +526,7 @@ private fun ActivitySummaryContent(
 
             ActivityStatCard(
                 icon = Icons.Default.ShoppingCart,
-                title = "Expenses",
+                title = stringResource(Res.string.contacts_expenses),
                 count = activity.expenseCount.toString(),
                 total = activity.expenseTotal,
                 color = MaterialTheme.colorScheme.secondary,
@@ -515,7 +550,7 @@ private fun ActivitySummaryContent(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Last activity: ${formatDateTime(lastActivity)}",
+                    text = stringResource(Res.string.contacts_last_activity_value, formatDateTime(lastActivity)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -524,6 +559,12 @@ private fun ActivitySummaryContent(
 
         // Pending approvals
         if (activity.pendingApprovalCount > 0) {
+            val pendingCount = activity.pendingApprovalCount
+            val pendingText = if (pendingCount == 1) {
+                stringResource(Res.string.contacts_pending_approval_single, pendingCount)
+            } else {
+                stringResource(Res.string.contacts_pending_approval_plural, pendingCount)
+            }
             Surface(
                 color = MaterialTheme.colorScheme.tertiaryContainer,
                 shape = RoundedCornerShape(8.dp)
@@ -536,7 +577,7 @@ private fun ActivitySummaryContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "${activity.pendingApprovalCount} pending approval${if (activity.pendingApprovalCount > 1) "s" else ""}",
+                        text = pendingText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
@@ -656,7 +697,7 @@ internal fun NotesSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Notes",
+                    text = stringResource(Res.string.contacts_notes),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -668,7 +709,7 @@ internal fun NotesSection(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Note")
+                    Text(stringResource(Res.string.contacts_add_note))
                 }
             }
 
@@ -764,7 +805,7 @@ private fun NoteItem(
                         )
                         note.authorName?.let { author ->
                             Text(
-                                text = "by $author",
+                                text = stringResource(Res.string.contacts_note_by, author),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -783,7 +824,7 @@ private fun NoteItem(
                     IconButton(onClick = onEdit) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit note",
+                            contentDescription = stringResource(Res.string.contacts_edit_note),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -791,7 +832,7 @@ private fun NoteItem(
                     IconButton(onClick = onDelete) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete note",
+                            contentDescription = stringResource(Res.string.contacts_delete_note),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.error
                         )
@@ -821,7 +862,7 @@ private fun NotesEmptyState() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "No notes yet",
+                text = stringResource(Res.string.contacts_no_notes),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -863,9 +904,9 @@ private fun ContactStatusLabel(
     modifier: Modifier = Modifier
 ) {
     val (color, text) = if (isActive) {
-        MaterialTheme.colorScheme.primary to "Active"
+        MaterialTheme.colorScheme.primary to stringResource(Res.string.contacts_active)
     } else {
-        MaterialTheme.colorScheme.onSurfaceVariant to "Inactive"
+        MaterialTheme.colorScheme.onSurfaceVariant to stringResource(Res.string.contacts_inactive)
     }
 
     Surface(
@@ -889,21 +930,21 @@ private fun ContactRoleBadges(
 ) {
     if (roles.isCustomer) {
         ContactRoleBadge(
-            text = "Customer",
+            text = stringResource(Res.string.contacts_customer),
             color = MaterialTheme.colorScheme.primary,
             modifier = modifier
         )
     }
     if (roles.isSupplier) {
         ContactRoleBadge(
-            text = "Supplier",
+            text = stringResource(Res.string.contacts_supplier),
             color = MaterialTheme.colorScheme.tertiary,
             modifier = modifier
         )
     }
     if (roles.isVendor) {
         ContactRoleBadge(
-            text = "Vendor",
+            text = stringResource(Res.string.contacts_vendor),
             color = MaterialTheme.colorScheme.secondary,
             modifier = modifier
         )

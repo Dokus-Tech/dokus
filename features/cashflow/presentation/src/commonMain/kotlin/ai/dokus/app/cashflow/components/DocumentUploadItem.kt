@@ -20,6 +20,7 @@ import ai.dokus.app.cashflow.model.DocumentUploadDisplayState
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.state.DocumentUploadItemState
 import ai.dokus.app.cashflow.state.rememberDocumentUploadItemState
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -41,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Unified document upload item component that renders all possible states:
@@ -165,7 +167,7 @@ private fun PendingContent(
 ) {
     UploadItemRow(
         fileName = state.fileName,
-        subtitle = "Waiting...",
+        subtitle = stringResource(Res.string.upload_status_waiting),
         subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
         icon = {
             FileIconWithOverlay { PendingOverlay() }

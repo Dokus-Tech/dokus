@@ -2,6 +2,20 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.viewmodel.ContactFormData
 import ai.dokus.app.contacts.viewmodel.PotentialDuplicate
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_cancel
+import ai.dokus.app.resources.generated.contacts_create_contact
+import ai.dokus.app.resources.generated.contacts_delete
+import ai.dokus.app.resources.generated.contacts_delete_contact
+import ai.dokus.app.resources.generated.contacts_deleting
+import ai.dokus.app.resources.generated.contacts_edit_contact
+import ai.dokus.app.resources.generated.contacts_fill_details_hint
+import ai.dokus.app.resources.generated.contacts_required_fields_hint
+import ai.dokus.app.resources.generated.contacts_save
+import ai.dokus.app.resources.generated.contacts_save_contact
+import ai.dokus.app.resources.generated.contacts_saving
+import ai.dokus.app.resources.generated.contacts_update_hint
+import ai.dokus.app.resources.generated.contacts_update_mobile_hint
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.POutlinedButton
@@ -23,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 // ============================================================================
 // CONTACT FORM CONTENT
@@ -108,16 +123,20 @@ internal fun ContactFormContent(
 
             // Header with back button
             SectionTitle(
-                text = if (isEditMode) "Edit Contact" else "Create Contact",
+                text = if (isEditMode) {
+                    stringResource(Res.string.contacts_edit_contact)
+                } else {
+                    stringResource(Res.string.contacts_create_contact)
+                },
                 onBackPress = if (showBackButton) onBackPress else null
             )
 
             // Description
             Text(
                 text = if (isEditMode) {
-                    "Update contact information. Changes are saved when you click Save."
+                    stringResource(Res.string.contacts_update_hint)
                 } else {
-                    "Fill in the contact details below. Required fields are marked with *."
+                    stringResource(Res.string.contacts_fill_details_hint)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -225,16 +244,20 @@ internal fun ContactFormContentCompact(
     ) {
         // Header with title (always show for inline detail panel use)
         SectionTitle(
-            text = if (isEditMode) "Edit Contact" else "Create Contact",
+            text = if (isEditMode) {
+                stringResource(Res.string.contacts_edit_contact)
+            } else {
+                stringResource(Res.string.contacts_create_contact)
+            },
             onBackPress = if (showBackButton) onBackPress else null
         )
 
         // Description (shorter for compact mode)
         Text(
             text = if (isEditMode) {
-                "Update contact information."
+                stringResource(Res.string.contacts_update_mobile_hint)
             } else {
-                "Required fields are marked with *."
+                stringResource(Res.string.contacts_required_fields_hint)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -319,7 +342,11 @@ internal fun ContactFormActionButtons(
         // Delete button (edit mode only, left side)
         if (isEditMode) {
             POutlinedButton(
-                text = if (isDeleting) "Deleting..." else "Delete Contact",
+                text = if (isDeleting) {
+                    stringResource(Res.string.contacts_deleting)
+                } else {
+                    stringResource(Res.string.contacts_delete_contact)
+                },
                 onClick = onDelete,
                 enabled = !isSaving && !isDeleting,
                 isLoading = isDeleting
@@ -334,14 +361,18 @@ internal fun ContactFormActionButtons(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             PButton(
-                text = "Cancel",
+                text = stringResource(Res.string.contacts_cancel),
                 variant = PButtonVariant.Outline,
                 onClick = onCancel,
                 isEnabled = !isSaving && !isDeleting
             )
 
             PButton(
-                text = if (isSaving) "Saving..." else "Save Contact",
+                text = if (isSaving) {
+                    stringResource(Res.string.contacts_saving)
+                } else {
+                    stringResource(Res.string.contacts_save_contact)
+                },
                 variant = PButtonVariant.Default,
                 onClick = onSave,
                 isEnabled = isValid && !isSaving && !isDeleting,
@@ -373,7 +404,11 @@ internal fun ContactFormActionButtonsCompact(
         // Delete button (edit mode only, left-aligned)
         if (isEditMode) {
             POutlinedButton(
-                text = if (isDeleting) "Deleting..." else "Delete",
+                text = if (isDeleting) {
+                    stringResource(Res.string.contacts_deleting)
+                } else {
+                    stringResource(Res.string.contacts_delete)
+                },
                 onClick = onDelete,
                 enabled = !isSaving && !isDeleting,
                 isLoading = isDeleting,
@@ -383,7 +418,7 @@ internal fun ContactFormActionButtonsCompact(
 
         // Cancel button
         PButton(
-            text = "Cancel",
+            text = stringResource(Res.string.contacts_cancel),
             variant = PButtonVariant.Outline,
             onClick = onCancel,
             isEnabled = !isSaving && !isDeleting,
@@ -392,7 +427,11 @@ internal fun ContactFormActionButtonsCompact(
 
         // Save button
         PButton(
-            text = if (isSaving) "Saving..." else "Save",
+            text = if (isSaving) {
+                stringResource(Res.string.contacts_saving)
+            } else {
+                stringResource(Res.string.contacts_save)
+            },
             variant = PButtonVariant.Default,
             onClick = onSave,
             isEnabled = isValid && !isSaving && !isDeleting,

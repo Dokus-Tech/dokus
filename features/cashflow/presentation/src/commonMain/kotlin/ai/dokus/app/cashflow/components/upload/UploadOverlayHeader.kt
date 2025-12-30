@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components.upload
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -18,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Header prompt shown when dragging files over the upload overlay.
@@ -51,7 +53,7 @@ fun UploadOverlayHeader(
         Spacer(modifier = Modifier.height(180.dp))
 
         Text(
-            text = "Release to Upload",
+            text = stringResource(Res.string.upload_release_to_upload),
             style = MaterialTheme.typography.headlineMedium,
             color = Color(0xFFFFAA00).copy(alpha = alpha),
             textAlign = TextAlign.Center
@@ -60,7 +62,7 @@ fun UploadOverlayHeader(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Documents will be absorbed",
+            text = stringResource(Res.string.upload_documents_absorbed),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = alpha * 0.7f),
             textAlign = TextAlign.Center

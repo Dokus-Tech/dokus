@@ -1,5 +1,9 @@
 package ai.dokus.app.auth.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_protocol_http
+import ai.dokus.app.resources.generated.auth_protocol_https
+import ai.dokus.app.resources.generated.auth_protocol_selector
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -26,13 +30,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Protocol options for server connection.
  */
-enum class ProtocolOption(val value: String, val displayName: String) {
-    HTTP("http", "HTTP"),
-    HTTPS("https", "HTTPS (Secure)")
+enum class ProtocolOption(val value: String, val labelRes: StringResource) {
+    HTTP("http", Res.string.auth_protocol_http),
+    HTTPS("https", Res.string.auth_protocol_https)
 }
 
 /**
@@ -80,7 +86,7 @@ fun ProtocolSelector(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = selected.displayName,
+                    text = stringResource(selected.labelRes),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -89,7 +95,7 @@ fun ProtocolSelector(
 
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Select protocol",
+                    contentDescription = stringResource(Res.string.auth_protocol_selector),
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -116,7 +122,7 @@ fun ProtocolSelector(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = option.displayName,
+                                text = stringResource(option.labelRes),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (option == selected) {
                                     MaterialTheme.colorScheme.primary

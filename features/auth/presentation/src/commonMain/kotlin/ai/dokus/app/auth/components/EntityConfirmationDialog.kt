@@ -1,6 +1,13 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.app.auth.model.EntityConfirmationState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_entity_manual_entry
+import ai.dokus.app.resources.generated.auth_entity_multiple_title
+import ai.dokus.app.resources.generated.auth_entity_multiple_subtitle
+import ai.dokus.app.resources.generated.auth_entity_single_confirm
+import ai.dokus.app.resources.generated.auth_entity_single_prompt
+import ai.dokus.app.resources.generated.common_vat_value
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.components.PPrimaryButton
 import tech.dokus.domain.model.entity.EntityLookup
@@ -37,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +112,7 @@ private fun SingleResultContent(
     Spacer(modifier = Modifier.height(16.dp))
 
     Text(
-        text = "Did we catch you correctly?",
+        text = stringResource(Res.string.auth_entity_single_prompt),
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.SemiBold,
         textAlign = TextAlign.Center
@@ -121,7 +129,7 @@ private fun SingleResultContent(
     Spacer(modifier = Modifier.height(24.dp))
 
     PPrimaryButton(
-        text = "Yes, that's me",
+        text = stringResource(Res.string.auth_entity_single_confirm),
         onClick = onConfirm,
         modifier = Modifier.fillMaxWidth()
     )
@@ -129,7 +137,7 @@ private fun SingleResultContent(
     Spacer(modifier = Modifier.height(12.dp))
 
     POutlinedButton(
-        text = "Enter manually",
+        text = stringResource(Res.string.auth_entity_manual_entry),
         onClick = onEnterManually,
         modifier = Modifier.fillMaxWidth()
     )
@@ -142,7 +150,7 @@ private fun MultipleResultsContent(
     onEnterManually: () -> Unit,
 ) {
     Text(
-        text = "We found multiple matches",
+        text = stringResource(Res.string.auth_entity_multiple_title),
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.SemiBold,
         textAlign = TextAlign.Center
@@ -151,7 +159,7 @@ private fun MultipleResultsContent(
     Spacer(modifier = Modifier.height(8.dp))
 
     Text(
-        text = "Select your company from the list below",
+        text = stringResource(Res.string.auth_entity_multiple_subtitle),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -188,7 +196,7 @@ private fun MultipleResultsContent(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "Enter manually",
+            text = stringResource(Res.string.auth_entity_manual_entry),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Medium,
@@ -229,7 +237,7 @@ private fun EntityCard(
             entity.vatNumber?.let { vat ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "VAT: ${vat.value}",
+                    text = stringResource(Res.string.common_vat_value, vat.value),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

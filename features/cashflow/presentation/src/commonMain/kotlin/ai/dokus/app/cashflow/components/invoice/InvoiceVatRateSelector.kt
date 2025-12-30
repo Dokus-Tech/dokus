@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * VAT rate selector dropdown for invoice line items.
@@ -35,7 +37,7 @@ fun InvoiceVatRateSelector(
 
     Column(modifier = modifier) {
         Text(
-            text = "VAT Rate",
+            text = stringResource(Res.string.invoice_vat_rate),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface
         )

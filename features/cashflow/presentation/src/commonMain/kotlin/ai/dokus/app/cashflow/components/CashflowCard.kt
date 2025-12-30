@@ -1,5 +1,7 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
+import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.background
@@ -27,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A card component displaying a cash flow list with financial document items and navigation controls.
@@ -63,7 +66,7 @@ fun CashflowCard(
         ) {
             // Title
             Text(
-                text = "Cash flow",
+                text = stringResource(Res.string.cashflow_card_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -110,7 +113,7 @@ fun CashflowCard(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Previous"
+                        contentDescription = stringResource(Res.string.pending_documents_previous)
                     )
                 }
 
@@ -130,7 +133,7 @@ fun CashflowCard(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Next"
+                        contentDescription = stringResource(Res.string.pending_documents_next)
                     )
                 }
             }
@@ -152,8 +155,14 @@ private fun CashflowDocumentItem(
 ) {
     val documentNumber = when (document) {
         is FinancialDocumentDto.InvoiceDto -> document.invoiceNumber.toString()
-        is FinancialDocumentDto.ExpenseDto -> "EXP-${document.id.value}"
-        is FinancialDocumentDto.BillDto -> document.invoiceNumber ?: "BILL-${document.id.value}"
+        is FinancialDocumentDto.ExpenseDto -> stringResource(
+            Res.string.cashflow_document_number_expense,
+            document.id.value
+        )
+        is FinancialDocumentDto.BillDto -> document.invoiceNumber ?: stringResource(
+            Res.string.cashflow_document_number_bill,
+            document.id.value
+        )
     }
 
     Row(
@@ -204,12 +213,12 @@ private fun DocumentStatusBadge(
         is FinancialDocumentDto.ExpenseDto -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
-            "Expense"
+            stringResource(Res.string.document_type_expense)
         )
         is FinancialDocumentDto.BillDto -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            document.status.name
+            document.status.toDisplayText()
         )
     }
 
@@ -227,42 +236,47 @@ private fun DocumentStatusBadge(
 }
 
 @Composable
+@Composable
 private fun getInvoiceStatusStyle(status: InvoiceStatus): Triple<Color, Color, String> {
     return when (status) {
         InvoiceStatus.Draft -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
-            "Draft"
+            stringResource(Res.string.invoice_status_draft)
         )
         InvoiceStatus.Sent, InvoiceStatus.Overdue -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            if (status == InvoiceStatus.Overdue) "Overdue" else "Need confirmation"
+            if (status == InvoiceStatus.Overdue) {
+                stringResource(Res.string.invoice_status_overdue)
+            } else {
+                stringResource(Res.string.pending_documents_need_confirmation)
+            }
         )
         InvoiceStatus.Viewed -> Triple(
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer,
-            "Viewed"
+            stringResource(Res.string.invoice_status_viewed)
         )
         InvoiceStatus.PartiallyPaid -> Triple(
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer,
-            "Partially Paid"
+            stringResource(Res.string.invoice_status_partial)
         )
         InvoiceStatus.Paid -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "Paid"
+            stringResource(Res.string.invoice_status_paid)
         )
         InvoiceStatus.Cancelled -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
-            "Cancelled"
+            stringResource(Res.string.invoice_status_cancelled)
         )
         InvoiceStatus.Refunded -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "Refunded"
+            stringResource(Res.string.invoice_status_refunded)
         )
     }
 }
@@ -270,8 +284,19 @@ private fun getInvoiceStatusStyle(status: InvoiceStatus): Triple<Color, Color, S
 /**
  * Extension function to get the document icon/emoji representation.
  */
+@Composable
 private fun FinancialDocumentDto.typeIcon(): String = when (this) {
-    is FinancialDocumentDto.InvoiceDto -> "Invoice"
-    is FinancialDocumentDto.ExpenseDto -> "Expense"
-    is FinancialDocumentDto.BillDto -> "Bill"
+    is FinancialDocumentDto.InvoiceDto -> stringResource(Res.string.document_type_invoice)
+    is FinancialDocumentDto.ExpenseDto -> stringResource(Res.string.document_type_expense)
+    is FinancialDocumentDto.BillDto -> stringResource(Res.string.document_type_bill)
+}
+
+@Composable
+private fun BillStatus.toDisplayText(): String = when (this) {
+    BillStatus.Draft -> stringResource(Res.string.bill_status_draft)
+    BillStatus.Pending -> stringResource(Res.string.bill_status_pending)
+    BillStatus.Scheduled -> stringResource(Res.string.bill_status_scheduled)
+    BillStatus.Paid -> stringResource(Res.string.bill_status_paid)
+    BillStatus.Overdue -> stringResource(Res.string.bill_status_overdue)
+    BillStatus.Cancelled -> stringResource(Res.string.bill_status_cancelled)
 }

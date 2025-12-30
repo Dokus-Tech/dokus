@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.contacts.usecases.CreateContactUseCase
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +44,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.CreateContactRequest
 
@@ -81,6 +83,7 @@ fun ContactCreateSheet(
 
     var isSubmitting by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val createContactFailed = stringResource(Res.string.contacts_create_failed)
 
     val canSubmit = name.isNotBlank() && !isSubmitting
 
@@ -106,7 +109,7 @@ fun ContactCreateSheet(
                 },
                 onFailure = { error ->
                     isSubmitting = false
-                    errorMessage = error.message ?: "Failed to create contact"
+                    errorMessage = error.message ?: createContactFailed
                 }
             )
         }
@@ -158,8 +161,8 @@ fun ContactCreateSheet(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Name *") },
-                        placeholder = { Text("Company or person name") },
+                        label = { Text(stringResource(Res.string.contacts_name)) },
+                        placeholder = { Text(stringResource(Res.string.contacts_name_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         enabled = !isSubmitting,
@@ -170,8 +173,8 @@ fun ContactCreateSheet(
                     OutlinedTextField(
                         value = vatNumber,
                         onValueChange = { vatNumber = it },
-                        label = { Text("VAT Number") },
-                        placeholder = { Text("BE0123456789") },
+                        label = { Text(stringResource(Res.string.contacts_vat_number)) },
+                        placeholder = { Text(stringResource(Res.string.contacts_vat_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         enabled = !isSubmitting,
@@ -181,8 +184,8 @@ fun ContactCreateSheet(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Email") },
-                        placeholder = { Text("contact@company.com") },
+                        label = { Text(stringResource(Res.string.contacts_email)) },
+                        placeholder = { Text(stringResource(Res.string.contacts_email_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         enabled = !isSubmitting,
@@ -193,8 +196,8 @@ fun ContactCreateSheet(
                     OutlinedTextField(
                         value = address,
                         onValueChange = { address = it },
-                        label = { Text("Address") },
-                        placeholder = { Text("Street, City, Country") },
+                        label = { Text(stringResource(Res.string.contacts_address)) },
+                        placeholder = { Text(stringResource(Res.string.contacts_address_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                         maxLines = 3,
@@ -213,7 +216,7 @@ fun ContactCreateSheet(
                             modifier = Modifier.weight(1f),
                             enabled = !isSubmitting,
                         ) {
-                            Text("Cancel")
+                            Text(stringResource(Res.string.action_cancel))
                         }
 
                         Button(
@@ -229,7 +232,7 @@ fun ContactCreateSheet(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
-                            Text("Create Contact")
+                            Text(stringResource(Res.string.contacts_create_contact))
                         }
                     }
                 }
@@ -256,7 +259,7 @@ private fun SheetHeader(
         Spacer(modifier = Modifier.width(48.dp))
 
         Text(
-            text = "Create Contact",
+            text = stringResource(Res.string.contacts_create_contact),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
@@ -269,7 +272,7 @@ private fun SheetHeader(
         ) {
             PIcon(
                 icon = FeatherIcons.X,
-                description = "Close",
+                description = stringResource(Res.string.action_close),
                 modifier = Modifier.size(24.dp),
             )
         }

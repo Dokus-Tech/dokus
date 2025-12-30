@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +33,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Small clickable thumbnail preview for mobile Document Review.
@@ -80,7 +83,7 @@ fun PdfThumbnail(
                 firstPageUrl != null -> {
                     SubcomposeAsyncImage(
                         model = firstPageUrl,
-                        contentDescription = "Document preview",
+                        contentDescription = stringResource(Res.string.cashflow_document_preview_title),
                         imageLoader = imageLoader,
                         loading = {
                             CircularProgressIndicator(
@@ -115,7 +118,7 @@ fun PdfThumbnail(
                         .padding(horizontal = 4.dp, vertical = 2.dp),
                 ) {
                     Text(
-                        text = "$totalPages",
+                        text = totalPages.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -175,7 +178,7 @@ fun PdfPreviewRow(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Document Preview",
+                text = stringResource(Res.string.cashflow_document_preview_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -183,9 +186,10 @@ fun PdfPreviewRow(
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = when {
-                    isLoading -> "Loading..."
-                    totalPages > 0 -> "$totalPages ${if (totalPages == 1) "page" else "pages"}"
-                    else -> "No preview"
+                    isLoading -> stringResource(Res.string.state_loading)
+                    totalPages == 1 -> stringResource(Res.string.cashflow_page_single, totalPages)
+                    totalPages > 1 -> stringResource(Res.string.cashflow_page_plural, totalPages)
+                    else -> stringResource(Res.string.cashflow_no_preview)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -193,10 +197,11 @@ fun PdfPreviewRow(
         }
 
         // Chevron indicator
-        Text(
-            text = "›",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(Constrains.IconSize.medium),
         )
     }
 }
