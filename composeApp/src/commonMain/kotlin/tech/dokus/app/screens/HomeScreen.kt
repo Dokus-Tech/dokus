@@ -122,7 +122,7 @@ private fun HomeNavHost(
         exitTransition = { with(transitionsProvider) { exitTransition } },
         popEnterTransition = { with(transitionsProvider) { popEnterTransition } },
         popExitTransition = { with(transitionsProvider) { popExitTransition } },
-        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
     ) {
         homeNavProviders.forEach { navProvider ->
             with(navProvider) {
@@ -151,9 +151,10 @@ private fun RailNavigationLayout(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(240.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
             shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f))
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)),
+            tonalElevation = 0.dp,
+            shadowElevation = 2.dp,
         ) {
             Column(
                 modifier = Modifier
@@ -171,14 +172,23 @@ private fun RailNavigationLayout(
             }
         }
 
-        // Main content area
-        Box(
-            Modifier
+        // Main content area — detached glass container (clips app bars to rounded corners)
+        Surface(
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(start = 16.dp),
-            contentAlignment = Alignment.TopStart
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+            shape = MaterialTheme.shapes.large,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)),
+            tonalElevation = 0.dp,
+            shadowElevation = 1.dp,
         ) {
-            content()
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopStart
+            ) {
+                content()
+            }
         }
     }
 }
