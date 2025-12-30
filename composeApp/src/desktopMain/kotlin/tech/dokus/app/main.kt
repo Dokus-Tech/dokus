@@ -1,7 +1,7 @@
 package tech.dokus.app
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.app_name
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.app_name
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.window.Window

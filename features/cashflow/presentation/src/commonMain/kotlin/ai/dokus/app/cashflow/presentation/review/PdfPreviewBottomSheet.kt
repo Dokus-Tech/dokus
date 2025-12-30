@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.presentation.review
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_close
-import ai.dokus.app.resources.generated.cashflow_document_preview_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.cashflow_document_preview_title
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.Column

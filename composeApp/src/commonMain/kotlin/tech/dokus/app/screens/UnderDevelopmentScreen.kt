@@ -32,9 +32,9 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.under_development_subtitle
-import ai.dokus.app.resources.generated.under_development_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.under_development_subtitle
+import tech.dokus.aura.resources.under_development_title
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos

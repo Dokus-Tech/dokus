@@ -1,8 +1,8 @@
 package tech.dokus.foundation.aura.style
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.interVariable
-import ai.dokus.app.resources.generated.switzerVariable
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.interVariable
+import tech.dokus.aura.resources.switzerVariable
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

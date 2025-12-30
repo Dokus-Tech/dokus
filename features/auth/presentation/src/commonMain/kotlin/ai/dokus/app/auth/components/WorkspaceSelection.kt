@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.workspace_select_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.workspace_select_title
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.text.SectionTitle

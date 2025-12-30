@@ -1,11 +1,11 @@
 package tech.dokus.app.screens
 
 import ai.dokus.app.cashflow.components.PendingDocumentsCard
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_search
-import ai.dokus.app.resources.generated.search_placeholder
-import ai.dokus.app.resources.generated.settings_select_workspace
-import ai.dokus.app.resources.generated.settings_switch_workspace
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.search_placeholder
+import tech.dokus.aura.resources.settings_select_workspace
+import tech.dokus.aura.resources.settings_switch_workspace
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage

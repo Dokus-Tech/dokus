@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.components.text
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.copyright
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.copyright
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

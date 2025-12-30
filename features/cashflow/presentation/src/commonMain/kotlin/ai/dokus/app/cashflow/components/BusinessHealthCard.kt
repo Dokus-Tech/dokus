@@ -1,15 +1,15 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.business_health_actual
-import ai.dokus.app.resources.generated.business_health_description
-import ai.dokus.app.resources.generated.business_health_predicted
-import ai.dokus.app.resources.generated.business_health_title
-import ai.dokus.app.resources.generated.common_label_value
-import ai.dokus.app.resources.generated.common_percent_value
-import ai.dokus.app.resources.generated.health_status_critical
-import ai.dokus.app.resources.generated.health_status_good
-import ai.dokus.app.resources.generated.health_status_warning
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.business_health_actual
+import tech.dokus.aura.resources.business_health_description
+import tech.dokus.aura.resources.business_health_predicted
+import tech.dokus.aura.resources.business_health_title
+import tech.dokus.aura.resources.common_label_value
+import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.aura.resources.health_status_critical
+import tech.dokus.aura.resources.health_status_good
+import tech.dokus.aura.resources.health_status_warning
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerCircle

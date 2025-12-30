@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.presentation.review
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_fit
-import ai.dokus.app.resources.generated.action_zoom_in
-import ai.dokus.app.resources.generated.action_zoom_out
-import ai.dokus.app.resources.generated.common_percent_value
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_fit
+import tech.dokus.aura.resources.action_zoom_in
+import tech.dokus.aura.resources.action_zoom_out
+import tech.dokus.aura.resources.common_percent_value
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

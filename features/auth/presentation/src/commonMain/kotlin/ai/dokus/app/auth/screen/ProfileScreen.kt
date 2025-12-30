@@ -1,7 +1,7 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.profile_settings_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.profile_settings_title
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold

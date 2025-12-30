@@ -1,10 +1,10 @@
 package tech.dokus.foundation.aura.tooling
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.chart_bar_trend_up
-import ai.dokus.app.resources.generated.home_dashboard
-import ai.dokus.app.resources.generated.home_settings
-import ai.dokus.app.resources.generated.user
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chart_bar_trend_up
+import tech.dokus.aura.resources.home_dashboard
+import tech.dokus.aura.resources.home_settings
+import tech.dokus.aura.resources.user
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.foundation.aura.model.HomeItemPriority
 import ai.dokus.foundation.navigation.destinations.HomeDestination

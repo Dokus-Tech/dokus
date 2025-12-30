@@ -1,12 +1,12 @@
 package ai.dokus.app.cashflow.presentation.review
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow_document_preview_title
-import ai.dokus.app.resources.generated.cashflow_preview_highlight_hint
-import ai.dokus.app.resources.generated.cashflow_preview_load_more
-import ai.dokus.app.resources.generated.cashflow_preview_page_failed
-import ai.dokus.app.resources.generated.cashflow_preview_page_label
-import ai.dokus.app.resources.generated.state_retry
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_document_preview_title
+import tech.dokus.aura.resources.cashflow_preview_highlight_hint
+import tech.dokus.aura.resources.cashflow_preview_load_more
+import tech.dokus.aura.resources.cashflow_preview_page_failed
+import tech.dokus.aura.resources.cashflow_preview_page_label
+import tech.dokus.aura.resources.state_retry
 import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.company_avatar_content_description
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.company_avatar_content_description
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

@@ -1,9 +1,9 @@
 package tech.dokus.contacts.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_add_contact
-import ai.dokus.app.resources.generated.contacts_search_content_description
-import ai.dokus.app.resources.generated.contacts_search_placeholder
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_add_contact
+import tech.dokus.aura.resources.contacts_search_content_description
+import tech.dokus.aura.resources.contacts_search_placeholder
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIconPosition

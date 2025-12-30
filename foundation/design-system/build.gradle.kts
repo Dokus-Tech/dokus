@@ -95,6 +95,6 @@ dependencies {
 
 compose.resources {
     publicResClass = true  // Makes Res class public
-    packageOfResClass = "ai.dokus.app.resources.generated"
+    packageOfResClass = "tech.dokus.aura.resources"
     generateResClass = always // Ensures generation happens
 }

@@ -9,11 +9,11 @@ import ai.dokus.app.auth.viewmodel.RegisterAction
 import ai.dokus.app.auth.viewmodel.RegisterContainer
 import ai.dokus.app.auth.viewmodel.RegisterIntent
 import ai.dokus.app.auth.viewmodel.RegisterState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_has_account_prefix
-import ai.dokus.app.resources.generated.auth_login_link
-import ai.dokus.app.resources.generated.auth_register_credentials_title
-import ai.dokus.app.resources.generated.auth_register_profile_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_has_account_prefix
+import tech.dokus.aura.resources.auth_login_link
+import tech.dokus.aura.resources.auth_register_credentials_title
+import tech.dokus.aura.resources.auth_register_profile_title
 import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
 import tech.dokus.foundation.aura.components.background.SpotlightEffect
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer

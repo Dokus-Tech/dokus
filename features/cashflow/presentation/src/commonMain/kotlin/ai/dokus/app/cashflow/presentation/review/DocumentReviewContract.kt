@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.presentation.review
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow_confirm_missing_fields
-import ai.dokus.app.resources.generated.cashflow_confirm_select_contact
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_confirm_missing_fields
+import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import org.jetbrains.compose.resources.StringResource
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType

@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.components.tiles
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.workspace_add
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.workspace_add
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage

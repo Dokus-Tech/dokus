@@ -17,8 +17,8 @@ import ai.dokus.app.cashflow.viewmodel.CashflowContainer
 import ai.dokus.app.cashflow.viewmodel.CashflowIntent
 import ai.dokus.app.cashflow.viewmodel.CashflowSuccess
 import ai.dokus.app.cashflow.viewmodel.CashflowState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow_invoice_create_success
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_invoice_create_success
 import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize

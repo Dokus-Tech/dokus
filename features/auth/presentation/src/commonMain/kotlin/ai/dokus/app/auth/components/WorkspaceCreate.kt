@@ -1,14 +1,14 @@
 package ai.dokus.app.auth.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_your_name
-import ai.dokus.app.resources.generated.workspace_create_button
-import ai.dokus.app.resources.generated.workspace_create_title
-import ai.dokus.app.resources.generated.workspace_display_name
-import ai.dokus.app.resources.generated.workspace_legal_name
-import ai.dokus.app.resources.generated.workspace_type_company
-import ai.dokus.app.resources.generated.workspace_type_freelancer
-import ai.dokus.app.resources.generated.workspace_vat_number
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_your_name
+import tech.dokus.aura.resources.workspace_create_button
+import tech.dokus.aura.resources.workspace_create_title
+import tech.dokus.aura.resources.workspace_display_name
+import tech.dokus.aura.resources.workspace_legal_name
+import tech.dokus.aura.resources.workspace_type_company
+import tech.dokus.aura.resources.workspace_type_freelancer
+import tech.dokus.aura.resources.workspace_vat_number
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
 import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName

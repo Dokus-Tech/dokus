@@ -1,11 +1,11 @@
 package tech.dokus.foundation.aura.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_cancel
-import ai.dokus.app.resources.generated.image_cropper_apply
-import ai.dokus.app.resources.generated.image_cropper_content_description
-import ai.dokus.app.resources.generated.image_cropper_hint
-import ai.dokus.app.resources.generated.image_cropper_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.image_cropper_apply
+import tech.dokus.aura.resources.image_cropper_content_description
+import tech.dokus.aura.resources.image_cropper_hint
+import tech.dokus.aura.resources.image_cropper_title
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background

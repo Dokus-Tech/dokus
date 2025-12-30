@@ -1,9 +1,9 @@
 package tech.dokus.foundation.aura.components.common
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.exception_connection_error
-import ai.dokus.app.resources.generated.state_error
-import ai.dokus.app.resources.generated.state_retry
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.exception_connection_error
+import tech.dokus.aura.resources.state_error
+import tech.dokus.aura.resources.state_retry
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized

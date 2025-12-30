@@ -2,15 +2,15 @@
 
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_close
-import ai.dokus.app.resources.generated.contacts_selected
-import ai.dokus.app.resources.generated.error_failed_to_load_clients
-import ai.dokus.app.resources.generated.invoice_no_clients_found
-import ai.dokus.app.resources.generated.invoice_no_clients_match
-import ai.dokus.app.resources.generated.invoice_search_clients
-import ai.dokus.app.resources.generated.invoice_select_client
-import ai.dokus.app.resources.generated.peppol_id_missing
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.contacts_selected
+import tech.dokus.aura.resources.error_failed_to_load_clients
+import tech.dokus.aura.resources.invoice_no_clients_found
+import tech.dokus.aura.resources.invoice_no_clients_match
+import tech.dokus.aura.resources.invoice_search_clients
+import tech.dokus.aura.resources.invoice_select_client
+import tech.dokus.aura.resources.peppol_id_missing
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.domain.model.contact.ContactDto

@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.components
 
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.pending_documents_empty
-import ai.dokus.app.resources.generated.pending_documents_need_confirmation
-import ai.dokus.app.resources.generated.pending_documents_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.pending_documents_empty
+import tech.dokus.aura.resources.pending_documents_need_confirmation
+import tech.dokus.aura.resources.pending_documents_title
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine

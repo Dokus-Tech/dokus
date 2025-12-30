@@ -1,13 +1,13 @@
 package ai.dokus.app.auth.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_change_server
-import ai.dokus.app.resources.generated.auth_dokus_cloud
-import ai.dokus.app.resources.generated.auth_reset_cloud
-import ai.dokus.app.resources.generated.auth_server_connection
-import ai.dokus.app.resources.generated.auth_server_label
-import ai.dokus.app.resources.generated.auth_server_url
-import ai.dokus.app.resources.generated.auth_server_version
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_change_server
+import tech.dokus.aura.resources.auth_dokus_cloud
+import tech.dokus.aura.resources.auth_reset_cloud
+import tech.dokus.aura.resources.auth_server_connection
+import tech.dokus.aura.resources.auth_server_label
+import tech.dokus.aura.resources.auth_server_url
+import tech.dokus.aura.resources.auth_server_version
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement

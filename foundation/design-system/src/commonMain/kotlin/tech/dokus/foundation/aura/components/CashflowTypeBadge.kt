@@ -1,8 +1,8 @@
 package tech.dokus.foundation.aura.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow_cash_in
-import ai.dokus.app.resources.generated.cashflow_cash_out
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_cash_in
+import tech.dokus.aura.resources.cashflow_cash_out
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding

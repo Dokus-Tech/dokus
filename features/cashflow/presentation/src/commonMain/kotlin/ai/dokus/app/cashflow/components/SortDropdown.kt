@@ -1,14 +1,14 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow_sort_amount_highest
-import ai.dokus.app.resources.generated.cashflow_sort_amount_lowest
-import ai.dokus.app.resources.generated.cashflow_sort_date_newest
-import ai.dokus.app.resources.generated.cashflow_sort_date_oldest
-import ai.dokus.app.resources.generated.cashflow_sort_default
-import ai.dokus.app.resources.generated.cashflow_sort_label
-import ai.dokus.app.resources.generated.cashflow_sort_type
-import ai.dokus.app.resources.generated.sort_expand
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_sort_amount_highest
+import tech.dokus.aura.resources.cashflow_sort_amount_lowest
+import tech.dokus.aura.resources.cashflow_sort_date_newest
+import tech.dokus.aura.resources.cashflow_sort_date_oldest
+import tech.dokus.aura.resources.cashflow_sort_default
+import tech.dokus.aura.resources.cashflow_sort_label
+import tech.dokus.aura.resources.cashflow_sort_type
+import tech.dokus.aura.resources.sort_expand
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row

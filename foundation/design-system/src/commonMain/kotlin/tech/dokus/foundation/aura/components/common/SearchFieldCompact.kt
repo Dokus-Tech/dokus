@@ -1,8 +1,8 @@
 package tech.dokus.foundation.aura.components.common
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_clear_field
-import ai.dokus.app.resources.generated.action_search
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_clear_field
+import tech.dokus.aura.resources.action_search
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background

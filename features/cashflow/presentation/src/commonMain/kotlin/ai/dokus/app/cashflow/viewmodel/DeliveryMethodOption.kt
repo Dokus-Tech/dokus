@@ -1,14 +1,14 @@
 package ai.dokus.app.cashflow.viewmodel
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceDeliveryMethod
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.delivery_email_description
-import ai.dokus.app.resources.generated.delivery_export_pdf
-import ai.dokus.app.resources.generated.delivery_pdf_description
-import ai.dokus.app.resources.generated.delivery_peppol_description
-import ai.dokus.app.resources.generated.delivery_peppol_warning
-import ai.dokus.app.resources.generated.delivery_send_email
-import ai.dokus.app.resources.generated.delivery_send_peppol
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.delivery_email_description
+import tech.dokus.aura.resources.delivery_export_pdf
+import tech.dokus.aura.resources.delivery_pdf_description
+import tech.dokus.aura.resources.delivery_peppol_description
+import tech.dokus.aura.resources.delivery_peppol_warning
+import tech.dokus.aura.resources.delivery_send_email
+import tech.dokus.aura.resources.delivery_send_peppol
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Email

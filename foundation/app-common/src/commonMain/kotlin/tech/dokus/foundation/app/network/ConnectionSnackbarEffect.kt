@@ -1,9 +1,9 @@
 package tech.dokus.foundation.app.network
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.connection_connected
-import ai.dokus.app.resources.generated.connection_server_unreachable
-import ai.dokus.app.resources.generated.state_retry
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.connection_connected
+import tech.dokus.aura.resources.connection_server_unreachable
+import tech.dokus.aura.resources.state_retry
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult

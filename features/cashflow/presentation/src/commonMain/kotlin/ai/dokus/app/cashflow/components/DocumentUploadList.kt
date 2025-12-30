@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.upload_no_documents
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.upload_no_documents
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import tech.dokus.domain.model.DocumentDto

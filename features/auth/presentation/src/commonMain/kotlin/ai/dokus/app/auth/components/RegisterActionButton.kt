@@ -2,9 +2,9 @@ package ai.dokus.app.auth.components
 
 import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.auth.model.RegisterPage
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_continue
-import ai.dokus.app.resources.generated.auth_register_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_continue
+import tech.dokus.aura.resources.auth_register_title
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf

@@ -11,9 +11,9 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.SettingsPriority
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.settings_group_account
-import ai.dokus.app.resources.generated.settings_profile
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.settings_group_account
+import tech.dokus.aura.resources.settings_profile
 import tech.dokus.foundation.aura.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.AuthDestination

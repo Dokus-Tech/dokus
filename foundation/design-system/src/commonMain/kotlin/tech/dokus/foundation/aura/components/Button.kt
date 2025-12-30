@@ -1,8 +1,8 @@
 package tech.dokus.foundation.aura.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_back
-import ai.dokus.app.resources.generated.arrow_left
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_back
+import tech.dokus.aura.resources.arrow_left
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height

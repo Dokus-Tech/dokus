@@ -1,10 +1,10 @@
 package tech.dokus.foundation.aura.extensions
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.document_type_bill
-import ai.dokus.app.resources.generated.document_type_expense
-import ai.dokus.app.resources.generated.document_type_invoice
-import ai.dokus.app.resources.generated.document_type_unknown
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.document_type_bill
+import tech.dokus.aura.resources.document_type_expense
+import tech.dokus.aura.resources.document_type_invoice
+import tech.dokus.aura.resources.document_type_unknown
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.MediaDocumentType
 import androidx.compose.runtime.Composable

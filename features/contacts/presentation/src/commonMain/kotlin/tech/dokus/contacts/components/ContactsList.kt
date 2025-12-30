@@ -1,9 +1,9 @@
 package tech.dokus.contacts.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_add_first
-import ai.dokus.app.resources.generated.contacts_add_first_hint
-import ai.dokus.app.resources.generated.contacts_empty
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_add_first
+import tech.dokus.aura.resources.contacts_add_first_hint
+import tech.dokus.aura.resources.contacts_empty
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine

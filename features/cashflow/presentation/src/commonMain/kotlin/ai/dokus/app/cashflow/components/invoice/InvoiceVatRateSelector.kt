@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.common_percent_value
-import ai.dokus.app.resources.generated.invoice_vat_rate
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_percent_value
+import tech.dokus.aura.resources.invoice_vat_rate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

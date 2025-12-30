@@ -7,9 +7,9 @@ import ai.dokus.app.contacts.datasource.ContactsDb
 import tech.dokus.contacts.di.contactsPresentationModule
 import tech.dokus.contacts.navigation.ContactsHomeNavigationProvider
 import tech.dokus.contacts.navigation.ContactsNavigationProvider
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_title
-import ai.dokus.app.resources.generated.users
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_title
+import tech.dokus.aura.resources.users
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.foundation.aura.model.HomeItemPriority
 import ai.dokus.foundation.navigation.NavigationProvider

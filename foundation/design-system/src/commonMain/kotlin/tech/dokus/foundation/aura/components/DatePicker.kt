@@ -2,9 +2,9 @@
 
 package tech.dokus.foundation.aura.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_cancel
-import ai.dokus.app.resources.generated.action_confirm
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.action_confirm
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api

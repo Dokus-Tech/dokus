@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.components.upload
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.upload_documents_absorbed
-import ai.dokus.app.resources.generated.upload_release_to_upload
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.upload_documents_absorbed
+import tech.dokus.aura.resources.upload_release_to_upload
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat

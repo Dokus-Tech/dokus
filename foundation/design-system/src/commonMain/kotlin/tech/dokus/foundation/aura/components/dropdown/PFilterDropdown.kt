@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.components.dropdown
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_expand_options
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_expand_options
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
