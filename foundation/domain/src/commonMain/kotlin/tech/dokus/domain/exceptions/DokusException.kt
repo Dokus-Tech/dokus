@@ -51,6 +51,12 @@ sealed class DokusException(
         )
 
         @Serializable
+        @SerialName("DokusException.Validation.EmailRequired")
+        data object EmailRequired : Validation(
+            message = "Email is required",
+        )
+
+        @Serializable
         @SerialName("DokusException.Validation.InvalidPhoneNumber")
         data object InvalidPhoneNumber : Validation(
             message = "Invalid phone number",
@@ -104,6 +110,62 @@ sealed class DokusException(
             message = "Invalid display name",
         )
 
+        // Server Connection Validation Errors
+        @Serializable
+        @SerialName("DokusException.Validation.ServerHostRequired")
+        data object ServerHostRequired : Validation(
+            message = "Host is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.ServerHostNoSpaces")
+        data object ServerHostNoSpaces : Validation(
+            message = "Host must not contain spaces",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.ServerPortRequired")
+        data object ServerPortRequired : Validation(
+            message = "Port is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.ServerPortInvalidNumber")
+        data object ServerPortInvalidNumber : Validation(
+            message = "Port must be a number",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.ServerPortOutOfRange")
+        data object ServerPortOutOfRange : Validation(
+            message = "Port must be between 1 and 65535",
+        )
+
+        // Contact Validation Errors
+        @Serializable
+        @SerialName("DokusException.Validation.ContactNameRequired")
+        data object ContactNameRequired : Validation(
+            message = "Name is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.CompanyNameRequired")
+        data object CompanyNameRequired : Validation(
+            message = "Company name is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.FullNameRequired")
+        data object FullNameRequired : Validation(
+            message = "Full name is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.ContactEmailOrPhoneRequired")
+        data object ContactEmailOrPhoneRequired : Validation(
+            message = "Email or phone number is required",
+        )
+
         @Serializable
         @SerialName("DokusException.Validation.InvalidVatNumber")
         data object InvalidVatNumber : Validation(
@@ -126,6 +188,12 @@ sealed class DokusException(
         @SerialName("DokusException.Validation.InvalidPeppolId")
         data object InvalidPeppolId : Validation(
             message = "Invalid Peppol ID",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.PeppolIdRequired")
+        data object PeppolIdRequired : Validation(
+            message = "Peppol ID is required",
         )
 
         @Serializable
@@ -156,6 +224,37 @@ sealed class DokusException(
         @SerialName("DokusException.Validation.InvalidQuantity")
         data object InvalidQuantity : Validation(
             message = "Invalid quantity",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.InvoiceClientRequired")
+        data object InvoiceClientRequired : Validation(
+            message = "Client is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.InvoiceItemsRequired")
+        data object InvoiceItemsRequired : Validation(
+            message = "At least one line item is required",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.InvoiceDueDateBeforeIssue")
+        data object InvoiceDueDateBeforeIssue : Validation(
+            message = "Due date cannot be before issue date",
+        )
+
+        // Document Validation Errors
+        @Serializable
+        @SerialName("DokusException.Validation.DocumentMissingFields")
+        data object DocumentMissingFields : Validation(
+            message = "Required fields are missing",
+        )
+
+        @Serializable
+        @SerialName("DokusException.Validation.NoteContentRequired")
+        data object NoteContentRequired : Validation(
+            message = "Note content is required",
         )
 
         // Address Validation Errors
@@ -558,6 +657,303 @@ sealed class DokusException(
             const val HTTP_STATUS = 500
             const val ERROR_CODE = "TENANT_CREATION_FAILED"
         }
+    }
+
+    // 500 Internal Server Error - Contact Operations
+    @Serializable
+    @SerialName("DokusException.ContactCreateFailed")
+    data object ContactCreateFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_CREATE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to create contact"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ContactLookupFailed")
+    data object ContactLookupFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_LOOKUP_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to search contacts"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ContactDeleteFailed")
+    data object ContactDeleteFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_DELETE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to delete contact"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ContactMergeFailed")
+    data object ContactMergeFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_MERGE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to merge contacts"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ContactPeppolUpdateFailed")
+    data object ContactPeppolUpdateFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_PEPPOL_UPDATE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to update Peppol settings"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ContactNoteAddFailed")
+    data object ContactNoteAddFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_NOTE_ADD_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to add note"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ContactNoteUpdateFailed")
+    data object ContactNoteUpdateFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_NOTE_UPDATE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to update note"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ContactNoteDeleteFailed")
+    data object ContactNoteDeleteFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CONTACT_NOTE_DELETE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to delete note"
+    }
+
+    // 500 Internal Server Error - Team Operations
+    @Serializable
+    @SerialName("DokusException.TeamInviteFailed")
+    data object TeamInviteFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "TEAM_INVITE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to send invitation"
+    }
+
+    @Serializable
+    @SerialName("DokusException.TeamInviteCancelFailed")
+    data object TeamInviteCancelFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "TEAM_INVITE_CANCEL_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to cancel invitation"
+    }
+
+    @Serializable
+    @SerialName("DokusException.TeamRoleUpdateFailed")
+    data object TeamRoleUpdateFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "TEAM_ROLE_UPDATE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to update role"
+    }
+
+    @Serializable
+    @SerialName("DokusException.TeamMemberRemoveFailed")
+    data object TeamMemberRemoveFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "TEAM_MEMBER_REMOVE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to remove member"
+    }
+
+    @Serializable
+    @SerialName("DokusException.TeamOwnershipTransferFailed")
+    data object TeamOwnershipTransferFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "TEAM_OWNERSHIP_TRANSFER_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to transfer ownership"
+    }
+
+    // 500 Internal Server Error - Workspace Operations
+    @Serializable
+    @SerialName("DokusException.WorkspaceSettingsSaveFailed")
+    data object WorkspaceSettingsSaveFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "WORKSPACE_SETTINGS_SAVE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to save settings"
+    }
+
+    @Serializable
+    @SerialName("DokusException.WorkspaceAvatarUploadFailed")
+    data object WorkspaceAvatarUploadFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "WORKSPACE_AVATAR_UPLOAD_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to upload avatar"
+    }
+
+    @Serializable
+    @SerialName("DokusException.WorkspaceAvatarDeleteFailed")
+    data object WorkspaceAvatarDeleteFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "WORKSPACE_AVATAR_DELETE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to delete avatar"
+    }
+
+    @Serializable
+    @SerialName("DokusException.WorkspaceCreateFailed")
+    data object WorkspaceCreateFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "WORKSPACE_CREATE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to create workspace"
+    }
+
+    @Serializable
+    @SerialName("DokusException.CompanyLookupFailed")
+    data object CompanyLookupFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "COMPANY_LOOKUP_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Company lookup failed"
+    }
+
+    @Serializable
+    @SerialName("DokusException.WorkspaceSelectFailed")
+    data object WorkspaceSelectFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "WORKSPACE_SELECT_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to select workspace"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ProfileSaveFailed")
+    data object ProfileSaveFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "PROFILE_SAVE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to save profile"
+    }
+
+    // 500 Internal Server Error - Chat Operations
+    @Serializable
+    @SerialName("DokusException.ChatLoadConversationFailed")
+    data class ChatLoadConversationFailed(
+        val reason: String? = null,
+        override val message: String? = reason,
+    ) : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CHAT_LOAD_CONVERSATION_FAILED",
+        recoverable = true,
+    )
+
+    @Serializable
+    @SerialName("DokusException.ChatSendMessageFailed")
+    data class ChatSendMessageFailed(
+        val reason: String? = null,
+        override val message: String? = reason,
+    ) : DokusException(
+        httpStatusCode = 500,
+        errorCode = "CHAT_SEND_MESSAGE_FAILED",
+        recoverable = true,
+    )
+
+    @Serializable
+    @SerialName("DokusException.ChatNoDocumentSelected")
+    data object ChatNoDocumentSelected : DokusException(
+        httpStatusCode = 400,
+        errorCode = "CHAT_NO_DOCUMENT_SELECTED",
+        recoverable = false,
+    ) {
+        override val message: String? = "No document selected"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ChatInvalidDocumentReference")
+    data object ChatInvalidDocumentReference : DokusException(
+        httpStatusCode = 400,
+        errorCode = "CHAT_INVALID_DOCUMENT_REFERENCE",
+        recoverable = false,
+    ) {
+        override val message: String? = "Invalid document reference"
+    }
+
+    // 500 Internal Server Error - Document Review Operations
+    @Serializable
+    @SerialName("DokusException.DocumentContactClearFailed")
+    data object DocumentContactClearFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "DOCUMENT_CONTACT_CLEAR_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to clear contact"
+    }
+
+    @Serializable
+    @SerialName("DokusException.DocumentContactSaveFailed")
+    data object DocumentContactSaveFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "DOCUMENT_CONTACT_SAVE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to save contact"
+    }
+
+    @Serializable
+    @SerialName("DokusException.DocumentContactBindFailed")
+    data object DocumentContactBindFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "DOCUMENT_CONTACT_BIND_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to bind contact"
+    }
+
+    @Serializable
+    @SerialName("DokusException.DocumentPreviewLoadFailed")
+    data object DocumentPreviewLoadFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "DOCUMENT_PREVIEW_LOAD_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to load preview"
+    }
+
+    @Serializable
+    @SerialName("DokusException.DocumentUploadFailed")
+    data object DocumentUploadFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "DOCUMENT_UPLOAD_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Upload failed"
     }
 
     @Serializable

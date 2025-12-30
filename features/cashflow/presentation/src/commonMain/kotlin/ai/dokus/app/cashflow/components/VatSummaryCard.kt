@@ -1,6 +1,13 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_amount_compact_thousands
+import ai.dokus.app.resources.generated.cashflow_amount_with_currency
+import ai.dokus.app.resources.generated.currency_symbol_eur
+import ai.dokus.app.resources.generated.vat_net_amount
+import ai.dokus.app.resources.generated.vat_predicted_net_amount
+import ai.dokus.app.resources.generated.vat_quarter_sublabel
+import ai.dokus.app.resources.generated.vat_summary_title
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
@@ -247,27 +254,27 @@ private fun AmountColumn(
 @Composable
 private fun formatAmount(amount: Money): String {
     val currencySymbol = stringResource(Res.string.currency_symbol_eur)
-    return try {
-        val value = amount.toDouble()
-        when {
-            value >= 1000 -> {
-                val thousands = (value / 1000).toInt()
-                stringResource(Res.string.cashflow_amount_compact_thousands, currencySymbol, thousands)
-            }
-
-            value == 0.0 -> stringResource(
-                Res.string.cashflow_amount_with_currency,
-                currencySymbol,
-                "000"
-            )
-            else -> stringResource(
-                Res.string.cashflow_amount_with_currency,
-                currencySymbol,
-                value.toInt().toString()
-            )
+    val value = runCatching { amount.toDouble() }.getOrNull()
+    return when {
+        value == null -> stringResource(
+            Res.string.cashflow_amount_with_currency,
+            currencySymbol,
+            "000"
+        )
+        value >= 1000 -> {
+            val thousands = (value / 1000).toInt()
+            stringResource(Res.string.cashflow_amount_compact_thousands, currencySymbol, thousands)
         }
-    } catch (e: Exception) {
-        stringResource(Res.string.cashflow_amount_with_currency, currencySymbol, "000")
+        value == 0.0 -> stringResource(
+            Res.string.cashflow_amount_with_currency,
+            currencySymbol,
+            "000"
+        )
+        else -> stringResource(
+            Res.string.cashflow_amount_with_currency,
+            currencySymbol,
+            value.toInt().toString()
+        )
     }
 }
 

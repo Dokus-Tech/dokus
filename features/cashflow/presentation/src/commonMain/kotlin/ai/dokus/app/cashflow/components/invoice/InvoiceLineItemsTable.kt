@@ -2,6 +2,11 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_add_line_item
+import ai.dokus.app.resources.generated.invoice_amount
+import ai.dokus.app.resources.generated.invoice_description
+import ai.dokus.app.resources.generated.invoice_price
+import ai.dokus.app.resources.generated.invoice_qty
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

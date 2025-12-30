@@ -8,6 +8,7 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.Language
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.entity.EntityLookup
 
@@ -49,7 +50,7 @@ sealed interface LookupUiState {
     data object Loading : LookupUiState
     data class Success(val results: List<EntityLookup>) : LookupUiState
     data object Empty : LookupUiState
-    data class Error(val message: String) : LookupUiState
+    data class Error(val exception: DokusException) : LookupUiState
 }
 
 /**
@@ -67,7 +68,7 @@ data class ManualContactFormData(
     val personEmail: String = "",
     val personPhone: String = "",
     // Validation errors
-    val errors: Map<String, String> = emptyMap(),
+    val errors: Map<String, DokusException> = emptyMap(),
 ) {
     val isBusinessValid: Boolean
         get() = companyName.isNotBlank() && errors.isEmpty()
@@ -85,8 +86,13 @@ data class ManualContactFormData(
 data class SoftDuplicateUi(
     val contactId: ContactId,
     val displayName: String,
-    val matchReason: String,
+    val matchReason: SoftDuplicateReason,
 )
+
+enum class SoftDuplicateReason {
+    NameAndCountry,
+    Name,
+}
 
 // ============================================================================
 // STATE
@@ -121,7 +127,7 @@ sealed interface CreateContactState : MVIState {
         val language: Language? = null,
         val showAddressDetails: Boolean = false,
         val isSubmitting: Boolean = false,
-        val emailError: String? = null,
+        val emailError: DokusException? = null,
     ) : CreateContactState
 
     /**
@@ -236,5 +242,5 @@ sealed interface CreateContactAction : MVIAction {
     data class ContactCreated(val contactId: ContactId, val displayName: String) : CreateContactAction
 
     /** Show error message */
-    data class ShowError(val message: String) : CreateContactAction
+    data class ShowError(val error: DokusException) : CreateContactAction
 }

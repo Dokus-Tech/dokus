@@ -17,6 +17,9 @@
     <string name="exception_invalid_vat_rate">Aliquota IVA non valida</string>
     <string name="exception_invalid_percentage">Valore percentuale non valido</string>
     <string name="exception_invalid_quantity">Quantità non valida</string>
+    <string name="exception_invoice_client_required">Seleziona un cliente</string>
+    <string name="exception_invoice_items_required">Aggiungi almeno una riga valida</string>
+    <string name="exception_invoice_due_date_before_issue">La data di scadenza non può essere precedente alla data di emissione</string>
     <string name="exception_invalid_street_name">Nome della via non valido</string>
     <string name="exception_invalid_city">Città non valida</string>
     <string name="exception_invalid_postal_code">CAP non valido</string>

@@ -7,6 +7,7 @@ import ai.dokus.app.resources.generated.action_upload
 import ai.dokus.app.resources.generated.save_changes
 import ai.dokus.app.resources.generated.settings_saved_successfully
 import ai.dokus.app.resources.generated.state_removing
+import ai.dokus.app.resources.generated.state_retry
 import ai.dokus.app.resources.generated.state_uploading
 import ai.dokus.app.resources.generated.workspace_address
 import ai.dokus.app.resources.generated.workspace_banking
@@ -31,6 +32,7 @@ import ai.dokus.app.resources.generated.workspace_payment_terms
 import ai.dokus.app.resources.generated.workspace_payment_terms_description
 import ai.dokus.app.resources.generated.workspace_payment_terms_section
 import ai.dokus.app.resources.generated.workspace_payment_terms_text
+import ai.dokus.app.resources.generated.workspace_settings_load_failed
 import ai.dokus.app.resources.generated.workspace_settings_title
 import ai.dokus.app.resources.generated.workspace_vat_number
 import ai.dokus.foundation.design.components.AvatarSize
@@ -38,6 +40,7 @@ import ai.dokus.foundation.design.components.CompanyAvatarImage
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldFree
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
 import tech.dokus.domain.model.common.Thumbnail
@@ -75,7 +78,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -87,9 +92,11 @@ import tech.dokus.app.viewmodel.WorkspaceSettingsAction
 import tech.dokus.app.viewmodel.WorkspaceSettingsContainer
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
+import tech.dokus.app.viewmodel.WorkspaceSettingsSuccess
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
+import tech.dokus.domain.exceptions.DokusException
 
 /**
  * Workspace/Company settings screen with top bar using FlowMVI Container pattern.
@@ -100,15 +107,39 @@ internal fun WorkspaceSettingsScreen(
     container: WorkspaceSettingsContainer = container()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf<WorkspaceSettingsSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            WorkspaceSettingsSuccess.SettingsSaved ->
+                stringResource(Res.string.settings_saved_successfully)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is WorkspaceSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingSuccess = action.success
             }
 
             is WorkspaceSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingError = action.error
             }
         }
     }
@@ -145,15 +176,39 @@ internal fun WorkspaceSettingsContent(
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf<WorkspaceSettingsSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            WorkspaceSettingsSuccess.SettingsSaved ->
+                stringResource(Res.string.settings_saved_successfully)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is WorkspaceSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingSuccess = action.success
             }
 
             is WorkspaceSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingError = action.error
             }
         }
     }
@@ -679,7 +734,7 @@ private fun AvatarStateIndicator(
 
         is WorkspaceSettingsState.Content.AvatarState.Error -> {
             Text(
-                text = avatarState.message,
+                text = avatarState.error.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )
@@ -715,7 +770,7 @@ private fun SaveStateFeedback(
 
         is WorkspaceSettingsState.Content.SaveState.Error -> {
             Text(
-                text = saveState.message,
+                text = saveState.error.localized,
                 color = MaterialTheme.colorScheme.error,
                 modifier = modifier
             )

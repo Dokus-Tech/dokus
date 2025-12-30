@@ -178,8 +178,12 @@ sealed interface CashflowAction : MVIAction {
     data object NavigateToSettings : CashflowAction
 
     /** Show error message as snackbar/toast */
-    data class ShowError(val message: String) : CashflowAction
+    data class ShowError(val error: DokusException) : CashflowAction
 
     /** Show success message as snackbar/toast */
-    data class ShowSuccess(val message: String) : CashflowAction
+    data class ShowSuccess(val success: CashflowSuccess) : CashflowAction
+}
+
+enum class CashflowSuccess {
+    InvoiceCreated,
 }

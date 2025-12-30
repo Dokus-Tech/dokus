@@ -1,6 +1,28 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.bill_status_cancelled
+import ai.dokus.app.resources.generated.bill_status_draft
+import ai.dokus.app.resources.generated.bill_status_overdue
+import ai.dokus.app.resources.generated.bill_status_paid
+import ai.dokus.app.resources.generated.bill_status_pending
+import ai.dokus.app.resources.generated.bill_status_scheduled
+import ai.dokus.app.resources.generated.cashflow_card_title
+import ai.dokus.app.resources.generated.cashflow_document_number_bill
+import ai.dokus.app.resources.generated.cashflow_document_number_expense
+import ai.dokus.app.resources.generated.document_type_bill
+import ai.dokus.app.resources.generated.document_type_expense
+import ai.dokus.app.resources.generated.document_type_invoice
+import ai.dokus.app.resources.generated.invoice_status_cancelled
+import ai.dokus.app.resources.generated.invoice_status_draft
+import ai.dokus.app.resources.generated.invoice_status_overdue
+import ai.dokus.app.resources.generated.invoice_status_paid
+import ai.dokus.app.resources.generated.invoice_status_partial
+import ai.dokus.app.resources.generated.invoice_status_refunded
+import ai.dokus.app.resources.generated.invoice_status_viewed
+import ai.dokus.app.resources.generated.pending_documents_need_confirmation
+import ai.dokus.app.resources.generated.pending_documents_next
+import ai.dokus.app.resources.generated.pending_documents_previous
 import tech.dokus.domain.enums.BillStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
@@ -235,7 +257,6 @@ private fun DocumentStatusBadge(
     )
 }
 
-@Composable
 @Composable
 private fun getInvoiceStatusStyle(status: InvoiceStatus): Triple<Color, Color, String> {
     return when (status) {

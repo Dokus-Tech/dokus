@@ -3,6 +3,14 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_close
+import ai.dokus.app.resources.generated.contacts_selected
+import ai.dokus.app.resources.generated.error_failed_to_load_clients
+import ai.dokus.app.resources.generated.invoice_no_clients_found
+import ai.dokus.app.resources.generated.invoice_no_clients_match
+import ai.dokus.app.resources.generated.invoice_search_clients
+import ai.dokus.app.resources.generated.invoice_select_client
+import ai.dokus.app.resources.generated.peppol_id_missing
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import tech.dokus.domain.model.contact.ContactDto

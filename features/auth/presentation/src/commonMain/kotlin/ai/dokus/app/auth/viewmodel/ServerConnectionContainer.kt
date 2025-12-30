@@ -1,14 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_host_no_spaces
-import ai.dokus.app.resources.generated.auth_host_required
-import ai.dokus.app.resources.generated.auth_port_invalid_number
-import ai.dokus.app.resources.generated.auth_port_out_of_range
-import ai.dokus.app.resources.generated.auth_port_required
 import ai.dokus.foundation.platform.Logger
-import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -16,6 +9,7 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 
 internal typealias ServerConnectionCtx = PipelineContext<ServerConnectionState, ServerConnectionIntent, ServerConnectionAction>
@@ -250,20 +244,20 @@ internal class ServerConnectionContainer(
         )
     }
 
-    private fun validateHost(host: String): StringResource? {
+    private fun validateHost(host: String): DokusException? {
         return when {
-            host.isBlank() -> Res.string.auth_host_required
-            host.contains(" ") -> Res.string.auth_host_no_spaces
+            host.isBlank() -> DokusException.Validation.ServerHostRequired
+            host.contains(" ") -> DokusException.Validation.ServerHostNoSpaces
             else -> null
         }
     }
 
-    private fun validatePort(port: String): StringResource? {
+    private fun validatePort(port: String): DokusException? {
         val portNum = port.toIntOrNull()
         return when {
-            port.isBlank() -> Res.string.auth_port_required
-            portNum == null -> Res.string.auth_port_invalid_number
-            portNum !in 1..65535 -> Res.string.auth_port_out_of_range
+            port.isBlank() -> DokusException.Validation.ServerPortRequired
+            portNum == null -> DokusException.Validation.ServerPortInvalidNumber
+            portNum !in 1..65535 -> DokusException.Validation.ServerPortOutOfRange
             else -> null
         }
     }

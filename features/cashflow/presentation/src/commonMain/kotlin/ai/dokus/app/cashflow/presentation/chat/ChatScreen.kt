@@ -1,6 +1,38 @@
 package ai.dokus.app.cashflow.presentation.chat
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.chat_collapse_all_citations
+import ai.dokus.app.resources.generated.chat_document_title_fallback
+import ai.dokus.app.resources.generated.chat_empty_description_all
+import ai.dokus.app.resources.generated.chat_empty_description_single
+import ai.dokus.app.resources.generated.chat_example_due_date
+import ai.dokus.app.resources.generated.chat_example_format
+import ai.dokus.app.resources.generated.chat_example_invoices_company
+import ai.dokus.app.resources.generated.chat_example_spend_last_month
+import ai.dokus.app.resources.generated.chat_example_total_amount
+import ai.dokus.app.resources.generated.chat_expand_all_citations
+import ai.dokus.app.resources.generated.chat_general_chat
+import ai.dokus.app.resources.generated.chat_history_action
+import ai.dokus.app.resources.generated.chat_history_empty
+import ai.dokus.app.resources.generated.chat_history_title
+import ai.dokus.app.resources.generated.chat_input_placeholder
+import ai.dokus.app.resources.generated.chat_loading
+import ai.dokus.app.resources.generated.chat_message_count_plural
+import ai.dokus.app.resources.generated.chat_message_count_single
+import ai.dokus.app.resources.generated.chat_message_too_long
+import ai.dokus.app.resources.generated.chat_more_options
+import ai.dokus.app.resources.generated.chat_new_chat
+import ai.dokus.app.resources.generated.chat_new_conversation
+import ai.dokus.app.resources.generated.chat_prompt_all_documents
+import ai.dokus.app.resources.generated.chat_prompt_single_document
+import ai.dokus.app.resources.generated.chat_scope_all_documents
+import ai.dokus.app.resources.generated.chat_scope_single_document
+import ai.dokus.app.resources.generated.chat_switch_to_all_documents
+import ai.dokus.app.resources.generated.chat_thinking
+import ai.dokus.app.resources.generated.chat_this_document
+import ai.dokus.app.resources.generated.chat_title_all_documents
+import ai.dokus.app.resources.generated.chat_try_asking
 import ai.dokus.foundation.design.components.PBackButton
 import ai.dokus.foundation.design.components.chat.ChatMessageBubble
 import ai.dokus.foundation.design.components.chat.ChatMessageRole
@@ -9,9 +41,11 @@ import ai.dokus.foundation.design.components.chat.CitationDisplayData
 import ai.dokus.foundation.design.components.chat.PChatInputField
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.constrains.Constrains
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionSummary
@@ -114,8 +148,17 @@ internal fun ChatScreen(
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.isLarge
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     // Subscribe to state and handle actions
     val state by container.store.subscribe(DefaultLifecycle) { action ->
@@ -133,9 +176,7 @@ internal fun ChatScreen(
             }
 
             is ChatAction.ShowError -> {
-                scope.launch {
-                    snackbarHostState.showSnackbar(action.message)
-                }
+                pendingError = action.error
             }
 
             is ChatAction.ShowSuccess -> {

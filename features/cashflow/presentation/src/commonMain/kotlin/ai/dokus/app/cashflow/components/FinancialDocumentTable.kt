@@ -1,6 +1,29 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_amount_with_currency
+import ai.dokus.app.resources.generated.cashflow_document_number_bill
+import ai.dokus.app.resources.generated.cashflow_document_number_expense
+import ai.dokus.app.resources.generated.common_unknown
+import ai.dokus.app.resources.generated.date_format_long
+import ai.dokus.app.resources.generated.date_month_long_april
+import ai.dokus.app.resources.generated.date_month_long_august
+import ai.dokus.app.resources.generated.date_month_long_december
+import ai.dokus.app.resources.generated.date_month_long_february
+import ai.dokus.app.resources.generated.date_month_long_january
+import ai.dokus.app.resources.generated.date_month_long_july
+import ai.dokus.app.resources.generated.date_month_long_june
+import ai.dokus.app.resources.generated.date_month_long_march
+import ai.dokus.app.resources.generated.date_month_long_may
+import ai.dokus.app.resources.generated.date_month_long_november
+import ai.dokus.app.resources.generated.date_month_long_october
+import ai.dokus.app.resources.generated.date_month_long_september
+import ai.dokus.app.resources.generated.document_table_amount
+import ai.dokus.app.resources.generated.document_table_contact
+import ai.dokus.app.resources.generated.document_table_date
+import ai.dokus.app.resources.generated.document_table_invoice
+import ai.dokus.app.resources.generated.document_table_more_options
+import ai.dokus.app.resources.generated.document_table_view_details
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
 import tech.dokus.domain.enums.InvoiceStatus
@@ -98,23 +121,18 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
         is FinancialDocumentDto.BillDto -> false // Bills don't have a status requiring confirmation (yet)
     }
 
-    // Format amount with comma separator
-    val formattedAmount = try {
+    // Format amount with comma separator (fallback to display string on parse failure)
+    val formattedNumber = runCatching {
         val amountValue = amount.toDouble()
         val intAmount = amountValue.toInt()
-        val formattedNumber = intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
-        stringResource(
-            Res.string.cashflow_amount_with_currency,
-            currency.displaySign,
-            formattedNumber
-        )
-    } catch (e: Exception) {
-        stringResource(
-            Res.string.cashflow_amount_with_currency,
-            currency.displaySign,
-            amount.toDisplayString()
-        )
-    }
+        intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
+    }.getOrNull()
+
+    val formattedAmount = stringResource(
+        Res.string.cashflow_amount_with_currency,
+        currency.displaySign,
+        formattedNumber ?: amount.toDisplayString()
+    )
 
     return FinancialDocumentRow(
         id = documentId,

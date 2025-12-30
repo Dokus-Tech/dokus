@@ -5,7 +5,6 @@ import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.runtime.Immutable
-import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
@@ -44,8 +43,8 @@ sealed interface ServerConnectionState : MVIState, DokusState<Nothing> {
         override val protocol: String = "http",
         override val host: String = "",
         override val port: String = "8000",
-        val hostError: StringResource? = null,
-        val portError: StringResource? = null,
+        val hostError: DokusException? = null,
+        val portError: DokusException? = null,
     ) : ServerConnectionState
 
     /**

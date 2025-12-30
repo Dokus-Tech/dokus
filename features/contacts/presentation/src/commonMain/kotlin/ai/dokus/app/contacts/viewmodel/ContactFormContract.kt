@@ -1,11 +1,6 @@
 package ai.dokus.app.contacts.viewmodel
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_duplicate_match_email
-import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
-import ai.dokus.app.resources.generated.contacts_duplicate_match_vat
 import androidx.compose.runtime.Immutable
-import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
@@ -15,6 +10,11 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_duplicate_match_email
+import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
+import ai.dokus.app.resources.generated.contacts_duplicate_match_vat
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Contract for Contact Form screen (Create/Edit).
@@ -78,7 +78,7 @@ data class ContactFormData(
     val isActive: Boolean = true,
 
     // Validation errors
-    val errors: Map<String, String> = emptyMap(),
+    val errors: Map<String, DokusException> = emptyMap(),
 ) {
     /**
      * Check if the form has the minimum required data.
@@ -348,11 +348,17 @@ sealed interface ContactFormAction : MVIAction {
     data class NavigateToContact(val contactId: ContactId) : ContactFormAction
 
     /** Show error message as snackbar/toast */
-    data class ShowError(val message: String) : ContactFormAction
+    data class ShowError(val error: DokusException) : ContactFormAction
 
     /** Show success message as snackbar/toast */
-    data class ShowSuccess(val message: String) : ContactFormAction
+    data class ShowSuccess(val success: ContactFormSuccess) : ContactFormAction
 
     /** Show validation error for a specific field */
-    data class ShowFieldError(val field: String, val message: String) : ContactFormAction
+    data class ShowFieldError(val field: String, val error: DokusException) : ContactFormAction
+}
+
+enum class ContactFormSuccess {
+    Created,
+    Updated,
+    Deleted,
 }

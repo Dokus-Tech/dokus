@@ -12,7 +12,6 @@ import ai.dokus.app.resources.generated.contacts_company_name
 import ai.dokus.app.resources.generated.contacts_create_contact
 import ai.dokus.app.resources.generated.contacts_creating
 import ai.dokus.app.resources.generated.contacts_email
-import ai.dokus.app.resources.generated.contacts_email_or_phone_required
 import ai.dokus.app.resources.generated.contacts_full_name
 import ai.dokus.app.resources.generated.contacts_individual
 import ai.dokus.app.resources.generated.contacts_phone
@@ -27,6 +26,7 @@ import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldPhone
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.Constrains
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -207,9 +207,7 @@ private fun BusinessFields(
                 stringResource(Res.string.contacts_company_name)
             ),
             value = formData.companyName,
-            error = formData.errors["companyName"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
-            },
+            error = formData.errors["companyName"],
             onValueChange = { onFieldChanged("companyName", it) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -259,9 +257,7 @@ private fun IndividualFields(
                 stringResource(Res.string.contacts_full_name)
             ),
             value = formData.fullName,
-            error = formData.errors["fullName"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
-            },
+            error = formData.errors["fullName"],
             onValueChange = { onFieldChanged("fullName", it) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -269,9 +265,7 @@ private fun IndividualFields(
         PTextFieldEmail(
             fieldName = stringResource(Res.string.contacts_email),
             value = Email(formData.personEmail),
-            error = formData.errors["contact"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
-            },
+            error = formData.errors["contact"],
             onValueChange = { onFieldChanged("personEmail", it.value) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -279,16 +273,14 @@ private fun IndividualFields(
         PTextFieldPhone(
             fieldName = stringResource(Res.string.contacts_phone),
             value = PhoneNumber(formData.personPhone),
-            error = formData.errors["contact"]?.let {
-                tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
-            },
+            error = formData.errors["contact"],
             onValueChange = { onFieldChanged("personPhone", it.value) },
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (formData.errors["contact"] != null) {
+        formData.errors["contact"]?.let { error ->
             Text(
-                text = stringResource(Res.string.contacts_email_or_phone_required),
+                text = error.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )

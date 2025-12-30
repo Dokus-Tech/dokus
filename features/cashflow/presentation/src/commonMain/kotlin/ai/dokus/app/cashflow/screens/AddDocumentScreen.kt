@@ -13,6 +13,13 @@ import ai.dokus.app.cashflow.viewmodel.AddDocumentContainer
 import ai.dokus.app.cashflow.viewmodel.AddDocumentIntent
 import ai.dokus.app.cashflow.viewmodel.AddDocumentState
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_add_document
+import ai.dokus.app.resources.generated.upload_documents_title
+import ai.dokus.app.resources.generated.upload_instructions
+import ai.dokus.app.resources.generated.upload_no_app_hint
+import ai.dokus.app.resources.generated.upload_select_file
+import ai.dokus.app.resources.generated.upload_uploads_title
+import ai.dokus.app.resources.generated.upload_with_camera
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.padding
 import ai.dokus.foundation.design.local.LocalScreenSize

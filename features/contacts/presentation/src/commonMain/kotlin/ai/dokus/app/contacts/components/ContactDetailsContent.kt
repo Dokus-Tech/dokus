@@ -34,6 +34,7 @@ import ai.dokus.app.resources.generated.contacts_supplier
 import ai.dokus.app.resources.generated.contacts_tags
 import ai.dokus.app.resources.generated.contacts_vat_number
 import ai.dokus.app.resources.generated.contacts_vendor
+import ai.dokus.app.resources.generated.common_percent_value
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
 import androidx.compose.foundation.layout.Arrangement
@@ -351,7 +352,7 @@ private fun ContactInfoContent(
             ContactInfoRow(
                 icon = Icons.Default.Payments,
                 label = stringResource(Res.string.contacts_default_vat_rate),
-                value = "${rate.toDisplayString()}%"
+                value = stringResource(Res.string.common_percent_value, rate.toDisplayString())
             )
         }
 
@@ -560,7 +561,7 @@ private fun ActivitySummaryContent(
         // Pending approvals
         if (activity.pendingApprovalCount > 0) {
             val pendingCount = activity.pendingApprovalCount
-            val pendingText = if (pendingCount == 1) {
+            val pendingText = if (pendingCount == 1L) {
                 stringResource(Res.string.contacts_pending_approval_single, pendingCount)
             } else {
                 stringResource(Res.string.contacts_pending_approval_plural, pendingCount)

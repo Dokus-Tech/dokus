@@ -2,6 +2,10 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_details_title
+import ai.dokus.app.resources.generated.invoice_notes_optional
+import ai.dokus.app.resources.generated.invoice_save_as_draft
+import ai.dokus.foundation.design.extensions.localized
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
@@ -96,7 +100,7 @@ fun InvoiceFormCard(
             // Error message
             formState.errors["general"]?.let { error ->
                 Text(
-                    text = error,
+                    text = error.localized,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )

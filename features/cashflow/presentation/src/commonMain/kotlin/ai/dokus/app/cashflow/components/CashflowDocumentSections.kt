@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_no_documents
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine

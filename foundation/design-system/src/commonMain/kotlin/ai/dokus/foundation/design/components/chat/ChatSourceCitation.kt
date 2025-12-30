@@ -9,6 +9,7 @@ import ai.dokus.app.resources.generated.chat_expand_sources
 import ai.dokus.app.resources.generated.chat_page_number
 import ai.dokus.app.resources.generated.chat_sources_count
 import ai.dokus.app.resources.generated.chat_view_source_document
+import ai.dokus.app.resources.generated.common_percent_value
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -246,7 +247,7 @@ private fun RelevanceScoreBadge(
     }
 
     Text(
-        text = "$displayScore%",
+        text = stringResource(Res.string.common_percent_value, displayScore),
         style = MaterialTheme.typography.labelSmall,
         color = textColor,
         modifier = modifier

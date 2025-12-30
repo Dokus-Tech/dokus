@@ -1,5 +1,7 @@
 package ai.dokus.app.cashflow.components.upload
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.common_percent_value
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Upload progress indicator showing a linear progress bar with percentage text.
@@ -46,7 +49,7 @@ fun UploadProgressIndicator(
             strokeCap = StrokeCap.Round
         )
         Text(
-            text = "$progressPercent%",
+            text = stringResource(Res.string.common_percent_value, progressPercent),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

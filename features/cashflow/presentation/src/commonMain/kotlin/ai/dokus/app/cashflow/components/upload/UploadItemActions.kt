@@ -1,6 +1,10 @@
 package ai.dokus.app.cashflow.components.upload
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.upload_action_cancel
+import ai.dokus.app.resources.generated.upload_action_delete
+import ai.dokus.app.resources.generated.upload_action_retry
+import ai.dokus.app.resources.generated.upload_action_undo
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close

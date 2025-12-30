@@ -80,5 +80,5 @@ sealed interface WorkspaceSelectAction : MVIAction {
     data object NavigateToHome : WorkspaceSelectAction
 
     /** Show error message when selection fails */
-    data class ShowSelectionError(val message: String) : WorkspaceSelectAction
+    data class ShowSelectionError(val error: DokusException) : WorkspaceSelectAction
 }

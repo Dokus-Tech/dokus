@@ -192,8 +192,14 @@ sealed interface ContactsAction : MVIAction {
     data class NavigateToEditContact(val contactId: ContactId) : ContactsAction
 
     /** Show error message as snackbar/toast */
-    data class ShowError(val message: String) : ContactsAction
+    data class ShowError(val error: DokusException) : ContactsAction
 
     /** Show success message as snackbar/toast */
-    data class ShowSuccess(val message: String) : ContactsAction
+    data class ShowSuccess(val success: ContactsSuccess) : ContactsAction
+}
+
+enum class ContactsSuccess {
+    Created,
+    Updated,
+    Deleted,
 }

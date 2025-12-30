@@ -1,6 +1,84 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_collapse
+import ai.dokus.app.resources.generated.action_confirm
+import ai.dokus.app.resources.generated.action_discard
+import ai.dokus.app.resources.generated.action_expand
+import ai.dokus.app.resources.generated.action_reject
+import ai.dokus.app.resources.generated.action_save
+import ai.dokus.app.resources.generated.action_select
+import ai.dokus.app.resources.generated.action_select_date
+import ai.dokus.app.resources.generated.cashflow_bill_details_section
+import ai.dokus.app.resources.generated.cashflow_chat_with_document
+import ai.dokus.app.resources.generated.cashflow_client_information
+import ai.dokus.app.resources.generated.cashflow_client_name
+import ai.dokus.app.resources.generated.cashflow_confidence_badge
+import ai.dokus.app.resources.generated.cashflow_deductible_percentage
+import ai.dokus.app.resources.generated.cashflow_document_confirmed
+import ai.dokus.app.resources.generated.cashflow_document_review_title
+import ai.dokus.app.resources.generated.cashflow_draft_saved
+import ai.dokus.app.resources.generated.cashflow_expense_details_section
+import ai.dokus.app.resources.generated.cashflow_invoice_details_section
+import ai.dokus.app.resources.generated.cashflow_invoice_number
+import ai.dokus.app.resources.generated.cashflow_is_deductible
+import ai.dokus.app.resources.generated.cashflow_loading_document
+import ai.dokus.app.resources.generated.cashflow_merchant
+import ai.dokus.app.resources.generated.cashflow_merchant_information
+import ai.dokus.app.resources.generated.cashflow_payment_method
+import ai.dokus.app.resources.generated.cashflow_receipt_number
+import ai.dokus.app.resources.generated.cashflow_section_additional_information
+import ai.dokus.app.resources.generated.cashflow_section_amounts
+import ai.dokus.app.resources.generated.cashflow_select_category
+import ai.dokus.app.resources.generated.cashflow_select_payment_method
+import ai.dokus.app.resources.generated.cashflow_suggested_contacts
+import ai.dokus.app.resources.generated.cashflow_supplier_information
+import ai.dokus.app.resources.generated.cashflow_supplier_name
+import ai.dokus.app.resources.generated.cashflow_tax_deductibility
+import ai.dokus.app.resources.generated.cashflow_unknown_document_type
+import ai.dokus.app.resources.generated.cashflow_vat_amount
+import ai.dokus.app.resources.generated.common_bank_account
+import ai.dokus.app.resources.generated.common_currency
+import ai.dokus.app.resources.generated.common_date
+import ai.dokus.app.resources.generated.common_notes
+import ai.dokus.app.resources.generated.common_unknown
+import ai.dokus.app.resources.generated.contacts_address
+import ai.dokus.app.resources.generated.contacts_email
+import ai.dokus.app.resources.generated.contacts_payment_terms
+import ai.dokus.app.resources.generated.contacts_vat_number
+import ai.dokus.app.resources.generated.expense_category_hardware
+import ai.dokus.app.resources.generated.expense_category_insurance
+import ai.dokus.app.resources.generated.expense_category_marketing
+import ai.dokus.app.resources.generated.expense_category_meals
+import ai.dokus.app.resources.generated.expense_category_office_supplies
+import ai.dokus.app.resources.generated.expense_category_other
+import ai.dokus.app.resources.generated.expense_category_professional_services
+import ai.dokus.app.resources.generated.expense_category_rent
+import ai.dokus.app.resources.generated.expense_category_software
+import ai.dokus.app.resources.generated.expense_category_telecommunications
+import ai.dokus.app.resources.generated.expense_category_travel
+import ai.dokus.app.resources.generated.expense_category_utilities
+import ai.dokus.app.resources.generated.expense_category_vehicle
+import ai.dokus.app.resources.generated.invoice_amount
+import ai.dokus.app.resources.generated.invoice_category
+import ai.dokus.app.resources.generated.invoice_description
+import ai.dokus.app.resources.generated.invoice_details
+import ai.dokus.app.resources.generated.invoice_due_date
+import ai.dokus.app.resources.generated.invoice_issue_date
+import ai.dokus.app.resources.generated.invoice_subtotal
+import ai.dokus.app.resources.generated.invoice_total_amount
+import ai.dokus.app.resources.generated.invoice_vat_rate
+import ai.dokus.app.resources.generated.payment_method_bank_transfer
+import ai.dokus.app.resources.generated.payment_method_cash
+import ai.dokus.app.resources.generated.payment_method_check
+import ai.dokus.app.resources.generated.payment_method_credit_card
+import ai.dokus.app.resources.generated.payment_method_debit_card
+import ai.dokus.app.resources.generated.payment_method_other
+import ai.dokus.app.resources.generated.payment_method_paypal
+import ai.dokus.app.resources.generated.payment_method_stripe
+import ai.dokus.app.resources.generated.state_confirming
+import ai.dokus.app.resources.generated.state_saving
+import ai.dokus.app.resources.generated.state_unsaved_changes
 import ai.dokus.foundation.design.components.DraftStatusBadge
 import ai.dokus.foundation.design.components.PBackButton
 import ai.dokus.foundation.design.components.PDatePickerDialog
@@ -9,11 +87,13 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.Constrains
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.animation.AnimatedVisibility
@@ -109,7 +189,32 @@ internal fun DocumentReviewScreen(
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.isLarge
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var pendingSuccess by remember { mutableStateOf<DocumentReviewSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            DocumentReviewSuccess.DraftSaved ->
+                stringResource(Res.string.cashflow_draft_saved)
+            DocumentReviewSuccess.DocumentConfirmed ->
+                stringResource(Res.string.cashflow_document_confirmed)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     // Subscribe to state and handle actions
     val state by container.store.subscribe(DefaultLifecycle) { action ->
@@ -125,14 +230,10 @@ internal fun DocumentReviewScreen(
                 navController.popBackStack()
             }
             is DocumentReviewAction.ShowError -> {
-                scope.launch {
-                    snackbarHostState.showSnackbar(action.message)
-                }
+                pendingError = action.error
             }
             is DocumentReviewAction.ShowSuccess -> {
-                scope.launch {
-                    snackbarHostState.showSnackbar(action.message)
-                }
+                pendingSuccess = action.success
             }
             is DocumentReviewAction.ShowDiscardConfirmation -> {
                 // TODO: Show discard confirmation dialog
@@ -1462,6 +1563,8 @@ private fun ContactSuggestionsChips(
         ) {
             suggestions.forEach { suggestion ->
                 val isSelected = suggestion.contactId == selectedContactId
+                val displayName = suggestion.name.takeIf { it.isNotBlank() }
+                    ?: stringResource(Res.string.common_unknown)
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
@@ -1476,7 +1579,7 @@ private fun ContactSuggestionsChips(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = suggestion.name,
+                        text = displayName,
                         style = MaterialTheme.typography.labelMedium,
                         color = if (isSelected) {
                             MaterialTheme.colorScheme.onPrimaryContainer

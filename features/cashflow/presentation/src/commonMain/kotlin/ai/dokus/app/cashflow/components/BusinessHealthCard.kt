@@ -1,6 +1,15 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.business_health_actual
+import ai.dokus.app.resources.generated.business_health_description
+import ai.dokus.app.resources.generated.business_health_predicted
+import ai.dokus.app.resources.generated.business_health_title
+import ai.dokus.app.resources.generated.common_label_value
+import ai.dokus.app.resources.generated.common_percent_value
+import ai.dokus.app.resources.generated.health_status_critical
+import ai.dokus.app.resources.generated.health_status_good
+import ai.dokus.app.resources.generated.health_status_warning
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerCircle
@@ -168,12 +177,12 @@ private fun BusinessHealthCardContent(
                 LegendItem(
                     color = MaterialTheme.colorScheme.primary,
                     label = stringResource(Res.string.business_health_predicted),
-                    value = "${data.predictedPercentage}%"
+                    value = stringResource(Res.string.common_percent_value, data.predictedPercentage)
                 )
                 LegendItem(
                     color = MaterialTheme.colorScheme.tertiary,
                     label = stringResource(Res.string.business_health_actual),
-                    value = "${data.actualPercentage}%"
+                    value = stringResource(Res.string.common_percent_value, data.actualPercentage)
                 )
             }
         }
@@ -326,7 +335,7 @@ private fun DonutChart(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "${actualPercentage}%",
+                text = stringResource(Res.string.common_percent_value, actualPercentage),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface

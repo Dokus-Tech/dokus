@@ -56,6 +56,10 @@
     <string name="common_notes">Заметки</string>
     <string name="common_date">Дата</string>
     <string name="common_vat_value">НДС: %1$s</string>
+    <string name="common_percent_value">%1$s %%</string>
+    <string name="common_file_size_bytes">%1$d Б</string>
+    <string name="common_file_size_kb">%1$.1f КБ</string>
+    <string name="common_file_size_mb">%1$.1f МБ</string>
     <string name="common_country_value">Страна: %1$s</string>
     <string name="common_action_irreversible">Это действие необратимо</string>
     <string name="search_placeholder">Поиск...</string>

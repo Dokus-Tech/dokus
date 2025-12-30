@@ -1,6 +1,8 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_confirm_missing_fields
+import ai.dokus.app.resources.generated.cashflow_confirm_select_contact
 import org.jetbrains.compose.resources.StringResource
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
@@ -101,7 +103,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val isContactRequired: Boolean = false,
         val showCreateContactSheet: Boolean = false,
         val createContactPreFill: ContactPreFillData? = null,
-        val contactValidationError: String? = null,
+        val contactValidationError: DokusException? = null,
         val isBindingContact: Boolean = false,
         // Document confirmation state
         val isDocumentConfirmed: Boolean = false,
@@ -375,8 +377,14 @@ data class ContactSuggestion(
     val name: String,
     val vatNumber: String?,
     val matchConfidence: Float,
-    val matchReason: String,
+    val matchReason: ContactSuggestionReason,
 )
+
+@Immutable
+sealed interface ContactSuggestionReason {
+    data object AiSuggested : ContactSuggestionReason
+    data class Custom(val value: String) : ContactSuggestionReason
+}
 
 // ============================================================================
 // CONTACT SELECTION STATE
@@ -414,7 +422,7 @@ sealed interface ContactSelectionState {
         val name: String,
         val vatNumber: String?,
         val confidence: Float,
-        val reason: String,
+        val reason: ContactSuggestionReason,
     ) : ContactSelectionState
 
     /**
@@ -632,14 +640,20 @@ sealed interface DocumentReviewAction : MVIAction {
     // === Feedback ===
 
     /** Show error message */
-    data class ShowError(val message: String) : DocumentReviewAction
+    data class ShowError(val error: DokusException) : DocumentReviewAction
 
     /** Show success message */
-    data class ShowSuccess(val message: String) : DocumentReviewAction
+    data class ShowSuccess(val success: DocumentReviewSuccess) : DocumentReviewAction
 
     /** Show confirmation dialog before discard */
     data object ShowDiscardConfirmation : DocumentReviewAction
 
     /** Show confirmation dialog before reject */
     data object ShowRejectConfirmation : DocumentReviewAction
+}
+
+@Immutable
+sealed interface DocumentReviewSuccess {
+    data object DraftSaved : DocumentReviewSuccess
+    data object DocumentConfirmed : DocumentReviewSuccess
 }

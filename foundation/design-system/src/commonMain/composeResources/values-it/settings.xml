@@ -102,6 +102,7 @@
     <string name="peppol_testing_connection">Test della connessione...</string>
     <string name="peppol_connection_successful">Connessione riuscita!</string>
     <string name="peppol_delete_warning">L\'eliminazione delle impostazioni Peppol disabiliterà le funzionalità di fatturazione elettronica.</string>
+    <string name="peppol_delete_success">Impostazioni Peppol eliminate</string>
 
     <!-- Additional Settings -->
     <string name="settings_save_failed">Impossibile salvare le impostazioni</string>

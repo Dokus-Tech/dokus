@@ -3,6 +3,9 @@ package ai.dokus.app.cashflow.components.invoice
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_amount_with_currency
+import ai.dokus.app.resources.generated.common_empty_value
+import ai.dokus.app.resources.generated.currency_symbol_eur
 import ai.dokus.app.resources.generated.invoice_amount
 import ai.dokus.app.resources.generated.invoice_bill_to
 import ai.dokus.app.resources.generated.invoice_description

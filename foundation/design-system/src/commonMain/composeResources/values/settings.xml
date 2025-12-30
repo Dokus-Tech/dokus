@@ -114,6 +114,7 @@
     <string name="peppol_testing_connection">Testing connection...</string>
     <string name="peppol_connection_successful">Connection successful!</string>
     <string name="peppol_delete_warning">Deleting Peppol settings will disable e-invoicing capabilities.</string>
+    <string name="peppol_delete_success">Peppol settings deleted</string>
     <string name="peppol_connect_title">Connect Peppol Provider</string>
     <string name="peppol_connect_title_with_provider">Connect %1$s</string>
     <string name="peppol_select_provider_hint">Select a provider to continue</string>

@@ -110,9 +110,7 @@ fun ConfirmStepContent(
                     stringResource(Res.string.contacts_billing_email)
                 ),
                 value = Email(state.billingEmail),
-                error = state.emailError?.let {
-                    tech.dokus.domain.exceptions.DokusException.Validation.InvalidEmail
-                },
+                error = state.emailError,
                 onValueChange = { onIntent(CreateContactIntent.BillingEmailChanged(it.value)) },
                 modifier = Modifier.fillMaxWidth()
             )

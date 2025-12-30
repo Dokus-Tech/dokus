@@ -2,6 +2,9 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_add_line_item
+import ai.dokus.app.resources.generated.invoice_line_items
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import tech.dokus.domain.exceptions.DokusException
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -31,7 +35,7 @@ fun InvoiceLineItemsSection(
     onUpdateQuantity: (String, Double) -> Unit,
     onUpdateUnitPrice: (String, String) -> Unit,
     onUpdateVatRate: (String, Int) -> Unit,
-    error: String?,
+    error: DokusException?,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -72,9 +76,9 @@ fun InvoiceLineItemsSection(
             )
         }
 
-        error?.let {
+        error?.let { exception ->
             Text(
-                text = it,
+                text = exception.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )

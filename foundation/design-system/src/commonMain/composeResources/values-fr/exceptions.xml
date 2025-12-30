@@ -17,6 +17,9 @@
     <string name="exception_invalid_vat_rate">Taux de TVA invalide</string>
     <string name="exception_invalid_percentage">Pourcentage invalide</string>
     <string name="exception_invalid_quantity">Quantité invalide</string>
+    <string name="exception_invoice_client_required">Veuillez sélectionner un client</string>
+    <string name="exception_invoice_items_required">Veuillez ajouter au moins une ligne valide</string>
+    <string name="exception_invoice_due_date_before_issue">La date d\'échéance ne peut pas être antérieure à la date d\'émission</string>
     <string name="exception_invalid_street_name">Nom de rue invalide</string>
     <string name="exception_invalid_city">Ville invalide</string>
     <string name="exception_invalid_postal_code">Code postal invalide</string>

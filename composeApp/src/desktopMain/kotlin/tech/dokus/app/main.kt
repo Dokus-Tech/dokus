@@ -1,6 +1,7 @@
 package tech.dokus.app
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.app_name
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.window.Window

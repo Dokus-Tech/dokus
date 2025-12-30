@@ -1,6 +1,13 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_document_preview_title
+import ai.dokus.app.resources.generated.cashflow_preview_highlight_hint
+import ai.dokus.app.resources.generated.cashflow_preview_load_more
+import ai.dokus.app.resources.generated.cashflow_preview_page_failed
+import ai.dokus.app.resources.generated.cashflow_preview_page_label
+import ai.dokus.app.resources.generated.state_retry
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.compose.SubcomposeAsyncImage
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentPagePreviewDto
 
 /**
@@ -67,7 +75,7 @@ fun PdfPreviewPane(
         }
         is DocumentPreviewState.Error -> {
             ErrorPreview(
-                message = state.message,
+                exception = state.exception,
                 onRetry = state.retry,
                 modifier = modifier
             )
@@ -103,7 +111,7 @@ private fun LoadingPreview(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ErrorPreview(
-    message: String,
+    exception: DokusException,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -115,7 +123,7 @@ private fun ErrorPreview(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = message,
+            text = exception.localized,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error
         )

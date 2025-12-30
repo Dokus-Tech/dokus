@@ -191,10 +191,19 @@ sealed interface ContactDetailsAction : MVIAction {
     data class NavigateToMergedContact(val contactId: ContactId) : ContactDetailsAction
 
     /** Show error message as snackbar/toast */
-    data class ShowError(val message: String) : ContactDetailsAction
+    data class ShowError(val error: DokusException) : ContactDetailsAction
 
     /** Show success message as snackbar/toast */
-    data class ShowSuccess(val message: String) : ContactDetailsAction
+    data class ShowSuccess(val success: ContactDetailsSuccess) : ContactDetailsAction
+}
+
+@Immutable
+sealed interface ContactDetailsSuccess {
+    data object PeppolUpdated : ContactDetailsSuccess
+    data object NoteAdded : ContactDetailsSuccess
+    data object NoteUpdated : ContactDetailsSuccess
+    data object NoteDeleted : ContactDetailsSuccess
+    data class EnrichmentApplied(val count: Int) : ContactDetailsSuccess
 }
 
 // ============================================================================

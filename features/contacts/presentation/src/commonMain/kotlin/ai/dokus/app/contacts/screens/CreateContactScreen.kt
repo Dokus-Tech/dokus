@@ -7,6 +7,7 @@ import ai.dokus.app.contacts.viewmodel.CreateContactAction
 import ai.dokus.app.contacts.viewmodel.CreateContactContainer
 import ai.dokus.app.contacts.viewmodel.CreateContactIntent
 import ai.dokus.app.contacts.viewmodel.CreateContactState
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -18,15 +19,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -44,6 +53,17 @@ internal fun CreateContactScreen(
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     with(container.store) {
         val state by subscribe { action ->
@@ -58,21 +78,28 @@ internal fun CreateContactScreen(
                 }
 
                 is CreateContactAction.ShowError -> {
-                    // TODO: Show snackbar
+                    pendingError = action.error
                 }
             }
         }
 
-        if (isLargeScreen) {
-            CreateContactPage(
-                state = state,
-                onIntent = ::intent,
-            )
-        } else {
-            CreateContactFullScreen(
-                state = state,
-                onIntent = ::intent,
-            )
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { contentPadding ->
+            if (isLargeScreen) {
+                CreateContactPage(
+                    state = state,
+                    onIntent = ::intent,
+                    modifier = Modifier.padding(contentPadding)
+                )
+            } else {
+                CreateContactFullScreen(
+                    state = state,
+                    onIntent = ::intent,
+                    modifier = Modifier.padding(contentPadding)
+                )
+            }
         }
     }
 }

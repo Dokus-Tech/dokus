@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentPagePreviewDto
 
 /**
@@ -31,11 +32,11 @@ sealed interface DocumentPreviewState {
     /**
      * Preview failed to load.
      *
-     * @property message Error message to display
+     * @property exception Error to display
      * @property retry Callback to retry loading
      */
     data class Error(
-        val message: String,
+        val exception: DokusException,
         val retry: () -> Unit
     ) : DocumentPreviewState
 

@@ -4,9 +4,13 @@ import ai.dokus.app.auth.screen.ProfileSettingsScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.settings_current_workspace
+import ai.dokus.app.resources.generated.settings_select_hint
+import ai.dokus.app.resources.generated.settings_select_prompt
 import ai.dokus.app.resources.generated.settings_select_workspace
+import ai.dokus.app.resources.generated.settings_unknown_section
 import ai.dokus.foundation.design.components.ListSettingsItem
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
@@ -37,6 +41,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,6 +73,7 @@ import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.domain.exceptions.DokusException
 
 /**
  * Settings screen using FlowMVI Container pattern.
@@ -78,6 +85,17 @@ internal fun SettingsScreen(
 ) {
     val screenSize = LocalScreenSize.current
     val navController = LocalNavController.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -85,7 +103,7 @@ internal fun SettingsScreen(
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
             is SettingsAction.ShowError -> {
-                // TODO: Show snackbar
+                pendingError = action.error
             }
         }
     }
@@ -97,10 +115,16 @@ internal fun SettingsScreen(
 
     if (screenSize.isLarge) {
         // Desktop: Split-pane layout
-        SettingsSplitPaneLayout(state = state)
+        SettingsSplitPaneLayout(
+            state = state,
+            snackbarHostState = snackbarHostState
+        )
     } else {
         // Mobile: Traditional navigation layout
-        SettingsMobileLayout(state = state)
+        SettingsMobileLayout(
+            state = state,
+            snackbarHostState = snackbarHostState
+        )
     }
 }
 
@@ -109,7 +133,8 @@ internal fun SettingsScreen(
  */
 @Composable
 private fun SettingsSplitPaneLayout(
-    state: SettingsState
+    state: SettingsState,
+    snackbarHostState: SnackbarHostState
 ) {
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
@@ -124,36 +149,44 @@ private fun SettingsSplitPaneLayout(
         mutableStateOf(allSections.firstOrNull())
     }
 
-    Surface {
-        Row(Modifier.fillMaxSize()) {
-            // Left Navigation Panel - matches HomeScreen's RailNavigationLayout pattern
-            Surface(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(280.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-            ) {
-                SettingsNavigationPanel(
-                    state = state,
-                    settingsGroups = settingsGroups,
-                    selectedSection = selectedSection,
-                    onSectionSelected = { selectedSection = it }
-                )
-            }
-
-            // Right Content Panel (fills remaining space)
-            Box(
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { contentPadding ->
+        Surface {
+            Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 8.dp),
-                contentAlignment = Alignment.TopStart
+                    .padding(contentPadding)
             ) {
-                selectedSection?.let { section ->
-                    SettingsContentPane(section = section)
-                } ?: run {
-                    // Empty state when no section selected
-                    SettingsEmptyState()
+                // Left Navigation Panel - matches HomeScreen's RailNavigationLayout pattern
+                Surface(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(280.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                ) {
+                    SettingsNavigationPanel(
+                        state = state,
+                        settingsGroups = settingsGroups,
+                        selectedSection = selectedSection,
+                        onSectionSelected = { selectedSection = it }
+                    )
+                }
+
+                // Right Content Panel (fills remaining space)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 8.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    selectedSection?.let { section ->
+                        SettingsContentPane(section = section)
+                    } ?: run {
+                        // Empty state when no section selected
+                        SettingsEmptyState()
+                    }
                 }
             }
         }
@@ -165,7 +198,8 @@ private fun SettingsSplitPaneLayout(
  */
 @Composable
 private fun SettingsMobileLayout(
-    state: SettingsState
+    state: SettingsState,
+    snackbarHostState: SnackbarHostState
 ) {
     val navController = LocalNavController.current
     val appModules = LocalAppModules.current
@@ -175,7 +209,9 @@ private fun SettingsMobileLayout(
     val currentTenant = (state as? SettingsState.Content)?.tenant
     val isLoading = state is SettingsState.Loading
 
-    Scaffold { contentPadding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { contentPadding ->
         Column(
             modifier = Modifier
                 .padding(contentPadding)

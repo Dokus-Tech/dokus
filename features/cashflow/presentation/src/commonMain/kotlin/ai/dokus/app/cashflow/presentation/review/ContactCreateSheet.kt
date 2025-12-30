@@ -2,6 +2,18 @@ package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.contacts.usecases.CreateContactUseCase
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.action_close
+import ai.dokus.app.resources.generated.contacts_address
+import ai.dokus.app.resources.generated.contacts_address_placeholder
+import ai.dokus.app.resources.generated.contacts_create_contact
+import ai.dokus.app.resources.generated.contacts_email
+import ai.dokus.app.resources.generated.contacts_email_placeholder
+import ai.dokus.app.resources.generated.contacts_name
+import ai.dokus.app.resources.generated.contacts_name_placeholder
+import ai.dokus.app.resources.generated.contacts_vat_number
+import ai.dokus.app.resources.generated.contacts_vat_placeholder
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +59,8 @@ import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
 
 /**
  * Simplified contact creation sheet embedded in Document Review flow.
@@ -82,8 +96,7 @@ fun ContactCreateSheet(
     var address by remember(preFillData) { mutableStateOf(preFillData?.address ?: "") }
 
     var isSubmitting by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val createContactFailed = stringResource(Res.string.contacts_create_failed)
+    var errorMessage by remember { mutableStateOf<DokusException?>(null) }
 
     val canSubmit = name.isNotBlank() && !isSubmitting
 
@@ -109,7 +122,12 @@ fun ContactCreateSheet(
                 },
                 onFailure = { error ->
                     isSubmitting = false
-                    errorMessage = error.message ?: createContactFailed
+                    val exception = error.asDokusException
+                    errorMessage = if (exception is DokusException.Unknown) {
+                        DokusException.ContactCreateFailed
+                    } else {
+                        exception
+                    }
                 }
             )
         }
@@ -148,12 +166,14 @@ fun ContactCreateSheet(
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(
-                                text = errorMessage ?: "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.padding(Constrains.Spacing.small),
-                            )
+                            errorMessage?.let { exception ->
+                                Text(
+                                    text = exception.localized,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(Constrains.Spacing.small),
+                                )
+                            }
                         }
                     }
 

@@ -1,8 +1,26 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_change
+import ai.dokus.app.resources.generated.cashflow_ai_suggested
+import ai.dokus.app.resources.generated.cashflow_bound_to
+import ai.dokus.app.resources.generated.cashflow_choose_different
+import ai.dokus.app.resources.generated.cashflow_client_label
+import ai.dokus.app.resources.generated.cashflow_contact_label
+import ai.dokus.app.resources.generated.cashflow_contact_selected
+import ai.dokus.app.resources.generated.cashflow_no_contact_selected
+import ai.dokus.app.resources.generated.cashflow_saving_contact
+import ai.dokus.app.resources.generated.cashflow_select_contact
+import ai.dokus.app.resources.generated.cashflow_suggested_contact
+import ai.dokus.app.resources.generated.cashflow_supplier_label
+import ai.dokus.app.resources.generated.cashflow_use_this_contact
+import ai.dokus.app.resources.generated.common_percent_value
+import ai.dokus.app.resources.generated.common_unknown
+import ai.dokus.app.resources.generated.common_vat_value
+import ai.dokus.app.resources.generated.contacts_create_contact
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -50,6 +68,7 @@ import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Link
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.exceptions.DokusException
 
 /**
  * Contact selection section for the Document Review screen.
@@ -81,7 +100,7 @@ fun ContactSelectionSection(
     selectedContactSnapshot: ContactSnapshot?,
     isBindingContact: Boolean,
     isReadOnly: Boolean,
-    validationError: String?,
+    validationError: DokusException?,
     onAcceptSuggestion: () -> Unit,
     onChooseDifferent: () -> Unit,
     onSelectContact: () -> Unit,
@@ -115,7 +134,7 @@ fun ContactSelectionSection(
                     .padding(bottom = Constrains.Spacing.small),
             ) {
                 Text(
-                    text = validationError,
+                    text = validationError.localized,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(Constrains.Spacing.small),
@@ -277,6 +296,13 @@ private fun SuggestedContactCard(
     onChooseDifferent: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val displayName = suggestion.name.takeIf { it.isNotBlank() }
+        ?: stringResource(Res.string.common_unknown)
+    val reasonText = when (val reason = suggestion.reason) {
+        ContactSuggestionReason.AiSuggested -> stringResource(Res.string.cashflow_ai_suggested)
+        is ContactSuggestionReason.Custom -> reason.value
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -310,7 +336,7 @@ private fun SuggestedContactCard(
 
             // Contact details
             Text(
-                text = suggestion.name,
+                text = displayName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -324,9 +350,9 @@ private fun SuggestedContactCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (suggestion.reason.isNotBlank()) {
+            if (reasonText.isNotBlank()) {
                 Text(
-                    text = suggestion.reason,
+                    text = reasonText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 2.dp),
@@ -382,7 +408,7 @@ private fun ConfidenceBadge(
         modifier = modifier,
     ) {
         Text(
-            text = "$percentage%",
+            text = stringResource(Res.string.common_percent_value, percentage),
             style = MaterialTheme.typography.labelSmall,
             color = color,
             fontWeight = FontWeight.Medium,

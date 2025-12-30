@@ -1,8 +1,8 @@
 package ai.dokus.app.auth.model
 
-import org.jetbrains.compose.resources.StringResource
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
 import androidx.compose.runtime.Stable
@@ -52,7 +52,7 @@ sealed class LookupState {
     data object Idle : LookupState()
     data object Loading : LookupState()
     data class Success(val results: List<EntityLookup>) : LookupState()
-    data class Error(val message: StringResource) : LookupState()
+    data class Error(val exception: DokusException) : LookupState()
 }
 
 /**

@@ -31,8 +31,10 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldName
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.design.extensions.localized
 import tech.dokus.domain.Name
 import tech.dokus.domain.config.ServerConfigManager
+import tech.dokus.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -60,6 +62,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,16 +92,37 @@ fun ProfileSettingsScreen(
     container: ProfileSettingsContainer = container()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf(false) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val navController = LocalNavController.current
-    val saveSuccessMessage = stringResource(Res.string.profile_save_success)
+    val saveSuccessMessage = if (pendingSuccess) {
+        stringResource(Res.string.profile_save_success)
+    } else {
+        null
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(saveSuccessMessage) {
+        if (saveSuccessMessage != null) {
+            snackbarHostState.showSnackbar(saveSuccessMessage)
+            pendingSuccess = false
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             ProfileSettingsAction.ShowSaveSuccess -> {
-                snackbarHostState.showSnackbar(saveSuccessMessage)
+                pendingSuccess = true
             }
             is ProfileSettingsAction.ShowSaveError -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingError = action.error
             }
             ProfileSettingsAction.NavigateBack -> {
                 navController.navigateUp()

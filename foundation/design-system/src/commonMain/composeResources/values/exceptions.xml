@@ -17,6 +17,9 @@
     <string name="exception_invalid_vat_rate">Invalid VAT rate</string>
     <string name="exception_invalid_percentage">Invalid percentage value</string>
     <string name="exception_invalid_quantity">Invalid quantity</string>
+    <string name="exception_invoice_client_required">Please select a client</string>
+    <string name="exception_invoice_items_required">Please add at least one valid line item</string>
+    <string name="exception_invoice_due_date_before_issue">Due date cannot be before issue date</string>
     <string name="exception_invalid_street_name">Invalid street name</string>
     <string name="exception_invalid_city">Invalid city</string>
     <string name="exception_invalid_postal_code">Invalid postal code</string>

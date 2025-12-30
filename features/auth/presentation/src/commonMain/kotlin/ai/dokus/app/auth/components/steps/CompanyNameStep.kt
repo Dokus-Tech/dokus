@@ -8,6 +8,7 @@ import ai.dokus.app.resources.generated.auth_company_name_searching
 import ai.dokus.app.resources.generated.auth_company_name_subtitle
 import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
 import ai.dokus.foundation.design.components.text.SectionTitle
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -78,7 +79,7 @@ internal fun CompanyNameStep(
             }
             is LookupState.Error -> {
                 Text(
-                    text = stringResource(lookupState.message),
+                    text = lookupState.exception.localized,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )

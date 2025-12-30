@@ -1,7 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.cashflow.datasource.CashflowRemoteDataSource
-import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.contacts.usecases.GetContactUseCase
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.launch
@@ -26,7 +25,6 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ExtractedDocumentData
 import tech.dokus.domain.model.ExtractedLineItem
 import tech.dokus.domain.model.UpdateDraftRequest
-import org.jetbrains.compose.resources.getString
 
 internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction>
 
@@ -225,10 +223,13 @@ internal class DocumentReviewContainer(
             }
             val suggested = ContactSelectionState.Suggested(
                 contactId = suggestedContactId,
-                name = extractedName ?: getString(Res.string.common_unknown),
+                name = extractedName.orEmpty(),
                 vatNumber = extractedVat,
                 confidence = draft.contactSuggestionConfidence ?: 0f,
-                reason = draft.contactSuggestionReason ?: getString(Res.string.cashflow_ai_suggested),
+                reason = draft.contactSuggestionReason
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { ContactSuggestionReason.Custom(it) }
+                    ?: ContactSuggestionReason.AiSuggested,
             )
             return Triple(suggested, null, null)
         }
@@ -283,10 +284,10 @@ internal class DocumentReviewContainer(
             suggestions.add(
                 ContactSuggestion(
                     contactId = contactId,
-                    name = extractedName ?: getString(Res.string.common_unknown),
+                    name = extractedName.orEmpty(),
                     vatNumber = extractedVat,
                     matchConfidence = 0f, // TODO: Add confidence to draft
-                    matchReason = getString(Res.string.cashflow_ai_suggested)
+                    matchReason = ContactSuggestionReason.AiSuggested
                 )
             )
         }
@@ -433,12 +434,14 @@ internal class DocumentReviewContainer(
                                 contactId = suggestedId,
                                 name = document.draft?.extractedData?.invoice?.clientName
                                     ?: document.draft?.extractedData?.bill?.supplierName
-                                    ?: getString(Res.string.common_unknown),
+                                    ?: "",
                                 vatNumber = document.draft?.extractedData?.invoice?.clientVatNumber
                                     ?: document.draft?.extractedData?.bill?.supplierVatNumber,
                                 confidence = document.draft?.contactSuggestionConfidence ?: 0f,
                                 reason = document.draft?.contactSuggestionReason
-                                    ?: getString(Res.string.cashflow_ai_suggested),
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.let { ContactSuggestionReason.Custom(it) }
+                                    ?: ContactSuggestionReason.AiSuggested,
                             )
                         } ?: ContactSelectionState.NoContact
 
@@ -455,11 +458,13 @@ internal class DocumentReviewContainer(
                     onFailure = { error ->
                         logger.e(error) { "Failed to clear contact" }
                         updateState { copy(isBindingContact = false) }
-                        action(
-                            DocumentReviewAction.ShowError(
-                                getString(Res.string.cashflow_contact_clear_failed)
-                            )
-                        )
+                        val exception = error.asDokusException
+                        val displayException = if (exception is DokusException.Unknown) {
+                            DokusException.DocumentContactClearFailed
+                        } else {
+                            exception
+                        }
+                        action(DocumentReviewAction.ShowError(displayException))
                     }
                 )
         }
@@ -515,19 +520,26 @@ internal class DocumentReviewContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to bind contact to draft" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.DocumentContactSaveFailed
+                    } else {
+                        exception
+                    }
                     withState<DocumentReviewState.Content, _> {
                         updateState {
                             copy(
                                 isBindingContact = false,
-                                contactValidationError = getString(Res.string.cashflow_contact_save_failed),
+                                contactValidationError = displayException,
                             )
                         }
                     }
-                    action(
-                        DocumentReviewAction.ShowError(
-                            getString(Res.string.cashflow_contact_bind_failed)
-                        )
-                    )
+                    val bindException = if (exception is DokusException.Unknown) {
+                        DokusException.DocumentContactBindFailed
+                    } else {
+                        exception
+                    }
+                    action(DocumentReviewAction.ShowError(bindException))
                 }
             )
     }
@@ -739,14 +751,19 @@ internal class DocumentReviewContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to load preview pages for document: $documentId" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.DocumentPreviewLoadFailed
+                    } else {
+                        exception
+                    }
                     withState<DocumentReviewState.Content, _> {
                         updateState {
                             copy(
-                                    previewState = DocumentPreviewState.Error(
-                                    message = error.message
-                                        ?: getString(Res.string.cashflow_preview_load_failed),
+                                previewState = DocumentPreviewState.Error(
+                                    exception = displayException,
                                     retry = { intent(DocumentReviewIntent.RetryLoadPreview) }
-                                )
+                                ),
                             )
                         }
                     }
@@ -784,7 +801,7 @@ internal class DocumentReviewContainer(
                             hasUnsavedChanges = false
                         )
                     }
-                    action(DocumentReviewAction.ShowSuccess(getString(Res.string.cashflow_draft_saved)))
+                    action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DraftSaved))
                 }
             }
         }
@@ -803,7 +820,7 @@ internal class DocumentReviewContainer(
             if (!canConfirm) {
                 action(
                     DocumentReviewAction.ShowError(
-                        getString(Res.string.cashflow_confirm_missing_fields)
+                        DokusException.Validation.DocumentMissingFields
                     )
                 )
                 return@withState
@@ -828,7 +845,7 @@ internal class DocumentReviewContainer(
                     updateState { copy(isConfirming = false) }
                     action(
                         DocumentReviewAction.ShowSuccess(
-                            getString(Res.string.cashflow_document_confirmed)
+                            DocumentReviewSuccess.DocumentConfirmed
                         )
                     )
                     action(

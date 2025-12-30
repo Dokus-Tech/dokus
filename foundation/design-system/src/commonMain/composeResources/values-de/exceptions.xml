@@ -17,6 +17,9 @@
     <string name="exception_invalid_vat_rate">Ungültiger Umsatzsteuersatz</string>
     <string name="exception_invalid_percentage">Ungültiger Prozentsatz</string>
     <string name="exception_invalid_quantity">Ungültige Menge</string>
+    <string name="exception_invoice_client_required">Bitte wählen Sie einen Kunden aus</string>
+    <string name="exception_invoice_items_required">Bitte fügen Sie mindestens eine gültige Position hinzu</string>
+    <string name="exception_invoice_due_date_before_issue">Fälligkeitsdatum darf nicht vor dem Ausstellungsdatum liegen</string>
     <string name="exception_invalid_street_name">Ungültiger Straßenname</string>
     <string name="exception_invalid_city">Ungültige Stadt</string>
     <string name="exception_invalid_postal_code">Ungültige Postleitzahl</string>

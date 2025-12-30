@@ -12,6 +12,18 @@ import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.app.contacts.components.ContactAutoFillData
 import ai.dokus.app.contacts.components.ContactAutocomplete
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_close
+import ai.dokus.app.resources.generated.action_next
+import ai.dokus.app.resources.generated.cashflow_create_invoice
+import ai.dokus.app.resources.generated.common_vat_value
+import ai.dokus.app.resources.generated.invoice_contact_search_help
+import ai.dokus.app.resources.generated.invoice_contact_search_label
+import ai.dokus.app.resources.generated.invoice_contact_search_placeholder
+import ai.dokus.app.resources.generated.invoice_edit_hint_desktop
+import ai.dokus.app.resources.generated.invoice_edit_hint_mobile
+import ai.dokus.app.resources.generated.invoice_number_preview
+import ai.dokus.app.resources.generated.invoice_select_client
+import ai.dokus.app.resources.generated.invoice_selected_contact
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PDatePickerDialog
@@ -95,7 +107,7 @@ internal fun CreateInvoiceScreen(
             is CreateInvoiceAction.ShowValidationError -> {
                 // Could show a snackbar, for now handled via form state errors
             }
-            is CreateInvoiceAction.ShowSuccess -> {
+            CreateInvoiceAction.ShowSuccess -> {
                 // Could show a success snackbar
             }
             is CreateInvoiceAction.ShowError -> {

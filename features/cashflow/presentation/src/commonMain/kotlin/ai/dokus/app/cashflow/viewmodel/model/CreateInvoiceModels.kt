@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.viewmodel.model
 
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.contact.ContactDto
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -72,7 +73,7 @@ data class CreateInvoiceFormState(
     val notes: String = "",
     val items: List<InvoiceLineItem> = listOf(InvoiceLineItem()),
     val isSaving: Boolean = false,
-    val errors: Map<String, String> = emptyMap()
+    val errors: Map<String, DokusException> = emptyMap()
 ) {
     val subtotal: String
         get() {

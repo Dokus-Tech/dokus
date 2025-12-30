@@ -1,6 +1,10 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_fit
+import ai.dokus.app.resources.generated.action_zoom_in
+import ai.dokus.app.resources.generated.action_zoom_out
+import ai.dokus.app.resources.generated.common_percent_value
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -59,7 +63,7 @@ fun ZoomControls(
         }
 
         Text(
-            text = "${(zoomLevel * 100).toInt()}%",
+            text = stringResource(Res.string.common_percent_value, (zoomLevel * 100).toInt()),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(horizontal = 4.dp)
         )
