@@ -1,45 +1,116 @@
 package tech.dokus.foundation.aura.style
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import com.materialkolor.PaletteStyle
-import com.materialkolor.dynamicColorScheme
 
-// Dokus brand colors - elegant dark theme with gold accents
-private val dokusGold = Color(0xFFD4AF37) // Elegant gold - primary brand color
-private val dokusBlack = Color(0xFF0A0A0F) // Deep black with slight blue tint
+// Dokus brand accent (signature only)
+internal val dokusGold = Color(0xFFD4AF37) // Brand accent only (never primary UI color)
 
-// Neutral gray palette for calm finance aesthetic - dark mode
-private val neutralTertiaryDark = Color(0xFF9A9A9F) // Medium gray for tertiary elements
-private val neutralTertiaryContainerDark = Color(0xFF2A2A2F) // Elevated surface gray
-private val neutralErrorContainerDark = Color(0xFF322828) // Muted dark gray (subtle warmth for error context)
-private val neutralSurfaceVariantDark = Color(0xFF1A1A1F) // Slight variation from surface
+// Canonical Dokus primary (trustworthy blue)
+private val dokusPrimaryLight = Color(0xFF3B82F6)
+private val dokusPrimaryDark = Color(0xFF60A5FA)
 
-// Neutral gray palette for calm finance aesthetic - light mode
-private val neutralTertiaryLight = Color(0xFF6A6A6F) // Medium gray for tertiary elements
-private val neutralTertiaryContainerLight = Color(0xFFE0E0E5) // Light elevated surface
-private val neutralErrorContainerLight = Color(0xFFE8D8D8) // Muted light gray (subtle warmth for error context)
-private val neutralSurfaceVariantLight = Color(0xFFF0F0F5) // Slight off-white variation
+// Canonical surfaces
+private val dokusBackgroundLight = Color(0xFFF8FAFC)
+private val dokusOnBackgroundLight = Color(0xFF0F172A)
+private val dokusSurfaceLight = Color(0xFFFFFFFF)
+private val dokusOnSurfaceLight = Color(0xFF0F172A)
+private val dokusSurfaceVariantLight = Color(0xFFF1F5F9)
+private val dokusOnSurfaceVariantLight = Color(0xFF334155)
+private val dokusOutlineLight = Color(0xFFCBD5E1)
+private val dokusOutlineVariantLight = Color(0xFFE2E8F0)
 
-fun createColorScheme(useDarkTheme: Boolean) = dynamicColorScheme(
-    seedColor = dokusGold,
-    style = PaletteStyle.Neutral,
-    isAmoled = false,
-    isDark = useDarkTheme,
-    modifyColorScheme = {
-        it.copy(
-            background = if (useDarkTheme) dokusBlack else it.background,
-            surface = if (useDarkTheme) dokusBlack else it.surface,
-            // Override tertiary colors to neutral grays for calm finance aesthetic
-            tertiary = if (useDarkTheme) neutralTertiaryDark else neutralTertiaryLight,
-            tertiaryContainer = if (useDarkTheme) neutralTertiaryContainerDark else neutralTertiaryContainerLight,
-            // Override error container to muted neutral (preserves error semantics with less visual noise)
-            errorContainer = if (useDarkTheme) neutralErrorContainerDark else neutralErrorContainerLight,
-            // Override surface variant to neutral gray
-            surfaceVariant = if (useDarkTheme) neutralSurfaceVariantDark else neutralSurfaceVariantLight
-        )
-    }
-)
+private val dokusBackgroundDark = Color(0xFF020617)
+private val dokusOnBackgroundDark = Color(0xFFE5E7EB)
+private val dokusSurfaceDark = Color(0xFF020617)
+private val dokusOnSurfaceDark = Color(0xFFE5E7EB)
+private val dokusSurfaceVariantDark = Color(0xFF0F172A)
+private val dokusOnSurfaceVariantDark = Color(0xFFCBD5E1)
+private val dokusOutlineDark = Color(0xFF334155)
+private val dokusOutlineVariantDark = Color(0xFF1E293B)
+
+// Secondary (neutral slate)
+private val dokusSecondaryLight = Color(0xFF64748B)
+private val dokusSecondaryDark = Color(0xFF94A3B8)
+
+// Primary containers
+private val dokusPrimaryContainerLight = Color(0xFFE8F0FF)
+private val dokusOnPrimaryContainerLight = Color(0xFF0B1B3F)
+private val dokusPrimaryContainerDark = Color(0xFF1E3A8A)
+private val dokusOnPrimaryContainerDark = Color(0xFFDBEAFE)
+
+// Error tokens
+private val dokusErrorLight = Color(0xFFDC2626)
+private val dokusOnErrorLight = Color(0xFFFFFFFF)
+private val dokusErrorContainerLight = Color(0xFFFEE2E2)
+private val dokusOnErrorContainerLight = Color(0xFF7F1D1D)
+
+private val dokusErrorDark = Color(0xFFF87171)
+private val dokusOnErrorDark = Color(0xFF020617)
+private val dokusErrorContainerDark = Color(0xFF7F1D1D)
+private val dokusOnErrorContainerDark = Color(0xFFFEE2E2)
+
+fun createColorScheme(useDarkTheme: Boolean): ColorScheme = if (useDarkTheme) {
+    darkColorScheme(
+        primary = dokusPrimaryDark,
+        onPrimary = dokusOnErrorDark, // near-black for contrast
+        primaryContainer = dokusPrimaryContainerDark,
+        onPrimaryContainer = dokusOnPrimaryContainerDark,
+
+        secondary = dokusSecondaryDark,
+        onSecondary = dokusOnErrorDark,
+
+        background = dokusBackgroundDark,
+        onBackground = dokusOnBackgroundDark,
+
+        surface = dokusSurfaceDark,
+        onSurface = dokusOnSurfaceDark,
+
+        surfaceVariant = dokusSurfaceVariantDark,
+        onSurfaceVariant = dokusOnSurfaceVariantDark,
+
+        outline = dokusOutlineDark,
+        outlineVariant = dokusOutlineVariantDark,
+
+        error = dokusErrorDark,
+        onError = dokusOnErrorDark,
+        errorContainer = dokusErrorContainerDark,
+        onErrorContainer = dokusOnErrorContainerDark,
+    )
+} else {
+    lightColorScheme(
+        primary = dokusPrimaryLight,
+        onPrimary = dokusOnErrorLight,
+        primaryContainer = dokusPrimaryContainerLight,
+        onPrimaryContainer = dokusOnPrimaryContainerLight,
+
+        secondary = dokusSecondaryLight,
+        onSecondary = dokusOnErrorLight,
+
+        background = dokusBackgroundLight,
+        onBackground = dokusOnBackgroundLight,
+
+        surface = dokusSurfaceLight,
+        onSurface = dokusOnSurfaceLight,
+
+        surfaceVariant = dokusSurfaceVariantLight,
+        onSurfaceVariant = dokusOnSurfaceVariantLight,
+
+        outline = dokusOutlineLight,
+        outlineVariant = dokusOutlineVariantLight,
+
+        error = dokusErrorLight,
+        onError = dokusOnErrorLight,
+        errorContainer = dokusErrorContainerLight,
+        onErrorContainer = dokusOnErrorContainerLight,
+    )
+}
 
 // Calm ripple color - use onSurface for neutral ripple effects instead of primary (gold)
 val ColorScheme.rippleColor: Color get() = onSurface
+
+// Brand accent access (use intentionally; do not map to primary)
+@Suppress("UnusedReceiverParameter")
+val ColorScheme.brandGold: Color get() = dokusGold

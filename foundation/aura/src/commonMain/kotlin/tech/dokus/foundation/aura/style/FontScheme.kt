@@ -1,8 +1,5 @@
 package tech.dokus.foundation.aura.style
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.interVariable
-import tech.dokus.aura.resources.switzerVariable
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -11,6 +8,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.interVariable
+import tech.dokus.aura.resources.switzerVariable
 
 @Composable
 fun Typography.withFontFamily(fontFamily: FontFamily): Typography {
@@ -21,7 +21,6 @@ fun Typography.withFontFamily(fontFamily: FontFamily): Typography {
         headlineLarge = headlineLarge.copy(fontFamily = fontFamily),
         headlineMedium = headlineMedium.copy(fontFamily = fontFamily),
         headlineSmall = headlineSmall.copy(fontFamily = fontFamily),
-        titleLarge = titleLarge.copy(fontFamily = fontFamily),
         titleMedium = titleMedium.copy(fontFamily = fontFamily),
         titleSmall = titleSmall.copy(fontFamily = fontFamily),
         bodyLarge = bodyLarge.copy(fontFamily = fontFamily),
@@ -43,11 +42,17 @@ fun Typography.withFontFamilyForDisplay(fontFamily: FontFamily): Typography {
         headlineMedium = headlineMedium.copy(fontFamily = fontFamily),
         headlineSmall = headlineSmall.copy(fontFamily = fontFamily),
         // Optional: titleLarge only if you want brand in top bars
-        // titleLarge = titleLarge.copy(fontFamily = fontFamily),
+         titleLarge = titleLarge.copy(fontFamily = fontFamily),
     )
 }
 
 fun Typography.tuned(): Typography = copy(
+    // Dokus Design System line-height rules:
+    // - Titles: 1.2
+    // - Body: 1.35
+    // - Labels: 1.2
+    // Display stays slightly tighter for large hero text.
+
     // Display (rare in product UI)
     displayLarge = displayLarge.withLineHeightMultiplier(1.15f),
     displayMedium = displayMedium.withLineHeightMultiplier(1.15f),
@@ -55,21 +60,21 @@ fun Typography.tuned(): Typography = copy(
 
     // Headlines (screen titles, empty states)
     headlineLarge = headlineLarge.withLineHeightMultiplier(1.2f),
-    headlineMedium = headlineMedium.withLineHeightMultiplier(1.22f),
-    headlineSmall = headlineSmall.withLineHeightMultiplier(1.25f),
+    headlineMedium = headlineMedium.withLineHeightMultiplier(1.2f),
+    headlineSmall = headlineSmall.withLineHeightMultiplier(1.2f),
 
     // Titles (cards, dialogs, sections)
-    titleLarge = titleLarge.withLineHeightMultiplier(1.25f),
-    titleMedium = titleMedium.withLineHeightMultiplier(1.25f),
-    titleSmall = titleSmall.withLineHeightMultiplier(1.25f),
+    titleLarge = titleLarge.withLineHeightMultiplier(1.2f),
+    titleMedium = titleMedium.withLineHeightMultiplier(1.2f),
+    titleSmall = titleSmall.withLineHeightMultiplier(1.2f),
 
     // Body (lists, forms, paragraphs)
-    bodyLarge = bodyLarge.withLineHeightMultiplier(1.5f),
-    bodyMedium = bodyMedium.withLineHeightMultiplier(1.5f),
-    bodySmall = bodySmall.withLineHeightMultiplier(1.45f),
+    bodyLarge = bodyLarge.withLineHeightMultiplier(1.35f),
+    bodyMedium = bodyMedium.withLineHeightMultiplier(1.35f),
+    bodySmall = bodySmall.withLineHeightMultiplier(1.35f),
 
     // Labels (buttons, chips, input labels)
-    labelLarge = labelLarge.withLineHeightMultiplier(1.25f),
+    labelLarge = labelLarge.withLineHeightMultiplier(1.2f),
     labelMedium = labelMedium.withLineHeightMultiplier(1.2f),
     labelSmall = labelSmall.withLineHeightMultiplier(1.2f),
 )

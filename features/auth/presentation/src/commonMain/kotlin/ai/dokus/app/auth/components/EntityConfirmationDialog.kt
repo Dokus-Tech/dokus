@@ -1,16 +1,6 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.app.auth.model.EntityConfirmationState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.auth_entity_manual_entry
-import tech.dokus.aura.resources.auth_entity_multiple_title
-import tech.dokus.aura.resources.auth_entity_multiple_subtitle
-import tech.dokus.aura.resources.auth_entity_single_confirm
-import tech.dokus.aura.resources.auth_entity_single_prompt
-import tech.dokus.aura.resources.common_vat_value
-import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.domain.model.entity.EntityLookup
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +35,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_entity_manual_entry
+import tech.dokus.aura.resources.auth_entity_multiple_subtitle
+import tech.dokus.aura.resources.auth_entity_multiple_title
+import tech.dokus.aura.resources.auth_entity_single_confirm
+import tech.dokus.aura.resources.auth_entity_single_prompt
+import tech.dokus.aura.resources.common_vat_value
+import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -215,7 +215,7 @@ private fun EntityCard(
         onClick = onClick,
         enabled = isClickable,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         ),

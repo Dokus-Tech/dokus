@@ -1,6 +1,5 @@
 package tech.dokus.foundation.aura.style
 
-import tech.dokus.foundation.aura.local.LocalThemeManager
 import ai.dokus.foundation.platform.activePlatform
 import ai.dokus.foundation.platform.isWeb
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -12,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import tech.dokus.foundation.aura.local.LocalThemeManager
 
 /**
  * Themed wrapper that applies Material3 theme to content.
@@ -45,7 +45,7 @@ fun Themed(
         // For some reason, rendering of custom fonts fails on the web. They do load but render incorrectly
         // For now we'll keep typography default only for web and use custom for all other platforms
         if (activePlatform.isWeb) this
-        else withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay)
+        else withFontFamily(fontFamily).withFontFamilyForDisplay(fontFamilyDisplay).tuned()
     }
     // Calm ripple configuration: neutral color with low alpha (≤ 0.12) for subtle feedback
     val calmRippleAlpha = RippleAlpha(
