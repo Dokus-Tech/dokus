@@ -1,4 +1,4 @@
-package ai.dokus.peppol.service
+package tech.dokus.peppol.service
 
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsWithCredentials
@@ -23,12 +23,12 @@ import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.foundation.backend.utils.loggerFor
-import ai.dokus.peppol.mapper.PeppolMapper
-import ai.dokus.peppol.model.PeppolVerifyResponse
-import ai.dokus.peppol.provider.PeppolProvider
-import ai.dokus.peppol.provider.PeppolProviderFactory
-import ai.dokus.peppol.providers.recommand.RecommandCredentials
-import ai.dokus.peppol.validator.PeppolValidator
+import tech.dokus.peppol.mapper.PeppolMapper
+import tech.dokus.peppol.model.PeppolVerifyResponse
+import tech.dokus.peppol.provider.PeppolProvider
+import tech.dokus.peppol.provider.PeppolProviderFactory
+import tech.dokus.peppol.provider.client.RecommandCredentials
+import tech.dokus.peppol.validator.PeppolValidator
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

@@ -1,4 +1,4 @@
-package ai.dokus.peppol.providers.recommand
+package tech.dokus.peppol.provider.client
 
 import tech.dokus.domain.enums.PeppolDocumentType.Companion.toApiValue
 import tech.dokus.domain.model.RecommandDocumentsResponse
@@ -12,23 +12,24 @@ import tech.dokus.domain.model.RecommandSendDocumentType
 import tech.dokus.domain.model.RecommandSendRequest
 import tech.dokus.domain.model.RecommandSendResponse
 import tech.dokus.domain.model.RecommandVerifyResponse
-import ai.dokus.peppol.model.PeppolDirection
-import ai.dokus.peppol.model.PeppolDocumentList
-import ai.dokus.peppol.model.PeppolDocumentSummary
-import ai.dokus.peppol.model.PeppolDocumentType
-import ai.dokus.peppol.model.PeppolError
-import ai.dokus.peppol.model.PeppolInboxItem
-import ai.dokus.peppol.model.PeppolMonetaryTotals
-import ai.dokus.peppol.model.PeppolParty
-import ai.dokus.peppol.model.PeppolReceivedDocument
-import ai.dokus.peppol.model.PeppolReceivedLineItem
-import ai.dokus.peppol.model.PeppolSendRequest
-import ai.dokus.peppol.model.PeppolSendResponse
-import ai.dokus.peppol.model.PeppolTaxSubtotal
-import ai.dokus.peppol.model.PeppolTaxTotal
-import ai.dokus.peppol.model.PeppolVerifyResponse
+import tech.dokus.peppol.model.PeppolDirection
+import tech.dokus.peppol.model.PeppolDocumentList
+import tech.dokus.peppol.model.PeppolDocumentSummary
+import tech.dokus.peppol.model.PeppolDocumentType
+import tech.dokus.peppol.model.PeppolError
+import tech.dokus.peppol.model.PeppolInboxItem
+import tech.dokus.peppol.model.PeppolMonetaryTotals
+import tech.dokus.peppol.model.PeppolParty
+import tech.dokus.peppol.model.PeppolReceivedDocument
+import tech.dokus.peppol.model.PeppolReceivedLineItem
+import tech.dokus.peppol.model.PeppolSendRequest
+import tech.dokus.peppol.model.PeppolSendResponse
+import tech.dokus.peppol.model.PeppolTaxSubtotal
+import tech.dokus.peppol.model.PeppolTaxTotal
+import tech.dokus.peppol.model.PeppolVerifyResponse
 import tech.dokus.domain.enums.RecommandDirection
 import tech.dokus.domain.model.RecommandReceivedLineItem
+import tech.dokus.peppol.model.PeppolLineItem
 
 /**
  * Maps between provider-agnostic Peppol models and Recommand-specific models.
@@ -83,7 +84,7 @@ object RecommandMapper {
         )
     }
 
-    private fun toRecommandLineItem(item: ai.dokus.peppol.model.PeppolLineItem): RecommandLineItem {
+    private fun toRecommandLineItem(item: PeppolLineItem): RecommandLineItem {
         return RecommandLineItem(
             id = item.id,
             name = item.name,

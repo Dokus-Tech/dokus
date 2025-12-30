@@ -1,12 +1,12 @@
-package ai.dokus.peppol.provider
+package tech.dokus.peppol.provider
 
-import ai.dokus.peppol.model.PeppolDirection
-import ai.dokus.peppol.model.PeppolDocumentList
-import ai.dokus.peppol.model.PeppolInboxItem
-import ai.dokus.peppol.model.PeppolReceivedDocument
-import ai.dokus.peppol.model.PeppolSendRequest
-import ai.dokus.peppol.model.PeppolSendResponse
-import ai.dokus.peppol.model.PeppolVerifyResponse
+import tech.dokus.peppol.model.PeppolDirection
+import tech.dokus.peppol.model.PeppolDocumentList
+import tech.dokus.peppol.model.PeppolInboxItem
+import tech.dokus.peppol.model.PeppolReceivedDocument
+import tech.dokus.peppol.model.PeppolSendRequest
+import tech.dokus.peppol.model.PeppolSendResponse
+import tech.dokus.peppol.model.PeppolVerifyResponse
 
 /**
  * Generic interface for Peppol Access Point providers.

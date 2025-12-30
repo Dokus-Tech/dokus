@@ -1,4 +1,4 @@
-package ai.dokus.peppol.config
+package tech.dokus.peppol.config
 
 import com.typesafe.config.Config
 

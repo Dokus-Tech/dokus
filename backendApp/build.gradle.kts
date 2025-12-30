@@ -23,7 +23,7 @@ dependencies {
     implementation(projects.foundation.domain)
     implementation(projects.foundation.backendCommon)
     implementation(projects.foundation.database)
-    implementation(projects.foundation.peppolCore)
+    implementation(projects.foundation.peppol)
 
     // AI backend (kept as separate library)
     implementation(projects.features.ai.backend)

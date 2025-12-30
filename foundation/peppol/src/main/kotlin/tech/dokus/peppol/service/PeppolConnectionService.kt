@@ -1,4 +1,4 @@
-package ai.dokus.peppol.service
+package tech.dokus.peppol.service
 
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.ids.VatNumber
@@ -10,10 +10,10 @@ import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.backend.utils.loggerFor
-import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
-import ai.dokus.peppol.providers.recommand.RecommandCompany
-import ai.dokus.peppol.providers.recommand.RecommandCreateCompanyRequest
-import ai.dokus.peppol.providers.recommand.RecommandUnauthorizedException
+import tech.dokus.peppol.provider.client.RecommandCompaniesClient
+import tech.dokus.peppol.provider.client.RecommandCompany
+import tech.dokus.peppol.provider.client.RecommandCreateCompanyRequest
+import tech.dokus.peppol.provider.client.RecommandUnauthorizedException
 
 class PeppolConnectionService(
     private val settingsRepository: PeppolSettingsRepository,

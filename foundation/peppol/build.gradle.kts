@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-group = "ai.dokus.foundation"
+group = "tech.dokus.peppol"
 version = "1.0.0"
 
 dependencies {

@@ -42,7 +42,7 @@ include(":foundation:platform")
 include(":foundation:navigation")
 include(":foundation:backend-common")
 include(":foundation:database")
-include(":foundation:peppol-core")
+include(":foundation:peppol")
 
 // Backend library (shared by backendApp)
 include(":features:ai:backend")

@@ -1,4 +1,4 @@
-package ai.dokus.peppol.mapper
+package tech.dokus.peppol.mapper
 
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
@@ -12,13 +12,13 @@ import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.foundation.backend.utils.loggerFor
-import ai.dokus.peppol.model.PeppolDocumentType
-import ai.dokus.peppol.model.PeppolInvoiceData
-import ai.dokus.peppol.model.PeppolLineItem
-import ai.dokus.peppol.model.PeppolParty
-import ai.dokus.peppol.model.PeppolPaymentInfo
-import ai.dokus.peppol.model.PeppolReceivedDocument
-import ai.dokus.peppol.model.PeppolSendRequest
+import tech.dokus.peppol.model.PeppolDocumentType
+import tech.dokus.peppol.model.PeppolInvoiceData
+import tech.dokus.peppol.model.PeppolLineItem
+import tech.dokus.peppol.model.PeppolParty
+import tech.dokus.peppol.model.PeppolPaymentInfo
+import tech.dokus.peppol.model.PeppolReceivedDocument
+import tech.dokus.peppol.model.PeppolSendRequest
 import kotlinx.datetime.LocalDate
 
 /**
