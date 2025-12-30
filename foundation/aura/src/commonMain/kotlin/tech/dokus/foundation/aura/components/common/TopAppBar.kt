@@ -1,8 +1,5 @@
 package tech.dokus.foundation.aura.components.common
 
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.back
-import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -16,11 +13,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.back
+import tech.dokus.navigation.local.LocalNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,22 +47,22 @@ fun PTopAppBar(
                     text = title,
                     style = MaterialTheme.typography.headlineLarge,
                     maxLines = 1,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     overflow = TextOverflow.Ellipsis
                 )
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                navigationIconContentColor = Color.Unspecified,
-                titleContentColor = Color.Unspecified,
-                actionIconContentColor = Color.Unspecified
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurface
             )
         )
 
         // Bottom divider for visual separation
         HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
         )
     }
 }
