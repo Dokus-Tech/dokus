@@ -401,6 +401,7 @@ internal class DocumentReviewContainer(
     private suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) {
         withState<DocumentReviewState.Content, _> {
             bindContact(documentId, contactId)
+            updateState { copy(showContactPicker = false) }
         }
     }
 
@@ -545,13 +546,15 @@ internal class DocumentReviewContainer(
     }
 
     private suspend fun DocumentReviewCtx.handleOpenContactPicker() {
-        // This triggers navigation action to open picker UI
-        // For now, the picker is part of the screen, so just an intent marker
-        // Could emit action if needed: action(DocumentReviewAction.OpenContactPicker)
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(showContactPicker = true) }
+        }
     }
 
     private suspend fun DocumentReviewCtx.handleCloseContactPicker() {
-        // Picker closed without selection - no state change needed
+        withState<DocumentReviewState.Content, _> {
+            updateState { copy(showContactPicker = false) }
+        }
     }
 
     // =========================================================================

@@ -1,6 +1,78 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Message
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Calendar
+import compose.icons.feathericons.ChevronDown
+import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_collapse
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_discard
@@ -9,19 +81,19 @@ import tech.dokus.aura.resources.action_reject
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.action_select
 import tech.dokus.aura.resources.action_select_date
-import tech.dokus.aura.resources.cashflow_bill_details_section
-import tech.dokus.aura.resources.cashflow_chat_with_document
-import tech.dokus.aura.resources.cashflow_bound_to
-import tech.dokus.aura.resources.cashflow_client_information
-import tech.dokus.aura.resources.cashflow_client_name
 import tech.dokus.aura.resources.cashflow_action_ignore_for_now
 import tech.dokus.aura.resources.cashflow_action_link_contact
 import tech.dokus.aura.resources.cashflow_action_save_new_contact
+import tech.dokus.aura.resources.cashflow_bill_details_section
+import tech.dokus.aura.resources.cashflow_bound_to
+import tech.dokus.aura.resources.cashflow_chat_with_document
+import tech.dokus.aura.resources.cashflow_client_information
+import tech.dokus.aura.resources.cashflow_client_name
+import tech.dokus.aura.resources.cashflow_confidence_badge
 import tech.dokus.aura.resources.cashflow_confidence_high
 import tech.dokus.aura.resources.cashflow_confidence_label
 import tech.dokus.aura.resources.cashflow_confidence_low
 import tech.dokus.aura.resources.cashflow_confidence_medium
-import tech.dokus.aura.resources.cashflow_confidence_badge
 import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_counterparty_ai_extracted
 import tech.dokus.aura.resources.cashflow_counterparty_details_title
@@ -41,6 +113,7 @@ import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_section_additional_information
 import tech.dokus.aura.resources.cashflow_section_amounts
 import tech.dokus.aura.resources.cashflow_select_category
+import tech.dokus.aura.resources.cashflow_select_contact
 import tech.dokus.aura.resources.cashflow_select_payment_method
 import tech.dokus.aura.resources.cashflow_suggested_contacts
 import tech.dokus.aura.resources.cashflow_supplier_information
@@ -73,7 +146,6 @@ import tech.dokus.aura.resources.expense_category_vehicle
 import tech.dokus.aura.resources.invoice_amount
 import tech.dokus.aura.resources.invoice_category
 import tech.dokus.aura.resources.invoice_description
-import tech.dokus.aura.resources.invoice_details
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.invoice_status_draft
@@ -91,93 +163,30 @@ import tech.dokus.aura.resources.payment_method_stripe
 import tech.dokus.aura.resources.state_confirming
 import tech.dokus.aura.resources.state_saving
 import tech.dokus.aura.resources.state_unsaved_changes
+import tech.dokus.contacts.components.ContactAutocompleteSimple
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.DraftStatusBadge
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.StatusBadge
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.ExpenseCategory
-import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentId
 import tech.dokus.navigation.local.LocalNavController
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Message
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Calendar
-import compose.icons.feathericons.ChevronDown
-import kotlinx.datetime.LocalDate
-import org.jetbrains.compose.resources.stringResource
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
-import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.foundation.app.mvi.container
 
 /**
  * Document Review Screen for reviewing and editing AI-extracted document data.
@@ -286,7 +295,8 @@ internal fun DocumentReviewScreen(
                     DesktopReviewContent(
                         state = content,
                         contentPadding = contentPadding,
-                        onIntent = { container.store.intent(it) }
+                        onIntent = { container.store.intent(it) },
+                        isLargeScreen = isLargeScreen,
                     )
                 } else {
                     MobileReviewContent(
@@ -295,6 +305,14 @@ internal fun DocumentReviewScreen(
                         onIntent = { container.store.intent(it) }
                     )
                 }
+
+                ContactPickerDialog(
+                    isVisible = content.showContactPicker,
+                    isLargeScreen = isLargeScreen,
+                    onDismiss = { container.store.intent(DocumentReviewIntent.CloseContactPicker) },
+                    onSelect = { container.store.intent(DocumentReviewIntent.SelectContact(it)) },
+                    onCreateNew = { container.store.intent(DocumentReviewIntent.OpenCreateContactSheet) },
+                )
             }
 
             is DocumentReviewState.Error -> {
@@ -481,6 +499,7 @@ private fun DesktopReviewContent(
     state: DocumentReviewState.Content,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
+    isLargeScreen: Boolean,
 ) {
     Row(
         modifier = Modifier
@@ -512,6 +531,7 @@ private fun DesktopReviewContent(
     // Contact Create Sheet
     ContactCreateSheet(
         isVisible = state.showCreateContactSheet,
+        isLargeScreen = isLargeScreen,
         onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
         preFillData = state.createContactPreFill,
         onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
@@ -571,10 +591,12 @@ private fun ReviewDetailsPane(
                 )
                 InvoiceDetailsCard(
                     state = state,
+                    onIntent = onIntent,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 AmountsCard(
                     state = state,
+                    onIntent = onIntent,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -710,6 +732,7 @@ private fun EditableFormPane(
     // Contact Create Sheet
     ContactCreateSheet(
         isVisible = state.showCreateContactSheet,
+        isLargeScreen = LocalScreenSize.isLarge,
         onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
         preFillData = state.createContactPreFill,
         onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
@@ -769,11 +792,13 @@ private fun MobileReviewContent(
 
             InvoiceDetailsCard(
                 state = state,
+                onIntent = onIntent,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             AmountsCard(
                 state = state,
+                onIntent = onIntent,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -805,6 +830,7 @@ private fun MobileReviewContent(
     // Contact Create Sheet
     ContactCreateSheet(
         isVisible = state.showCreateContactSheet,
+        isLargeScreen = LocalScreenSize.isLarge,
         onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
         preFillData = state.createContactPreFill,
         onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
@@ -945,9 +971,7 @@ private fun CounterpartyCard(
 
             TextButton(
                 onClick = {
-                    if (state.selectedContactId != null) {
-                        onIntent(DocumentReviewIntent.ClearSelectedContact)
-                    }
+                    onIntent(DocumentReviewIntent.ClearSelectedContact)
                 },
                 enabled = actionsEnabled,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -961,6 +985,7 @@ private fun CounterpartyCard(
 @Composable
 private fun InvoiceDetailsCard(
     state: DocumentReviewState.Content,
+    onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val titleRes = when (state.editableData.documentType) {
@@ -984,43 +1009,70 @@ private fun InvoiceDetailsCard(
             when (state.editableData.documentType) {
                 DocumentType.Invoice -> {
                     val fields = state.editableData.invoice ?: EditableInvoiceFields()
-                    DetailRow(
-                        label = stringResource(Res.string.cashflow_invoice_number),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.cashflow_invoice_number),
                         value = fields.invoiceNumber,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.INVOICE_NUMBER, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DetailRow(
+                    DatePickerField(
                         label = stringResource(Res.string.invoice_issue_date),
-                        value = formatDate(fields.issueDate),
+                        value = fields.issueDate,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.ISSUE_DATE, it))
+                        },
                     )
-                    DetailRow(
+                    DatePickerField(
                         label = stringResource(Res.string.invoice_due_date),
-                        value = formatDate(fields.dueDate),
+                        value = fields.dueDate,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.DUE_DATE, it))
+                        },
                     )
                 }
                 DocumentType.Bill -> {
                     val fields = state.editableData.bill ?: EditableBillFields()
-                    DetailRow(
-                        label = stringResource(Res.string.cashflow_invoice_number),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.cashflow_invoice_number),
                         value = fields.invoiceNumber,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.INVOICE_NUMBER, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DetailRow(
+                    DatePickerField(
                         label = stringResource(Res.string.invoice_issue_date),
-                        value = formatDate(fields.issueDate),
+                        value = fields.issueDate,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.ISSUE_DATE, it))
+                        },
                     )
-                    DetailRow(
+                    DatePickerField(
                         label = stringResource(Res.string.invoice_due_date),
-                        value = formatDate(fields.dueDate),
+                        value = fields.dueDate,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.DUE_DATE, it))
+                        },
                     )
                 }
                 DocumentType.Expense -> {
                     val fields = state.editableData.expense ?: EditableExpenseFields()
-                    DetailRow(
-                        label = stringResource(Res.string.cashflow_receipt_number),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.cashflow_receipt_number),
                         value = fields.receiptNumber,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateExpenseField(ExpenseField.RECEIPT_NUMBER, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DetailRow(
+                    DatePickerField(
                         label = stringResource(Res.string.common_date),
-                        value = formatDate(fields.date),
+                        value = fields.date,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateExpenseField(ExpenseField.DATE, it))
+                        },
                     )
                 }
                 else -> {
@@ -1038,6 +1090,7 @@ private fun InvoiceDetailsCard(
 @Composable
 private fun AmountsCard(
     state: DocumentReviewState.Content,
+    onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     DokusCardSurface(modifier = modifier) {
@@ -1054,39 +1107,67 @@ private fun AmountsCard(
             when (state.editableData.documentType) {
                 DocumentType.Invoice -> {
                     val fields = state.editableData.invoice ?: EditableInvoiceFields()
-                    DetailRow(
-                        label = stringResource(Res.string.invoice_subtotal),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.invoice_subtotal),
                         value = fields.subtotalAmount,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.SUBTOTAL_AMOUNT, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DetailRow(
-                        label = stringResource(Res.string.cashflow_vat_amount),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.cashflow_vat_amount),
                         value = fields.vatAmount,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.VAT_AMOUNT, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DetailRow(
-                        label = stringResource(Res.string.invoice_total_amount),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.invoice_total_amount),
                         value = fields.totalAmount,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateInvoiceField(InvoiceField.TOTAL_AMOUNT, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 DocumentType.Bill -> {
                     val fields = state.editableData.bill ?: EditableBillFields()
-                    DetailRow(
-                        label = stringResource(Res.string.invoice_total_amount),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.invoice_total_amount),
                         value = fields.amount,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.AMOUNT, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DetailRow(
-                        label = stringResource(Res.string.cashflow_vat_amount),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.cashflow_vat_amount),
                         value = fields.vatAmount,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateBillField(BillField.VAT_AMOUNT, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 DocumentType.Expense -> {
                     val fields = state.editableData.expense ?: EditableExpenseFields()
-                    DetailRow(
-                        label = stringResource(Res.string.invoice_total_amount),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.invoice_total_amount),
                         value = fields.amount,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateExpenseField(ExpenseField.AMOUNT, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DetailRow(
-                        label = stringResource(Res.string.cashflow_vat_amount),
+                    PTextFieldStandard(
+                        fieldName = stringResource(Res.string.cashflow_vat_amount),
                         value = fields.vatAmount,
+                        onValueChange = {
+                            onIntent(DocumentReviewIntent.UpdateExpenseField(ExpenseField.VAT_AMOUNT, it))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 else -> {
@@ -1192,6 +1273,77 @@ private fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyIn
 }
 
 private fun formatDate(value: LocalDate?): String? = value?.toString()
+
+@Composable
+private fun ContactPickerDialog(
+    isVisible: Boolean,
+    isLargeScreen: Boolean,
+    onDismiss: () -> Unit,
+    onSelect: (ContactId) -> Unit,
+    onCreateNew: () -> Unit,
+    listContacts: ListContactsUseCase = koinInject(),
+) {
+    if (!isVisible) return
+
+    var query by remember { mutableStateOf("") }
+    var selected by remember { mutableStateOf<ContactDto?>(null) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = isLargeScreen),
+    ) {
+        Surface(
+            modifier = if (isLargeScreen) {
+                Modifier.widthIn(min = 520.dp, max = 720.dp)
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            },
+            shape = MaterialTheme.shapes.medium,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Constrains.Spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.cashflow_action_link_contact),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(Res.string.action_cancel))
+                    }
+                }
+
+                ContactAutocompleteSimple(
+                    value = query,
+                    onValueChange = { query = it },
+                    selectedContact = selected,
+                    onContactSelected = { contact ->
+                        selected = contact
+                        onSelect(contact.id)
+                        onDismiss()
+                    },
+                    onAddNewContact = {
+                        onDismiss()
+                        onCreateNew()
+                    },
+                    placeholder = stringResource(Res.string.cashflow_select_contact),
+                    label = stringResource(Res.string.cashflow_contact_label),
+                    listContacts = listContacts,
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun CollapsibleSection(
