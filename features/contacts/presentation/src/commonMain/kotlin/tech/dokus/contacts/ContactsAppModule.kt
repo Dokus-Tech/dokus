@@ -12,8 +12,8 @@ import tech.dokus.aura.resources.contacts_title
 import tech.dokus.aura.resources.users
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.foundation.aura.model.HomeItemPriority
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.HomeDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.HomeDestination
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import tech.dokus.foundation.app.AppDataModuleDi

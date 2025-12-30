@@ -1,8 +1,8 @@
 package ai.dokus.app.auth.navigation
 
 import ai.dokus.app.auth.screen.*
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.AuthDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.AuthDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute

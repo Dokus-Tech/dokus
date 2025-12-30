@@ -15,9 +15,9 @@ import tech.dokus.aura.resources.settings_group_workspace
 import tech.dokus.aura.resources.settings_peppol
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.foundation.aura.model.HomeItemPriority
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.HomeDestination
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import org.koin.core.component.KoinComponent

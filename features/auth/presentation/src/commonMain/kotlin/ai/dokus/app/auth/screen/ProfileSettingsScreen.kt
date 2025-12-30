@@ -35,9 +35,9 @@ import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.Name
 import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.exceptions.DokusException
-import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.navigateTo
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

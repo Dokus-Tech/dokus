@@ -29,9 +29,9 @@ import tech.dokus.foundation.aura.constrains.withContentPadding
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerConfigManager
-import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.replace
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.replace
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

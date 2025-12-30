@@ -1,7 +1,7 @@
 package tech.dokus.foundation.app
 
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.NavigationDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.NavigationDestination
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.jetbrains.compose.resources.StringResource

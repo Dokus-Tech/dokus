@@ -30,8 +30,8 @@ import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import ai.dokus.foundation.navigation.destinations.ContactsDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.destinations.ContactsDestination
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

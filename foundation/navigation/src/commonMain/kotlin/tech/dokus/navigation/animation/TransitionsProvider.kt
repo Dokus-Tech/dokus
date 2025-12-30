@@ -1,4 +1,4 @@
-package ai.dokus.foundation.navigation.animation
+package tech.dokus.navigation.animation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition

@@ -25,8 +25,8 @@ import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.domain.model.PeppolProvider
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

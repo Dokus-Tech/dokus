@@ -19,9 +19,9 @@ import tech.dokus.aura.resources.contacts_update_success
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import ai.dokus.foundation.navigation.destinations.ContactsDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.navigateTo
+import tech.dokus.navigation.destinations.ContactsDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

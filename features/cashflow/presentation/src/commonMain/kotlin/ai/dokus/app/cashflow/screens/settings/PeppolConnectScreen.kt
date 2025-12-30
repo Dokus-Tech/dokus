@@ -39,8 +39,8 @@ import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.PeppolProvider
 import tech.dokus.domain.model.RecommandCompanySummary
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

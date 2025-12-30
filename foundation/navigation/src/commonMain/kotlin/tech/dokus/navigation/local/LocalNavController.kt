@@ -1,4 +1,4 @@
-package ai.dokus.foundation.navigation.local
+package tech.dokus.navigation.local
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

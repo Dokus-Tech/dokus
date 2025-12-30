@@ -8,9 +8,9 @@ import ai.dokus.app.cashflow.screens.settings.PeppolConnectScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.PeppolProvider
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.CashFlowDestination
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute

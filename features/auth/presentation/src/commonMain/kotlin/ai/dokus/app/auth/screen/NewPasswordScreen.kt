@@ -7,7 +7,7 @@ import ai.dokus.app.auth.viewmodel.NewPasswordState
 import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
 import tech.dokus.foundation.aura.components.background.SpotlightEffect
 import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box

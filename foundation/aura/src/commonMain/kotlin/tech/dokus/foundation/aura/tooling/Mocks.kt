@@ -7,7 +7,7 @@ import tech.dokus.aura.resources.home_settings
 import tech.dokus.aura.resources.user
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.foundation.aura.model.HomeItemPriority
-import ai.dokus.foundation.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.ids.UserId
