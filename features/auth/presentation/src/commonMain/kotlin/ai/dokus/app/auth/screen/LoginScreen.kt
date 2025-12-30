@@ -4,32 +4,6 @@ import ai.dokus.app.auth.viewmodel.LoginAction
 import ai.dokus.app.auth.viewmodel.LoginContainer
 import ai.dokus.app.auth.viewmodel.LoginIntent
 import ai.dokus.app.auth.viewmodel.LoginState
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_or
-import tech.dokus.aura.resources.app_name
-import tech.dokus.aura.resources.auth_email_label
-import tech.dokus.aura.resources.auth_forgot_password
-import tech.dokus.aura.resources.auth_no_account_prefix
-import tech.dokus.aura.resources.auth_password_label
-import tech.dokus.aura.resources.auth_sign_in_button
-import tech.dokus.aura.resources.auth_sign_up_link
-import tech.dokus.aura.resources.connect_to_server
-import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
-import tech.dokus.foundation.aura.components.background.SpotlightEffect
-import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
-import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
-import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
-import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
-import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
-import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
-import tech.dokus.foundation.aura.constrains.withContentPadding
-import tech.dokus.navigation.destinations.AuthDestination
-import tech.dokus.navigation.destinations.CoreDestination
-import tech.dokus.navigation.local.LocalNavController
-import tech.dokus.navigation.navigateTo
-import tech.dokus.navigation.replace
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -63,9 +37,36 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_or
+import tech.dokus.aura.resources.app_name
+import tech.dokus.aura.resources.auth_email_label
+import tech.dokus.aura.resources.auth_forgot_password
+import tech.dokus.aura.resources.auth_no_account_prefix
+import tech.dokus.aura.resources.auth_password_label
+import tech.dokus.aura.resources.auth_sign_in_button
+import tech.dokus.aura.resources.auth_sign_up_link
+import tech.dokus.aura.resources.connect_to_server
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.exceptionIfError
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
+import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
+import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
+import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
+import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
+import tech.dokus.foundation.aura.constrains.withContentPadding
+import tech.dokus.foundation.aura.style.brandGold
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.replace
 
 @Composable
 internal fun LoginScreen(
@@ -135,7 +136,7 @@ private fun IntentReceiver<LoginIntent>.LoginContent(
                     text = stringResource(Res.string.app_name),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.brandGold
                 )
 
                 Spacer(modifier = Modifier.height(48.dp))
