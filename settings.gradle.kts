@@ -35,7 +35,7 @@ dependencyResolutionManagement {
 include(":composeApp")
 include(":backendApp")
 
-include(":foundation:design-system")
+include(":foundation:aura")
 
 include(":foundation:app-common")
 include(":foundation:platform")
