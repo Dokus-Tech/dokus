@@ -2,9 +2,9 @@
 
 package tech.dokus.backend.services.auth
 
-import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
-import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
+import tech.dokus.database.repository.auth.PasswordResetTokenRepository
+import tech.dokus.database.repository.auth.RefreshTokenRepository
+import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.now

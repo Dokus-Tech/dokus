@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.CashflowRepository
+import tech.dokus.database.repository.cashflow.CashflowRepository
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.response.respond

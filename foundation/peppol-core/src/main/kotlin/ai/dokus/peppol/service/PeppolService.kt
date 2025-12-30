@@ -1,8 +1,8 @@
 package ai.dokus.peppol.service
 
-import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
-import ai.dokus.foundation.database.repository.peppol.PeppolSettingsWithCredentials
-import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionRepository
+import tech.dokus.database.repository.peppol.PeppolSettingsRepository
+import tech.dokus.database.repository.peppol.PeppolSettingsWithCredentials
+import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection

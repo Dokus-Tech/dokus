@@ -1,8 +1,8 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.auth.AddressRepository
-import ai.dokus.foundation.database.repository.auth.TenantRepository
-import ai.dokus.foundation.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.auth.AddressRepository
+import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolConnectRequest

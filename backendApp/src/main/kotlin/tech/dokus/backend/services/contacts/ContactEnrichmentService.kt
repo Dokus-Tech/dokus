@@ -1,6 +1,6 @@
 package tech.dokus.backend.services.contacts
 
-import ai.dokus.foundation.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId

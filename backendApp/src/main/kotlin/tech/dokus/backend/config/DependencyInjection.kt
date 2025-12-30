@@ -1,11 +1,11 @@
 package tech.dokus.backend.config
 
 import tech.dokus.foundation.backend.config.AIConfig
-import ai.dokus.foundation.database.di.repositoryModules
-import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
-import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
-import ai.dokus.foundation.database.schema.DokusSchema
+import tech.dokus.database.di.repositoryModules
+import tech.dokus.database.repository.auth.PasswordResetTokenRepository
+import tech.dokus.database.repository.auth.RefreshTokenRepository
+import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.DokusSchema
 import tech.dokus.domain.repository.ChunkRepository
 import ai.dokus.peppol.config.PeppolModuleConfig
 import ai.dokus.peppol.mapper.PeppolMapper

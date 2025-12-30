@@ -1,6 +1,6 @@
 package tech.dokus.backend.services.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId

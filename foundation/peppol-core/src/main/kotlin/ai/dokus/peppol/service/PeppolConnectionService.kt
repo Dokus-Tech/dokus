@@ -1,6 +1,6 @@
 package ai.dokus.peppol.service
 
-import ai.dokus.foundation.database.repository.peppol.PeppolSettingsRepository
+import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.PeppolConnectRequest

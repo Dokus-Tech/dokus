@@ -1,8 +1,8 @@
 package tech.dokus.backend.services.auth
 
-import ai.dokus.foundation.database.repository.auth.InvitationRepository
-import ai.dokus.foundation.database.repository.auth.TenantRepository
-import ai.dokus.foundation.database.repository.auth.UserRepository
+import tech.dokus.database.repository.auth.InvitationRepository
+import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.InvitationId

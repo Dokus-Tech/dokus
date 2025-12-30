@@ -8,8 +8,8 @@ import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.ai.services.ChunkingService
 import tech.dokus.ai.services.EmbeddingException
 import tech.dokus.ai.services.EmbeddingService
-import ai.dokus.foundation.database.entity.IngestionItemEntity
-import ai.dokus.foundation.database.repository.processor.ProcessorIngestionRepository
+import tech.dokus.database.entity.IngestionItemEntity
+import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

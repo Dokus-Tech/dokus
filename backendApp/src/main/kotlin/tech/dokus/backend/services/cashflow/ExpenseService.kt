@@ -1,6 +1,6 @@
 package tech.dokus.backend.services.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.TenantId

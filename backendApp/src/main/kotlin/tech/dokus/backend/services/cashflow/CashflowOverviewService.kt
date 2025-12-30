@@ -1,8 +1,8 @@
 package tech.dokus.backend.services.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.BillRepository
-import ai.dokus.foundation.database.repository.cashflow.ExpenseRepository
-import ai.dokus.foundation.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.cashflow.BillRepository
+import tech.dokus.database.repository.cashflow.ExpenseRepository
+import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus

@@ -1,8 +1,8 @@
 package tech.dokus.backend.routes.cashflow
 
-import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepository
-import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
-import ai.dokus.foundation.database.repository.cashflow.IngestionRunSummary
+import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentRecordDto
