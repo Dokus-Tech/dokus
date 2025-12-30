@@ -1,9 +1,5 @@
 package tech.dokus.foundation.aura.components.fields
 
-import tech.dokus.foundation.aura.components.PErrorText
-import tech.dokus.foundation.aura.components.PIcon
-import tech.dokus.foundation.aura.constrains.Constrains
-import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_clear
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
@@ -31,15 +25,53 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_clear
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.aura.components.PErrorText
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.style.brandGold
+
+private fun Modifier.dokusFocusGlow(
+    enabled: Boolean,
+    isFocused: Boolean,
+    hasError: Boolean,
+    shape: Shape,
+    focusColor: Color,
+    errorColor: Color,
+    glowStroke: androidx.compose.ui.unit.Dp = 10.dp,
+    glowAlpha: Float = 0.14f,
+): Modifier = composed {
+    if (!enabled || (!isFocused && !hasError)) return@composed this
+
+    val layoutDirection = LocalLayoutDirection.current
+    val glowColor = (if (hasError) errorColor else focusColor).copy(alpha = glowAlpha)
+
+    this.drawBehind {
+        // Fake a soft glow by drawing a thicker translucent stroke *behind* the field.
+        // This avoids the "shadow inside" look and stays consistent across KMP targets.
+        val outline = shape.createOutline(size, layoutDirection, this)
+        drawOutline(outline = outline, color = glowColor, style = Stroke(width = glowStroke.toPx()))
+    }
+}
 
 @Composable
 fun PTextField(
@@ -63,6 +95,17 @@ fun PTextField(
     val density = LocalDensity.current
     val iconSizeDp = with(density) { labelTextStyle.fontSize.toDp() }
 
+    val gold = MaterialTheme.colorScheme.brandGold
+
+    // Dokus Field tokens (glassy + calm)
+    val fieldShape = MaterialTheme.shapes.medium
+    val idleBorder = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+    val focusBorder = gold.copy(alpha = 0.85f)
+    val errorBorder = MaterialTheme.colorScheme.error
+
+    val containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+    val labelColor = if (isFocused) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
@@ -83,7 +126,7 @@ fun PTextField(
                 text = fieldName,
                 style = labelTextStyle,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = labelColor
             )
         }
 
@@ -93,20 +136,34 @@ fun PTextField(
                 .onFocusChanged { focusState ->
                     isFocused = focusState.hasFocus
                 }
+                .dokusFocusGlow(
+                    enabled = enabled,
+                    isFocused = isFocused,
+                    hasError = error != null,
+                    shape = fieldShape,
+                    focusColor = focusBorder,
+                    errorColor = errorBorder,
+                )
+                // Dokus inputs: calm surface + precise border (no elevation shadow)
+                .clip(fieldShape)
+                .background(containerColor)
                 .border(
-                    width = Constrains.Stroke.thin,
-                    color = when {
-                        error != null -> MaterialTheme.colorScheme.error
-                        isFocused -> MaterialTheme.colorScheme.primary
-                        else -> MaterialTheme.colorScheme.outline
+                    width = when {
+                        error != null -> 2.dp
+                        isFocused -> 2.dp
+                        else -> Constrains.Stroke.thin
                     },
-                    shape = MaterialTheme.shapes.small
+                    color = when {
+                        error != null -> errorBorder
+                        isFocused -> focusBorder
+                        else -> idleBorder
+                    },
+                    shape = fieldShape
                 )
-                .background(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = MaterialTheme.shapes.small
-                )
-                .padding(horizontal = Constrains.Spacing.large, vertical = Constrains.Spacing.medium),
+                .padding(
+                    horizontal = Constrains.Spacing.large,
+                    vertical = Constrains.Spacing.medium
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
         ) {
@@ -117,13 +174,13 @@ fun PTextField(
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 16.sp,
                     color = when {
-                        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        value.isEmpty() -> MaterialTheme.colorScheme.onSurfaceVariant
+                        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.50f)
+                        value.isEmpty() -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
                         else -> MaterialTheme.colorScheme.onSurface
                     }
                 ),
                 singleLine = singleLine,
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                cursorBrush = SolidColor(gold),
                 keyboardActions = KeyboardActions(
                     onNext = { onAction() },
                     onDone = { onAction() }
@@ -147,7 +204,7 @@ fun PTextField(
                         imageVector = Icons.Default.Clear,
                         contentDescription = stringResource(Res.string.action_clear),
                         modifier = Modifier.size(Constrains.IconSize.xSmall),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                     )
                 }
             }
