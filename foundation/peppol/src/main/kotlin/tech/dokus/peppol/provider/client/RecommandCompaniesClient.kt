@@ -1,6 +1,6 @@
-package ai.dokus.peppol.providers.recommand
+package tech.dokus.peppol.provider.client
 
-import ai.dokus.peppol.config.PeppolModuleConfig
+import tech.dokus.peppol.config.PeppolModuleConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.basicAuth

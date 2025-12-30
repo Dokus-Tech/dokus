@@ -1,4 +1,4 @@
-package ai.dokus.peppol.validator
+package tech.dokus.peppol.validator
 
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.FinancialDocumentDto

@@ -10,8 +10,8 @@ import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import ai.dokus.peppol.service.PeppolConnectionService
-import ai.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.service.PeppolConnectionService
+import tech.dokus.peppol.service.PeppolService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete

@@ -1,4 +1,4 @@
-package ai.dokus.peppol.provider
+package tech.dokus.peppol.provider
 
 /**
  * Base interface for provider-specific credentials.

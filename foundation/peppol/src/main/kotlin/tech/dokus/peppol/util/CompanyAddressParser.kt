@@ -1,4 +1,4 @@
-package ai.dokus.peppol.util
+package tech.dokus.peppol.util
 
 data class ParsedCompanyAddress(
     val street: String?,

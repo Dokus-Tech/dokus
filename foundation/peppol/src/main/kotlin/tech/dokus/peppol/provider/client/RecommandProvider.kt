@@ -1,19 +1,5 @@
-package ai.dokus.peppol.providers.recommand
+package tech.dokus.peppol.provider.client
 
-import tech.dokus.domain.model.RecommandDocumentsResponse
-import tech.dokus.domain.model.RecommandInboxDocument
-import tech.dokus.domain.model.RecommandMarkAsReadRequest
-import tech.dokus.domain.model.RecommandSendResponse
-import tech.dokus.foundation.backend.utils.loggerFor
-import ai.dokus.peppol.model.PeppolDirection
-import ai.dokus.peppol.model.PeppolDocumentList
-import ai.dokus.peppol.model.PeppolInboxItem
-import ai.dokus.peppol.model.PeppolReceivedDocument
-import ai.dokus.peppol.model.PeppolSendRequest
-import ai.dokus.peppol.model.PeppolSendResponse
-import ai.dokus.peppol.model.PeppolVerifyResponse
-import ai.dokus.peppol.provider.PeppolCredentials
-import ai.dokus.peppol.provider.PeppolProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.basicAuth
@@ -26,6 +12,20 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.model.RecommandDocumentsResponse
+import tech.dokus.domain.model.RecommandInboxDocument
+import tech.dokus.domain.model.RecommandMarkAsReadRequest
+import tech.dokus.domain.model.RecommandSendResponse
+import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.peppol.model.PeppolDirection
+import tech.dokus.peppol.model.PeppolDocumentList
+import tech.dokus.peppol.model.PeppolInboxItem
+import tech.dokus.peppol.model.PeppolReceivedDocument
+import tech.dokus.peppol.model.PeppolSendRequest
+import tech.dokus.peppol.model.PeppolSendResponse
+import tech.dokus.peppol.model.PeppolVerifyResponse
+import tech.dokus.peppol.provider.PeppolCredentials
+import tech.dokus.peppol.provider.PeppolProvider
 
 /**
  * Peppol provider implementation for Recommand.eu

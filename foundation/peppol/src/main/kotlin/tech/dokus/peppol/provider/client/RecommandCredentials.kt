@@ -1,6 +1,6 @@
-package ai.dokus.peppol.providers.recommand
+package tech.dokus.peppol.provider.client
 
-import ai.dokus.peppol.provider.PeppolCredentials
+import tech.dokus.peppol.provider.PeppolCredentials
 import kotlinx.serialization.Serializable
 
 /**

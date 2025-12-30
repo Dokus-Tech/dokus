@@ -1,4 +1,4 @@
-package ai.dokus.peppol.model
+package tech.dokus.peppol.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
