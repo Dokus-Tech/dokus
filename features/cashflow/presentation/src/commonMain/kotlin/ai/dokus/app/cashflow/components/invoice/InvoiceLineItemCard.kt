@@ -8,7 +8,7 @@ import ai.dokus.app.resources.generated.invoice_line_total
 import ai.dokus.app.resources.generated.invoice_price
 import ai.dokus.app.resources.generated.invoice_qty
 import ai.dokus.app.resources.generated.invoice_remove
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

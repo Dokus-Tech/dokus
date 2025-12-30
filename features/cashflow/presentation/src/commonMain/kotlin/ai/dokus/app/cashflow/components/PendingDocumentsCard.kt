@@ -5,10 +5,10 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.pending_documents_empty
 import ai.dokus.app.resources.generated.pending_documents_need_confirmation
 import ai.dokus.app.resources.generated.pending_documents_title
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerBox
-import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.design.extensions.localizedUppercase
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerBox
+import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.extensions.localizedUppercase
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.background

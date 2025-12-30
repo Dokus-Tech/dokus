@@ -4,7 +4,7 @@ import tech.dokus.contacts.viewmodel.DuplicateVatUi
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_view
 import ai.dokus.app.resources.generated.contacts_duplicate_exists
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

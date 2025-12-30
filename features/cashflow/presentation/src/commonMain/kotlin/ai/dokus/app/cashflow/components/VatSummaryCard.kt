@@ -9,8 +9,8 @@ import ai.dokus.app.resources.generated.vat_predicted_net_amount
 import ai.dokus.app.resources.generated.vat_quarter_sublabel
 import ai.dokus.app.resources.generated.vat_summary_title
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerLine
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.domain.Money
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement

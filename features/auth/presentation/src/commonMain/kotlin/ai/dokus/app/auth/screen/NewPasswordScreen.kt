@@ -4,9 +4,9 @@ import ai.dokus.app.auth.viewmodel.NewPasswordAction
 import ai.dokus.app.auth.viewmodel.NewPasswordContainer
 import ai.dokus.app.auth.viewmodel.NewPasswordIntent
 import ai.dokus.app.auth.viewmodel.NewPasswordState
-import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightEffect
-import ai.dokus.foundation.design.components.layout.TwoPaneContainer
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

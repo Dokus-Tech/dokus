@@ -5,10 +5,10 @@ import tech.dokus.app.local.AppModulesInitializer
 import tech.dokus.app.local.AppModulesProvided
 import tech.dokus.app.local.KoinProvided
 import tech.dokus.app.navigation.DokusNavHost
-import ai.dokus.foundation.design.local.ScreenSizeProvided
-import ai.dokus.foundation.design.local.ThemeManagerProvided
-import ai.dokus.foundation.design.style.ThemeManager
-import ai.dokus.foundation.design.style.Themed
+import tech.dokus.foundation.aura.local.ScreenSizeProvided
+import tech.dokus.foundation.aura.local.ThemeManagerProvided
+import tech.dokus.foundation.aura.style.ThemeManager
+import tech.dokus.foundation.aura.style.Themed
 import ai.dokus.foundation.navigation.local.NavControllerProvided
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

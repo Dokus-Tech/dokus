@@ -5,7 +5,7 @@ import ai.dokus.app.auth.model.RegisterPage
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_continue
 import ai.dokus.app.resources.generated.auth_register_title
-import ai.dokus.foundation.design.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue

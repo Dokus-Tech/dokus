@@ -1,7 +1,7 @@
 package tech.dokus.app.navigation
 
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.design.local.isLarge
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.domain.asbtractions.AuthManager
 import tech.dokus.domain.model.auth.AuthEvent
 import tech.dokus.domain.model.common.DeepLinks

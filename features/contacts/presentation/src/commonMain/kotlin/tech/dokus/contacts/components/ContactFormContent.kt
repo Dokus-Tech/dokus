@@ -16,10 +16,10 @@ import ai.dokus.app.resources.generated.contacts_save_contact
 import ai.dokus.app.resources.generated.contacts_saving
 import ai.dokus.app.resources.generated.contacts_update_hint
 import ai.dokus.app.resources.generated.contacts_update_mobile_hint
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PButtonVariant
-import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.design.components.text.SectionTitle
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.domain.enums.ClientType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

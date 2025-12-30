@@ -1,8 +1,8 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.foundation.design.tooling.PreviewParameters
-import ai.dokus.foundation.design.tooling.PreviewParametersProvider
-import ai.dokus.foundation.design.tooling.TestWrapper
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus

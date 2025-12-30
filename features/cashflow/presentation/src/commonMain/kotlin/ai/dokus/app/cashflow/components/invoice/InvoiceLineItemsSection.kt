@@ -4,7 +4,7 @@ import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.invoice_add_line_item
 import ai.dokus.app.resources.generated.invoice_line_items
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

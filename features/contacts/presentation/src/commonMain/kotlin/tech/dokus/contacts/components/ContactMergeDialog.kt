@@ -58,7 +58,7 @@ import ai.dokus.app.resources.generated.contacts_searching
 import ai.dokus.app.resources.generated.contacts_tags
 import ai.dokus.app.resources.generated.contacts_vat_number
 import ai.dokus.foundation.platform.Logger
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

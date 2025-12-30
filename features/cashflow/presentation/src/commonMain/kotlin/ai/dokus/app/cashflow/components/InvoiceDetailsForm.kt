@@ -17,8 +17,8 @@ import ai.dokus.app.resources.generated.invoice_no_items
 import ai.dokus.app.resources.generated.invoice_recurrent_expense
 import ai.dokus.app.resources.generated.invoice_total_amount
 import ai.dokus.app.resources.generated.invoice_vat
-import ai.dokus.foundation.design.components.CashflowType
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.components.CashflowType
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

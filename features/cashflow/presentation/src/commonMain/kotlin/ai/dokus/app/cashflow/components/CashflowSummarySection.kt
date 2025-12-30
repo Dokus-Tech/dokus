@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.foundation.design.components.common.OfflineOverlay
+import tech.dokus.foundation.aura.components.common.OfflineOverlay
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement

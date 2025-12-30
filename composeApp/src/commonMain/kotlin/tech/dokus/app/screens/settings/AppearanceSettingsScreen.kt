@@ -6,10 +6,10 @@ import ai.dokus.app.resources.generated.appearance_theme
 import ai.dokus.app.resources.generated.appearance_theme_dark
 import ai.dokus.app.resources.generated.appearance_theme_light
 import ai.dokus.app.resources.generated.appearance_theme_system
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.design.local.LocalThemeManager
-import ai.dokus.foundation.design.style.ThemeMode
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.local.LocalThemeManager
+import tech.dokus.foundation.aura.style.ThemeMode
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row

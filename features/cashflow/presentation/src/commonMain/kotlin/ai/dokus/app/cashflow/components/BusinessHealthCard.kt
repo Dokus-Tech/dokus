@@ -11,9 +11,9 @@ import ai.dokus.app.resources.generated.health_status_critical
 import ai.dokus.app.resources.generated.health_status_good
 import ai.dokus.app.resources.generated.health_status_warning
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerCircle
-import ai.dokus.foundation.design.components.common.ShimmerLine
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerCircle
+import tech.dokus.foundation.aura.components.common.ShimmerLine
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement

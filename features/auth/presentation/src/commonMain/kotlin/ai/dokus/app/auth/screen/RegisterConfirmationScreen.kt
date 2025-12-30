@@ -4,11 +4,11 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_continue
 import ai.dokus.app.resources.generated.auth_register_success_title
 import ai.dokus.app.resources.generated.registration_success_message
-import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.text.AppNameText
-import ai.dokus.foundation.design.components.text.CopyRightText
-import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.design.local.LocalScreenSize
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.components.text.CopyRightText
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

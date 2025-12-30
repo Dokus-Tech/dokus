@@ -4,10 +4,10 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.contacts_add_contact
 import ai.dokus.app.resources.generated.contacts_search_content_description
 import ai.dokus.app.resources.generated.contacts_search_placeholder
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PButtonVariant
-import ai.dokus.foundation.design.components.PIconPosition
-import ai.dokus.foundation.design.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PIconPosition
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn

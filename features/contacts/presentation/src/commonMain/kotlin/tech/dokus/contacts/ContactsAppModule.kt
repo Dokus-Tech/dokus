@@ -10,8 +10,8 @@ import tech.dokus.contacts.navigation.ContactsNavigationProvider
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.contacts_title
 import ai.dokus.app.resources.generated.users
-import ai.dokus.foundation.design.model.HomeItem
-import ai.dokus.foundation.design.model.HomeItemPriority
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItemPriority
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.HomeDestination
 import org.koin.core.component.KoinComponent

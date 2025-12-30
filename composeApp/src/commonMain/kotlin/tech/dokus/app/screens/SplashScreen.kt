@@ -6,8 +6,8 @@ import ai.dokus.app.resources.generated.bootstrap_state_app_version_check
 import ai.dokus.app.resources.generated.bootstrap_state_authenticating
 import ai.dokus.app.resources.generated.bootstrap_state_checking_account_status
 import ai.dokus.app.resources.generated.bootstrap_state_initializing
-import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
-import ai.dokus.foundation.design.components.background.SpotlightEffect
+import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
+import tech.dokus.foundation.aura.components.background.SpotlightEffect
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.CoreDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -47,7 +47,6 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.viewmodel.BootstrapAction
 import tech.dokus.app.viewmodel.BootstrapContainer
 import tech.dokus.app.viewmodel.BootstrapIntent
-import tech.dokus.app.viewmodel.BootstrapState
 import tech.dokus.app.viewmodel.BootstrapStep
 import tech.dokus.app.viewmodel.BootstrapStepType
 import tech.dokus.foundation.app.mvi.container

@@ -5,10 +5,10 @@ import ai.dokus.app.resources.generated.action_search
 import ai.dokus.app.resources.generated.cashflow_create_invoice
 import ai.dokus.app.resources.generated.cashflow_search_placeholder
 import ai.dokus.app.resources.generated.cashflow_upload_document
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PButtonVariant
-import ai.dokus.foundation.design.components.PIconPosition
-import ai.dokus.foundation.design.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PIconPosition
+import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn

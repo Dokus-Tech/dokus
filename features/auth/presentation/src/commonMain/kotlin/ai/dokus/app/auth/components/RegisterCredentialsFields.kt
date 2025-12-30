@@ -4,10 +4,10 @@ import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_email_label
 import ai.dokus.app.resources.generated.auth_password_label
-import ai.dokus.foundation.design.components.fields.PTextFieldEmail
-import ai.dokus.foundation.design.components.fields.PTextFieldEmailDefaults
-import ai.dokus.foundation.design.components.fields.PTextFieldPassword
-import ai.dokus.foundation.design.components.fields.PTextFieldPasswordDefaults
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
+import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
+import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -44,7 +45,7 @@ internal fun RegisterCredentialsFields(
                 it is DokusException.UserAlreadyExists
             },
             keyboardOptions = PTextFieldEmailDefaults.keyboardOptions.copy(imeAction = ImeAction.Next),
-            onAction = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Next) },
+            onAction = { focusManager.moveFocus(FocusDirection.Next) },
         ) { onFieldsUpdate(fields.copy(email = it)) }
         Spacer(modifier = Modifier.height(16.dp))
         PTextFieldPassword(

@@ -11,10 +11,10 @@ import ai.dokus.app.resources.generated.contacts_delete_success
 import ai.dokus.app.resources.generated.contacts_select_contact
 import ai.dokus.app.resources.generated.contacts_select_contact_hint
 import ai.dokus.app.resources.generated.contacts_update_success
-import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
-import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.design.local.isLarge
+import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo

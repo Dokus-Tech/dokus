@@ -3,7 +3,7 @@ package ai.dokus.app.cashflow.components.invoice
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.invoice_client
 import ai.dokus.app.resources.generated.invoice_select_client
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.contact.ContactDto

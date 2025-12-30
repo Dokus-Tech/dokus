@@ -15,8 +15,8 @@ import ai.dokus.app.resources.generated.contacts_searching
 import ai.dokus.app.resources.generated.contacts_selected
 import ai.dokus.app.resources.generated.contacts_supplier
 import ai.dokus.app.resources.generated.contacts_vendor
-import ai.dokus.foundation.design.components.PIcon
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.domain.model.contact.ContactDto
 import ai.dokus.foundation.platform.Logger
 import androidx.compose.foundation.background

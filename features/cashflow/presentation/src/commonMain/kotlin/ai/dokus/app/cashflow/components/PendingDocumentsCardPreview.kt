@@ -1,9 +1,9 @@
 package ai.dokus.app.cashflow.components
 
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.design.tooling.PreviewParameters
-import ai.dokus.foundation.design.tooling.PreviewParametersProvider
-import ai.dokus.foundation.design.tooling.TestWrapper
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus

@@ -16,9 +16,9 @@ import ai.dokus.app.resources.generated.contacts_deleting
 import ai.dokus.app.resources.generated.contacts_edit_contact
 import ai.dokus.app.resources.generated.contacts_update_mobile_hint
 import ai.dokus.app.resources.generated.contacts_update_success
-import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.local.LocalScreenSize
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo

@@ -10,7 +10,7 @@ import ai.dokus.app.resources.generated.contacts_filter_sort_expand
 import ai.dokus.app.resources.generated.contacts_filter_sort_label
 import ai.dokus.app.resources.generated.contacts_filter_status_expand
 import ai.dokus.app.resources.generated.contacts_filter_status_label
-import ai.dokus.foundation.design.components.dropdown.PFilterDropdown
+import tech.dokus.foundation.aura.components.dropdown.PFilterDropdown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth

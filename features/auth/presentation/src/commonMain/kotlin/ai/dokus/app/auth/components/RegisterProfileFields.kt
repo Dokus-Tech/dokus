@@ -4,7 +4,7 @@ import ai.dokus.app.auth.model.RegisterFormFields
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_first_name_label
 import ai.dokus.app.resources.generated.auth_last_name_label
-import ai.dokus.foundation.design.components.fields.PTextFieldName
+import tech.dokus.foundation.aura.components.fields.PTextFieldName
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

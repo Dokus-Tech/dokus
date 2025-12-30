@@ -7,8 +7,8 @@ import ai.dokus.app.resources.generated.auth_workspace_type_prompt
 import ai.dokus.app.resources.generated.auth_workspace_type_unavailable
 import ai.dokus.app.resources.generated.workspace_type_company
 import ai.dokus.app.resources.generated.workspace_type_freelancer
-import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.domain.enums.TenantType
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement

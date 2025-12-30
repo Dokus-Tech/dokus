@@ -8,8 +8,8 @@ import ai.dokus.app.resources.generated.auth_entity_multiple_subtitle
 import ai.dokus.app.resources.generated.auth_entity_single_confirm
 import ai.dokus.app.resources.generated.auth_entity_single_prompt
 import ai.dokus.app.resources.generated.common_vat_value
-import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.design.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.domain.model.entity.EntityLookup
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable

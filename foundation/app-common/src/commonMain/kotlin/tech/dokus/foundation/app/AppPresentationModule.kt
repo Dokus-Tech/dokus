@@ -1,6 +1,6 @@
 package tech.dokus.foundation.app
 
-import ai.dokus.foundation.design.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import org.koin.core.module.Module
 

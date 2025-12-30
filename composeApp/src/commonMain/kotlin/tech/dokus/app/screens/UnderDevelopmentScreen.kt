@@ -1,5 +1,5 @@
 package tech.dokus.app.screens
-import ai.dokus.foundation.design.constrains.withContentPadding
+import tech.dokus.foundation.aura.constrains.withContentPadding
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing

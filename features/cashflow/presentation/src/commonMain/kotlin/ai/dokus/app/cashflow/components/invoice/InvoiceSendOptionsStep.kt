@@ -27,8 +27,8 @@ import ai.dokus.app.resources.generated.invoice_summary
 import ai.dokus.app.resources.generated.invoice_total
 import ai.dokus.app.resources.generated.peppol_belgian_client_warning
 import ai.dokus.app.resources.generated.peppol_id_missing
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

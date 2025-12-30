@@ -4,9 +4,9 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.contacts_add_first
 import ai.dokus.app.resources.generated.contacts_add_first_hint
 import ai.dokus.app.resources.generated.contacts_empty
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerBox
-import ai.dokus.foundation.design.components.common.ShimmerLine
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerBox
+import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.clickable
