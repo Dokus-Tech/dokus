@@ -9,8 +9,8 @@ import ai.dokus.app.cashflow.viewmodel.CreateInvoiceIntent
 import ai.dokus.app.cashflow.viewmodel.CreateInvoiceState
 import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
-import ai.dokus.app.contacts.components.ContactAutoFillData
-import ai.dokus.app.contacts.components.ContactAutocomplete
+import tech.dokus.contacts.components.ContactAutoFillData
+import tech.dokus.contacts.components.ContactAutocomplete
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_close
 import ai.dokus.app.resources.generated.action_next
