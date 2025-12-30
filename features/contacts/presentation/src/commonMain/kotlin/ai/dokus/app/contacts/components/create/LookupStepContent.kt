@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,6 +31,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -40,17 +45,44 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import tech.dokus.domain.model.entity.EntityLookup
+
+private const val SEARCH_DEBOUNCE_MS = 300L
+private const val MIN_SEARCH_LENGTH = 3
 
 /**
  * Lookup step content - search by company name or VAT number.
+ *
+ * The search query is kept as local UI state to avoid TextField race conditions.
+ * Changes are observed via snapshotFlow and debounced before triggering search.
  */
+@OptIn(FlowPreview::class)
 @Composable
 fun LookupStepContent(
     state: CreateContactState.LookupStep,
     onIntent: (CreateContactIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Keep query as local state to avoid MVI race conditions
+    var query by rememberSaveable { mutableStateOf("") }
+
+    // Observe query changes with debounce and trigger search
+    LaunchedEffect(Unit) {
+        snapshotFlow { query }
+            .distinctUntilChanged()
+            .debounce(SEARCH_DEBOUNCE_MS)
+            .collect { searchQuery ->
+                if (searchQuery.length >= MIN_SEARCH_LENGTH) {
+                    onIntent(CreateContactIntent.Search(searchQuery))
+                } else {
+                    onIntent(CreateContactIntent.ClearSearch)
+                }
+            }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -71,10 +103,10 @@ fun LookupStepContent(
 
         Spacer(modifier = Modifier.height(Constrains.Spacing.large))
 
-        // Search field
+        // Search field - uses local state, NOT MVI state
         PTextFieldStandard(
             fieldName = "Search by company name or VAT number",
-            value = state.query,
+            value = query,
             icon = FeatherIcons.Search,
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -82,19 +114,20 @@ fun LookupStepContent(
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Search
             ),
-            showClearButton = state.query.isNotEmpty(),
-            onClear = { onIntent(CreateContactIntent.QueryChanged("")) },
-            onValueChange = { onIntent(CreateContactIntent.QueryChanged(it)) },
+            showClearButton = query.isNotEmpty(),
+            onClear = { query = "" },
+            onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
 
         // Duplicate VAT warning (hard block)
-        if (state.duplicateVat != null) {
+        val duplicateVat = state.duplicateVat
+        if (duplicateVat != null) {
             DuplicateVatBanner(
-                duplicate = state.duplicateVat,
-                onViewContact = { onIntent(CreateContactIntent.ViewExistingContact(state.duplicateVat.contactId)) },
+                duplicate = duplicateVat,
+                onViewContact = { onIntent(CreateContactIntent.ViewExistingContact(duplicateVat.contactId)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
@@ -108,8 +141,8 @@ fun LookupStepContent(
         ) {
             when (val lookupState = state.lookupState) {
                 is LookupUiState.Idle -> {
-                    // Show hint text
-                    if (state.query.isEmpty() && state.duplicateVat == null) {
+                    // Show hint text when query is empty
+                    if (query.isEmpty() && duplicateVat == null) {
                         LookupHint()
                     }
                 }
@@ -130,14 +163,14 @@ fun LookupStepContent(
                 }
                 is LookupUiState.Empty -> {
                     LookupEmptyState(
-                        query = state.query,
+                        query = query,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
                 is LookupUiState.Error -> {
                     LookupErrorState(
                         message = lookupState.message,
-                        onRetry = { onIntent(CreateContactIntent.QueryChanged(state.query)) },
+                        onRetry = { onIntent(CreateContactIntent.Search(query)) },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
