@@ -2,11 +2,11 @@ package tech.dokus.contacts.components
 
 import tech.dokus.contacts.viewmodel.DuplicateReason
 import tech.dokus.contacts.viewmodel.PotentialDuplicate
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_cancel
-import ai.dokus.app.resources.generated.contacts_continue_anyway
-import ai.dokus.app.resources.generated.contacts_duplicate_warning
-import ai.dokus.app.resources.generated.contacts_merge
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.contacts_continue_anyway
+import tech.dokus.aura.resources.contacts_duplicate_warning
+import tech.dokus.aura.resources.contacts_merge
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

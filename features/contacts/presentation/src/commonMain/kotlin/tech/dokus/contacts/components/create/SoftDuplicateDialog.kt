@@ -2,14 +2,14 @@ package tech.dokus.contacts.components.create
 
 import tech.dokus.contacts.viewmodel.SoftDuplicateReason
 import tech.dokus.contacts.viewmodel.SoftDuplicateUi
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_view
-import ai.dokus.app.resources.generated.contacts_cancel
-import ai.dokus.app.resources.generated.contacts_continue_anyway
-import ai.dokus.app.resources.generated.contacts_duplicate_list_hint
-import ai.dokus.app.resources.generated.contacts_duplicate_match_name
-import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
-import ai.dokus.app.resources.generated.contacts_duplicate_warning
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_view
+import tech.dokus.aura.resources.contacts_cancel
+import tech.dokus.aura.resources.contacts_continue_anyway
+import tech.dokus.aura.resources.contacts_duplicate_list_hint
+import tech.dokus.aura.resources.contacts_duplicate_match_name
+import tech.dokus.aura.resources.contacts_duplicate_match_name_country
+import tech.dokus.aura.resources.contacts_duplicate_warning
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

@@ -1,15 +1,15 @@
 package tech.dokus.foundation.aura.components.chat
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.chat_collapse_citation
-import ai.dokus.app.resources.generated.chat_collapse_sources
-import ai.dokus.app.resources.generated.chat_document_fallback
-import ai.dokus.app.resources.generated.chat_expand_citation
-import ai.dokus.app.resources.generated.chat_expand_sources
-import ai.dokus.app.resources.generated.chat_page_number
-import ai.dokus.app.resources.generated.chat_sources_count
-import ai.dokus.app.resources.generated.chat_view_source_document
-import ai.dokus.app.resources.generated.common_percent_value
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chat_collapse_citation
+import tech.dokus.aura.resources.chat_collapse_sources
+import tech.dokus.aura.resources.chat_document_fallback
+import tech.dokus.aura.resources.chat_expand_citation
+import tech.dokus.aura.resources.chat_expand_sources
+import tech.dokus.aura.resources.chat_page_number
+import tech.dokus.aura.resources.chat_sources_count
+import tech.dokus.aura.resources.chat_view_source_document
+import tech.dokus.aura.resources.common_percent_value
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState

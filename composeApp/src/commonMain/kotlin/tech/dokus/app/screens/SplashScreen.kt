@@ -1,11 +1,11 @@
 package tech.dokus.app.screens
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.app_name
-import ai.dokus.app.resources.generated.bootstrap_state_app_version_check
-import ai.dokus.app.resources.generated.bootstrap_state_authenticating
-import ai.dokus.app.resources.generated.bootstrap_state_checking_account_status
-import ai.dokus.app.resources.generated.bootstrap_state_initializing
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.app_name
+import tech.dokus.aura.resources.bootstrap_state_app_version_check
+import tech.dokus.aura.resources.bootstrap_state_authenticating
+import tech.dokus.aura.resources.bootstrap_state_checking_account_status
+import tech.dokus.aura.resources.bootstrap_state_initializing
 import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
 import tech.dokus.foundation.aura.components.background.SpotlightEffect
 import ai.dokus.foundation.navigation.destinations.AuthDestination

@@ -1,11 +1,11 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.app_slogan
-import ai.dokus.app.resources.generated.brand_motto
-import ai.dokus.app.resources.generated.copyright
-import ai.dokus.app.resources.generated.slogan_line_2
-import ai.dokus.app.resources.generated.slogan_line_3
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.app_slogan
+import tech.dokus.aura.resources.brand_motto
+import tech.dokus.aura.resources.copyright
+import tech.dokus.aura.resources.slogan_line_2
+import tech.dokus.aura.resources.slogan_line_3
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper

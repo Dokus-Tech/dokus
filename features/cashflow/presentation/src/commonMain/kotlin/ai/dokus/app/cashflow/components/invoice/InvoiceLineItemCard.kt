@@ -1,13 +1,13 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.invoice_description
-import ai.dokus.app.resources.generated.invoice_item_number
-import ai.dokus.app.resources.generated.invoice_line_total
-import ai.dokus.app.resources.generated.invoice_price
-import ai.dokus.app.resources.generated.invoice_qty
-import ai.dokus.app.resources.generated.invoice_remove
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_description
+import tech.dokus.aura.resources.invoice_item_number
+import tech.dokus.aura.resources.invoice_line_total
+import tech.dokus.aura.resources.invoice_price
+import tech.dokus.aura.resources.invoice_qty
+import tech.dokus.aura.resources.invoice_remove
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

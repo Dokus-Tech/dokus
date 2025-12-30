@@ -1,13 +1,13 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.cashflow_amount_compact_thousands
-import ai.dokus.app.resources.generated.cashflow_amount_with_currency
-import ai.dokus.app.resources.generated.currency_symbol_eur
-import ai.dokus.app.resources.generated.vat_net_amount
-import ai.dokus.app.resources.generated.vat_predicted_net_amount
-import ai.dokus.app.resources.generated.vat_quarter_sublabel
-import ai.dokus.app.resources.generated.vat_summary_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_amount_compact_thousands
+import tech.dokus.aura.resources.cashflow_amount_with_currency
+import tech.dokus.aura.resources.currency_symbol_eur
+import tech.dokus.aura.resources.vat_net_amount
+import tech.dokus.aura.resources.vat_predicted_net_amount
+import tech.dokus.aura.resources.vat_quarter_sublabel
+import tech.dokus.aura.resources.vat_summary_title
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine

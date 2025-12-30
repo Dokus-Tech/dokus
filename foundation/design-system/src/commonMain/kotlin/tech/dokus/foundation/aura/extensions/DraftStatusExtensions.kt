@@ -1,11 +1,11 @@
 package tech.dokus.foundation.aura.extensions
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.draft_status_confirmed
-import ai.dokus.app.resources.generated.draft_status_needs_input
-import ai.dokus.app.resources.generated.draft_status_needs_review
-import ai.dokus.app.resources.generated.draft_status_ready
-import ai.dokus.app.resources.generated.draft_status_rejected
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.draft_status_confirmed
+import tech.dokus.aura.resources.draft_status_needs_input
+import tech.dokus.aura.resources.draft_status_needs_review
+import tech.dokus.aura.resources.draft_status_ready
+import tech.dokus.aura.resources.draft_status_rejected
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color

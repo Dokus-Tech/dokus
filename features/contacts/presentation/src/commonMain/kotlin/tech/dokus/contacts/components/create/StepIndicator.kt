@@ -1,9 +1,9 @@
 package tech.dokus.contacts.components.create
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_step_confirm
-import ai.dokus.app.resources.generated.contacts_step_details
-import ai.dokus.app.resources.generated.contacts_step_search
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_step_confirm
+import tech.dokus.aura.resources.contacts_step_details
+import tech.dokus.aura.resources.contacts_step_search
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

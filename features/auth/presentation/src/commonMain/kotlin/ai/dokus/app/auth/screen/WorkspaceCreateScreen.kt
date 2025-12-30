@@ -9,11 +9,11 @@ import ai.dokus.app.auth.viewmodel.WorkspaceCreateAction
 import ai.dokus.app.auth.viewmodel.WorkspaceCreateContainer
 import ai.dokus.app.auth.viewmodel.WorkspaceCreateIntent
 import ai.dokus.app.auth.viewmodel.WorkspaceCreateState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_continue
-import ai.dokus.app.resources.generated.auth_step_of
-import ai.dokus.app.resources.generated.state_creating
-import ai.dokus.app.resources.generated.workspace_create_button
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_continue
+import tech.dokus.aura.resources.auth_step_of
+import tech.dokus.aura.resources.state_creating
+import tech.dokus.aura.resources.workspace_create_button
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect

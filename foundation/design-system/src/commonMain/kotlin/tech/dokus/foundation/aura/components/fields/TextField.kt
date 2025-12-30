@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_clear
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_clear
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon

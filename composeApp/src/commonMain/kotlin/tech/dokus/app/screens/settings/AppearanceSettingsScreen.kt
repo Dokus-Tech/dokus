@@ -1,11 +1,11 @@
 package tech.dokus.app.screens.settings
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.appearance_settings_title
-import ai.dokus.app.resources.generated.appearance_theme
-import ai.dokus.app.resources.generated.appearance_theme_dark
-import ai.dokus.app.resources.generated.appearance_theme_light
-import ai.dokus.app.resources.generated.appearance_theme_system
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.appearance_settings_title
+import tech.dokus.aura.resources.appearance_theme
+import tech.dokus.aura.resources.appearance_theme_dark
+import tech.dokus.aura.resources.appearance_theme_light
+import tech.dokus.aura.resources.appearance_theme_system
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.local.LocalThemeManager

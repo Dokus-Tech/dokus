@@ -2,12 +2,12 @@ package tech.dokus.app.screens
 
 import ai.dokus.app.auth.screen.ProfileSettingsScreen
 import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.settings_current_workspace
-import ai.dokus.app.resources.generated.settings_select_hint
-import ai.dokus.app.resources.generated.settings_select_prompt
-import ai.dokus.app.resources.generated.settings_select_workspace
-import ai.dokus.app.resources.generated.settings_unknown_section
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.settings_current_workspace
+import tech.dokus.aura.resources.settings_select_hint
+import tech.dokus.aura.resources.settings_select_prompt
+import tech.dokus.aura.resources.settings_select_workspace
+import tech.dokus.aura.resources.settings_unknown_section
 import tech.dokus.foundation.aura.components.ListSettingsItem
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.localized

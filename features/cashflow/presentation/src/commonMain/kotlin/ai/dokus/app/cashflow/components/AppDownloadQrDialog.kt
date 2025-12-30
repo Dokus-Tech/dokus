@@ -1,11 +1,11 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_close
-import ai.dokus.app.resources.generated.app_download_description
-import ai.dokus.app.resources.generated.app_download_platforms
-import ai.dokus.app.resources.generated.app_download_qr_code
-import ai.dokus.app.resources.generated.app_download_title
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.app_download_description
+import tech.dokus.aura.resources.app_download_platforms
+import tech.dokus.aura.resources.app_download_qr_code
+import tech.dokus.aura.resources.app_download_title
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement

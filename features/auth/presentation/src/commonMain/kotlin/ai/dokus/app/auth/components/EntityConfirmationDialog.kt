@@ -1,13 +1,13 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.app.auth.model.EntityConfirmationState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_entity_manual_entry
-import ai.dokus.app.resources.generated.auth_entity_multiple_title
-import ai.dokus.app.resources.generated.auth_entity_multiple_subtitle
-import ai.dokus.app.resources.generated.auth_entity_single_confirm
-import ai.dokus.app.resources.generated.auth_entity_single_prompt
-import ai.dokus.app.resources.generated.common_vat_value
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_entity_manual_entry
+import tech.dokus.aura.resources.auth_entity_multiple_title
+import tech.dokus.aura.resources.auth_entity_multiple_subtitle
+import tech.dokus.aura.resources.auth_entity_single_confirm
+import tech.dokus.aura.resources.auth_entity_single_prompt
+import tech.dokus.aura.resources.common_vat_value
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.domain.model.entity.EntityLookup

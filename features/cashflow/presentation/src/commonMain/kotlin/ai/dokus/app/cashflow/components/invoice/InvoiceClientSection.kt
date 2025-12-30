@@ -1,11 +1,11 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.invoice_bill_to
-import ai.dokus.app.resources.generated.invoice_click_to_change
-import ai.dokus.app.resources.generated.invoice_click_to_select_client
-import ai.dokus.app.resources.generated.peppol_belgian_client_warning_short
-import ai.dokus.app.resources.generated.peppol_id_missing
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_bill_to
+import tech.dokus.aura.resources.invoice_click_to_change
+import tech.dokus.aura.resources.invoice_click_to_select_client
+import tech.dokus.aura.resources.peppol_belgian_client_warning_short
+import tech.dokus.aura.resources.peppol_id_missing
 import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

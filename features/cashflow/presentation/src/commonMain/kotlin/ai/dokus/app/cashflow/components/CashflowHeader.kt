@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_search
-import ai.dokus.app.resources.generated.cashflow_create_invoice
-import ai.dokus.app.resources.generated.cashflow_search_placeholder
-import ai.dokus.app.resources.generated.cashflow_upload_document
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_search
+import tech.dokus.aura.resources.cashflow_create_invoice
+import tech.dokus.aura.resources.cashflow_search_placeholder
+import tech.dokus.aura.resources.cashflow_upload_document
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIconPosition

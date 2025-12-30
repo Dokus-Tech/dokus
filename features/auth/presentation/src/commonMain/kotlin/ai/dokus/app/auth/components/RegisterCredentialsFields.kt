@@ -1,9 +1,9 @@
 package ai.dokus.app.auth.components
 
 import ai.dokus.app.auth.model.RegisterFormFields
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_email_label
-import ai.dokus.app.resources.generated.auth_password_label
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_email_label
+import tech.dokus.aura.resources.auth_password_label
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword

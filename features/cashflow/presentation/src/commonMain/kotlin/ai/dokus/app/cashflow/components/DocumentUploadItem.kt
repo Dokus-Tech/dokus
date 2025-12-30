@@ -20,11 +20,11 @@ import ai.dokus.app.cashflow.model.DocumentUploadDisplayState
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.state.DocumentUploadItemState
 import ai.dokus.app.cashflow.state.rememberDocumentUploadItemState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.common_file_size_bytes
-import ai.dokus.app.resources.generated.common_file_size_kb
-import ai.dokus.app.resources.generated.common_file_size_mb
-import ai.dokus.app.resources.generated.upload_status_waiting
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_file_size_bytes
+import tech.dokus.aura.resources.common_file_size_kb
+import tech.dokus.aura.resources.common_file_size_mb
+import tech.dokus.aura.resources.upload_status_waiting
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedContent

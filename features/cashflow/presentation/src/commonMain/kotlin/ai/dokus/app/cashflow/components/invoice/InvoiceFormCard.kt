@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.invoice_details_title
-import ai.dokus.app.resources.generated.invoice_notes_optional
-import ai.dokus.app.resources.generated.invoice_save_as_draft
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_details_title
+import tech.dokus.aura.resources.invoice_notes_optional
+import tech.dokus.aura.resources.invoice_save_as_draft
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.PButton

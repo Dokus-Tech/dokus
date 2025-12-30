@@ -1,9 +1,9 @@
 package ai.dokus.app.auth.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_protocol_http
-import ai.dokus.app.resources.generated.auth_protocol_https
-import ai.dokus.app.resources.generated.auth_protocol_selector
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_protocol_http
+import tech.dokus.aura.resources.auth_protocol_https
+import tech.dokus.aura.resources.auth_protocol_selector
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row

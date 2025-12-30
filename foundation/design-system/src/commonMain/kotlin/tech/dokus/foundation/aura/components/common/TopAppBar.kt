@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.components.common
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.back
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.back
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons

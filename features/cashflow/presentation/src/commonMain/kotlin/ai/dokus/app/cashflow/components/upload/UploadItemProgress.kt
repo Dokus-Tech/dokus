@@ -1,7 +1,7 @@
 package ai.dokus.app.cashflow.components.upload
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.common_percent_value
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_percent_value
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement

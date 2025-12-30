@@ -2,12 +2,12 @@ package tech.dokus.contacts.components
 
 import tech.dokus.contacts.viewmodel.ContactFormData
 import tech.dokus.contacts.viewmodel.PotentialDuplicate
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_close
-import ai.dokus.app.resources.generated.contacts_create_contact
-import ai.dokus.app.resources.generated.contacts_edit_contact
-import ai.dokus.app.resources.generated.contacts_required_fields_hint
-import ai.dokus.app.resources.generated.contacts_update_mobile_hint
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.contacts_create_contact
+import tech.dokus.aura.resources.contacts_edit_contact
+import tech.dokus.aura.resources.contacts_required_fields_hint
+import tech.dokus.aura.resources.contacts_update_mobile_hint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

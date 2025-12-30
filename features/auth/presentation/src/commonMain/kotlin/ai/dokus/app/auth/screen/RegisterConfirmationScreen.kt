@@ -1,9 +1,9 @@
 package ai.dokus.app.auth.screen
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_continue
-import ai.dokus.app.resources.generated.auth_register_success_title
-import ai.dokus.app.resources.generated.registration_success_message
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_continue
+import tech.dokus.aura.resources.auth_register_success_title
+import tech.dokus.aura.resources.registration_success_message
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.components.text.CopyRightText

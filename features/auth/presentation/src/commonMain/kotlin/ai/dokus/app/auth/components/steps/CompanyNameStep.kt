@@ -1,11 +1,11 @@
 package ai.dokus.app.auth.components.steps
 
 import ai.dokus.app.auth.model.LookupState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_company_name_label
-import ai.dokus.app.resources.generated.auth_company_name_prompt
-import ai.dokus.app.resources.generated.auth_company_name_searching
-import ai.dokus.app.resources.generated.auth_company_name_subtitle
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_company_name_label
+import tech.dokus.aura.resources.auth_company_name_prompt
+import tech.dokus.aura.resources.auth_company_name_searching
+import tech.dokus.aura.resources.auth_company_name_subtitle
 import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.extensions.localized

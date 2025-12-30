@@ -1,9 +1,9 @@
 package ai.dokus.app.cashflow.components
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.upload_drag_hint
-import ai.dokus.app.resources.generated.upload_drop_files
-import ai.dokus.app.resources.generated.upload_select_or_drag
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.upload_drag_hint
+import tech.dokus.aura.resources.upload_drop_files
+import tech.dokus.aura.resources.upload_select_or_drag
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

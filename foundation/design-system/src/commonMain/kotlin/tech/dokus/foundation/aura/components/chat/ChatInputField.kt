@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.components.chat
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.chat_send_message
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chat_send_message
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

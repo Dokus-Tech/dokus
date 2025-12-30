@@ -1,12 +1,12 @@
 package ai.dokus.app.auth.components.steps
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.auth_workspace_type_company_description
-import ai.dokus.app.resources.generated.auth_workspace_type_freelancer_description
-import ai.dokus.app.resources.generated.auth_workspace_type_prompt
-import ai.dokus.app.resources.generated.auth_workspace_type_unavailable
-import ai.dokus.app.resources.generated.workspace_type_company
-import ai.dokus.app.resources.generated.workspace_type_freelancer
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_workspace_type_company_description
+import tech.dokus.aura.resources.auth_workspace_type_freelancer_description
+import tech.dokus.aura.resources.auth_workspace_type_prompt
+import tech.dokus.aura.resources.auth_workspace_type_unavailable
+import tech.dokus.aura.resources.workspace_type_company
+import tech.dokus.aura.resources.workspace_type_freelancer
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.domain.enums.TenantType

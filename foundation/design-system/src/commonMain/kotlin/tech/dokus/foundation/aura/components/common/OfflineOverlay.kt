@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.components.common
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.state_offline
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.state_offline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding

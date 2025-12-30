@@ -10,10 +10,10 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_duplicate_match_email
-import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
-import ai.dokus.app.resources.generated.contacts_duplicate_match_vat
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_duplicate_match_email
+import tech.dokus.aura.resources.contacts_duplicate_match_name_country
+import tech.dokus.aura.resources.contacts_duplicate_match_vat
 import org.jetbrains.compose.resources.StringResource
 
 /**

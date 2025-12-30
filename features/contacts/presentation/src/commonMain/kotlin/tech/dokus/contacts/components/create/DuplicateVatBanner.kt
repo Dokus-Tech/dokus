@@ -1,9 +1,9 @@
 package tech.dokus.contacts.components.create
 
 import tech.dokus.contacts.viewmodel.DuplicateVatUi
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.action_view
-import ai.dokus.app.resources.generated.contacts_duplicate_exists
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_view
+import tech.dokus.aura.resources.contacts_duplicate_exists
 import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column

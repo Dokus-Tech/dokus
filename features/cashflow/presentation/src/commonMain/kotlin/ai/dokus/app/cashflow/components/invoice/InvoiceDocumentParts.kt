@@ -1,10 +1,10 @@
 package ai.dokus.app.cashflow.components.invoice
 
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.invoice_subtotal
-import ai.dokus.app.resources.generated.invoice_title
-import ai.dokus.app.resources.generated.invoice_total
-import ai.dokus.app.resources.generated.invoice_vat
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.invoice_subtotal
+import tech.dokus.aura.resources.invoice_title
+import tech.dokus.aura.resources.invoice_total
+import tech.dokus.aura.resources.invoice_vat
 import tech.dokus.foundation.aura.components.PDashedDivider
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.tooling.PreviewParameters
