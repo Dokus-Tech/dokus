@@ -249,12 +249,8 @@ internal class CreateContactContainer(
 
     private suspend fun CreateContactCtx.handleConfirmAndCreate() {
         withState<CreateContactState.ConfirmStep, _> {
-            // Validate billing email
-            if (billingEmail.isBlank()) {
-                updateState { copy(emailError = "Billing email is required") }
-                return@withState
-            }
-            if (!billingEmail.contains("@")) {
+            // Validate email format only if provided
+            if (billingEmail.isNotBlank() && !billingEmail.contains("@")) {
                 updateState { copy(emailError = "Invalid email format") }
                 return@withState
             }
