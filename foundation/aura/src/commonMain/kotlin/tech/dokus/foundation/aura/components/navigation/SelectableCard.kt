@@ -32,10 +32,10 @@ fun SelectableCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.small,
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
             } else {
                 Color.Transparent
             }
@@ -67,11 +67,7 @@ fun SelectableCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -86,14 +82,18 @@ fun SelectableOutlineCard(
 ) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.small,
+        shape = MaterialTheme.shapes.medium,
         border = BorderStroke(
             Constrains.Stroke.thin,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            if (isSelected) {
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.65f)
+            } else {
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.45f)
+            }
         ),
         colors = CardDefaults.outlinedCardColors(
             containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
             } else {
                 Color.Transparent
             }
