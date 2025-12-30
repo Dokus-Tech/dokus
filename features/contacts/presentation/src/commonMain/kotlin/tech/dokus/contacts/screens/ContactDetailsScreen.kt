@@ -31,9 +31,9 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.OfflineOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.extensions.localized
-import ai.dokus.foundation.navigation.destinations.ContactsDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.navigateTo
+import tech.dokus.navigation.destinations.ContactsDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints

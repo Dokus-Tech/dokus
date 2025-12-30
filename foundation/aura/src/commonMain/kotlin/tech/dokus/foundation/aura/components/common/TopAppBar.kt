@@ -2,7 +2,7 @@ package tech.dokus.foundation.aura.components.common
 
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.back
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack

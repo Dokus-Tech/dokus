@@ -1,7 +1,7 @@
 package tech.dokus.contacts.navigation
 
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.ContactsDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.ContactsDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute

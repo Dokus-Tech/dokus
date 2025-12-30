@@ -1,4 +1,4 @@
-package ai.dokus.foundation.navigation.destinations
+package tech.dokus.navigation.destinations
 
 import kotlinx.serialization.Serializable
 

@@ -8,10 +8,10 @@ import tech.dokus.aura.resources.bootstrap_state_checking_account_status
 import tech.dokus.aura.resources.bootstrap_state_initializing
 import tech.dokus.foundation.aura.components.background.EnhancedFloatingBubbles
 import tech.dokus.foundation.aura.components.background.SpotlightEffect
-import ai.dokus.foundation.navigation.destinations.AuthDestination
-import ai.dokus.foundation.navigation.destinations.CoreDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.replace
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.replace
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat

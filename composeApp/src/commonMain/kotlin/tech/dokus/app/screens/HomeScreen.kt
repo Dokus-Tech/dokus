@@ -7,10 +7,10 @@ import tech.dokus.foundation.aura.components.text.AppNameText
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.foundation.aura.model.HomeItem
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.animation.TransitionsProvider
-import ai.dokus.foundation.navigation.navigateTo
-import ai.dokus.foundation.navigation.rememberSelectedDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.animation.TransitionsProvider
+import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.rememberSelectedDestination
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

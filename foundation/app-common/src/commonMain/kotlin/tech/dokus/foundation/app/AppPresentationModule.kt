@@ -1,7 +1,7 @@
 package tech.dokus.foundation.app
 
 import tech.dokus.foundation.aura.model.HomeItem
-import ai.dokus.foundation.navigation.NavigationProvider
+import tech.dokus.navigation.NavigationProvider
 import org.koin.core.module.Module
 
 interface AppPresentationModule {

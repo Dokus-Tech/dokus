@@ -23,9 +23,9 @@ import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
-import ai.dokus.foundation.navigation.destinations.CashFlowDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.navigateTo
+import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme

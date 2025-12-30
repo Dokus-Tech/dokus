@@ -4,7 +4,7 @@ import ai.dokus.app.auth.viewmodel.ForgotPasswordAction
 import ai.dokus.app.auth.viewmodel.ForgotPasswordContainer
 import ai.dokus.app.auth.viewmodel.ForgotPasswordIntent
 import ai.dokus.app.auth.viewmodel.ForgotPasswordState
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box

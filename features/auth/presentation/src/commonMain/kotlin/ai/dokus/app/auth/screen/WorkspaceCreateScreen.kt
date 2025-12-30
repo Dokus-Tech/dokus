@@ -22,9 +22,9 @@ import tech.dokus.foundation.aura.components.text.CopyRightText
 import tech.dokus.foundation.aura.constrains.limitWidth
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.constrains.withVerticalPadding
-import ai.dokus.foundation.navigation.destinations.CoreDestination
-import ai.dokus.foundation.navigation.local.LocalNavController
-import ai.dokus.foundation.navigation.replace
+import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.replace
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

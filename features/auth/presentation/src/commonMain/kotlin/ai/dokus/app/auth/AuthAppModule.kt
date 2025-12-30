@@ -15,8 +15,8 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_group_account
 import tech.dokus.aura.resources.settings_profile
 import tech.dokus.foundation.aura.model.HomeItem
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.AuthDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.AuthDestination
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import org.koin.core.component.KoinComponent

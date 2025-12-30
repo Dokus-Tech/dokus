@@ -1,4 +1,4 @@
-package ai.dokus.foundation.navigation
+package tech.dokus.navigation
 
 import androidx.navigation.NavGraphBuilder
 

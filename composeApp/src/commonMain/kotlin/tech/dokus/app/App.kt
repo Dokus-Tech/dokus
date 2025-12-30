@@ -9,7 +9,7 @@ import tech.dokus.foundation.aura.local.ScreenSizeProvided
 import tech.dokus.foundation.aura.local.ThemeManagerProvided
 import tech.dokus.foundation.aura.style.ThemeManager
 import tech.dokus.foundation.aura.style.Themed
-import ai.dokus.foundation.navigation.local.NavControllerProvided
+import tech.dokus.navigation.local.NavControllerProvided
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController

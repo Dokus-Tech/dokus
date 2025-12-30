@@ -95,7 +95,7 @@ import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn

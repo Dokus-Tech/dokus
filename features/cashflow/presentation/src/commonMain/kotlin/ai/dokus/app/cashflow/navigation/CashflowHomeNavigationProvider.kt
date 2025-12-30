@@ -2,8 +2,8 @@ package ai.dokus.app.cashflow.navigation
 
 import ai.dokus.app.cashflow.presentation.chat.ChatScreen
 import ai.dokus.app.cashflow.screens.CashflowScreen
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.HomeDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.HomeDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 

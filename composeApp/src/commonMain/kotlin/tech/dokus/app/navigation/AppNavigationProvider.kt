@@ -7,10 +7,10 @@ import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.settings.AppearanceSettingsScreen
 import tech.dokus.app.screens.settings.TeamSettingsScreen
 import tech.dokus.app.screens.settings.WorkspaceSettingsScreen
-import ai.dokus.foundation.navigation.NavigationProvider
-import ai.dokus.foundation.navigation.destinations.AppDestination
-import ai.dokus.foundation.navigation.destinations.CoreDestination
-import ai.dokus.foundation.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.NavigationProvider
+import tech.dokus.navigation.destinations.AppDestination
+import tech.dokus.navigation.destinations.CoreDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 

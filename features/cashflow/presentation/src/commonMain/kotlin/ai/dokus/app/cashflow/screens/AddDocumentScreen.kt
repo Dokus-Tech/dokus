@@ -24,7 +24,7 @@ import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.padding
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.domain.model.DocumentDto
-import ai.dokus.foundation.navigation.local.LocalNavController
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

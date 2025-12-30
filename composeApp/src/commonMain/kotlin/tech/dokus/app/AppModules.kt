@@ -4,7 +4,7 @@ import ai.dokus.app.auth.AuthAppModule
 import ai.dokus.app.cashflow.CashflowAppModule
 import tech.dokus.contacts.ContactsAppModule
 import tech.dokus.foundation.aura.model.HomeItem
-import ai.dokus.foundation.navigation.NavigationProvider
+import tech.dokus.navigation.NavigationProvider
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module
 import tech.dokus.app.module.AppMainModule

@@ -1,6 +1,6 @@
-package ai.dokus.foundation.navigation
+package tech.dokus.navigation
 
-import ai.dokus.foundation.navigation.destinations.NavigationDestination
+import tech.dokus.navigation.destinations.NavigationDestination
 import androidx.annotation.MainThread
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
