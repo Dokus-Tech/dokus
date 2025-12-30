@@ -181,6 +181,15 @@
     <string name="cashflow_document_review_title">Revisión de documento</string>
     <string name="cashflow_chat_with_document">Chatear con el documento</string>
     <string name="cashflow_confidence_badge">%1$d%% de confianza</string>
+    <string name="cashflow_counterparty_details_title">Counterparty &amp; Details</string>
+    <string name="cashflow_counterparty_ai_extracted">Counterparty (AI extracted)</string>
+    <string name="cashflow_action_link_contact">Link existing contact</string>
+    <string name="cashflow_action_save_new_contact">Save as new contact</string>
+    <string name="cashflow_action_ignore_for_now">Ignore for now</string>
+    <string name="cashflow_confidence_label">Confidence</string>
+    <string name="cashflow_confidence_high">High</string>
+    <string name="cashflow_confidence_medium">Medium</string>
+    <string name="cashflow_confidence_low">Low</string>
     <string name="cashflow_loading_document">Cargando documento...</string>
     <string name="cashflow_unknown_document_type">Tipo de documento desconocido</string>
     <string name="cashflow_client_information">Información del cliente</string>

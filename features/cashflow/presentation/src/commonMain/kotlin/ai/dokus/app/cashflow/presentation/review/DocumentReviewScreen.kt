@@ -11,9 +11,20 @@ import tech.dokus.aura.resources.action_select
 import tech.dokus.aura.resources.action_select_date
 import tech.dokus.aura.resources.cashflow_bill_details_section
 import tech.dokus.aura.resources.cashflow_chat_with_document
+import tech.dokus.aura.resources.cashflow_bound_to
 import tech.dokus.aura.resources.cashflow_client_information
 import tech.dokus.aura.resources.cashflow_client_name
+import tech.dokus.aura.resources.cashflow_action_ignore_for_now
+import tech.dokus.aura.resources.cashflow_action_link_contact
+import tech.dokus.aura.resources.cashflow_action_save_new_contact
+import tech.dokus.aura.resources.cashflow_confidence_high
+import tech.dokus.aura.resources.cashflow_confidence_label
+import tech.dokus.aura.resources.cashflow_confidence_low
+import tech.dokus.aura.resources.cashflow_confidence_medium
 import tech.dokus.aura.resources.cashflow_confidence_badge
+import tech.dokus.aura.resources.cashflow_contact_label
+import tech.dokus.aura.resources.cashflow_counterparty_ai_extracted
+import tech.dokus.aura.resources.cashflow_counterparty_details_title
 import tech.dokus.aura.resources.cashflow_deductible_percentage
 import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.aura.resources.cashflow_document_review_title
@@ -65,6 +76,7 @@ import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_details
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
+import tech.dokus.aura.resources.invoice_status_draft
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
 import tech.dokus.aura.resources.invoice_vat_rate
@@ -84,6 +96,7 @@ import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.StatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
@@ -114,6 +127,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -138,6 +152,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -149,6 +164,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -248,8 +265,11 @@ internal fun DocumentReviewScreen(
         topBar = {
             ReviewTopBar(
                 state = state,
+                isLargeScreen = isLargeScreen,
                 onBackClick = { navController.popBackStack() },
-                onChatClick = { container.store.intent(DocumentReviewIntent.OpenChat) }
+                onChatClick = { container.store.intent(DocumentReviewIntent.OpenChat) },
+                onConfirmClick = { container.store.intent(DocumentReviewIntent.Confirm) },
+                onRejectClick = { container.store.intent(DocumentReviewIntent.Reject) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -296,8 +316,11 @@ internal fun DocumentReviewScreen(
 @Composable
 private fun ReviewTopBar(
     state: DocumentReviewState,
+    isLargeScreen: Boolean,
     onBackClick: () -> Unit,
     onChatClick: () -> Unit,
+    onConfirmClick: () -> Unit,
+    onRejectClick: () -> Unit,
 ) {
     val content = state as? DocumentReviewState.Content
 
@@ -332,6 +355,27 @@ private fun ReviewTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
+                if (content != null && isLargeScreen && !content.isDocumentConfirmed) {
+                    val isBusy = content.isConfirming || content.isSaving || content.isBindingContact
+                    Row(horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)) {
+                        POutlinedButton(
+                            text = stringResource(Res.string.action_reject),
+                            enabled = !isBusy,
+                            onClick = onRejectClick,
+                        )
+                        PPrimaryButton(
+                            text = if (content.isConfirming) {
+                                stringResource(Res.string.state_confirming)
+                            } else {
+                                stringResource(Res.string.action_confirm)
+                            },
+                            enabled = content.canConfirm,
+                            isLoading = content.isConfirming || content.isBindingContact,
+                            onClick = onConfirmClick,
+                        )
+                    }
+                }
+
                 // Chat button - only visible when document is confirmed
                 if (content != null && content.isDocumentConfirmed) {
                     IconButton(onClick = onChatClick) {
@@ -455,8 +499,8 @@ private fun DesktopReviewContent(
                 .fillMaxHeight()
         )
 
-        // Right side: Editable form
-        EditableFormPane(
+        // Right side: Counterparty & details panel
+        ReviewDetailsPane(
             state = state,
             onIntent = onIntent,
             modifier = Modifier
@@ -464,6 +508,14 @@ private fun DesktopReviewContent(
                 .fillMaxHeight()
         )
     }
+
+    // Contact Create Sheet
+    ContactCreateSheet(
+        isVisible = state.showCreateContactSheet,
+        onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
+        preFillData = state.createContactPreFill,
+        onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
+    )
 }
 
 @Composable
@@ -482,6 +534,68 @@ private fun DocumentPreviewPane(
             onLoadMore = onLoadMore,
             modifier = Modifier.fillMaxSize()
         )
+    }
+}
+
+@Composable
+private fun ReviewDetailsPane(
+    state: DocumentReviewState.Content,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(Res.string.cashflow_counterparty_details_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = Constrains.Spacing.small),
+        )
+
+        val scrollState = rememberScrollState()
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(bottom = Constrains.Spacing.large),
+                verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium),
+            ) {
+                CounterpartyCard(
+                    state = state,
+                    onIntent = onIntent,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                InvoiceDetailsCard(
+                    state = state,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                AmountsCard(
+                    state = state,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            if (scrollState.canScrollForward) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.background,
+                                ),
+                            )
+                        )
+                )
+            }
+        }
     }
 }
 
@@ -647,82 +761,21 @@ private fun MobileReviewContent(
                 )
             }
 
-            // Contact Selection Section (Invoice/Bill only)
-            if (state.isContactRequired) {
-                ContactSelectionSection(
-                    documentType = state.editableData.documentType,
-                    selectionState = state.contactSelectionState,
-                    selectedContactSnapshot = state.selectedContactSnapshot,
-                    isBindingContact = state.isBindingContact,
-                    isReadOnly = state.isDocumentConfirmed,
-                    validationError = state.contactValidationError,
-                    onAcceptSuggestion = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
-                    onChooseDifferent = { onIntent(DocumentReviewIntent.OpenContactPicker) },
-                    onSelectContact = { onIntent(DocumentReviewIntent.OpenContactPicker) },
-                    onClearContact = { onIntent(DocumentReviewIntent.ClearSelectedContact) },
-                    onCreateNewContact = { onIntent(DocumentReviewIntent.OpenCreateContactSheet) },
-                )
-            }
-
-            // Form section
-            DokusCardSurface(
+            CounterpartyCard(
+                state = state,
+                onIntent = onIntent,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(Constrains.Spacing.medium),
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.invoice_details),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
+            )
 
-                    when (state.editableData.documentType) {
-                        DocumentType.Invoice -> InvoiceForm(
-                            fields = state.editableData.invoice ?: EditableInvoiceFields(),
-                            onFieldUpdate = { field, value ->
-                                onIntent(DocumentReviewIntent.UpdateInvoiceField(field, value))
-                            },
-                            onFieldFocus = { fieldPath ->
-                                onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                            },
-                            contactSuggestions = state.contactSuggestions,
-                            onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) },
-                            isReadOnly = state.isDocumentConfirmed,
-                        )
-                        DocumentType.Bill -> BillForm(
-                            fields = state.editableData.bill ?: EditableBillFields(),
-                            onFieldUpdate = { field, value ->
-                                onIntent(DocumentReviewIntent.UpdateBillField(field, value))
-                            },
-                            onFieldFocus = { fieldPath ->
-                                onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                            },
-                            contactSuggestions = state.contactSuggestions,
-                            onContactSelect = { onIntent(DocumentReviewIntent.SelectContact(it)) },
-                            isReadOnly = state.isDocumentConfirmed,
-                        )
-                        DocumentType.Expense -> ExpenseForm(
-                            fields = state.editableData.expense ?: EditableExpenseFields(),
-                            onFieldUpdate = { field, value ->
-                                onIntent(DocumentReviewIntent.UpdateExpenseField(field, value))
-                            },
-                            onFieldFocus = { fieldPath ->
-                                onIntent(DocumentReviewIntent.SelectFieldForProvenance(fieldPath))
-                            },
-                            isReadOnly = state.isDocumentConfirmed,
-                        )
-                        else -> {
-                            Text(
-                                text = stringResource(Res.string.cashflow_unknown_document_type),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-            }
+            InvoiceDetailsCard(
+                state = state,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            AmountsCard(
+                state = state,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
 
         // Footer with action buttons
@@ -757,6 +810,388 @@ private fun MobileReviewContent(
         onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
     )
 }
+
+// ============================================================================
+// REVIEW DETAILS CARDS
+// ============================================================================
+
+private data class CounterpartyInfo(
+    val name: String?,
+    val vatNumber: String?,
+    val address: String?,
+)
+
+@Composable
+private fun CounterpartyCard(
+    state: DocumentReviewState.Content,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val counterparty = remember(state.editableData) { counterpartyInfo(state) }
+    val hasDraft = listOf(counterparty.name, counterparty.vatNumber, counterparty.address)
+        .any { !it.isNullOrBlank() }
+    val actionsEnabled = !state.isBindingContact && !state.isDocumentConfirmed
+
+    val nameLabel = when (state.editableData.documentType) {
+        DocumentType.Invoice -> stringResource(Res.string.cashflow_client_name)
+        DocumentType.Bill -> stringResource(Res.string.cashflow_supplier_name)
+        DocumentType.Expense -> stringResource(Res.string.cashflow_merchant)
+        else -> stringResource(Res.string.cashflow_contact_label)
+    }
+
+    val confidence = (state.originalData?.overallConfidence
+        ?: state.document.latestIngestion?.confidence)
+        ?.takeIf { it > 0.0 }
+    val confidenceLabelRes = confidence?.let {
+        when {
+            it >= 0.8 -> Res.string.cashflow_confidence_high
+            it >= 0.5 -> Res.string.cashflow_confidence_medium
+            else -> Res.string.cashflow_confidence_low
+        }
+    }
+    val confidenceColor = when {
+        confidence == null -> MaterialTheme.colorScheme.onSurfaceVariant
+        confidence >= 0.8 -> MaterialTheme.colorScheme.tertiary
+        confidence >= 0.5 -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.error
+    }
+
+    DokusCardSurface(
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier.padding(Constrains.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.cashflow_counterparty_ai_extracted),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (hasDraft) {
+                    StatusBadge(
+                        text = stringResource(Res.string.invoice_status_draft),
+                        backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                        textColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+            }
+
+            DetailRow(label = nameLabel, value = counterparty.name)
+
+            counterparty.vatNumber?.let { vat ->
+                DetailRow(
+                    label = stringResource(Res.string.contacts_vat_number),
+                    value = vat,
+                )
+            }
+
+            counterparty.address?.let { address ->
+                DetailBlock(
+                    label = stringResource(Res.string.contacts_address),
+                    value = address,
+                )
+            }
+
+            state.selectedContactSnapshot?.let { snapshot ->
+                Text(
+                    text = stringResource(Res.string.cashflow_bound_to, snapshot.name),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            if (confidenceLabelRes != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.cashflow_confidence_label),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    StatusBadge(
+                        text = stringResource(confidenceLabelRes),
+                        backgroundColor = confidenceColor.copy(alpha = 0.15f),
+                        textColor = confidenceColor,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+            ) {
+                POutlinedButton(
+                    text = stringResource(Res.string.cashflow_action_link_contact),
+                    modifier = Modifier.weight(1f),
+                    enabled = actionsEnabled,
+                    onClick = { onIntent(DocumentReviewIntent.OpenContactPicker) },
+                )
+                PPrimaryButton(
+                    text = stringResource(Res.string.cashflow_action_save_new_contact),
+                    modifier = Modifier.weight(1f),
+                    enabled = actionsEnabled,
+                    onClick = { onIntent(DocumentReviewIntent.OpenCreateContactSheet) },
+                )
+            }
+
+            TextButton(
+                onClick = {
+                    if (state.selectedContactId != null) {
+                        onIntent(DocumentReviewIntent.ClearSelectedContact)
+                    }
+                },
+                enabled = actionsEnabled,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            ) {
+                Text(stringResource(Res.string.cashflow_action_ignore_for_now))
+            }
+        }
+    }
+}
+
+@Composable
+private fun InvoiceDetailsCard(
+    state: DocumentReviewState.Content,
+    modifier: Modifier = Modifier,
+) {
+    val titleRes = when (state.editableData.documentType) {
+        DocumentType.Invoice -> Res.string.cashflow_invoice_details_section
+        DocumentType.Bill -> Res.string.cashflow_bill_details_section
+        DocumentType.Expense -> Res.string.cashflow_expense_details_section
+        else -> Res.string.cashflow_invoice_details_section
+    }
+
+    DokusCardSurface(modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(Constrains.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        ) {
+            Text(
+                text = stringResource(titleRes),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            when (state.editableData.documentType) {
+                DocumentType.Invoice -> {
+                    val fields = state.editableData.invoice ?: EditableInvoiceFields()
+                    DetailRow(
+                        label = stringResource(Res.string.cashflow_invoice_number),
+                        value = fields.invoiceNumber,
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_issue_date),
+                        value = formatDate(fields.issueDate),
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_due_date),
+                        value = formatDate(fields.dueDate),
+                    )
+                }
+                DocumentType.Bill -> {
+                    val fields = state.editableData.bill ?: EditableBillFields()
+                    DetailRow(
+                        label = stringResource(Res.string.cashflow_invoice_number),
+                        value = fields.invoiceNumber,
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_issue_date),
+                        value = formatDate(fields.issueDate),
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_due_date),
+                        value = formatDate(fields.dueDate),
+                    )
+                }
+                DocumentType.Expense -> {
+                    val fields = state.editableData.expense ?: EditableExpenseFields()
+                    DetailRow(
+                        label = stringResource(Res.string.cashflow_receipt_number),
+                        value = fields.receiptNumber,
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.common_date),
+                        value = formatDate(fields.date),
+                    )
+                }
+                else -> {
+                    Text(
+                        text = stringResource(Res.string.cashflow_unknown_document_type),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AmountsCard(
+    state: DocumentReviewState.Content,
+    modifier: Modifier = Modifier,
+) {
+    DokusCardSurface(modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(Constrains.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
+        ) {
+            Text(
+                text = stringResource(Res.string.cashflow_section_amounts),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            when (state.editableData.documentType) {
+                DocumentType.Invoice -> {
+                    val fields = state.editableData.invoice ?: EditableInvoiceFields()
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_subtotal),
+                        value = fields.subtotalAmount,
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.cashflow_vat_amount),
+                        value = fields.vatAmount,
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_total_amount),
+                        value = fields.totalAmount,
+                    )
+                }
+                DocumentType.Bill -> {
+                    val fields = state.editableData.bill ?: EditableBillFields()
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_total_amount),
+                        value = fields.amount,
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.cashflow_vat_amount),
+                        value = fields.vatAmount,
+                    )
+                }
+                DocumentType.Expense -> {
+                    val fields = state.editableData.expense ?: EditableExpenseFields()
+                    DetailRow(
+                        label = stringResource(Res.string.invoice_total_amount),
+                        value = fields.amount,
+                    )
+                    DetailRow(
+                        label = stringResource(Res.string.cashflow_vat_amount),
+                        value = fields.vatAmount,
+                    )
+                }
+                else -> {
+                    Text(
+                        text = stringResource(Res.string.cashflow_unknown_document_type),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    label: String,
+    value: String?,
+    modifier: Modifier = Modifier,
+) {
+    val trimmedValue = value?.trim()
+    val isUnknown = trimmedValue.isNullOrBlank()
+    val displayValue = if (isUnknown) {
+        stringResource(Res.string.common_unknown)
+    } else {
+        trimmedValue.orEmpty()
+    }
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = displayValue,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = if (isUnknown) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun DetailBlock(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+private fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyInfo {
+    fun clean(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
+
+    return when (state.editableData.documentType) {
+        DocumentType.Invoice -> CounterpartyInfo(
+            name = clean(state.editableData.invoice?.clientName),
+            vatNumber = clean(state.editableData.invoice?.clientVatNumber),
+            address = clean(state.editableData.invoice?.clientAddress),
+        )
+        DocumentType.Bill -> CounterpartyInfo(
+            name = clean(state.editableData.bill?.supplierName),
+            vatNumber = clean(state.editableData.bill?.supplierVatNumber),
+            address = clean(state.editableData.bill?.supplierAddress),
+        )
+        DocumentType.Expense -> CounterpartyInfo(
+            name = clean(state.editableData.expense?.merchant),
+            vatNumber = clean(state.editableData.expense?.merchantVatNumber),
+            address = clean(state.editableData.expense?.merchantAddress),
+        )
+        else -> CounterpartyInfo(
+            name = null,
+            vatNumber = null,
+            address = null,
+        )
+    }
+}
+
+private fun formatDate(value: LocalDate?): String? = value?.toString()
 
 @Composable
 private fun CollapsibleSection(
