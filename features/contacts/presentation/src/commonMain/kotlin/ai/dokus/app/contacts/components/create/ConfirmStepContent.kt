@@ -87,7 +87,7 @@ fun ConfirmStepContent(
             )
 
             PTextFieldEmail(
-                fieldName = "Billing Email *",
+                fieldName = "Billing Email (optional)",
                 value = Email(state.billingEmail),
                 error = state.emailError?.let {
                     tech.dokus.domain.exceptions.DokusException.Validation.InvalidEmail
