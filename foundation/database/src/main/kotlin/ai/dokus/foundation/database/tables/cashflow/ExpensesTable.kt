@@ -4,7 +4,7 @@ import ai.dokus.foundation.database.tables.auth.TenantTable
 import ai.dokus.foundation.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.foundation.ktor.database.dbEnumeration
+import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime

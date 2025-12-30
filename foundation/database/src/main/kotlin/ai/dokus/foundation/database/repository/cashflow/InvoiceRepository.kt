@@ -4,7 +4,6 @@ import ai.dokus.foundation.database.services.InvoiceNumberGenerator
 import ai.dokus.foundation.database.tables.cashflow.InvoiceItemsTable
 import ai.dokus.foundation.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
-import tech.dokus.domain.Quantity
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.toDbDecimal
@@ -19,7 +18,7 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime

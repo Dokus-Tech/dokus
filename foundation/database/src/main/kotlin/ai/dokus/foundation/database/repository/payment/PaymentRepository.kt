@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.TransactionId
 import tech.dokus.domain.model.PaymentDto
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder

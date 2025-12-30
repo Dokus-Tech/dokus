@@ -2,7 +2,7 @@ package ai.dokus.foundation.database.repository.cashflow
 
 import ai.dokus.foundation.database.tables.cashflow.InvoiceNumberSequencesTable
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.coroutines.delay
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq

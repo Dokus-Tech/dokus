@@ -8,8 +8,8 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.routes.Peppol
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import ai.dokus.peppol.service.PeppolConnectionService
 import ai.dokus.peppol.service.PeppolService
 import io.ktor.http.HttpStatusCode

@@ -26,7 +26,7 @@ import ai.dokus.foundation.database.repository.peppol.PeppolTransmissionReposito
 import ai.dokus.foundation.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
-import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
+import tech.dokus.foundation.backend.crypto.CredentialCryptoService
 import org.koin.dsl.bind
 import org.koin.dsl.module
 

@@ -13,7 +13,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -26,7 +26,6 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
-import tech.dokus.foundation.ktor.database.dbQuery
 
 /**
  * Repository for managing expenses

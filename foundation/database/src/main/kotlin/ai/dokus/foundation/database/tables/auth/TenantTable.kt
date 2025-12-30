@@ -4,7 +4,7 @@ import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.TenantPlan
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
-import tech.dokus.foundation.ktor.database.dbEnumeration
+import tech.dokus.foundation.backend.database.dbEnumeration
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime

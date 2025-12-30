@@ -1,8 +1,8 @@
 package tech.dokus.backend.plugins
 
-import tech.dokus.foundation.ktor.cache.RedisClient
-import tech.dokus.foundation.ktor.config.AppBaseConfig
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.cache.RedisClient
+import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.utils.loggerFor
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopping

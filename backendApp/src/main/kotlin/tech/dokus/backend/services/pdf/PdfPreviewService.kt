@@ -3,16 +3,15 @@ package tech.dokus.backend.services.pdf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.pdfbox.Loader
-import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.rendering.ImageType
 import org.apache.pdfbox.rendering.PDFRenderer
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.foundation.ktor.storage.DocumentStorageService
-import tech.dokus.foundation.ktor.storage.ObjectStorage
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.foundation.backend.storage.ObjectStorage
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 

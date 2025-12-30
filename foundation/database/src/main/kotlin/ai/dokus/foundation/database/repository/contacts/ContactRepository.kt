@@ -21,7 +21,7 @@ import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.foundation.ktor.database.dbQuery
+import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

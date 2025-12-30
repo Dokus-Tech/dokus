@@ -18,15 +18,14 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.UpsertTenantAddressRequest
-import tech.dokus.foundation.ktor.database.dbQuery
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.loggerFor
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import java.math.BigDecimal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid

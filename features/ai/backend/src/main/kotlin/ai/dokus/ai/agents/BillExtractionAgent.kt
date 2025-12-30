@@ -1,6 +1,5 @@
 package ai.dokus.ai.agents
 
-import ai.dokus.ai.models.BillLineItem
 import ai.dokus.ai.models.BillProvenance
 import ai.dokus.ai.models.ExtractedBillData
 import ai.dokus.ai.models.FieldProvenance
@@ -10,7 +9,7 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.json.Json
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Agent responsible for extracting data from bill (supplier invoice) documents.

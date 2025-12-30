@@ -9,8 +9,8 @@ import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.routes.Cashflow
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 
 /**
  * Cashflow Document Routes using Ktor Type-Safe Routing

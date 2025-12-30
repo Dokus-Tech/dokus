@@ -40,7 +40,7 @@ include(":foundation:aura")
 include(":foundation:app-common")
 include(":foundation:platform")
 include(":foundation:navigation")
-include(":foundation:ktor-common")
+include(":foundation:backend-common")
 include(":foundation:database")
 include(":foundation:peppol-core")
 

@@ -7,7 +7,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.datetime.LocalDate
 
 /**

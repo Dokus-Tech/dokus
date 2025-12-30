@@ -3,8 +3,8 @@ package ai.dokus.foundation.database.services
 import ai.dokus.foundation.database.repository.cashflow.InvoiceNumberRepository
 import ai.dokus.foundation.database.tables.auth.TenantSettingsTable
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.foundation.ktor.database.dbQuery
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.loggerFor
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.time.ZoneId

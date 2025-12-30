@@ -5,8 +5,8 @@ package tech.dokus.backend.services.auth
 import ai.dokus.foundation.database.repository.auth.UserRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.UserId
-import tech.dokus.foundation.ktor.database.now
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.database.now
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

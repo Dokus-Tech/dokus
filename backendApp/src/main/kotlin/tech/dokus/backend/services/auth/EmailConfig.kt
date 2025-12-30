@@ -1,6 +1,6 @@
 package tech.dokus.backend.services.auth
 
-import tech.dokus.foundation.ktor.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.AppBaseConfig
 import com.typesafe.config.Config
 
 /**

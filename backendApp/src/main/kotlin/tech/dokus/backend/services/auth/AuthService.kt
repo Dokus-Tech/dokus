@@ -20,10 +20,10 @@ import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.domain.model.auth.UpdateProfileRequest
-import tech.dokus.foundation.ktor.database.now
-import tech.dokus.foundation.ktor.security.JwtGenerator
-import tech.dokus.foundation.ktor.security.TokenBlacklistService
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.database.now
+import tech.dokus.foundation.backend.security.JwtGenerator
+import tech.dokus.foundation.backend.security.TokenBlacklistService
+import tech.dokus.foundation.backend.utils.loggerFor
 import com.auth0.jwt.JWT
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi

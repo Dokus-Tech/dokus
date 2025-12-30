@@ -4,14 +4,13 @@ import ai.dokus.foundation.database.repository.cashflow.DocumentIngestionRunRepo
 import ai.dokus.foundation.database.repository.cashflow.DocumentRepository
 import ai.dokus.foundation.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.routes.Documents
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
-import tech.dokus.foundation.ktor.storage.DocumentStorageService as MinioDocumentStorageService
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.DocumentUploadValidator
+import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.request.*

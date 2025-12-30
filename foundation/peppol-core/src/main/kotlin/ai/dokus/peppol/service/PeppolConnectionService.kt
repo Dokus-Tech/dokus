@@ -9,7 +9,7 @@ import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.domain.model.SavePeppolSettingsRequest
 import tech.dokus.domain.model.Tenant
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import ai.dokus.peppol.providers.recommand.RecommandCompaniesClient
 import ai.dokus.peppol.providers.recommand.RecommandCompany
 import ai.dokus.peppol.providers.recommand.RecommandCreateCompanyRequest

@@ -20,10 +20,10 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import tech.dokus.foundation.ktor.security.authenticateJwt
-import tech.dokus.foundation.ktor.security.dokusPrincipal
-import tech.dokus.foundation.ktor.storage.AvatarStorageService
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.AvatarStorageService
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

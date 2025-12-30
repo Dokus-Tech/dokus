@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.foundation.ktor.storage.DocumentStorageService
-import tech.dokus.foundation.ktor.storage.ObjectStorage
+import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.foundation.backend.storage.ObjectStorage
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.uuid.ExperimentalUuidApi

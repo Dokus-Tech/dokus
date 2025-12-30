@@ -1,6 +1,6 @@
 package tech.dokus.backend.config
 
-import tech.dokus.foundation.ktor.config.AIConfig
+import tech.dokus.foundation.backend.config.AIConfig
 import ai.dokus.foundation.database.di.repositoryModules
 import ai.dokus.foundation.database.repository.auth.PasswordResetTokenRepository
 import ai.dokus.foundation.database.repository.auth.RefreshTokenRepository
@@ -54,26 +54,26 @@ import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
-import tech.dokus.foundation.ktor.cache.RedisClient
-import tech.dokus.foundation.ktor.cache.RedisNamespace
-import tech.dokus.foundation.ktor.cache.redis
-import tech.dokus.foundation.ktor.config.AppBaseConfig
-import tech.dokus.foundation.ktor.config.MinioConfig
-import tech.dokus.foundation.ktor.crypto.AesGcmCredentialCryptoService
-import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
-import tech.dokus.foundation.ktor.crypto.PasswordCryptoService
-import tech.dokus.foundation.ktor.crypto.PasswordCryptoService4j
-import tech.dokus.foundation.ktor.database.DatabaseFactory
-import tech.dokus.foundation.ktor.lookup.CbeApiClient
-import tech.dokus.foundation.ktor.security.JwtGenerator
-import tech.dokus.foundation.ktor.security.JwtValidator
-import tech.dokus.foundation.ktor.security.RedisTokenBlacklistService
-import tech.dokus.foundation.ktor.security.TokenBlacklistService
-import tech.dokus.foundation.ktor.storage.AvatarStorageService
-import tech.dokus.foundation.ktor.storage.DocumentStorageService
-import tech.dokus.foundation.ktor.storage.DocumentUploadValidator
-import tech.dokus.foundation.ktor.storage.MinioStorage
-import tech.dokus.foundation.ktor.storage.ObjectStorage
+import tech.dokus.foundation.backend.cache.RedisClient
+import tech.dokus.foundation.backend.cache.RedisNamespace
+import tech.dokus.foundation.backend.cache.redis
+import tech.dokus.foundation.backend.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.MinioConfig
+import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
+import tech.dokus.foundation.backend.crypto.CredentialCryptoService
+import tech.dokus.foundation.backend.crypto.PasswordCryptoService
+import tech.dokus.foundation.backend.crypto.PasswordCryptoService4j
+import tech.dokus.foundation.backend.database.DatabaseFactory
+import tech.dokus.foundation.backend.lookup.CbeApiClient
+import tech.dokus.foundation.backend.security.JwtGenerator
+import tech.dokus.foundation.backend.security.JwtValidator
+import tech.dokus.foundation.backend.security.RedisTokenBlacklistService
+import tech.dokus.foundation.backend.security.TokenBlacklistService
+import tech.dokus.foundation.backend.storage.AvatarStorageService
+import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.foundation.backend.storage.DocumentUploadValidator
+import tech.dokus.foundation.backend.storage.MinioStorage
+import tech.dokus.foundation.backend.storage.ObjectStorage
 
 /**
  * Koin setup for the modular monolith server.

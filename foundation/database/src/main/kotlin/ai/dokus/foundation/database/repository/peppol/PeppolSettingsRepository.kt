@@ -6,9 +6,9 @@ import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.SavePeppolSettingsRequest
-import tech.dokus.foundation.ktor.crypto.CredentialCryptoService
-import tech.dokus.foundation.ktor.database.dbQuery
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.crypto.CredentialCryptoService
+import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

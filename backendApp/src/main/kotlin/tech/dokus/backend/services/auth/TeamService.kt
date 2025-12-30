@@ -11,7 +11,7 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration.Companion.days

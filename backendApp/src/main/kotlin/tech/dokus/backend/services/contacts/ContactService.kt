@@ -8,7 +8,7 @@ import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.foundation.ktor.utils.loggerFor
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Service for contact business operations.

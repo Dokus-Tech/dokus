@@ -1,6 +1,6 @@
 package tech.dokus.backend.plugins
 
-import tech.dokus.foundation.ktor.config.AppBaseConfig
+import tech.dokus.foundation.backend.config.AppBaseConfig
 import io.ktor.server.application.Application
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.auth.configureAuthRoutes
