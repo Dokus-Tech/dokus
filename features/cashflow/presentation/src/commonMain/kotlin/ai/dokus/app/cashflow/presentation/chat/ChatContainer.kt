@@ -1,7 +1,6 @@
 package ai.dokus.app.cashflow.presentation.chat
 
 import ai.dokus.app.cashflow.repository.ChatRepositoryImpl
-import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.cashflow.usecase.SendChatMessageUseCase
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -19,13 +18,13 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.DokusException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -168,12 +167,8 @@ internal class ChatContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to load session: $sessionId" }
                     updateState { copy(isSending = false) }
-                    val reason = error.message ?: getString(Res.string.common_unknown)
-                    action(
-                        ChatAction.ShowError(
-                            getString(Res.string.chat_error_load_conversation, reason)
-                        )
-                    )
+                    val reason = error.message?.takeIf { it.isNotBlank() }
+                    action(ChatAction.ShowError(DokusException.ChatLoadConversationFailed(reason)))
                 }
             )
         }
@@ -247,7 +242,7 @@ internal class ChatContainer(
                             if (docId == null) {
                                 action(
                                     ChatAction.ShowError(
-                                        getString(Res.string.chat_error_no_document_selected)
+                                        DokusException.ChatNoDocumentSelected
                                     )
                                 )
                                 withState<ChatState.Content, _> {
@@ -320,12 +315,8 @@ internal class ChatContainer(
                             isSending = false
                         )
                     }
-                    val reason = error.message ?: getString(Res.string.common_unknown)
-                    action(
-                        ChatAction.ShowError(
-                            getString(Res.string.chat_error_send_message, reason)
-                        )
-                    )
+                    val reason = error.message?.takeIf { it.isNotBlank() }
+                    action(ChatAction.ShowError(DokusException.ChatSendMessageFailed(reason)))
                 }
             }
         )
@@ -467,7 +458,7 @@ internal class ChatContainer(
             DocumentId.parse(documentIdStr)
         } catch (e: Exception) {
             logger.e(e) { "Invalid document ID: $documentIdStr" }
-            action(ChatAction.ShowError(getString(Res.string.chat_error_invalid_document_reference)))
+            action(ChatAction.ShowError(DokusException.ChatInvalidDocumentReference))
             return
         }
 

@@ -102,6 +102,7 @@
     <string name="peppol_testing_connection">Проверка подключения...</string>
     <string name="peppol_connection_successful">Подключение успешно!</string>
     <string name="peppol_delete_warning">Удаление настроек Peppol отключит возможности электронного выставления счетов.</string>
+    <string name="peppol_delete_success">Настройки Peppol удалены</string>
 
     <!-- Additional Settings -->
     <string name="settings_save_failed">Не удалось сохранить настройки</string>

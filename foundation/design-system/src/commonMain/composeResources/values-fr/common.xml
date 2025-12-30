@@ -56,6 +56,10 @@
     <string name="common_notes">Notes</string>
     <string name="common_date">Date</string>
     <string name="common_vat_value">TVA : %1$s</string>
+    <string name="common_percent_value">%1$s %%</string>
+    <string name="common_file_size_bytes">%1$d o</string>
+    <string name="common_file_size_kb">%1$.1f Ko</string>
+    <string name="common_file_size_mb">%1$.1f Mo</string>
     <string name="common_country_value">Pays : %1$s</string>
     <string name="common_action_irreversible">Cette action est irréversible</string>
     <string name="search_placeholder">Rechercher...</string>

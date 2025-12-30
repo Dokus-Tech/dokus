@@ -2,10 +2,7 @@ package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.SelectTenantUseCase
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.workspace_select_failed
 import ai.dokus.foundation.platform.Logger
-import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -13,6 +10,7 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.TenantId
 
@@ -86,9 +84,15 @@ internal class WorkspaceSelectContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to select tenant: $tenantId" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.WorkspaceSelectFailed
+                    } else {
+                        exception
+                    }
                     action(
                         WorkspaceSelectAction.ShowSelectionError(
-                            getString(Res.string.workspace_select_failed)
+                            displayException
                         )
                     )
                     updateState {

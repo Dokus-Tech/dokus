@@ -1,21 +1,17 @@
 package ai.dokus.app.cashflow.usecase
 
 import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceFormState
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.invoice_validation_client_required
-import ai.dokus.app.resources.generated.invoice_validation_due_date_before_issue
-import ai.dokus.app.resources.generated.invoice_validation_items_required
-import org.jetbrains.compose.resources.getString
+import tech.dokus.domain.exceptions.DokusException
 
 /**
  * Validation result for invoice form.
  *
  * @property isValid True if the form passes all validation checks.
- * @property errors Map of field names to error messages.
+ * @property errors Map of field names to validation exceptions.
  */
 data class InvoiceValidationResult(
     val isValid: Boolean,
-    val errors: Map<String, String>
+    val errors: Map<String, DokusException>
 )
 
 /**
@@ -32,22 +28,22 @@ class ValidateInvoiceUseCase {
      * @param formState The current form state to validate.
      * @return [InvoiceValidationResult] with validation status and any errors.
      */
-    suspend operator fun invoke(formState: CreateInvoiceFormState): InvoiceValidationResult {
-        val errors = mutableMapOf<String, String>()
+    operator fun invoke(formState: CreateInvoiceFormState): InvoiceValidationResult {
+        val errors = mutableMapOf<String, DokusException>()
 
         // Validate client selection
         if (formState.selectedClient == null) {
-            errors[FIELD_CLIENT] = getString(Res.string.invoice_validation_client_required)
+            errors[FIELD_CLIENT] = DokusException.Validation.InvoiceClientRequired
         }
 
         // Validate line items - at least one valid item required
         if (!formState.items.any { it.isValid }) {
-            errors[FIELD_ITEMS] = getString(Res.string.invoice_validation_items_required)
+            errors[FIELD_ITEMS] = DokusException.Validation.InvoiceItemsRequired
         }
 
         // Validate date constraints
         if (formState.issueDate != null && formState.dueDate != null && formState.dueDate < formState.issueDate) {
-            errors[FIELD_DUE_DATE] = getString(Res.string.invoice_validation_due_date_before_issue)
+            errors[FIELD_DUE_DATE] = DokusException.Validation.InvoiceDueDateBeforeIssue
         }
 
         return InvoiceValidationResult(

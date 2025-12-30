@@ -38,6 +38,7 @@ import ai.dokus.app.resources.generated.field_optional
 import ai.dokus.app.resources.generated.field_required
 import ai.dokus.foundation.design.components.fields.PTextFieldPhone
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,7 +74,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
-import tech.dokus.domain.exceptions.DokusException
 
 // ============================================================================
 // CONTACT FORM FIELDS
@@ -119,7 +119,7 @@ internal fun ContactFormFields(
                 fieldName = stringResource(Res.string.contacts_name),
                 value = formData.name,
                 onValueChange = onNameChange,
-                error = formData.errors["name"]?.toValidationError(),
+                error = formData.errors["name"],
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -130,7 +130,7 @@ internal fun ContactFormFields(
                 fieldName = stringResource(Res.string.contacts_email),
                 value = formData.email,
                 onValueChange = onEmailChange,
-                error = formData.errors["email"]?.toValidationError(),
+                error = formData.errors["email"],
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     capitalization = KeyboardCapitalization.None,
@@ -175,7 +175,7 @@ internal fun ContactFormFields(
                 fieldName = stringResource(Res.string.contacts_vat_number),
                 value = formData.vatNumber,
                 onValueChange = onVatNumberChange,
-                error = formData.errors["vatNumber"]?.toValidationError(),
+                error = formData.errors["vatNumber"],
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     capitalization = KeyboardCapitalization.Characters,
@@ -275,7 +275,7 @@ internal fun ContactFormFields(
                 },
                 value = formData.peppolId,
                 onValueChange = onPeppolIdChange,
-                error = formData.errors["peppolId"]?.toValidationError(),
+                error = formData.errors["peppolId"],
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -391,7 +391,7 @@ internal fun ContactFormFields(
         // General error message
         formData.errors["general"]?.let { error ->
             Text(
-                text = error,
+                text = error.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(horizontal = 24.dp)
@@ -528,9 +528,3 @@ private fun ClientType.displayName(): String =
         ClientType.Business -> stringResource(Res.string.contacts_business)
         ClientType.Government -> stringResource(Res.string.contacts_government)
     }
-
-/**
- * Convert a string error message to a DokusException for display.
- */
-private fun String.toValidationError(): DokusException =
-    DokusException.Validation.Generic(this)

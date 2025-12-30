@@ -1,6 +1,8 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_close
+import ai.dokus.app.resources.generated.cashflow_document_preview_title
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.layout.Column

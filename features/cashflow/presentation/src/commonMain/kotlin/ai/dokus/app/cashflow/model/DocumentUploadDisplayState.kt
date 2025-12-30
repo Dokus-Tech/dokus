@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.model
 
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentDto
 
 /**
@@ -32,22 +33,6 @@ sealed interface DocumentUploadDisplayState {
     val fileSize: Long
 
     /**
-     * Formatted file size for display (e.g., "1.5 MB").
-     */
-    val formattedSize: String
-        get() = when {
-            fileSize < 1024 -> "$fileSize B"
-            fileSize < 1024 * 1024 -> {
-                val kb = fileSize / 1024.0
-                "${((kb * 10).toInt() / 10.0)} KB"
-            }
-            else -> {
-                val mb = fileSize / (1024.0 * 1024.0)
-                "${((mb * 10).toInt() / 10.0)} MB"
-            }
-        }
-
-    /**
      * Upload is pending, waiting in queue.
      */
     data class Pending(
@@ -78,7 +63,7 @@ sealed interface DocumentUploadDisplayState {
         override val fileName: String,
         override val fileSize: Long,
         val task: DocumentUploadTask,
-        val error: String
+        val error: DokusException
     ) : DocumentUploadDisplayState {
         val canRetry: Boolean get() = task.canManualRetry
     }

@@ -2,6 +2,19 @@ package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_collapse
+import ai.dokus.app.resources.generated.cashflow_amount_with_currency
+import ai.dokus.app.resources.generated.common_empty_value
+import ai.dokus.app.resources.generated.common_percent_value
+import ai.dokus.app.resources.generated.currency_symbol_eur
+import ai.dokus.app.resources.generated.invoice_add_description_hint
+import ai.dokus.app.resources.generated.invoice_description
+import ai.dokus.app.resources.generated.invoice_line_total
+import ai.dokus.app.resources.generated.invoice_price_with_currency
+import ai.dokus.app.resources.generated.invoice_qty
+import ai.dokus.app.resources.generated.invoice_remove
+import ai.dokus.app.resources.generated.invoice_vat_rate
+import ai.dokus.app.resources.generated.invoice_vat_with_rate
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -320,7 +333,7 @@ private fun VatRateSelector(
                 shape = MaterialTheme.shapes.small,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "$selectedRate%")
+                Text(text = stringResource(Res.string.common_percent_value, selectedRate))
             }
         }
 
@@ -330,7 +343,7 @@ private fun VatRateSelector(
         ) {
             rates.forEach { rate ->
                 DropdownMenuItem(
-                    text = { Text("$rate%") },
+                    text = { Text(stringResource(Res.string.common_percent_value, rate)) },
                     onClick = {
                         onRateSelected(rate)
                         expanded = false

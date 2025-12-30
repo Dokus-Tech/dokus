@@ -2,19 +2,9 @@ package ai.dokus.app.contacts.viewmodel
 
 import ai.dokus.app.contacts.usecases.CreateContactUseCase
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_company_name_required
-import ai.dokus.app.resources.generated.contacts_create_failed
-import ai.dokus.app.resources.generated.contacts_duplicate_match_name
-import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
-import ai.dokus.app.resources.generated.contacts_email_or_phone_required
-import ai.dokus.app.resources.generated.contacts_full_name_required
-import ai.dokus.app.resources.generated.contacts_invalid_email
-import ai.dokus.app.resources.generated.contacts_lookup_search_failed
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -23,6 +13,8 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.entity.EntityLookup
@@ -190,11 +182,15 @@ internal class CreateContactContainer(
                 logger.e(error) { "Search failed" }
                 updateState {
                     when (this) {
-                        is CreateContactState.LookupStep -> copy(
-                            lookupState = LookupUiState.Error(
-                                error.message ?: getString(Res.string.contacts_lookup_search_failed)
-                            )
-                        )
+                        is CreateContactState.LookupStep -> {
+                            val exception = error.asDokusException
+                            val displayException = if (exception is DokusException.Unknown) {
+                                DokusException.ContactLookupFailed
+                            } else {
+                                exception
+                            }
+                            copy(lookupState = LookupUiState.Error(displayException))
+                        }
 
                         else -> this
                     }
@@ -233,7 +229,7 @@ internal class CreateContactContainer(
     private suspend fun CreateContactCtx.handleBillingEmailChanged(email: String) {
         withState<CreateContactState.ConfirmStep, _> {
             val error = if (email.isNotBlank() && !email.contains("@")) {
-                getString(Res.string.contacts_invalid_email)
+                DokusException.Validation.InvalidEmail
             } else {
                 null
             }
@@ -263,7 +259,7 @@ internal class CreateContactContainer(
         withState<CreateContactState.ConfirmStep, _> {
             // Validate email format only if provided
             if (billingEmail.isNotBlank() && !billingEmail.contains("@")) {
-                updateState { copy(emailError = getString(Res.string.contacts_invalid_email)) }
+                updateState { copy(emailError = DokusException.Validation.InvalidEmail) }
                 return@withState
             }
 
@@ -291,11 +287,13 @@ internal class CreateContactContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to create contact" }
                     updateState { copy(isSubmitting = false) }
-                    action(
-                        CreateContactAction.ShowError(
-                            error.message ?: getString(Res.string.contacts_create_failed)
-                        )
-                    )
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.ContactCreateFailed
+                    } else {
+                        exception
+                    }
+                    action(CreateContactAction.ShowError(displayException))
                 }
             )
         }
@@ -429,11 +427,13 @@ internal class CreateContactContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to create contact" }
                     updateState { copy(isSubmitting = false) }
-                    action(
-                        CreateContactAction.ShowError(
-                            error.message ?: getString(Res.string.contacts_create_failed)
-                        )
-                    )
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.ContactCreateFailed
+                    } else {
+                        exception
+                    }
+                    action(CreateContactAction.ShowError(displayException))
                 }
             )
         }
@@ -446,19 +446,19 @@ internal class CreateContactContainer(
     private suspend fun validateManualForm(
         type: ClientType,
         data: ManualContactFormData
-    ): Map<String, String> {
-        val errors = mutableMapOf<String, String>()
+    ): Map<String, DokusException> {
+        val errors = mutableMapOf<String, DokusException>()
 
         if (type == ClientType.Business) {
             if (data.companyName.isBlank()) {
-                errors["companyName"] = getString(Res.string.contacts_company_name_required)
+                errors["companyName"] = DokusException.Validation.CompanyNameRequired
             }
         } else {
             if (data.fullName.isBlank()) {
-                errors["fullName"] = getString(Res.string.contacts_full_name_required)
+                errors["fullName"] = DokusException.Validation.FullNameRequired
             }
             if (data.personEmail.isBlank() && data.personPhone.isBlank()) {
-                errors["contact"] = getString(Res.string.contacts_email_or_phone_required)
+                errors["contact"] = DokusException.Validation.ContactEmailOrPhoneRequired
             }
         }
 
@@ -484,9 +484,9 @@ internal class CreateContactContainer(
                             contactId = contact.id,
                             displayName = contact.name.value,
                             matchReason = if (type == ClientType.Business) {
-                                getString(Res.string.contacts_duplicate_match_name_country)
+                                SoftDuplicateReason.NameAndCountry
                             } else {
-                                getString(Res.string.contacts_duplicate_match_name)
+                                SoftDuplicateReason.Name
                             }
                         )
                     }

@@ -1,6 +1,8 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.common_percent_value
+import ai.dokus.app.resources.generated.invoice_vat_rate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,7 +54,7 @@ fun InvoiceVatRateSelector(
                 shape = MaterialTheme.shapes.small
             ) {
                 Text(
-                    text = "$selectedRatePercent%",
+                    text = stringResource(Res.string.common_percent_value, selectedRatePercent),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -64,7 +66,7 @@ fun InvoiceVatRateSelector(
             ) {
                 rates.forEach { rate ->
                     DropdownMenuItem(
-                        text = { Text("$rate%") },
+                        text = { Text(stringResource(Res.string.common_percent_value, rate)) },
                         onClick = {
                             onSelectRate(rate)
                             expanded = false

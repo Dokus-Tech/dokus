@@ -21,6 +21,11 @@ import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.state.DocumentUploadItemState
 import ai.dokus.app.cashflow.state.rememberDocumentUploadItemState
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.common_file_size_bytes
+import ai.dokus.app.resources.generated.common_file_size_kb
+import ai.dokus.app.resources.generated.common_file_size_mb
+import ai.dokus.app.resources.generated.upload_status_waiting
+import ai.dokus.foundation.design.extensions.localized
 import tech.dokus.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -213,7 +218,7 @@ private fun FailedContent(
 ) {
     UploadItemRow(
         fileName = state.fileName,
-        subtitle = state.error,
+        subtitle = state.error.localized,
         subtitleColor = MaterialTheme.colorScheme.error,
         icon = {
             FileIconWithOverlay { FailedOverlay() }
@@ -237,7 +242,7 @@ private fun UploadedContent(
 ) {
     UploadItemRow(
         fileName = state.fileName,
-        subtitle = state.formattedSize,
+        subtitle = formatFileSize(state.fileSize),
         subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
         icon = {
             FileIconWithOverlay { UploadedOverlay() }
@@ -247,6 +252,23 @@ private fun UploadedContent(
         },
         modifier = modifier
     )
+}
+
+@Composable
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> stringResource(Res.string.common_file_size_bytes, bytes)
+        bytes < 1024 * 1024 -> {
+            val kb = bytes / 1024.0
+            val displayKb = (kb * 10).toInt() / 10.0
+            stringResource(Res.string.common_file_size_kb, displayKb)
+        }
+        else -> {
+            val mb = bytes / (1024.0 * 1024.0)
+            val displayMb = (mb * 10).toInt() / 10.0
+            stringResource(Res.string.common_file_size_mb, displayMb)
+        }
+    }
 }
 
 @Composable

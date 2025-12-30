@@ -116,7 +116,7 @@ sealed interface ProfileSettingsAction : MVIAction {
     data object ShowSaveSuccess : ProfileSettingsAction
 
     /** Profile save failed */
-    data class ShowSaveError(val message: String) : ProfileSettingsAction
+    data class ShowSaveError(val error: DokusException) : ProfileSettingsAction
 
     /** Navigate back to previous screen */
     data object NavigateBack : ProfileSettingsAction

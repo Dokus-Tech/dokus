@@ -9,6 +9,7 @@ import ai.dokus.app.contacts.components.NotesSidePanel
 import ai.dokus.app.contacts.viewmodel.ContactDetailsAction
 import ai.dokus.app.contacts.viewmodel.ContactDetailsContainer
 import ai.dokus.app.contacts.viewmodel.ContactDetailsIntent
+import ai.dokus.app.contacts.viewmodel.ContactDetailsSuccess
 import ai.dokus.app.contacts.viewmodel.ContactDetailsState
 import ai.dokus.app.contacts.viewmodel.EnrichmentSuggestion
 import ai.dokus.app.resources.generated.Res
@@ -17,6 +18,8 @@ import ai.dokus.app.resources.generated.contacts_contact_details
 import ai.dokus.app.resources.generated.contacts_current
 import ai.dokus.app.resources.generated.contacts_deselect_all
 import ai.dokus.app.resources.generated.contacts_edit_contact
+import ai.dokus.app.resources.generated.contacts_enrichment_applied_plural
+import ai.dokus.app.resources.generated.contacts_enrichment_applied_single
 import ai.dokus.app.resources.generated.contacts_enrichment_apply_all
 import ai.dokus.app.resources.generated.contacts_enrichment_apply_selected_count
 import ai.dokus.app.resources.generated.contacts_enrichment_available
@@ -24,10 +27,16 @@ import ai.dokus.app.resources.generated.contacts_enrichment_hint
 import ai.dokus.app.resources.generated.contacts_enrichment_not_now
 import ai.dokus.app.resources.generated.contacts_enrichment_suggestions
 import ai.dokus.app.resources.generated.contacts_merge
+import ai.dokus.app.resources.generated.contacts_note_added
+import ai.dokus.app.resources.generated.contacts_note_deleted
+import ai.dokus.app.resources.generated.contacts_note_updated
+import ai.dokus.app.resources.generated.contacts_peppol_update_success
 import ai.dokus.app.resources.generated.contacts_select_all
+import ai.dokus.app.resources.generated.common_percent_value
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.foundation.design.components.common.ShimmerLine
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -61,6 +70,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,7 +81,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -89,6 +102,7 @@ import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.domain.exceptions.DokusException
 
 /**
  * Contact Details Screen displaying all information about a contact.
@@ -122,6 +136,44 @@ internal fun ContactDetailsScreen(
     }
 ) {
     val navController = LocalNavController.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf<ContactDetailsSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            ContactDetailsSuccess.PeppolUpdated ->
+                stringResource(Res.string.contacts_peppol_update_success)
+            ContactDetailsSuccess.NoteAdded ->
+                stringResource(Res.string.contacts_note_added)
+            ContactDetailsSuccess.NoteUpdated ->
+                stringResource(Res.string.contacts_note_updated)
+            ContactDetailsSuccess.NoteDeleted ->
+                stringResource(Res.string.contacts_note_deleted)
+            is ContactDetailsSuccess.EnrichmentApplied -> {
+                if (success.count == 1) {
+                    stringResource(Res.string.contacts_enrichment_applied_single, success.count)
+                } else {
+                    stringResource(Res.string.contacts_enrichment_applied_plural, success.count)
+                }
+            }
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     // Subscribe to state and handle actions
     val state by container.store.subscribe(DefaultLifecycle) { action ->
@@ -134,10 +186,10 @@ internal fun ContactDetailsScreen(
                 navController.navigateTo(ContactsDestination.ContactDetails(action.contactId.toString()))
             }
             is ContactDetailsAction.ShowError -> {
-                // TODO: Show snackbar with error message
+                pendingError = action.error
             }
             is ContactDetailsAction.ShowSuccess -> {
-                // TODO: Show snackbar with success message
+                pendingSuccess = action.success
             }
         }
     }
@@ -161,6 +213,7 @@ internal fun ContactDetailsScreen(
                 isDesktop = isDesktop,
                 isOnline = isOnline,
                 contactId = contactId,
+                snackbarHostState = snackbarHostState,
                 onBackClick = { navController.popBackStack() },
                 onEditClick = {
                     navController.navigateTo(ContactsDestination.EditContact(contactId.toString()))
@@ -181,6 +234,7 @@ private fun IntentReceiver<ContactDetailsIntent>.ContactDetailsScreenContent(
     isDesktop: Boolean,
     isOnline: Boolean,
     contactId: ContactId,
+    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
@@ -234,6 +288,7 @@ private fun IntentReceiver<ContactDetailsIntent>.ContactDetailsScreenContent(
                 isOnline = isOnline
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         ContactDetailsContent(
@@ -778,7 +833,7 @@ private fun ConfidenceBadge(confidence: Float) {
         shape = RoundedCornerShape(4.dp)
     ) {
         Text(
-            text = "$percentage%",
+            text = stringResource(Res.string.common_percent_value, percentage),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
             color = textColor,

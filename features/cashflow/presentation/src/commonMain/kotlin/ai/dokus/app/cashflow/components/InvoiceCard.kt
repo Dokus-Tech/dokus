@@ -1,6 +1,12 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_due_prefix
+import ai.dokus.app.resources.generated.invoice_status_cancelled
+import ai.dokus.app.resources.generated.invoice_status_draft
+import ai.dokus.app.resources.generated.invoice_status_overdue
+import ai.dokus.app.resources.generated.invoice_status_paid
+import ai.dokus.app.resources.generated.invoice_status_sent
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.FinancialDocumentDto
 import androidx.compose.foundation.layout.Arrangement

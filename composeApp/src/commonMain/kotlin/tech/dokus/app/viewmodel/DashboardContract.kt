@@ -100,5 +100,5 @@ sealed interface DashboardAction : MVIAction {
     data object NavigateToWorkspaceSelect : DashboardAction
 
     /** Show error message */
-    data class ShowError(val message: String) : DashboardAction
+    data class ShowError(val error: DokusException) : DashboardAction
 }

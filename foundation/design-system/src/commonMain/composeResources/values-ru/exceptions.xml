@@ -17,6 +17,9 @@
     <string name="exception_invalid_vat_rate">Неверная ставка НДС</string>
     <string name="exception_invalid_percentage">Неверное процентное значение</string>
     <string name="exception_invalid_quantity">Неверное количество</string>
+    <string name="exception_invoice_client_required">Выберите клиента</string>
+    <string name="exception_invoice_items_required">Добавьте хотя бы одну корректную позицию</string>
+    <string name="exception_invoice_due_date_before_issue">Срок оплаты не может быть раньше даты выставления</string>
     <string name="exception_invalid_street_name">Неверное название улицы</string>
     <string name="exception_invalid_city">Неверный город</string>
     <string name="exception_invalid_postal_code">Неверный почтовый индекс</string>

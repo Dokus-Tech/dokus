@@ -1,6 +1,24 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.common_unknown
+import ai.dokus.app.resources.generated.date_format_short
+import ai.dokus.app.resources.generated.date_month_short_apr
+import ai.dokus.app.resources.generated.date_month_short_aug
+import ai.dokus.app.resources.generated.date_month_short_dec
+import ai.dokus.app.resources.generated.date_month_short_feb
+import ai.dokus.app.resources.generated.date_month_short_jan
+import ai.dokus.app.resources.generated.date_month_short_jul
+import ai.dokus.app.resources.generated.date_month_short_jun
+import ai.dokus.app.resources.generated.date_month_short_mar
+import ai.dokus.app.resources.generated.date_month_short_may
+import ai.dokus.app.resources.generated.date_month_short_nov
+import ai.dokus.app.resources.generated.date_month_short_oct
+import ai.dokus.app.resources.generated.date_month_short_sep
+import ai.dokus.app.resources.generated.invoice_click_to_change
+import ai.dokus.app.resources.generated.invoice_click_to_set
+import ai.dokus.app.resources.generated.invoice_due_date
+import ai.dokus.app.resources.generated.invoice_issue_date
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

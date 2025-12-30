@@ -1,6 +1,10 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_search
+import ai.dokus.app.resources.generated.cashflow_create_invoice
+import ai.dokus.app.resources.generated.cashflow_search_placeholder
+import ai.dokus.app.resources.generated.cashflow_upload_document
 import ai.dokus.foundation.design.components.PButton
 import ai.dokus.foundation.design.components.PButtonVariant
 import ai.dokus.foundation.design.components.PIconPosition

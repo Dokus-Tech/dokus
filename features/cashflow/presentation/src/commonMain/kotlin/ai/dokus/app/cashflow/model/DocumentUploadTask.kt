@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.model
 
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -37,7 +38,7 @@ data class DocumentUploadTask(
     val bytes: ByteArray,
     val status: UploadStatus = UploadStatus.PENDING,
     val progress: Float = 0f,
-    val error: String? = null,
+    val error: DokusException? = null,
     val documentId: DocumentId? = null,
     val retryCount: Int = 0
 ) {

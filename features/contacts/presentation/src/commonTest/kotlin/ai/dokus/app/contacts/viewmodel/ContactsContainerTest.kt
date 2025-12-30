@@ -312,8 +312,8 @@ class ContactsContainerTest {
             ContactsAction.NavigateToContactDetails(ContactId.generate()),
             ContactsAction.NavigateToCreateContact,
             ContactsAction.NavigateToEditContact(ContactId.generate()),
-            ContactsAction.ShowError("error"),
-            ContactsAction.ShowSuccess("success")
+            ContactsAction.ShowError(DokusException.Validation.InvalidEmail),
+            ContactsAction.ShowSuccess(ContactsSuccess.Created)
         )
 
         assertEquals(5, actions.size)

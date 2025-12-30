@@ -8,16 +8,21 @@ import ai.dokus.app.contacts.viewmodel.ContactFormAction
 import ai.dokus.app.contacts.viewmodel.ContactFormContainer
 import ai.dokus.app.contacts.viewmodel.ContactFormIntent
 import ai.dokus.app.contacts.viewmodel.ContactFormState
+import ai.dokus.app.contacts.viewmodel.ContactFormSuccess
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_cancel
 import ai.dokus.app.resources.generated.action_delete
+import ai.dokus.app.resources.generated.contacts_create_success
 import ai.dokus.app.resources.generated.contacts_delete_confirmation
 import ai.dokus.app.resources.generated.contacts_delete_contact
+import ai.dokus.app.resources.generated.contacts_delete_success
 import ai.dokus.app.resources.generated.contacts_delete_warning
 import ai.dokus.app.resources.generated.contacts_deleting
 import ai.dokus.app.resources.generated.contacts_edit_contact
+import ai.dokus.app.resources.generated.contacts_update_success
 import ai.dokus.app.resources.generated.contacts_update_mobile_hint
 import ai.dokus.foundation.design.components.text.SectionTitle
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -42,19 +47,26 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -84,6 +96,32 @@ internal fun ContactFormScreen(
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf<ContactFormSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            ContactFormSuccess.Created -> stringResource(Res.string.contacts_create_success)
+            ContactFormSuccess.Updated -> stringResource(Res.string.contacts_update_success)
+            ContactFormSuccess.Deleted -> stringResource(Res.string.contacts_delete_success)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     with(container.store) {
         val state by subscribe { action ->
@@ -95,11 +133,11 @@ internal fun ContactFormScreen(
                 }
 
                 is ContactFormAction.ShowError -> {
-                    // TODO: Show snackbar with error message
+                    pendingError = action.error
                 }
 
                 is ContactFormAction.ShowSuccess -> {
-                    // TODO: Show snackbar with success message
+                    pendingSuccess = action.success
                 }
 
                 is ContactFormAction.ShowFieldError -> {
@@ -109,6 +147,7 @@ internal fun ContactFormScreen(
         }
 
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background
         ) { contentPadding ->
             Box(modifier = Modifier.fillMaxSize()) {

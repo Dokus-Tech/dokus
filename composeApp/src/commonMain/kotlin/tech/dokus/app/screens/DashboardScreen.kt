@@ -11,6 +11,7 @@ import ai.dokus.foundation.design.components.AvatarSize
 import ai.dokus.foundation.design.components.CompanyAvatarImage
 import ai.dokus.foundation.design.components.common.PSearchFieldCompact
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
@@ -41,6 +42,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +65,7 @@ import tech.dokus.app.viewmodel.DashboardIntent
 import tech.dokus.app.viewmodel.DashboardState
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.domain.exceptions.DokusException
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -73,10 +77,21 @@ internal fun DashboardScreen(
     container: DashboardContainer = container()
 ) {
     val navController = LocalNavController.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     val isLargeScreen = LocalScreenSize.current.isLarge
     var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val searchExpanded = isLargeScreen || isSearchExpanded
+
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -87,7 +102,7 @@ internal fun DashboardScreen(
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
             is DashboardAction.ShowError -> {
-                // TODO: Show snackbar or error state
+                pendingError = action.error
             }
         }
     }
@@ -171,7 +186,8 @@ internal fun DashboardScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
         // Mobile dashboard content
         if (!isLargeScreen) {

@@ -1,6 +1,22 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.answer_no
+import ai.dokus.app.resources.generated.answer_yes
+import ai.dokus.app.resources.generated.cashflow_cash_in
+import ai.dokus.app.resources.generated.cashflow_cash_out
+import ai.dokus.app.resources.generated.cashflow_direction
+import ai.dokus.app.resources.generated.invoice_category
+import ai.dokus.app.resources.generated.invoice_client
+import ai.dokus.app.resources.generated.invoice_details
+import ai.dokus.app.resources.generated.invoice_due_date
+import ai.dokus.app.resources.generated.invoice_issue_date
+import ai.dokus.app.resources.generated.invoice_items
+import ai.dokus.app.resources.generated.invoice_name
+import ai.dokus.app.resources.generated.invoice_no_items
+import ai.dokus.app.resources.generated.invoice_recurrent_expense
+import ai.dokus.app.resources.generated.invoice_total_amount
+import ai.dokus.app.resources.generated.invoice_vat
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import androidx.compose.foundation.layout.Arrangement

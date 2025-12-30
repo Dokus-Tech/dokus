@@ -290,7 +290,7 @@ sealed interface ChatAction : MVIAction {
      * Show error message.
      * @param message Error message to display
      */
-    data class ShowError(val message: String) : ChatAction
+    data class ShowError(val error: DokusException) : ChatAction
 
     /**
      * Show success message.

@@ -1,20 +1,7 @@
 package ai.dokus.app.contacts.viewmodel
 
-import ai.dokus.app.contacts.usecases.CreateContactUseCase
-import ai.dokus.app.contacts.usecases.DeleteContactUseCase
-import ai.dokus.app.contacts.usecases.GetContactUseCase
-import ai.dokus.app.contacts.usecases.ListContactsUseCase
-import ai.dokus.app.contacts.usecases.UpdateContactUseCase
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.contacts_create_success
-import ai.dokus.app.resources.generated.contacts_delete_failed
-import ai.dokus.app.resources.generated.contacts_delete_success
-import ai.dokus.app.resources.generated.contacts_invalid_email
-import ai.dokus.app.resources.generated.contacts_invalid_peppol_id
-import ai.dokus.app.resources.generated.contacts_name_required
-import ai.dokus.app.resources.generated.contacts_peppol_id_required
-import ai.dokus.app.resources.generated.contacts_update_success
 import tech.dokus.domain.enums.ClientType
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
@@ -24,13 +11,17 @@ import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import ai.dokus.app.contacts.usecases.CreateContactUseCase
+import ai.dokus.app.contacts.usecases.DeleteContactUseCase
+import ai.dokus.app.contacts.usecases.GetContactUseCase
+import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import ai.dokus.app.contacts.usecases.UpdateContactUseCase
 
 internal typealias ContactFormCtx = PipelineContext<ContactFormState, ContactFormIntent, ContactFormAction>
 
@@ -190,7 +181,7 @@ internal class ContactFormContainer(
     private suspend fun ContactFormCtx.handleUpdateEmail(value: String) {
         updateFormData {
             val errors = if (value.isNotBlank() && !value.contains("@")) {
-                errors + ("email" to getString(Res.string.contacts_invalid_email))
+                errors + ("email" to DokusException.Validation.InvalidEmail)
             } else {
                 errors - "email"
             }
@@ -258,7 +249,7 @@ internal class ContactFormContainer(
     private suspend fun ContactFormCtx.handleUpdatePeppolId(value: String) {
         updateFormData {
             val errors = if (value.isNotBlank() && !value.contains(":")) {
-                errors + ("peppolId" to getString(Res.string.contacts_invalid_peppol_id))
+                errors + ("peppolId" to DokusException.Validation.InvalidPeppolId)
             } else {
                 errors - "peppolId"
             }
@@ -455,27 +446,27 @@ internal class ContactFormContainer(
     // VALIDATION
     // ============================================================================
 
-    private suspend fun validateForm(formData: ContactFormData): Map<String, String> {
-        val errors = mutableMapOf<String, String>()
+    private fun validateForm(formData: ContactFormData): Map<String, DokusException> {
+        val errors = mutableMapOf<String, DokusException>()
 
         // Required field: name
         if (formData.name.isBlank()) {
-            errors["name"] = getString(Res.string.contacts_name_required)
+            errors["name"] = DokusException.Validation.ContactNameRequired
         }
 
         // Optional validation: email format
         if (formData.email.isNotBlank() && !formData.email.contains("@")) {
-            errors["email"] = getString(Res.string.contacts_invalid_email)
+            errors["email"] = DokusException.Validation.InvalidEmail
         }
 
         // Optional validation: Peppol ID format
         if (formData.peppolId.isNotBlank() && !formData.peppolId.contains(":")) {
-            errors["peppolId"] = getString(Res.string.contacts_invalid_peppol_id)
+            errors["peppolId"] = DokusException.Validation.InvalidPeppolId
         }
 
         // Optional validation: Peppol ID required if enabled
         if (formData.peppolEnabled && formData.peppolId.isBlank()) {
-            errors["peppolId"] = getString(Res.string.contacts_peppol_id_required)
+            errors["peppolId"] = DokusException.Validation.PeppolIdRequired
         }
 
         return errors
@@ -493,8 +484,8 @@ internal class ContactFormContainer(
                 logger.w { "Form validation failed: $errors" }
                 updateState { copy(formData = formData.copy(errors = errors)) }
                 // Show first error to user
-                errors.values.firstOrNull()?.let { errorMessage ->
-                    action(ContactFormAction.ShowError(errorMessage))
+                errors.values.firstOrNull()?.let { error ->
+                    action(ContactFormAction.ShowError(error))
                 }
                 return@withState
             }
@@ -519,7 +510,7 @@ internal class ContactFormContainer(
                 onSuccess = { contact ->
                     logger.i { "Contact created: ${contact.id}" }
                     updateState { copy(isSaving = false) }
-                    action(ContactFormAction.ShowSuccess(getString(Res.string.contacts_create_success)))
+                    action(ContactFormAction.ShowSuccess(ContactFormSuccess.Created))
                     action(ContactFormAction.NavigateToContact(contact.id))
                 },
                 onFailure = { error ->
@@ -549,7 +540,7 @@ internal class ContactFormContainer(
                 onSuccess = { contact ->
                     logger.i { "Contact updated: ${contact.id}" }
                     updateState { copy(isSaving = false) }
-                    action(ContactFormAction.ShowSuccess(getString(Res.string.contacts_update_success)))
+                    action(ContactFormAction.ShowSuccess(ContactFormSuccess.Updated))
                     action(ContactFormAction.NavigateToContact(contact.id))
                 },
                 onFailure = { error ->
@@ -588,13 +579,19 @@ internal class ContactFormContainer(
                 onSuccess = {
                     logger.i { "Contact deleted: $id" }
                     updateState { copy(isDeleting = false) }
-                    action(ContactFormAction.ShowSuccess(getString(Res.string.contacts_delete_success)))
+                    action(ContactFormAction.ShowSuccess(ContactFormSuccess.Deleted))
                     action(ContactFormAction.NavigateBack)
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to delete contact: $id" }
                     updateState { copy(isDeleting = false) }
-                    action(ContactFormAction.ShowError(getString(Res.string.contacts_delete_failed)))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.ContactDeleteFailed
+                    } else {
+                        exception
+                    }
+                    action(ContactFormAction.ShowError(displayException))
                 }
             )
         }

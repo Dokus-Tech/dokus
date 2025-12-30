@@ -10,6 +10,7 @@ import ai.dokus.app.resources.generated.action_done
 import ai.dokus.app.resources.generated.common_action_irreversible
 import ai.dokus.app.resources.generated.common_empty_value
 import ai.dokus.app.resources.generated.common_vat_value
+import ai.dokus.app.resources.generated.common_percent_value
 import ai.dokus.app.resources.generated.contacts_address_line1
 import ai.dokus.app.resources.generated.contacts_address_line2
 import ai.dokus.app.resources.generated.contacts_bills
@@ -58,6 +59,7 @@ import ai.dokus.app.resources.generated.contacts_searching
 import ai.dokus.app.resources.generated.contacts_tags
 import ai.dokus.app.resources.generated.contacts_vat_number
 import ai.dokus.foundation.platform.Logger
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -112,6 +114,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.exceptions.asDokusException
 import org.koin.compose.koinInject
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
@@ -147,8 +151,7 @@ internal data class MergeFieldConflict(
  * Represents a merge error message that can come from resources or raw text.
  */
 private sealed interface MergeError {
-    data class Message(val value: String) : MergeError
-    data class Resource(val res: StringResource) : MergeError
+    data class Exception(val exception: DokusException) : MergeError
 }
 
 // ============================================================================
@@ -225,8 +228,13 @@ internal fun ContactMergeDialog(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Merge failed" }
-                    mergeError = error.message?.let { MergeError.Message(it) }
-                        ?: MergeError.Resource(Res.string.contacts_merge_failed)
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.ContactMergeFailed
+                    } else {
+                        exception
+                    }
+                    mergeError = MergeError.Exception(displayException)
                     isMerging = false
                 }
             )
@@ -809,7 +817,7 @@ private fun formatConflictValue(fieldName: String, value: String?): String {
                 value
             }
         }
-        "defaultVatRate" -> "$value%"
+        "defaultVatRate" -> stringResource(Res.string.common_percent_value, value)
         else -> value
     }
 }
@@ -947,8 +955,7 @@ private fun ConfirmationStep(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val errorText = when (mergeError) {
-                    is MergeError.Message -> mergeError.value
-                    is MergeError.Resource -> stringResource(mergeError.res)
+                    is MergeError.Exception -> mergeError.exception.localized
                 }
                 Text(
                     text = errorText,

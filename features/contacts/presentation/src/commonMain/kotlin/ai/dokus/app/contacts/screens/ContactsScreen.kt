@@ -12,10 +12,15 @@ import ai.dokus.app.contacts.viewmodel.ContactsAction
 import ai.dokus.app.contacts.viewmodel.ContactsContainer
 import ai.dokus.app.contacts.viewmodel.ContactsIntent
 import ai.dokus.app.contacts.viewmodel.ContactsState
+import ai.dokus.app.contacts.viewmodel.ContactsSuccess
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_create_success
+import ai.dokus.app.resources.generated.contacts_delete_success
 import ai.dokus.app.resources.generated.contacts_select_contact
 import ai.dokus.app.resources.generated.contacts_select_contact_hint
+import ai.dokus.app.resources.generated.contacts_update_success
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
@@ -61,6 +66,7 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.domain.exceptions.DokusException
 
 /**
  * The main contacts screen showing a list of contacts with master-detail layout.
@@ -79,6 +85,32 @@ internal fun ContactsScreen(
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.isLarge
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf<ContactsSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            ContactsSuccess.Created -> stringResource(Res.string.contacts_create_success)
+            ContactsSuccess.Updated -> stringResource(Res.string.contacts_update_success)
+            ContactsSuccess.Deleted -> stringResource(Res.string.contacts_delete_success)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     // Subscribe to state and handle actions
     val state by container.store.subscribe(DefaultLifecycle) { action ->
@@ -100,11 +132,11 @@ internal fun ContactsScreen(
             }
 
             is ContactsAction.ShowError -> {
-                // TODO: Show snackbar error
+                pendingError = action.error
             }
 
             is ContactsAction.ShowSuccess -> {
-                // TODO: Show snackbar success
+                pendingSuccess = action.success
             }
         }
     }
@@ -118,7 +150,6 @@ internal fun ContactsScreen(
     val activeFilter = contentState?.activeFilter ?: ContactActiveFilter.All
 
     // Snackbar for connection status changes
-    val snackbarHostState = remember { SnackbarHostState() }
     ConnectionSnackbarEffect(snackbarHostState)
 
     // Search expansion state for mobile

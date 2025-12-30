@@ -155,5 +155,5 @@ sealed interface WorkspaceCreateAction : MVIAction {
     data object NavigateBack : WorkspaceCreateAction
 
     /** Show error message when creation fails */
-    data class ShowCreationError(val message: String) : WorkspaceCreateAction
+    data class ShowCreationError(val error: DokusException) : WorkspaceCreateAction
 }

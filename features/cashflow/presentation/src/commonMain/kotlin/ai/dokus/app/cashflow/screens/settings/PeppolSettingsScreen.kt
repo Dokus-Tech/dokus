@@ -5,10 +5,20 @@ import ai.dokus.app.cashflow.viewmodel.PeppolSettingsContainer
 import ai.dokus.app.cashflow.viewmodel.PeppolSettingsIntent
 import ai.dokus.app.cashflow.viewmodel.PeppolSettingsState
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.action_delete
+import ai.dokus.app.resources.generated.common_vat_value
+import ai.dokus.app.resources.generated.peppol_connect_title
 import ai.dokus.app.resources.generated.peppol_connected
+import ai.dokus.app.resources.generated.peppol_connected_to
 import ai.dokus.app.resources.generated.peppol_connection_status
 import ai.dokus.app.resources.generated.peppol_delete_settings
+import ai.dokus.app.resources.generated.peppol_delete_success
+import ai.dokus.app.resources.generated.peppol_delete_warning
+import ai.dokus.app.resources.generated.peppol_more_providers_coming
 import ai.dokus.app.resources.generated.peppol_not_configured
+import ai.dokus.app.resources.generated.peppol_provider_recommand_description
+import ai.dokus.app.resources.generated.peppol_select_provider_hint
 import ai.dokus.app.resources.generated.peppol_settings_title
 import ai.dokus.app.resources.generated.profile_danger_zone
 import ai.dokus.foundation.design.components.POutlinedButton
@@ -38,16 +48,23 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -70,6 +87,22 @@ fun PeppolSettingsScreen(
     container: PeppolSettingsContainer = container()
 ) {
     val navController = LocalNavController.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    val successMessage = if (pendingSuccess) {
+        stringResource(Res.string.peppol_delete_success)
+    } else {
+        null
+    }
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = false
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -80,10 +113,10 @@ fun PeppolSettingsScreen(
             }
             PeppolSettingsAction.NavigateBack -> navController.navigateUp()
             PeppolSettingsAction.ShowDeleteConfirmation -> {
-                // TODO: Show confirmation dialog
+                showDeleteConfirmation = true
             }
             PeppolSettingsAction.ShowDeleteSuccess -> {
-                // TODO: Show success message/snackbar
+                pendingSuccess = true
             }
         }
     }
@@ -97,7 +130,8 @@ fun PeppolSettingsScreen(
             PTopAppBar(
                 title = stringResource(Res.string.peppol_settings_title)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
         with(container.store) {
             PeppolSettingsContent(
@@ -105,6 +139,41 @@ fun PeppolSettingsScreen(
                 modifier = Modifier.padding(contentPadding)
             )
         }
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteConfirmation = false
+                container.store.intent(PeppolSettingsIntent.CancelDelete)
+            },
+            title = {
+                Text(text = stringResource(Res.string.peppol_delete_settings))
+            },
+            text = {
+                Text(text = stringResource(Res.string.peppol_delete_warning))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        container.store.intent(PeppolSettingsIntent.ConfirmDelete)
+                    }
+                ) {
+                    Text(text = stringResource(Res.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        container.store.intent(PeppolSettingsIntent.CancelDelete)
+                    }
+                ) {
+                    Text(text = stringResource(Res.string.action_cancel))
+                }
+            }
+        )
     }
 }
 

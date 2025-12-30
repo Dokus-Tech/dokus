@@ -1,6 +1,11 @@
 package ai.dokus.app.cashflow.presentation.review
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_confirm
+import ai.dokus.app.resources.generated.action_reject
+import ai.dokus.app.resources.generated.action_save
+import ai.dokus.app.resources.generated.cashflow_chat_with_document
+import ai.dokus.app.resources.generated.cashflow_document_confirmed
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility

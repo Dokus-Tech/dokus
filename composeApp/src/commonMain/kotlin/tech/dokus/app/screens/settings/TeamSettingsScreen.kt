@@ -1,6 +1,8 @@
 package tech.dokus.app.screens.settings
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_confirm
+import ai.dokus.app.resources.generated.action_save
 import ai.dokus.app.resources.generated.cancel
 import ai.dokus.app.resources.generated.role_accountant
 import ai.dokus.app.resources.generated.role_accountant_desc
@@ -11,21 +13,27 @@ import ai.dokus.app.resources.generated.role_editor_desc
 import ai.dokus.app.resources.generated.role_owner
 import ai.dokus.app.resources.generated.role_viewer
 import ai.dokus.app.resources.generated.role_viewer_desc
+import ai.dokus.app.resources.generated.state_sending
 import ai.dokus.app.resources.generated.team_cancel_invitation
 import ai.dokus.app.resources.generated.team_change_role
 import ai.dokus.app.resources.generated.team_expires
+import ai.dokus.app.resources.generated.team_invite_cancelled
 import ai.dokus.app.resources.generated.team_invite_email
 import ai.dokus.app.resources.generated.team_invite_member
 import ai.dokus.app.resources.generated.team_invite_role
+import ai.dokus.app.resources.generated.team_invite_success
 import ai.dokus.app.resources.generated.team_invited_by
 import ai.dokus.app.resources.generated.team_joined
+import ai.dokus.app.resources.generated.team_member_removed_success
 import ai.dokus.app.resources.generated.team_members
 import ai.dokus.app.resources.generated.team_no_invitations
 import ai.dokus.app.resources.generated.team_no_members
 import ai.dokus.app.resources.generated.team_owner_badge
+import ai.dokus.app.resources.generated.team_ownership_transferred_success
 import ai.dokus.app.resources.generated.team_pending_invitations
 import ai.dokus.app.resources.generated.team_remove_confirm
 import ai.dokus.app.resources.generated.team_remove_member
+import ai.dokus.app.resources.generated.team_role_update_success
 import ai.dokus.app.resources.generated.team_send_invitation
 import ai.dokus.app.resources.generated.team_settings_title
 import ai.dokus.app.resources.generated.team_transfer_confirm
@@ -35,7 +43,9 @@ import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import ai.dokus.foundation.design.extensions.localized
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import androidx.compose.foundation.layout.Arrangement
@@ -92,6 +102,7 @@ import tech.dokus.app.viewmodel.TeamSettingsAction
 import tech.dokus.app.viewmodel.TeamSettingsContainer
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
+import tech.dokus.app.viewmodel.TeamSettingsSuccess
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -103,15 +114,43 @@ internal fun TeamSettingsScreen(
     container: TeamSettingsContainer = container()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf<TeamSettingsSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showInviteDialog by remember { mutableStateOf(false) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            TeamSettingsSuccess.InviteSent -> stringResource(Res.string.team_invite_success)
+            TeamSettingsSuccess.InviteCancelled -> stringResource(Res.string.team_invite_cancelled)
+            TeamSettingsSuccess.RoleUpdated -> stringResource(Res.string.team_role_update_success)
+            TeamSettingsSuccess.MemberRemoved -> stringResource(Res.string.team_member_removed_success)
+            TeamSettingsSuccess.OwnershipTransferred ->
+                stringResource(Res.string.team_ownership_transferred_success)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is TeamSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingSuccess = action.success
             }
             is TeamSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingError = action.error
             }
             TeamSettingsAction.DismissInviteDialog -> {
                 showInviteDialog = false
@@ -153,15 +192,43 @@ internal fun TeamSettingsContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
+    var pendingSuccess by remember { mutableStateOf<TeamSettingsSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showInviteDialog by remember { mutableStateOf(false) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            TeamSettingsSuccess.InviteSent -> stringResource(Res.string.team_invite_success)
+            TeamSettingsSuccess.InviteCancelled -> stringResource(Res.string.team_invite_cancelled)
+            TeamSettingsSuccess.RoleUpdated -> stringResource(Res.string.team_role_update_success)
+            TeamSettingsSuccess.MemberRemoved -> stringResource(Res.string.team_member_removed_success)
+            TeamSettingsSuccess.OwnershipTransferred ->
+                stringResource(Res.string.team_ownership_transferred_success)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is TeamSettingsAction.ShowSuccess -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingSuccess = action.success
             }
             is TeamSettingsAction.ShowError -> {
-                snackbarHostState.showSnackbar(action.message)
+                pendingError = action.error
             }
             TeamSettingsAction.DismissInviteDialog -> {
                 showInviteDialog = false

@@ -21,6 +21,7 @@ import ai.dokus.app.resources.generated.country_netherlands
 import ai.dokus.app.resources.generated.state_retry
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import ai.dokus.foundation.design.constrains.Constrains
+import ai.dokus.foundation.design.extensions.localized
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,6 +65,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import tech.dokus.domain.enums.Country
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.entity.EntityLookup
 import org.jetbrains.compose.resources.stringResource
 
@@ -186,7 +188,7 @@ fun LookupStepContent(
                 }
                 is LookupUiState.Error -> {
                     LookupErrorState(
-                        message = lookupState.message,
+                        exception = lookupState.exception,
                         onRetry = { onIntent(CreateContactIntent.Search(query)) },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -353,7 +355,7 @@ private fun LookupEmptyState(
 
 @Composable
 private fun LookupErrorState(
-    message: String,
+    exception: DokusException,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -368,7 +370,7 @@ private fun LookupErrorState(
             color = MaterialTheme.colorScheme.error
         )
         Text(
-            text = message,
+            text = exception.localized,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -1,6 +1,7 @@
 package tech.dokus.app.screens
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.app_name
 import ai.dokus.app.resources.generated.bootstrap_state_app_version_check
 import ai.dokus.app.resources.generated.bootstrap_state_authenticating
 import ai.dokus.app.resources.generated.bootstrap_state_checking_account_status

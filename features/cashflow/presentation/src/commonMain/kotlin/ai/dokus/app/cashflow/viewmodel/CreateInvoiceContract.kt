@@ -227,12 +227,12 @@ sealed interface CreateInvoiceAction : MVIAction {
     /** Navigate to invoice details after creation */
     data class NavigateToInvoice(val invoiceId: InvoiceId) : CreateInvoiceAction
 
-    /** Show validation error message */
-    data class ShowValidationError(val message: String) : CreateInvoiceAction
+    /** Show validation error */
+    data class ShowValidationError(val error: DokusException) : CreateInvoiceAction
 
     /** Show success message */
-    data class ShowSuccess(val message: String) : CreateInvoiceAction
+    data object ShowSuccess : CreateInvoiceAction
 
-    /** Show error message */
-    data class ShowError(val message: String) : CreateInvoiceAction
+    /** Show error */
+    data class ShowError(val error: DokusException) : CreateInvoiceAction
 }

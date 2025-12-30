@@ -5,7 +5,7 @@ import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadDisplayState
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.model.UploadStatus
-import ai.dokus.app.resources.generated.Res
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentDto
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
-import org.jetbrains.compose.resources.stringResource
 
 /**
  * Component-level state holder for a single document upload item.
@@ -46,7 +45,7 @@ class DocumentUploadItemState(
     private var currentTask: DocumentUploadTask? = null
     private var currentDocument: DocumentDto? = null
     private var currentDeletionHandle: DocumentDeletionHandle? = null
-    private var fallbackErrorMessage: String = ""
+    private var fallbackError: DokusException = DokusException.DocumentUploadFailed
 
     /**
      * Updates the state with new data from the manager.
@@ -55,11 +54,11 @@ class DocumentUploadItemState(
         task: DocumentUploadTask?,
         document: DocumentDto?,
         deletionHandle: DocumentDeletionHandle?,
-        fallbackErrorMessage: String
+        fallbackError: DokusException
     ) {
         currentTask = task
         currentDocument = document
-        this.fallbackErrorMessage = fallbackErrorMessage
+        this.fallbackError = fallbackError
 
         // Handle deletion countdown changes
         if (deletionHandle != currentDeletionHandle) {
@@ -167,7 +166,7 @@ class DocumentUploadItemState(
                 fileName = task.fileName,
                 fileSize = task.fileSize,
                 task = task,
-                error = task.error ?: fallbackErrorMessage
+                error = task.error ?: fallbackError
             )
 
             UploadStatus.COMPLETED -> {
@@ -219,7 +218,7 @@ fun rememberDocumentUploadItemState(
         task,
         document,
         deletionHandle,
-        stringResource(Res.string.upload_failed_message)
+        DokusException.DocumentUploadFailed
     )
 
     return state

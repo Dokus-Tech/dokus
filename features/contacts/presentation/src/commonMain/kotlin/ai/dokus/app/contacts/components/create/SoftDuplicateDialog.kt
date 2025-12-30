@@ -1,11 +1,14 @@
 package ai.dokus.app.contacts.components.create
 
+import ai.dokus.app.contacts.viewmodel.SoftDuplicateReason
 import ai.dokus.app.contacts.viewmodel.SoftDuplicateUi
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_view
 import ai.dokus.app.resources.generated.contacts_cancel
 import ai.dokus.app.resources.generated.contacts_continue_anyway
 import ai.dokus.app.resources.generated.contacts_duplicate_list_hint
+import ai.dokus.app.resources.generated.contacts_duplicate_match_name
+import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
 import ai.dokus.app.resources.generated.contacts_duplicate_warning
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.clickable
@@ -97,6 +100,13 @@ private fun DuplicateItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val reasonText = when (duplicate.matchReason) {
+        SoftDuplicateReason.NameAndCountry ->
+            stringResource(Res.string.contacts_duplicate_match_name_country)
+        SoftDuplicateReason.Name ->
+            stringResource(Res.string.contacts_duplicate_match_name)
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -119,7 +129,7 @@ private fun DuplicateItem(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = duplicate.matchReason,
+                    text = reasonText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

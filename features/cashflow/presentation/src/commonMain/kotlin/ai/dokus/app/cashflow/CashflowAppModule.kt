@@ -9,6 +9,7 @@ import ai.dokus.app.cashflow.navigation.CashflowNavigationProvider
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cashflow
 import ai.dokus.app.resources.generated.cashflow_title
+import ai.dokus.app.resources.generated.chat_title
 import ai.dokus.app.resources.generated.ml
 import ai.dokus.app.resources.generated.settings_group_workspace
 import ai.dokus.app.resources.generated.settings_peppol

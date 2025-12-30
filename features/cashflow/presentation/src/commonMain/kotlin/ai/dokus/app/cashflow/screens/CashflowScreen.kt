@@ -15,8 +15,12 @@ import ai.dokus.app.cashflow.components.isDragDropSupported
 import ai.dokus.app.cashflow.viewmodel.CashflowAction
 import ai.dokus.app.cashflow.viewmodel.CashflowContainer
 import ai.dokus.app.cashflow.viewmodel.CashflowIntent
+import ai.dokus.app.cashflow.viewmodel.CashflowSuccess
 import ai.dokus.app.cashflow.viewmodel.CashflowState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.cashflow_invoice_create_success
 import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
+import ai.dokus.foundation.design.extensions.localized
 import ai.dokus.foundation.design.local.LocalScreenSize
 import ai.dokus.foundation.design.local.isLarge
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
@@ -38,12 +42,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.domain.exceptions.DokusException
 import kotlin.random.Random
 
 /**
@@ -64,6 +70,30 @@ internal fun CashflowScreen(
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.isLarge
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSuccess by remember { mutableStateOf<CashflowSuccess?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    val successMessage = pendingSuccess?.let { success ->
+        when (success) {
+            CashflowSuccess.InvoiceCreated -> stringResource(Res.string.cashflow_invoice_create_success)
+        }
+    }
+    val errorMessage = pendingError?.localized
+
+    LaunchedEffect(successMessage) {
+        if (successMessage != null) {
+            snackbarHostState.showSnackbar(successMessage)
+            pendingSuccess = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
+        }
+    }
 
     // Subscribe to state and handle actions
     val state by container.store.subscribe(DefaultLifecycle) { action ->
@@ -81,10 +111,10 @@ internal fun CashflowScreen(
                 // TODO: Navigate to settings
             }
             is CashflowAction.ShowError -> {
-                // TODO: Show snackbar error
+                pendingError = action.error
             }
             is CashflowAction.ShowSuccess -> {
-                // TODO: Show snackbar success
+                pendingSuccess = action.success
             }
         }
     }
@@ -100,7 +130,6 @@ internal fun CashflowScreen(
     }
 
     // Snackbar for connection status changes
-    val snackbarHostState = remember { SnackbarHostState() }
     ConnectionSnackbarEffect(snackbarHostState)
 
     // Check connection status for offline UI

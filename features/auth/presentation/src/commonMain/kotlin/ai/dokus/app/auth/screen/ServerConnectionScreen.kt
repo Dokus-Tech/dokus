@@ -29,7 +29,6 @@ import ai.dokus.foundation.design.constrains.withContentPadding
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerConfigManager
-import tech.dokus.domain.exceptions.DokusException
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.replace
@@ -222,7 +221,6 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
 
                     // Host input
                     val hostError = (state as? ServerConnectionState.Input)?.hostError
-                        ?.let { stringResource(it) }
                     PTextFieldStandard(
                         fieldName = stringResource(Res.string.auth_host_label),
                         value = state.host,
@@ -230,7 +228,7 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
                             keyboardType = KeyboardType.Uri,
                             imeAction = ImeAction.Next
                         ),
-                        error = hostError?.let { DokusException.Validation.Generic(it) },
+                        error = hostError,
                         modifier = Modifier.fillMaxWidth(),
                         onValueChange = { intent(ServerConnectionIntent.UpdateHost(it)) }
                     )
@@ -239,7 +237,6 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
 
                     // Port input
                     val portError = (state as? ServerConnectionState.Input)?.portError
-                        ?.let { stringResource(it) }
                     PTextFieldStandard(
                         fieldName = stringResource(Res.string.auth_port_label),
                         value = state.port,
@@ -247,7 +244,7 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done
                         ),
-                        error = portError?.let { DokusException.Validation.Generic(it) },
+                        error = portError,
                         modifier = Modifier.fillMaxWidth(),
                         onValueChange = { intent(ServerConnectionIntent.UpdatePort(it)) }
                     )

@@ -1,7 +1,11 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_client
+import ai.dokus.app.resources.generated.invoice_select_client
+import ai.dokus.foundation.design.extensions.localized
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +41,7 @@ fun InvoiceClientSelector(
     selectedClient: ContactDto?,
     clientsState: DokusState<List<ContactDto>>,
     onSelectClient: (ContactDto?) -> Unit,
-    error: String?,
+    error: DokusException?,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -114,10 +118,10 @@ fun InvoiceClientSelector(
             }
         }
 
-        error?.let {
+        error?.let { exception ->
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = it,
+                text = exception.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )

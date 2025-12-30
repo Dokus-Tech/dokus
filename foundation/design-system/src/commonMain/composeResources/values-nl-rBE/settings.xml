@@ -102,6 +102,7 @@
     <string name="peppol_testing_connection">Verbinding testen...</string>
     <string name="peppol_connection_successful">Verbinding geslaagd!</string>
     <string name="peppol_delete_warning">Het verwijderen van Peppol-instellingen schakelt e-factureringmogelijkheden uit.</string>
+    <string name="peppol_delete_success">Peppol-instellingen verwijderd</string>
 
     <!-- Additional Settings -->
     <string name="settings_save_failed">Instellingen opslaan mislukt</string>

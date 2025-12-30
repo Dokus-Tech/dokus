@@ -1,10 +1,7 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.repository.AuthRepository
-import ai.dokus.app.resources.generated.Res
-import ai.dokus.app.resources.generated.profile_save_error
 import ai.dokus.foundation.platform.Logger
-import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -13,6 +10,7 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Name
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 
 internal typealias ProfileSettingsCtx = PipelineContext<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction>
@@ -146,7 +144,13 @@ class ProfileSettingsContainer(
                             editLastName = currentEditLastName
                         )
                     }
-                    action(ProfileSettingsAction.ShowSaveError(getString(Res.string.profile_save_error)))
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.ProfileSaveFailed
+                    } else {
+                        exception
+                    }
+                    action(ProfileSettingsAction.ShowSaveError(displayException))
                 }
             )
         }
