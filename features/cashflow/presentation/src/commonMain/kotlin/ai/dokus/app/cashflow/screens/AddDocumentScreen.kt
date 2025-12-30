@@ -20,9 +20,9 @@ import ai.dokus.app.resources.generated.upload_no_app_hint
 import ai.dokus.app.resources.generated.upload_select_file
 import ai.dokus.app.resources.generated.upload_uploads_title
 import ai.dokus.app.resources.generated.upload_with_camera
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.constrains.padding
-import ai.dokus.foundation.design.local.LocalScreenSize
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.padding
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.domain.model.DocumentDto
 import ai.dokus.foundation.navigation.local.LocalNavController
 import androidx.compose.foundation.layout.Arrangement

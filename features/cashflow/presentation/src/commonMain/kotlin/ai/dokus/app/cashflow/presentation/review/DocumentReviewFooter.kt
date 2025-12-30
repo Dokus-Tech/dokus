@@ -6,8 +6,8 @@ import ai.dokus.app.resources.generated.action_reject
 import ai.dokus.app.resources.generated.action_save
 import ai.dokus.app.resources.generated.cashflow_chat_with_document
 import ai.dokus.app.resources.generated.cashflow_document_confirmed
-import ai.dokus.foundation.design.components.PIcon
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn

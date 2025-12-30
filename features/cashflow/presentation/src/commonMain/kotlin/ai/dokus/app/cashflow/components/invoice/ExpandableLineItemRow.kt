@@ -15,7 +15,7 @@ import ai.dokus.app.resources.generated.invoice_qty
 import ai.dokus.app.resources.generated.invoice_remove
 import ai.dokus.app.resources.generated.invoice_vat_rate
 import ai.dokus.app.resources.generated.invoice_vat_with_rate
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,7 +36,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon

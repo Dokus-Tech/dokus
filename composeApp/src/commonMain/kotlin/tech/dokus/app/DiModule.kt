@@ -1,6 +1,6 @@
 package tech.dokus.app
 
-import ai.dokus.foundation.design.style.ThemeManager
+import tech.dokus.foundation.aura.style.ThemeManager
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.flags.FeatureFlagService

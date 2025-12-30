@@ -8,7 +8,7 @@ import ai.dokus.app.resources.generated.auth_server_connection
 import ai.dokus.app.resources.generated.auth_server_label
 import ai.dokus.app.resources.generated.auth_server_url
 import ai.dokus.app.resources.generated.auth_server_version
-import ai.dokus.foundation.design.components.POutlinedButton
+import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

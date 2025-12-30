@@ -13,9 +13,9 @@ import ai.dokus.app.resources.generated.contacts_name
 import ai.dokus.app.resources.generated.contacts_name_placeholder
 import ai.dokus.app.resources.generated.contacts_vat_number
 import ai.dokus.app.resources.generated.contacts_vat_placeholder
-import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.components.PIcon
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +41,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember

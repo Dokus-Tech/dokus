@@ -1,0 +1,50 @@
+package tech.dokus.foundation.aura.components.navigation
+
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.model.HomeItem
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+
+@Composable
+fun DokusNavigationBar(
+    navItems: List<HomeItem>,
+    selectedItem: HomeItem,
+    onSelectedItemChange: (HomeItem) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    NavigationBar(modifier = modifier) {
+        navItems.forEach {
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        painter = painterResource(it.iconRes),
+                        contentDescription = stringResource(it.titleRes),
+                        modifier = Modifier.size(Constrains.IconSize.small)
+                    )
+                },
+                label = {
+                    Text(
+                        stringResource(it.titleRes),
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                selected = selectedItem == it,
+                alwaysShowLabel = false,
+                onClick = { onSelectedItemChange(it) }
+            )
+        }
+    }
+}

@@ -14,7 +14,7 @@ import tech.dokus.foundation.app.SettingsPriority
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.settings_group_account
 import ai.dokus.app.resources.generated.settings_profile
-import ai.dokus.foundation.design.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import androidx.compose.material.icons.Icons

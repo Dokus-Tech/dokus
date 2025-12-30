@@ -24,8 +24,8 @@ import ai.dokus.app.resources.generated.document_table_date
 import ai.dokus.app.resources.generated.document_table_invoice
 import ai.dokus.app.resources.generated.document_table_more_options
 import ai.dokus.app.resources.generated.document_table_view_details
-import ai.dokus.foundation.design.components.CashflowType
-import ai.dokus.foundation.design.components.CashflowTypeBadge
+import tech.dokus.foundation.aura.components.CashflowType
+import tech.dokus.foundation.aura.components.CashflowTypeBadge
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.FinancialDocumentDto

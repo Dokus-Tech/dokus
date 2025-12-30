@@ -27,10 +27,10 @@ import ai.dokus.app.resources.generated.contacts_note_deleted
 import ai.dokus.app.resources.generated.contacts_note_updated
 import ai.dokus.app.resources.generated.contacts_peppol_update_success
 import ai.dokus.app.resources.generated.contacts_select_all
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.OfflineOverlay
-import ai.dokus.foundation.design.components.common.ShimmerLine
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.OfflineOverlay
+import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.extensions.localized
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo

@@ -1,12 +1,12 @@
 package tech.dokus.app.screens
 
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.components.navigation.DokusNavigationBar
-import ai.dokus.foundation.design.components.navigation.DokusNavigationRail
-import ai.dokus.foundation.design.components.text.AppNameText
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.design.local.isLarge
-import ai.dokus.foundation.design.model.HomeItem
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
+import tech.dokus.foundation.aura.components.navigation.DokusNavigationRail
+import tech.dokus.foundation.aura.components.text.AppNameText
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.aura.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import ai.dokus.foundation.navigation.animation.TransitionsProvider
 import ai.dokus.foundation.navigation.navigateTo

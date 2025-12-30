@@ -3,7 +3,7 @@ package tech.dokus.app
 import ai.dokus.app.auth.AuthAppModule
 import ai.dokus.app.cashflow.CashflowAppModule
 import tech.dokus.contacts.ContactsAppModule
-import ai.dokus.foundation.design.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItem
 import ai.dokus.foundation.navigation.NavigationProvider
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module

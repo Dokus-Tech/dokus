@@ -9,10 +9,10 @@ import ai.dokus.app.resources.generated.workspace_legal_name
 import ai.dokus.app.resources.generated.workspace_type_company
 import ai.dokus.app.resources.generated.workspace_type_freelancer
 import ai.dokus.app.resources.generated.workspace_vat_number
-import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
-import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
-import ai.dokus.foundation.design.components.text.SectionTitle
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
+import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName
+import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.TenantType

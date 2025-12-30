@@ -7,7 +7,7 @@ import ai.dokus.app.resources.generated.cashflow_preview_load_more
 import ai.dokus.app.resources.generated.cashflow_preview_page_failed
 import ai.dokus.app.resources.generated.cashflow_preview_page_label
 import ai.dokus.app.resources.generated.state_retry
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

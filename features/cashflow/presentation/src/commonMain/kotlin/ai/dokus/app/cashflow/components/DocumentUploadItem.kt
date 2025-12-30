@@ -25,7 +25,7 @@ import ai.dokus.app.resources.generated.common_file_size_bytes
 import ai.dokus.app.resources.generated.common_file_size_kb
 import ai.dokus.app.resources.generated.common_file_size_mb
 import ai.dokus.app.resources.generated.upload_status_waiting
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.model.DocumentDto
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween

@@ -14,9 +14,9 @@ import ai.dokus.app.resources.generated.country_france
 import ai.dokus.app.resources.generated.country_netherlands
 import ai.dokus.app.resources.generated.workspace_address
 import ai.dokus.app.resources.generated.workspace_vat_number
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.design.components.fields.PTextFieldTaxNumber
-import ai.dokus.foundation.design.components.text.SectionTitle
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
+import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
 import androidx.compose.foundation.clickable

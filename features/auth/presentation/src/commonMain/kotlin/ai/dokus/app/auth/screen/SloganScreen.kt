@@ -6,9 +6,9 @@ import ai.dokus.app.resources.generated.brand_motto
 import ai.dokus.app.resources.generated.copyright
 import ai.dokus.app.resources.generated.slogan_line_2
 import ai.dokus.app.resources.generated.slogan_line_3
-import ai.dokus.foundation.design.tooling.PreviewParameters
-import ai.dokus.foundation.design.tooling.PreviewParametersProvider
-import ai.dokus.foundation.design.tooling.TestWrapper
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing

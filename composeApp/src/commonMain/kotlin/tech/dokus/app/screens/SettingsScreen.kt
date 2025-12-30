@@ -8,10 +8,10 @@ import ai.dokus.app.resources.generated.settings_select_hint
 import ai.dokus.app.resources.generated.settings_select_prompt
 import ai.dokus.app.resources.generated.settings_select_workspace
 import ai.dokus.app.resources.generated.settings_unknown_section
-import ai.dokus.foundation.design.components.ListSettingsItem
-import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
-import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.local.LocalScreenSize
+import tech.dokus.foundation.aura.components.ListSettingsItem
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.AuthDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController

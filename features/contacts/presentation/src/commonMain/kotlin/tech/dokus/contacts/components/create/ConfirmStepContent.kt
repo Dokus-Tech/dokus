@@ -18,10 +18,10 @@ import ai.dokus.app.resources.generated.country_belgium
 import ai.dokus.app.resources.generated.country_france
 import ai.dokus.app.resources.generated.country_netherlands
 import ai.dokus.app.resources.generated.field_optional
-import ai.dokus.foundation.design.components.PPrimaryButton
-import ai.dokus.foundation.design.components.fields.PTextFieldEmail
-import ai.dokus.foundation.design.components.fields.PTextFieldPhone
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
+import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

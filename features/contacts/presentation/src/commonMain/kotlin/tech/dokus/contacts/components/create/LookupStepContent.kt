@@ -18,9 +18,9 @@ import ai.dokus.app.resources.generated.country_belgium
 import ai.dokus.app.resources.generated.country_france
 import ai.dokus.app.resources.generated.country_netherlands
 import ai.dokus.app.resources.generated.state_retry
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.design.constrains.Constrains
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.constrains.Constrains
+import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

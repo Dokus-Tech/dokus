@@ -6,9 +6,9 @@ import ai.dokus.app.resources.generated.auth_company_name_label
 import ai.dokus.app.resources.generated.auth_company_name_prompt
 import ai.dokus.app.resources.generated.auth_company_name_searching
 import ai.dokus.app.resources.generated.auth_company_name_subtitle
-import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
-import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.components.fields.PTextFieldWorkspaceName
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

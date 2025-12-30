@@ -3,14 +3,13 @@ package ai.dokus.app.cashflow.presentation.review
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.action_close
 import ai.dokus.app.resources.generated.cashflow_document_preview_title
-import ai.dokus.foundation.design.components.PIcon
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.components.PIcon
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width

@@ -12,7 +12,7 @@ import ai.dokus.app.resources.generated.invoice_search_clients
 import ai.dokus.app.resources.generated.invoice_select_client
 import ai.dokus.app.resources.generated.peppol_id_missing
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween

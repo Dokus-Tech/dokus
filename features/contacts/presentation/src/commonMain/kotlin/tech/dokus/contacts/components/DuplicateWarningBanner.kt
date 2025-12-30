@@ -7,7 +7,7 @@ import ai.dokus.app.resources.generated.action_cancel
 import ai.dokus.app.resources.generated.contacts_continue_anyway
 import ai.dokus.app.resources.generated.contacts_duplicate_warning
 import ai.dokus.app.resources.generated.contacts_merge
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

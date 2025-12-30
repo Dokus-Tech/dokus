@@ -78,7 +78,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.foundation.design"
+    namespace = "tech.dokus.foundation.aura"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

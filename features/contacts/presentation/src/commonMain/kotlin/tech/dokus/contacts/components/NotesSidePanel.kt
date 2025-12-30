@@ -18,7 +18,7 @@ import ai.dokus.app.resources.generated.contacts_note_by
 import ai.dokus.app.resources.generated.contacts_note_content
 import ai.dokus.app.resources.generated.contacts_notes
 import ai.dokus.app.resources.generated.contacts_saving
-import ai.dokus.foundation.design.components.fields.PTextFieldFree
+import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

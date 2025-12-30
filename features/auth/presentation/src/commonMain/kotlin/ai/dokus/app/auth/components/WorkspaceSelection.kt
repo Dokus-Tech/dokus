@@ -3,10 +3,10 @@ package ai.dokus.app.auth.components
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.workspace_select_title
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.text.SectionTitle
-import ai.dokus.foundation.design.components.tiles.AddCompanyTile
-import ai.dokus.foundation.design.components.tiles.CompanyTile
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
+import tech.dokus.foundation.aura.components.tiles.CompanyTile
 import tech.dokus.domain.model.Tenant
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi

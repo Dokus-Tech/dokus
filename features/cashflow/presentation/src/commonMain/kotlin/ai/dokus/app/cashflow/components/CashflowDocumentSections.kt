@@ -3,8 +3,8 @@ package ai.dokus.app.cashflow.components
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cashflow_no_documents
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerLine
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
 import androidx.compose.foundation.layout.Arrangement

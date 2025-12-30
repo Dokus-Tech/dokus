@@ -10,7 +10,7 @@ import ai.dokus.app.resources.generated.contacts_duplicate_list_hint
 import ai.dokus.app.resources.generated.contacts_duplicate_match_name
 import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
 import ai.dokus.app.resources.generated.contacts_duplicate_warning
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -19,10 +19,10 @@ import ai.dokus.app.cashflow.viewmodel.CashflowSuccess
 import ai.dokus.app.cashflow.viewmodel.CashflowState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.cashflow_invoice_create_success
-import ai.dokus.foundation.design.components.common.PTopAppBarSearchAction
-import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.local.LocalScreenSize
-import ai.dokus.foundation.design.local.isLarge
+import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
 import ai.dokus.foundation.navigation.destinations.CashFlowDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo

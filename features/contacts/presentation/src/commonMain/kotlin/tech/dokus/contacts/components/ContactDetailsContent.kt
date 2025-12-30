@@ -35,8 +35,8 @@ import ai.dokus.app.resources.generated.contacts_tags
 import ai.dokus.app.resources.generated.contacts_vat_number
 import ai.dokus.app.resources.generated.contacts_vendor
 import ai.dokus.app.resources.generated.common_percent_value
-import ai.dokus.foundation.design.components.common.DokusErrorContent
-import ai.dokus.foundation.design.components.common.ShimmerLine
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ShimmerLine
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

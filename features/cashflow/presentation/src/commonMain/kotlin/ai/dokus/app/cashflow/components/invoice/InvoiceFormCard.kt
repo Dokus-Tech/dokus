@@ -5,11 +5,11 @@ import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.invoice_details_title
 import ai.dokus.app.resources.generated.invoice_notes_optional
 import ai.dokus.app.resources.generated.invoice_save_as_draft
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.app.state.DokusState
-import ai.dokus.foundation.design.components.PButton
-import ai.dokus.foundation.design.components.PButtonVariant
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

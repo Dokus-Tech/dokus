@@ -10,8 +10,8 @@ import ai.dokus.app.resources.generated.settings_group_workspace
 import ai.dokus.app.resources.generated.settings_team
 import ai.dokus.app.resources.generated.settings_workspace_details
 import ai.dokus.app.resources.generated.user
-import ai.dokus.foundation.design.model.HomeItem
-import ai.dokus.foundation.design.model.HomeItemPriority
+import tech.dokus.foundation.aura.model.HomeItem
+import tech.dokus.foundation.aura.model.HomeItemPriority
 import ai.dokus.foundation.navigation.destinations.HomeDestination
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import androidx.compose.material.icons.Icons

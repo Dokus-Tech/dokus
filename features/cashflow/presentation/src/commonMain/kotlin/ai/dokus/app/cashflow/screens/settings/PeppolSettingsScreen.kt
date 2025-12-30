@@ -21,9 +21,9 @@ import ai.dokus.app.resources.generated.peppol_provider_recommand_description
 import ai.dokus.app.resources.generated.peppol_select_provider_hint
 import ai.dokus.app.resources.generated.peppol_settings_title
 import ai.dokus.app.resources.generated.profile_danger_zone
-import ai.dokus.foundation.design.components.POutlinedButton
-import ai.dokus.foundation.design.components.common.PTopAppBar
-import ai.dokus.foundation.design.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.domain.model.PeppolProvider
 import ai.dokus.foundation.navigation.destinations.SettingsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController

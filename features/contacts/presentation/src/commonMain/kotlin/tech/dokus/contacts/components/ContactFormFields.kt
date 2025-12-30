@@ -36,9 +36,9 @@ import ai.dokus.app.resources.generated.contacts_tags_hint
 import ai.dokus.app.resources.generated.contacts_vat_number
 import ai.dokus.app.resources.generated.field_optional
 import ai.dokus.app.resources.generated.field_required
-import ai.dokus.foundation.design.components.fields.PTextFieldPhone
-import ai.dokus.foundation.design.components.fields.PTextFieldStandard
-import ai.dokus.foundation.design.extensions.localized
+import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
+import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

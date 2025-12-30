@@ -5,11 +5,11 @@ import ai.dokus.app.resources.generated.invoice_subtotal
 import ai.dokus.app.resources.generated.invoice_title
 import ai.dokus.app.resources.generated.invoice_total
 import ai.dokus.app.resources.generated.invoice_vat
-import ai.dokus.foundation.design.components.PDashedDivider
-import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.tooling.PreviewParameters
-import ai.dokus.foundation.design.tooling.PreviewParametersProvider
-import ai.dokus.foundation.design.tooling.TestWrapper
+import tech.dokus.foundation.aura.components.PDashedDivider
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.domain.enums.InvoiceStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

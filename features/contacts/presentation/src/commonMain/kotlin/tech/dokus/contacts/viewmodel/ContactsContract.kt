@@ -12,7 +12,7 @@ import ai.dokus.app.resources.generated.contacts_sort_created_oldest
 import ai.dokus.app.resources.generated.contacts_sort_default
 import ai.dokus.app.resources.generated.contacts_sort_name_asc
 import ai.dokus.app.resources.generated.contacts_sort_name_desc
-import ai.dokus.foundation.design.components.dropdown.FilterOption
+import tech.dokus.foundation.aura.components.dropdown.FilterOption
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIAction

@@ -3,8 +3,8 @@ package tech.dokus.contacts.screens
 import tech.dokus.contacts.components.create.ConfirmStepContent
 import tech.dokus.contacts.components.create.LookupStepContent
 import tech.dokus.contacts.components.create.ManualStepContent
-import ai.dokus.foundation.design.extensions.localized
-import ai.dokus.foundation.design.local.LocalScreenSize
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo

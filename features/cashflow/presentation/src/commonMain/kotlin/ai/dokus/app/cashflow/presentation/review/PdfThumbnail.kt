@@ -6,7 +6,7 @@ import ai.dokus.app.resources.generated.cashflow_no_preview
 import ai.dokus.app.resources.generated.cashflow_page_plural
 import ai.dokus.app.resources.generated.cashflow_page_single
 import ai.dokus.app.resources.generated.state_loading
-import ai.dokus.foundation.design.constrains.Constrains
+import tech.dokus.foundation.aura.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
