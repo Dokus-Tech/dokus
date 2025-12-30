@@ -1,6 +1,5 @@
 package ai.dokus.ai.config
 
-import tech.dokus.domain.model.ai.AiProvider
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
@@ -8,6 +7,7 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.OllamaModels
+import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -123,17 +123,17 @@ object AIProviderFactory {
     private fun createOpenAIModel(modelName: String): LLModel {
         return when (modelName) {
             "gpt-4o", "gpt4o" -> OpenAIModels.Chat.GPT4o
-            "gpt-4o-mini", "gpt4o-mini" -> OpenAIModels.CostOptimized.GPT4oMini
+            "gpt-4o-mini", "gpt4o-mini" -> OpenAIModels.Chat.GPT4oMini
             "gpt-4.1", "gpt-4-1" -> OpenAIModels.Chat.GPT4_1
-            "gpt-4.1-mini" -> OpenAIModels.CostOptimized.GPT4_1Mini
-            "gpt-4.1-nano" -> OpenAIModels.CostOptimized.GPT4_1Nano
+            "gpt-4.1-mini" -> OpenAIModels.Chat.GPT4_1Mini
+            "gpt-4.1-nano" -> OpenAIModels.Chat.GPT4_1Nano
             "gpt-5" -> OpenAIModels.Chat.GPT5
             "gpt-5-mini" -> OpenAIModels.Chat.GPT5Mini
-            "o3-mini" -> OpenAIModels.CostOptimized.O3Mini
-            "o4-mini" -> OpenAIModels.CostOptimized.O4Mini
+            "o3-mini" -> OpenAIModels.Chat.O3Mini
+            "o4-mini" -> OpenAIModels.Chat.O4Mini
             else -> {
                 logger.warn("Unknown OpenAI model: $modelName, defaulting to GPT-4o-mini")
-                OpenAIModels.CostOptimized.GPT4oMini
+                OpenAIModels.Chat.GPT4oMini
             }
         }
     }
