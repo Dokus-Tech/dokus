@@ -1,4 +1,4 @@
-package ai.dokus.ai.config
+package tech.dokus.ai.config
 
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
@@ -23,7 +23,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
  * - **Ollama**: Uses `nomic-embed-text` (768 dimensions) by default
  * - **OpenAI**: Uses `text-embedding-3-small` (1536 dimensions) by default
  *
- * Note: Embedding generation is handled by [ai.dokus.ai.services.EmbeddingService] using direct
+ * Note: Embedding generation is handled by [tech.dokus.ai.services.EmbeddingService] using direct
  * HTTP calls to provider APIs, as Koog doesn't have built-in embedding support for Ollama.
  */
 object AIProviderFactory {

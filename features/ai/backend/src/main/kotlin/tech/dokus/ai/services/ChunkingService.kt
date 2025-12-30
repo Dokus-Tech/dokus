@@ -1,4 +1,4 @@
-package ai.dokus.ai.services
+package tech.dokus.ai.services
 
 import tech.dokus.domain.model.ChunkMetadata
 import tech.dokus.domain.model.ChunkProvenance

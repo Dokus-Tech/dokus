@@ -4,7 +4,7 @@ plugins {
     `java-library`
 }
 
-group = "ai.dokus.ai"
+group = "tech.dokus.ai"
 version = "1.0.0"
 
 kotlin {

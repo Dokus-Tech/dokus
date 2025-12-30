@@ -1,8 +1,8 @@
-package ai.dokus.ai.agents
+package tech.dokus.ai.agents
 
-import ai.dokus.ai.models.ExtractedInvoiceData
-import ai.dokus.ai.models.FieldProvenance
-import ai.dokus.ai.models.InvoiceProvenance
+import tech.dokus.ai.models.BillProvenance
+import tech.dokus.ai.models.ExtractedBillData
+import tech.dokus.ai.models.FieldProvenance
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
@@ -12,17 +12,15 @@ import kotlinx.serialization.json.Json
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
- * Agent responsible for extracting data from invoice documents.
- * Step 2a in the two-step document processing pipeline (for invoices and bills).
+ * Agent responsible for extracting data from bill (supplier invoice) documents.
+ * Step 2b in the two-step document processing pipeline (for bills).
  *
- * This agent extracts structured invoice data AND provenance information,
+ * Bills are incoming invoices from suppliers, as opposed to outgoing invoices to clients.
+ *
+ * This agent extracts structured bill data AND provenance information,
  * linking each extracted field back to its source location in the document.
- * Provenance enables:
- * - Highlighting source text in document preview for user verification
- * - Per-field confidence scores for transparency
- * - Audit trail linking extracted values to evidence
  */
-class InvoiceExtractionAgent(
+class BillExtractionAgent(
     private val executor: PromptExecutor,
     private val model: LLModel
 ) {
@@ -33,16 +31,20 @@ class InvoiceExtractionAgent(
     }
 
     private val systemPrompt = """
-        You are an invoice data extraction specialist with forensic attention to detail.
-        Extract structured data from business invoices AND track the evidence for each extraction.
+        You are a bill/supplier invoice data extraction specialist with forensic attention to detail.
+        Extract structured data from supplier invoices (bills) AND track the evidence for each extraction.
         Always respond with valid JSON matching the requested schema.
 
+        A "bill" is an invoice you RECEIVE from a supplier (you owe them money).
+        This is different from an "invoice" which is what you SEND to clients (they owe you money).
+
         Extract these fields:
-        - Vendor: name, VAT number (BE format or international), address
-        - Invoice: number, issue date, due date, payment terms
-        - Line items: description, quantity, unit price, VAT rate, total
-        - Totals: subtotal, VAT breakdown by rate, total amount, currency
-        - Payment: bank account (IBAN/BIC), payment reference
+        - Supplier: name, VAT number (BE format or international), address
+        - Bill: invoice number, issue date, due date
+        - Amount: total amount, VAT amount, VAT rate, currency
+        - Line items (if present): description, quantity, unit price, VAT rate, total
+        - Category: suggested expense category (OFFICE_SUPPLIES, HARDWARE, SOFTWARE, TRAVEL, etc.)
+        - Payment: bank account (IBAN), payment terms
 
         CRITICAL: For each field you extract, also provide provenance information:
         - sourceText: The EXACT text snippet from the document you extracted the value from
@@ -59,15 +61,34 @@ class InvoiceExtractionAgent(
         - Overall confidence should reflect how complete and accurate the extraction is (0.0 to 1.0)
         - For provenance sourceText, quote the EXACT text from the document (don't paraphrase)
 
+        Suggested expense categories for Belgian freelancers:
+        - OFFICE_SUPPLIES: Paper, pens, office consumables
+        - HARDWARE: Computers, monitors, peripherals
+        - SOFTWARE: Licenses, subscriptions, SaaS
+        - TRAVEL: Hotels, flights, transport
+        - TRANSPORTATION: Fuel, public transport, parking
+        - MEALS: Business meals, restaurants
+        - PROFESSIONAL_SERVICES: Accountant, lawyer, consultants
+        - UTILITIES: Internet, phone, electricity
+        - TRAINING: Courses, certifications, books
+        - MARKETING: Advertising, website, branding
+        - INSURANCE: Professional liability, health
+        - RENT: Office space, coworking
+        - OTHER: Miscellaneous expenses
+
         Respond with a JSON object matching this schema:
         {
-            "vendorName": "string or null",
-            "vendorVatNumber": "string or null",
-            "vendorAddress": "string or null",
+            "supplierName": "string or null",
+            "supplierVatNumber": "string or null",
+            "supplierAddress": "string or null",
             "invoiceNumber": "string or null",
             "issueDate": "YYYY-MM-DD or null",
             "dueDate": "YYYY-MM-DD or null",
-            "paymentTerms": "string or null",
+            "currency": "EUR",
+            "amount": "string or null",
+            "vatAmount": "string or null",
+            "vatRate": "21%",
+            "totalAmount": "string or null",
             "lineItems": [
                 {
                     "description": "string",
@@ -77,40 +98,25 @@ class InvoiceExtractionAgent(
                     "total": "string or null"
                 }
             ],
-            "currency": "EUR",
-            "subtotal": "string or null",
-            "vatBreakdown": [
-                {
-                    "rate": "21%",
-                    "base": "string or null",
-                    "amount": "string or null"
-                }
-            ],
-            "totalVatAmount": "string or null",
-            "totalAmount": "string or null",
-            "iban": "string or null",
-            "bic": "string or null",
-            "paymentReference": "string or null",
+            "category": "EXPENSE_CATEGORY or null",
+            "description": "brief description of what was purchased or null",
+            "paymentTerms": "string or null",
+            "bankAccount": "IBAN or null",
+            "notes": "string or null",
             "confidence": 0.0 to 1.0,
             "provenance": {
-                "vendorName": {
-                    "sourceText": "exact text from document or null",
-                    "fieldConfidence": 0.0 to 1.0 or null,
-                    "extractionNotes": "explanation if ambiguous or null"
-                },
-                "vendorVatNumber": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "vendorAddress": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
+                "supplierName": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
+                "supplierVatNumber": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
+                "supplierAddress": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
                 "invoiceNumber": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
                 "issueDate": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
                 "dueDate": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "paymentTerms": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
+                "amount": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
+                "vatAmount": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
+                "vatRate": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
                 "currency": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "subtotal": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "totalVatAmount": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "totalAmount": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "iban": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "bic": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
-                "paymentReference": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." }
+                "category": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." },
+                "description": { "sourceText": "...", "fieldConfidence": 0.0-1.0, "extractionNotes": "..." }
             }
         }
 
@@ -119,16 +125,16 @@ class InvoiceExtractionAgent(
     """.trimIndent()
 
     /**
-     * Extract invoice data from OCR text.
+     * Extract bill data from OCR text.
      *
      * @param ocrText The raw OCR text extracted from the document
-     * @return ExtractedInvoiceData with values and provenance information
+     * @return ExtractedBillData with values and provenance information
      */
-    suspend fun extract(ocrText: String): ExtractedInvoiceData {
-        logger.debug("Extracting invoice data with provenance (${ocrText.length} chars)")
+    suspend fun extract(ocrText: String): ExtractedBillData {
+        logger.debug("Extracting bill data with provenance (${ocrText.length} chars)")
 
         val userPrompt = """
-            Extract invoice data from this text:
+            Extract bill/supplier invoice data from this text:
 
             $ocrText
         """.trimIndent()
@@ -139,7 +145,7 @@ class InvoiceExtractionAgent(
                 llmModel = model,
                 strategy = singleRunStrategy(),
                 toolRegistry = ToolRegistry.EMPTY,
-                id = "invoice-extractor",
+                id = "bill-extractor",
                 systemPrompt = systemPrompt
             )
 
@@ -149,45 +155,43 @@ class InvoiceExtractionAgent(
             // Enhance provenance with text offsets by finding sourceText in the OCR text
             enhanceProvenanceWithOffsets(extractedData, ocrText)
         } catch (e: Exception) {
-            logger.error("Failed to extract invoice data", e)
-            ExtractedInvoiceData(confidence = 0.0)
+            logger.error("Failed to extract bill data", e)
+            ExtractedBillData(confidence = 0.0)
         }
     }
 
     /**
      * Enhance provenance data by finding the character offsets of sourceText
-     * within the original OCR text. This allows for precise highlighting
-     * in the document preview.
+     * within the original OCR text.
      */
     private fun enhanceProvenanceWithOffsets(
-        extractedData: ExtractedInvoiceData,
+        extractedData: ExtractedBillData,
         ocrText: String
-    ): ExtractedInvoiceData {
+    ): ExtractedBillData {
         val provenance = extractedData.provenance ?: return extractedData
 
         return extractedData.copy(
-            provenance = InvoiceProvenance(
-                vendorName = enhanceFieldProvenance(provenance.vendorName, ocrText),
-                vendorVatNumber = enhanceFieldProvenance(provenance.vendorVatNumber, ocrText),
-                vendorAddress = enhanceFieldProvenance(provenance.vendorAddress, ocrText),
+            provenance = BillProvenance(
+                supplierName = enhanceFieldProvenance(provenance.supplierName, ocrText),
+                supplierVatNumber = enhanceFieldProvenance(provenance.supplierVatNumber, ocrText),
+                supplierAddress = enhanceFieldProvenance(provenance.supplierAddress, ocrText),
                 invoiceNumber = enhanceFieldProvenance(provenance.invoiceNumber, ocrText),
                 issueDate = enhanceFieldProvenance(provenance.issueDate, ocrText),
                 dueDate = enhanceFieldProvenance(provenance.dueDate, ocrText),
-                paymentTerms = enhanceFieldProvenance(provenance.paymentTerms, ocrText),
+                amount = enhanceFieldProvenance(provenance.amount, ocrText),
+                vatAmount = enhanceFieldProvenance(provenance.vatAmount, ocrText),
+                vatRate = enhanceFieldProvenance(provenance.vatRate, ocrText),
                 currency = enhanceFieldProvenance(provenance.currency, ocrText),
-                subtotal = enhanceFieldProvenance(provenance.subtotal, ocrText),
-                totalVatAmount = enhanceFieldProvenance(provenance.totalVatAmount, ocrText),
-                totalAmount = enhanceFieldProvenance(provenance.totalAmount, ocrText),
-                iban = enhanceFieldProvenance(provenance.iban, ocrText),
-                bic = enhanceFieldProvenance(provenance.bic, ocrText),
-                paymentReference = enhanceFieldProvenance(provenance.paymentReference, ocrText)
+                category = enhanceFieldProvenance(provenance.category, ocrText),
+                description = enhanceFieldProvenance(provenance.description, ocrText),
+                paymentTerms = enhanceFieldProvenance(provenance.paymentTerms, ocrText),
+                bankAccount = enhanceFieldProvenance(provenance.bankAccount, ocrText)
             )
         )
     }
 
     /**
      * Find the sourceText within the OCR text and add character offsets.
-     * Uses case-insensitive, whitespace-normalized matching for robustness.
      */
     private fun enhanceFieldProvenance(
         provenance: FieldProvenance?,
@@ -198,29 +202,22 @@ class InvoiceExtractionAgent(
         val sourceText = provenance.sourceText
         if (sourceText.isNullOrBlank()) return provenance
 
-        // Already has offsets, no need to compute
         if (provenance.startOffset != null && provenance.endOffset != null) {
             return provenance
         }
 
-        // Try exact match first
         var startIndex = ocrText.indexOf(sourceText)
 
-        // If exact match fails, try case-insensitive
         if (startIndex < 0) {
             startIndex = ocrText.lowercase().indexOf(sourceText.lowercase())
         }
 
-        // If still no match, try normalized whitespace matching
         if (startIndex < 0) {
             val normalizedSource = normalizeWhitespace(sourceText)
             val normalizedOcr = normalizeWhitespace(ocrText)
             val normalizedIndex = normalizedOcr.indexOf(normalizedSource)
 
-            // If found in normalized, we need to find the approximate position
-            // This is an approximation - exact offset may differ due to whitespace
             if (normalizedIndex >= 0) {
-                // Estimate position by ratio
                 val ratio = normalizedIndex.toFloat() / normalizedOcr.length.toFloat()
                 startIndex = (ratio * ocrText.length).toInt()
                     .coerceIn(0, (ocrText.length - sourceText.length).coerceAtLeast(0))
@@ -239,20 +236,17 @@ class InvoiceExtractionAgent(
         }
     }
 
-    /**
-     * Normalize whitespace for fuzzy matching (collapses multiple spaces, trims).
-     */
     private fun normalizeWhitespace(text: String): String {
         return text.replace(Regex("\\s+"), " ").trim().lowercase()
     }
 
-    private fun parseExtractionResponse(response: String): ExtractedInvoiceData {
+    private fun parseExtractionResponse(response: String): ExtractedBillData {
         return try {
             val jsonString = extractJson(response)
-            json.decodeFromString<ExtractedInvoiceData>(jsonString)
+            json.decodeFromString<ExtractedBillData>(jsonString)
         } catch (e: Exception) {
             logger.warn("Failed to parse extraction response: ${response.take(500)}", e)
-            ExtractedInvoiceData(confidence = 0.0)
+            ExtractedBillData(confidence = 0.0)
         }
     }
 

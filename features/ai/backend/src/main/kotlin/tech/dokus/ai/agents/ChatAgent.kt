@@ -1,6 +1,6 @@
-package ai.dokus.ai.agents
+package tech.dokus.ai.agents
 
-import ai.dokus.ai.services.RAGService
+import tech.dokus.ai.services.RAGService
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.RetrievedChunk

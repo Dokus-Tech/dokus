@@ -1,13 +1,13 @@
 package tech.dokus.backend.worker
 
-import ai.dokus.ai.models.meetsMinimalThreshold
-import ai.dokus.ai.models.toDomainType
-import ai.dokus.ai.models.toExtractedDocumentData
-import ai.dokus.ai.service.AIService
+import tech.dokus.ai.models.meetsMinimalThreshold
+import tech.dokus.ai.models.toDomainType
+import tech.dokus.ai.models.toExtractedDocumentData
+import tech.dokus.ai.service.AIService
 import tech.dokus.domain.enums.IndexingStatus
-import ai.dokus.ai.services.ChunkingService
-import ai.dokus.ai.services.EmbeddingException
-import ai.dokus.ai.services.EmbeddingService
+import tech.dokus.ai.services.ChunkingService
+import tech.dokus.ai.services.EmbeddingException
+import tech.dokus.ai.services.EmbeddingService
 import ai.dokus.foundation.database.entity.IngestionItemEntity
 import ai.dokus.foundation.database.repository.processor.ProcessorIngestionRepository
 import kotlinx.coroutines.CancellationException

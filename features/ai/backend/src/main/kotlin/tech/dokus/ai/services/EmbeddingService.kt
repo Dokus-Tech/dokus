@@ -1,4 +1,4 @@
-package ai.dokus.ai.services
+package tech.dokus.ai.services
 
 import tech.dokus.domain.model.ai.AiProvider
 import tech.dokus.foundation.backend.config.AIConfig

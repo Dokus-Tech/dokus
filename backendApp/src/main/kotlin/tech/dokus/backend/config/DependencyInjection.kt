@@ -29,9 +29,9 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
-import ai.dokus.ai.service.AIService
-import ai.dokus.ai.services.ChunkingService
-import ai.dokus.ai.services.EmbeddingService
+import tech.dokus.ai.service.AIService
+import tech.dokus.ai.services.ChunkingService
+import tech.dokus.ai.services.EmbeddingService
 import tech.dokus.ocr.OcrEngine
 import tech.dokus.ocr.engine.TesseractOcrEngine
 import tech.dokus.backend.services.auth.AuthService
