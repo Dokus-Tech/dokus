@@ -100,9 +100,11 @@ sealed interface CreateContactState : MVIState {
      *
      * User searches by company name or VAT number.
      * If VAT exists locally, shows hard block banner.
+     *
+     * Note: The search query is NOT stored in state to avoid TextField race conditions.
+     * The query is kept as local UI state and observed via snapshotFlow.
      */
     data class LookupStep(
-        val query: String = "",
         val lookupState: LookupUiState = LookupUiState.Idle,
         val duplicateVat: DuplicateVatUi? = null,
     ) : CreateContactState
@@ -146,8 +148,14 @@ sealed interface CreateContactIntent : MVIIntent {
 
     // === Lookup Step ===
 
-    /** User typed in the search field */
-    data class QueryChanged(val query: String) : CreateContactIntent
+    /**
+     * Trigger search with debounced query.
+     * Called from UI after debounce via snapshotFlow.
+     */
+    data class Search(val query: String) : CreateContactIntent
+
+    /** Clear search results (when query is cleared or too short) */
+    data object ClearSearch : CreateContactIntent
 
     /** User selected a result from the lookup list */
     data class SelectResult(val entity: EntityLookup) : CreateContactIntent

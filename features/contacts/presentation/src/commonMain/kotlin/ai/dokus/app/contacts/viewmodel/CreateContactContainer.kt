@@ -4,7 +4,6 @@ import ai.dokus.app.contacts.usecases.CreateContactUseCase
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import ai.dokus.foundation.platform.Logger
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
@@ -40,11 +39,6 @@ internal class CreateContactContainer(
     private val createContact: CreateContactUseCase,
 ) : Container<CreateContactState, CreateContactIntent, CreateContactAction> {
 
-    companion object {
-        private const val SEARCH_DEBOUNCE_MS = 300L
-        private const val MIN_SEARCH_LENGTH = 3
-    }
-
     private val logger = Logger.forClass<CreateContactContainer>()
     private var searchJob: Job? = null
 
@@ -53,7 +47,8 @@ internal class CreateContactContainer(
             reduce { intent ->
                 when (intent) {
                     // Lookup step
-                    is CreateContactIntent.QueryChanged -> handleQueryChanged(intent.query)
+                    is CreateContactIntent.Search -> handleSearch(intent.query)
+                    is CreateContactIntent.ClearSearch -> handleClearSearch()
                     is CreateContactIntent.SelectResult -> handleSelectResult(intent.entity)
                     is CreateContactIntent.GoToManualEntry -> handleGoToManualEntry()
 
@@ -95,37 +90,43 @@ internal class CreateContactContainer(
     // LOOKUP STEP HANDLERS
     // ============================================================================
 
-    private suspend fun CreateContactCtx.handleQueryChanged(query: String) {
-        // Cancel previous search
+    /**
+     * Handle search request (already debounced by UI).
+     * Called from snapshotFlow after debounce delay.
+     */
+    private suspend fun CreateContactCtx.handleSearch(query: String) {
+        // Cancel any previous search job
         searchJob?.cancel()
 
         withState<CreateContactState.LookupStep, _> {
-            // Update query immediately
-            updateState {
-                copy(
-                    query = query,
-                    lookupState = LookupUiState.Idle,
-                    duplicateVat = null
-                )
+            // Clear previous duplicate warning
+            if (duplicateVat != null) {
+                updateState { copy(duplicateVat = null) }
             }
 
             // Use VatNumber for validation and normalization
             val vatNumber = VatNumber(query)
 
             if (vatNumber.isValid) {
-                // Valid VAT pattern detected - check local first, then immediate remote
+                // Valid VAT pattern - check local first, then remote
                 handleVatQuery(vatNumber.normalized)
-            } else if (query.length >= MIN_SEARCH_LENGTH) {
-                // Name search - debounce
+            } else {
+                // Name search - execute immediately (debounce already happened in UI)
                 updateState { copy(lookupState = LookupUiState.Loading) }
                 searchJob = launch {
-                    delay(SEARCH_DEBOUNCE_MS)
                     searchRemote(query)
                 }
-            } else {
-                // Too short - reset to idle
-                updateState { copy(lookupState = LookupUiState.Idle) }
             }
+        }
+    }
+
+    /**
+     * Clear search results when query is empty or too short.
+     */
+    private suspend fun CreateContactCtx.handleClearSearch() {
+        searchJob?.cancel()
+        withState<CreateContactState.LookupStep, _> {
+            updateState { copy(lookupState = LookupUiState.Idle, duplicateVat = null) }
         }
     }
 
