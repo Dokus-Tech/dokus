@@ -1,5 +1,7 @@
 package ai.dokus.foundation.design.components.common
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.state_offline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A reusable overlay component that blurs content when offline and shows an indicator.
@@ -77,7 +80,7 @@ fun OfflineOverlay(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CloudOff,
-                        contentDescription = "Offline",
+                        contentDescription = stringResource(Res.string.state_offline),
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )

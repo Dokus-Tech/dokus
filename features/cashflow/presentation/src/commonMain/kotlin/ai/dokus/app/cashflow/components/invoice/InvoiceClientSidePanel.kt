@@ -2,6 +2,7 @@
 
 package ai.dokus.app.cashflow.components.invoice
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import tech.dokus.domain.model.contact.ContactDto
@@ -52,6 +53,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Side panel for selecting a client in the invoice creation flow.
@@ -133,7 +135,7 @@ fun InvoiceClientSidePanel(
 
                         // Search field
                         PTextFieldStandard(
-                            fieldName = "Search clients",
+                            fieldName = stringResource(Res.string.invoice_search_clients),
                             value = searchQuery,
                             onValueChange = onSearchQueryChange,
                             modifier = Modifier.fillMaxWidth()
@@ -171,7 +173,7 @@ fun InvoiceClientSidePanel(
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                         Text(
-                                            text = "Failed to load clients",
+                                            text = stringResource(Res.string.error_failed_to_load_clients),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -194,7 +196,11 @@ fun InvoiceClientSidePanel(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = if (searchQuery.isBlank()) "No clients found" else "No clients match \"$searchQuery\"",
+                                            text = if (searchQuery.isBlank()) {
+                                                stringResource(Res.string.invoice_no_clients_found)
+                                            } else {
+                                                stringResource(Res.string.invoice_no_clients_match, searchQuery)
+                                            },
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -253,7 +259,7 @@ private fun ClientSidePanelHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Select Client",
+            text = stringResource(Res.string.invoice_select_client),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -261,7 +267,7 @@ private fun ClientSidePanelHeader(
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.action_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -332,7 +338,7 @@ private fun ClientListItem(
                 if (showPeppolWarning) {
                     Icon(
                         imageVector = Icons.Default.Warning,
-                        contentDescription = "No Peppol ID",
+                        contentDescription = stringResource(Res.string.peppol_id_missing),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(14.dp)
                     )
@@ -360,7 +366,7 @@ private fun ClientListItem(
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(Res.string.contacts_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )

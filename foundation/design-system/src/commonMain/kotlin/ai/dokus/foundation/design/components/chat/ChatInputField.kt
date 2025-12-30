@@ -1,5 +1,7 @@
 package ai.dokus.foundation.design.components.chat
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.chat_send_message
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Default values for ChatInputField components.
@@ -157,7 +160,7 @@ fun PChatInputField(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Send,
-                contentDescription = "Send message",
+                contentDescription = stringResource(Res.string.chat_send_message),
                 modifier = Modifier.size(Constrains.IconSize.medium)
             )
         }

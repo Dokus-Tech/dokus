@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Dialog showing a QR code for downloading the mobile application.
@@ -40,7 +42,7 @@ fun AppDownloadQrDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Download Dokus App",
+                text = stringResource(Res.string.app_download_title),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
@@ -51,7 +53,7 @@ fun AppDownloadQrDialog(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Scan this QR code with your phone to download the Dokus mobile app.",
+                    text = stringResource(Res.string.app_download_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -66,7 +68,7 @@ fun AppDownloadQrDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Available on iOS and Android",
+                    text = stringResource(Res.string.app_download_platforms),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -75,7 +77,7 @@ fun AppDownloadQrDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(Res.string.action_close))
             }
         }
     )
@@ -106,7 +108,7 @@ private fun QrCodePlaceholder(
         ) {
             Icon(
                 imageVector = Icons.Default.QrCode2,
-                contentDescription = "QR Code",
+                contentDescription = stringResource(Res.string.app_download_qr_code),
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -114,7 +116,7 @@ private fun QrCodePlaceholder(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "QR Code",
+                text = stringResource(Res.string.app_download_qr_code),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

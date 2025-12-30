@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components
 
 import ai.dokus.app.cashflow.manager.DocumentUploadManager
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import tech.dokus.domain.model.DocumentDto
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A list of document upload items.
@@ -85,7 +87,7 @@ private fun EmptyUploadList(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "No documents uploading",
+            text = stringResource(Res.string.upload_no_documents),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

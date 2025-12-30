@@ -1,6 +1,20 @@
 package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_clear
+import ai.dokus.app.resources.generated.action_search
+import ai.dokus.app.resources.generated.common_vat_value
+import ai.dokus.app.resources.generated.contacts_add_new_contact
+import ai.dokus.app.resources.generated.contacts_autocomplete_no_results
+import ai.dokus.app.resources.generated.contacts_autocomplete_no_results_for
+import ai.dokus.app.resources.generated.contacts_contact_label
+import ai.dokus.app.resources.generated.contacts_customer
+import ai.dokus.app.resources.generated.contacts_search_placeholder
+import ai.dokus.app.resources.generated.contacts_searching
+import ai.dokus.app.resources.generated.contacts_selected
+import ai.dokus.app.resources.generated.contacts_supplier
+import ai.dokus.app.resources.generated.contacts_vendor
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import tech.dokus.domain.model.contact.ContactDto
@@ -61,6 +75,7 @@ import compose.icons.feathericons.Search
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 // ============================================================================
@@ -117,8 +132,8 @@ fun ContactAutocomplete(
     selectedContact: ContactDto?,
     onContactSelected: (ContactAutoFillData) -> Unit,
     onAddNewContact: () -> Unit,
-    placeholder: String = "Search contacts...",
-    label: String = "Contact",
+    placeholder: String? = null,
+    label: String? = null,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isError: Boolean = false,
@@ -128,6 +143,8 @@ fun ContactAutocomplete(
     val scope = rememberCoroutineScope()
     val logger = remember { Logger.withTag("ContactAutocomplete") }
     val focusManager = LocalFocusManager.current
+    val placeholderText = placeholder ?: stringResource(Res.string.contacts_search_placeholder)
+    val labelText = label ?: stringResource(Res.string.contacts_contact_label)
 
     // State
     var searchQuery by remember { mutableStateOf(value) }
@@ -185,7 +202,7 @@ fun ContactAutocomplete(
     Column(modifier = modifier) {
         // Label
         Text(
-            text = label,
+            text = labelText,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
@@ -204,7 +221,7 @@ fun ContactAutocomplete(
                         // Parent should handle clearing selection
                     }
                 },
-                placeholder = placeholder,
+                placeholder = placeholderText,
                 isError = isError,
                 enabled = enabled,
                 selectedContact = selectedContact,
@@ -320,7 +337,7 @@ private fun ContactAutocompleteField(
         // Search icon
         PIcon(
             icon = FeatherIcons.Search,
-            description = "Search",
+            description = stringResource(Res.string.action_search),
             modifier = Modifier.size(Constrains.IconSize.small)
         )
 
@@ -358,7 +375,7 @@ private fun ContactAutocompleteField(
                 shape = RoundedCornerShape(4.dp)
             ) {
                 Text(
-                    text = "Selected",
+                    text = stringResource(Res.string.contacts_selected),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -373,7 +390,7 @@ private fun ContactAutocompleteField(
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,
-                    contentDescription = "Clear",
+                    contentDescription = stringResource(Res.string.action_clear),
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -427,7 +444,7 @@ private fun ContactAutocompleteDropdown(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Searching...",
+                            text = stringResource(Res.string.contacts_searching),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -443,12 +460,12 @@ private fun ContactAutocompleteDropdown(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "No contacts found",
+                            text = stringResource(Res.string.contacts_autocomplete_no_results),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "for \"$searchQuery\"",
+                            text = stringResource(Res.string.contacts_autocomplete_no_results_for, searchQuery),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -495,7 +512,7 @@ private fun ContactAutocompleteDropdown(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Add new contact",
+                        text = stringResource(Res.string.contacts_add_new_contact),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -556,7 +573,7 @@ private fun ContactAutocompleteItem(
             // VAT number (if available)
             contact.vatNumber?.let { vat ->
                 Text(
-                    text = "VAT: ${vat.value}",
+                    text = stringResource(Res.string.common_vat_value, vat.value),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -574,19 +591,19 @@ private fun ContactAutocompleteItem(
                     ) {
                         if (roles.isCustomer) {
                             AutocompleteRoleBadge(
-                                text = "Customer",
+                                text = stringResource(Res.string.contacts_customer),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                         if (roles.isSupplier) {
                             AutocompleteRoleBadge(
-                                text = "Supplier",
+                                text = stringResource(Res.string.contacts_supplier),
                                 color = MaterialTheme.colorScheme.tertiary
                             )
                         }
                         if (roles.isVendor) {
                             AutocompleteRoleBadge(
-                                text = "Vendor",
+                                text = stringResource(Res.string.contacts_vendor),
                                 color = MaterialTheme.colorScheme.secondary
                             )
                         }
@@ -644,8 +661,8 @@ fun ContactAutocompleteSimple(
     selectedContact: ContactDto?,
     onContactSelected: (ContactDto) -> Unit,
     onAddNewContact: () -> Unit,
-    placeholder: String = "Search contacts...",
-    label: String = "Contact",
+    placeholder: String? = null,
+    label: String? = null,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isError: Boolean = false,

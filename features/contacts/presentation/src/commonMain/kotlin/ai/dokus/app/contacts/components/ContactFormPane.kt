@@ -2,7 +2,12 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.viewmodel.ContactFormData
 import ai.dokus.app.contacts.viewmodel.PotentialDuplicate
-import tech.dokus.domain.enums.ClientType
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_close
+import ai.dokus.app.resources.generated.contacts_create_contact
+import ai.dokus.app.resources.generated.contacts_edit_contact
+import ai.dokus.app.resources.generated.contacts_required_fields_hint
+import ai.dokus.app.resources.generated.contacts_update_mobile_hint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -39,6 +44,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.enums.ClientType
 
 /**
  * Side pane for creating or editing a contact on desktop.
@@ -178,7 +185,11 @@ fun ContactFormPane(
                     ) {
                         // Header
                         ContactFormPaneHeader(
-                            title = if (isEditMode) "Edit Contact" else "Create Contact",
+                            title = if (isEditMode) {
+                                stringResource(Res.string.contacts_edit_contact)
+                            } else {
+                                stringResource(Res.string.contacts_create_contact)
+                            },
                             onClose = onDismiss
                         )
 
@@ -193,9 +204,9 @@ fun ContactFormPane(
                             // Description
                             Text(
                                 text = if (isEditMode) {
-                                    "Update contact information."
+                                    stringResource(Res.string.contacts_update_mobile_hint)
                                 } else {
-                                    "Required fields are marked with *."
+                                    stringResource(Res.string.contacts_required_fields_hint)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -284,7 +295,7 @@ private fun ContactFormPaneHeader(
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.action_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

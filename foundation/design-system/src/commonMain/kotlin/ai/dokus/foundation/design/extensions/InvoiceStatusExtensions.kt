@@ -1,9 +1,19 @@
 package ai.dokus.foundation.design.extensions
 
-import tech.dokus.domain.enums.InvoiceStatus
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.invoice_status_cancelled
+import ai.dokus.app.resources.generated.invoice_status_draft
+import ai.dokus.app.resources.generated.invoice_status_overdue
+import ai.dokus.app.resources.generated.invoice_status_paid
+import ai.dokus.app.resources.generated.invoice_status_partial
+import ai.dokus.app.resources.generated.invoice_status_refunded
+import ai.dokus.app.resources.generated.invoice_status_sent
+import ai.dokus.app.resources.generated.invoice_status_viewed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.enums.InvoiceStatus
 
 /**
  * Extension property to get a localized display name for an InvoiceStatus.
@@ -18,14 +28,14 @@ import androidx.compose.ui.graphics.Color
  */
 val InvoiceStatus.localized: String
     @Composable get() = when (this) {
-        InvoiceStatus.Draft -> "DRAFT"
-        InvoiceStatus.Sent -> "SENT"
-        InvoiceStatus.Viewed -> "VIEWED"
-        InvoiceStatus.PartiallyPaid -> "PARTIAL"
-        InvoiceStatus.Paid -> "PAID"
-        InvoiceStatus.Overdue -> "OVERDUE"
-        InvoiceStatus.Cancelled -> "CANCELLED"
-        InvoiceStatus.Refunded -> "REFUNDED"
+        InvoiceStatus.Draft -> stringResource(Res.string.invoice_status_draft)
+        InvoiceStatus.Sent -> stringResource(Res.string.invoice_status_sent)
+        InvoiceStatus.Viewed -> stringResource(Res.string.invoice_status_viewed)
+        InvoiceStatus.PartiallyPaid -> stringResource(Res.string.invoice_status_partial)
+        InvoiceStatus.Paid -> stringResource(Res.string.invoice_status_paid)
+        InvoiceStatus.Overdue -> stringResource(Res.string.invoice_status_overdue)
+        InvoiceStatus.Cancelled -> stringResource(Res.string.invoice_status_cancelled)
+        InvoiceStatus.Refunded -> stringResource(Res.string.invoice_status_refunded)
     }
 
 /**

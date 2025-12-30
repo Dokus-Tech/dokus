@@ -10,6 +10,28 @@ import ai.dokus.app.contacts.usecases.GetContactUseCase
 import ai.dokus.app.contacts.usecases.ListContactNotesUseCase
 import ai.dokus.app.contacts.usecases.UpdateContactNoteUseCase
 import ai.dokus.app.contacts.usecases.UpdateContactPeppolUseCase
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_enrichment_applied_plural
+import ai.dokus.app.resources.generated.contacts_enrichment_applied_single
+import ai.dokus.app.resources.generated.contacts_note_add_failed
+import ai.dokus.app.resources.generated.contacts_note_added
+import ai.dokus.app.resources.generated.contacts_note_delete_failed
+import ai.dokus.app.resources.generated.contacts_note_deleted
+import ai.dokus.app.resources.generated.contacts_note_empty_error
+import ai.dokus.app.resources.generated.contacts_note_update_failed
+import ai.dokus.app.resources.generated.contacts_note_updated
+import ai.dokus.app.resources.generated.contacts_peppol_id_required
+import ai.dokus.app.resources.generated.contacts_peppol_update_failed
+import ai.dokus.app.resources.generated.contacts_peppol_update_success
+import ai.dokus.foundation.platform.Logger
+import kotlinx.coroutines.async
+import org.jetbrains.compose.resources.getString
+import pro.respawn.flowmvi.api.Container
+import pro.respawn.flowmvi.api.PipelineContext
+import pro.respawn.flowmvi.api.Store
+import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
@@ -17,14 +39,6 @@ import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactPeppolRequest
-import ai.dokus.foundation.platform.Logger
-import kotlinx.coroutines.async
-import pro.respawn.flowmvi.api.Container
-import pro.respawn.flowmvi.api.PipelineContext
-import pro.respawn.flowmvi.api.Store
-import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
-import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.foundation.app.state.DokusState
 
 internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction>
@@ -300,7 +314,7 @@ internal class ContactDetailsContainer(
             // If enabling Peppol, require a Peppol ID
             if (enabled && contact.peppolId.isNullOrBlank()) {
                 logger.w { "Cannot enable Peppol without Peppol ID" }
-                action(ContactDetailsAction.ShowError("Cannot enable Peppol without Peppol ID"))
+                action(ContactDetailsAction.ShowError(getString(Res.string.contacts_peppol_id_required)))
                 return@withState
             }
 
@@ -322,12 +336,12 @@ internal class ContactDetailsContainer(
                             isTogglingPeppol = false
                         )
                     }
-                    action(ContactDetailsAction.ShowSuccess("Peppol settings updated"))
+                    action(ContactDetailsAction.ShowSuccess(getString(Res.string.contacts_peppol_update_success)))
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to toggle Peppol" }
                     updateState { copy(isTogglingPeppol = false) }
-                    action(ContactDetailsAction.ShowError("Failed to update Peppol settings"))
+                    action(ContactDetailsAction.ShowError(getString(Res.string.contacts_peppol_update_failed)))
                 }
             )
         }
@@ -489,7 +503,7 @@ internal class ContactDetailsContainer(
 
             if (content.isBlank()) {
                 logger.w { "Cannot add empty note" }
-                action(ContactDetailsAction.ShowError("Note content cannot be empty"))
+                action(ContactDetailsAction.ShowError(getString(Res.string.contacts_note_empty_error)))
                 return@withState
             }
 
@@ -510,14 +524,14 @@ internal class ContactDetailsContainer(
                             )
                         )
                     }
-                    action(ContactDetailsAction.ShowSuccess("Note added"))
+                    action(ContactDetailsAction.ShowSuccess(getString(Res.string.contacts_note_added)))
                     // Reload notes to get updated list
                     loadNotesData(contactId)
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to add note" }
                     updateState { copy(isSavingNote = false) }
-                    action(ContactDetailsAction.ShowError("Failed to add note"))
+                    action(ContactDetailsAction.ShowError(getString(Res.string.contacts_note_add_failed)))
                 }
             )
         }
@@ -530,7 +544,7 @@ internal class ContactDetailsContainer(
 
             if (content.isBlank()) {
                 logger.w { "Cannot update note with empty content" }
-                action(ContactDetailsAction.ShowError("Note content cannot be empty"))
+                action(ContactDetailsAction.ShowError(getString(Res.string.contacts_note_empty_error)))
                 return@withState
             }
 
@@ -552,14 +566,14 @@ internal class ContactDetailsContainer(
                             )
                         )
                     }
-                    action(ContactDetailsAction.ShowSuccess("Note updated"))
+                    action(ContactDetailsAction.ShowSuccess(getString(Res.string.contacts_note_updated)))
                     // Reload notes to get updated list
                     loadNotesData(contactId)
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to update note" }
                     updateState { copy(isSavingNote = false) }
-                    action(ContactDetailsAction.ShowError("Failed to update note"))
+                    action(ContactDetailsAction.ShowError(getString(Res.string.contacts_note_update_failed)))
                 }
             )
         }
@@ -585,7 +599,7 @@ internal class ContactDetailsContainer(
                             )
                         )
                     }
-                    action(ContactDetailsAction.ShowSuccess("Note deleted"))
+                    action(ContactDetailsAction.ShowSuccess(getString(Res.string.contacts_note_deleted)))
                     // Reload notes to get updated list
                     loadNotesData(contactId)
                 },
@@ -600,7 +614,7 @@ internal class ContactDetailsContainer(
                             )
                         )
                     }
-                    action(ContactDetailsAction.ShowError("Failed to delete note"))
+                    action(ContactDetailsAction.ShowError(getString(Res.string.contacts_note_delete_failed)))
                 }
             )
         }
@@ -667,7 +681,12 @@ internal class ContactDetailsContainer(
                 )
             }
 
-            action(ContactDetailsAction.ShowSuccess("Applied ${suggestions.size} enrichment suggestion(s)"))
+            val appliedMessage = if (suggestions.size == 1) {
+                getString(Res.string.contacts_enrichment_applied_single, suggestions.size)
+            } else {
+                getString(Res.string.contacts_enrichment_applied_plural, suggestions.size)
+            }
+            action(ContactDetailsAction.ShowSuccess(appliedMessage))
         }
     }
 

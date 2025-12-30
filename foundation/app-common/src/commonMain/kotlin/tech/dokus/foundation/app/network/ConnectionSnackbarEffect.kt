@@ -1,5 +1,9 @@
 package tech.dokus.foundation.app.network
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.connection_connected
+import ai.dokus.app.resources.generated.connection_server_unreachable
+import ai.dokus.app.resources.generated.state_retry
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -9,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Effect that shows a snackbar when server connection state changes.
@@ -39,6 +44,9 @@ fun ConnectionSnackbarEffect(
 ) {
     val connectionState = LocalServerConnection.current
     val isConnected = connectionState.isConnected
+    val unreachableMessage = stringResource(Res.string.connection_server_unreachable)
+    val connectedMessage = stringResource(Res.string.connection_connected)
+    val retryLabel = stringResource(Res.string.state_retry)
 
     // Track previous state to detect transitions
     var wasConnected by rememberSaveable { mutableStateOf(true) }
@@ -48,8 +56,8 @@ fun ConnectionSnackbarEffect(
             // Just went offline
             wasConnected && !isConnected -> {
                 val result = snackbarHostState.showSnackbar(
-                    message = "Server unreachable",
-                    actionLabel = "Retry",
+                    message = unreachableMessage,
+                    actionLabel = retryLabel,
                     duration = SnackbarDuration.Long
                 )
                 if (result == SnackbarResult.ActionPerformed) {
@@ -59,7 +67,7 @@ fun ConnectionSnackbarEffect(
             // Just came back online
             !wasConnected && isConnected -> {
                 snackbarHostState.showSnackbar(
-                    message = "Connected",
+                    message = connectedMessage,
                     duration = SnackbarDuration.Short
                 )
             }

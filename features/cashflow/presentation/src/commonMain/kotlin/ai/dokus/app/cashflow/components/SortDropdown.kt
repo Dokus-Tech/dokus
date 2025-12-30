@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -24,17 +25,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Sort options for financial documents.
  */
-enum class DocumentSortOption(val displayName: String) {
-    Default("Default"),
-    DateNewest("Date (Newest)"),
-    DateOldest("Date (Oldest)"),
-    AmountHighest("Amount (Highest)"),
-    AmountLowest("Amount (Lowest)"),
-    Type("Type")
+enum class DocumentSortOption(val labelRes: StringResource) {
+    Default(Res.string.cashflow_sort_default),
+    DateNewest(Res.string.cashflow_sort_date_newest),
+    DateOldest(Res.string.cashflow_sort_date_oldest),
+    AmountHighest(Res.string.cashflow_sort_amount_highest),
+    AmountLowest(Res.string.cashflow_sort_amount_lowest),
+    Type(Res.string.cashflow_sort_type)
 }
 
 /**
@@ -71,7 +74,7 @@ fun SortDropdown(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Sort:",
+                    text = stringResource(Res.string.cashflow_sort_label),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -79,7 +82,7 @@ fun SortDropdown(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 Text(
-                    text = selectedOption.displayName,
+                    text = stringResource(selectedOption.labelRes),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -88,7 +91,7 @@ fun SortDropdown(
 
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Expand sort options",
+                    contentDescription = stringResource(Res.string.sort_expand),
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -103,7 +106,7 @@ fun SortDropdown(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = option.displayName,
+                            text = stringResource(option.labelRes),
                             style = MaterialTheme.typography.bodySmall,
                             color = if (option == selectedOption) {
                                 MaterialTheme.colorScheme.primary

@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Dates section in the invoice document.
@@ -40,13 +42,13 @@ fun InvoiceDatesSection(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         DateField(
-            label = "ISSUE DATE",
+            label = stringResource(Res.string.invoice_issue_date),
             date = issueDate,
             onClick = onIssueDateClick,
             modifier = Modifier.weight(1f)
         )
         DateField(
-            label = "DUE DATE",
+            label = stringResource(Res.string.invoice_due_date),
             date = dueDate,
             onClick = onDueDateClick,
             modifier = Modifier.weight(1f)
@@ -92,7 +94,7 @@ private fun DateField(
         )
 
         Text(
-            text = date?.formatDate() ?: "Click to set",
+            text = date?.formatDate() ?: stringResource(Res.string.invoice_click_to_set),
             style = MaterialTheme.typography.bodyMedium,
             color = if (date != null) {
                 MaterialTheme.colorScheme.onSurface
@@ -104,7 +106,7 @@ private fun DateField(
         // Hover hint
         if (isHovered) {
             Text(
-                text = "Click to change",
+                text = stringResource(Res.string.invoice_click_to_change),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
@@ -116,11 +118,22 @@ private fun DateField(
  * Format LocalDate to a readable string.
  * Format: "Dec 13, 2025"
  */
+@Composable
 private fun LocalDate.formatDate(): String {
     val monthNames = listOf(
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        stringResource(Res.string.date_month_short_jan),
+        stringResource(Res.string.date_month_short_feb),
+        stringResource(Res.string.date_month_short_mar),
+        stringResource(Res.string.date_month_short_apr),
+        stringResource(Res.string.date_month_short_may),
+        stringResource(Res.string.date_month_short_jun),
+        stringResource(Res.string.date_month_short_jul),
+        stringResource(Res.string.date_month_short_aug),
+        stringResource(Res.string.date_month_short_sep),
+        stringResource(Res.string.date_month_short_oct),
+        stringResource(Res.string.date_month_short_nov),
+        stringResource(Res.string.date_month_short_dec),
     )
-    val monthName = monthNames.getOrElse(month.ordinal) { "???" }
-    return "$monthName $day, $year"
+    val monthName = monthNames.getOrElse(month.ordinal) { stringResource(Res.string.common_unknown) }
+    return stringResource(Res.string.date_format_short, monthName, day, year)
 }

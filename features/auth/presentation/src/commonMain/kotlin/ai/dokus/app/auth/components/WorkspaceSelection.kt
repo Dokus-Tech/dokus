@@ -1,5 +1,7 @@
 package ai.dokus.app.auth.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.workspace_select_title
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.text.SectionTitle
@@ -19,6 +21,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 @Stable
 private fun Modifier.widthInWorkspaceItem(): Modifier = widthIn(min = 140.dp, max = 320.dp)
@@ -30,7 +33,7 @@ fun WorkspaceSelectionBody(
     onAddTenantClick: () -> Unit,
 ) {
     SectionTitle(
-        text = "Select your workspace",
+        text = stringResource(Res.string.workspace_select_title),
         horizontalArrangement = Arrangement.Center
     )
 

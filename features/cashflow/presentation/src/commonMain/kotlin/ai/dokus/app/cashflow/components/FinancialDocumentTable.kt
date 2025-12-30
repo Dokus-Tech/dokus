@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.CashflowTypeBadge
 import tech.dokus.domain.enums.InvoiceStatus
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing a financial document table row.
@@ -58,6 +60,7 @@ data class FinancialDocumentRow(
  * Converts a FinancialDocumentDto to a FinancialDocumentRow for display.
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@Composable
 fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
     val cashflowType = when (this) {
         is FinancialDocumentDto.InvoiceDto -> CashflowType.CashIn
@@ -66,21 +69,27 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
     }
 
     val contactName = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> "Name Surname" // TODO: Get from client
+        is FinancialDocumentDto.InvoiceDto -> ""
         is FinancialDocumentDto.ExpenseDto -> this.merchant
         is FinancialDocumentDto.BillDto -> this.supplierName
     }
 
     val contactEmail = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> "mailname@email.com" // TODO: Get from client
+        is FinancialDocumentDto.InvoiceDto -> ""
         is FinancialDocumentDto.ExpenseDto -> ""
         is FinancialDocumentDto.BillDto -> ""
     }
 
     val documentNumber = when (this) {
         is FinancialDocumentDto.InvoiceDto -> invoiceNumber.toString()
-        is FinancialDocumentDto.ExpenseDto -> "EXP-${id.value}"
-        is FinancialDocumentDto.BillDto -> invoiceNumber ?: "BILL-${id.value}"
+        is FinancialDocumentDto.ExpenseDto -> stringResource(
+            Res.string.cashflow_document_number_expense,
+            id.value
+        )
+        is FinancialDocumentDto.BillDto -> invoiceNumber ?: stringResource(
+            Res.string.cashflow_document_number_bill,
+            id.value
+        )
     }
 
     val hasAlert = when (this) {
@@ -93,9 +102,18 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
     val formattedAmount = try {
         val amountValue = amount.toDouble()
         val intAmount = amountValue.toInt()
-        "€${intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")}"
+        val formattedNumber = intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
+        stringResource(
+            Res.string.cashflow_amount_with_currency,
+            currency.displaySign,
+            formattedNumber
+        )
     } catch (e: Exception) {
-        "€${amount.toDisplayString()}"
+        stringResource(
+            Res.string.cashflow_amount_with_currency,
+            currency.displaySign,
+            amount.toDisplayString()
+        )
     }
 
     return FinancialDocumentRow(
@@ -113,12 +131,28 @@ fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
 /**
  * Formats a LocalDate to display format (e.g., "May 25, 2024").
  */
+@Composable
 private fun formatDate(date: LocalDate): String {
     val months = listOf(
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        stringResource(Res.string.date_month_long_january),
+        stringResource(Res.string.date_month_long_february),
+        stringResource(Res.string.date_month_long_march),
+        stringResource(Res.string.date_month_long_april),
+        stringResource(Res.string.date_month_long_may),
+        stringResource(Res.string.date_month_long_june),
+        stringResource(Res.string.date_month_long_july),
+        stringResource(Res.string.date_month_long_august),
+        stringResource(Res.string.date_month_long_september),
+        stringResource(Res.string.date_month_long_october),
+        stringResource(Res.string.date_month_long_november),
+        stringResource(Res.string.date_month_long_december),
     )
-    return "${months[date.month.ordinal]} ${date.day}, ${date.year}"
+    return stringResource(
+        Res.string.date_format_long,
+        months[date.month.ordinal],
+        date.day,
+        date.year
+    )
 }
 
 /**
@@ -196,7 +230,7 @@ private fun FinancialDocumentTableHeader(
     ) {
         // Invoice column
         Text(
-            text = "Invoice",
+            text = stringResource(Res.string.document_table_invoice),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(140.dp)
@@ -204,7 +238,7 @@ private fun FinancialDocumentTableHeader(
 
         // Contact column (grows to fill space)
         Text(
-            text = "Contact",
+            text = stringResource(Res.string.document_table_contact),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
@@ -212,7 +246,7 @@ private fun FinancialDocumentTableHeader(
 
         // Amount column
         Text(
-            text = "Amount",
+            text = stringResource(Res.string.document_table_amount),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(100.dp)
@@ -220,7 +254,7 @@ private fun FinancialDocumentTableHeader(
 
         // Date column
         Text(
-            text = "Date",
+            text = stringResource(Res.string.document_table_date),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(120.dp)
@@ -303,7 +337,9 @@ private fun FinancialDocumentTableRow(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = row.contactName,
+                text = row.contactName.ifBlank {
+                    stringResource(Res.string.common_unknown)
+                },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium
                     ),
@@ -360,7 +396,7 @@ private fun FinancialDocumentTableRow(
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More options",
+                    contentDescription = stringResource(Res.string.document_table_more_options),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -372,7 +408,7 @@ private fun FinancialDocumentTableRow(
             ) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "View details",
+                    contentDescription = stringResource(Res.string.document_table_view_details),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -492,7 +528,7 @@ private fun FinancialDocumentListItem(
         // Chevron
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = "View details",
+            contentDescription = stringResource(Res.string.document_table_view_details),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
         )

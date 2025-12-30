@@ -12,6 +12,8 @@ import ai.dokus.app.auth.viewmodel.RegisterState
 import ai.dokus.app.resources.generated.Res
 import ai.dokus.app.resources.generated.auth_has_account_prefix
 import ai.dokus.app.resources.generated.auth_login_link
+import ai.dokus.app.resources.generated.auth_register_credentials_title
+import ai.dokus.app.resources.generated.auth_register_profile_title
 import ai.dokus.foundation.design.components.background.EnhancedFloatingBubbles
 import ai.dokus.foundation.design.components.background.SpotlightEffect
 import ai.dokus.foundation.design.components.layout.TwoPaneContainer
@@ -147,8 +149,8 @@ private fun IntentReceiver<RegisterIntent>.RegisterContent(
             }
         }
         val title = when (currentPage) {
-            RegisterPage.Profile -> "Create your profile"
-            RegisterPage.Credentials -> "Set up credentials"
+            RegisterPage.Profile -> stringResource(Res.string.auth_register_profile_title)
+            RegisterPage.Credentials -> stringResource(Res.string.auth_register_credentials_title)
         }
 
         Column(

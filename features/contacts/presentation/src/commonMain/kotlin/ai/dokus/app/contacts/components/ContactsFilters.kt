@@ -3,6 +3,13 @@ package ai.dokus.app.contacts.components
 import ai.dokus.app.contacts.viewmodel.ContactActiveFilter
 import ai.dokus.app.contacts.viewmodel.ContactRoleFilter
 import ai.dokus.app.contacts.viewmodel.ContactSortOption
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_filter_role_expand
+import ai.dokus.app.resources.generated.contacts_filter_role_label
+import ai.dokus.app.resources.generated.contacts_filter_sort_expand
+import ai.dokus.app.resources.generated.contacts_filter_sort_label
+import ai.dokus.app.resources.generated.contacts_filter_status_expand
+import ai.dokus.app.resources.generated.contacts_filter_status_label
 import ai.dokus.foundation.design.components.dropdown.PFilterDropdown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -11,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Filter controls for the Contacts screen (desktop layout).
@@ -43,26 +51,26 @@ internal fun ContactsFilters(
     ) {
         // Sort dropdown
         PFilterDropdown(
-            label = "Sort:",
+            label = stringResource(Res.string.contacts_filter_sort_label),
             selectedOption = selectedSortOption,
             onOptionSelected = onSortOptionSelected,
-            contentDescription = "Expand sort options"
+            contentDescription = stringResource(Res.string.contacts_filter_sort_expand)
         )
 
         // Role filter dropdown
         PFilterDropdown(
-            label = "Role:",
+            label = stringResource(Res.string.contacts_filter_role_label),
             selectedOption = selectedRoleFilter,
             onOptionSelected = onRoleFilterSelected,
-            contentDescription = "Expand role filter options"
+            contentDescription = stringResource(Res.string.contacts_filter_role_expand)
         )
 
         // Active status filter dropdown
         PFilterDropdown(
-            label = "Status:",
+            label = stringResource(Res.string.contacts_filter_status_label),
             selectedOption = selectedActiveFilter,
             onOptionSelected = onActiveFilterSelected,
-            contentDescription = "Expand status filter options"
+            contentDescription = stringResource(Res.string.contacts_filter_status_expand)
         )
     }
 }
@@ -99,26 +107,26 @@ internal fun ContactsFiltersMobile(
     ) {
         // Sort dropdown
         PFilterDropdown(
-            label = "Sort:",
+            label = stringResource(Res.string.contacts_filter_sort_label),
             selectedOption = selectedSortOption,
             onOptionSelected = onSortOptionSelected,
-            contentDescription = "Expand sort options"
+            contentDescription = stringResource(Res.string.contacts_filter_sort_expand)
         )
 
         // Role filter dropdown
         PFilterDropdown(
-            label = "Role:",
+            label = stringResource(Res.string.contacts_filter_role_label),
             selectedOption = selectedRoleFilter,
             onOptionSelected = onRoleFilterSelected,
-            contentDescription = "Expand role filter options"
+            contentDescription = stringResource(Res.string.contacts_filter_role_expand)
         )
 
         // Active status filter dropdown
         PFilterDropdown(
-            label = "Status:",
+            label = stringResource(Res.string.contacts_filter_status_label),
             selectedOption = selectedActiveFilter,
             onOptionSelected = onActiveFilterSelected,
-            contentDescription = "Expand status filter options"
+            contentDescription = stringResource(Res.string.contacts_filter_status_expand)
         )
     }
 }

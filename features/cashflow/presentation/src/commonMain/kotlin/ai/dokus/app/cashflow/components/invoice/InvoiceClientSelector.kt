@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components.invoice
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.domain.model.contact.ContactDto
 import androidx.compose.foundation.clickable
@@ -26,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Client selector dropdown for invoice creation.
@@ -42,7 +44,7 @@ fun InvoiceClientSelector(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "Client",
+            text = stringResource(Res.string.invoice_client),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -64,7 +66,7 @@ fun InvoiceClientSelector(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = selectedClient?.name?.value ?: "Select a client",
+                        text = selectedClient?.name?.value ?: stringResource(Res.string.invoice_select_client),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (selectedClient != null) {
                             MaterialTheme.colorScheme.onSurface

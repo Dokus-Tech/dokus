@@ -8,6 +8,7 @@ import ai.dokus.app.cashflow.viewmodel.model.CreateInvoiceUiState
 import ai.dokus.app.cashflow.viewmodel.model.DatePickerTarget
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceCreationStep
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.contact.ContactDto
 import ai.dokus.foundation.platform.Logger
@@ -16,6 +17,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -320,6 +322,8 @@ internal class CreateInvoiceContainer(
 
             val currentFormState = formState
             val currentUiState = uiState
+            val successMessage = getString(Res.string.cashflow_invoice_create_success)
+            val failureMessage = getString(Res.string.cashflow_invoice_create_failed)
 
             // Transition to saving state
             updateState {
@@ -341,7 +345,7 @@ internal class CreateInvoiceContainer(
                             createdInvoiceId = invoice.id
                         )
                     }
-                    action(CreateInvoiceAction.ShowSuccess("Invoice created successfully"))
+                    action(CreateInvoiceAction.ShowSuccess(successMessage))
                     action(CreateInvoiceAction.NavigateToInvoice(invoice.id))
                 },
                 onFailure = { error ->
@@ -350,14 +354,14 @@ internal class CreateInvoiceContainer(
                         CreateInvoiceState.Error(
                             formState = currentFormState.copy(
                                 isSaving = false,
-                                errors = currentFormState.errors + ("general" to (error.message ?: "Failed to create invoice"))
+                                errors = currentFormState.errors + ("general" to (error.message ?: failureMessage))
                             ),
                             uiState = currentUiState,
                             exception = error.asDokusException,
                             retryHandler = { intent(CreateInvoiceIntent.SaveAsDraft) }
                         )
                     }
-                    action(CreateInvoiceAction.ShowError(error.message ?: "Failed to create invoice"))
+                    action(CreateInvoiceAction.ShowError(error.message ?: failureMessage))
                 }
             )
         }
@@ -366,6 +370,8 @@ internal class CreateInvoiceContainer(
         withState<CreateInvoiceState.Error, _> {
             val currentFormState = formState
             val currentUiState = uiState
+            val successMessage = getString(Res.string.cashflow_invoice_create_success)
+            val failureMessage = getString(Res.string.cashflow_invoice_create_failed)
 
             // Transition back to saving
             updateState {
@@ -385,7 +391,7 @@ internal class CreateInvoiceContainer(
                             createdInvoiceId = invoice.id
                         )
                     }
-                    action(CreateInvoiceAction.ShowSuccess("Invoice created successfully"))
+                    action(CreateInvoiceAction.ShowSuccess(successMessage))
                     action(CreateInvoiceAction.NavigateToInvoice(invoice.id))
                 },
                 onFailure = { error ->
@@ -394,14 +400,14 @@ internal class CreateInvoiceContainer(
                         CreateInvoiceState.Error(
                             formState = currentFormState.copy(
                                 isSaving = false,
-                                errors = currentFormState.errors + ("general" to (error.message ?: "Failed to create invoice"))
+                                errors = currentFormState.errors + ("general" to (error.message ?: failureMessage))
                             ),
                             uiState = currentUiState,
                             exception = error.asDokusException,
                             retryHandler = { intent(CreateInvoiceIntent.SaveAsDraft) }
                         )
                     }
-                    action(CreateInvoiceAction.ShowError(error.message ?: "Failed to create invoice"))
+                    action(CreateInvoiceAction.ShowError(error.message ?: failureMessage))
                 }
             )
         }

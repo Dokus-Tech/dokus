@@ -2,6 +2,11 @@ package ai.dokus.app.contacts.components
 
 import ai.dokus.app.contacts.viewmodel.DuplicateReason
 import ai.dokus.app.contacts.viewmodel.PotentialDuplicate
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.contacts_continue_anyway
+import ai.dokus.app.resources.generated.contacts_duplicate_warning
+import ai.dokus.app.resources.generated.contacts_merge
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A warning banner displayed when potential duplicate contacts are detected
@@ -99,7 +105,7 @@ private fun DuplicateWarningHeader(
     ) {
         Icon(
             imageVector = Icons.Default.Warning,
-            contentDescription = "Warning",
+            contentDescription = stringResource(Res.string.contacts_duplicate_warning),
             tint = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(Constrains.IconSize.medium)
         )
@@ -107,7 +113,7 @@ private fun DuplicateWarningHeader(
         Spacer(modifier = Modifier.width(Constrains.Spacing.small))
 
         Text(
-            text = "Potential duplicate contact found",
+            text = stringResource(Res.string.contacts_duplicate_warning),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.error
         )
@@ -171,7 +177,7 @@ private fun DuplicateContactItem(
 
             // Merge button
             TextButton(onClick = onMerge) {
-                Text(text = "Merge")
+                Text(text = stringResource(Res.string.contacts_merge))
             }
         }
     }
@@ -198,7 +204,7 @@ private fun DuplicateReasonBadge(
     }
 
     Text(
-        text = reason.displayName,
+        text = stringResource(reason.labelRes),
         style = MaterialTheme.typography.labelSmall,
         color = textColor,
         modifier = modifier
@@ -229,7 +235,7 @@ private fun DuplicateWarningActions(
     ) {
         // Cancel button
         TextButton(onClick = onCancel) {
-            Text(text = "Cancel")
+            Text(text = stringResource(Res.string.action_cancel))
         }
 
         Spacer(modifier = Modifier.width(Constrains.Spacing.small))
@@ -241,7 +247,7 @@ private fun DuplicateWarningActions(
                 contentColor = MaterialTheme.colorScheme.error
             )
         ) {
-            Text(text = "Continue Anyway")
+            Text(text = stringResource(Res.string.contacts_continue_anyway))
         }
     }
 }

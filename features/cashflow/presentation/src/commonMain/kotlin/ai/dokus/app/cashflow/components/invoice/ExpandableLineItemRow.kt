@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Expandable line item row for the interactive invoice.
@@ -102,7 +104,9 @@ fun ExpandableLineItemRow(
         ) {
             // Description
             Text(
-                text = item.description.ifBlank { "Click to add description" },
+                text = item.description.ifBlank {
+                    stringResource(Res.string.invoice_add_description_hint)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (item.description.isNotBlank()) {
                     MaterialTheme.colorScheme.onSurface
@@ -125,7 +129,15 @@ fun ExpandableLineItemRow(
 
             // Unit price
             Text(
-                text = if (item.unitPriceDouble > 0) "€${formatDecimal(item.unitPriceDouble)}" else "-",
+                text = if (item.unitPriceDouble > 0) {
+                    stringResource(
+                        Res.string.cashflow_amount_with_currency,
+                        stringResource(Res.string.currency_symbol_eur),
+                        formatDecimal(item.unitPriceDouble)
+                    )
+                } else {
+                    stringResource(Res.string.common_empty_value)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.End,
@@ -134,7 +146,15 @@ fun ExpandableLineItemRow(
 
             // Line total
             Text(
-                text = if (item.lineTotalDouble > 0) "€${formatDecimal(item.lineTotalDouble)}" else "-",
+                text = if (item.lineTotalDouble > 0) {
+                    stringResource(
+                        Res.string.cashflow_amount_with_currency,
+                        stringResource(Res.string.currency_symbol_eur),
+                        formatDecimal(item.lineTotalDouble)
+                    )
+                } else {
+                    stringResource(Res.string.common_empty_value)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -150,7 +170,7 @@ fun ExpandableLineItemRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.ExpandLess,
-                        contentDescription = "Collapse",
+                        contentDescription = stringResource(Res.string.action_collapse),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -173,7 +193,7 @@ fun ExpandableLineItemRow(
             ) {
                 // Description field
                 PTextFieldStandard(
-                    fieldName = "Description",
+                    fieldName = stringResource(Res.string.invoice_description),
                     value = item.description,
                     onValueChange = onUpdateDescription,
                     modifier = Modifier.fillMaxWidth()
@@ -186,7 +206,7 @@ fun ExpandableLineItemRow(
                 ) {
                     // Quantity
                     PTextFieldStandard(
-                        fieldName = "Quantity",
+                        fieldName = stringResource(Res.string.invoice_qty),
                         value = formatQuantity(item.quantity),
                         onValueChange = { value ->
                             value.toDoubleOrNull()?.let { onUpdateQuantity(it) }
@@ -197,7 +217,10 @@ fun ExpandableLineItemRow(
 
                     // Unit Price
                     PTextFieldStandard(
-                        fieldName = "Unit Price (€)",
+                        fieldName = stringResource(
+                            Res.string.invoice_price_with_currency,
+                            stringResource(Res.string.currency_symbol_eur)
+                        ),
                         value = item.unitPrice,
                         onValueChange = onUpdateUnitPrice,
                         modifier = Modifier.weight(1f),
@@ -221,12 +244,27 @@ fun ExpandableLineItemRow(
                     // Line total summary
                     Column {
                         Text(
-                            text = "Line Total: €${formatDecimal(item.lineTotalDouble)}",
+                            text = stringResource(
+                                Res.string.invoice_line_total,
+                                stringResource(
+                                    Res.string.cashflow_amount_with_currency,
+                                    stringResource(Res.string.currency_symbol_eur),
+                                    formatDecimal(item.lineTotalDouble)
+                                )
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "VAT (${item.vatRatePercent}%): €${formatDecimal(item.vatAmountDouble)}",
+                            text = stringResource(
+                                Res.string.invoice_vat_with_rate,
+                                item.vatRatePercent,
+                                stringResource(
+                                    Res.string.cashflow_amount_with_currency,
+                                    stringResource(Res.string.currency_symbol_eur),
+                                    formatDecimal(item.vatAmountDouble)
+                                )
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -246,7 +284,7 @@ fun ExpandableLineItemRow(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Remove",
+                                text = stringResource(Res.string.invoice_remove),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
@@ -272,7 +310,7 @@ private fun VatRateSelector(
     Box(modifier = modifier) {
         Column {
             Text(
-                text = "VAT Rate",
+                text = stringResource(Res.string.invoice_vat_rate),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 4.dp)

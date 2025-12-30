@@ -4,6 +4,24 @@ import ai.dokus.app.contacts.viewmodel.CreateContactIntent
 import ai.dokus.app.contacts.viewmodel.CreateContactState
 import ai.dokus.app.contacts.viewmodel.ManualContactFormData
 import ai.dokus.app.contacts.viewmodel.SoftDuplicateUi
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_back
+import ai.dokus.app.resources.generated.contacts_add_contact_manually
+import ai.dokus.app.resources.generated.contacts_business
+import ai.dokus.app.resources.generated.contacts_company_name
+import ai.dokus.app.resources.generated.contacts_create_contact
+import ai.dokus.app.resources.generated.contacts_creating
+import ai.dokus.app.resources.generated.contacts_email
+import ai.dokus.app.resources.generated.contacts_email_or_phone_required
+import ai.dokus.app.resources.generated.contacts_full_name
+import ai.dokus.app.resources.generated.contacts_individual
+import ai.dokus.app.resources.generated.contacts_phone
+import ai.dokus.app.resources.generated.contacts_vat_number
+import ai.dokus.app.resources.generated.country_belgium
+import ai.dokus.app.resources.generated.country_france
+import ai.dokus.app.resources.generated.country_netherlands
+import ai.dokus.app.resources.generated.field_optional
+import ai.dokus.app.resources.generated.field_required
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldPhone
@@ -33,6 +51,7 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Manual step content - add contact without VAT lookup.
@@ -97,13 +116,17 @@ fun ManualStepContent(
             }
         }
 
-        // Primary action button
-        PPrimaryButton(
-            text = if (state.isSubmitting) "Creating..." else "Create Contact",
-            enabled = !state.isSubmitting && isFormValid(state.contactType, state.formData),
-            isLoading = state.isSubmitting,
-            onClick = { onIntent(CreateContactIntent.CreateManualContact) },
-            modifier = Modifier
+    // Primary action button
+    PPrimaryButton(
+        text = if (state.isSubmitting) {
+            stringResource(Res.string.contacts_creating)
+        } else {
+            stringResource(Res.string.contacts_create_contact)
+        },
+        enabled = !state.isSubmitting && isFormValid(state.contactType, state.formData),
+        isLoading = state.isSubmitting,
+        onClick = { onIntent(CreateContactIntent.CreateManualContact) },
+        modifier = Modifier
                 .fillMaxWidth()
                 .height(Constrains.Height.button)
         )
@@ -132,12 +155,12 @@ private fun ManualHeader(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(Res.string.action_back),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
         Text(
-            text = "Add Contact Manually",
+            text = stringResource(Res.string.contacts_add_contact_manually),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -157,12 +180,12 @@ private fun TypeSelector(
         FilterChip(
             selected = selectedType == ClientType.Business,
             onClick = { onTypeSelected(ClientType.Business) },
-            label = { Text("Business") }
+            label = { Text(stringResource(Res.string.contacts_business)) }
         )
         FilterChip(
             selected = selectedType == ClientType.Individual,
             onClick = { onTypeSelected(ClientType.Individual) },
-            label = { Text("Individual") }
+            label = { Text(stringResource(Res.string.contacts_individual)) }
         )
     }
 }
@@ -179,7 +202,10 @@ private fun BusinessFields(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
         PTextFieldStandard(
-            fieldName = "Company Name *",
+            fieldName = stringResource(
+                Res.string.field_required,
+                stringResource(Res.string.contacts_company_name)
+            ),
             value = formData.companyName,
             error = formData.errors["companyName"]?.let {
                 tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
@@ -196,14 +222,20 @@ private fun BusinessFields(
         )
 
         PTextFieldStandard(
-            fieldName = "VAT Number (optional)",
+            fieldName = stringResource(
+                Res.string.field_optional,
+                stringResource(Res.string.contacts_vat_number)
+            ),
             value = formData.vatNumber,
             onValueChange = { onFieldChanged("vatNumber", it) },
             modifier = Modifier.fillMaxWidth()
         )
 
         PTextFieldEmail(
-            fieldName = "Email (optional)",
+            fieldName = stringResource(
+                Res.string.field_optional,
+                stringResource(Res.string.contacts_email)
+            ),
             value = Email(formData.email),
             onValueChange = { onFieldChanged("email", it.value) },
             modifier = Modifier.fillMaxWidth()
@@ -222,7 +254,10 @@ private fun IndividualFields(
         verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
     ) {
         PTextFieldStandard(
-            fieldName = "Full Name *",
+            fieldName = stringResource(
+                Res.string.field_required,
+                stringResource(Res.string.contacts_full_name)
+            ),
             value = formData.fullName,
             error = formData.errors["fullName"]?.let {
                 tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
@@ -232,7 +267,7 @@ private fun IndividualFields(
         )
 
         PTextFieldEmail(
-            fieldName = "Email",
+            fieldName = stringResource(Res.string.contacts_email),
             value = Email(formData.personEmail),
             error = formData.errors["contact"]?.let {
                 tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
@@ -242,7 +277,7 @@ private fun IndividualFields(
         )
 
         PTextFieldPhone(
-            fieldName = "Phone",
+            fieldName = stringResource(Res.string.contacts_phone),
             value = PhoneNumber(formData.personPhone),
             error = formData.errors["contact"]?.let {
                 tech.dokus.domain.exceptions.DokusException.Validation.Generic(it)
@@ -253,7 +288,7 @@ private fun IndividualFields(
 
         if (formData.errors["contact"] != null) {
             Text(
-                text = "Email or phone is required",
+                text = stringResource(Res.string.contacts_email_or_phone_required),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )
@@ -275,11 +310,19 @@ private fun CountrySelector(
             FilterChip(
                 selected = selectedCountry == country,
                 onClick = { onCountrySelected(country) },
-                label = { Text(country.dbValue) }
+                label = { Text(country.localizedName()) }
             )
         }
     }
 }
+
+@Composable
+private fun Country.localizedName(): String =
+    when (this) {
+        Country.Belgium -> stringResource(Res.string.country_belgium)
+        Country.Netherlands -> stringResource(Res.string.country_netherlands)
+        Country.France -> stringResource(Res.string.country_france)
+    }
 
 private fun isFormValid(type: ClientType, data: ManualContactFormData): Boolean {
     return if (type == ClientType.Business) {

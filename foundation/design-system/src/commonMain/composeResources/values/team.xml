@@ -19,11 +19,22 @@
     <string name="team_no_members">No team members yet</string>
     <string name="team_no_invitations">No pending invitations</string>
     <string name="team_invite_success">Invitation sent successfully</string>
+    <string name="team_invite_failed">Failed to send invitation</string>
+    <string name="team_invite_cancelled">Invitation cancelled</string>
+    <string name="team_invite_cancel_failed">Failed to cancel invitation</string>
     <string name="team_remove_confirm">Are you sure you want to remove this member?</string>
+    <string name="team_member_removed_success">Member removed</string>
+    <string name="team_member_removed_failed">Failed to remove member</string>
     <string name="team_transfer_confirm">Are you sure you want to transfer ownership? You will become an Admin.</string>
+    <string name="team_ownership_transferred_success">Ownership transferred</string>
+    <string name="team_ownership_transferred_failed">Failed to transfer ownership</string>
     <string name="team_only_owner_can_manage">Only the workspace Owner can manage team members</string>
     <string name="team_load_members_failed">Failed to load team members</string>
     <string name="team_load_invitations_failed">Failed to load invitations</string>
+    <string name="team_email_required">Email is required</string>
+    <string name="team_email_invalid">Invalid email format</string>
+    <string name="team_role_update_success">Role updated</string>
+    <string name="team_role_update_failed">Failed to update role</string>
 
     <!-- Role names and descriptions -->
     <string name="role_owner">Owner</string>

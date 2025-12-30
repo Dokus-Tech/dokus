@@ -1,5 +1,7 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
+import org.jetbrains.compose.resources.StringResource
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DraftStatus
@@ -131,10 +133,11 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         /**
          * Reason why confirmation is blocked, if any.
          */
-        val confirmBlockedReason: String?
+        val confirmBlockedReason: StringResource?
             get() = when {
-                isContactRequired && selectedContactId == null -> "Select a contact to continue"
-                !editableData.isValid -> "Required fields missing"
+                isContactRequired && selectedContactId == null ->
+                    Res.string.cashflow_confirm_select_contact
+                !editableData.isValid -> Res.string.cashflow_confirm_missing_fields
                 else -> null
             }
 

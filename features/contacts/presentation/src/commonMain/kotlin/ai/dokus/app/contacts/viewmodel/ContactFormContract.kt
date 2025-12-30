@@ -1,14 +1,19 @@
 package ai.dokus.app.contacts.viewmodel
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.contacts_duplicate_match_email
+import ai.dokus.app.resources.generated.contacts_duplicate_match_name_country
+import ai.dokus.app.resources.generated.contacts_duplicate_match_vat
+import androidx.compose.runtime.Immutable
+import org.jetbrains.compose.resources.StringResource
+import pro.respawn.flowmvi.api.MVIAction
+import pro.respawn.flowmvi.api.MVIIntent
+import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
-import androidx.compose.runtime.Immutable
-import pro.respawn.flowmvi.api.MVIAction
-import pro.respawn.flowmvi.api.MVIIntent
-import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -118,10 +123,10 @@ data class PotentialDuplicate(
 /**
  * Reason for duplicate detection match.
  */
-enum class DuplicateReason(val displayName: String) {
-    VatNumber("Matching VAT number"),
-    Email("Matching email"),
-    NameAndCountry("Similar name and country"),
+enum class DuplicateReason(val labelRes: StringResource) {
+    VatNumber(Res.string.contacts_duplicate_match_vat),
+    Email(Res.string.contacts_duplicate_match_email),
+    NameAndCountry(Res.string.contacts_duplicate_match_name_country),
 }
 
 // ============================================================================

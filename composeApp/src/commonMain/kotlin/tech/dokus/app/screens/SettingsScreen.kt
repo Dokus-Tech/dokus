@@ -333,7 +333,7 @@ private fun SettingsContentPane(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Settings content for ${section.destination::class.simpleName}",
+                            text = stringResource(Res.string.settings_unknown_section),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -366,12 +366,12 @@ private fun SettingsEmptyState() {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
             Text(
-                text = "Select a setting to configure",
+                text = stringResource(Res.string.settings_select_prompt),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Choose from the options on the left",
+                text = stringResource(Res.string.settings_select_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )

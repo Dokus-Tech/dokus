@@ -1,6 +1,7 @@
 package ai.dokus.app.cashflow.components.invoice
 
 import ai.dokus.app.cashflow.viewmodel.model.InvoiceLineItem
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Section containing all invoice line items with add/remove functionality.
@@ -42,7 +44,7 @@ fun InvoiceLineItemsSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Line Items",
+                text = stringResource(Res.string.invoice_line_items),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -50,10 +52,10 @@ fun InvoiceLineItemsSection(
             TextButton(onClick = onAddItem) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add item",
+                    contentDescription = stringResource(Res.string.invoice_add_line_item),
                     modifier = Modifier.padding(end = 4.dp)
                 )
-                Text("Add Item")
+                Text(stringResource(Res.string.invoice_add_line_item))
             }
         }
 

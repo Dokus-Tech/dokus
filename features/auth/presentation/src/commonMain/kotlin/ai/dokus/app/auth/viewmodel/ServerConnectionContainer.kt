@@ -1,15 +1,22 @@
 package ai.dokus.app.auth.viewmodel
 
 import ai.dokus.app.auth.usecases.ConnectToServerUseCase
-import tech.dokus.domain.config.ServerConfig
-import tech.dokus.domain.exceptions.asDokusException
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_host_no_spaces
+import ai.dokus.app.resources.generated.auth_host_required
+import ai.dokus.app.resources.generated.auth_port_invalid_number
+import ai.dokus.app.resources.generated.auth_port_out_of_range
+import ai.dokus.app.resources.generated.auth_port_required
 import ai.dokus.foundation.platform.Logger
+import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.exceptions.asDokusException
 
 internal typealias ServerConnectionCtx = PipelineContext<ServerConnectionState, ServerConnectionIntent, ServerConnectionAction>
 
@@ -243,20 +250,20 @@ internal class ServerConnectionContainer(
         )
     }
 
-    private fun validateHost(host: String): String? {
+    private fun validateHost(host: String): StringResource? {
         return when {
-            host.isBlank() -> "Host is required"
-            host.contains(" ") -> "Host cannot contain spaces"
+            host.isBlank() -> Res.string.auth_host_required
+            host.contains(" ") -> Res.string.auth_host_no_spaces
             else -> null
         }
     }
 
-    private fun validatePort(port: String): String? {
+    private fun validatePort(port: String): StringResource? {
         val portNum = port.toIntOrNull()
         return when {
-            port.isBlank() -> "Port is required"
-            portNum == null -> "Port must be a number"
-            portNum !in 1..65535 -> "Port must be between 1 and 65535"
+            port.isBlank() -> Res.string.auth_port_required
+            portNum == null -> Res.string.auth_port_invalid_number
+            portNum !in 1..65535 -> Res.string.auth_port_out_of_range
             else -> null
         }
     }

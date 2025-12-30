@@ -1,5 +1,6 @@
 package ai.dokus.app.auth.model
 
+import org.jetbrains.compose.resources.StringResource
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.VatNumber
@@ -51,7 +52,7 @@ sealed class LookupState {
     data object Idle : LookupState()
     data object Loading : LookupState()
     data class Success(val results: List<EntityLookup>) : LookupState()
-    data class Error(val message: String) : LookupState()
+    data class Error(val message: StringResource) : LookupState()
 }
 
 /**

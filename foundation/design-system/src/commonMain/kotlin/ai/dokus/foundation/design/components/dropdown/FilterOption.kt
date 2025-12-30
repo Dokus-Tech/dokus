@@ -1,5 +1,7 @@
 package ai.dokus.foundation.design.components.dropdown
 
+import org.jetbrains.compose.resources.StringResource
+
 /**
  * Interface that filter enum types must implement to work with [PFilterDropdown].
  *
@@ -9,16 +11,16 @@ package ai.dokus.foundation.design.components.dropdown
  *
  * Example usage:
  * ```kotlin
- * enum class ContactRoleFilter(override val displayName: String) : FilterOption {
- *     All("All"),
- *     Customers("Customers"),
- *     Vendors("Vendors")
+ * enum class ContactRoleFilter(override val labelRes: StringResource) : FilterOption {
+ *     All(Res.string.contacts_filter_all),
+ *     Customers(Res.string.contacts_filter_customers),
+ *     Vendors(Res.string.contacts_filter_vendors)
  * }
  * ```
  */
 interface FilterOption {
     /**
-     * The human-readable name to display in the dropdown UI.
+     * The string resource to display in the dropdown UI.
      */
-    val displayName: String
+    val labelRes: StringResource
 }

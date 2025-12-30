@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components.upload
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * File icon with a customizable overlay indicator.
@@ -234,7 +236,7 @@ fun DeletingFileInfo(
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = "Deleting...",
+            text = stringResource(Res.string.upload_status_deleting),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error
         )

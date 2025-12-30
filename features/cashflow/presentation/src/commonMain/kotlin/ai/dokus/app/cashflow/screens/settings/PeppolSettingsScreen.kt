@@ -222,7 +222,7 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
                     HorizontalDivider()
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "Connected to:",
+                        text = stringResource(Res.string.peppol_connected_to),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -232,7 +232,7 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "VAT: ${company.vatNumber}",
+                        text = stringResource(Res.string.common_vat_value, company.vatNumber),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -245,14 +245,14 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
             OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Connect to Peppol",
+                        text = stringResource(Res.string.peppol_connect_title),
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     Spacer(Modifier.height(8.dp))
 
                     Text(
-                        text = "Select your e-invoicing provider to get started.",
+                        text = stringResource(Res.string.peppol_select_provider_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -263,7 +263,7 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
                     ProviderCard(
                         provider = PeppolProvider.Recommand,
                         icon = Icons.Outlined.Receipt,
-                        description = "Belgian Peppol Access Point for e-invoicing",
+                        description = stringResource(Res.string.peppol_provider_recommand_description),
                         onClick = {
                             intent(PeppolSettingsIntent.SelectProvider(PeppolProvider.Recommand))
                         },
@@ -273,7 +273,7 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = "More providers coming soon",
+                        text = stringResource(Res.string.peppol_more_providers_coming),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,
@@ -296,7 +296,7 @@ private fun IntentReceiver<PeppolSettingsIntent>.SettingsContent(
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = "Disconnecting Peppol will disable e-invoicing capabilities.",
+                        text = stringResource(Res.string.peppol_delete_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

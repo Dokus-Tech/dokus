@@ -1,6 +1,7 @@
 package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.datasource.TeamRemoteDataSource
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.Email
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.asDokusException
@@ -8,6 +9,7 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import ai.dokus.foundation.platform.Logger
+import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -140,18 +142,18 @@ internal class TeamSettingsContainer(
             // Validate email
             if (inviteEmail.isBlank()) {
                 updateState {
-                    copy(actionState = TeamSettingsState.Content.ActionState.Error("Email is required"))
+                    copy(actionState = TeamSettingsState.Content.ActionState.Error(getString(Res.string.team_email_required)))
                 }
-                action(TeamSettingsAction.ShowError("Email is required"))
+                action(TeamSettingsAction.ShowError(getString(Res.string.team_email_required)))
                 return@withState
             }
 
             // Basic email validation
             if (!inviteEmail.contains("@") || !inviteEmail.contains(".")) {
                 updateState {
-                    copy(actionState = TeamSettingsState.Content.ActionState.Error("Please enter a valid email address"))
+                    copy(actionState = TeamSettingsState.Content.ActionState.Error(getString(Res.string.team_email_invalid)))
                 }
-                action(TeamSettingsAction.ShowError("Please enter a valid email address"))
+                action(TeamSettingsAction.ShowError(getString(Res.string.team_email_invalid)))
                 return@withState
             }
 
@@ -173,10 +175,10 @@ internal class TeamSettingsContainer(
                         copy(
                             inviteEmail = "",
                             inviteRole = UserRole.Editor,
-                            actionState = TeamSettingsState.Content.ActionState.Success("Invitation sent successfully")
+                            actionState = TeamSettingsState.Content.ActionState.Success(getString(Res.string.team_invite_success))
                         )
                     }
-                    action(TeamSettingsAction.ShowSuccess("Invitation sent successfully"))
+                    action(TeamSettingsAction.ShowSuccess(getString(Res.string.team_invite_success)))
                     action(TeamSettingsAction.DismissInviteDialog)
 
                     // Refresh invitations
@@ -184,7 +186,7 @@ internal class TeamSettingsContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to send invitation" }
-                    val message = error.message ?: "Failed to send invitation"
+                    val message = error.message ?: getString(Res.string.team_invite_failed)
                     updateState {
                         copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
                     }
@@ -203,16 +205,16 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Invitation cancelled: $invitationId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Invitation cancelled"))
+                        copy(actionState = TeamSettingsState.Content.ActionState.Success(getString(Res.string.team_invite_cancelled)))
                     }
-                    action(TeamSettingsAction.ShowSuccess("Invitation cancelled"))
+                    action(TeamSettingsAction.ShowSuccess(getString(Res.string.team_invite_cancelled)))
 
                     // Refresh invitations
                     refreshInvitations()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to cancel invitation" }
-                    val message = error.message ?: "Failed to cancel invitation"
+                    val message = error.message ?: getString(Res.string.team_invite_cancel_failed)
                     updateState {
                         copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
                     }
@@ -231,16 +233,16 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Role updated for $userId to $newRole" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Role updated successfully"))
+                        copy(actionState = TeamSettingsState.Content.ActionState.Success(getString(Res.string.team_role_update_success)))
                     }
-                    action(TeamSettingsAction.ShowSuccess("Role updated successfully"))
+                    action(TeamSettingsAction.ShowSuccess(getString(Res.string.team_role_update_success)))
 
                     // Refresh members
                     refreshMembers()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to update role" }
-                    val message = error.message ?: "Failed to update role"
+                    val message = error.message ?: getString(Res.string.team_role_update_failed)
                     updateState {
                         copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
                     }
@@ -259,16 +261,16 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Member removed: $userId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Member removed successfully"))
+                        copy(actionState = TeamSettingsState.Content.ActionState.Success(getString(Res.string.team_member_removed_success)))
                     }
-                    action(TeamSettingsAction.ShowSuccess("Member removed successfully"))
+                    action(TeamSettingsAction.ShowSuccess(getString(Res.string.team_member_removed_success)))
 
                     // Refresh members
                     refreshMembers()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to remove member" }
-                    val message = error.message ?: "Failed to remove member"
+                    val message = error.message ?: getString(Res.string.team_member_removed_failed)
                     updateState {
                         copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
                     }
@@ -287,16 +289,16 @@ internal class TeamSettingsContainer(
                 onSuccess = {
                     logger.i { "Ownership transferred to $newOwnerId" }
                     updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Success("Ownership transferred successfully"))
+                        copy(actionState = TeamSettingsState.Content.ActionState.Success(getString(Res.string.team_ownership_transferred_success)))
                     }
-                    action(TeamSettingsAction.ShowSuccess("Ownership transferred successfully"))
+                    action(TeamSettingsAction.ShowSuccess(getString(Res.string.team_ownership_transferred_success)))
 
                     // Refresh members
                     refreshMembers()
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to transfer ownership" }
-                    val message = error.message ?: "Failed to transfer ownership"
+                    val message = error.message ?: getString(Res.string.team_ownership_transferred_failed)
                     updateState {
                         copy(actionState = TeamSettingsState.Content.ActionState.Error(message))
                     }

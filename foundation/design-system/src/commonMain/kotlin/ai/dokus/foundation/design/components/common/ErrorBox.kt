@@ -1,6 +1,8 @@
 package ai.dokus.foundation.design.components.common
 
 import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.exception_connection_error
+import ai.dokus.app.resources.generated.state_error
 import ai.dokus.app.resources.generated.state_retry
 import ai.dokus.foundation.design.components.POutlinedButton
 import ai.dokus.foundation.design.constrains.Constrains
@@ -176,7 +178,7 @@ private fun PulseErrorTextPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        DokusErrorText(text = "An error occurred while processing your request")
+        DokusErrorText(text = stringResource(Res.string.state_error))
     }
 }
 
@@ -187,8 +189,8 @@ private fun PulseErrorContentPreview(
 ) {
     TestWrapper(parameters) {
         DokusErrorContent(
-            title = "Connection Error",
-            text = "Unable to connect to the server. Please check your internet connection and try again.",
+            title = stringResource(Res.string.state_error),
+            text = stringResource(Res.string.exception_connection_error),
             retryHandler = RetryHandler { }
         )
     }

@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Documents table section with its own loading/error handling.
@@ -231,7 +233,7 @@ fun EmptyDocumentsState(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "No financial documents yet",
+            text = stringResource(Res.string.cashflow_no_documents),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

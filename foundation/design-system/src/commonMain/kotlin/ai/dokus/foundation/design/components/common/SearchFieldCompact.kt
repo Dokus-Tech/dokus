@@ -1,5 +1,8 @@
 package ai.dokus.foundation.design.components.common
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_clear_field
+import ai.dokus.app.resources.generated.action_search
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.background
@@ -30,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Search
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Compact search field for top bars; independent of PTextField.
@@ -40,7 +44,7 @@ fun PSearchFieldCompact(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
-    fieldName: String = "Search",
+    fieldName: String = stringResource(Res.string.action_search),
     onClear: (() -> Unit)? = null,
 ) {
     val shape = MaterialTheme.shapes.small
@@ -89,7 +93,7 @@ fun PSearchFieldCompact(
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,
-                    contentDescription = "Clear $fieldName",
+                    contentDescription = stringResource(Res.string.action_clear_field, fieldName),
                     modifier = Modifier.size(Constrains.IconSize.xSmall),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )

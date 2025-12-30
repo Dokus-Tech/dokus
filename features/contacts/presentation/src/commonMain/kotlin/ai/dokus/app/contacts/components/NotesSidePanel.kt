@@ -1,7 +1,24 @@
 package ai.dokus.app.contacts.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.action_close
+import ai.dokus.app.resources.generated.action_delete
+import ai.dokus.app.resources.generated.action_save
+import ai.dokus.app.resources.generated.contacts_add_first_note_hint
+import ai.dokus.app.resources.generated.contacts_add_note
+import ai.dokus.app.resources.generated.contacts_delete_note
+import ai.dokus.app.resources.generated.contacts_delete_note_confirm
+import ai.dokus.app.resources.generated.contacts_delete_note_warning
+import ai.dokus.app.resources.generated.contacts_deleting
+import ai.dokus.app.resources.generated.contacts_edit_note
+import ai.dokus.app.resources.generated.contacts_load_notes_failed
+import ai.dokus.app.resources.generated.contacts_no_notes
+import ai.dokus.app.resources.generated.contacts_note_by
+import ai.dokus.app.resources.generated.contacts_note_content
+import ai.dokus.app.resources.generated.contacts_notes
+import ai.dokus.app.resources.generated.contacts_saving
 import ai.dokus.foundation.design.components.fields.PTextFieldFree
-import tech.dokus.domain.model.contact.ContactNoteDto
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -56,6 +73,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -172,7 +191,11 @@ fun NotesSidePanel(
                         // Add/Edit Note Form
                         if (showAddNoteForm || editingNote != null) {
                             NoteForm(
-                                title = if (editingNote != null) "Edit Note" else "Add Note",
+                                title = if (editingNote != null) {
+                                    stringResource(Res.string.contacts_edit_note)
+                                } else {
+                                    stringResource(Res.string.contacts_add_note)
+                                },
                                 noteContent = noteContent,
                                 onNoteContentChange = onNoteContentChange,
                                 isSaving = isSavingNote,
@@ -229,7 +252,7 @@ fun NotesSidePanel(
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                         Text(
-                                            text = "Failed to load notes",
+                                            text = stringResource(Res.string.contacts_load_notes_failed),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -258,12 +281,12 @@ fun NotesSidePanel(
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                             )
                                             Text(
-                                                text = "No notes yet",
+                                                text = stringResource(Res.string.contacts_no_notes),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                             Text(
-                                                text = "Click the + button to add your first note",
+                                                text = stringResource(Res.string.contacts_add_first_note_hint),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                             )
@@ -338,7 +361,7 @@ private fun NotesSidePanelHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Notes",
+            text = stringResource(Res.string.contacts_notes),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -349,7 +372,7 @@ private fun NotesSidePanelHeader(
             IconButton(onClick = onAddClick) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add note",
+                    contentDescription = stringResource(Res.string.contacts_add_note),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -357,7 +380,7 @@ private fun NotesSidePanelHeader(
             IconButton(onClick = onClose) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
+                    contentDescription = stringResource(Res.string.action_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -387,7 +410,7 @@ private fun NoteForm(
         )
 
         PTextFieldFree(
-            fieldName = "Note content",
+            fieldName = stringResource(Res.string.contacts_note_content),
             value = noteContent,
             onValueChange = onNoteContentChange,
             modifier = Modifier.fillMaxWidth()
@@ -408,7 +431,7 @@ private fun NoteForm(
                         strokeWidth = 2.dp
                     )
                     Text(
-                        text = "Saving...",
+                        text = stringResource(Res.string.contacts_saving),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -416,7 +439,7 @@ private fun NoteForm(
             } else {
                 TextButton(onClick = onCancel) {
                     Text(
-                        text = "Cancel",
+                        text = stringResource(Res.string.action_cancel),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -427,7 +450,7 @@ private fun NoteForm(
                     onClick = onSave,
                     enabled = noteContent.isNotBlank()
                 ) {
-                    Text("Save")
+                    Text(stringResource(Res.string.action_save))
                 }
             }
         }
@@ -476,12 +499,12 @@ private fun NoteListItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         note.authorName?.let { author ->
-                            Text(
-                                text = "by $author",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = stringResource(Res.string.contacts_note_by, author),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -496,7 +519,7 @@ private fun NoteListItem(
                     IconButton(onClick = onEditClick) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit note",
+                            contentDescription = stringResource(Res.string.contacts_edit_note),
                             modifier = Modifier.size(18.dp),
                             tint = if (isEditing) {
                                 MaterialTheme.colorScheme.primary
@@ -508,7 +531,7 @@ private fun NoteListItem(
                     IconButton(onClick = onDeleteClick) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete note",
+                            contentDescription = stringResource(Res.string.contacts_delete_note),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.error
                         )
@@ -537,7 +560,7 @@ private fun DeleteNoteConfirmationDialog(
         },
         title = {
             Text(
-                text = "Delete Note",
+                text = stringResource(Res.string.contacts_delete_note),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -545,7 +568,7 @@ private fun DeleteNoteConfirmationDialog(
         text = {
             Column {
                 Text(
-                    text = "Are you sure you want to delete this note?",
+                    text = stringResource(Res.string.contacts_delete_note_confirm),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -562,7 +585,7 @@ private fun DeleteNoteConfirmationDialog(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "This action cannot be undone.",
+                    text = stringResource(Res.string.contacts_delete_note_warning),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -579,14 +602,14 @@ private fun DeleteNoteConfirmationDialog(
                         strokeWidth = 2.dp
                     )
                     Text(
-                        text = "Deleting...",
+                        text = stringResource(Res.string.contacts_deleting),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
             } else {
                 TextButton(onClick = onConfirm) {
                     Text(
-                        text = "Delete",
+                        text = stringResource(Res.string.action_delete),
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -597,7 +620,7 @@ private fun DeleteNoteConfirmationDialog(
             if (!isDeleting) {
                 TextButton(onClick = onDismiss) {
                     Text(
-                        text = "Cancel",
+                        text = stringResource(Res.string.action_cancel),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

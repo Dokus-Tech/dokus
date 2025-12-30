@@ -8,9 +8,17 @@ import ai.dokus.app.contacts.viewmodel.ContactFormAction
 import ai.dokus.app.contacts.viewmodel.ContactFormContainer
 import ai.dokus.app.contacts.viewmodel.ContactFormIntent
 import ai.dokus.app.contacts.viewmodel.ContactFormState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.action_delete
+import ai.dokus.app.resources.generated.contacts_delete_confirmation
+import ai.dokus.app.resources.generated.contacts_delete_contact
+import ai.dokus.app.resources.generated.contacts_delete_warning
+import ai.dokus.app.resources.generated.contacts_deleting
+import ai.dokus.app.resources.generated.contacts_edit_contact
+import ai.dokus.app.resources.generated.contacts_update_mobile_hint
 import ai.dokus.foundation.design.components.text.SectionTitle
 import ai.dokus.foundation.design.local.LocalScreenSize
-import tech.dokus.domain.ids.ContactId
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -42,9 +50,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.foundation.app.mvi.container
 
 /**
@@ -249,13 +259,13 @@ private fun IntentReceiver<ContactFormIntent>.MobileFormLayout(
 
             // Header with back button
             SectionTitle(
-                text = "Edit Contact",
+                text = stringResource(Res.string.contacts_edit_contact),
                 onBackPress = onBackPress
             )
 
             // Description (shorter for mobile)
             Text(
-                text = "Update contact information.",
+                text = stringResource(Res.string.contacts_update_mobile_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -346,7 +356,7 @@ private fun DeleteContactConfirmationDialog(
         },
         title = {
             Text(
-                text = "Delete Contact",
+                text = stringResource(Res.string.contacts_delete_contact),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -354,12 +364,12 @@ private fun DeleteContactConfirmationDialog(
         text = {
             Column {
                 Text(
-                    text = "Are you sure you want to delete \"$contactName\"?",
+                    text = stringResource(Res.string.contacts_delete_confirmation, contactName),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "This action cannot be undone. Any associated invoices, bills, and expenses will lose their contact reference.",
+                    text = stringResource(Res.string.contacts_delete_warning),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -376,14 +386,14 @@ private fun DeleteContactConfirmationDialog(
                         strokeWidth = 2.dp
                     )
                     Text(
-                        text = "Deleting...",
+                        text = stringResource(Res.string.contacts_deleting),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
             } else {
                 TextButton(onClick = onConfirm) {
                     Text(
-                        text = "Delete",
+                        text = stringResource(Res.string.action_delete),
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -394,7 +404,7 @@ private fun DeleteContactConfirmationDialog(
             if (!isDeleting) {
                 TextButton(onClick = onDismiss) {
                     Text(
-                        text = "Cancel",
+                        text = stringResource(Res.string.action_cancel),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

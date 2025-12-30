@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Document upload zone component with dashed border and drag state visual feedback.
@@ -55,7 +57,7 @@ fun DocumentUploadZone(
     onFilesDropped: (List<DroppedFile>) -> Unit,
     modifier: Modifier = Modifier,
     isUploading: Boolean = false,
-    title: String = "Select file or\ndrag it here",
+    title: String? = null,
     icon: UploadIcon = UploadIcon.Document
 ) {
     val borderColor = if (isDragging) {
@@ -64,10 +66,11 @@ fun DocumentUploadZone(
         MaterialTheme.colorScheme.outline
     }
 
+    val resolvedTitle = title ?: stringResource(Res.string.upload_select_or_drag)
     val displayText = if (isDragging) {
-        "Drop files or folders here"
+        stringResource(Res.string.upload_drop_files)
     } else {
-        title
+        resolvedTitle
     }
 
     Box(
@@ -141,7 +144,7 @@ fun DocumentUploadZone(
                 if (isDragDropSupported && !isDragging) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "or drag files or folders here",
+                        text = stringResource(Res.string.upload_drag_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = borderColor.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
@@ -167,10 +170,11 @@ fun DocumentUploadZone(
     onUploadClick: () -> Unit,
     isUploading: Boolean,
     modifier: Modifier = Modifier,
-    title: String = "Select file or\ndrag it here",
+    title: String? = null,
     icon: UploadIcon = UploadIcon.Document
 ) {
     val borderColor = MaterialTheme.colorScheme.outline
+    val resolvedTitle = title ?: stringResource(Res.string.upload_select_or_drag)
 
     Box(
         modifier = modifier
@@ -225,7 +229,7 @@ fun DocumentUploadZone(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = title,
+                    text = resolvedTitle,
                     style = MaterialTheme.typography.bodyLarge,
                     color = borderColor,
                     textAlign = TextAlign.Center
@@ -234,7 +238,7 @@ fun DocumentUploadZone(
                 if (isDragDropSupported) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "or drag files or folders here",
+                        text = stringResource(Res.string.upload_drag_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = borderColor.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center

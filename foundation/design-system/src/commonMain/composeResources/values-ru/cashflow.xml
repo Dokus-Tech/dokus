@@ -154,4 +154,165 @@
 
     <!-- Errors -->
     <string name="error_failed_to_load_clients">Не удалось загрузить клиентов</string>
+
+    <!-- Draft Status -->
+    <string name="draft_status_needs_input">Требуются данные</string>
+    <string name="draft_status_needs_review">Требуется проверка</string>
+    <string name="draft_status_ready">Готово</string>
+    <string name="draft_status_confirmed">Подтверждено</string>
+    <string name="draft_status_rejected">Отклонено</string>
+
+    <!-- Cashflow Actions -->
+    <string name="cashflow_upload_document">Загрузить документ</string>
+    <string name="cashflow_create_invoice">Создать счет</string>
+    <string name="cashflow_sort_label">Сортировать</string>
+    <string name="cashflow_sort_default">По умолчанию</string>
+    <string name="cashflow_sort_date_newest">Сначала новые</string>
+    <string name="cashflow_sort_date_oldest">Сначала старые</string>
+    <string name="cashflow_sort_amount_highest">Сумма (по убыванию)</string>
+    <string name="cashflow_sort_amount_lowest">Сумма (по возрастанию)</string>
+    <string name="cashflow_sort_type">Тип</string>
+    <string name="cashflow_document_number_expense">Расход %1$s</string>
+    <string name="cashflow_document_number_bill">Счет %1$s</string>
+    <string name="cashflow_amount_with_currency">%1$s %2$s</string>
+    <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
+
+    <!-- Document Review -->
+    <string name="cashflow_document_review_title">Проверка документа</string>
+    <string name="cashflow_chat_with_document">Чат с документом</string>
+    <string name="cashflow_confidence_badge">%1$d%% уверенности</string>
+    <string name="cashflow_loading_document">Загрузка документа...</string>
+    <string name="cashflow_unknown_document_type">Неизвестный тип документа</string>
+    <string name="cashflow_client_information">Информация о клиенте</string>
+    <string name="cashflow_client_name">Имя клиента</string>
+    <string name="cashflow_invoice_details_section">Детали счета</string>
+    <string name="cashflow_section_amounts">Суммы</string>
+    <string name="cashflow_section_additional_information">Дополнительная информация</string>
+    <string name="cashflow_invoice_number">Номер счета</string>
+    <string name="cashflow_vat_amount">Сумма НДС</string>
+    <string name="cashflow_bill_details_section">Детали счета</string>
+    <string name="cashflow_supplier_information">Информация о поставщике</string>
+    <string name="cashflow_supplier_name">Имя поставщика</string>
+    <string name="cashflow_merchant_information">Информация о продавце</string>
+    <string name="cashflow_merchant">Продавец</string>
+    <string name="cashflow_expense_details_section">Детали расхода</string>
+    <string name="cashflow_receipt_number">Номер чека</string>
+    <string name="cashflow_payment_method">Способ оплаты</string>
+    <string name="cashflow_tax_deductibility">Налоговый вычет</string>
+    <string name="cashflow_is_deductible">Подлежит вычету</string>
+    <string name="cashflow_deductible_percentage">Процент вычета</string>
+    <string name="cashflow_select_category">Выберите категорию</string>
+    <string name="cashflow_select_payment_method">Выберите способ оплаты</string>
+    <string name="cashflow_suggested_contacts">Рекомендуемые контакты:</string>
+
+    <!-- Contact Selection -->
+    <string name="cashflow_client_label">Клиент</string>
+    <string name="cashflow_supplier_label">Поставщик</string>
+    <string name="cashflow_contact_label">Контакт</string>
+    <string name="cashflow_saving_contact">Сохранение контакта...</string>
+    <string name="cashflow_no_contact_selected">Контакт не выбран</string>
+    <string name="cashflow_select_contact">Выбрать контакт</string>
+    <string name="cashflow_suggested_contact">Рекомендуемый контакт</string>
+    <string name="cashflow_use_this_contact">Использовать этот контакт</string>
+    <string name="cashflow_choose_different">Выбрать другой</string>
+    <string name="cashflow_contact_selected">Контакт выбран</string>
+    <string name="cashflow_bound_to">Связано с %1$s</string>
+    <string name="cashflow_ai_suggested">Предложено ИИ</string>
+
+    <!-- Document Review Messages -->
+    <string name="cashflow_contact_clear_failed">Не удалось удалить контакт</string>
+    <string name="cashflow_contact_save_failed">Не удалось сохранить контакт</string>
+    <string name="cashflow_contact_bind_failed">Не удалось связать контакт</string>
+    <string name="cashflow_preview_load_failed">Не удалось загрузить предпросмотр документа</string>
+    <string name="cashflow_draft_saved">Черновик сохранен</string>
+    <string name="cashflow_confirm_missing_fields">Отсутствуют обязательные поля</string>
+    <string name="cashflow_confirm_select_contact">Выберите контакт, чтобы продолжить</string>
+    <string name="cashflow_document_confirmed">Документ подтвержден</string>
+
+    <!-- Preview -->
+    <string name="cashflow_document_preview_title">Предпросмотр документа</string>
+    <string name="cashflow_preview_page_label">Страница %1$d</string>
+    <string name="cashflow_preview_page_failed">Страница %1$d не загрузилась</string>
+    <string name="cashflow_preview_load_more">Загрузить еще (показано %1$d из %2$d)</string>
+    <string name="cashflow_preview_highlight_hint">Предпросмотр выделит нужные области при выборе поля</string>
+    <string name="cashflow_no_preview">Нет предпросмотра</string>
+    <string name="cashflow_page_single">%1$d страница</string>
+    <string name="cashflow_page_plural">%1$d страниц</string>
+
+    <!-- Invoice Creation (Additional) -->
+    <string name="invoice_click_to_set">Нажмите, чтобы установить</string>
+    <string name="invoice_back_to_edit">Назад к редактированию</string>
+    <string name="invoice_details_title">Детали счета</string>
+    <string name="invoice_notes_optional">Примечания (необязательно)</string>
+    <string name="invoice_add_description_hint">Добавить описание</string>
+    <string name="invoice_price_with_currency">Цена (%1$s)</string>
+    <string name="invoice_number_preview">Счет №%1$s</string>
+    <string name="invoice_edit_hint_desktop">Нажмите на поле, чтобы изменить</string>
+    <string name="invoice_edit_hint_mobile">Нажмите на поле, чтобы изменить</string>
+    <string name="invoice_contact_search_placeholder">Поиск контактов...</string>
+    <string name="invoice_contact_search_label">Поиск контактов</string>
+    <string name="invoice_contact_search_help">Ищите клиента по имени, e-mail или номеру НДС</string>
+    <string name="invoice_selected_contact">Выбранный контакт</string>
+    <string name="invoice_search_clients">Поиск клиентов</string>
+    <string name="invoice_no_clients_found">Клиенты не найдены</string>
+    <string name="invoice_no_clients_match">Нет клиентов, соответствующих поиску</string>
+    <string name="cashflow_invoice_create_success">Счёт успешно создан</string>
+    <string name="cashflow_invoice_create_failed">Не удалось создать счёт</string>
+    <string name="invoice_validation_client_required">Выберите клиента</string>
+    <string name="invoice_validation_items_required">Добавьте хотя бы одну корректную позицию</string>
+    <string name="invoice_validation_due_date_before_issue">Срок оплаты не может быть раньше даты выставления</string>
+
+    <!-- Upload -->
+    <string name="upload_select_or_drag">Выберите файлы или перетащите их сюда</string>
+    <string name="upload_drop_files">Перетащите файлы для загрузки</string>
+    <string name="upload_with_camera">Загрузить с камеры</string>
+    <string name="upload_select_file">Выберите файл</string>
+    <string name="upload_status_deleting">Удаление...</string>
+    <string name="upload_status_waiting">Ожидание...</string>
+    <string name="upload_failed_message">Не удалось загрузить</string>
+
+    <!-- Bill Status -->
+    <string name="bill_status_draft">Черновик</string>
+    <string name="bill_status_pending">В ожидании</string>
+    <string name="bill_status_scheduled">Запланировано</string>
+    <string name="bill_status_paid">Оплачено</string>
+    <string name="bill_status_overdue">Просрочено</string>
+    <string name="bill_status_cancelled">Отменено</string>
+
+    <!-- Business Health -->
+    <string name="business_health_description">Прогноз эффективности на основе недавней активности</string>
+    <string name="health_status_good">Хорошо</string>
+    <string name="health_status_warning">Предупреждение</string>
+    <string name="health_status_critical">Критично</string>
+
+    <!-- VAT Summary -->
+    <string name="vat_quarter_sublabel">Квартал %1$d</string>
+
+    <!-- Currency -->
+    <string name="currency_symbol_eur">€</string>
+
+    <!-- Expense Categories -->
+    <string name="expense_category_office_supplies">Офисные принадлежности</string>
+    <string name="expense_category_travel">Путешествия</string>
+    <string name="expense_category_meals">Питание</string>
+    <string name="expense_category_software">ПО</string>
+    <string name="expense_category_hardware">Оборудование</string>
+    <string name="expense_category_utilities">Коммунальные услуги</string>
+    <string name="expense_category_rent">Аренда</string>
+    <string name="expense_category_insurance">Страхование</string>
+    <string name="expense_category_marketing">Маркетинг</string>
+    <string name="expense_category_professional_services">Профессиональные услуги</string>
+    <string name="expense_category_telecommunications">Телекоммуникации</string>
+    <string name="expense_category_vehicle">Транспорт</string>
+    <string name="expense_category_other">Другое</string>
+
+    <!-- Payment Methods -->
+    <string name="payment_method_bank_transfer">Банковский перевод</string>
+    <string name="payment_method_credit_card">Кредитная карта</string>
+    <string name="payment_method_debit_card">Дебетовая карта</string>
+    <string name="payment_method_paypal">PayPal</string>
+    <string name="payment_method_stripe">Stripe</string>
+    <string name="payment_method_cash">Наличные</string>
+    <string name="payment_method_check">Чек</string>
+    <string name="payment_method_other">Другое</string>
 </resources>

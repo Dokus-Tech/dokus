@@ -1,5 +1,7 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.foundation.design.components.CashflowType
 import ai.dokus.foundation.design.components.fields.PTextFieldStandard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Form a component for invoice details.
@@ -38,7 +41,7 @@ fun InvoiceDetailsForm(
     var dueDate by remember { mutableStateOf("") }
     var client by remember { mutableStateOf("") }
     var isRecurrent by remember { mutableStateOf(false) }
-    var cashflowType by remember { mutableStateOf("Cash-in") }
+    var cashflowType by remember { mutableStateOf(CashflowType.CashIn) }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -55,7 +58,7 @@ fun InvoiceDetailsForm(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
-                text = "Details",
+                text = stringResource(Res.string.invoice_details),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -63,7 +66,7 @@ fun InvoiceDetailsForm(
 
             // Invoice name
             PTextFieldStandard(
-                fieldName = "Invoice name",
+                fieldName = stringResource(Res.string.invoice_name),
                 value = invoiceName,
                 onValueChange = { invoiceName = it },
                 modifier = Modifier.fillMaxWidth()
@@ -71,7 +74,7 @@ fun InvoiceDetailsForm(
 
             // Total amount
             PTextFieldStandard(
-                fieldName = "Total amount",
+                fieldName = stringResource(Res.string.invoice_total_amount),
                 value = totalAmount,
                 onValueChange = { totalAmount = it },
                 modifier = Modifier.fillMaxWidth()
@@ -79,7 +82,7 @@ fun InvoiceDetailsForm(
 
             // VAT
             PTextFieldStandard(
-                fieldName = "VAT",
+                fieldName = stringResource(Res.string.invoice_vat),
                 value = vat,
                 onValueChange = { vat = it },
                 modifier = Modifier.fillMaxWidth()
@@ -87,7 +90,7 @@ fun InvoiceDetailsForm(
 
             // Category
             PTextFieldStandard(
-                fieldName = "Category",
+                fieldName = stringResource(Res.string.invoice_category),
                 value = category,
                 onValueChange = { category = it },
                 modifier = Modifier.fillMaxWidth()
@@ -95,7 +98,7 @@ fun InvoiceDetailsForm(
 
             // Issue date
             PTextFieldStandard(
-                fieldName = "Issue date",
+                fieldName = stringResource(Res.string.invoice_issue_date),
                 value = issueDate,
                 onValueChange = { issueDate = it },
                 modifier = Modifier.fillMaxWidth()
@@ -103,7 +106,7 @@ fun InvoiceDetailsForm(
 
             // Due date
             PTextFieldStandard(
-                fieldName = "Due date",
+                fieldName = stringResource(Res.string.invoice_due_date),
                 value = dueDate,
                 onValueChange = { dueDate = it },
                 modifier = Modifier.fillMaxWidth()
@@ -111,14 +114,14 @@ fun InvoiceDetailsForm(
 
             // Client
             PTextFieldStandard(
-                fieldName = "Client",
+                fieldName = stringResource(Res.string.invoice_client),
                 value = client,
                 onValueChange = { client = it },
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Recurrent expense
-            FormField(label = "Recurrent expense") {
+            FormField(label = stringResource(Res.string.invoice_recurrent_expense)) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -131,7 +134,7 @@ fun InvoiceDetailsForm(
                             onClick = { isRecurrent = true }
                         )
                         Text(
-                            text = "Yes",
+                            text = stringResource(Res.string.answer_yes),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -143,7 +146,7 @@ fun InvoiceDetailsForm(
                             onClick = { isRecurrent = false }
                         )
                         Text(
-                            text = "No",
+                            text = stringResource(Res.string.answer_no),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -151,7 +154,7 @@ fun InvoiceDetailsForm(
             }
 
             // Cashflow
-            FormField(label = "Cashflow") {
+            FormField(label = stringResource(Res.string.cashflow_direction)) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -160,11 +163,11 @@ fun InvoiceDetailsForm(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = cashflowType == "Cash-in",
-                            onClick = { cashflowType = "Cash-in" }
+                            selected = cashflowType == CashflowType.CashIn,
+                            onClick = { cashflowType = CashflowType.CashIn }
                         )
                         Text(
-                            text = "Cash-in",
+                            text = stringResource(Res.string.cashflow_cash_in),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -172,11 +175,11 @@ fun InvoiceDetailsForm(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = cashflowType == "Cash-out",
-                            onClick = { cashflowType = "Cash-out" }
+                            selected = cashflowType == CashflowType.CashOut,
+                            onClick = { cashflowType = CashflowType.CashOut }
                         )
                         Text(
-                            text = "Cash-out",
+                            text = stringResource(Res.string.cashflow_cash_out),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -184,9 +187,9 @@ fun InvoiceDetailsForm(
             }
 
             // Items
-            FormField(label = "Items") {
+            FormField(label = stringResource(Res.string.invoice_items)) {
                 Text(
-                    text = "No items added",
+                    text = stringResource(Res.string.invoice_no_items),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

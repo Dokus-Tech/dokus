@@ -5,6 +5,7 @@ import ai.dokus.app.cashflow.model.DocumentDeletionHandle
 import ai.dokus.app.cashflow.model.DocumentUploadDisplayState
 import ai.dokus.app.cashflow.model.DocumentUploadTask
 import ai.dokus.app.cashflow.model.UploadStatus
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.model.DocumentDto
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Component-level state holder for a single document upload item.
@@ -44,6 +46,7 @@ class DocumentUploadItemState(
     private var currentTask: DocumentUploadTask? = null
     private var currentDocument: DocumentDto? = null
     private var currentDeletionHandle: DocumentDeletionHandle? = null
+    private var fallbackErrorMessage: String = ""
 
     /**
      * Updates the state with new data from the manager.
@@ -51,10 +54,12 @@ class DocumentUploadItemState(
     fun update(
         task: DocumentUploadTask?,
         document: DocumentDto?,
-        deletionHandle: DocumentDeletionHandle?
+        deletionHandle: DocumentDeletionHandle?,
+        fallbackErrorMessage: String
     ) {
         currentTask = task
         currentDocument = document
+        this.fallbackErrorMessage = fallbackErrorMessage
 
         // Handle deletion countdown changes
         if (deletionHandle != currentDeletionHandle) {
@@ -162,7 +167,7 @@ class DocumentUploadItemState(
                 fileName = task.fileName,
                 fileSize = task.fileSize,
                 task = task,
-                error = task.error ?: "Upload failed"
+                error = task.error ?: fallbackErrorMessage
             )
 
             UploadStatus.COMPLETED -> {
@@ -210,7 +215,12 @@ fun rememberDocumentUploadItemState(
     }
 
     // Update with latest data
-    state.update(task, document, deletionHandle)
+    state.update(
+        task,
+        document,
+        deletionHandle,
+        stringResource(Res.string.upload_failed_message)
+    )
 
     return state
 }

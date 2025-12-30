@@ -103,6 +103,40 @@
     <string name="peppol_connection_successful">Verbinding geslaagd!</string>
     <string name="peppol_delete_warning">Het verwijderen van Peppol-instellingen schakelt e-factureringmogelijkheden uit.</string>
 
+    <!-- Additional Settings -->
+    <string name="settings_save_failed">Instellingen opslaan mislukt</string>
+    <string name="settings_unknown_section">Onbekende instellingensectie</string>
+    <string name="profile_logging_out">Bezig met uitloggen...</string>
+    <string name="profile_reset_to_cloud_failed">Terugzetten naar cloud mislukt</string>
+    <string name="workspace_add">Werkruimte toevoegen</string>
+    <string name="workspace_type_company">Bedrijf</string>
+    <string name="workspace_type_freelancer">Freelancer</string>
+    <string name="workspace_create_failed">Werkruimte maken mislukt</string>
+    <string name="workspace_select_failed">Werkruimte selecteren mislukt</string>
+    <string name="workspace_settings_load_failed">Werkruimte-instellingen laden mislukt</string>
+    <string name="workspace_company_logo">Bedrijfslogo</string>
+    <string name="workspace_avatar_upload_failed">Bedrijfslogo uploaden mislukt</string>
+    <string name="workspace_avatar_delete_failed">Bedrijfslogo verwijderen mislukt</string>
+    <string name="peppol_connect_title">Peppol-provider verbinden</string>
+    <string name="peppol_connect_title_with_provider">%1$s verbinden</string>
+    <string name="peppol_select_provider_hint">Selecteer een provider om door te gaan</string>
+    <string name="peppol_provider_recommand_description">Aanbevolen voor snelle onboarding</string>
+    <string name="peppol_more_providers_coming">Meer providers volgen binnenkort</string>
+    <string name="peppol_connected_to">Verbonden met %1$s</string>
+    <string name="peppol_get_credentials_title">Haal je API-gegevens op</string>
+    <string name="peppol_instruction_visit_site">Bezoek de providerwebsite</string>
+    <string name="peppol_instruction_create_account">Maak een account aan</string>
+    <string name="peppol_instruction_navigate_api">Ga naar de API-gegevens</string>
+    <string name="peppol_instruction_generate_keys">Genereer API-sleutels</string>
+    <string name="peppol_instruction_copy_credentials">Kopieer de gegevens hieronder</string>
+    <string name="peppol_open_provider">Providerwebsite openen</string>
+    <string name="peppol_select_company_title">Selecteer een bedrijf</string>
+    <string name="peppol_multiple_companies_hint">Meerdere bedrijven gevonden, kies er één om door te gaan</string>
+    <string name="peppol_enterprise_value">Bedrijf</string>
+    <string name="peppol_no_companies_title">Geen bedrijven gevonden</string>
+    <string name="peppol_no_companies_hint">Maak een bedrijf aan op het platform van de provider om door te gaan</string>
+    <string name="peppol_create_company_on_provider">Bedrijf aanmaken bij provider</string>
+
     <!-- Appearance Settings -->
     <string name="appearance_settings_title">Weergave</string>
     <string name="appearance_theme">Thema</string>

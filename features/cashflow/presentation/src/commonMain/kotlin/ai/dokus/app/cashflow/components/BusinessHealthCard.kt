@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerCircle
@@ -34,6 +35,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing business health metrics.
@@ -130,7 +132,7 @@ private fun BusinessHealthCardContent(
     Column(modifier = modifier.fillMaxWidth()) {
         // Title
         Text(
-            text = "Business health",
+            text = stringResource(Res.string.business_health_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -139,7 +141,7 @@ private fun BusinessHealthCardContent(
 
         // Description
         Text(
-            text = "The status of your current company or business is assessed based on your management of taxes, invoices, and budget.",
+            text = stringResource(Res.string.business_health_description),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -165,12 +167,12 @@ private fun BusinessHealthCardContent(
             ) {
                 LegendItem(
                     color = MaterialTheme.colorScheme.primary,
-                    label = "Predicted",
+                    label = stringResource(Res.string.business_health_predicted),
                     value = "${data.predictedPercentage}%"
                 )
                 LegendItem(
                     color = MaterialTheme.colorScheme.tertiary,
-                    label = "Actual",
+                    label = stringResource(Res.string.business_health_actual),
                     value = "${data.actualPercentage}%"
                 )
             }
@@ -241,7 +243,7 @@ private fun BusinessHealthCardError(
     Column(modifier = modifier.fillMaxWidth()) {
         // Title - always show
         Text(
-            text = "Business health",
+            text = stringResource(Res.string.business_health_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -277,9 +279,9 @@ private fun DonutChart(
         HealthStatus.Critical -> MaterialTheme.colorScheme.error
     }
     val statusLabel = when (status) {
-        HealthStatus.Good -> "Good"
-        HealthStatus.Warning -> "Warning"
-        HealthStatus.Critical -> "Critical"
+        HealthStatus.Good -> stringResource(Res.string.health_status_good)
+        HealthStatus.Warning -> stringResource(Res.string.health_status_warning)
+        HealthStatus.Critical -> stringResource(Res.string.health_status_critical)
     }
 
     Box(
@@ -363,7 +365,7 @@ private fun LegendItem(
 
         // Label and value
         Text(
-            text = "$label - $value",
+            text = stringResource(Res.string.common_label_value, label, value),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface
         )

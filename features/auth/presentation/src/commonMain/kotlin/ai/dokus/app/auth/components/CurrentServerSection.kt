@@ -1,5 +1,13 @@
 package ai.dokus.app.auth.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_change_server
+import ai.dokus.app.resources.generated.auth_dokus_cloud
+import ai.dokus.app.resources.generated.auth_reset_cloud
+import ai.dokus.app.resources.generated.auth_server_connection
+import ai.dokus.app.resources.generated.auth_server_label
+import ai.dokus.app.resources.generated.auth_server_url
+import ai.dokus.app.resources.generated.auth_server_version
 import ai.dokus.foundation.design.components.POutlinedButton
 import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Settings section showing the current server connection.
@@ -54,7 +63,7 @@ fun CurrentServerSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Server Connection",
+                    text = stringResource(Res.string.auth_server_connection),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Icon(
@@ -69,15 +78,19 @@ fun CurrentServerSection(
 
             // Server name
             ServerInfoRow(
-                label = "Server",
-                value = currentServer.name ?: if (currentServer.isCloud) "Dokus Cloud" else currentServer.host
+                label = stringResource(Res.string.auth_server_label),
+                value = currentServer.name ?: if (currentServer.isCloud) {
+                    stringResource(Res.string.auth_dokus_cloud)
+                } else {
+                    currentServer.host
+                }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // Server URL
             ServerInfoRow(
-                label = "URL",
+                label = stringResource(Res.string.auth_server_url),
                 value = currentServer.baseUrl
             )
 
@@ -85,7 +98,7 @@ fun CurrentServerSection(
             if (currentServer.version != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 ServerInfoRow(
-                    label = "Version",
+                    label = stringResource(Res.string.auth_server_version),
                     value = currentServer.version!!
                 )
             }
@@ -94,7 +107,7 @@ fun CurrentServerSection(
 
             // Change server button
             POutlinedButton(
-                text = "Change Server",
+                text = stringResource(Res.string.auth_change_server),
                 onClick = onChangeServer,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -113,7 +126,7 @@ fun CurrentServerSection(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Reset to Dokus Cloud",
+                        text = stringResource(Res.string.auth_reset_cloud),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

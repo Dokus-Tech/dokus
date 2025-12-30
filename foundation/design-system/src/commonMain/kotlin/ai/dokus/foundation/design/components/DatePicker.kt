@@ -2,6 +2,9 @@
 
 package ai.dokus.foundation.design.components
 
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_cancel
+import ai.dokus.app.resources.generated.action_confirm
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,6 +16,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A date picker dialog that works with kotlinx.datetime.LocalDate.
@@ -29,8 +33,8 @@ fun PDatePickerDialog(
     initialDate: LocalDate?,
     onDateSelected: (LocalDate?) -> Unit,
     onDismiss: () -> Unit,
-    confirmText: String = "Confirm",
-    dismissText: String = "Cancel"
+    confirmText: String = stringResource(Res.string.action_confirm),
+    dismissText: String = stringResource(Res.string.action_cancel)
 ) {
     val initialMillis = initialDate?.atStartOfDayIn(TimeZone.UTC)?.toEpochMilliseconds()
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)

@@ -49,7 +49,7 @@ object CashflowAppModule : AppModule, KoinComponent {
         ),
         HomeItem(
             destination = HomeDestination.AiChat,
-            titleRes = Res.string.cashflow_title,
+            titleRes = Res.string.chat_title,
             iconRes = Res.drawable.ml,
             priority = HomeItemPriority.Medium,
             showTopBar = false

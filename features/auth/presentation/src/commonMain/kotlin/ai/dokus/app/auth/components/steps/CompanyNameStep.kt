@@ -1,6 +1,11 @@
 package ai.dokus.app.auth.components.steps
 
 import ai.dokus.app.auth.model.LookupState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_company_name_label
+import ai.dokus.app.resources.generated.auth_company_name_prompt
+import ai.dokus.app.resources.generated.auth_company_name_searching
+import ai.dokus.app.resources.generated.auth_company_name_subtitle
 import ai.dokus.foundation.design.components.fields.PTextFieldWorkspaceName
 import ai.dokus.foundation.design.components.text.SectionTitle
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun CompanyNameStep(
@@ -31,7 +37,7 @@ internal fun CompanyNameStep(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SectionTitle(
-            text = "What's your company name?",
+            text = stringResource(Res.string.auth_company_name_prompt),
             horizontalArrangement = Arrangement.Start,
             onBackPress = onBackPress
         )
@@ -39,7 +45,7 @@ internal fun CompanyNameStep(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "We'll search for your company details automatically",
+            text = stringResource(Res.string.auth_company_name_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -48,7 +54,7 @@ internal fun CompanyNameStep(
         Spacer(modifier = Modifier.height(32.dp))
 
         PTextFieldWorkspaceName(
-            fieldName = "Company name",
+            fieldName = stringResource(Res.string.auth_company_name_label),
             value = companyName,
             enabled = lookupState !is LookupState.Loading,
             modifier = Modifier.fillMaxWidth(),
@@ -65,14 +71,14 @@ internal fun CompanyNameStep(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Searching for your company...",
+                    text = stringResource(Res.string.auth_company_name_searching),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             is LookupState.Error -> {
                 Text(
-                    text = lookupState.message,
+                    text = stringResource(lookupState.message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )

@@ -2,6 +2,22 @@ package ai.dokus.app.contacts.components.create
 
 import ai.dokus.app.contacts.viewmodel.CreateContactIntent
 import ai.dokus.app.contacts.viewmodel.CreateContactState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_back
+import ai.dokus.app.resources.generated.common_country_value
+import ai.dokus.app.resources.generated.common_vat_value
+import ai.dokus.app.resources.generated.contacts_billing_email
+import ai.dokus.app.resources.generated.contacts_confirm_company
+import ai.dokus.app.resources.generated.contacts_contact_details
+import ai.dokus.app.resources.generated.contacts_create_contact
+import ai.dokus.app.resources.generated.contacts_creating
+import ai.dokus.app.resources.generated.contacts_hide_address
+import ai.dokus.app.resources.generated.contacts_phone
+import ai.dokus.app.resources.generated.contacts_show_address
+import ai.dokus.app.resources.generated.country_belgium
+import ai.dokus.app.resources.generated.country_france
+import ai.dokus.app.resources.generated.country_netherlands
+import ai.dokus.app.resources.generated.field_optional
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.fields.PTextFieldEmail
 import ai.dokus.foundation.design.components.fields.PTextFieldPhone
@@ -33,6 +49,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import tech.dokus.domain.Email
+import tech.dokus.domain.enums.Country
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Confirm step content - review company data and add billing email.
@@ -81,13 +99,16 @@ fun ConfirmStepContent(
 
             // Form fields
             Text(
-                text = "Contact Details",
+                text = stringResource(Res.string.contacts_contact_details),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             PTextFieldEmail(
-                fieldName = "Billing Email (optional)",
+                fieldName = stringResource(
+                    Res.string.field_optional,
+                    stringResource(Res.string.contacts_billing_email)
+                ),
                 value = Email(state.billingEmail),
                 error = state.emailError?.let {
                     tech.dokus.domain.exceptions.DokusException.Validation.InvalidEmail
@@ -97,7 +118,10 @@ fun ConfirmStepContent(
             )
 
             PTextFieldPhone(
-                fieldName = "Phone (optional)",
+                fieldName = stringResource(
+                    Res.string.field_optional,
+                    stringResource(Res.string.contacts_phone)
+                ),
                 value = tech.dokus.domain.PhoneNumber(state.phone),
                 onValueChange = { onIntent(CreateContactIntent.PhoneChanged(it.value)) },
                 modifier = Modifier.fillMaxWidth()
@@ -108,7 +132,11 @@ fun ConfirmStepContent(
 
         // Primary action button
         PPrimaryButton(
-            text = if (state.isSubmitting) "Creating..." else "Create Contact",
+            text = if (state.isSubmitting) {
+                stringResource(Res.string.contacts_creating)
+            } else {
+                stringResource(Res.string.contacts_create_contact)
+            },
             enabled = !state.isSubmitting && state.emailError == null,
             isLoading = state.isSubmitting,
             onClick = { onIntent(CreateContactIntent.ConfirmAndCreate) },
@@ -131,12 +159,12 @@ private fun ConfirmHeader(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(Res.string.action_back),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
         Text(
-            text = "Confirm Company",
+            text = stringResource(Res.string.contacts_confirm_company),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -171,36 +199,22 @@ private fun CompanyInfoCard(
             // VAT number
             val vatNumber = entity.vatNumber
             if (vatNumber != null) {
-                Row {
-                    Text(
-                        text = "VAT: ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = vatNumber.value,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                Text(
+                    text = stringResource(Res.string.common_vat_value, vatNumber.value),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // Country
             val address = entity.address
             val country = address?.country
             if (country != null) {
-                Row {
-                    Text(
-                        text = "Country: ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = country.dbValue,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                Text(
+                    text = stringResource(Res.string.common_country_value, country.localizedName()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // Address toggle
@@ -214,7 +228,11 @@ private fun CompanyInfoCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (showAddress) "Hide address" else "Show address",
+                        text = if (showAddress) {
+                            stringResource(Res.string.contacts_hide_address)
+                        } else {
+                            stringResource(Res.string.contacts_show_address)
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -257,3 +275,11 @@ private fun CompanyInfoCard(
         }
     }
 }
+
+@Composable
+private fun Country.localizedName(): String =
+    when (this) {
+        Country.Belgium -> stringResource(Res.string.country_belgium)
+        Country.Netherlands -> stringResource(Res.string.country_netherlands)
+        Country.France -> stringResource(Res.string.country_france)
+    }

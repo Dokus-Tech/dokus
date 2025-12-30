@@ -6,6 +6,20 @@ import ai.dokus.app.auth.viewmodel.ServerConnectionAction
 import ai.dokus.app.auth.viewmodel.ServerConnectionContainer
 import ai.dokus.app.auth.viewmodel.ServerConnectionIntent
 import ai.dokus.app.auth.viewmodel.ServerConnectionState
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.auth_checking_server
+import ai.dokus.app.resources.generated.auth_connecting
+import ai.dokus.app.resources.generated.auth_currently_connected_to
+import ai.dokus.app.resources.generated.auth_help_description
+import ai.dokus.app.resources.generated.auth_host_label
+import ai.dokus.app.resources.generated.auth_need_help
+import ai.dokus.app.resources.generated.auth_port_label
+import ai.dokus.app.resources.generated.auth_protocol_label
+import ai.dokus.app.resources.generated.auth_server_details_title
+import ai.dokus.app.resources.generated.auth_use_cloud
+import ai.dokus.app.resources.generated.auth_validate_connection
+import ai.dokus.app.resources.generated.auth_validating
+import ai.dokus.app.resources.generated.connect_to_server
 import ai.dokus.foundation.design.components.PBackButton
 import ai.dokus.foundation.design.components.PPrimaryButton
 import ai.dokus.foundation.design.components.common.DokusErrorContent
@@ -58,6 +72,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
@@ -112,7 +127,7 @@ internal fun ServerConnectionScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Connect to Server",
+                        text = stringResource(Res.string.connect_to_server),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
@@ -183,7 +198,7 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Server Details",
+                        text = stringResource(Res.string.auth_server_details_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -192,7 +207,7 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
 
                     // Protocol selector
                     Text(
-                        text = "Protocol",
+                        text = stringResource(Res.string.auth_protocol_label),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -207,8 +222,9 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
 
                     // Host input
                     val hostError = (state as? ServerConnectionState.Input)?.hostError
+                        ?.let { stringResource(it) }
                     PTextFieldStandard(
-                        fieldName = "Host or IP Address",
+                        fieldName = stringResource(Res.string.auth_host_label),
                         value = state.host,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Uri,
@@ -223,8 +239,9 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
 
                     // Port input
                     val portError = (state as? ServerConnectionState.Input)?.portError
+                        ?.let { stringResource(it) }
                     PTextFieldStandard(
-                        fieldName = "Port",
+                        fieldName = stringResource(Res.string.auth_port_label),
                         value = state.port,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
@@ -240,9 +257,9 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
                     // Validate button
                     PPrimaryButton(
                         text = when (state) {
-                            is ServerConnectionState.Validating -> "Validating..."
-                            is ServerConnectionState.Connecting -> "Connecting..."
-                            else -> "Validate Connection"
+                            is ServerConnectionState.Validating -> stringResource(Res.string.auth_validating)
+                            is ServerConnectionState.Connecting -> stringResource(Res.string.auth_connecting)
+                            else -> stringResource(Res.string.auth_validate_connection)
                         },
                         enabled = state !is ServerConnectionState.Validating &&
                                 state !is ServerConnectionState.Connecting,
@@ -278,9 +295,9 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = if (state is ServerConnectionState.Validating) {
-                            "Checking server..."
+                            stringResource(Res.string.auth_checking_server)
                         } else {
-                            "Connecting..."
+                            stringResource(Res.string.auth_connecting)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -306,7 +323,7 @@ private fun IntentReceiver<ServerConnectionIntent>.ServerConnectionContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Use Dokus Cloud instead")
+                Text(text = stringResource(Res.string.auth_use_cloud))
             }
         }
     }
@@ -333,7 +350,7 @@ private fun CurrentServerCard(currentServer: ServerConfig) {
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
-                    text = "Currently connected to:",
+                    text = stringResource(Res.string.auth_currently_connected_to),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -368,14 +385,13 @@ private fun HelpCard() {
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
-                    text = "Need help?",
+                    text = stringResource(Res.string.auth_need_help),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Ask your system administrator for the server address, port, and protocol. " +
-                            "You can also scan a QR code from the server admin panel.",
+                    text = stringResource(Res.string.auth_help_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

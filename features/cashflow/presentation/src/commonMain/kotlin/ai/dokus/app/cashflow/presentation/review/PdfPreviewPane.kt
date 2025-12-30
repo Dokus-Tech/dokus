@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.compose.SubcomposeAsyncImage
+import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.model.DocumentPagePreviewDto
 
 /**
@@ -126,7 +128,7 @@ private fun ErrorPreview(
                 contentDescription = null,
                 modifier = Modifier.padding(end = 8.dp)
             )
-            Text("Retry")
+            Text(stringResource(Res.string.state_retry))
         }
     }
 }
@@ -213,7 +215,7 @@ private fun PdfPageImage(
     ) {
         SubcomposeAsyncImage(
             model = page.imageUrl,
-            contentDescription = "Page ${page.page}",
+            contentDescription = stringResource(Res.string.cashflow_preview_page_label, page.page),
             imageLoader = imageLoader,
             loading = {
                 Box(
@@ -241,7 +243,7 @@ private fun PdfPageImage(
                             tint = MaterialTheme.colorScheme.onErrorContainer,
                         )
                         Text(
-                            text = "Page ${page.page} failed",
+                            text = stringResource(Res.string.cashflow_preview_page_failed, page.page),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                         )
@@ -267,7 +269,7 @@ private fun LoadMoreButton(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Text("Load more (showing $currentCount of $totalCount)")
+        Text(stringResource(Res.string.cashflow_preview_load_more, currentCount, totalCount))
     }
 }
 
@@ -288,12 +290,12 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = "Document Preview",
+            text = stringResource(Res.string.cashflow_document_preview_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = "Preview will highlight relevant sections when you select a field",
+            text = stringResource(Res.string.cashflow_preview_highlight_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             modifier = Modifier.padding(top = 8.dp)

@@ -19,11 +19,22 @@
     <string name="team_no_members">Nog geen teamleden</string>
     <string name="team_no_invitations">Geen openstaande uitnodigingen</string>
     <string name="team_invite_success">Uitnodiging succesvol verzonden</string>
+    <string name="team_invite_failed">Uitnodiging verzenden mislukt</string>
+    <string name="team_invite_cancelled">Uitnodiging geannuleerd</string>
+    <string name="team_invite_cancel_failed">Uitnodiging annuleren mislukt</string>
     <string name="team_remove_confirm">Weet u zeker dat u dit lid wilt verwijderen?</string>
+    <string name="team_member_removed_success">Lid verwijderd</string>
+    <string name="team_member_removed_failed">Lid verwijderen mislukt</string>
     <string name="team_transfer_confirm">Weet u zeker dat u het eigenaarschap wilt overdragen? U wordt Admin.</string>
+    <string name="team_ownership_transferred_success">Eigendom overgedragen</string>
+    <string name="team_ownership_transferred_failed">Eigendom overdragen mislukt</string>
     <string name="team_only_owner_can_manage">Alleen de eigenaar van de werkruimte kan teamleden beheren</string>
     <string name="team_load_members_failed">Laden van teamleden mislukt</string>
     <string name="team_load_invitations_failed">Laden van uitnodigingen mislukt</string>
+    <string name="team_email_required">E-mailadres is verplicht</string>
+    <string name="team_email_invalid">Ongeldig e-mailadres</string>
+    <string name="team_role_update_success">Rol bijgewerkt</string>
+    <string name="team_role_update_failed">Rol bijwerken mislukt</string>
 
     <!-- Role names and descriptions -->
     <string name="role_owner">Eigenaar</string>

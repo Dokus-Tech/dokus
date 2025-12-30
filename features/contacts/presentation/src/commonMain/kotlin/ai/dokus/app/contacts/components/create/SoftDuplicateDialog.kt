@@ -1,6 +1,12 @@
 package ai.dokus.app.contacts.components.create
 
 import ai.dokus.app.contacts.viewmodel.SoftDuplicateUi
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_view
+import ai.dokus.app.resources.generated.contacts_cancel
+import ai.dokus.app.resources.generated.contacts_continue_anyway
+import ai.dokus.app.resources.generated.contacts_duplicate_list_hint
+import ai.dokus.app.resources.generated.contacts_duplicate_warning
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import tech.dokus.domain.ids.ContactId
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Dialog shown when soft duplicates are found during manual contact creation.
@@ -47,14 +54,14 @@ fun SoftDuplicateDialog(
         },
         title = {
             Text(
-                text = "Possible Duplicate",
+                text = stringResource(Res.string.contacts_duplicate_warning),
                 style = MaterialTheme.typography.titleMedium
             )
         },
         text = {
             Column {
                 Text(
-                    text = "The following contacts look similar:",
+                    text = stringResource(Res.string.contacts_duplicate_list_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -72,12 +79,12 @@ fun SoftDuplicateDialog(
         },
         confirmButton = {
             TextButton(onClick = onContinue) {
-                Text("Create Anyway")
+                Text(stringResource(Res.string.contacts_continue_anyway))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.contacts_cancel))
             }
         },
         modifier = modifier
@@ -118,7 +125,7 @@ private fun DuplicateItem(
                 )
             }
             Text(
-                text = "View",
+                text = stringResource(Res.string.action_view),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
             )

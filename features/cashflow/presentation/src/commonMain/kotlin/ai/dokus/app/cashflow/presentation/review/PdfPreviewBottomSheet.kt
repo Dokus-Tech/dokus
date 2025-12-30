@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.presentation.review
 
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.PIcon
 import ai.dokus.foundation.design.constrains.Constrains
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Full-screen bottom sheet for PDF preview on mobile.
@@ -102,7 +104,7 @@ private fun SheetHeader(
         Spacer(modifier = Modifier.width(48.dp)) // Balance for close button
 
         Text(
-            text = "Document Preview",
+            text = stringResource(Res.string.cashflow_document_preview_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
@@ -112,7 +114,7 @@ private fun SheetHeader(
         IconButton(onClick = onClose) {
             PIcon(
                 icon = FeatherIcons.X,
-                description = "Close",
+                description = stringResource(Res.string.action_close),
                 modifier = Modifier.size(24.dp),
             )
         }

@@ -1,5 +1,6 @@
 package ai.dokus.app.cashflow.components
 
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.foundation.app.state.DokusState
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.ShimmerLine
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A card component displaying VAT summary information with three columns:
@@ -91,20 +93,20 @@ private fun VatSummaryCardContent(
     ) {
         // VAT column
         VatAmountColumn(
-            label = "VAT",
-            sublabel = data.quarterInfo ?: "(by the end of quarter)",
+            label = stringResource(Res.string.vat_summary_title),
+            sublabel = data.quarterInfo ?: stringResource(Res.string.vat_quarter_sublabel),
             amount = data.vatAmount
         )
 
         // Net amount column
         AmountColumn(
-            label = "Net amount",
+            label = stringResource(Res.string.vat_net_amount),
             amount = data.netAmount
         )
 
         // Predicted Net amount column
         AmountColumn(
-            label = "Predicted Net amount",
+            label = stringResource(Res.string.vat_predicted_net_amount),
             amount = data.predictedNetAmount
         )
     }
@@ -242,21 +244,30 @@ private fun AmountColumn(
  * @param amount The Money value to format
  * @return Formatted string (e.g., "€1,234")
  */
+@Composable
 private fun formatAmount(amount: Money): String {
+    val currencySymbol = stringResource(Res.string.currency_symbol_eur)
     return try {
         val value = amount.toDouble()
-        val formattedValue = when {
+        when {
             value >= 1000 -> {
                 val thousands = (value / 1000).toInt()
-                "€${thousands}k"
+                stringResource(Res.string.cashflow_amount_compact_thousands, currencySymbol, thousands)
             }
 
-            value == 0.0 -> "€000"
-            else -> "€${value.toInt()}"
+            value == 0.0 -> stringResource(
+                Res.string.cashflow_amount_with_currency,
+                currencySymbol,
+                "000"
+            )
+            else -> stringResource(
+                Res.string.cashflow_amount_with_currency,
+                currencySymbol,
+                value.toInt().toString()
+            )
         }
-        formattedValue
     } catch (e: Exception) {
-        "€000"
+        stringResource(Res.string.cashflow_amount_with_currency, currencySymbol, "000")
     }
 }
 

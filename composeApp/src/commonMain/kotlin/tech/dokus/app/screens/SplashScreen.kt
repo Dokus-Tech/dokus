@@ -101,7 +101,7 @@ internal fun SplashScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "D[#]kus",
+                    text = stringResource(Res.string.app_name),
                     color = MaterialTheme.colorScheme.primaryContainer,
                     style = TextStyle(
                         fontSize = 64.sp,

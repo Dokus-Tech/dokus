@@ -154,4 +154,165 @@
 
     <!-- Errors -->
     <string name="error_failed_to_load_clients">Impossibile caricare i clienti</string>
+
+    <!-- Draft Status -->
+    <string name="draft_status_needs_input">Richiede dati</string>
+    <string name="draft_status_needs_review">Richiede revisione</string>
+    <string name="draft_status_ready">Pronto</string>
+    <string name="draft_status_confirmed">Confermato</string>
+    <string name="draft_status_rejected">Rifiutato</string>
+
+    <!-- Cashflow Actions -->
+    <string name="cashflow_upload_document">Carica documento</string>
+    <string name="cashflow_create_invoice">Crea fattura</string>
+    <string name="cashflow_sort_label">Ordina</string>
+    <string name="cashflow_sort_default">Predefinito</string>
+    <string name="cashflow_sort_date_newest">Più recenti</string>
+    <string name="cashflow_sort_date_oldest">Più vecchi</string>
+    <string name="cashflow_sort_amount_highest">Importo (dal più alto al più basso)</string>
+    <string name="cashflow_sort_amount_lowest">Importo (dal più basso al più alto)</string>
+    <string name="cashflow_sort_type">Tipo</string>
+    <string name="cashflow_document_number_expense">Spesa %1$s</string>
+    <string name="cashflow_document_number_bill">Fattura %1$s</string>
+    <string name="cashflow_amount_with_currency">%1$s %2$s</string>
+    <string name="cashflow_amount_compact_thousands">%1$s%2$sK</string>
+
+    <!-- Document Review -->
+    <string name="cashflow_document_review_title">Revisione documento</string>
+    <string name="cashflow_chat_with_document">Chat con il documento</string>
+    <string name="cashflow_confidence_badge">%1$d%% di confidenza</string>
+    <string name="cashflow_loading_document">Caricamento documento...</string>
+    <string name="cashflow_unknown_document_type">Tipo di documento sconosciuto</string>
+    <string name="cashflow_client_information">Informazioni cliente</string>
+    <string name="cashflow_client_name">Nome cliente</string>
+    <string name="cashflow_invoice_details_section">Dettagli fattura</string>
+    <string name="cashflow_section_amounts">Importi</string>
+    <string name="cashflow_section_additional_information">Informazioni aggiuntive</string>
+    <string name="cashflow_invoice_number">Numero fattura</string>
+    <string name="cashflow_vat_amount">Importo IVA</string>
+    <string name="cashflow_bill_details_section">Dettagli fattura</string>
+    <string name="cashflow_supplier_information">Informazioni fornitore</string>
+    <string name="cashflow_supplier_name">Nome fornitore</string>
+    <string name="cashflow_merchant_information">Informazioni commerciante</string>
+    <string name="cashflow_merchant">Commerciante</string>
+    <string name="cashflow_expense_details_section">Dettagli spesa</string>
+    <string name="cashflow_receipt_number">Numero ricevuta</string>
+    <string name="cashflow_payment_method">Metodo di pagamento</string>
+    <string name="cashflow_tax_deductibility">Deducibilità fiscale</string>
+    <string name="cashflow_is_deductible">Deducibile</string>
+    <string name="cashflow_deductible_percentage">Percentuale deducibile</string>
+    <string name="cashflow_select_category">Seleziona categoria</string>
+    <string name="cashflow_select_payment_method">Seleziona metodo di pagamento</string>
+    <string name="cashflow_suggested_contacts">Contatti suggeriti:</string>
+
+    <!-- Contact Selection -->
+    <string name="cashflow_client_label">Cliente</string>
+    <string name="cashflow_supplier_label">Fornitore</string>
+    <string name="cashflow_contact_label">Contatto</string>
+    <string name="cashflow_saving_contact">Salvataggio contatto...</string>
+    <string name="cashflow_no_contact_selected">Nessun contatto selezionato</string>
+    <string name="cashflow_select_contact">Seleziona contatto</string>
+    <string name="cashflow_suggested_contact">Contatto suggerito</string>
+    <string name="cashflow_use_this_contact">Usa questo contatto</string>
+    <string name="cashflow_choose_different">Scegli diverso</string>
+    <string name="cashflow_contact_selected">Contatto selezionato</string>
+    <string name="cashflow_bound_to">Associato a %1$s</string>
+    <string name="cashflow_ai_suggested">Suggerito dall'IA</string>
+
+    <!-- Document Review Messages -->
+    <string name="cashflow_contact_clear_failed">Impossibile rimuovere il contatto</string>
+    <string name="cashflow_contact_save_failed">Impossibile salvare il contatto</string>
+    <string name="cashflow_contact_bind_failed">Impossibile associare il contatto</string>
+    <string name="cashflow_preview_load_failed">Impossibile caricare l'anteprima del documento</string>
+    <string name="cashflow_draft_saved">Bozza salvata</string>
+    <string name="cashflow_confirm_missing_fields">Campi obbligatori mancanti</string>
+    <string name="cashflow_confirm_select_contact">Seleziona un contatto per continuare</string>
+    <string name="cashflow_document_confirmed">Documento confermato</string>
+
+    <!-- Preview -->
+    <string name="cashflow_document_preview_title">Anteprima documento</string>
+    <string name="cashflow_preview_page_label">Pagina %1$d</string>
+    <string name="cashflow_preview_page_failed">Pagina %1$d non riuscita</string>
+    <string name="cashflow_preview_load_more">Carica altro (mostrando %1$d di %2$d)</string>
+    <string name="cashflow_preview_highlight_hint">L'anteprima evidenzierà le sezioni rilevanti quando selezioni un campo</string>
+    <string name="cashflow_no_preview">Nessuna anteprima</string>
+    <string name="cashflow_page_single">%1$d pagina</string>
+    <string name="cashflow_page_plural">%1$d pagine</string>
+
+    <!-- Invoice Creation (Additional) -->
+    <string name="invoice_click_to_set">Clicca per impostare</string>
+    <string name="invoice_back_to_edit">Torna alla modifica</string>
+    <string name="invoice_details_title">Dettagli fattura</string>
+    <string name="invoice_notes_optional">Note (opzionale)</string>
+    <string name="invoice_add_description_hint">Aggiungi descrizione</string>
+    <string name="invoice_price_with_currency">Prezzo (%1$s)</string>
+    <string name="invoice_number_preview">Fattura #%1$s</string>
+    <string name="invoice_edit_hint_desktop">Fai clic su un campo per modificarlo</string>
+    <string name="invoice_edit_hint_mobile">Tocca un campo per modificarlo</string>
+    <string name="invoice_contact_search_placeholder">Cerca contatti...</string>
+    <string name="invoice_contact_search_label">Cerca contatti</string>
+    <string name="invoice_contact_search_help">Cerca un cliente per nome, email o numero IVA</string>
+    <string name="invoice_selected_contact">Contatto selezionato</string>
+    <string name="invoice_search_clients">Cerca clienti</string>
+    <string name="invoice_no_clients_found">Nessun cliente trovato</string>
+    <string name="invoice_no_clients_match">Nessun cliente corrisponde alla ricerca</string>
+    <string name="cashflow_invoice_create_success">Fattura creata con successo</string>
+    <string name="cashflow_invoice_create_failed">Impossibile creare la fattura</string>
+    <string name="invoice_validation_client_required">Seleziona un cliente</string>
+    <string name="invoice_validation_items_required">Aggiungi almeno una riga valida</string>
+    <string name="invoice_validation_due_date_before_issue">La data di scadenza non può essere precedente alla data di emissione</string>
+
+    <!-- Upload -->
+    <string name="upload_select_or_drag">Seleziona file o trascinali qui</string>
+    <string name="upload_drop_files">Rilascia i file per caricarli</string>
+    <string name="upload_with_camera">Carica con la fotocamera</string>
+    <string name="upload_select_file">Seleziona un file</string>
+    <string name="upload_status_deleting">Eliminazione...</string>
+    <string name="upload_status_waiting">In attesa...</string>
+    <string name="upload_failed_message">Caricamento non riuscito</string>
+
+    <!-- Bill Status -->
+    <string name="bill_status_draft">Bozza</string>
+    <string name="bill_status_pending">In sospeso</string>
+    <string name="bill_status_scheduled">Programmato</string>
+    <string name="bill_status_paid">Pagato</string>
+    <string name="bill_status_overdue">Scaduto</string>
+    <string name="bill_status_cancelled">Annullato</string>
+
+    <!-- Business Health -->
+    <string name="business_health_description">Previsione delle prestazioni basata sull'attività recente</string>
+    <string name="health_status_good">Buono</string>
+    <string name="health_status_warning">Avviso</string>
+    <string name="health_status_critical">Critico</string>
+
+    <!-- VAT Summary -->
+    <string name="vat_quarter_sublabel">Trimestre %1$d</string>
+
+    <!-- Currency -->
+    <string name="currency_symbol_eur">€</string>
+
+    <!-- Expense Categories -->
+    <string name="expense_category_office_supplies">Forniture per ufficio</string>
+    <string name="expense_category_travel">Viaggi</string>
+    <string name="expense_category_meals">Pasti</string>
+    <string name="expense_category_software">Software</string>
+    <string name="expense_category_hardware">Hardware</string>
+    <string name="expense_category_utilities">Utenze</string>
+    <string name="expense_category_rent">Affitto</string>
+    <string name="expense_category_insurance">Assicurazione</string>
+    <string name="expense_category_marketing">Marketing</string>
+    <string name="expense_category_professional_services">Servizi professionali</string>
+    <string name="expense_category_telecommunications">Telecomunicazioni</string>
+    <string name="expense_category_vehicle">Veicolo</string>
+    <string name="expense_category_other">Altro</string>
+
+    <!-- Payment Methods -->
+    <string name="payment_method_bank_transfer">Bonifico bancario</string>
+    <string name="payment_method_credit_card">Carta di credito</string>
+    <string name="payment_method_debit_card">Carta di debito</string>
+    <string name="payment_method_paypal">PayPal</string>
+    <string name="payment_method_stripe">Stripe</string>
+    <string name="payment_method_cash">Contanti</string>
+    <string name="payment_method_check">Assegno</string>
+    <string name="payment_method_other">Altro</string>
 </resources>

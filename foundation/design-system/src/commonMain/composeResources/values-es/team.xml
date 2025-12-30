@@ -19,11 +19,22 @@
     <string name="team_no_members">Aún no hay miembros del equipo</string>
     <string name="team_no_invitations">No hay invitaciones pendientes</string>
     <string name="team_invite_success">Invitación enviada correctamente</string>
+    <string name="team_invite_failed">No se pudo enviar la invitación</string>
+    <string name="team_invite_cancelled">Invitación cancelada</string>
+    <string name="team_invite_cancel_failed">No se pudo cancelar la invitación</string>
     <string name="team_remove_confirm">¿Estás seguro de que quieres eliminar a este miembro?</string>
+    <string name="team_member_removed_success">Miembro eliminado</string>
+    <string name="team_member_removed_failed">No se pudo eliminar al miembro</string>
     <string name="team_transfer_confirm">¿Estás seguro de que quieres transferir la propiedad? Te convertirás en Admin.</string>
+    <string name="team_ownership_transferred_success">Propiedad transferida</string>
+    <string name="team_ownership_transferred_failed">No se pudo transferir la propiedad</string>
     <string name="team_only_owner_can_manage">Solo el propietario del espacio de trabajo puede gestionar los miembros del equipo</string>
     <string name="team_load_members_failed">No se pudieron cargar los miembros del equipo</string>
     <string name="team_load_invitations_failed">No se pudieron cargar las invitaciones</string>
+    <string name="team_email_required">El correo electrónico es obligatorio</string>
+    <string name="team_email_invalid">Formato de correo electrónico no válido</string>
+    <string name="team_role_update_success">Rol actualizado</string>
+    <string name="team_role_update_failed">No se pudo actualizar el rol</string>
 
     <!-- Role names and descriptions -->
     <string name="role_owner">Propietario</string>

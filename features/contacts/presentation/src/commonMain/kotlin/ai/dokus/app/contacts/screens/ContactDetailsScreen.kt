@@ -11,13 +11,23 @@ import ai.dokus.app.contacts.viewmodel.ContactDetailsContainer
 import ai.dokus.app.contacts.viewmodel.ContactDetailsIntent
 import ai.dokus.app.contacts.viewmodel.ContactDetailsState
 import ai.dokus.app.contacts.viewmodel.EnrichmentSuggestion
+import ai.dokus.app.resources.generated.Res
+import ai.dokus.app.resources.generated.action_back
+import ai.dokus.app.resources.generated.contacts_contact_details
+import ai.dokus.app.resources.generated.contacts_current
+import ai.dokus.app.resources.generated.contacts_deselect_all
+import ai.dokus.app.resources.generated.contacts_edit_contact
+import ai.dokus.app.resources.generated.contacts_enrichment_apply_all
+import ai.dokus.app.resources.generated.contacts_enrichment_apply_selected_count
+import ai.dokus.app.resources.generated.contacts_enrichment_available
+import ai.dokus.app.resources.generated.contacts_enrichment_hint
+import ai.dokus.app.resources.generated.contacts_enrichment_not_now
+import ai.dokus.app.resources.generated.contacts_enrichment_suggestions
+import ai.dokus.app.resources.generated.contacts_merge
+import ai.dokus.app.resources.generated.contacts_select_all
 import ai.dokus.foundation.design.components.common.DokusErrorContent
 import ai.dokus.foundation.design.components.common.OfflineOverlay
 import ai.dokus.foundation.design.components.common.ShimmerLine
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactNoteDto
 import ai.dokus.foundation.navigation.destinations.ContactsDestination
 import ai.dokus.foundation.navigation.local.LocalNavController
 import ai.dokus.foundation.navigation.navigateTo
@@ -67,10 +77,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.app.state.DokusState
@@ -344,7 +359,7 @@ private fun ContactDetailsTopBar(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.action_back)
                         )
                     }
                 }
@@ -365,7 +380,7 @@ private fun ContactDetailsTopBar(
                     }
                     else -> {
                         Text(
-                            text = "Contact Details",
+                            text = stringResource(Res.string.contacts_contact_details),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -379,7 +394,7 @@ private fun ContactDetailsTopBar(
                         Box {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "Enrichment suggestions available",
+                                contentDescription = stringResource(Res.string.contacts_enrichment_available),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                             Badge(
@@ -397,7 +412,7 @@ private fun ContactDetailsTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.MergeType,
-                        contentDescription = "Merge contacts"
+                        contentDescription = stringResource(Res.string.contacts_merge)
                     )
                 }
 
@@ -408,7 +423,7 @@ private fun ContactDetailsTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit contact"
+                        contentDescription = stringResource(Res.string.contacts_edit_contact)
                     )
                 }
             },
@@ -547,7 +562,7 @@ private fun EnrichmentSuggestionsDialog(
         },
         title = {
             Text(
-                text = "Enrichment Suggestions",
+                text = stringResource(Res.string.contacts_enrichment_suggestions),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -557,7 +572,7 @@ private fun EnrichmentSuggestionsDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "We found additional information that may improve this contact's data. Select which suggestions to apply:",
+                    text = stringResource(Res.string.contacts_enrichment_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -591,7 +606,7 @@ private fun EnrichmentSuggestionsDialog(
                             onClick = { selectedSuggestions.clear() }
                         ) {
                             Text(
-                                text = "Deselect All",
+                                text = stringResource(Res.string.contacts_deselect_all),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -603,7 +618,7 @@ private fun EnrichmentSuggestionsDialog(
                             }
                         ) {
                             Text(
-                                text = "Select All",
+                                text = stringResource(Res.string.contacts_select_all),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -619,9 +634,12 @@ private fun EnrichmentSuggestionsDialog(
             ) {
                 Text(
                     text = if (selectedSuggestions.size == suggestions.size) {
-                        "Apply All"
+                        stringResource(Res.string.contacts_enrichment_apply_all)
                     } else {
-                        "Apply Selected (${selectedSuggestions.size})"
+                        stringResource(
+                            Res.string.contacts_enrichment_apply_selected_count,
+                            selectedSuggestions.size
+                        )
                     },
                     fontWeight = FontWeight.Medium,
                     color = if (selectedSuggestions.isNotEmpty()) {
@@ -635,7 +653,7 @@ private fun EnrichmentSuggestionsDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Not Now",
+                    text = stringResource(Res.string.contacts_enrichment_not_now),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -716,7 +734,7 @@ private fun EnrichmentSuggestionItem(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "Current:",
+                            text = stringResource(Res.string.contacts_current),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

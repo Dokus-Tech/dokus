@@ -12,6 +12,7 @@ import ai.dokus.app.cashflow.viewmodel.AddDocumentAction
 import ai.dokus.app.cashflow.viewmodel.AddDocumentContainer
 import ai.dokus.app.cashflow.viewmodel.AddDocumentIntent
 import ai.dokus.app.cashflow.viewmodel.AddDocumentState
+import ai.dokus.app.resources.generated.Res
 import ai.dokus.foundation.design.components.common.PTopAppBar
 import ai.dokus.foundation.design.constrains.padding
 import ai.dokus.foundation.design.local.LocalScreenSize
@@ -42,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.api.IntentReceiver
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
@@ -143,7 +145,7 @@ private fun IntentReceiver<AddDocumentIntent>.DesktopLayout(
     var isDragging by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { PTopAppBar("Add a new document") },
+        topBar = { PTopAppBar(stringResource(Res.string.cashflow_add_document)) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Column(
@@ -155,7 +157,7 @@ private fun IntentReceiver<AddDocumentIntent>.DesktopLayout(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Upload Documents",
+                text = stringResource(Res.string.upload_documents_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -164,7 +166,7 @@ private fun IntentReceiver<AddDocumentIntent>.DesktopLayout(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "To import an image or scan a document for your invoice, make sure the file is clear and in a compatible format.",
+                text = stringResource(Res.string.upload_instructions),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -184,7 +186,7 @@ private fun IntentReceiver<AddDocumentIntent>.DesktopLayout(
 
             TextButton(onClick = onShowQrCode) {
                 Text(
-                    text = "Don't have the application? Click here",
+                    text = stringResource(Res.string.upload_no_app_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -221,7 +223,7 @@ private fun IntentReceiver<AddDocumentIntent>.MobileLayout(
     var isFileDragging by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { PTopAppBar("Add a new document") },
+        topBar = { PTopAppBar(stringResource(Res.string.cashflow_add_document)) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Column(
@@ -239,7 +241,7 @@ private fun IntentReceiver<AddDocumentIntent>.MobileLayout(
                 onDragStateChange = { isCameraDragging = it },
                 onFilesDropped = { intent(AddDocumentIntent.Upload(it)) },
                 isUploading = isUploading,
-                title = "Upload with camera",
+                title = stringResource(Res.string.upload_with_camera),
                 icon = UploadIcon.Camera,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -251,7 +253,7 @@ private fun IntentReceiver<AddDocumentIntent>.MobileLayout(
                 onDragStateChange = { isFileDragging = it },
                 onFilesDropped = { intent(AddDocumentIntent.Upload(it)) },
                 isUploading = isUploading,
-                title = "Select file",
+                title = stringResource(Res.string.upload_select_file),
                 icon = UploadIcon.Document,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -283,7 +285,7 @@ private fun Uploads(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Uploads",
+            text = stringResource(Res.string.upload_uploads_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = modifierText

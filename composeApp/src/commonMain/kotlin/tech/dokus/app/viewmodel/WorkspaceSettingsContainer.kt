@@ -2,6 +2,7 @@ package tech.dokus.app.viewmodel
 
 import ai.dokus.app.auth.datasource.TenantRemoteDataSource
 import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
+import ai.dokus.app.resources.generated.Res
 import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.exceptions.asDokusException
@@ -9,6 +10,7 @@ import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import ai.dokus.foundation.platform.Logger
+import org.jetbrains.compose.resources.getString
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -222,11 +224,11 @@ internal class WorkspaceSettingsContainer(
                             saveState = WorkspaceSettingsState.Content.SaveState.Success
                         )
                     }
-                    action(WorkspaceSettingsAction.ShowSuccess("Settings saved successfully"))
+                    action(WorkspaceSettingsAction.ShowSuccess(getString(Res.string.settings_saved_successfully)))
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to save workspace settings" }
-                    val message = error.message ?: "Failed to save settings"
+                    val message = error.message ?: getString(Res.string.settings_save_failed)
                     updateState {
                         copy(saveState = WorkspaceSettingsState.Content.SaveState.Error(message))
                     }
@@ -277,7 +279,7 @@ internal class WorkspaceSettingsContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to upload avatar" }
-                    val message = error.message ?: "Failed to upload avatar"
+                    val message = error.message ?: getString(Res.string.workspace_avatar_upload_failed)
                     updateState {
                         copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(message))
                     }
@@ -306,7 +308,7 @@ internal class WorkspaceSettingsContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to delete avatar" }
-                    val message = error.message ?: "Failed to delete avatar"
+                    val message = error.message ?: getString(Res.string.workspace_avatar_delete_failed)
                     updateState {
                         copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(message))
                     }

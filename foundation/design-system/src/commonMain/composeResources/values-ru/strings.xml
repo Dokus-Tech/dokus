@@ -33,4 +33,57 @@
     <!-- Keyboard Modifiers -->
     <string name="key_cmd">CMD</string>
     <string name="key_ctrl">CTRL</string>
+
+    <!-- Navigation -->
+    <string name="nav_simulations">Симуляции</string>
+    <string name="nav_items">Элементы</string>
+    <string name="nav_banking">Банк</string>
+    <string name="nav_profile">Профиль</string>
+
+    <!-- Chat -->
+    <string name="chat_title">Чат ИИ</string>
+    <string name="chat_document_title_fallback">Чат по документам</string>
+    <string name="chat_title_all_documents">Чат с документами</string>
+    <string name="chat_scope_single_document">Один документ</string>
+    <string name="chat_scope_all_documents">Все документы</string>
+    <string name="chat_new_conversation">Новый диалог</string>
+    <string name="chat_history_action">История чата</string>
+    <string name="chat_more_options">Другие опции</string>
+    <string name="chat_switch_to_all_documents">Переключиться на все документы</string>
+    <string name="chat_expand_all_citations">Развернуть все цитаты</string>
+    <string name="chat_collapse_all_citations">Свернуть все цитаты</string>
+    <string name="chat_loading">Загрузка чата...</string>
+    <string name="chat_thinking">Думаю...</string>
+    <string name="chat_prompt_single_document">Задайте вопрос о %1$s</string>
+    <string name="chat_this_document">этом документе</string>
+    <string name="chat_prompt_all_documents">Задайте вопрос о ваших документах</string>
+    <string name="chat_empty_description_single">Я могу помочь найти информацию, резюмировать содержимое или ответить на конкретные вопросы по документу.</string>
+    <string name="chat_empty_description_all">Я могу искать по всем подтвержденным документам, чтобы найти информацию и ответить на ваши вопросы.</string>
+    <string name="chat_try_asking">Попробуйте спросить:</string>
+    <string name="chat_example_total_amount">Какова общая сумма?</string>
+    <string name="chat_example_spend_last_month">Сколько я потратил в прошлом месяце?</string>
+    <string name="chat_example_due_date">Когда срок оплаты?</string>
+    <string name="chat_example_invoices_company">Покажите счета от компании X</string>
+    <string name="chat_example_format">"%1$s"</string>
+    <string name="chat_message_too_long">Сообщение слишком длинное (макс. %1$d символов)</string>
+    <string name="chat_input_placeholder">Задайте вопрос...</string>
+    <string name="chat_history_title">История чата</string>
+    <string name="chat_history_empty">Нет предыдущих разговоров</string>
+    <string name="chat_new_chat">Новый чат</string>
+    <string name="chat_general_chat">Общий чат</string>
+    <string name="chat_message_count_single">%1$d сообщение</string>
+    <string name="chat_message_count_plural">%1$d сообщений</string>
+    <string name="chat_error_load_conversation">Не удалось загрузить разговор: %1$s</string>
+    <string name="chat_error_no_document_selected">Документ не выбран</string>
+    <string name="chat_error_send_message">Не удалось отправить сообщение: %1$s</string>
+    <string name="chat_error_invalid_document_reference">Недействительная ссылка на документ</string>
+    <string name="chat_send_message">Отправить сообщение</string>
+    <string name="chat_document_fallback">Документ</string>
+    <string name="chat_page_number">Страница %1$d</string>
+    <string name="chat_expand_citation">Развернуть цитату</string>
+    <string name="chat_collapse_citation">Свернуть цитату</string>
+    <string name="chat_view_source_document">Просмотреть источник</string>
+    <string name="chat_sources_count">Источники (%1$d)</string>
+    <string name="chat_expand_sources">Развернуть источники</string>
+    <string name="chat_collapse_sources">Свернуть источники</string>
 </resources>
