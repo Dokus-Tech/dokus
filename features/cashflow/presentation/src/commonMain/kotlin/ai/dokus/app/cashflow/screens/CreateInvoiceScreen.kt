@@ -98,7 +98,7 @@ internal fun CreateInvoiceScreen(
         when (action) {
             is CreateInvoiceAction.NavigateBack -> navController.popBackStack()
             is CreateInvoiceAction.NavigateToCreateContact -> {
-                navController.navigate(ContactsDestination.CreateContact)
+                navController.navigate(ContactsDestination.CreateContact())
             }
             is CreateInvoiceAction.NavigateToInvoice -> {
                 // Invoice created, navigate back
@@ -187,7 +187,7 @@ internal fun CreateInvoiceScreen(
                         },
                         onAddNewContact = {
                             intent(CreateInvoiceIntent.CloseClientPanel)
-                            navController.navigate(ContactsDestination.CreateContact)
+                            navController.navigate(ContactsDestination.CreateContact())
                         }
                     )
                 }
@@ -251,7 +251,7 @@ internal fun CreateInvoiceScreen(
                                 },
                                 onAddNewContact = {
                                     intent(CreateInvoiceIntent.CloseClientPanel)
-                                    navController.navigate(ContactsDestination.CreateContact)
+                                    navController.navigate(ContactsDestination.CreateContact())
                                 }
                             )
                         }

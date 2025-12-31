@@ -81,12 +81,6 @@ internal class DocumentReviewContainer(
                     is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
                     is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
                     is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
-                    is DocumentReviewIntent.OpenContactPicker -> handleOpenContactPicker()
-                    is DocumentReviewIntent.CloseContactPicker -> handleCloseContactPicker()
-
-                    // === Contact Creation ===
-                    is DocumentReviewIntent.OpenCreateContactSheet -> handleOpenCreateContactSheet()
-                    is DocumentReviewIntent.CloseCreateContactSheet -> handleCloseCreateContactSheet()
                     is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
 
                     // === Line Items ===
@@ -401,7 +395,6 @@ internal class DocumentReviewContainer(
     private suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) {
         withState<DocumentReviewState.Content, _> {
             bindContact(documentId, contactId)
-            updateState { copy(showContactPicker = false) }
         }
     }
 
@@ -545,53 +538,8 @@ internal class DocumentReviewContainer(
             )
     }
 
-    private suspend fun DocumentReviewCtx.handleOpenContactPicker() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(showContactPicker = true) }
-        }
-    }
-
-    private suspend fun DocumentReviewCtx.handleCloseContactPicker() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(showContactPicker = false) }
-        }
-    }
-
-    // =========================================================================
-    // CONTACT CREATION
-    // =========================================================================
-
-    private suspend fun DocumentReviewCtx.handleOpenCreateContactSheet() {
-        withState<DocumentReviewState.Content, _> {
-            // Build pre-fill data from extracted fields
-            val preFill = when (editableData.documentType) {
-                DocumentType.Invoice -> ContactPreFillData(
-                    name = editableData.invoice?.clientName ?: "",
-                    vatNumber = editableData.invoice?.clientVatNumber,
-                    email = editableData.invoice?.clientEmail,
-                    address = editableData.invoice?.clientAddress,
-                )
-                DocumentType.Bill -> ContactPreFillData(
-                    name = editableData.bill?.supplierName ?: "",
-                    vatNumber = editableData.bill?.supplierVatNumber,
-                    email = null,
-                    address = editableData.bill?.supplierAddress,
-                )
-                else -> null
-            }
-            updateState { copy(showCreateContactSheet = true, createContactPreFill = preFill) }
-        }
-    }
-
-    private suspend fun DocumentReviewCtx.handleCloseCreateContactSheet() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(showCreateContactSheet = false, createContactPreFill = null) }
-        }
-    }
-
     private suspend fun DocumentReviewCtx.handleContactCreated(contactId: ContactId) {
         withState<DocumentReviewState.Content, _> {
-            updateState { copy(showCreateContactSheet = false, createContactPreFill = null) }
             bindContact(documentId, contactId)
         }
     }

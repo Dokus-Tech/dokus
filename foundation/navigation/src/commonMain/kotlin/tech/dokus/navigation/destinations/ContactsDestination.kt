@@ -9,7 +9,12 @@ import kotlinx.serialization.Serializable
 sealed interface ContactsDestination : NavigationDestination {
     @Serializable
     @SerialName("contacts/create")
-    data object CreateContact : ContactsDestination
+    data class CreateContact(
+        val prefillCompanyName: String? = null,
+        val prefillVat: String? = null,
+        val prefillAddress: String? = null,
+        val origin: String? = null,
+    ) : ContactsDestination
 
     @Serializable
     @SerialName("contacts/edit")
@@ -18,4 +23,15 @@ sealed interface ContactsDestination : NavigationDestination {
     @Serializable
     @SerialName("contacts/details")
     data class ContactDetails(val contactId: String) : ContactsDestination
+}
+
+@Serializable
+enum class ContactCreateOrigin {
+    DocumentReview;
+
+    companion object {
+        fun fromString(value: String?): ContactCreateOrigin? {
+            return entries.find { it.name == value }
+        }
+    }
 }

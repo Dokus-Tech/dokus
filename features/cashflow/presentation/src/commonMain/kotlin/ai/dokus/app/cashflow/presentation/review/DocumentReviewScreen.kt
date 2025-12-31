@@ -1,6 +1,5 @@
 package ai.dokus.app.cashflow.presentation.review
 
-import ai.dokus.app.contacts.usecases.ListContactsUseCase
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -21,9 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -43,7 +39,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,47 +47,31 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.navigation.compose.currentBackStackEntryAsState
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Calendar
-import compose.icons.feathericons.Check
 import compose.icons.feathericons.ChevronDown
-import compose.icons.feathericons.X
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.action_change
 import tech.dokus.aura.resources.action_collapse
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_discard
 import tech.dokus.aura.resources.action_expand
-import tech.dokus.aura.resources.action_or
 import tech.dokus.aura.resources.action_reject
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.action_select
@@ -142,7 +121,6 @@ import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.common_notes
 import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.contacts_address
-import tech.dokus.aura.resources.contacts_create_contact
 import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_vat_number
@@ -161,8 +139,6 @@ import tech.dokus.aura.resources.expense_category_utilities
 import tech.dokus.aura.resources.expense_category_vehicle
 import tech.dokus.aura.resources.invoice_amount
 import tech.dokus.aura.resources.invoice_category
-import tech.dokus.aura.resources.invoice_contact_search_help
-import tech.dokus.aura.resources.invoice_contact_search_label
 import tech.dokus.aura.resources.invoice_description
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
@@ -187,25 +163,27 @@ import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.DraftStatusBadge
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PDatePickerDialog
-import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.StatusBadge
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.navigation.destinations.ContactCreateOrigin
+import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
+
+private const val CONTACT_RESULT_KEY = "documentReview_contactId"
 
 /**
  * Document Review Screen for reviewing and editing AI-extracted document data.
@@ -227,6 +205,17 @@ internal fun DocumentReviewScreen(
     container: DocumentReviewContainer = container(),
 ) {
     val navController = LocalNavController.current
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val pendingContactId = backStackEntry?.savedStateHandle?.get<String>(CONTACT_RESULT_KEY)
+
+    LaunchedEffect(pendingContactId) {
+        if (pendingContactId != null) {
+            container.store.intent(
+                DocumentReviewIntent.ContactCreated(ContactId.parse(pendingContactId))
+            )
+            backStackEntry?.savedStateHandle?.remove<String>(CONTACT_RESULT_KEY)
+        }
+    }
     val isLargeScreen = LocalScreenSize.isLarge
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingSuccess by remember { mutableStateOf<DocumentReviewSuccess?>(null) }
@@ -310,28 +299,43 @@ internal fun DocumentReviewScreen(
 
             is DocumentReviewState.Content -> {
                 val content = state as DocumentReviewState.Content
+                val counterparty = remember(content.editableData) { counterpartyInfo(content) }
+                val openLinkExistingContact = {
+                    navController.navigateTo(
+                        ContactsDestination.CreateContact(
+                            origin = ContactCreateOrigin.DocumentReview.name
+                        )
+                    )
+                }
+                val openCreateContact = {
+                    navController.navigateTo(
+                        ContactsDestination.CreateContact(
+                            prefillCompanyName = counterparty.name,
+                            prefillVat = counterparty.vatNumber,
+                            prefillAddress = counterparty.address,
+                            origin = ContactCreateOrigin.DocumentReview.name
+                        )
+                    )
+                }
+
                 if (isLargeScreen) {
                     DesktopReviewContent(
                         state = content,
                         contentPadding = contentPadding,
                         onIntent = { container.store.intent(it) },
-                        isLargeScreen = isLargeScreen,
+                        onLinkExistingContact = openLinkExistingContact,
+                        onCreateNewContact = openCreateContact,
                     )
                 } else {
                     MobileReviewContent(
                         state = content,
                         contentPadding = contentPadding,
-                        onIntent = { container.store.intent(it) }
+                        onIntent = { container.store.intent(it) },
+                        onLinkExistingContact = openLinkExistingContact,
+                        onCreateNewContact = openCreateContact,
                     )
                 }
 
-                ContactPickerDialog(
-                    isVisible = content.showContactPicker,
-                    isLargeScreen = isLargeScreen,
-                    onDismiss = { container.store.intent(DocumentReviewIntent.CloseContactPicker) },
-                    onSelect = { container.store.intent(DocumentReviewIntent.SelectContact(it)) },
-                    onCreateNew = { container.store.intent(DocumentReviewIntent.OpenCreateContactSheet) },
-                )
             }
 
             is DocumentReviewState.Error -> {
@@ -518,7 +522,8 @@ private fun DesktopReviewContent(
     state: DocumentReviewState.Content,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
-    isLargeScreen: Boolean,
+    onLinkExistingContact: () -> Unit,
+    onCreateNewContact: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -541,20 +546,14 @@ private fun DesktopReviewContent(
         ReviewDetailsPane(
             state = state,
             onIntent = onIntent,
+            onLinkExistingContact = onLinkExistingContact,
+            onCreateNewContact = onCreateNewContact,
             modifier = Modifier
                 .width(420.dp)
                 .fillMaxHeight()
         )
     }
 
-    // Contact Create Sheet
-    ContactCreateSheet(
-        isVisible = state.showCreateContactSheet,
-        isLargeScreen = isLargeScreen,
-        onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
-        preFillData = state.createContactPreFill,
-        onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
-    )
 }
 
 @Composable
@@ -580,6 +579,8 @@ private fun DocumentPreviewPane(
 private fun ReviewDetailsPane(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onLinkExistingContact: () -> Unit,
+    onCreateNewContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -606,6 +607,8 @@ private fun ReviewDetailsPane(
                 CounterpartyCard(
                     state = state,
                     onIntent = onIntent,
+                    onLinkExistingContact = onLinkExistingContact,
+                    onCreateNewContact = onCreateNewContact,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 InvoiceDetailsCard(
@@ -644,6 +647,8 @@ private fun ReviewDetailsPane(
 private fun EditableFormPane(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onLinkExistingContact: () -> Unit,
+    onCreateNewContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -679,10 +684,10 @@ private fun EditableFormPane(
                     isReadOnly = state.isDocumentConfirmed,
                     validationError = state.contactValidationError,
                     onAcceptSuggestion = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
-                    onChooseDifferent = { onIntent(DocumentReviewIntent.OpenContactPicker) },
-                    onSelectContact = { onIntent(DocumentReviewIntent.OpenContactPicker) },
+                    onChooseDifferent = onLinkExistingContact,
+                    onSelectContact = onLinkExistingContact,
                     onClearContact = { onIntent(DocumentReviewIntent.ClearSelectedContact) },
-                    onCreateNewContact = { onIntent(DocumentReviewIntent.OpenCreateContactSheet) },
+                    onCreateNewContact = onCreateNewContact,
                 )
             }
 
@@ -748,14 +753,6 @@ private fun EditableFormPane(
         )
     }
 
-    // Contact Create Sheet
-    ContactCreateSheet(
-        isVisible = state.showCreateContactSheet,
-        isLargeScreen = LocalScreenSize.isLarge,
-        onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
-        preFillData = state.createContactPreFill,
-        onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
-    )
 }
 
 // ============================================================================
@@ -767,6 +764,8 @@ private fun MobileReviewContent(
     state: DocumentReviewState.Content,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onLinkExistingContact: () -> Unit,
+    onCreateNewContact: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -806,6 +805,8 @@ private fun MobileReviewContent(
             CounterpartyCard(
                 state = state,
                 onIntent = onIntent,
+                onLinkExistingContact = onLinkExistingContact,
+                onCreateNewContact = onCreateNewContact,
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -845,15 +846,6 @@ private fun MobileReviewContent(
         previewState = state.previewState,
         onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
     )
-
-    // Contact Create Sheet
-    ContactCreateSheet(
-        isVisible = state.showCreateContactSheet,
-        isLargeScreen = LocalScreenSize.isLarge,
-        onDismiss = { onIntent(DocumentReviewIntent.CloseCreateContactSheet) },
-        preFillData = state.createContactPreFill,
-        onContactCreated = { contactId -> onIntent(DocumentReviewIntent.ContactCreated(contactId)) },
-    )
 }
 
 // ============================================================================
@@ -870,12 +862,20 @@ private data class CounterpartyInfo(
 private fun CounterpartyCard(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onLinkExistingContact: () -> Unit,
+    onCreateNewContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val counterparty = remember(state.editableData) { counterpartyInfo(state) }
     val hasDraft = listOf(counterparty.name, counterparty.vatNumber, counterparty.address)
         .any { !it.isNullOrBlank() }
     val actionsEnabled = !state.isBindingContact && !state.isDocumentConfirmed
+    val hasLinkedContact = state.selectedContactSnapshot != null
+    val linkLabel = if (hasLinkedContact) {
+        Res.string.action_change
+    } else {
+        Res.string.cashflow_action_link_contact
+    }
 
     val nameLabel = when (state.editableData.documentType) {
         DocumentType.Invoice -> stringResource(Res.string.cashflow_client_name)
@@ -975,16 +975,16 @@ private fun CounterpartyCard(
                 horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
             ) {
                 POutlinedButton(
-                    text = stringResource(Res.string.cashflow_action_link_contact),
+                    text = stringResource(linkLabel),
                     modifier = Modifier.weight(1f),
                     enabled = actionsEnabled,
-                    onClick = { onIntent(DocumentReviewIntent.OpenContactPicker) },
+                    onClick = onLinkExistingContact,
                 )
                 PPrimaryButton(
                     text = stringResource(Res.string.cashflow_action_save_new_contact),
                     modifier = Modifier.weight(1f),
                     enabled = actionsEnabled,
-                    onClick = { onIntent(DocumentReviewIntent.OpenCreateContactSheet) },
+                    onClick = onCreateNewContact,
                 )
             }
 
@@ -1292,352 +1292,6 @@ private fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyIn
 }
 
 private fun formatDate(value: LocalDate?): String? = value?.toString()
-
-@Composable
-private fun ContactPickerDialog(
-    isVisible: Boolean,
-    isLargeScreen: Boolean,
-    onDismiss: () -> Unit,
-    onSelect: (ContactId) -> Unit,
-    onCreateNew: () -> Unit,
-    listContacts: ListContactsUseCase = koinInject(),
-) {
-    if (!isVisible) return
-
-    val scope = rememberCoroutineScope()
-    var query by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-    var selectedId by remember { mutableStateOf<ContactId?>(null) }
-    val contacts = remember { mutableStateListOf<ContactDto>() }
-
-    fun refresh(search: String) {
-        isLoading = true
-        scope.launch {
-            listContacts(search = search, limit = 100)
-                .onSuccess {
-                    contacts.clear()
-                    contacts.addAll(it)
-                }
-            isLoading = false
-        }
-    }
-
-    LaunchedEffect(isVisible) {
-        if (isVisible) {
-            query = ""
-            selectedId = null
-            refresh("")
-        }
-    }
-
-    LaunchedEffect(query) {
-        isLoading = true
-        delay(250)
-        refresh(query)
-    }
-
-    val onLink: () -> Unit = {
-        selectedId?.let {
-            onSelect(it)
-            onDismiss()
-        }
-    }
-
-    if (isLargeScreen) {
-        Dialog(
-            onDismissRequest = onDismiss,
-            properties = DialogProperties(usePlatformDefaultWidth = true),
-        ) {
-            Surface(
-                modifier = Modifier.widthIn(min = 540.dp, max = 640.dp),
-                shape = MaterialTheme.shapes.medium,
-                tonalElevation = 4.dp,
-            ) {
-                ContactPickerContent(
-                    query = query,
-                    onQueryChange = { query = it },
-                    isLoading = isLoading,
-                    contacts = contacts,
-                    selectedId = selectedId,
-                    onSelect = { selectedId = it },
-                    onCreateNew = onCreateNew,
-                    onCancel = onDismiss,
-                    onLink = onLink,
-                    isLargeScreen = true,
-                )
-            }
-        }
-    } else {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-        ) {
-            ContactPickerContent(
-                query = query,
-                onQueryChange = { query = it },
-                isLoading = isLoading,
-                contacts = contacts,
-                selectedId = selectedId,
-                onSelect = { selectedId = it },
-                onCreateNew = onCreateNew,
-                onCancel = onDismiss,
-                onLink = onLink,
-                isLargeScreen = false,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ContactPickerContent(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    isLoading: Boolean,
-    contacts: List<ContactDto>,
-    selectedId: ContactId?,
-    onSelect: (ContactId) -> Unit,
-    onCreateNew: () -> Unit,
-    onCancel: () -> Unit,
-    onLink: () -> Unit,
-    isLargeScreen: Boolean,
-) {
-    val shape = MaterialTheme.shapes.medium
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                if (isLargeScreen) Constrains.Spacing.large else Constrains.Spacing.medium
-            )
-            .onPreviewKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
-                    onCancel()
-                    true
-                } else if (
-                    event.type == KeyEventType.KeyDown &&
-                    event.key == Key.Enter &&
-                    (event.isMetaPressed || event.isCtrlPressed)
-                ) {
-                    onLink()
-                    true
-                } else {
-                    false
-                }
-            },
-        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.medium)
-    ) {
-        if (!isLargeScreen) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
-            ) {
-                PBackButton(onBackPress = onCancel)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(Res.string.cashflow_action_link_contact),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = stringResource(Res.string.invoice_contact_search_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(Res.string.cashflow_action_link_contact),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(Res.string.invoice_contact_search_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = onCancel) {
-                    PIcon(icon = FeatherIcons.X, description = stringResource(Res.string.action_cancel))
-                }
-            }
-        }
-
-        PSearchFieldCompact(
-            value = query,
-            onValueChange = onQueryChange,
-            placeholder = stringResource(Res.string.invoice_contact_search_label),
-            modifier = Modifier.fillMaxWidth(),
-            onClear = { onQueryChange("") },
-        )
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            shape = shape,
-            tonalElevation = 1.dp,
-        ) {
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
-                ) {
-                    items(contacts, key = { it.id }) { contact ->
-                        val isSelected = contact.id == selectedId
-                        ContactRow(
-                            contact = contact,
-                            isSelected = isSelected,
-                            onClick = { onSelect(contact.id) },
-                        )
-                    }
-                }
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            HorizontalDivider(modifier = Modifier.weight(1f))
-            Text(
-                text = stringResource(Res.string.action_or),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            HorizontalDivider(modifier = Modifier.weight(1f))
-        }
-
-        POutlinedButton(
-            text = stringResource(Res.string.contacts_create_contact),
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onCreateNew,
-        )
-
-        if (isLargeScreen) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
-            ) {
-                POutlinedButton(
-                    text = stringResource(Res.string.action_cancel),
-                    modifier = Modifier.weight(1f),
-                    onClick = onCancel
-                )
-                PPrimaryButton(
-                    text = stringResource(Res.string.cashflow_action_link_contact),
-                    modifier = Modifier.weight(1f),
-                    enabled = selectedId != null,
-                    onClick = onLink
-                )
-            }
-        } else {
-            Surface(
-                tonalElevation = 4.dp,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Constrains.Spacing.medium),
-                    horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
-                ) {
-                    POutlinedButton(
-                        text = stringResource(Res.string.action_cancel),
-                        modifier = Modifier.weight(1f),
-                        onClick = onCancel
-                    )
-                    PPrimaryButton(
-                        text = stringResource(Res.string.cashflow_action_link_contact),
-                        modifier = Modifier.weight(1f),
-                        enabled = selectedId != null,
-                        onClick = onLink
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ContactRow(
-    contact: ContactDto,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    val background = if (isSelected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        color = background,
-        shape = MaterialTheme.shapes.small,
-        tonalElevation = 0.dp,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Constrains.Spacing.medium),
-            horizontalArrangement = Arrangement.spacedBy(Constrains.Spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = contact.name.value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                )
-                val secondary = listOfNotNull(
-                    contact.email?.value,
-                    contact.vatNumber?.value
-                ).joinToString(" • ")
-                if (secondary.isNotBlank()) {
-                    Text(
-                        text = secondary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                val address = listOfNotNull(
-                    contact.addressLine1,
-                    contact.city
-                ).joinToString(", ")
-                if (address.isNotBlank()) {
-                    Text(
-                        text = address,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            if (isSelected) {
-                PIcon(
-                    icon = FeatherIcons.Check,
-                    description = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun CollapsibleSection(
