@@ -212,18 +212,30 @@ private fun BottomNavigationLayout(
             }
         },
         bottomBar = {
-            DokusNavigationBar(
-                navItems = navItems,
-                selectedItem = selectedItem,
-                onSelectedItemChange = onSelectedItemChange,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Calm, “Dokus” bottom shell: no tinted slab; keep accent only for the selected item.
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
+                )
+            ) {
+                DokusNavigationBar(
+                    navItems = navItems,
+                    selectedItem = selectedItem,
+                    onSelectedItemChange = onSelectedItemChange,
+                    modifier = Modifier
+                        .padding(top = 1.dp)
+                        .fillMaxWidth()
+                )
+            }
         }
     ) { innerPadding ->
         Box(
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             content()
