@@ -1,6 +1,6 @@
 package ai.dokus.app.cashflow.navigation
 
-import ai.dokus.app.cashflow.presentation.chat.ChatScreen
+import ai.dokus.app.cashflow.presentation.chat.route.ChatRoute
 import ai.dokus.app.cashflow.screens.CashflowScreen
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
@@ -13,7 +13,7 @@ internal object CashflowHomeNavigationProvider : NavigationProvider {
             CashflowScreen()
         }
         composable<HomeDestination.AiChat> {
-            ChatScreen(documentId = null)
+            ChatRoute(documentId = null)
         }
     }
 }

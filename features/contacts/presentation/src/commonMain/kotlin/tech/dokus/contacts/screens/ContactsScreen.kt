@@ -17,6 +17,7 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.contacts.screens.route.ContactDetailsRoute
 import tech.dokus.navigation.navigateTo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -335,7 +336,7 @@ private fun DesktopContactsContent(
         ) {
             if (selectedContactId != null) {
                 // Show contact details
-                ContactDetailsScreen(
+                ContactDetailsRoute(
                     contactId = selectedContactId,
                     showBackButton = false
                 )

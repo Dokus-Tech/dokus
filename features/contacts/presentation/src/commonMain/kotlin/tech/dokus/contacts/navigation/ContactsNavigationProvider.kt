@@ -3,7 +3,7 @@ package tech.dokus.contacts.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import tech.dokus.contacts.screens.ContactDetailsScreen
+import tech.dokus.contacts.screens.route.ContactDetailsRoute
 import tech.dokus.contacts.screens.ContactFormScreen
 import tech.dokus.contacts.screens.CreateContactScreen
 import tech.dokus.domain.ids.ContactId
@@ -36,7 +36,7 @@ internal object ContactsNavigationProvider : NavigationProvider {
         composable<ContactsDestination.ContactDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<ContactsDestination.ContactDetails>()
             val contactId = ContactId.parse(route.contactId)
-            ContactDetailsScreen(contactId = contactId, showBackButton = true)
+            ContactDetailsRoute(contactId = contactId, showBackButton = true)
         }
     }
 }

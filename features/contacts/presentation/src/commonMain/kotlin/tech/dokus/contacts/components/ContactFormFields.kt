@@ -44,7 +44,6 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -52,8 +51,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import tech.dokus.foundation.aura.components.fields.PDropdownField
+import tech.dokus.foundation.aura.extensions.localized
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -463,59 +462,13 @@ private fun BusinessTypeSelector(
     onTypeSelected: (ClientType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(Res.string.contacts_business_type),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Box {
-            DokusCardSurface(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { expanded = true },
-            ) {
-                Text(
-                    text = selectedType.displayName(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                ClientType.entries.forEach { type ->
-                    DropdownMenuItem(
-                        text = { Text(type.displayName()) },
-                        onClick = {
-                            onTypeSelected(type)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
+    PDropdownField(
+        label = stringResource(Res.string.contacts_business_type),
+        value = selectedType,
+        onValueChange = { type -> type?.let(onTypeSelected) },
+        options = ClientType.entries,
+        optionLabel = { it.localized },
+        placeholder = stringResource(Res.string.contacts_business_type),
+        modifier = modifier,
+    )
 }
-
-// ============================================================================
-// EXTENSIONS
-// ============================================================================
-
-/**
- * Display name for ClientType enum.
- */
-@Composable
-private fun ClientType.displayName(): String =
-    when (this) {
-        ClientType.Individual -> stringResource(Res.string.contacts_individual)
-        ClientType.Business -> stringResource(Res.string.contacts_business)
-        ClientType.Government -> stringResource(Res.string.contacts_government)
-    }

@@ -12,7 +12,7 @@ import tech.dokus.aura.resources.contacts_create_contact
 import tech.dokus.aura.resources.contacts_creating
 import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_full_name
-import tech.dokus.aura.resources.contacts_individual
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.country_belgium
@@ -179,12 +179,12 @@ private fun TypeSelector(
         FilterChip(
             selected = selectedType == ClientType.Business,
             onClick = { onTypeSelected(ClientType.Business) },
-            label = { Text(stringResource(Res.string.contacts_business)) }
+            label = { Text(ClientType.Business.localized) }
         )
         FilterChip(
             selected = selectedType == ClientType.Individual,
             onClick = { onTypeSelected(ClientType.Individual) },
-            label = { Text(stringResource(Res.string.contacts_individual)) }
+            label = { Text(ClientType.Individual.localized) }
         )
     }
 }

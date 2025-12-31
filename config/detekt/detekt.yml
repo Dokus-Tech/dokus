@@ -1,0 +1,18 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 60
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
