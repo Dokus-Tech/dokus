@@ -50,7 +50,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -270,7 +270,7 @@ fun NotesSidePanel(
                                             verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Default.Note,
+                                                imageVector = Icons.AutoMirrored.Filled.Note,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(48.dp),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -483,7 +483,7 @@ private fun NoteListItem(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Note,
+                            imageVector = Icons.AutoMirrored.Filled.Note,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -622,12 +622,4 @@ private fun DeleteNoteConfirmationDialog(
             }
         }
     )
-}
-
-/**
- * Format a LocalDateTime to a human-readable string.
- */
-private fun formatDateTime(dateTime: LocalDateTime): String {
-    val month = dateTime.month.name.lowercase().replaceFirstChar { it.uppercase() }.take(3)
-    return "${dateTime.dayOfMonth} $month ${dateTime.year}, ${dateTime.hour.toString().padStart(2, '0')}:${dateTime.minute.toString().padStart(2, '0')}"
 }

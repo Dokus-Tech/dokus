@@ -10,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -111,7 +111,7 @@ fun UndoDeleteAction(
         modifier = modifier
     ) {
         Icon(
-            imageVector = Icons.Default.Undo,
+            imageVector = Icons.AutoMirrored.Filled.Undo,
             contentDescription = stringResource(Res.string.upload_action_undo),
             tint = MaterialTheme.colorScheme.primary
         )

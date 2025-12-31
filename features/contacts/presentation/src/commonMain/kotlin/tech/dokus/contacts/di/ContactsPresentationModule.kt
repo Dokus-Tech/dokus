@@ -9,6 +9,10 @@ import tech.dokus.contacts.viewmodel.ContactFormAction
 import tech.dokus.contacts.viewmodel.ContactFormContainer
 import tech.dokus.contacts.viewmodel.ContactFormIntent
 import tech.dokus.contacts.viewmodel.ContactFormState
+import tech.dokus.contacts.viewmodel.ContactMergeAction
+import tech.dokus.contacts.viewmodel.ContactMergeContainer
+import tech.dokus.contacts.viewmodel.ContactMergeIntent
+import tech.dokus.contacts.viewmodel.ContactMergeState
 import tech.dokus.contacts.viewmodel.ContactsAction
 import tech.dokus.contacts.viewmodel.ContactsContainer
 import tech.dokus.contacts.viewmodel.ContactsIntent
@@ -54,6 +58,15 @@ val contactsPresentationModule = module {
             createContact = get(),
             updateContact = get(),
             deleteContact = get()
+        )
+    }
+    container<ContactMergeContainer, ContactMergeState, ContactMergeIntent, ContactMergeAction> { (params: ContactMergeContainer.Params) ->
+        ContactMergeContainer(
+            sourceContact = params.sourceContact,
+            sourceActivity = params.sourceActivity,
+            preselectedTarget = params.preselectedTarget,
+            listContacts = get(),
+            mergeContacts = get()
         )
     }
 

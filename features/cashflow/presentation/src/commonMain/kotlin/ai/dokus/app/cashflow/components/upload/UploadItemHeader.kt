@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +46,7 @@ fun FileIconWithOverlay(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Default.InsertDriveFile,
+            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
             contentDescription = null,
             modifier = Modifier.size(32.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -146,7 +146,7 @@ fun DeletingFileIcon(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Default.InsertDriveFile,
+            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
             contentDescription = null,
             modifier = Modifier.size(32.dp),
             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
