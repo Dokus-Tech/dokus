@@ -76,8 +76,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
      * @property selectedContactSnapshot Contact details for display (not source of truth)
      * @property contactSelectionState Current UI state for contact selection
      * @property isContactRequired Whether contact is required for confirmation (Invoice/Bill)
-     * @property showCreateContactSheet Whether to show the contact creation sheet
-     * @property createContactPreFill Pre-fill data for contact creation
      * @property contactValidationError Error message for contact binding failures
      * @property isBindingContact Whether a contact binding operation is in progress
      * @property isDocumentConfirmed Whether the document has been confirmed (read-only mode)
@@ -100,11 +98,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val selectedContactSnapshot: ContactSnapshot? = null,
         val contactSelectionState: ContactSelectionState = ContactSelectionState.NoContact,
         val isContactRequired: Boolean = false,
-        val showCreateContactSheet: Boolean = false,
-        val createContactPreFill: ContactPreFillData? = null,
         val contactValidationError: DokusException? = null,
         val isBindingContact: Boolean = false,
-        val showContactPicker: Boolean = false,
         // Document confirmation state
         val isDocumentConfirmed: Boolean = false,
         // Mobile preview sheet
@@ -425,16 +420,6 @@ sealed interface ContactSelectionState {
     data object Selected : ContactSelectionState
 }
 
-/**
- * Pre-fill data for contact creation from extracted fields.
- */
-@Immutable
-data class ContactPreFillData(
-    val name: String,
-    val vatNumber: String?,
-    val email: String?,
-    val address: String?,
-)
 
 // ============================================================================
 // INTENTS (User Actions)
@@ -490,20 +475,6 @@ sealed interface DocumentReviewIntent : MVIIntent {
 
     /** Clear selected contact (triggers backend persist) */
     data object ClearSelectedContact : DocumentReviewIntent
-
-    /** Open contact picker/search UI */
-    data object OpenContactPicker : DocumentReviewIntent
-
-    /** Close contact picker/search UI */
-    data object CloseContactPicker : DocumentReviewIntent
-
-    // === Contact Creation ===
-
-    /** Open contact creation sheet */
-    data object OpenCreateContactSheet : DocumentReviewIntent
-
-    /** Close contact creation sheet */
-    data object CloseCreateContactSheet : DocumentReviewIntent
 
     /** Contact was created, bind it to this document */
     data class ContactCreated(val contactId: ContactId) : DocumentReviewIntent

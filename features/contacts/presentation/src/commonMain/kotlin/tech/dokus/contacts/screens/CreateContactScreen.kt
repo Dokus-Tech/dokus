@@ -5,6 +5,7 @@ import tech.dokus.contacts.components.create.LookupStepContent
 import tech.dokus.contacts.components.create.ManualStepContent
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.navigation.destinations.ContactCreateOrigin
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
@@ -48,12 +49,17 @@ import tech.dokus.foundation.app.mvi.container
  */
 @Composable
 internal fun CreateContactScreen(
+    prefillCompanyName: String? = null,
+    prefillVat: String? = null,
+    prefillAddress: String? = null,
+    origin: ContactCreateOrigin? = null,
     container: CreateContactContainer = container(),
 ) {
     val navController = LocalNavController.current
     val isLargeScreen = LocalScreenSize.current.isLarge
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
+    val resultKey = remember { "documentReview_contactId" }
 
     val errorMessage = pendingError?.localized
 
@@ -61,6 +67,15 @@ internal fun CreateContactScreen(
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
             pendingError = null
+        }
+    }
+
+    val onExistingContactSelected: (String) -> Unit = { contactId ->
+        if (origin == ContactCreateOrigin.DocumentReview) {
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(resultKey, contactId)
+            navController.popBackStack()
         }
     }
 
@@ -73,6 +88,11 @@ internal fun CreateContactScreen(
                 }
 
                 is CreateContactAction.ContactCreated -> {
+                    if (origin == ContactCreateOrigin.DocumentReview) {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(resultKey, action.contactId.toString())
+                    }
                     navController.popBackStack()
                 }
 
@@ -90,12 +110,22 @@ internal fun CreateContactScreen(
                 CreateContactPage(
                     state = state,
                     onIntent = ::intent,
+                    prefillCompanyName = prefillCompanyName,
+                    prefillVat = prefillVat,
+                    prefillAddress = prefillAddress,
+                    origin = origin,
+                    onExistingContactSelected = onExistingContactSelected,
                     modifier = Modifier.padding(contentPadding)
                 )
             } else {
                 CreateContactFullScreen(
                     state = state,
                     onIntent = ::intent,
+                    prefillCompanyName = prefillCompanyName,
+                    prefillVat = prefillVat,
+                    prefillAddress = prefillAddress,
+                    origin = origin,
+                    onExistingContactSelected = onExistingContactSelected,
                     modifier = Modifier.padding(contentPadding)
                 )
             }
@@ -111,6 +141,11 @@ internal fun CreateContactScreen(
 private fun CreateContactPage(
     state: CreateContactState,
     onIntent: (CreateContactIntent) -> Unit,
+    prefillCompanyName: String?,
+    prefillVat: String?,
+    prefillAddress: String?,
+    origin: ContactCreateOrigin?,
+    onExistingContactSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -128,6 +163,11 @@ private fun CreateContactPage(
             CreateContactContent(
                 state = state,
                 onIntent = onIntent,
+                prefillCompanyName = prefillCompanyName,
+                prefillVat = prefillVat,
+                prefillAddress = prefillAddress,
+                origin = origin,
+                onExistingContactSelected = onExistingContactSelected,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp)
@@ -143,6 +183,11 @@ private fun CreateContactPage(
 private fun CreateContactFullScreen(
     state: CreateContactState,
     onIntent: (CreateContactIntent) -> Unit,
+    prefillCompanyName: String?,
+    prefillVat: String?,
+    prefillAddress: String?,
+    origin: ContactCreateOrigin?,
+    onExistingContactSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -154,6 +199,11 @@ private fun CreateContactFullScreen(
         CreateContactContent(
             state = state,
             onIntent = onIntent,
+            prefillCompanyName = prefillCompanyName,
+            prefillVat = prefillVat,
+            prefillAddress = prefillAddress,
+            origin = origin,
+            onExistingContactSelected = onExistingContactSelected,
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -166,12 +216,41 @@ private fun CreateContactFullScreen(
 private fun CreateContactContent(
     state: CreateContactState,
     onIntent: (CreateContactIntent) -> Unit,
+    prefillCompanyName: String?,
+    prefillVat: String?,
+    prefillAddress: String?,
+    origin: ContactCreateOrigin?,
+    onExistingContactSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var manualPrefillApplied by remember(prefillCompanyName, prefillVat, prefillAddress, origin) {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(state, prefillCompanyName, prefillVat, origin) {
+        if (origin != ContactCreateOrigin.DocumentReview) return@LaunchedEffect
+        if (manualPrefillApplied) return@LaunchedEffect
+        val manualState = state as? CreateContactState.ManualStep ?: return@LaunchedEffect
+
+        if (!prefillCompanyName.isNullOrBlank() && manualState.formData.companyName.isBlank()) {
+            onIntent(CreateContactIntent.ManualFieldChanged("companyName", prefillCompanyName))
+        }
+        if (!prefillVat.isNullOrBlank() && manualState.formData.vatNumber.isBlank()) {
+            onIntent(CreateContactIntent.ManualFieldChanged("vatNumber", prefillVat))
+        }
+        manualPrefillApplied = true
+    }
+
     when (state) {
         is CreateContactState.LookupStep -> LookupStepContent(
             state = state,
             onIntent = onIntent,
+            initialQuery = prefillVat?.takeIf { it.isNotBlank() } ?: prefillCompanyName,
+            onExistingContactSelected = if (origin == ContactCreateOrigin.DocumentReview) {
+                onExistingContactSelected
+            } else {
+                null
+            },
             modifier = modifier
         )
 

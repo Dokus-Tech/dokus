@@ -122,7 +122,7 @@ internal fun ContactsScreen(
             }
 
             is ContactsAction.NavigateToCreateContact -> {
-                navController.navigateTo(ContactsDestination.CreateContact)
+                navController.navigateTo(ContactsDestination.CreateContact())
             }
 
             is ContactsAction.NavigateToEditContact -> {
@@ -188,7 +188,7 @@ internal fun ContactsScreen(
                     ContactsHeaderActions(
                         onAddContactClick = {
                             // Navigate to new CreateContactScreen (VAT-first flow)
-                            navController.navigateTo(ContactsDestination.CreateContact)
+                            navController.navigateTo(ContactsDestination.CreateContact())
                         }
                     )
                 }
@@ -223,7 +223,7 @@ internal fun ContactsScreen(
                 onLoadMore = { container.store.intent(ContactsIntent.LoadMore) },
                 onAddContactClick = {
                     // Navigate to new CreateContactScreen (VAT-first flow)
-                    navController.navigateTo(ContactsDestination.CreateContact)
+                    navController.navigateTo(ContactsDestination.CreateContact())
                 },
                 onSortOptionSelected = { container.store.intent(ContactsIntent.UpdateSortOption(it)) },
                 onRoleFilterSelected = { container.store.intent(ContactsIntent.UpdateRoleFilter(it)) },
@@ -247,7 +247,7 @@ internal fun ContactsScreen(
                 onLoadMore = { container.store.intent(ContactsIntent.LoadMore) },
                 onAddContactClick = {
                     // Mobile: Navigate to full-screen form
-                    navController.navigateTo(ContactsDestination.CreateContact)
+                    navController.navigateTo(ContactsDestination.CreateContact())
                 },
                 onSortOptionSelected = { container.store.intent(ContactsIntent.UpdateSortOption(it)) },
                 onRoleFilterSelected = { container.store.intent(ContactsIntent.UpdateRoleFilter(it)) },

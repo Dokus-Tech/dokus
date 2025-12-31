@@ -6,7 +6,9 @@ import tech.dokus.contacts.viewmodel.LookupUiState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.contacts_add_contact
+import tech.dokus.aura.resources.contacts_add_new_contact
 import tech.dokus.aura.resources.contacts_add_without_vat
+import tech.dokus.aura.resources.contacts_autocomplete_no_results_for
 import tech.dokus.aura.resources.contacts_lookup_empty
 import tech.dokus.aura.resources.contacts_lookup_hint
 import tech.dokus.aura.resources.contacts_lookup_label
@@ -14,10 +16,13 @@ import tech.dokus.aura.resources.contacts_lookup_location
 import tech.dokus.aura.resources.contacts_lookup_no_results
 import tech.dokus.aura.resources.contacts_lookup_query_hint
 import tech.dokus.aura.resources.contacts_lookup_search_failed
+import tech.dokus.aura.resources.contacts_select_contact
 import tech.dokus.aura.resources.country_belgium
 import tech.dokus.aura.resources.country_france
 import tech.dokus.aura.resources.country_netherlands
 import tech.dokus.aura.resources.state_retry
+import tech.dokus.foundation.aura.components.POutlinedButton
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constrains
@@ -37,6 +42,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -48,6 +54,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -64,10 +71,14 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.entity.EntityLookup
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import ai.dokus.app.contacts.usecases.ListContactsUseCase
+import tech.dokus.domain.model.contact.ContactDto
 
-private const val SEARCH_DEBOUNCE_MS = 300L
+private const val SEARCH_DEBOUNCE_MS = 500L
 private const val MIN_SEARCH_LENGTH = 3
 
 /**
@@ -81,10 +92,22 @@ private const val MIN_SEARCH_LENGTH = 3
 fun LookupStepContent(
     state: CreateContactState.LookupStep,
     onIntent: (CreateContactIntent) -> Unit,
+    initialQuery: String? = null,
+    onExistingContactSelected: ((String) -> Unit)? = null,
+    listContacts: ListContactsUseCase = koinInject(),
     modifier: Modifier = Modifier,
 ) {
     // Keep query as local state to avoid MVI race conditions
-    var query by rememberSaveable { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf(initialQuery.orEmpty()) }
+    var existingContacts by remember { mutableStateOf(emptyList<ContactDto>()) }
+    var isExistingLoading by remember { mutableStateOf(false) }
+    var selectedExistingId by remember { mutableStateOf<ContactId?>(null) }
+
+    LaunchedEffect(initialQuery) {
+        if (!initialQuery.isNullOrBlank() && query.isBlank()) {
+            query = initialQuery
+        }
+    }
 
     // Observe query changes with debounce and trigger search
     LaunchedEffect(Unit) {
@@ -92,10 +115,20 @@ fun LookupStepContent(
             .distinctUntilChanged()
             .debounce(SEARCH_DEBOUNCE_MS)
             .collect { searchQuery ->
+                selectedExistingId = null
                 if (searchQuery.length >= MIN_SEARCH_LENGTH) {
                     onIntent(CreateContactIntent.Search(searchQuery))
+                    if (onExistingContactSelected != null) {
+                        isExistingLoading = true
+                        listContacts(search = searchQuery, limit = 10)
+                            .onSuccess { existingContacts = it }
+                            .onFailure { existingContacts = emptyList() }
+                        isExistingLoading = false
+                    }
                 } else {
                     onIntent(CreateContactIntent.ClearSearch)
+                    existingContacts = emptyList()
+                    isExistingLoading = false
                 }
             }
     }
@@ -138,6 +171,23 @@ fun LookupStepContent(
         )
 
         Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+
+        if (onExistingContactSelected != null) {
+            ExistingContactsSection(
+                query = query,
+                contacts = existingContacts,
+                isLoading = isExistingLoading,
+                selectedId = selectedExistingId,
+                onSelect = { selectedExistingId = it },
+                onConfirm = {
+                    selectedExistingId?.let { onExistingContactSelected(it.toString()) }
+                },
+                onCreateNew = { onIntent(CreateContactIntent.GoToManualEntry) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(Constrains.Spacing.medium))
+        }
 
         // Duplicate VAT warning (hard block)
         val duplicateVat = state.duplicateVat
@@ -200,10 +250,117 @@ fun LookupStepContent(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             Text(
-                text = stringResource(Res.string.contacts_add_without_vat),
+                text = if (onExistingContactSelected != null) {
+                    stringResource(Res.string.contacts_add_new_contact)
+                } else {
+                    stringResource(Res.string.contacts_add_without_vat)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun ExistingContactsSection(
+    query: String,
+    contacts: List<ContactDto>,
+    isLoading: Boolean,
+    selectedId: ContactId?,
+    onSelect: (ContactId) -> Unit,
+    onConfirm: () -> Unit,
+    onCreateNew: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.small)
+    ) {
+        Text(
+            text = stringResource(Res.string.contacts_select_contact),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            query.length >= MIN_SEARCH_LENGTH && contacts.isEmpty() -> {
+                Text(
+                    text = stringResource(Res.string.contacts_autocomplete_no_results_for, query),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                POutlinedButton(
+                    text = stringResource(Res.string.contacts_add_new_contact),
+                    onClick = onCreateNew,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+            }
+            contacts.isNotEmpty() -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Constrains.Spacing.xSmall)
+                ) {
+                    contacts.forEach { contact ->
+                        val isSelected = contact.id == selectedId
+                        DokusCardSurface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(contact.id) }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(Constrains.Spacing.medium),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = contact.name.value,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    val secondary = listOfNotNull(
+                                        contact.vatNumber?.value,
+                                        contact.email?.value
+                                    ).joinToString(" • ")
+                                    if (secondary.isNotBlank()) {
+                                        Text(
+                                            text = secondary,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    PPrimaryButton(
+                        text = stringResource(Res.string.contacts_select_contact),
+                        enabled = selectedId != null,
+                        onClick = onConfirm,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
     }
 }
