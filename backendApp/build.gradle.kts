@@ -105,7 +105,7 @@ tasks.test {
 
 tasks.shadowJar {
     manifest {
-        attributes["Main-Class"] = "ai.dokus.backend.ApplicationKt"
+        attributes["Main-Class"] = "tech.dokus.backend.ApplicationKt"
     }
     mergeServiceFiles()
     archiveClassifier.set("all")

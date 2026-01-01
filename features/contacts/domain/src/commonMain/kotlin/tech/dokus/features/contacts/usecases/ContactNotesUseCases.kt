@@ -1,0 +1,49 @@
+package tech.dokus.features.contacts.usecases
+
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.domain.model.contact.CreateContactNoteRequest
+import tech.dokus.domain.model.contact.UpdateContactNoteRequest
+
+/**
+ * Use case for listing notes for a contact.
+ */
+interface ListContactNotesUseCase {
+    suspend operator fun invoke(
+        contactId: ContactId,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<List<ContactNoteDto>>
+}
+
+/**
+ * Use case for creating a new note on a contact.
+ */
+interface CreateContactNoteUseCase {
+    suspend operator fun invoke(
+        contactId: ContactId,
+        request: CreateContactNoteRequest
+    ): Result<ContactNoteDto>
+}
+
+/**
+ * Use case for updating an existing note.
+ */
+interface UpdateContactNoteUseCase {
+    suspend operator fun invoke(
+        contactId: ContactId,
+        noteId: ContactNoteId,
+        request: UpdateContactNoteRequest
+    ): Result<ContactNoteDto>
+}
+
+/**
+ * Use case for deleting a note.
+ */
+interface DeleteContactNoteUseCase {
+    suspend operator fun invoke(
+        contactId: ContactId,
+        noteId: ContactNoteId
+    ): Result<Unit>
+}

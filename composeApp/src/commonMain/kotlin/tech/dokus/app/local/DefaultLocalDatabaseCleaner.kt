@@ -1,6 +1,6 @@
 package tech.dokus.app.local
 
-import ai.dokus.app.auth.database.AuthDatabase
+import tech.dokus.features.auth.database.AuthDatabase
 import tech.dokus.foundation.app.database.LocalDatabaseCleaner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex

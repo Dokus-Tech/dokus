@@ -1,10 +1,10 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
-import ai.dokus.app.cashflow.usecase.WatchPendingDocumentsUseCase
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.WatchPendingDocumentsUseCase
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginationState
-import ai.dokus.foundation.platform.Logger
+import tech.dokus.foundation.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

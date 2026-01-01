@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.style
 
-import ai.dokus.foundation.platform.activePlatform
-import ai.dokus.foundation.platform.isWeb
+import tech.dokus.foundation.platform.activePlatform
+import tech.dokus.foundation.platform.isWeb
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.LocalRippleConfiguration

@@ -1,7 +1,7 @@
 package tech.dokus.app.screens
 
-import ai.dokus.app.auth.screen.ProfileSettingsScreen
-import ai.dokus.app.cashflow.screens.settings.PeppolSettingsScreen
+import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
+import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_current_workspace
 import tech.dokus.aura.resources.settings_select_hint
@@ -348,7 +348,7 @@ private fun SettingsContentPane(
             when (section.destination) {
                 is AuthDestination.ProfileSettings -> {
                     // Use the full screen as embedded content for now
-                    ProfileSettingsScreen()
+                    ProfileSettingsRoute()
                 }
                 is SettingsDestination.WorkspaceSettings -> {
                     WorkspaceSettingsContent()
@@ -361,7 +361,7 @@ private fun SettingsContentPane(
                 }
                 is SettingsDestination.PeppolSettings -> {
                     // Use the full screen as embedded content for now
-                    PeppolSettingsScreen()
+                    PeppolSettingsRoute()
                 }
                 else -> {
                     // Fallback for unknown destinations

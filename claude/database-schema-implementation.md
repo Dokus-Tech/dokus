@@ -9,7 +9,7 @@
 
 #### 1. ClientsTable.kt
 ```kotlin
-package ai.dokus.foundation.database.schema
+package tech.dokus.foundation.database.schema
 
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
@@ -53,7 +53,7 @@ object ClientsTable : UUIDTable("clients") {
 
 #### 2. ExpensesTable.kt
 ```kotlin
-package ai.dokus.foundation.database.schema
+package tech.dokus.foundation.database.schema
 
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.date
@@ -106,7 +106,7 @@ object ExpensesTable : UUIDTable("expenses") {
 
 #### 3. PaymentsTable.kt
 ```kotlin
-package ai.dokus.foundation.database.schema
+package tech.dokus.foundation.database.schema
 
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.kotlin.datetime.date
@@ -155,7 +155,7 @@ object PaymentsTable : UUIDTable("payments") {
 
 #### BaseRepository.kt
 ```kotlin
-package ai.dokus.foundation.database.repositories
+package tech.dokus.foundation.database.repositories
 
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -215,10 +215,10 @@ abstract class BaseRepository {
 
 #### ClientRepository.kt
 ```kotlin
-package ai.dokus.foundation.database.repositories
+package tech.dokus.foundation.database.repositories
 
-import ai.dokus.foundation.database.schema.ClientsTable
-import ai.dokus.foundation.domain.model.Client
+import tech.dokus.foundation.database.schema.ClientsTable
+import tech.dokus.foundation.domain.model.Client
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.*
 import java.util.UUID
@@ -371,11 +371,11 @@ CREATE TABLE users (
 
 #### Template for New Services
 ```kotlin
-package ai.dokus.[feature].backend.services
+package tech.dokus.[feature].backend.services
 
-import ai.dokus.foundation.apispec.[Feature]Api
-import ai.dokus.foundation.database.repositories.[Feature]Repository
-import ai.dokus.foundation.domain.model.*
+import tech.dokus.foundation.apispec.[Feature]Api
+import tech.dokus.foundation.database.repositories.[Feature]Repository
+import tech.dokus.foundation.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.rpc.RpcServiceContext
 

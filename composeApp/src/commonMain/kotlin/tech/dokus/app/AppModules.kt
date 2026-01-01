@@ -1,8 +1,8 @@
 package tech.dokus.app
 
-import ai.dokus.app.auth.AuthAppModule
-import ai.dokus.app.cashflow.CashflowAppModule
-import tech.dokus.contacts.ContactsAppModule
+import tech.dokus.features.auth.AuthAppModule
+import tech.dokus.features.cashflow.CashflowAppModule
+import tech.dokus.features.contacts.ContactsAppModule
 import tech.dokus.foundation.aura.model.HomeItem
 import tech.dokus.navigation.NavigationProvider
 import org.jetbrains.compose.resources.StringResource

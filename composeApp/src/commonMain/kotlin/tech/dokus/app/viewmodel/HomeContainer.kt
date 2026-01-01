@@ -1,6 +1,6 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.foundation.platform.Logger
+import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
