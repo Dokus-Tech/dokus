@@ -8,49 +8,49 @@ enum class Feature(
 ) {
     Auth(
         serviceName = "auth",
-        fullPackageName = "ai.dokus.auth",
+        fullPackageName = "tech.dokus.features.auth",
         poolName = "dokus-auth",
         frontendDbName = "dokus_auth"
     ),
     Cashflow(
         serviceName = "cashflow",
-        fullPackageName = "ai.dokus.cashflow",
+        fullPackageName = "tech.dokus.features.cashflow",
         poolName = "dokus-cashflow",
         frontendDbName = "dokus_cashflow"
     ),
     Expense(
         serviceName = "expense",
-        fullPackageName = "ai.dokus.expense",
+        fullPackageName = "tech.dokus.features.expense",
         poolName = "dokus-expense",
         frontendDbName = "dokus_expense"
     ),
     Invoicing(
         serviceName = "invoicing",
-        fullPackageName = "ai.dokus.invoicing",
+        fullPackageName = "tech.dokus.features.invoicing",
         poolName = "dokus-invoicing",
         frontendDbName = "dokus_invoicing"
     ),
     Payment(
         serviceName = "payment",
-        fullPackageName = "ai.dokus.payment",
+        fullPackageName = "tech.dokus.features.payment",
         poolName = "dokus-payment",
         frontendDbName = "dokus_payment"
     ),
     Reporting(
         serviceName = "reporting",
-        fullPackageName = "ai.dokus.reporting",
+        fullPackageName = "tech.dokus.features.reporting",
         poolName = "dokus-reporting",
         frontendDbName = "dokus_reporting"
     ),
     Media(
         serviceName = "media",
-        fullPackageName = "ai.dokus.media",
+        fullPackageName = "tech.dokus.features.media",
         poolName = "dokus-media",
         frontendDbName = "dokus_media"
     ),
     Contacts(
         serviceName = "contacts",
-        fullPackageName = "ai.dokus.contacts",
+        fullPackageName = "tech.dokus.features.contacts",
         poolName = "dokus-contacts",
         frontendDbName = "dokus_contacts"
     ),

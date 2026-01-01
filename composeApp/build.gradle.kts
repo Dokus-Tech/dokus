@@ -1,4 +1,4 @@
-import ai.dokus.utils.WebCacheBuster
+import tech.dokus.utils.WebCacheBuster
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -15,8 +15,8 @@ plugins {
 }
 
 // Access version from convention plugin
-val appVersion: ai.dokus.convention.AppVersionExtension by project.extensions
-val bundleIds: ai.dokus.convention.BundleIdsExtension by project.extensions
+val appVersion: tech.dokus.convention.AppVersionExtension by project.extensions
+val bundleIds: tech.dokus.convention.BundleIdsExtension by project.extensions
 
 // Version configuration from build-logic/Versions.kt
 // CI sets BUILD to git commit count before building
@@ -132,7 +132,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app"
+    namespace = "tech.dokus.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

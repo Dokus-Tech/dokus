@@ -1,7 +1,7 @@
 package tech.dokus.app.viewmodel
 
-import ai.dokus.app.auth.datasource.TenantRemoteDataSource
-import ai.dokus.app.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.features.auth.datasource.TenantRemoteDataSource
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.exceptions.DokusException
@@ -9,7 +9,7 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
-import ai.dokus.foundation.platform.Logger
+import tech.dokus.foundation.platform.Logger
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store

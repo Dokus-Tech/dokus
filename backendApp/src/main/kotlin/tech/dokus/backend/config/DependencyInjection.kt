@@ -1,19 +1,5 @@
 package tech.dokus.backend.config
 
-import tech.dokus.foundation.backend.config.AIConfig
-import tech.dokus.database.di.repositoryModules
-import tech.dokus.database.repository.auth.PasswordResetTokenRepository
-import tech.dokus.database.repository.auth.RefreshTokenRepository
-import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.DokusSchema
-import tech.dokus.domain.repository.ChunkRepository
-import tech.dokus.peppol.config.PeppolModuleConfig
-import tech.dokus.peppol.mapper.PeppolMapper
-import tech.dokus.peppol.provider.PeppolProviderFactory
-import tech.dokus.peppol.provider.client.RecommandCompaniesClient
-import tech.dokus.peppol.service.PeppolConnectionService
-import tech.dokus.peppol.service.PeppolService
-import tech.dokus.peppol.validator.PeppolValidator
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -29,11 +15,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.slf4j.LoggerFactory
-import tech.dokus.ai.service.AIService
-import tech.dokus.ai.services.ChunkingService
-import tech.dokus.ai.services.EmbeddingService
-import tech.dokus.ocr.OcrEngine
-import tech.dokus.ocr.engine.TesseractOcrEngine
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.DisabledEmailService
 import tech.dokus.backend.services.auth.EmailConfig
@@ -48,15 +29,25 @@ import tech.dokus.backend.services.cashflow.BillService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceService
-import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
+import tech.dokus.database.DokusSchema
+import tech.dokus.database.di.repositoryModules
+import tech.dokus.database.repository.auth.PasswordResetTokenRepository
+import tech.dokus.database.repository.auth.RefreshTokenRepository
+import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.features.ai.service.AIService
+import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
+import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
 import tech.dokus.foundation.backend.config.MinioConfig
 import tech.dokus.foundation.backend.crypto.AesGcmCredentialCryptoService
@@ -74,6 +65,15 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import tech.dokus.foundation.backend.storage.MinioStorage
 import tech.dokus.foundation.backend.storage.ObjectStorage
+import tech.dokus.ocr.OcrEngine
+import tech.dokus.ocr.engine.TesseractOcrEngine
+import tech.dokus.peppol.config.PeppolModuleConfig
+import tech.dokus.peppol.mapper.PeppolMapper
+import tech.dokus.peppol.provider.PeppolProviderFactory
+import tech.dokus.peppol.provider.client.RecommandCompaniesClient
+import tech.dokus.peppol.service.PeppolConnectionService
+import tech.dokus.peppol.service.PeppolService
+import tech.dokus.peppol.validator.PeppolValidator
 
 /**
  * Koin setup for the modular monolith server.

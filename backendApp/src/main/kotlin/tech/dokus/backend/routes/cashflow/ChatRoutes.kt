@@ -1,15 +1,18 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.ai.agents.ChatAgent
-import tech.dokus.ai.agents.ConversationMessage
-import tech.dokus.ai.config.AIProviderFactory
-import tech.dokus.foundation.backend.config.AIConfig
-import tech.dokus.foundation.backend.config.ModelPurpose
-import tech.dokus.ai.services.EmbeddingService
-import tech.dokus.ai.services.RAGService
+import io.ktor.client.HttpClient
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.domain.repository.ChatRepository
-import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -26,21 +29,18 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.model.ai.MessageRole
+import tech.dokus.domain.repository.ChatRepository
+import tech.dokus.domain.repository.ChunkRepository
+import tech.dokus.features.ai.agents.ChatAgent
+import tech.dokus.features.ai.agents.ConversationMessage
+import tech.dokus.features.ai.config.AIProviderFactory
+import tech.dokus.features.ai.services.EmbeddingService
+import tech.dokus.features.ai.services.RAGService
+import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ModelPurpose
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import io.ktor.client.HttpClient
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.koin.ktor.ext.inject
-import org.slf4j.LoggerFactory
-import tech.dokus.ai.agents.MessageRole as AgentMessageRole
+import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
 
 /**
  * Chat routes for RAG-powered document Q&A.

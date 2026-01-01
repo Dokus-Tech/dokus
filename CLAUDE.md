@@ -73,9 +73,9 @@ The project follows a feature-based modular architecture:
 - **Source sets**: Each module has `commonMain`, `androidMain`, `iosMain`, `desktopMain`, and `wasmJsMain`
 
 ### Package Naming
-- **Foundation modules**: `ai.dokus.foundation.{module}` (e.g., `ai.dokus.foundation.ui`, `ai.dokus.foundation.domain`)
-- **Application modules**: `ai.dokus.app.{module}` (e.g., `ai.dokus.app.onboarding`, `ai.dokus.app.repository`)
-- **Backend modules**: `ai.dokus.backend.{service}` (when enabled)
+- **Foundation modules**: `tech.dokus.foundation.{module}` (e.g., `tech.dokus.foundation.ui`, `tech.dokus.foundation.domain`)
+- **Application modules**: `tech.dokus.app.{module}` (e.g., `tech.dokus.app.onboarding`, `tech.dokus.app.repository`)
+- **Backend modules**: `tech.dokus.backend.{service}` (when enabled)
 
 ## Technology Stack
 
@@ -195,7 +195,7 @@ For detailed configuration guide, see `/deployment/CONFIGURATION_GUIDE.md`.
 
 Configuration is available via `BuildConfig` object in the `platform` module:
 ```kotlin
-import ai.dokus.foundation.platform.BuildConfig
+import tech.dokus.foundation.platform.BuildConfig
 
 // Access values
 val host = BuildConfig.API_HOST        // String: hostname/IP

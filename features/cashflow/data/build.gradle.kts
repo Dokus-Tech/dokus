@@ -77,7 +77,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.cashflow.data"
+    namespace = "tech.dokus.features.cashflow.data"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -91,7 +91,7 @@ android {
 sqldelight {
     databases {
         create("CashflowCacheDatabase") {
-            packageName.set("ai.dokus.app.cashflow.cache")
+            packageName.set("tech.dokus.features.cashflow.cache")
             generateAsync.set(true)
         }
     }

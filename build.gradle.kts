@@ -82,7 +82,7 @@ tasks.register("checkKotlinFileSize") {
 
 tasks.register("checkNoNavInComponents") {
     group = "verification"
-    description = "Fails if presentation/components imports navigation APIs."
+    description = "Fails if presentation/components or presentation/screen imports navigation APIs."
 
     val forbidden = listOf(
         Regex("import\\s+androidx\\.navigation"),
@@ -95,6 +95,7 @@ tasks.register("checkNoNavInComponents") {
         val offenders = mutableListOf<String>()
         fileTree(rootDir) {
             include("features/**/presentation/**/components/**/*.kt")
+            include("features/**/presentation/**/screen/**/*.kt")
             exclude("**/build/**", "**/generated/**", "**/out/**", "**/.gradle/**")
         }.files.forEach { file ->
             val text = file.readText()

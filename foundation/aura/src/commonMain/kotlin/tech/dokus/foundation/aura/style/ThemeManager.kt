@@ -1,7 +1,7 @@
 package tech.dokus.foundation.aura.style
 
-import ai.dokus.foundation.platform.Logger
-import ai.dokus.foundation.platform.persistence
+import tech.dokus.foundation.platform.Logger
+import tech.dokus.foundation.platform.persistence
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

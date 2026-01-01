@@ -1,15 +1,5 @@
 package tech.dokus.backend.worker
 
-import tech.dokus.ai.models.meetsMinimalThreshold
-import tech.dokus.ai.models.toDomainType
-import tech.dokus.ai.models.toExtractedDocumentData
-import tech.dokus.ai.service.AIService
-import tech.dokus.domain.enums.IndexingStatus
-import tech.dokus.ai.services.ChunkingService
-import tech.dokus.ai.services.EmbeddingException
-import tech.dokus.ai.services.EmbeddingService
-import tech.dokus.database.entity.IngestionItemEntity
-import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,10 +10,20 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import tech.dokus.database.entity.IngestionItemEntity
+import tech.dokus.database.repository.processor.ProcessorIngestionRepository
+import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.ChunkRepository
 import tech.dokus.domain.repository.ChunkWithEmbedding
+import tech.dokus.features.ai.models.meetsMinimalThreshold
+import tech.dokus.features.ai.models.toDomainType
+import tech.dokus.features.ai.models.toExtractedDocumentData
+import tech.dokus.features.ai.service.AIService
+import tech.dokus.features.ai.services.ChunkingService
+import tech.dokus.features.ai.services.EmbeddingException
+import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.ocr.OcrEngine

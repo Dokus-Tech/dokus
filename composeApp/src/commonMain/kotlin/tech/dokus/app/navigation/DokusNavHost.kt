@@ -1,7 +1,7 @@
 package tech.dokus.app.navigation
 
-import ai.dokus.foundation.platform.activePlatform
-import ai.dokus.foundation.platform.isDesktop
+import tech.dokus.foundation.platform.activePlatform
+import tech.dokus.foundation.platform.isDesktop
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme

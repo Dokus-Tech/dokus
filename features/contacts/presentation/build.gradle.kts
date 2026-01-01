@@ -70,7 +70,7 @@ kotlin {
 }
 
 android {
-    namespace = "tech.dokus.contacts"
+    namespace = "tech.dokus.features.contacts"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

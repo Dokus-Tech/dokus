@@ -1,6 +1,6 @@
 package tech.dokus.app.screens
 
-import ai.dokus.app.cashflow.components.PendingDocumentsCard
+import tech.dokus.features.cashflow.presentation.cashflow.components.PendingDocumentsCard
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
 import tech.dokus.aura.resources.search_placeholder

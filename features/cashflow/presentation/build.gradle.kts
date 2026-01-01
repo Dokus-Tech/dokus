@@ -65,7 +65,7 @@ kotlin {
 }
 
 android {
-    namespace = "ai.dokus.app.cashflow"
+    namespace = "tech.dokus.features.cashflow"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
