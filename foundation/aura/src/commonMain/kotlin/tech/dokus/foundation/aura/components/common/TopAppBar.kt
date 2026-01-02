@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.back
@@ -65,4 +66,20 @@ fun PTopAppBar(
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.22f)
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PTopAppBar(
+    title: StringResource,
+    navController: NavController? = LocalNavController.current,
+    showBackButton: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    PTopAppBar(
+        title = stringResource(resource = title),
+        navController = navController,
+        showBackButton = showBackButton,
+        modifier = modifier
+    )
 }

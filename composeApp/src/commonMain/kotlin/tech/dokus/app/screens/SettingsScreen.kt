@@ -365,7 +365,6 @@ private fun SettingsContentPane(
                 }
 
                 is SettingsDestination.PeppolSettings -> {
-                    // Use the full screen as embedded content for now
                     PeppolSettingsRoute()
                 }
 

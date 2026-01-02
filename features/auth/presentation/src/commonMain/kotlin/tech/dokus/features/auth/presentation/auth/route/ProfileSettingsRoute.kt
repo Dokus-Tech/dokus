@@ -9,12 +9,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
+import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_reset_to_cloud_failed
 import tech.dokus.aura.resources.profile_save_success
+import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.ProfileSettingsAction
 import tech.dokus.features.auth.mvi.ProfileSettingsContainer
@@ -23,13 +25,10 @@ import tech.dokus.features.auth.usecases.ConnectToServerUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.extensions.localized
-import org.koin.compose.koinInject
-import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.foundation.platform.Logger
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
-import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileSettingsRoute(
@@ -70,7 +69,7 @@ fun ProfileSettingsRoute(
         }
     }
 
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
+    val state by container.store.subscribe { action ->
         when (action) {
             ProfileSettingsAction.ShowSaveSuccess -> pendingSuccess = true
             is ProfileSettingsAction.ShowSaveError -> pendingError = action.error

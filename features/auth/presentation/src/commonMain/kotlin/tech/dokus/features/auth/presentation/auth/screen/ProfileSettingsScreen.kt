@@ -1,19 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import tech.dokus.features.auth.mvi.ProfileSettingsIntent
-import tech.dokus.features.auth.mvi.ProfileSettingsState
-import tech.dokus.features.auth.presentation.auth.components.CurrentServerSection
-import tech.dokus.features.auth.presentation.auth.components.DangerZoneSection
-import tech.dokus.features.auth.presentation.auth.components.LogoutSection
-import tech.dokus.features.auth.presentation.auth.components.ProfileEditingSection
-import tech.dokus.features.auth.presentation.auth.components.ProfileErrorSection
-import tech.dokus.features.auth.presentation.auth.components.ProfileSavingSection
-import tech.dokus.features.auth.presentation.auth.components.ProfileViewingSection
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.profile_settings_title
-import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
-import tech.dokus.domain.config.ServerConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +19,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.profile_settings_title
+import tech.dokus.domain.config.ServerConfig
+import tech.dokus.features.auth.mvi.ProfileSettingsIntent
+import tech.dokus.features.auth.mvi.ProfileSettingsState
+import tech.dokus.features.auth.presentation.auth.components.CurrentServerSection
+import tech.dokus.features.auth.presentation.auth.components.DangerZoneSection
+import tech.dokus.features.auth.presentation.auth.components.LogoutSection
+import tech.dokus.features.auth.presentation.auth.components.ProfileEditingSection
+import tech.dokus.features.auth.presentation.auth.components.ProfileErrorSection
+import tech.dokus.features.auth.presentation.auth.components.ProfileSavingSection
+import tech.dokus.features.auth.presentation.auth.components.ProfileViewingSection
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.local.LocalScreenSize
 
 /**
  * Profile settings screen with top bar and navigation.
@@ -51,11 +51,11 @@ fun ProfileSettingsScreen(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isLargeScreen = LocalScreenSize.current.isLarge
+
     Scaffold(
         topBar = {
-            PTopAppBar(
-                title = stringResource(Res.string.profile_settings_title)
-            )
+            if (!isLargeScreen) PTopAppBar(Res.string.profile_settings_title)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
@@ -108,6 +108,7 @@ fun ProfileSettingsContent(
                     CircularProgressIndicator()
                 }
             }
+
             is ProfileSettingsState.Viewing -> {
                 ProfileViewingSection(
                     state = state,
@@ -115,6 +116,7 @@ fun ProfileSettingsContent(
                 )
                 DangerZoneSection()
             }
+
             is ProfileSettingsState.Editing -> {
                 ProfileEditingSection(
                     state = state,
@@ -125,10 +127,12 @@ fun ProfileSettingsContent(
                 )
                 DangerZoneSection()
             }
+
             is ProfileSettingsState.Saving -> {
                 ProfileSavingSection(state = state)
                 DangerZoneSection()
             }
+
             is ProfileSettingsState.Error -> {
                 ProfileErrorSection()
             }
