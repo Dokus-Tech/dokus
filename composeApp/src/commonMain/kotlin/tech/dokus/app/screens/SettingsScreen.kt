@@ -1,24 +1,5 @@
 package tech.dokus.app.screens
 
-import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
-import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.settings_current_workspace
-import tech.dokus.aura.resources.settings_select_hint
-import tech.dokus.aura.resources.settings_select_prompt
-import tech.dokus.aura.resources.settings_select_workspace
-import tech.dokus.aura.resources.settings_unknown_section
-import tech.dokus.foundation.aura.components.DokusCard
-import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.ListSettingsItem
-import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
-import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.navigation.destinations.AuthDestination
-import tech.dokus.navigation.destinations.SettingsDestination
-import tech.dokus.navigation.local.LocalNavController
-import tech.dokus.navigation.navigateTo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,11 +51,32 @@ import tech.dokus.app.viewmodel.SettingsAction
 import tech.dokus.app.viewmodel.SettingsContainer
 import tech.dokus.app.viewmodel.SettingsIntent
 import tech.dokus.app.viewmodel.SettingsState
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.settings_current_workspace
+import tech.dokus.aura.resources.settings_select_hint
+import tech.dokus.aura.resources.settings_select_prompt
+import tech.dokus.aura.resources.settings_select_workspace
+import tech.dokus.aura.resources.settings_unknown_section
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.features.auth.presentation.auth.route.ProfileSettingsRoute
+import tech.dokus.features.cashflow.presentation.settings.route.PeppolSettingsRoute
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.DokusCard
+import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.ListSettingsItem
+import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 
 /**
  * Settings screen using FlowMVI Container pattern.
@@ -103,6 +105,7 @@ internal fun SettingsScreen(
             SettingsAction.NavigateToWorkspaceSelect -> {
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
             }
+
             is SettingsAction.ShowError -> {
                 pendingError = action.error
             }
@@ -124,7 +127,6 @@ internal fun SettingsScreen(
         // Mobile: Traditional navigation layout
         SettingsMobileLayout(
             state = state,
-            snackbarHostState = snackbarHostState
         )
     }
 }
@@ -165,7 +167,10 @@ private fun SettingsSplitPaneLayout(
                         .fillMaxHeight()
                         .width(280.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
                 ) {
                     SettingsNavigationPanel(
                         state = state,
@@ -200,19 +205,16 @@ private fun SettingsSplitPaneLayout(
 @Composable
 private fun SettingsMobileLayout(
     state: SettingsState,
-    snackbarHostState: SnackbarHostState
 ) {
     val navController = LocalNavController.current
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
     // Extract tenant from state
-    val currentTenant = (state as? SettingsState.Content)?.tenant
-    val isLoading = state is SettingsState.Loading
+    val currentTenant = if (state.isSuccess()) state.data else null
+    val isLoading = state.isLoading()
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { contentPadding ->
+    Scaffold { contentPadding ->
         Column(
             modifier = Modifier
                 .padding(contentPadding)
@@ -236,7 +238,6 @@ private fun SettingsMobileLayout(
                 SettingsGroupCard(
                     title = groupTitle,
                     sections = groups.flatMap { group -> group.sections },
-                    selectedSection = null, // No selection state on mobile
                     onSectionClick = { section ->
                         navController.navigateTo(section.destination)
                     }
@@ -260,8 +261,8 @@ private fun SettingsNavigationPanel(
     val navController = LocalNavController.current
 
     // Extract tenant from state
-    val currentTenant = (state as? SettingsState.Content)?.tenant
-    val isLoading = state is SettingsState.Loading
+    val currentTenant = if (state.isSuccess()) state.data else null
+    val isLoading = state.isLoading()
 
     Column(
         modifier = Modifier
@@ -350,19 +351,24 @@ private fun SettingsContentPane(
                     // Use the full screen as embedded content for now
                     ProfileSettingsRoute()
                 }
+
                 is SettingsDestination.WorkspaceSettings -> {
                     WorkspaceSettingsContent()
                 }
+
                 is SettingsDestination.TeamSettings -> {
                     TeamSettingsContent()
                 }
+
                 is SettingsDestination.AppearanceSettings -> {
                     AppearanceSettingsContent()
                 }
+
                 is SettingsDestination.PeppolSettings -> {
                     // Use the full screen as embedded content for now
                     PeppolSettingsRoute()
                 }
+
                 else -> {
                     // Fallback for unknown destinations
                     Box(
@@ -445,7 +451,8 @@ private fun WorkspacePickerCard(
                     )
                 } else {
                     Text(
-                        text = workspaceName ?: stringResource(Res.string.settings_select_workspace),
+                        text = workspaceName
+                            ?: stringResource(Res.string.settings_select_workspace),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -464,7 +471,6 @@ private fun WorkspacePickerCard(
 private fun SettingsGroupCard(
     title: StringResource,
     sections: List<ModuleSettingsSection>,
-    selectedSection: ModuleSettingsSection?,
     onSectionClick: (ModuleSettingsSection) -> Unit
 ) {
     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
@@ -482,7 +488,6 @@ private fun SettingsGroupCard(
                 ListSettingsItem(
                     text = stringResource(section.title),
                     icon = section.icon,
-                    isSelected = selectedSection == section,
                     onClick = { onSectionClick(section) }
                 )
             }
